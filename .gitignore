@@ -1,0 +1,45 @@
+# Visual Studio and IDE state
+.vs/
+.vscode/
+.idea/
+*.sln
+*.slnx
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Unreal generated build products and caches
+Binaries/
+Build/*
+!Build/**/
+!Build/**/*.ico
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Unreal transient files
+*.tmp
+*.log
+*.pdb
+*.obj
+*.dll
+*.exe
+*.modules
+*.target
+*.version
+*.manifest
+
+# Local user and platform files
+*.user
+*.userprefs
+*.sln.docstates
+Desktop.ini
+.DS_Store
+Thumbs.db
+
+# Optional local plugins marketplace cache/build output
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
