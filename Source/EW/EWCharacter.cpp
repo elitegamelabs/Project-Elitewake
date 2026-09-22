@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "Net/UnrealNetwork.h"
 #include "EW.h"
 
 AEWCharacter::AEWCharacter()
@@ -30,7 +31,7 @@ AEWCharacter::AEWCharacter()
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
@@ -65,11 +66,26 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AEWCharacter::Look);
+
+		// Sprinting
+		if (SprintAction)
+		{
+			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AEWCharacter::StartSprint);
+			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AEWCharacter::StopSprint);
+			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AEWCharacter::StopSprint);
+		}
 	}
 	else
 	{
 		UE_LOG(LogEW, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AEWCharacter, bIsSprinting);
 }
 
 void AEWCharacter::Move(const FInputActionValue& Value)
@@ -88,6 +104,47 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 	// route the input
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
+}
+
+void AEWCharacter::StartSprint()
+{
+	SetSprinting(true);
+}
+
+void AEWCharacter::StopSprint()
+{
+	SetSprinting(false);
+}
+
+void AEWCharacter::SetSprinting(bool bNewIsSprinting)
+{
+	if (bIsSprinting == bNewIsSprinting)
+	{
+		return;
+	}
+
+	bIsSprinting = bNewIsSprinting;
+	ApplyMovementSpeed();
+
+	if (!HasAuthority())
+	{
+		ServerSetSprinting(bNewIsSprinting);
+	}
+}
+
+void AEWCharacter::ServerSetSprinting_Implementation(bool bNewIsSprinting)
+{
+	SetSprinting(bNewIsSprinting);
+}
+
+void AEWCharacter::OnRep_IsSprinting()
+{
+	ApplyMovementSpeed();
+}
+
+void AEWCharacter::ApplyMovementSpeed()
+{
+	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? SprintSpeed : WalkingSpeed;
 }
 
 void AEWCharacter::DoMove(float Right, float Forward)

@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 struct FInputActionValue;
+class FLifetimeProperty;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -49,6 +50,22 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* MouseLookAction;
 
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* SprintAction;
+
+	/** Normal grounded movement speed. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
+	float WalkingSpeed = 500.0f;
+
+	/** Grounded movement speed while sprinting. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
+	float SprintSpeed = 750.0f;
+
+	/** Whether this character is currently requesting sprint movement. */
+	UPROPERTY(ReplicatedUsing=OnRep_IsSprinting, BlueprintReadOnly, Category="Movement|Sprint", meta=(AllowPrivateAccess="true"))
+	bool bIsSprinting = false;
+
 public:
 
 	/** Constructor */
@@ -59,6 +76,9 @@ protected:
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/** Register replicated character state. */
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
 
 	/** Called for movement input */
@@ -66,6 +86,26 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	/** Begin sprint input. */
+	void StartSprint();
+
+	/** End sprint input. */
+	void StopSprint();
+
+	/** Apply sprint state locally and to character movement. */
+	void SetSprinting(bool bNewIsSprinting);
+
+	/** Apply the configured movement speed for the current sprint state. */
+	void ApplyMovementSpeed();
+
+	/** Receive sprint intent on the authoritative server. */
+	UFUNCTION(Server, Reliable)
+	void ServerSetSprinting(bool bNewIsSprinting);
+
+	/** Refresh movement speed when sprint state replicates. */
+	UFUNCTION()
+	void OnRep_IsSprinting();
 
 public:
 
@@ -84,6 +124,10 @@ public:
 	/** Handles jump pressed inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
+
+	/** Returns whether the character is currently sprinting. */
+	UFUNCTION(BlueprintPure, Category="Movement|Sprint")
+	bool IsSprinting() const { return bIsSprinting; }
 
 public:
 
