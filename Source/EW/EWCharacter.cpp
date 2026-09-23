@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "Net/UnrealNetwork.h"
+#include "TimerManager.h"
 #include "EW.h"
 
 AEWCharacter::AEWCharacter()
@@ -26,12 +27,14 @@ AEWCharacter::AEWCharacter()
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 500.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = WalkingSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = CrouchSpeed;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
@@ -57,8 +60,8 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AEWCharacter::DoJumpStart);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AEWCharacter::DoJumpEnd);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AEWCharacter::Move);
@@ -74,6 +77,14 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AEWCharacter::StopSprint);
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AEWCharacter::StopSprint);
 		}
+
+		// Crouching and prone
+		if (StanceAction)
+		{
+			EnhancedInputComponent->BindAction(StanceAction, ETriggerEvent::Started, this, &AEWCharacter::StartStanceInput);
+			EnhancedInputComponent->BindAction(StanceAction, ETriggerEvent::Completed, this, &AEWCharacter::StopStanceInput);
+			EnhancedInputComponent->BindAction(StanceAction, ETriggerEvent::Canceled, this, &AEWCharacter::CancelStanceInput);
+		}
 	}
 	else
 	{
@@ -86,6 +97,19 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AEWCharacter, bIsSprinting);
+	DOREPLIFETIME(AEWCharacter, bIsProne);
+}
+
+void AEWCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnStartCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	ApplyMovementSpeed();
+}
+
+void AEWCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
+{
+	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	ApplyMovementSpeed();
 }
 
 void AEWCharacter::Move(const FInputActionValue& Value)
@@ -108,6 +132,16 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 void AEWCharacter::StartSprint()
 {
+	if (bIsProne)
+	{
+		SetProne(false);
+	}
+
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+
 	SetSprinting(true);
 }
 
@@ -116,8 +150,65 @@ void AEWCharacter::StopSprint()
 	SetSprinting(false);
 }
 
+void AEWCharacter::StartStanceInput()
+{
+	bStanceInputHeld = true;
+	SetSprinting(false);
+
+	GetWorldTimerManager().SetTimer(
+		StanceHoldTimer,
+		this,
+		&AEWCharacter::HandleProneHold,
+		StanceHoldDuration,
+		false);
+}
+
+void AEWCharacter::StopStanceInput()
+{
+	bStanceInputHeld = false;
+
+	if (GetWorldTimerManager().IsTimerActive(StanceHoldTimer))
+	{
+		GetWorldTimerManager().ClearTimer(StanceHoldTimer);
+		ToggleCrouch();
+	}
+}
+
+void AEWCharacter::CancelStanceInput()
+{
+	bStanceInputHeld = false;
+	GetWorldTimerManager().ClearTimer(StanceHoldTimer);
+}
+
+void AEWCharacter::HandleProneHold()
+{
+	if (bStanceInputHeld)
+	{
+		SetProne(true);
+	}
+}
+
+void AEWCharacter::ToggleCrouch()
+{
+	if (bIsProne)
+	{
+		SetProne(false);
+		Crouch();
+	}
+	else if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+	else
+	{
+		Crouch();
+	}
+}
+
 void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 {
+	bNewIsSprinting = bNewIsSprinting && !bIsProne && !bIsCrouched;
+
 	if (bIsSprinting == bNewIsSprinting)
 	{
 		return;
@@ -132,9 +223,41 @@ void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 	}
 }
 
+void AEWCharacter::SetProne(bool bNewIsProne)
+{
+	if (bIsProne == bNewIsProne)
+	{
+		return;
+	}
+
+	bIsProne = bNewIsProne;
+
+	if (bIsProne)
+	{
+		SetSprinting(false);
+		Crouch();
+	}
+	else
+	{
+		UnCrouch();
+	}
+
+	ApplyMovementSpeed();
+
+	if (!HasAuthority())
+	{
+		ServerSetProne(bNewIsProne);
+	}
+}
+
 void AEWCharacter::ServerSetSprinting_Implementation(bool bNewIsSprinting)
 {
 	SetSprinting(bNewIsSprinting);
+}
+
+void AEWCharacter::ServerSetProne_Implementation(bool bNewIsProne)
+{
+	SetProne(bNewIsProne);
 }
 
 void AEWCharacter::OnRep_IsSprinting()
@@ -142,9 +265,30 @@ void AEWCharacter::OnRep_IsSprinting()
 	ApplyMovementSpeed();
 }
 
+void AEWCharacter::OnRep_IsProne()
+{
+	ApplyMovementSpeed();
+}
+
 void AEWCharacter::ApplyMovementSpeed()
 {
-	GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? SprintSpeed : WalkingSpeed;
+	float TargetSpeed = WalkingSpeed;
+
+	if (bIsProne)
+	{
+		TargetSpeed = ProneSpeed;
+	}
+	else if (bIsCrouched)
+	{
+		TargetSpeed = CrouchSpeed;
+	}
+	else if (bIsSprinting)
+	{
+		TargetSpeed = SprintSpeed;
+	}
+
+	GetCharacterMovement()->MaxWalkSpeed = TargetSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = bIsProne ? ProneSpeed : CrouchSpeed;
 }
 
 void AEWCharacter::DoMove(float Right, float Forward)
@@ -179,6 +323,16 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 
 void AEWCharacter::DoJumpStart()
 {
+	if (bIsProne)
+	{
+		SetProne(false);
+	}
+
+	if (bIsCrouched)
+	{
+		UnCrouch();
+	}
+
 	// signal the character to jump
 	Jump();
 }

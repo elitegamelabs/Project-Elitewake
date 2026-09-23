@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "TimerManager.h"
 #include "EWCharacter.generated.h"
 
 class USpringArmComponent;
@@ -54,6 +55,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* SprintAction;
 
+	/** Shared crouch / prone Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* StanceAction;
+
 	/** Normal grounded movement speed. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
 	float WalkingSpeed = 500.0f;
@@ -62,9 +67,31 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
 	float SprintSpeed = 750.0f;
 
+	/** Grounded movement speed while crouched. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
+	float CrouchSpeed = 300.0f;
+
+	/** Grounded movement speed while prone. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
+	float ProneSpeed = 150.0f;
+
+	/** Time the stance input must be held before entering prone. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Stance", meta=(ClampMin="0.1", Units="s"))
+	float StanceHoldDuration = 0.35f;
+
 	/** Whether this character is currently requesting sprint movement. */
 	UPROPERTY(ReplicatedUsing=OnRep_IsSprinting, BlueprintReadOnly, Category="Movement|Sprint", meta=(AllowPrivateAccess="true"))
 	bool bIsSprinting = false;
+
+	/** Whether this character is currently prone. */
+	UPROPERTY(ReplicatedUsing=OnRep_IsProne, BlueprintReadOnly, Category="Movement|Stance", meta=(AllowPrivateAccess="true"))
+	bool bIsProne = false;
+
+	/** Tracks whether the local player is still holding the stance input. */
+	bool bStanceInputHeld = false;
+
+	/** Delays prone entry so a quick press remains a crouch toggle. */
+	FTimerHandle StanceHoldTimer;
 
 public:
 
@@ -78,6 +105,12 @@ protected:
 
 	/** Register replicated character state. */
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Refresh stance-dependent movement when crouch begins. */
+	virtual void OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
+
+	/** Refresh stance-dependent movement when crouch ends. */
+	virtual void OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust) override;
 
 protected:
 
@@ -93,8 +126,26 @@ protected:
 	/** End sprint input. */
 	void StopSprint();
 
+	/** Begin timing a tap versus hold stance input. */
+	void StartStanceInput();
+
+	/** Resolve a short stance press as a crouch toggle. */
+	void StopStanceInput();
+
+	/** Clear stance timing when input is canceled without treating it as a tap. */
+	void CancelStanceInput();
+
+	/** Enter prone after the stance input has been held long enough. */
+	void HandleProneHold();
+
+	/** Toggle between standing and crouching, or rise from prone into crouch. */
+	void ToggleCrouch();
+
 	/** Apply sprint state locally and to character movement. */
 	void SetSprinting(bool bNewIsSprinting);
+
+	/** Apply prone state locally and to character movement. */
+	void SetProne(bool bNewIsProne);
 
 	/** Apply the configured movement speed for the current sprint state. */
 	void ApplyMovementSpeed();
@@ -103,9 +154,17 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewIsSprinting);
 
+	/** Receive prone intent on the authoritative server. */
+	UFUNCTION(Server, Reliable)
+	void ServerSetProne(bool bNewIsProne);
+
 	/** Refresh movement speed when sprint state replicates. */
 	UFUNCTION()
 	void OnRep_IsSprinting();
+
+	/** Refresh movement speed when prone state replicates. */
+	UFUNCTION()
+	void OnRep_IsProne();
 
 public:
 
@@ -128,6 +187,10 @@ public:
 	/** Returns whether the character is currently sprinting. */
 	UFUNCTION(BlueprintPure, Category="Movement|Sprint")
 	bool IsSprinting() const { return bIsSprinting; }
+
+	/** Returns whether the character is currently prone. */
+	UFUNCTION(BlueprintPure, Category="Movement|Stance")
+	bool IsProne() const { return bIsProne; }
 
 public:
 
