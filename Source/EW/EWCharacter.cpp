@@ -114,12 +114,14 @@ void AEWCharacter::BeginPlay()
 
 	// Older Blueprint defaults can retain the template's non-crouching navigation flag.
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	DefaultMeshRelativeScale = GetMesh()->GetRelativeScale3D();
 	SetFirstPerson(false);
 }
 
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	UpdateTemporaryStanceVisual(DeltaSeconds);
 
 #if !UE_BUILD_SHIPPING
 	if (bShowMovementDebug && IsLocallyControlled() && GEngine)
@@ -243,6 +245,32 @@ void AEWCharacter::SetFirstPerson(bool bNewFirstPerson)
 	FirstPersonCamera->SetActive(bIsFirstPerson);
 	FollowCamera->SetActive(!bIsFirstPerson);
 	GetMesh()->SetOwnerNoSee(bIsFirstPerson);
+}
+
+void AEWCharacter::UpdateTemporaryStanceVisual(float DeltaSeconds)
+{
+	float TargetHeightScale = 1.0f;
+
+	if (bIsProne)
+	{
+		TargetHeightScale = ProneVisualHeightScale;
+	}
+	else if (bIsCrouched)
+	{
+		TargetHeightScale = CrouchVisualHeightScale;
+	}
+
+	const FVector TargetScale(
+		DefaultMeshRelativeScale.X,
+		DefaultMeshRelativeScale.Y,
+		DefaultMeshRelativeScale.Z * TargetHeightScale);
+	const FVector SmoothedScale = FMath::VInterpTo(
+		GetMesh()->GetRelativeScale3D(),
+		TargetScale,
+		DeltaSeconds,
+		StanceVisualInterpSpeed);
+
+	GetMesh()->SetRelativeScale3D(SmoothedScale);
 }
 
 void AEWCharacter::HandleProneHold()

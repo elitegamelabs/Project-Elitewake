@@ -118,6 +118,21 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Debug")
 	bool bShowMovementDebug = true;
 
+	/** Temporary third-person mesh height multiplier used until crouch animation assets are available. */
+	UPROPERTY(EditDefaultsOnly, Category="Movement|Temporary Visuals", meta=(ClampMin="0.1", ClampMax="1.0"))
+	float CrouchVisualHeightScale = 0.72f;
+
+	/** Temporary third-person mesh height multiplier used until prone animation assets are available. */
+	UPROPERTY(EditDefaultsOnly, Category="Movement|Temporary Visuals", meta=(ClampMin="0.1", ClampMax="1.0"))
+	float ProneVisualHeightScale = 0.35f;
+
+	/** Smoothing speed for the temporary stance visualization. */
+	UPROPERTY(EditDefaultsOnly, Category="Movement|Temporary Visuals", meta=(ClampMin="0.0"))
+	float StanceVisualInterpSpeed = 10.0f;
+
+	/** Original authored mesh scale restored while standing. */
+	FVector DefaultMeshRelativeScale = FVector::OneVector;
+
 	/** Delays prone entry so a quick press remains a crouch toggle. */
 	FTimerHandle StanceHoldTimer;
 
@@ -174,6 +189,9 @@ protected:
 
 	/** Apply the requested local camera presentation. */
 	void SetFirstPerson(bool bNewFirstPerson);
+
+	/** Smoothly visualize stance until dedicated crouch and prone animations are available. */
+	void UpdateTemporaryStanceVisual(float DeltaSeconds);
 
 	/** Enter prone after the stance input has been held long enough. */
 	void HandleProneHold();
