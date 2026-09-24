@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "EWSurvivalComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
 #include "Camera/CameraComponent.h"
@@ -18,6 +19,7 @@
 AEWCharacter::AEWCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -121,6 +123,16 @@ void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (HasAuthority() && SurvivalComponent)
+	{
+		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
+
+		if (bIsSprinting && !SurvivalComponent->CanSprint())
+		{
+			SetSprinting(false);
+		}
+	}
+
 #if !UE_BUILD_SHIPPING
 	if (bShowMovementDebug && IsLocallyControlled() && GEngine)
 	{
@@ -130,9 +142,11 @@ void AEWCharacter::Tick(float DeltaSeconds)
 			: TEXT("Unknown");
 		const FString PerspectiveName = bIsFirstPerson ? TEXT("First Person") : TEXT("Third Person");
 		const FString DebugText = FString::Printf(
-			TEXT("Perspective: %s  |  Movement State: %s"),
+			TEXT("Perspective: %s  |  Movement State: %s  |  Stamina: %.0f / %.0f"),
 			*PerspectiveName,
-			*StateName);
+			*StateName,
+			SurvivalComponent ? SurvivalComponent->GetStamina() : 0.0f,
+			SurvivalComponent ? SurvivalComponent->GetMaxStamina() : 0.0f);
 
 		GEngine->AddOnScreenDebugMessage(
 			static_cast<int32>(GetUniqueID()),
@@ -272,7 +286,10 @@ void AEWCharacter::ToggleCrouch()
 
 void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 {
-	bNewIsSprinting = bNewIsSprinting && !bIsProne && !bIsCrouched;
+	bNewIsSprinting = bNewIsSprinting
+		&& !bIsProne
+		&& !bIsCrouched
+		&& (!SurvivalComponent || SurvivalComponent->CanSprint());
 
 	if (bIsSprinting == bNewIsSprinting)
 	{

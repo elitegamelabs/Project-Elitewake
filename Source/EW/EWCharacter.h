@@ -11,6 +11,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
+class UEWSurvivalComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 
@@ -48,6 +49,10 @@ class AEWCharacter : public ACharacter
 	/** Dedicated local first-person camera. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCamera;
+
+	/** Server-authoritative survival values for this character. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UEWSurvivalComponent* SurvivalComponent;
 	
 protected:
 
@@ -250,5 +255,9 @@ public:
 
 	/** Returns FirstPersonCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
+
+	/** Returns the survival-stat component. */
+	UFUNCTION(BlueprintPure, Category="Survival")
+	UEWSurvivalComponent* GetSurvivalComponent() const { return SurvivalComponent; }
 };
 
