@@ -2,6 +2,7 @@
 
 #include "EWCharacter.h"
 #include "Engine/LocalPlayer.h"
+#include "Engine/Engine.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -16,6 +17,8 @@
 
 AEWCharacter::AEWCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 		
@@ -49,6 +52,13 @@ AEWCharacter::AEWCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	// Keep first-person presentation separate from the third-person boom.
+	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
+	FirstPersonCamera->SetupAttachment(GetCapsuleComponent());
+	FirstPersonCamera->SetRelativeLocation(FVector(10.0f, 0.0f, 64.0f));
+	FirstPersonCamera->bUsePawnControlRotation = true;
+	FirstPersonCamera->SetActive(false);
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -85,11 +95,52 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			EnhancedInputComponent->BindAction(StanceAction, ETriggerEvent::Completed, this, &AEWCharacter::StopStanceInput);
 			EnhancedInputComponent->BindAction(StanceAction, ETriggerEvent::Canceled, this, &AEWCharacter::CancelStanceInput);
 		}
+
+		// Perspective switching
+		if (TogglePerspectiveAction)
+		{
+			EnhancedInputComponent->BindAction(TogglePerspectiveAction, ETriggerEvent::Started, this, &AEWCharacter::TogglePerspective);
+		}
 	}
 	else
 	{
 		UE_LOG(LogEW, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+}
+
+void AEWCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Older Blueprint defaults can retain the template's non-crouching navigation flag.
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	SetFirstPerson(false);
+}
+
+void AEWCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+#if !UE_BUILD_SHIPPING
+	if (bShowMovementDebug && IsLocallyControlled() && GEngine)
+	{
+		const UEnum* LocomotionEnum = StaticEnum<EEWLocomotionState>();
+		const FString StateName = LocomotionEnum
+			? LocomotionEnum->GetDisplayNameTextByValue(static_cast<int64>(GetLocomotionState())).ToString()
+			: TEXT("Unknown");
+		const FString PerspectiveName = bIsFirstPerson ? TEXT("First Person") : TEXT("Third Person");
+		const FString DebugText = FString::Printf(
+			TEXT("Perspective: %s  |  Movement State: %s"),
+			*PerspectiveName,
+			*StateName);
+
+		GEngine->AddOnScreenDebugMessage(
+			static_cast<int32>(GetUniqueID()),
+			0.0f,
+			FColor::Cyan,
+			DebugText);
+	}
+#endif
 }
 
 void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -178,6 +229,20 @@ void AEWCharacter::CancelStanceInput()
 {
 	bStanceInputHeld = false;
 	GetWorldTimerManager().ClearTimer(StanceHoldTimer);
+}
+
+void AEWCharacter::TogglePerspective()
+{
+	SetFirstPerson(!bIsFirstPerson);
+}
+
+void AEWCharacter::SetFirstPerson(bool bNewFirstPerson)
+{
+	bIsFirstPerson = bNewFirstPerson;
+
+	FirstPersonCamera->SetActive(bIsFirstPerson);
+	FollowCamera->SetActive(!bIsFirstPerson);
+	GetMesh()->SetOwnerNoSee(bIsFirstPerson);
 }
 
 void AEWCharacter::HandleProneHold()
@@ -289,6 +354,31 @@ void AEWCharacter::ApplyMovementSpeed()
 
 	GetCharacterMovement()->MaxWalkSpeed = TargetSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = bIsProne ? ProneSpeed : CrouchSpeed;
+}
+
+EEWLocomotionState AEWCharacter::GetLocomotionState() const
+{
+	if (bIsProne)
+	{
+		return EEWLocomotionState::Prone;
+	}
+
+	if (bIsCrouched)
+	{
+		return EEWLocomotionState::Crouching;
+	}
+
+	if (GetCharacterMovement()->IsFalling())
+	{
+		return EEWLocomotionState::Airborne;
+	}
+
+	if (GetVelocity().SizeSquared2D() > 1.0f)
+	{
+		return bIsSprinting ? EEWLocomotionState::Sprinting : EEWLocomotionState::Walking;
+	}
+
+	return EEWLocomotionState::Standing;
 }
 
 void AEWCharacter::DoMove(float Right, float Forward)

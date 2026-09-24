@@ -16,6 +16,18 @@ class FLifetimeProperty;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
+/** High-level locomotion states exposed to animation and presentation systems. */
+UENUM(BlueprintType)
+enum class EEWLocomotionState : uint8
+{
+	Standing,
+	Walking,
+	Sprinting,
+	Crouching,
+	Prone,
+	Airborne
+};
+
 /**
  *  A simple player-controllable third person character
  *  Implements a controllable orbiting camera
@@ -32,6 +44,10 @@ class AEWCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	/** Dedicated local first-person camera. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UCameraComponent* FirstPersonCamera;
 	
 protected:
 
@@ -58,6 +74,10 @@ protected:
 	/** Shared crouch / prone Input Action */
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* StanceAction;
+
+	/** First-/third-person toggle Input Action */
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* TogglePerspectiveAction;
 
 	/** Normal grounded movement speed. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Movement|Speed", meta=(ClampMin="0.0", Units="cm/s"))
@@ -90,6 +110,14 @@ protected:
 	/** Tracks whether the local player is still holding the stance input. */
 	bool bStanceInputHeld = false;
 
+	/** Whether the locally controlled player is using the first-person camera. */
+	UPROPERTY(BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
+	bool bIsFirstPerson = false;
+
+	/** Show temporary movement-state text while the locomotion foundation is validated. */
+	UPROPERTY(EditDefaultsOnly, Category="Debug")
+	bool bShowMovementDebug = true;
+
 	/** Delays prone entry so a quick press remains a crouch toggle. */
 	FTimerHandle StanceHoldTimer;
 
@@ -98,7 +126,13 @@ public:
 	/** Constructor */
 	AEWCharacter();	
 
+	/** Update temporary movement-state diagnostics. */
+	virtual void Tick(float DeltaSeconds) override;
+
 protected:
+
+	/** Enforce runtime movement capabilities that derived Blueprints may have serialized previously. */
+	virtual void BeginPlay() override;
 
 	/** Initialize input action bindings */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -134,6 +168,12 @@ protected:
 
 	/** Clear stance timing when input is canceled without treating it as a tap. */
 	void CancelStanceInput();
+
+	/** Switch between the dedicated third- and first-person cameras. */
+	void TogglePerspective();
+
+	/** Apply the requested local camera presentation. */
+	void SetFirstPerson(bool bNewFirstPerson);
 
 	/** Enter prone after the stance input has been held long enough. */
 	void HandleProneHold();
@@ -192,6 +232,14 @@ public:
 	UFUNCTION(BlueprintPure, Category="Movement|Stance")
 	bool IsProne() const { return bIsProne; }
 
+	/** Returns whether the local player is using first person. */
+	UFUNCTION(BlueprintPure, Category="Camera")
+	bool IsFirstPerson() const { return bIsFirstPerson; }
+
+	/** Returns the high-level state used by animation and presentation systems. */
+	UFUNCTION(BlueprintPure, Category="Movement|Animation")
+	EEWLocomotionState GetLocomotionState() const;
+
 public:
 
 	/** Returns CameraBoom subobject **/
@@ -199,5 +247,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+	/** Returns FirstPersonCamera subobject **/
+	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
 };
 
