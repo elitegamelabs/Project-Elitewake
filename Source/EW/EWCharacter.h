@@ -12,6 +12,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputAction;
 class UEWSurvivalComponent;
+class UEWInventoryComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 
@@ -53,6 +54,10 @@ class AEWCharacter : public ACharacter
 	/** Server-authoritative survival values for this character. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UEWSurvivalComponent* SurvivalComponent;
+
+	/** Server-authoritative item stacks and carried weight. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UEWInventoryComponent* InventoryComponent;
 	
 protected:
 
@@ -259,5 +264,9 @@ public:
 	/** Returns the survival-stat component. */
 	UFUNCTION(BlueprintPure, Category="Survival")
 	UEWSurvivalComponent* GetSurvivalComponent() const { return SurvivalComponent; }
+
+	/** Returns the character inventory component. */
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 };
 

@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "EWInventoryComponent.h"
 #include "EWSurvivalComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
@@ -20,6 +21,7 @@ AEWCharacter::AEWCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
+	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);

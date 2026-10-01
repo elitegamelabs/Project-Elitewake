@@ -1,0 +1,81 @@
+// Copyright Elite Game Labs. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "EWInventoryComponent.generated.h"
+
+class FLifetimeProperty;
+class UEWItemDefinition;
+
+USTRUCT(BlueprintType)
+struct FEWInventoryEntry
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory")
+	TObjectPtr<UEWItemDefinition> ItemDefinition = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="1"))
+	int32 Quantity = 1;
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnInventoryChanged);
+
+/** Server-authoritative, slot-based inventory foundation. */
+UCLASS(ClassGroup=(Elitewake), BlueprintType, meta=(BlueprintSpawnableComponent))
+class EW_API UEWInventoryComponent : public UActorComponent
+{
+	GENERATED_BODY()
+
+public:
+	UEWInventoryComponent();
+
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	/** Raised after authoritative or replicated inventory contents change. */
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FEWOnInventoryChanged OnInventoryChanged;
+
+	/** Adds as much as fits and returns the quantity actually added. Authority only. */
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	int32 AddItem(UEWItemDefinition* ItemDefinition, int32 Quantity);
+
+	/** Removes up to the requested quantity and returns the quantity removed. Authority only. */
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	int32 RemoveItem(UEWItemDefinition* ItemDefinition, int32 Quantity);
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	int32 GetItemCount(const UEWItemDefinition* ItemDefinition) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	bool HasItem(const UEWItemDefinition* ItemDefinition, int32 Quantity = 1) const;
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	TArray<FEWInventoryEntry> GetInventoryEntries() const { return Entries; }
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	int32 GetUsedSlotCount() const { return Entries.Num(); }
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	int32 GetMaxSlotCount() const { return MaxSlots; }
+
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	float GetTotalWeight() const;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="1"))
+	int32 MaxSlots = 24;
+
+	UPROPERTY(ReplicatedUsing=OnRep_Entries, VisibleInstanceOnly, BlueprintReadOnly, Category="Inventory")
+	TArray<FEWInventoryEntry> Entries;
+
+	UFUNCTION()
+	void OnRep_Entries();
+
+private:
+	void HandleInventoryChanged();
+	void RefreshSurvivalWeight();
+};
