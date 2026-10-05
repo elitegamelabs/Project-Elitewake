@@ -11,6 +11,10 @@
 #include "Blueprint/UserWidget.h"
 #include "EW.h"
 #include "EWInventoryWidget.h"
+#include "EWCharacter.h"
+#include "EWInventoryComponent.h"
+#include "EWItemDefinition.h"
+#include "Engine/AssetManager.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void AEWPlayerController::BeginPlay()
@@ -85,6 +89,31 @@ void AEWPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AEWPlayerController::EWGrantTestWood(int32 Quantity)
+{
+#if WITH_EDITOR
+	if (!HasAuthority() || Quantity <= 0)
+	{
+		UE_LOG(LogEW, Warning, TEXT("Test Wood grant rejected: authority and a positive quantity are required."));
+		return;
+	}
+
+	AEWCharacter* EWCharacter = Cast<AEWCharacter>(GetPawn());
+	UEWInventoryComponent* Inventory = EWCharacter ? EWCharacter->GetInventoryComponent() : nullptr;
+	const FSoftObjectPath ItemPath = UAssetManager::Get().GetPrimaryAssetPath(FPrimaryAssetId(TEXT("EWItem"), TEXT("Test.Wood")));
+	UEWItemDefinition* Wood = Cast<UEWItemDefinition>(ItemPath.TryLoad());
+	if (!Inventory || !Wood)
+	{
+		UE_LOG(LogEW, Warning, TEXT("Test Wood grant unavailable: possess an EW character and create the registered DA_TestWood asset."));
+		return;
+	}
+
+	const int32 Added = Inventory->AddItem(Wood, Quantity);
+	UE_LOG(LogEW, Display, TEXT("Test Wood grant: requested=%d added=%d total=%d slots=%d weight=%.1f kg"),
+		Quantity, Added, Inventory->GetItemCount(Wood), Inventory->GetUsedSlotCount(), Inventory->GetTotalWeight());
+#endif
 }
 
 void AEWPlayerController::ToggleInventory()

@@ -2,7 +2,7 @@
 
 Reviewed: 2026-10-05. Status describes individual layers, not finished-game readiness.
 
-Sources reconciled against the September 21 Integrated Bible and [historical chat](https://chatgpt.com/s/cx_6ac35bcf93fc819187d17835a7f29cac); see [review record](CONTEXT_RECONCILIATION.md). Current work remains M5. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance.
+Current reference is the October 5 Authoritative Revision and later direct owner clarification of the rye sale. See [current revision review](DESIGN_REVISION_2026_10_05.md); the [September reconciliation](CONTEXT_RECONCILIATION.md) remains historical evidence. Current work remains M5. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance. New survival rates are requirements, not implemented behavior.
 
 **Planned**: no implementation evidenced. **In Progress**: slice underway. **Implemented**: code/content exists. **Verified**: specified test passed. **Postponed**: deliberately deferred. **Blocked**: named dependency prevents progress. **Replaced**: superseded implementation.
 
@@ -19,7 +19,8 @@ Sources reconciled against the September 21 Integrated Bible and [historical cha
 | Integrations | Implemented: Unreal MCP auto-start, Git editor, client configs | Scenario availability reported by handoff; no asset request made | Not gameplay | `EW.uproject`, `Config/DefaultEditorPerProjectUserSettings.ini`, `Config/DefaultSourceControlSettings.ini`; `0e18009`, `2f36734`, `edb52c3` |
 | M5A items/inventory | Implemented: definitions, categories/slot metadata, 24 slots, stacking, add/remove/count/weight | No game item assets/pickup evidenced in this slice | Replicated entries; server-only mutation source inspected. Multi-client behavior pending | `EWItemDefinition.*`, `EWInventoryComponent.*`, `EWInventoryComponentTests.cpp`; `9b7f129` |
 | M5B inventory panel | Verified: build, empty panel, I open/close/reopen and walking/camera recovery | Native functional draft; not final inventory design | Local-only Play test; remote populated inventory not verified | `EWInventoryWidget.*`, `EWPlayerController.*`; `286f8d0`, pushed after owner approval |
-| M5C-G grant/pickup/interactions/equipment/hotbar | Planned | Planned | Planned | Slot enum is metadata only; no equip behavior claimed |
+| M5C persisted test item/grant | Verified: saved asset registration/load, stacking/capacity/weight tests and populated Play panel | Wood (Test), resource stack 250, temporary fixture weight 0.1 kg | Authority check and no client grant RPC; multi-client behavior not verified | `DA_TestWood`, editor-only `EWGrantTestWood`; [verification](M5C_INVENTORY_VERIFICATION.md) |
+| M5D-G pickup/interactions/equipment/hotbar | Planned | Planned | Planned | Slot enum is metadata only; no equip behavior claimed |
 
 ## Verification ledger
 
@@ -34,19 +35,21 @@ Sources reconciled against the September 21 Integrated Bible and [historical cha
 | 2026-10-05 | Historical chat / integrated Bible / source / GitHub cross-reference | Reconciled prologue, progression, map/hotbar, rejuvenation, multiplayer and known gaps. Remote main read at `9b7f129`; `286f8d0` is local. No remote push |
 | 2026-10-05 | Owner-approved publication after cross-reference | Rechecked clean tree, pending changes and remote main at `9b7f129`; ordinary push of `286f8d0` and reconciliation `41ee3fc` succeeded. Verification boundaries remain unchanged |
 
-Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft only; populated inventory, full gameplay and multiplayer remain pending.
+Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft; M5C adds the populated checks below. Full gameplay and multiplayer remain pending.
+
+M5C adds populated local verification: 251 -> stacks 250/1, live increment to 252 -> 250/2, weight 25.1 -> 25.2 kg, zero/negative rejection, I close/reopen, and fresh Play empty. Both inventory automation tests succeeded. Full gameplay, packaging and multiplayer remain pending.
 
 ## Known limitations and next gates
 
 - Inventory controller Y, automatic selection, navigation/highlight, character preview, tabs and crafting are Planned.
-- Empty inventory is expected until persisted test item content and granting/pickup exist.
+- Normal Play starts empty. The persisted Wood fixture can now be explicitly granted in editor Play; gameplay pickups remain Planned.
 - Cyan movement diagnostics remain visible over the draft panel; final HUD/panel layout and long-list scrolling are pending presentation work.
 - Inventory UI currently follows inventory-change events; survival-only capacity updates and pawn replacement need a later lifecycle pass.
 - Max carried weight is a displayed survival value; current inventory capacity is enforced by slots, not a weight limit. Encumbrance gameplay remains Planned.
-- Primary item asset scan/packaging needs validation before item content integration. Startup currently reports an unrelated GameFeatureData asset-manager configuration warning.
+- Primary item scan and native fixture load are Verified; packaging remains pending. Required GameFeatureData scan/rule now resolves the previous startup configuration error.
 - Save/load, dedicated-server tests, final assets and polished HUD are not verified.
 - Proper stance and perspective animation work remains Postponed pending suitable assets.
 - Owner historically reported downloading two animation packs; neither imported content nor retargeting was verified. Keep integration postponed without assuming the downloads are missing.
 - Bible §25.4 includes item durability and structured tags; current item definition has neither. These are Planned extensions, not completed item behavior.
 - Current maps, death/logout drops, persistence and ownership transfer are not implemented; they are requirements for future inventory/equipment integration.
-- Controller View/Select map/radial conflict and raft/sloop progression placement remain unresolved before those slices.
+- Controller command radial is now Middle Mouse / D-pad Right, resolving the old View/Select conflict. Current dinghy opening replaces raft construction; persistent sloop progression placement remains to be designed.

@@ -1,5 +1,7 @@
 # Context reconciliation
 
+Superseded as current creative reference by the October 5 Authoritative Revision and subsequent direct owner decisions. See [current revision review](DESIGN_REVISION_2026_10_05.md). This record retains the September-source reconciliation history; do not restore its raft opening, Davy Jones, eight-hour cycle, old economy, or unresolved control conflict as current rules.
+
 Reviewed 2026-10-05 before any remote push. This record reconciles design references, development history and inspected implementation so future sessions can distinguish confirmed design from historical summaries.
 
 Publication update, 2026-10-05: after this review, the owner approved publication provided it aligns with core goals. Remote main was rechecked at `9b7f129`; the ordinary push of `286f8d0` and `41ee3fc` succeeded. Hold/local-only statements below describe the review-time state, not the current publication status. No core design change was introduced.

@@ -19,6 +19,11 @@ UCLASS(abstract)
 class AEWPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+public:
+	/** Explicit editor-only fixture grant. No client RPC or normal-game starting items. */
+	UFUNCTION(Exec)
+	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
 

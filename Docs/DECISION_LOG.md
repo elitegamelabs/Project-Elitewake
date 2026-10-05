@@ -1,5 +1,7 @@
 # Decision log
 
+Current creative reference is the October 5 Authoritative Revision and subsequent direct owner clarification; see [current review](DESIGN_REVISION_2026_10_05.md). D019-D028 describe the September design where later entries supersede them.
+
 Initialized: 2026-10-05 from supplied Design Bible, newer development handoff, inspected source and local Git history. Historical entries record existing decisions; proposed future work is labeled accordingly.
 
 Reconciled later on 2026-10-05 with the September 21 Integrated Master Bible and linked historical chat. [Source reconciliation](CONTEXT_RECONCILIATION.md) records the authority correction; shorter pasted design text does not override explicit integrated-Bible replacements. Earlier local documentation is retained in `286f8d0` history.
@@ -38,8 +40,14 @@ Reconciled later on 2026-10-05 with the September 21 Integrated Master Bible and
 | D030 | Animation packs reported downloaded; integrate later; Scenario authorization reported complete in Cursor | Later owner messages in historical chat | Not verified imported/retargeted animation or Scenario access in current session; Cursor remains optional |
 | D031 | Hold remote publication until cross-reference review and explicit push approval | Current owner instruction 2026-10-05 and prior automatic review rejection | `286f8d0` local; GitHub main read at `9b7f129`; reconciliation changes documentation only |
 | D032 | Publish reviewed inventory repair and reconciled records within core goals | Owner approval 2026-10-05: "You can do it as long as it aligns with our core goals"; supersedes D031 hold after completed review | Clean tree, diff check and remote tip rechecked; ordinary push `9b7f129` -> `41ee3fc` succeeded. No force push or creative scope change; M5 and verification limits remain recorded |
+| D033 | October 5 Authoritative Revision replaces September creative reference; newest §30 wins conflicts | Owner supplied new DOCX and requested review; later requested M5 continuation | Davy Jones Removed; current 90/90-minute cycle, 500/30 currency, Health +50/stat point, hardpoints/shipyard tiers and storage-only Ammo Bin replace older rules. Full revision review linked above; gameplay remains staged |
+| D034 | Keep rye through Village arrival; innkeeper introduces town-square shops; general merchant offers sale; credit player 250 Copper at introduction completion | Direct owner clarification in this chat after Bible review | Survivor begins zero currency. Merchant quests later; room payment unspecified. Writing deferred by owner; no mission implementation authorized in M5 slice |
+| D035 | M5C uses persisted Test.Wood plus opt-in editor-only authority command | Existing M5C roadmap and current owner request to continue M5 | Resource stack 250 follows §30.17; weight 0.1 kg is a test fixture only. No default grants or client grant RPC; supported Unreal asset creation; packaging/network gates pending |
+| D036 | Checkpoint verified M5C before pickup/interaction work | Build, two automation tests, real Play grant/live refresh/I close-reopen/fresh empty check | [M5C verification](M5C_INVENTORY_VERIFICATION.md) preserves exact scope and evidence; M5 equipment/hotbar and M4 backlog remain open |
 
 ## Open questions / deferred decisions
+
+- October authority resolves old entries below where applicable: Davy Jones removed; day/night 90 minutes each; currency 500/30; level cap 80; respec price 2 Gold; command radial Middle Mouse/D-pad Right; glider Smithy; current dinghy opening. Rye sale/introduction has direct owner clarification. Historical questions retained below must not revive these old rules.
 
 - Exact player encumbrance penalties and hard weight-cap behavior.
 - Equipment transfer semantics when all inventory slots are full; item use/durability model.
