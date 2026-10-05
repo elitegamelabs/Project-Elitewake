@@ -14,7 +14,7 @@ See [milestone status](MILESTONE_STATUS.md), [requirement traceability](DESIGN_B
 | --- | --- | --- |
 | M0 | Active project outside OneDrive, Git baseline and structure | Keep generated files out of source control |
 | M1 | Movement, jump, sprint, Enhanced Input | Repeat network validation; controller coverage |
-| M2 | Crouch/prone state and collision | Proper animation assets and integration are Postponed |
+| M2 | Crouch/prone state and shared crouch capsule | Proper stance animations configured; [verification and remaining collision gates](M2_STANCE_VERIFICATION.md) |
 | M3 | First/third-person cameras and locomotion states | Final camera/animation presentation and controller binding |
 | M4 | Replicated survival values and stamina | Final HUD, environmental needs and multiplayer validation |
 | M5 | Items, inventory, equipment | In Progress; see slices below |

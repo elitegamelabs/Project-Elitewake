@@ -45,6 +45,8 @@ Reconciled later on 2026-10-05 with the September 21 Integrated Master Bible and
 | D035 | M5C uses persisted Test.Wood plus opt-in editor-only authority command | Existing M5C roadmap and current owner request to continue M5 | Resource stack 250 follows §30.17; weight 0.1 kg is a test fixture only. No default grants or client grant RPC; supported Unreal asset creation; packaging/network gates pending |
 | D036 | Checkpoint verified M5C before pickup/interaction work | Build, two automation tests, real Play grant/live refresh/I close-reopen/fresh empty check | [M5C verification](M5C_INVENTORY_VERIFICATION.md) preserves exact scope and evidence; M5 equipment/hotbar and M4 backlog remain open |
 
+| D037 | Return to M2 on Unreal 5.8.3; import Free Animation Library, use compatible skeletons/private root-locked stance clips and retain locomotion | Direct owner request after engine update/import; build and local stance evidence | [M2 verification](M2_STANCE_VERIFICATION.md); shared crouch capsule, clearance/latency/gamepad gates and authored transition polish remain open; M5D pending |
+
 ## Open questions / deferred decisions
 
 - October authority resolves old entries below where applicable: Davy Jones removed; day/night 90 minutes each; currency 500/30; level cap 80; respec price 2 Gold; command radial Middle Mouse/D-pad Right; glider Smithy; current dinghy opening. Rye sale/introduction has direct owner clarification. Historical questions retained below must not revive these old rules.

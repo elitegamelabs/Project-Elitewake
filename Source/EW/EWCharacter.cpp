@@ -321,11 +321,8 @@ void AEWCharacter::SetProne(bool bNewIsProne)
 		SetSprinting(false);
 		Crouch();
 	}
-	else
-	{
-		UnCrouch();
-	}
-
+	// Leaving prone keeps the existing crouch request. Sprint and jump explicitly
+	// request standing; a stance tap should return to crouch without expanding.
 	ApplyMovementSpeed();
 
 	if (!HasAuthority())
@@ -373,6 +370,13 @@ void AEWCharacter::ApplyMovementSpeed()
 
 	GetCharacterMovement()->MaxWalkSpeed = TargetSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = bIsProne ? ProneSpeed : CrouchSpeed;
+	// The prone head is near the ground, rather than at the crouched eye level.
+	// Use the requested crouched size: this callback can precede capsule resizing.
+	const float ProneCapsuleHalfHeight = FMath::Max(
+		GetCharacterMovement()->GetCrouchedHalfHeight(),
+		GetCapsuleComponent()->GetUnscaledCapsuleRadius());
+	FirstPersonCamera->SetRelativeLocation(FVector(10.0f, 0.0f,
+		bIsProne ? 40.0f - ProneCapsuleHalfHeight : 64.0f));
 }
 
 EEWLocomotionState AEWCharacter::GetLocomotionState() const

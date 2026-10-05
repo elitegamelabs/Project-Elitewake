@@ -2,7 +2,7 @@
 
 Reviewed: 2026-10-05. Status describes individual layers, not finished-game readiness.
 
-Current reference is the October 5 Authoritative Revision and later direct owner clarification of the rye sale. See [current revision review](DESIGN_REVISION_2026_10_05.md); the [September reconciliation](CONTEXT_RECONCILIATION.md) remains historical evidence. Current work remains M5. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance. New survival rates are requirements, not implemented behavior.
+Current reference is the October 5 Authoritative Revision and later direct owner clarification of the rye sale. See [current revision review](DESIGN_REVISION_2026_10_05.md); the [September reconciliation](CONTEXT_RECONCILIATION.md) remains historical evidence. Owner paused M5 after M5C and returned to M2 stance animations on Unreal 5.8.3; M5D remains pending. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance. New survival rates are requirements, not implemented behavior.
 
 **Planned**: no implementation evidenced. **In Progress**: slice underway. **Implemented**: code/content exists. **Verified**: specified test passed. **Postponed**: deliberately deferred. **Blocked**: named dependency prevents progress. **Replaced**: superseded implementation.
 
@@ -12,7 +12,7 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | --- | --- | --- | --- | --- |
 | M0 foundation | Verified: active repository/path and history inspected | Project structure documented; template content | No online infrastructure claimed | `EW.uproject`, `.gitignore`, `README.md`, `Docs/PROJECT_STRUCTURE.md`; `919737f`, `50ecc95` |
 | M1 locomotion | Implemented: move/jump, walk 500, sprint 750 | Template animations | Sprint state replicated in source; network session not repeated in this review | `Source/EW/EWCharacter.*`; `d8ca1dc` |
-| M2 stance | Implemented: tap C/B crouch, hold 0.35s prone; separate speeds/collision | Proper crouch/prone animation Postponed | Prone replication present; collision under network latency not verified | `EWCharacter.*`; `5f08eb7` |
+| M2 stance | Implemented: tap C/B crouch, hold 0.35s prone; separate speeds, shared crouch capsule | Proper crouch/prone idle and movement blends configured; no scaling | Client stance inputs and animation flags verified on local listen server/client; latency and clearance pending | `EWCharacter.*`, `ABP_EWLocomotion`; [verification](M2_STANCE_VERIFICATION.md) |
 | Temporary stance scaling | Replaced: reverted | Do not restore as animation substitute | Not applicable | `cf282a8` reverted by `e88acb1` |
 | M3 cameras/states | Implemented: default third person, Z toggle; six locomotion states | Cyan diagnostics temporary; final perspective animations Planned | Perspective local; state source inspected, network presentation pending | `EWCharacter.*`; `fb214b3` |
 | M4 survival | Implemented: health/stamina/hunger/hydration/temperature/weight; stamina drain 15/s and recovery 10/s | Stamina diagnostic only; final HUD Planned | Replicated component and authority checks; dedicated-server validation pending | `EWSurvivalComponent.*`, `EWCharacter.*`; `55ed2c1` |
@@ -48,8 +48,8 @@ M5C adds populated local verification: 251 -> stacks 250/1, live increment to 25
 - Max carried weight is a displayed survival value; current inventory capacity is enforced by slots, not a weight limit. Encumbrance gameplay remains Planned.
 - Primary item scan and native fixture load are Verified; packaging remains pending. Required GameFeatureData scan/rule now resolves the previous startup configuration error.
 - Save/load, dedicated-server tests, final assets and polished HUD are not verified.
-- Proper stance and perspective animation work remains Postponed pending suitable assets.
-- Owner historically reported downloading two animation packs; neither imported content nor retargeting was verified. Keep integration postponed without assuming the downloads are missing.
+- Proper stance animations are configured from the imported Free Animation Library. Dedicated prone collision/clearance and final perspective animation polish remain open; see [M2 verification](M2_STANCE_VERIFICATION.md).
+- Free Animation Library was imported into the older backup; its content is now present in the active project. No status is claimed for other previously mentioned packs.
 - Bible §25.4 includes item durability and structured tags; current item definition has neither. These are Planned extensions, not completed item behavior.
 - Current maps, death/logout drops, persistence and ownership transfer are not implemented; they are requirements for future inventory/equipment integration.
 - Controller command radial is now Middle Mouse / D-pad Right, resolving the old View/Select conflict. Current dinghy opening replaces raft construction; persistent sloop progression placement remains to be designed.
