@@ -18,7 +18,7 @@ Sources reconciled against the September 21 Integrated Bible and [historical cha
 | M4 survival | Implemented: health/stamina/hunger/hydration/temperature/weight; stamina drain 15/s and recovery 10/s | Stamina diagnostic only; final HUD Planned | Replicated component and authority checks; dedicated-server validation pending | `EWSurvivalComponent.*`, `EWCharacter.*`; `55ed2c1` |
 | Integrations | Implemented: Unreal MCP auto-start, Git editor, client configs | Scenario availability reported by handoff; no asset request made | Not gameplay | `EW.uproject`, `Config/DefaultEditorPerProjectUserSettings.ini`, `Config/DefaultSourceControlSettings.ini`; `0e18009`, `2f36734`, `edb52c3` |
 | M5A items/inventory | Implemented: definitions, categories/slot metadata, 24 slots, stacking, add/remove/count/weight | No game item assets/pickup evidenced in this slice | Replicated entries; server-only mutation source inspected. Multi-client behavior pending | `EWItemDefinition.*`, `EWInventoryComponent.*`, `EWInventoryComponentTests.cpp`; `9b7f129` |
-| M5B inventory panel | Verified: build, empty panel, I open/close/reopen and walking/camera recovery | Native functional draft; not final inventory design | Local-only Play test; remote populated inventory not verified | `EWInventoryWidget.*`, `EWPlayerController.*`; local commit `286f8d0`, not pushed |
+| M5B inventory panel | Verified: build, empty panel, I open/close/reopen and walking/camera recovery | Native functional draft; not final inventory design | Local-only Play test; remote populated inventory not verified | `EWInventoryWidget.*`, `EWPlayerController.*`; `286f8d0`, pushed after owner approval |
 | M5C-G grant/pickup/interactions/equipment/hotbar | Planned | Planned | Planned | Slot enum is metadata only; no equip behavior claimed |
 
 ## Verification ledger
@@ -32,6 +32,7 @@ Sources reconciled against the September 21 Integrated Bible and [historical cha
 | 2026-10-05 | Repaired EWEditor build and inventory automation | Succeeded; `InventoryVerification.log` records `StackingAndWeight` Success and exit code 0 |
 | 2026-10-05 | Repaired panel in local Play mode | Verified visible empty panel, Slots 0/24, Weight 0.0/50.0 kg, I close/reopen, walking input and mouse camera rotation after closing. Logs confirm cursor true/false and GameAndUI/GameOnly capture transitions |
 | 2026-10-05 | Historical chat / integrated Bible / source / GitHub cross-reference | Reconciled prologue, progression, map/hotbar, rejuvenation, multiplayer and known gaps. Remote main read at `9b7f129`; `286f8d0` is local. No remote push |
+| 2026-10-05 | Owner-approved publication after cross-reference | Rechecked clean tree, pending changes and remote main at `9b7f129`; ordinary push of `286f8d0` and reconciliation `41ee3fc` succeeded. Verification boundaries remain unchanged |
 
 Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft only; populated inventory, full gameplay and multiplayer remain pending.
 

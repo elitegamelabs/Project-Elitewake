@@ -2,6 +2,8 @@
 
 Reviewed 2026-10-05 before any remote push. This record reconciles design references, development history and inspected implementation so future sessions can distinguish confirmed design from historical summaries.
 
+Publication update, 2026-10-05: after this review, the owner approved publication provided it aligns with core goals. Remote main was rechecked at `9b7f129`; the ordinary push of `286f8d0` and `41ee3fc` succeeded. Hold/local-only statements below describe the review-time state, not the current publication status. No core design change was introduced.
+
 ## Sources and authority
 
 1. **Current explicit owner instructions** control the work. The owner asked to review the linked historical chat and cross-reference everything before pushing. Remote publication remains on hold.

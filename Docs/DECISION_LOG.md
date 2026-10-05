@@ -37,6 +37,7 @@ Reconciled later on 2026-10-05 with the September 21 Integrated Master Bible and
 | D029 | Continue M5 while retaining M4 unfinished HUD/needs/testing backlog | Later historical owner explicitly begins M5; source inspection | Earlier survival-next recap is superseded as immediate task order, not acceptance of full M4 completion |
 | D030 | Animation packs reported downloaded; integrate later; Scenario authorization reported complete in Cursor | Later owner messages in historical chat | Not verified imported/retargeted animation or Scenario access in current session; Cursor remains optional |
 | D031 | Hold remote publication until cross-reference review and explicit push approval | Current owner instruction 2026-10-05 and prior automatic review rejection | `286f8d0` local; GitHub main read at `9b7f129`; reconciliation changes documentation only |
+| D032 | Publish reviewed inventory repair and reconciled records within core goals | Owner approval 2026-10-05: "You can do it as long as it aligns with our core goals"; supersedes D031 hold after completed review | Clean tree, diff check and remote tip rechecked; ordinary push `9b7f129` -> `41ee3fc` succeeded. No force push or creative scope change; M5 and verification limits remain recorded |
 
 ## Open questions / deferred decisions
 
