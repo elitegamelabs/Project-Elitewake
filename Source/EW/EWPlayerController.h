@@ -7,7 +7,9 @@
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
+class UInputAction;
 class UUserWidget;
+class UEWInventoryWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -36,6 +38,17 @@ protected:
 	UPROPERTY()
 	TObjectPtr<UUserWidget> MobileControlsWidget;
 
+	/** Toggle action for the native inventory draft. */
+	UPROPERTY(EditAnywhere, Category="Input|Inventory")
+	TObjectPtr<UInputAction> InventoryAction;
+
+	/** Runtime fallback mapping used until the project has a designer-authored inventory input asset. */
+	UPROPERTY(Transient)
+	TObjectPtr<UInputMappingContext> RuntimeInventoryMappingContext;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UEWInventoryWidget> InventoryWidget;
+
 	/** If true, the player will use UMG touch controls even if not playing on mobile platforms */
 	UPROPERTY(EditAnywhere, Config, Category = "Input|Touch Controls")
 	bool bForceTouchControls = false;
@@ -48,5 +61,9 @@ protected:
 
 	/** Returns true if the player should use UMG touch controls */
 	bool ShouldUseTouchControls() const;
+
+	/** Opens or closes the inventory and changes local mouse/input focus. */
+	void ToggleInventory();
+	void SetInventoryOpen(bool bOpen);
 
 };

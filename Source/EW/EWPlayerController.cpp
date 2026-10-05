@@ -3,10 +3,14 @@
 
 #include "EWPlayerController.h"
 #include "EnhancedInputSubsystems.h"
+#include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
+#include "InputAction.h"
+#include "InputCoreTypes.h"
 #include "InputMappingContext.h"
 #include "Blueprint/UserWidget.h"
 #include "EW.h"
+#include "EWInventoryWidget.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void AEWPlayerController::BeginPlay()
@@ -37,12 +41,35 @@ void AEWPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
+	// Milestone 5 fallback: create an Enhanced Input action in code so the draft works
+	// immediately. A designer-authored IA_Inventory asset can be assigned later.
+	if (!InventoryAction)
+	{
+		InventoryAction = NewObject<UInputAction>(this, TEXT("IA_Inventory_Runtime"));
+		InventoryAction->ValueType = EInputActionValueType::Boolean;
+		RuntimeInventoryMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Inventory_Runtime"));
+		RuntimeInventoryMappingContext->MapKey(InventoryAction, EKeys::I);
+	}
+
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		if (InventoryAction)
+		{
+			EnhancedInput->BindAction(InventoryAction, ETriggerEvent::Started, this, &AEWPlayerController::ToggleInventory);
+		}
+	}
+
 	// only add IMCs for local player controllers
 	if (IsLocalPlayerController())
 	{
 		// Add Input Mapping Contexts
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
+			if (RuntimeInventoryMappingContext)
+			{
+				Subsystem->AddMappingContext(RuntimeInventoryMappingContext, 1);
+			}
+
 			for (UInputMappingContext* CurrentContext : DefaultMappingContexts)
 			{
 				Subsystem->AddMappingContext(CurrentContext, 0);
@@ -57,6 +84,47 @@ void AEWPlayerController::SetupInputComponent()
 				}
 			}
 		}
+	}
+}
+
+void AEWPlayerController::ToggleInventory()
+{
+	SetInventoryOpen(!InventoryWidget || !InventoryWidget->IsInViewport());
+}
+
+void AEWPlayerController::SetInventoryOpen(bool bOpen)
+{
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+
+	if (bOpen)
+	{
+		if (!InventoryWidget)
+		{
+			InventoryWidget = CreateWidget<UEWInventoryWidget>(this, UEWInventoryWidget::StaticClass());
+		}
+		if (InventoryWidget && !InventoryWidget->IsInViewport())
+		{
+			InventoryWidget->AddToPlayerScreen(20);
+		}
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetHideCursorDuringCapture(false);
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		SetInputMode(InputMode);
+		SetShowMouseCursor(true);
+	}
+	else
+	{
+		if (InventoryWidget)
+		{
+			InventoryWidget->RemoveFromParent();
+		}
+
+		SetInputMode(FInputModeGameOnly());
+		SetShowMouseCursor(false);
 	}
 }
 
