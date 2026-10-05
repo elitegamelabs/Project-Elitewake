@@ -2,6 +2,8 @@
 
 Reviewed: 2026-10-05. Status describes individual layers, not finished-game readiness.
 
+Sources reconciled against the September 21 Integrated Bible and [historical chat](https://chatgpt.com/s/cx_6ac35bcf93fc819187d17835a7f29cac); see [review record](CONTEXT_RECONCILIATION.md). Current work remains M5. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance.
+
 **Planned**: no implementation evidenced. **In Progress**: slice underway. **Implemented**: code/content exists. **Verified**: specified test passed. **Postponed**: deliberately deferred. **Blocked**: named dependency prevents progress. **Replaced**: superseded implementation.
 
 ## Verified baseline and history
@@ -16,7 +18,7 @@ Reviewed: 2026-10-05. Status describes individual layers, not finished-game read
 | M4 survival | Implemented: health/stamina/hunger/hydration/temperature/weight; stamina drain 15/s and recovery 10/s | Stamina diagnostic only; final HUD Planned | Replicated component and authority checks; dedicated-server validation pending | `EWSurvivalComponent.*`, `EWCharacter.*`; `55ed2c1` |
 | Integrations | Implemented: Unreal MCP auto-start, Git editor, client configs | Scenario availability reported by handoff; no asset request made | Not gameplay | `EW.uproject`, `Config/DefaultEditorPerProjectUserSettings.ini`, `Config/DefaultSourceControlSettings.ini`; `0e18009`, `2f36734`, `edb52c3` |
 | M5A items/inventory | Implemented: definitions, categories/slot metadata, 24 slots, stacking, add/remove/count/weight | No game item assets/pickup evidenced in this slice | Replicated entries; server-only mutation source inspected. Multi-client behavior pending | `EWItemDefinition.*`, `EWInventoryComponent.*`, `EWInventoryComponentTests.cpp`; `9b7f129` |
-| M5B inventory panel | Verified: build, empty panel, I open/close/reopen and walking/camera recovery | Native functional draft; not final inventory design | Local-only Play test; remote populated inventory not verified | `EWInventoryWidget.*`, `EWPlayerController.*`; see Git commit titled `Fix and verify native inventory panel` |
+| M5B inventory panel | Verified: build, empty panel, I open/close/reopen and walking/camera recovery | Native functional draft; not final inventory design | Local-only Play test; remote populated inventory not verified | `EWInventoryWidget.*`, `EWPlayerController.*`; local commit `286f8d0`, not pushed |
 | M5C-G grant/pickup/interactions/equipment/hotbar | Planned | Planned | Planned | Slot enum is metadata only; no equip behavior claimed |
 
 ## Verification ledger
@@ -26,9 +28,10 @@ Reviewed: 2026-10-05. Status describes individual layers, not finished-game read
 | 2026-10-05 | Active path, Git status/history, GitHub repository | Verified `C:\UnrealProjects\EW`, private repository and main default branch; four original UI files uncommitted |
 | Historical 2026-09-30 local time | `Elitewake.Inventory.StackingAndWeight` | Success recorded in `Saved/Logs/EW-backup-2026.10.01-02.55.24.log`; stacking/removal/survival-weight unit checks only |
 | 2026-10-05 | EWEditor Win64 Development baseline | Succeeded; target up to date |
-| 2026-10-05 | Initial Play inventory check | Failed: I showed cursor but invisible panel; native tree constructed too late. Fixed by building before `Super::RebuildWidget()`; retest pending |
+| 2026-10-05 | Initial Play inventory check | Failed: I showed cursor but invisible panel; native tree constructed too late. Fixed by building before `Super::RebuildWidget()`; subsequent successful retest below |
 | 2026-10-05 | Repaired EWEditor build and inventory automation | Succeeded; `InventoryVerification.log` records `StackingAndWeight` Success and exit code 0 |
 | 2026-10-05 | Repaired panel in local Play mode | Verified visible empty panel, Slots 0/24, Weight 0.0/50.0 kg, I close/reopen, walking input and mouse camera rotation after closing. Logs confirm cursor true/false and GameAndUI/GameOnly capture transitions |
+| 2026-10-05 | Historical chat / integrated Bible / source / GitHub cross-reference | Reconciled prologue, progression, map/hotbar, rejuvenation, multiplayer and known gaps. Remote main read at `9b7f129`; `286f8d0` is local. No remote push |
 
 Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft only; populated inventory, full gameplay and multiplayer remain pending.
 
@@ -42,3 +45,7 @@ Generated logs are local evidence, not tracked artifacts. Historical handoff pla
 - Primary item asset scan/packaging needs validation before item content integration. Startup currently reports an unrelated GameFeatureData asset-manager configuration warning.
 - Save/load, dedicated-server tests, final assets and polished HUD are not verified.
 - Proper stance and perspective animation work remains Postponed pending suitable assets.
+- Owner historically reported downloading two animation packs; neither imported content nor retargeting was verified. Keep integration postponed without assuming the downloads are missing.
+- Bible §25.4 includes item durability and structured tags; current item definition has neither. These are Planned extensions, not completed item behavior.
+- Current maps, death/logout drops, persistence and ownership transfer are not implemented; they are requirements for future inventory/equipment integration.
+- Controller View/Select map/radial conflict and raft/sloop progression placement remain unresolved before those slices.
