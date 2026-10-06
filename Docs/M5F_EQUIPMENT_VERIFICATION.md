@@ -29,3 +29,11 @@ The initial scripted network runs were not acceptance evidence: Unreal's editor 
 ## Remaining gates
 
 Physical controller/device switching, polished equipment presentation, protective stats, durability, per-instance identity/save/load, death/logout drops, packaging, dedicated servers and broader network/load coverage remain unverified. M5G hotbar is next; M4 survival/HUD work remains open. The rye/currency/prologue requirements and core ship-home design are unchanged.
+
+## Owner-requested acceptance recheck
+
+On 2026-10-05, after publication of `f2d32d4`, the owner requested confirmation before moving on. A fresh editor build succeeded and all seven automated tests passed in `Saved/Logs/M5FAcceptanceRegression.log`. A fresh editor process reran equipment, selection and pickup scripts in separate standalone and listen-server/client sessions: 12 + 19 + 5 checkpoints passed in each mode. Multiplayer used 100 ms outgoing lag and 1% loss on both drivers. `Saved/Logs/M5FAcceptancePlay.log` contains no Error, ensure or fatal entries from this pass.
+
+The additional `Scripts/verify_equipment_network_stress.py` sent 60 alternating equip and 40 repeated unequip intents across the two owned controllers in fresh two-player PIE. Its two checkpoints verified both players in both worlds, covering authority, owning-client and observing-client copies. All eight recorded character states retained correct inventory/equipment quantities and 5.1 kg composite/survival weight per player. This is a bounded local regression probe, not a production load test. Packet/throttle settings and its callback were restored/removed on completion.
+
+`Saved/M5FAcceptanceSummary.json` indexes the seven fresh Play reports, totaling 74 successful checkpoints. No gameplay fix was required. Play is stopped, single-player settings restored, and the editor observer removed. The existing `Config/DefaultEditor.ini` owner change remains untouched and excluded from publication. Remaining gates above still apply; this recheck does not begin M5G or certify the full game.
