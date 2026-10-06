@@ -60,7 +60,7 @@ public:
     void Interact();
 
     UFUNCTION(Server, Reliable)
-    void ServerInteract(AEWPickup* Target);
+    void ServerInteract(AActor* Target);
 
 	/** Explicit editor-only fixture grant. No client RPC or normal-game starting items. */
 	UFUNCTION(Exec)

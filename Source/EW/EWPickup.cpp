@@ -1,6 +1,7 @@
 #include "EWPickup.h"
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
+#include "EWItemDefinition.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -30,15 +31,27 @@ void AEWPickup::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
 
 AEWPickup* AEWPickup::FindTarget(const AEWCharacter* Character)
 {
-    if (!IsValid(Character) || !Character->GetWorld() || !Character->GetController()
-        || Character->GetController()->GetPawn() != Character) return nullptr;
-    FVector Eye; FRotator Rotation;
-    Character->GetActorEyesViewPoint(Eye, Rotation);
-    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWPickupInteraction), false, Character);
-    FHitResult Hit;
-    Character->GetWorld()->LineTraceSingleByChannel(Hit, Eye,
-        Eye + Rotation.Vector() * InteractionRange, ECC_Visibility, Query);
-    return Cast<AEWPickup>(Hit.GetActor());
+    return Cast<AEWPickup>(FEWInteractionTargeting::FindTarget(Character));
+}
+
+bool AEWPickup::CanInteract_Implementation(AEWCharacter* Character) const
+{
+    return !IsActorBeingDestroyed() && !bTransferInProgress && IsValid(Character)
+        && Character->GetWorld() == GetWorld() && IsValid(ItemDefinition) && Quantity > 0
+        && Character->GetInventoryComponent() && Character->GetController()
+        && Character->GetController()->GetPawn() == Character
+        && (!GetOwner() || GetOwner() == Character || GetOwner() == Character->GetController());
+}
+
+FText AEWPickup::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
+{
+    return ItemDefinition ? FText::Format(NSLOCTEXT("Elitewake", "PickupPrompt", "Pick up {0}"),
+        ItemDefinition->DisplayName) : FText::GetEmpty();
+}
+
+bool AEWPickup::Interact_Implementation(AEWCharacter* Character)
+{
+    return TryPickup(Character) > 0;
 }
 
 int32 AEWPickup::TryPickup(AEWCharacter* Character)

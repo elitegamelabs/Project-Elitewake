@@ -16,6 +16,7 @@
 #include "InputKeyEventArgs.h"
 #include "EWCharacter.h"
 #include "EWPickup.h"
+#include "EWInteractable.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "Engine/AssetManager.h"
@@ -119,7 +120,7 @@ void AEWPlayerController::SetupInputComponent()
 void AEWPlayerController::Interact()
 {
     if (!IsLocalPlayerController() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
-    if (AEWPickup* Target = AEWPickup::FindTarget(Cast<AEWCharacter>(GetPawn())))
+    if (AActor* Target = FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())))
         ServerInteract(Target);
 }
 
@@ -234,9 +235,15 @@ void AEWPlayerController::ClientEquipmentResult_Implementation(EEWEquipmentResul
     if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowEquipmentResult(Result);
 }
 
-void AEWPlayerController::ServerInteract_Implementation(AEWPickup* Target)
+void AEWPlayerController::ServerInteract_Implementation(AActor* Target)
 {
-    if (IsValid(Target)) Target->TryPickup(Cast<AEWCharacter>(GetPawn()));
+    AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (HasAuthority() && IsValid(Survivor) && Survivor->GetController() == this
+        && IsValid(Target) && Target->Implements<UEWInteractable>()
+        && FEWInteractionTargeting::FindTarget(Survivor) == Target
+        && IEWInteractable::Execute_CanInteract(Target, Survivor)
+        && IEWInteractable::Execute_GetInteractionMode(Target) == EEWInteractionMode::Press)
+        IEWInteractable::Execute_Interact(Target, Survivor);
 }
 
 void AEWPlayerController::EWGrantTestWood(int32 Quantity)

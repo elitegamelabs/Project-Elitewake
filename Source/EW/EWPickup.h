@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "EWInteractable.h"
 #include "EWPickup.generated.h"
 
 class AEWCharacter;
@@ -10,7 +11,7 @@ class UStaticMeshComponent;
 
 /** World stack. Transfer is serialized on the server and consumes only accepted inventory units. */
 UCLASS(Blueprintable)
-class EW_API AEWPickup : public AActor
+class EW_API AEWPickup : public AActor, public IEWInteractable
 {
     GENERATED_BODY()
 public:
@@ -32,7 +33,11 @@ public:
     /** Authority only. Requires possession, range, aim/visibility and any assigned actor ownership. */
     int32 TryPickup(AEWCharacter* Character);
 
-    static constexpr float InteractionRange = 250.f;
+    virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
+    virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
+    virtual bool Interact_Implementation(AEWCharacter* Character) override;
+
+    static constexpr float InteractionRange = FEWInteractionTargeting::Range;
 private:
     bool bTransferInProgress = false;
 };

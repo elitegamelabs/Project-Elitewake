@@ -349,3 +349,13 @@ EWEditor Win64 Development builds successfully after removal and reorganization.
 The structure check confirms all 432 retained tracked asset files still exist, all 61 Markdown links/anchors resolve and all 13 moved scripts parse. No retained content asset was edited. Results are retained locally as `RepositoryCleanupBlueprintResult.json`, `RepositoryCleanupStructureResult.json`, `M2StancePlayResult.json` and `M5GHotbarNetworkResult.json`. Play is stopped, single-player settings restored and observer/callback cleanup completed. The unrelated owner's `Config/DefaultEditor.ini` change is excluded from the cleanup commit.
 
 Git history is retained; this is ordinary file cleanup rather than history rewriting or LFS-object pruning. Generated local reports remain under ignored Saved/.
+
+<a id="interaction-pickup-refactor"></a>
+
+## October 6, 2026 — Milestone A pickup interaction checkpoint
+
+Authorized on `milestone-a-interaction`; no main merge or remote publication. Added Blueprint-native interactable queries/action and shared 250 cm Visibility eye targeting. Pickups retain the legacy targeting wrapper for unchanged acceptance scripts and their authoritative partial-transfer/reentrancy/ownership checks. Controller requests now accept a generic actor and revalidate interface, possession, trace, eligibility and Press mode before dispatch. Hold execution and prompt presentation are not implemented at this checkpoint.
+
+EWEditor Win64 Development build passed. All nine existing `Elitewake` automation tests passed against the rebuilt modules (`Saved/Logs/InteractionPickupRegression.log`). The unchanged `Scripts/Verification/verify_pickup_play.py` passed five standalone and five listen/client checks: range rejection, competing transfer conservation, partial capacity, full-inventory remainder and final single collection. Network checks used 100 ms outgoing lag and 1% loss; owner inventories and world remainders agreed across worlds (`Saved/M5DPickupPlayResult.json`, `Saved/M5DPickupNetworkResult.json`, fresh October 6 evidence). This is local packet-emulated acceptance, not dedicated-server or packaged coverage.
+
+Documentation reconciliation preserves the supplied README/DESIGN_REFERENCE edits, corrects the unincorporated October 6 Shared-guide revision claim, updates current Project Guide terminology and records Attack for tree punching. Port rule carryover remains pending. `.mcp.json` and the existing `Config/DefaultEditor.ini` change are excluded from checkpoints. Original editor preference SHA-256: `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`.
