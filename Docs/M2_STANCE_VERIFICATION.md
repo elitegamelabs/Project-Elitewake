@@ -2,6 +2,8 @@
 
 Active project: `C:\UnrealProjects\EW`. Unreal **5.8.3**, changelist 58210709. Owner directed a return to M2 after M5C; M5D remains pending.
 
+This records the initial animation slice published in `19c573c`. Subsequent collision, camera callback and movement-replication changes are recorded in the [collision pass](M2_COLLISION_VERIFICATION.md).
+
 ## Implementation
 
 - Free Animation Library's 164 files were found in the older OneDrive backup and copied into active `Content/FreeAnimationLibrary`. The backup was neither launched nor modified.
@@ -25,8 +27,8 @@ Active project: `C:\UnrealProjects\EW`. Unreal **5.8.3**, changelist 58210709. O
 
 ## Remaining boundaries
 
-- Prone uses Unreal's crouched vertical capsule, **not** a separate horizontal body collision shape. Active Blueprint standing/crouched half heights are 90/40 cm. Low-clearance obstacles, slopes, overhangs and full-body prone collision tuning remain open; animation does not establish distinct prone clearance.
-- Local stance replication is tested. Artificial latency, packet loss, dedicated servers and production multiplayer remain unverified.
+- The initial animation slice used a shared 90/40 cm standing/crouched capsule. The subsequent [collision pass](M2_COLLISION_VERIFICATION.md) replaces this with distinct stance sizes and a prone body movement query; its obstacle, slope and packet-emulation evidence supersedes those initial collision/latency gaps.
+- Dedicated servers and production multiplayer remain unverified; local packet-emulation coverage is bounded by the collision-pass record.
 - Imported stand-to-prone/prone-to-stand clips are available but are not connected as authored actions; this slice uses responsive crossfades. Final animation polish remains later work.
 - Controller B retains its existing shared stance mapping; physical gamepad testing remains pending.
-- Packaging and full game acceptance are not claimed. M2's animation gate is configured; its remaining collision/validation gates must not be silently marked complete.
+- Packaging and full game acceptance are not claimed. Animation and collision foundations are configured and tested within the linked records; final presentation/controller coverage remains open.

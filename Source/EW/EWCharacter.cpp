@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWSurvivalComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -17,7 +18,8 @@
 #include "TimerManager.h"
 #include "EW.h"
 
-AEWCharacter::AEWCharacter()
+AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer.SetDefaultSubobjectClass<UEWCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
@@ -119,6 +121,7 @@ void AEWCharacter::BeginPlay()
 	// Older Blueprint defaults can retain the template's non-crouching navigation flag.
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	SetFirstPerson(false);
+	ApplyMovementSpeed();
 }
 
 void AEWCharacter::Tick(float DeltaSeconds)
@@ -176,6 +179,7 @@ void AEWCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightA
 void AEWCharacter::OnEndCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
 {
 	Super::OnEndCrouch(HalfHeightAdjust, ScaledHalfHeightAdjust);
+	if (bSprintInputHeld && (IsLocallyControlled() || HasAuthority())) SetSprinting(true);
 	ApplyMovementSpeed();
 }
 
@@ -199,6 +203,7 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 void AEWCharacter::StartSprint()
 {
+	bSprintInputHeld = true;
 	if (bIsProne)
 	{
 		SetProne(false);
@@ -214,12 +219,14 @@ void AEWCharacter::StartSprint()
 
 void AEWCharacter::StopSprint()
 {
+	bSprintInputHeld = false;
 	SetSprinting(false);
 }
 
 void AEWCharacter::StartStanceInput()
 {
 	bStanceInputHeld = true;
+	bSprintInputHeld = false;
 	SetSprinting(false);
 
 	GetWorldTimerManager().SetTimer(
@@ -309,36 +316,24 @@ void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 
 void AEWCharacter::SetProne(bool bNewIsProne)
 {
-	if (bIsProne == bNewIsProne)
-	{
-		return;
-	}
-
-	bIsProne = bNewIsProne;
-
-	if (bIsProne)
+	UEWCharacterMovementComponent* Movement = CastChecked<UEWCharacterMovementComponent>(GetCharacterMovement());
+	Movement->bWantsToProne = bNewIsProne;
+	if (bNewIsProne)
 	{
 		SetSprinting(false);
 		Crouch();
 	}
-	// Leaving prone keeps the existing crouch request. Sprint and jump explicitly
-	// request standing; a stance tap should return to crouch without expanding.
-	ApplyMovementSpeed();
+}
 
-	if (!HasAuthority())
-	{
-		ServerSetProne(bNewIsProne);
-	}
+void AEWCharacter::SetProneFromMovement(bool bNewIsProne)
+{
+	bIsProne = bNewIsProne;
+	ApplyMovementSpeed();
 }
 
 void AEWCharacter::ServerSetSprinting_Implementation(bool bNewIsSprinting)
 {
 	SetSprinting(bNewIsSprinting);
-}
-
-void AEWCharacter::ServerSetProne_Implementation(bool bNewIsProne)
-{
-	SetProne(bNewIsProne);
 }
 
 void AEWCharacter::OnRep_IsSprinting()
@@ -348,6 +343,7 @@ void AEWCharacter::OnRep_IsSprinting()
 
 void AEWCharacter::OnRep_IsProne()
 {
+	CastChecked<UEWCharacterMovementComponent>(GetCharacterMovement())->RefreshProxyStance();
 	ApplyMovementSpeed();
 }
 
@@ -370,13 +366,9 @@ void AEWCharacter::ApplyMovementSpeed()
 
 	GetCharacterMovement()->MaxWalkSpeed = TargetSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = bIsProne ? ProneSpeed : CrouchSpeed;
-	// The prone head is near the ground, rather than at the crouched eye level.
-	// Use the requested crouched size: this callback can precede capsule resizing.
-	const float ProneCapsuleHalfHeight = FMath::Max(
-		GetCharacterMovement()->GetCrouchedHalfHeight(),
-		GetCapsuleComponent()->GetUnscaledCapsuleRadius());
-	FirstPersonCamera->SetRelativeLocation(FVector(10.0f, 0.0f,
-		bIsProne ? 40.0f - ProneCapsuleHalfHeight : 64.0f));
+	const float CapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	const float EyeHeight = bIsProne ? 40.f : (bIsCrouched ? 96.f : CapsuleHalfHeight + 64.f);
+	FirstPersonCamera->SetRelativeLocation(FVector(10.f, 0.f, EyeHeight - CapsuleHalfHeight));
 }
 
 EEWLocomotionState AEWCharacter::GetLocomotionState() const
@@ -444,6 +436,9 @@ void AEWCharacter::DoJumpStart()
 	if (bIsCrouched)
 	{
 		UnCrouch();
+		// Resolve clearance before Character checks this frame's jump. A deferred
+		// uncrouch would otherwise consume a one-frame jump press while still low.
+		CastChecked<UEWCharacterMovementComponent>(GetCharacterMovement())->UnCrouch();
 	}
 
 	// signal the character to jump

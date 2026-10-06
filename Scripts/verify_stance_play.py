@@ -12,6 +12,10 @@ controller = unreal.GameplayStatics.get_player_controller(world, 0)
 pawn = controller.get_controlled_pawn()
 subsystem = unreal.EWEditorVerificationLibrary.get_player_input_subsystem(controller)
 assert pawn and subsystem
+fixture = unreal.EWEditorVerificationLibrary.spawn_verification_box(world,
+    unreal.Vector(0, 0, 4980), unreal.Vector(2000, 2000, 20), unreal.Rotator())
+assert fixture and pawn.teleport(unreal.Vector(0, 0, 5090), unreal.Rotator()), 'Could not enter clear verification area.'
+controller.set_control_rotation(unreal.Rotator())
 stance = pawn.get_editor_property('stance_action')
 move = pawn.get_editor_property('move_action')
 perspective = pawn.get_editor_property('toggle_perspective_action')
@@ -102,6 +106,7 @@ def finish():
     for action in [stance, move, perspective]:
         release(action)
     settings.set_editor_property('bThrottleCPUWhenNotForeground', previous_throttle)
+    if unreal.SystemLibrary.is_valid(fixture): fixture.destroy_actor()
     report['success'] = not report['errors'] and index == len(steps)
     with open(result_path, 'w') as f:
         json.dump(report, f, indent=2)

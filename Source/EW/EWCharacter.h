@@ -35,9 +35,12 @@ enum class EEWLocomotionState : uint8
  *  Implements a controllable orbiting camera
  */
 UCLASS(abstract)
-class AEWCharacter : public ACharacter
+class EW_API AEWCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+    friend class UEWCharacterMovementComponent;
+    friend class FEWSavedMove;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -120,6 +123,8 @@ protected:
 	/** Tracks whether the local player is still holding the stance input. */
 	bool bStanceInputHeld = false;
 
+    bool bSprintInputHeld = false;
+
 	/** Whether the locally controlled player is using the first-person camera. */
 	UPROPERTY(BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))
 	bool bIsFirstPerson = false;
@@ -134,7 +139,10 @@ protected:
 public:
 
 	/** Constructor */
-	AEWCharacter();	
+	AEWCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+    /** Only movement changes the accepted stance after collision checks succeed. */
+    void SetProneFromMovement(bool bNewIsProne);
 
 	/** Update temporary movement-state diagnostics. */
 	virtual void Tick(float DeltaSeconds) override;
@@ -203,10 +211,6 @@ protected:
 	/** Receive sprint intent on the authoritative server. */
 	UFUNCTION(Server, Reliable)
 	void ServerSetSprinting(bool bNewIsSprinting);
-
-	/** Receive prone intent on the authoritative server. */
-	UFUNCTION(Server, Reliable)
-	void ServerSetProne(bool bNewIsProne);
 
 	/** Refresh movement speed when sprint state replicates. */
 	UFUNCTION()

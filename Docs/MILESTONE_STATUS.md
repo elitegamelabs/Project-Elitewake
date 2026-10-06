@@ -12,7 +12,7 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | --- | --- | --- | --- | --- |
 | M0 foundation | Verified: active repository/path and history inspected | Project structure documented; template content | No online infrastructure claimed | `EW.uproject`, `.gitignore`, `README.md`, `Docs/PROJECT_STRUCTURE.md`; `919737f`, `50ecc95` |
 | M1 locomotion | Implemented: move/jump, walk 500, sprint 750 | Template animations | Sprint state replicated in source; network session not repeated in this review | `Source/EW/EWCharacter.*`; `d8ca1dc` |
-| M2 stance | Implemented: tap C/B crouch, hold 0.35s prone; separate speeds, shared crouch capsule | Proper crouch/prone idle and movement blends configured; no scaling | Client stance inputs and animation flags verified on local listen server/client; latency and clearance pending | `EWCharacter.*`, `ABP_EWLocomotion`; [verification](M2_STANCE_VERIFICATION.md) |
+| M2 stance | Verified foundation: tap C/B, hold 0.35s prone; distinct stance sizes, clearance-gated exits and prone body movement query | Proper stance blends, aligned roots and camera; final polish/controller hardware coverage open | Client/host collision states verified with 100 ms outgoing packet lag and 1% loss; dedicated server/moving decks pending | `EWCharacter.*`, `EWCharacterMovementComponent.*`, `ABP_EWLocomotion`; [collision verification](M2_COLLISION_VERIFICATION.md) |
 | Temporary stance scaling | Replaced: reverted | Do not restore as animation substitute | Not applicable | `cf282a8` reverted by `e88acb1` |
 | M3 cameras/states | Implemented: default third person, Z toggle; six locomotion states | Cyan diagnostics temporary; final perspective animations Planned | Perspective local; state source inspected, network presentation pending | `EWCharacter.*`; `fb214b3` |
 | M4 survival | Implemented: health/stamina/hunger/hydration/temperature/weight; stamina drain 15/s and recovery 10/s | Stamina diagnostic only; final HUD Planned | Replicated component and authority checks; dedicated-server validation pending | `EWSurvivalComponent.*`, `EWCharacter.*`; `55ed2c1` |
@@ -34,6 +34,7 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | 2026-10-05 | Repaired panel in local Play mode | Verified visible empty panel, Slots 0/24, Weight 0.0/50.0 kg, I close/reopen, walking input and mouse camera rotation after closing. Logs confirm cursor true/false and GameAndUI/GameOnly capture transitions |
 | 2026-10-05 | Historical chat / integrated Bible / source / GitHub cross-reference | Reconciled prologue, progression, map/hotbar, rejuvenation, multiplayer and known gaps. Remote main read at `9b7f129`; `286f8d0` is local. No remote push |
 | 2026-10-05 | Owner-approved publication after cross-reference | Rechecked clean tree, pending changes and remote main at `9b7f129`; ordinary push of `286f8d0` and reconciliation `41ee3fc` succeeded. Verification boundaries remain unchanged |
+| 2026-10-05 | M2 collision/clearance acceptance on 5.8.3 | Build and four automation tests pass; eight animation/camera and sixteen single-player clearance checkpoints pass; sixteen client/host clearance checkpoints pass with 100 ms outgoing lag/1% loss; eleven stance/sprint/simulated-proxy checkpoints pass. [Scope and evidence](M2_COLLISION_VERIFICATION.md) |
 
 Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft; M5C adds the populated checks below. Full gameplay and multiplayer remain pending.
 
@@ -48,7 +49,7 @@ M5C adds populated local verification: 251 -> stacks 250/1, live increment to 25
 - Max carried weight is a displayed survival value; current inventory capacity is enforced by slots, not a weight limit. Encumbrance gameplay remains Planned.
 - Primary item scan and native fixture load are Verified; packaging remains pending. Required GameFeatureData scan/rule now resolves the previous startup configuration error.
 - Save/load, dedicated-server tests, final assets and polished HUD are not verified.
-- Proper stance animations are configured from the imported Free Animation Library. Dedicated prone collision/clearance and final perspective animation polish remain open; see [M2 verification](M2_STANCE_VERIFICATION.md).
+- Proper stance animations and collision/clearance foundations are configured and tested. Physical controller coverage, authored transitions and final perspective/terrain animation polish remain open; see [M2 collision verification](M2_COLLISION_VERIFICATION.md).
 - Free Animation Library was imported into the older backup; its content is now present in the active project. No status is claimed for other previously mentioned packs.
 - Bible §25.4 includes item durability and structured tags; current item definition has neither. These are Planned extensions, not completed item behavior.
 - Current maps, death/logout drops, persistence and ownership transfer are not implemented; they are requirements for future inventory/equipment integration.

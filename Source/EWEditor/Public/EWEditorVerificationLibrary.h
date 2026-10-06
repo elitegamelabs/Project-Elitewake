@@ -6,6 +6,7 @@
 class APlayerController;
 class UEnhancedInputLocalPlayerSubsystem;
 class UWorld;
+class AActor;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -20,4 +21,15 @@ public:
     /** Enumerate in-process PIE worlds for host/client verification. */
     UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
     static TArray<UWorld*> GetPlayWorlds();
+
+    /** Temporary blocking geometry in a Play world; never saves or edits a map. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AActor* SpawnVerificationBox(UWorld* World, FVector Location, FVector Extent, FRotator Rotation);
+
+    UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
+    static FIntPoint GetVerificationNetworkSettings(UWorld* World);
+
+    /** Apply bounded packet emulation to an existing PIE driver only. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SetVerificationNetworkSettings(UWorld* World, int32 LagMilliseconds, int32 LossPercent);
 };
