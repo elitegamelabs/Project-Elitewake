@@ -12,6 +12,17 @@
 #include "InputCoreTypes.h"
 #include "EWStation.h"
 #include "EWResourceNode.h"
+#include "Survival/EWWaterSource.h"
+
+AEWWaterSource* UEWEditorVerificationLibrary::SpawnVerificationWaterSource(UWorld* World, FVector Location, bool bFresh)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* Source = World->SpawnActor<AEWWaterSource>(Location, FRotator::ZeroRotator, Spawn);
+    if (Source) { Source->WaterQuality = bFresh ? EEWWaterQuality::Fresh : EEWWaterQuality::Salt; Source->ForceNetUpdate(); }
+    return Source;
+}
 
 AEWStation* UEWEditorVerificationLibrary::SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource, bool bHold, bool bSingleUse, float Duration)
 {

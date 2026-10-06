@@ -376,4 +376,37 @@ Initial verification-tool failures were corrected and rerun: synthetic world ste
 
 Final regression evidence: unchanged pickup script passed five standalone and five listen/client checkpoints against the final feature build. Hotbar passed all 42 listen/client checkpoints, including LB input suppression and ordinary X pickup/jump restoration (`Saved/M5GHotbarNetworkResult.json`, October 6 09:12 local). Its first rerun rejected X because the test pawn was facing away after menu mouse recapture; a state probe confirmed both server/client menu blocks were false and the pickup remained intact. The test now restores its known aim after closing UI, retaining all 42 assertions. No gameplay camera or pickup guard was weakened.
 
-Direct viewport-input check: opt-in fixture setup, readable `E: Inspect Smithy (test)` prompt, Slate PressKey E, and exactly one Smithy acknowledgement with the other three fixture counts unchanged (`Saved/InteractionManualResult.json`, `Saved/InteractionManualBefore.png`). All fixtures were PIE-only and removed by stopping Play. The editor is left stopped in standalone test-map configuration. `Config/DefaultEditor.ini` retains its original checksum; `.mcp.json` remains untracked. No main merge or remote push was performed.
+Direct viewport-input check: opt-in fixture setup, readable `E: Inspect Smithy (test)` prompt, Slate PressKey E, and exactly one Smithy acknowledgement with the other three fixture counts unchanged (`Saved/InteractionManualResult.json`, `Saved/InteractionManualBefore.png`). All fixtures were PIE-only and removed by stopping Play. The editor was left stopped in standalone test-map configuration. `Config/DefaultEditor.ini` retained its original checksum; `.mcp.json` remained untracked. At that checkpoint no main merge or remote push was performed. The owner subsequently approved continuation; main was fast-forwarded and pushed to `adc9693` on October 6.
+
+<a id="fresh-water"></a>
+
+## October 6, 2026 — Fresh-water interaction
+
+`AEWWaterSource` provides a replicated, designer-sized query surface implementing the existing Press interaction. A valid fresh source instantly sets the server survivor's hydration to 100%, matching Development chapters 6/15; E/X uses the ordinary owned-controller interaction path. Standing is supported, with no prone requirement. Full hydration hides the prompt and rejects redundant use. The source remains reusable and shared: it does not consume inventory or a global water charge. Life, possession, source ownership/availability/quality, same-world identity, range and visibility are checked; direct target dispatch also rechecks authority and the eye trace. The existing interaction component rejects inventory-open requests. Salt quality is reserved and currently ineligible: it cannot grant fresh hydration; sickness and other qualities await their specified systems.
+
+The EWEditor Win64 Development build passed. All ten `Elitewake` native tests passed in `Saved/Logs/FreshWaterRegression.log`, including new fresh-water refill/reuse, full-state, salt, unavailable/foreign-owned/distant source, menu, death and direct-dispatch aim assertions within `Elitewake.Interaction.AuthorityAndHolds`. Existing native stance, inventory, equipment, pickup, hotbar and exhaustion checks remain successful.
+
+Final `Scripts/Verification/verify_water_play.py` passed **13 standalone and 14 listen/client checkpoints**, using 100 ms outgoing lag and 1% loss on both local network drivers. Evidence: `Saved/WaterPlayResult.json` (09:55–09:56 local) and `Saved/WaterNetworkResult.json` (09:54–09:55 local). Checks read the actual rendered hydration HUD and E/X prompt alongside server/owning-client stats; cover E refill, X refill from empty, harmless repeats, reusable source, client mutation rejection, salt/unavailable/range/wall/aim/menu/death rejection and independent shared-source use. Inventory count stays unchanged throughout. Scripts restore hydration, health, packet settings, throttling and input; remove temporary actors and callbacks.
+
+Two initial network-fixture failures were corrected and rerun: the verification box helper is intentionally nonreplicated, so the test now places equivalent query geometry in both PIE worlds for the local hidden-prompt assertion; the shared-source test initially overlapped player capsules, so players are now separated and aim at a widened test surface. No gameplay targeting or hydration guards were relaxed. These failed runs are not acceptance.
+
+`Scripts/Setup/spawn_water_play_fixture.py` is opt-in and PIE-only: it lowers test hydration to 25% and marks a source in blue without saving assets. The setup script was exercised successfully. Direct viewport PressKey E changed hydration **25% -> 100%**, cleared the interaction prompt, and visibly updated the HUD (`Saved/WaterManualBeforeResult.json`, `Saved/WaterManualResult.json`, `Saved/WaterManualBefore.png`, `Saved/WaterManualAfter.png`). The viewport was focused before this check; an earlier press while the console held focus did not reach gameplay. Play was stopped afterward; no test actors or callbacks remain active.
+
+Production water geometry/content, animation/audio, salt/brackish/contaminated/carried-water effects, automatic needs drain/damage, physical controller hardware, shipping/package and dedicated-server checks remain open. This is verified fresh-water gameplay, not complete survival or a finished pond.
+
+<a id="m6-interaction-closeout"></a>
+
+## October 6, 2026 — M6 interaction foundation closeout
+
+For the owner's instruction to continue the planned workflow through M6 under auto-approval, M6 uses the previously recorded interaction-framework sequence, implemented as Milestone A plus the fresh-water return slice. Gathering/crafting remains the following package. Completion applies to this foundation, not to all future actors that will use it.
+
+| Acceptance target | Evidence |
+| --- | --- |
+| Shared target interface and unchanged pickup behavior | [Pickup refactor](#interaction-pickup-refactor); unchanged standalone/client pickup checks |
+| Device-aware E/X prompts and owned Press/Hold authority | [Interaction foundation](#interaction-foundation); 31 standalone/31 client checkpoints |
+| Server-timed holds; release, aim/range/obstruction, menu, pawn/death, availability/destroy and competing-use cancellation | Native interaction test plus both Play runs; direct E fixture check |
+| Opt-in Tree/Rock/Campfire/Smithy acknowledgement fixtures | No yields/crafting/injury/storage; no saved/default world content |
+| Fresh-water E/X action and replicated survival HUD | [Fresh-water slice](#fresh-water); 13 standalone/14 client checkpoints and direct viewport input |
+| Existing subsystem conservation and input isolation | Milestone A pickup/hotbar regression evidence; final ten native tests including water assertions |
+
+All foundation targets above are verified. Production anchor/ladder/crew/vendor/storage behaviors belong to their dependent ship/world systems; resource yields, Attack/tree punching and injuries belong to gathering/combat. Remapping, final presentation and packaged/dedicated/hardware acceptance are retained as explicit later gates. No unresolved design rule has been silently assigned a value. Local editor preference checksum remains `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`; `.mcp.json` stays local.

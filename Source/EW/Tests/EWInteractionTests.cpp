@@ -3,6 +3,7 @@
 #include "EWInteractable.h"
 #include "EWStation.h"
 #include "EWResourceNode.h"
+#include "Survival/EWWaterSource.h"
 #include "EWCharacter.h"
 #include "EWSurvivalComponent.h"
 #include "EWInventoryComponent.h"
@@ -52,6 +53,30 @@ bool FEWInteractionTest::RunTest(const FString& Parameters)
     StartHold(); Station->bAvailable=false; Wait(.7f); TestEqual(TEXT("Unavailable target cancels"),Station->GetAcknowledgementCount(),2); Station->bAvailable=true;
     StartHold(); Station->Destroy(); Wait(.7f); TestNull(TEXT("Destroyed target clears hold"),Interaction->GetHoldState().Target.Get());
     auto* Tree=World->SpawnActor<AEWResourceNode>(Eye+FVector(150,0,0),FRotator::ZeroRotator); Wait(.2f); Interaction->Request(Tree); TestEqual(TEXT("Resource fixture acknowledges"),Tree->GetAcknowledgementCount(),1); TestEqual(TEXT("Fixture grants no inventory"),Pawn->GetInventoryComponent()->GetUsedSlotCount(),0);
+    Tree->Destroy(); Wait(.2f);
+    auto* Water=World->SpawnActor<AEWWaterSource>(Eye+FVector(150,0,0),FRotator::ZeroRotator);
+    auto* Stats=Pawn->GetSurvivalComponent();
+    Stats->SetHydration(12); Interaction->Request(Water);
+    TestEqual(TEXT("Fresh water instantly refills hydration"),Stats->GetHydration(),100.f);
+    TestFalse(TEXT("Full hydration disables redundant drinking"),IEWInteractable::Execute_CanInteract(Water,Pawn));
+    Stats->SetHydration(12); Water->WaterQuality=EEWWaterQuality::Salt; Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Salt water cannot grant fresh hydration"),Stats->GetHydration(),12.f);
+    Water->WaterQuality=EEWWaterQuality::Fresh; Water->bAvailable=false; Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Unavailable source rejected"),Stats->GetHydration(),12.f); Water->bAvailable=true;
+    auto* ForeignOwner=World->SpawnActor<AActor>(); Water->SetOwner(ForeignOwner); Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Foreign-owned source rejected"),Stats->GetHydration(),12.f); Water->SetOwner(nullptr); ForeignOwner->Destroy();
+    Water->SetActorLocation(Eye+FVector(400,0,0)); Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Distant water rejected"),Stats->GetHydration(),12.f); Water->SetActorLocation(Eye+FVector(150,0,0));
+    Interaction->SetMenuBlocked(true); Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Inventory blocks drinking"),Stats->GetHydration(),12.f); Interaction->SetMenuBlocked(false);
+    Stats->ApplyDamage(100); Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Dead survivor cannot drink"),Stats->GetHydration(),12.f); Stats->RestoreHealth(100);
+    PC->SetControlRotation(FRotator(0,90,0));
+    TestFalse(TEXT("Direct target dispatch still validates aim"),IEWInteractable::Execute_Interact(Water,Pawn));
+    TestEqual(TEXT("Invalid dispatch cannot mutate hydration"),Stats->GetHydration(),12.f);
+    PC->SetControlRotation(FRotator::ZeroRotator); Wait(.2f); Interaction->Request(Water);
+    TestEqual(TEXT("Source is reusable after hydration falls"),Stats->GetHydration(),100.f);
+    TestEqual(TEXT("Drinking grants no inventory"),Pawn->GetInventoryComponent()->GetUsedSlotCount(),0);
     GEngine->DestroyWorldContext(World); World->DestroyWorld(false); return true;
 }
 #endif

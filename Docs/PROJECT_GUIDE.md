@@ -10,10 +10,10 @@ This is a tested gameplay foundation for version 0.01, not a finished pirate san
 | --- | --- | --- |
 | Locomotion/camera | Move, jump, sprint, first/third-person; locomotion states | Final perspective animation and hardware coverage |
 | Crouch/prone | Distinct capsules, clearance-gated exits, prone-body collision; client prediction tested | Moving decks, dedicated server, final animation polish |
-| Survival | Authoritative stats; five HUD gauges and empty-stat warnings; carried weight includes gear | Needs drain/damage, drinking/food, five-second stamina tuning, jump/climb costs, regeneration/fall damage |
+| Survival | Authoritative stats/HUD/weight; contextual fresh-water drinking | Needs drain/damage, food, other water qualities, five-second stamina tuning, jump/climb costs, regeneration/fall damage |
 | Inventory | 24 slots, stacking, weight, saved item definitions; selection/details and live refresh | Durability/freshness/item instances, preview/tabs, discard and crafting |
 | Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
-| Interaction | E/X prompts, server Press/Hold timing and cancellation; opt-in Inspect fixtures | Actual drinking/station/storage/ship actions, remapping and final presentation |
+| Interaction | M6 foundation: E/X prompts, server Press/Hold timing/cancellation, fresh-water action; opt-in Inspect fixtures | Actual station/storage/ship/vendor actions, remapping and final presentation |
 | Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
 | Hotbar | Eight owned-definition shortcuts; 1–8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
 | Ship/world/prologue | Current Bible and owner decisions recorded | Production ship loop, Port/missions, navigation and save/load |
@@ -26,11 +26,13 @@ Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner con
 
 ## Next work
 
-Milestone A interaction work is authorized on `milestone-a-interaction`. Pickup generalization is checkpointed with unchanged pickup checks passing. Device-aware prompts and server-controlled holds now pass 31 standalone/31 client checkpoints; all ten pickup and 42 network hotbar regressions also pass; see VERIFICATION.md for branch-review evidence. Merge to main requires verified Play checks and owner approval. One-second fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures are draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
+**M6 interaction foundation is verified complete for the October 6 run.** The next planned package is gathering, followed by crafting/skills; detailed resource/tool/injury decisions stay explicit before their dependent implementation. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
 
-Development guide chapter 41 (archived Master §24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; the later conversational M0-M5 labels are not a one-to-one numbering of that list.
+Milestone A is approved and published on main at `adc9693` after the owner said "Let's continue. I approve." Device-aware prompts and server-controlled holds passed 31 standalone/31 client checkpoints, with all ten pickup and 42 network hotbar regressions passing. The additional survival return slice is fresh-water drinking on `codex/fresh-water-interaction`: E/X refills hydration instantly at an eligible visible source, without requiring prone. Salt-water consequences remain TBD. One-second Inspect fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures remain draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
 
-M4 remains partially implemented. The [HUD return slice](VERIFICATION.md#m4-hud) now supplies health/stamina/food/hydration/weight gauges and empty-stat warnings. Activity-dependent needs drain, starvation/dehydration consequences, fresh/salt drinking, five-second base stamina timing, jump/climb costs and regeneration remain open. October 6 owner clarification permits recovery while walking. Upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
+Development guide chapter 41 (archived Master §24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; conversational milestone labels are not a one-to-one numbering of that list. For the owner's October 6 auto-approved run through M6, M6 means the recorded interaction-framework package: shared pickup/world targeting, E/X prompts, Press/Hold authority and cancellation, Inspect-only resource/station fixtures, plus the fresh-water return slice. It does not include gathering/crafting or production ship/vendor/storage actions. See [M6 closeout](VERIFICATION.md#m6-interaction-closeout).
+
+M4 remains partially implemented. The [HUD return slice](VERIFICATION.md#m4-hud) now supplies health/stamina/food/hydration/weight gauges and empty-stat warnings. Activity-dependent needs drain, starvation/dehydration consequences, salt/other-water drinking, food, five-second base stamina timing, jump/climb costs and regeneration remain open. October 6 owner clarification permits recovery while walking. Upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
 
 ### Proposed 0.01 work packages after M5
 
@@ -82,6 +84,7 @@ Run Play scripts from Unreal's Python console with an absolute path. Pickup/inve
 | Verification `verify_inventory_selection_play.py` | Inventory input, focus and live-refresh checks |
 | Verification `verify_equipment_play.py`, `verify_equipment_network_stress.py` | Transfer/capacity and bounded request stress checks |
 | Verification `verify_hotbar_play.py` | Assignment, activation, input isolation and conservation |
+| Verification `verify_water_play.py` | Fresh-water E/X, hydration HUD, invalid requests and shared-source use |
 | Verification `verify_survival_hud_play.py` | Rendered stats/warnings, carried weight and possession lifecycle |
 
 <a id="repository-conventions"></a>
@@ -147,3 +150,7 @@ Update these three current documents rather than adding a new top-level document
 ### Trying the interaction fixtures
 
 Start Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_interaction_play_fixtures.py` from the editor Python console. Look at a fixture within 250 cm and follow E/X or Hold E/X. Campfire uses a one-second draft hold; Smithy, Tree and Rock acknowledge a press. Inspect does not harvest or craft. Stop Play to remove the fixtures; the script never saves a map.
+
+### Trying fresh-water drinking
+
+Start Play in `Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_water_play_fixture.py`. The opt-in script lowers hydration to 25% and marks a temporary source with blue bounds at (120, 100, 160). Look within 250 cm and press E/X; hydration immediately becomes 100% and the prompt hides until hydration falls. Stop Play removes the fixture and test state. Production ponds should place/size an `EWWaterSource` query surface over their authored water geometry; this slice adds no saved world content.

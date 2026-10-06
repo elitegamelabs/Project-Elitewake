@@ -13,6 +13,7 @@ class UEnhancedInputLocalPlayerSubsystem;
 class UWorld;
 class AActor;
 class AEWStation;
+class AEWWaterSource;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -20,6 +21,9 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    /** PIE-only source; never adds water to a saved map. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWWaterSource* SpawnVerificationWaterSource(UWorld* World, FVector Location, bool bFresh = true);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWStation* SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource = false, bool bHold = false, bool bSingleUse = false, float Duration = 1.f);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
