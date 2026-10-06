@@ -1,46 +1,28 @@
 # Project Elitewake
 
-Project Elitewake is the working title for a ship-centered pirate survival sandbox developed by Elite Game Labs in Unreal Engine 5.8.
+A ship-centered pirate survival sandbox by **Elite Game Labs**, built in **Unreal Engine 5.8.3**.
 
-The ship is the center of the game: the player's transportation, home, storage, workshop, combat platform, crew headquarters, progression platform, and social space.
+**THE SHIP IS HOME:** transportation, shelter, storage, workshop, combat platform, crew headquarters and progression. The loop is Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther.
 
-## Core Loop
+The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar and the survival HUD have verified foundations. The production ship loop, complete survival gameplay, persistence and final presentation remain open.
 
-Prepare -> Sail -> Discover -> Fight or Explore -> Loot -> Escape -> Upgrade -> Sail Farther
+## Start here
 
-## Current Stage
+- [Project guide](Docs/PROJECT_GUIDE.md): current status, next work, repository map and developer checks.
+- [Design reference](Docs/DESIGN_REFERENCE.md): current authority, requirement tracking and owner decisions.
+- [Verification record](Docs/VERIFICATION.md): dated acceptance results and their limits.
+- [Historical reviews](Docs/ARCHIVE/CONTEXT_AND_DESIGN_REVIEWS.md): preserved source cross-references.
 
-The project is at its foundation stage. Development should proceed through small systems that can be built, tested, and committed independently. The first playable target is version 0.01, not the finished game.
+## Open the project
 
-## Development Rules
+1. Install Unreal Engine **5.8.3**, Visual Studio's Unreal/C++ build components and **Git LFS**.
+2. Clone this repository and run `git lfs pull`.
+3. Open `EW.uproject` and allow the native modules to build.
 
-- Use Unreal Engine 5.8.
-- Keep stable gameplay foundations in C++ and use Blueprints for content assembly and iteration.
-- Use Enhanced Input for remappable controls.
-- Design gameplay for eventual server-authoritative multiplayer.
-- Prefer modular, data-driven systems that can expand without replacement.
-- Do not modify unrelated systems during a focused implementation task.
-- Build, test, and commit each working milestone before starting the next one.
-- Treat other games as design references only; all shipped code, assets, names, UI, dialogue, and presentation must be original.
+Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations and shared connector endpoints are declared in the project/configuration files.
 
-## Repository Layout
+## Repository
 
-- `Config/` - Project and engine configuration.
-- `Content/` - Unreal assets. New game-specific assets belong under `Content/Elitewake/`.
-- `Source/EW/` - Runtime C++ module.
-- `EW.uproject` - Unreal project descriptor.
+`Source/` contains gameplay and editor helpers, `Content/` contains Unreal assets, `Config/` contains shared settings, and `Scripts/Setup` / `Scripts/Verification` contain opt-in tooling. New game-specific assets belong in `Content/Elitewake/`.
 
-Generated directories such as `Binaries/`, `DerivedDataCache/`, `Intermediate/`, and `Saved/` are intentionally excluded from Git.
-
-## Opening the Project
-
-1. Install Unreal Engine 5.8 and the Visual Studio C++ components required by Unreal.
-2. Install Git LFS before cloning or pulling the project.
-3. Clone the repository and run `git lfs pull` if needed.
-4. Open `EW.uproject`.
-5. Allow Unreal to rebuild the native module when prompted.
-
-## Source Control
-
-The `main` branch represents known-good project state. Commit focused changes with clear messages and avoid committing generated Unreal or IDE files.
-
+Generated Unreal/IDE files are ignored. `main` holds verified, focused changes; use Git LFS for binary assets. Keep gameplay foundations in C++, assemble content in Blueprints, and preserve original code/art/story and the current design authority.
