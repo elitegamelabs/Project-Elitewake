@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "Engine/NetDriver.h"
 #include "EWPickup.h"
+#include "EWPlayerController.h"
 #include "Framework/Application/SlateApplication.h"
 #include "InputCoreTypes.h"
 
@@ -17,8 +18,19 @@ bool UEWEditorVerificationLibrary::SendVerificationUIKey(APlayerController* Cont
     if (!Key.IsValid()) return false;
     const int32 User = FSlateApplication::Get().GetUserIndexForController(Controller->GetLocalPlayer()->GetControllerId());
     const FKeyEvent Event(Key, FModifierKeysState(), User, false, 0, 0);
+    // Python's editor execution guard forces actor RPCs local. Exercise normal game input.
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
     FSlateApplication::Get().ProcessKeyDownEvent(Event);
     FSlateApplication::Get().ProcessKeyUpEvent(Event);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationEquipmentRequest(AEWPlayerController* Controller, UEWItemDefinition* Item, EEWEquipmentSlot Slot, bool bUnequip)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    if (bUnequip) Controller->RequestUnequipItem(Slot);
+    else Controller->RequestEquipItem(Item, Slot);
     return true;
 }
 

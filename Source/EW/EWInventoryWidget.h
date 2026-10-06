@@ -4,7 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Button.h"
 #include "EWInventoryComponent.h"
+#include "EWEquipmentComponent.h"
 #include "EWInventoryWidget.generated.h"
 
 class UTextBlock;
@@ -12,6 +14,16 @@ class UVerticalBox;
 class UEWInventoryComponent;
 class UBorder;
 class UScrollBox;
+class UButton;
+
+/** Keep mouse actions from taking navigation focus away from the inventory panel. */
+UCLASS()
+class UEWInventoryActionButton : public UButton
+{
+    GENERATED_BODY()
+public:
+    UEWInventoryActionButton() { InitIsFocusable(false); }
+};
 
 /** Functional first-pass inventory screen. Final art and equipment presentation will replace this layout. */
 UCLASS()
@@ -20,6 +32,7 @@ class EW_API UEWInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+    void ShowEquipmentResult(EEWEquipmentResult Result);
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
     UFUNCTION(BlueprintPure, Category="Inventory")
@@ -39,6 +52,22 @@ protected:
 	void RefreshInventory();
 
 private:
+    UFUNCTION()
+    void PerformEquipmentAction();
+    UEWItemDefinition* SelectedItem() const;
+    EEWEquipmentSlot SelectedEquipmentSlot() const;
+    UEWEquipmentComponent* ResolveEquipment() const;
+    int32 SelectionCount() const { return DisplayedEntries.Num() + DisplayedEquipment.Num(); }
+    UPROPERTY(Transient)
+    TArray<FEWEquipmentEntry> DisplayedEquipment;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWEquipmentComponent> BoundEquipment;
+    UPROPERTY(Transient)
+    TObjectPtr<UButton> EquipmentActionButton;
+    UPROPERTY(Transient)
+    TObjectPtr<UTextBlock> EquipmentActionText;
+    UPROPERTY(Transient)
+    TObjectPtr<UTextBlock> EquipmentResultText;
     void Select(int32 Index);
     void UpdateSelection();
     void ConfirmSelection();

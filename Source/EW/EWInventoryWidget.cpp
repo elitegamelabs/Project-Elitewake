@@ -13,6 +13,7 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Components/ScrollBox.h"
+#include "Components/Button.h"
 #include "InputCoreTypes.h"
 #include "Styling/SlateColor.h"
 
@@ -29,8 +30,11 @@ void UEWInventoryWidget::NativeConstruct()
     SetIsFocusable(true);
     SelectedIndex = INDEX_NONE;
     bShowingDetails = false;
+    if (EquipmentResultText) EquipmentResultText->SetText(FText::GetEmpty());
 
 	BoundInventory = ResolveInventory();
+    BoundEquipment = ResolveEquipment();
+    if (BoundEquipment) BoundEquipment->OnEquipmentChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
 	if (BoundInventory)
 	{
 		BoundInventory->OnInventoryChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
@@ -46,6 +50,8 @@ void UEWInventoryWidget::NativeDestruct()
 		BoundInventory->OnInventoryChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
 	}
 	BoundInventory = nullptr;
+    if (BoundEquipment) BoundEquipment->OnEquipmentChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
+    BoundEquipment = nullptr;
     AnalogDirection = 0;
 	Super::NativeDestruct();
 }
@@ -87,9 +93,17 @@ void UEWInventoryWidget::BuildWidgetTree()
     DetailsText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryDetails"));
     DetailsText->SetAutoWrapText(true);
     Content->AddChildToVerticalBox(DetailsText)->SetPadding(FMargin(0,12));
+    EquipmentActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("EquipmentAction"));
+    EquipmentActionText = WidgetTree->ConstructWidget<UTextBlock>();
+    EquipmentActionButton->SetContent(EquipmentActionText);
+    EquipmentActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformEquipmentAction);
+    Content->AddChildToVerticalBox(EquipmentActionButton);
+    EquipmentResultText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("EquipmentResult"));
+    EquipmentResultText->SetAutoWrapText(true);
+    Content->AddChildToVerticalBox(EquipmentResultText);
 
 	UTextBlock* Hint = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHint"));
-	Hint->SetText(FText::FromString(TEXT("Select: Up/Down, D-pad or left stick, mouse\nDetails: Enter / A / click    Close: I / Y / B / Esc")));
+	Hint->SetText(FText::FromString(TEXT("Select: Up/Down, D-pad or left stick, mouse\nDetails: Enter / A / click    Equip/remove: R / X / button\nClose: I / Y / B / Esc")));
 	Hint->SetColorAndOpacity(FSlateColor(FLinearColor(0.55f, 0.6f, 0.65f)));
 	Content->AddChildToVerticalBox(Hint)->SetPadding(FMargin(0.0f, 24.0f, 0.0f, 0.0f));
 }
@@ -105,27 +119,33 @@ void UEWInventoryWidget::RefreshInventory()
 	if (!Inventory)
 	{
 		SummaryText->SetText(FText::FromString(TEXT("Inventory unavailable")));
-        ItemsBox->ClearChildren(); Rows.Reset(); DisplayedEntries.Reset();
+        ItemsBox->ClearChildren(); Rows.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
+        EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
 
     RefreshSummary();
-    UEWItemDefinition* PreviousItem = DisplayedEntries.IsValidIndex(SelectedIndex) ? DisplayedEntries[SelectedIndex].ItemDefinition.Get() : nullptr;
+    UEWItemDefinition* PreviousItem = SelectedItem();
+    const EEWEquipmentSlot PreviousSlot = SelectedEquipmentSlot();
     int32 PreviousOrdinal = 0;
-    for (int32 i = 0; i < SelectedIndex; ++i)
+    for (int32 i = 0; i < FMath::Min(SelectedIndex, DisplayedEntries.Num()); ++i)
         if (DisplayedEntries[i].ItemDefinition == PreviousItem) ++PreviousOrdinal;
     DisplayedEntries = Inventory->GetInventoryEntries();
     DisplayedEntries.RemoveAll([](const FEWInventoryEntry& Entry) { return !Entry.ItemDefinition || Entry.Quantity <= 0; });
+    DisplayedEquipment = BoundEquipment ? BoundEquipment->GetEquipmentEntries() : TArray<FEWEquipmentEntry>();
+    DisplayedEquipment.Sort([](const FEWEquipmentEntry& A, const FEWEquipmentEntry& B) { return A.Slot < B.Slot; });
     int32 Match = INDEX_NONE, Ordinal = 0;
     for (int32 i = 0; i < DisplayedEntries.Num(); ++i)
-        if (DisplayedEntries[i].ItemDefinition == PreviousItem && Ordinal++ == PreviousOrdinal) { Match = i; break; }
-    SelectedIndex = DisplayedEntries.IsEmpty() ? INDEX_NONE : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, DisplayedEntries.Num()-1));
-    if (PreviousItem && (SelectedIndex == INDEX_NONE || DisplayedEntries[SelectedIndex].ItemDefinition != PreviousItem)) bShowingDetails = false;
+        if (PreviousSlot == EEWEquipmentSlot::None && DisplayedEntries[i].ItemDefinition == PreviousItem && Ordinal++ == PreviousOrdinal) { Match = i; break; }
+    if (PreviousSlot != EEWEquipmentSlot::None)
+        for (int32 i=0; i<DisplayedEquipment.Num(); ++i) if (DisplayedEquipment[i].Slot == PreviousSlot) { Match = DisplayedEntries.Num()+i; break; }
+    SelectedIndex = SelectionCount() == 0 ? INDEX_NONE : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, SelectionCount()-1));
+    if (PreviousItem && SelectedItem() != PreviousItem) bShowingDetails = false;
     ItemsBox->ClearChildren();
     Rows.Reset();
-    if (DisplayedEntries.IsEmpty())
+    if (SelectionCount() == 0)
     {
         UTextBlock* EmptyText = WidgetTree->ConstructWidget<UTextBlock>();
         EmptyText->SetText(FText::FromString(TEXT("Inventory is empty.")));
@@ -142,6 +162,15 @@ void UEWInventoryWidget::RefreshInventory()
         Row->SetContent(Text);
         ItemsBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,3));
         Rows.Add(Row);
+    }
+    for (const FEWEquipmentEntry& Entry : DisplayedEquipment)
+    {
+        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(); Row->SetPadding(FMargin(10,8));
+        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
+        Text->SetText(FText::FromString(FString::Printf(TEXT("Equipped — %s: %s    %.1f kg"),
+            *StaticEnum<EEWEquipmentSlot>()->GetDisplayNameTextByValue(static_cast<int64>(Entry.Slot)).ToString(),
+            *Entry.ItemDefinition->DisplayName.ToString(), Entry.ItemDefinition->UnitWeight)));
+        Row->SetContent(Text); ItemsBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,3)); Rows.Add(Row);
     }
     UpdateSelection();
 }
@@ -160,13 +189,13 @@ void UEWInventoryWidget::RefreshSummary()
 	}
 
 	SummaryText->SetText(FText::FromString(FString::Printf(TEXT("Slots %d / %d     Weight %.1f / %.1f kg"),
-		Inventory->GetUsedSlotCount(), Inventory->GetMaxSlotCount(), Inventory->GetTotalWeight(), MaxWeight)));
+		Inventory->GetUsedSlotCount(), Inventory->GetMaxSlotCount(), Inventory->GetTotalWeight() + (BoundEquipment ? BoundEquipment->GetTotalWeight() : 0.f), MaxWeight)));
 }
 
 void UEWInventoryWidget::Select(int32 Index)
 {
-    if (DisplayedEntries.IsEmpty()) return;
-    Index = FMath::Clamp(Index, 0, DisplayedEntries.Num()-1);
+    if (SelectionCount() == 0) return;
+    Index = FMath::Clamp(Index, 0, SelectionCount()-1);
     if (Index != SelectedIndex) { SelectedIndex = Index; bShowingDetails = false; UpdateSelection(); }
 }
 
@@ -175,6 +204,10 @@ void UEWInventoryWidget::UpdateSelection()
     for (int32 i=0; i<Rows.Num(); ++i)
         Rows[i]->SetBrushColor(i == SelectedIndex ? FLinearColor(.06f,.35f,.45f,1) : FLinearColor(.025f,.045f,.06f,1));
     if (!DetailsText) return;
+    UEWItemDefinition* Item = SelectedItem();
+    const bool bEquippable = Item && Item->EquipmentSlot != EEWEquipmentSlot::None;
+    EquipmentActionButton->SetVisibility(bShowingDetails && bEquippable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
     DetailsText->SetText(FText::FromString(SelectedIndex == INDEX_NONE ? TEXT("No item selected") : TEXT("Confirm to view item details")));
     if (bShowingDetails) ConfirmSelection();
     if (Rows.IsValidIndex(SelectedIndex)) ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], true);
@@ -183,12 +216,15 @@ void UEWInventoryWidget::UpdateSelection()
 
 void UEWInventoryWidget::ConfirmSelection()
 {
-    if (!DisplayedEntries.IsValidIndex(SelectedIndex)) return;
-    const FEWInventoryEntry& Entry = DisplayedEntries[SelectedIndex];
+    UEWItemDefinition* Item = SelectedItem();
+    if (!Item) return;
+    const int32 Quantity = DisplayedEntries.IsValidIndex(SelectedIndex) ? DisplayedEntries[SelectedIndex].Quantity : 1;
     bShowingDetails = true;
     DetailsText->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s\nQuantity %d    Unit weight %.1f kg    Stack limit %d"),
-        *Entry.ItemDefinition->DisplayName.ToString(), *Entry.ItemDefinition->Description.ToString(), Entry.Quantity,
-        Entry.ItemDefinition->UnitWeight, Entry.ItemDefinition->MaxStackSize)));
+        *Item->DisplayName.ToString(), *Item->Description.ToString(), Quantity,
+        Item->UnitWeight, Item->MaxStackSize)));
+    EquipmentActionButton->SetVisibility(Item->EquipmentSlot != EEWEquipmentSlot::None ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
     // Details change the list's available height; reveal the selected row after that layout change.
     if (Rows.IsValidIndex(SelectedIndex)) ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], true, EDescendantScrollDestination::Center);
     RevealSelectionAfterFrames = 2;
@@ -205,6 +241,7 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up) { Select(SelectedIndex-1); return FReply::Handled(); }
     if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down) { Select(SelectedIndex+1); return FReply::Handled(); }
     if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { ConfirmSelection(); return FReply::Handled(); }
+    if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left) { if (!Event.IsRepeat()) PerformEquipmentAction(); return FReply::Handled(); }
     return FReply::Handled(); // UI owns input while open, including gameplay bindings.
 }
 
@@ -249,8 +286,15 @@ void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         if (BoundInventory) BoundInventory->OnInventoryChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
         BoundInventory = Inventory;
         if (BoundInventory) BoundInventory->OnInventoryChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
-        DisplayedEntries.Reset(); SelectedIndex = INDEX_NONE; bShowingDetails = false;
+        DisplayedEntries.Reset(); DisplayedEquipment.Reset(); SelectedIndex = INDEX_NONE; bShowingDetails = false;
         if (!BoundInventory) { ItemsBox->ClearChildren(); Rows.Reset(); DetailsText->SetText(FText::FromString(TEXT("No item selected"))); }
+        RefreshInventory();
+    }
+    if (UEWEquipmentComponent* Equipment = ResolveEquipment(); Equipment != BoundEquipment)
+    {
+        if (BoundEquipment) BoundEquipment->OnEquipmentChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
+        BoundEquipment = Equipment;
+        if (BoundEquipment) BoundEquipment->OnEquipmentChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
         RefreshInventory();
     }
     RefreshSummary();
@@ -266,6 +310,51 @@ void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         AnalogRepeatRemaining -= DeltaTime;
         if (AnalogRepeatRemaining <= 0) { Select(SelectedIndex+AnalogDirection); AnalogRepeatRemaining = .18f; }
     }
+}
+
+UEWEquipmentComponent* UEWInventoryWidget::ResolveEquipment() const
+{
+    const AEWCharacter* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    return Character ? Character->GetEquipmentComponent() : nullptr;
+}
+
+UEWItemDefinition* UEWInventoryWidget::SelectedItem() const
+{
+    if (DisplayedEntries.IsValidIndex(SelectedIndex)) return DisplayedEntries[SelectedIndex].ItemDefinition.Get();
+    const int32 EquipmentIndex = SelectedIndex - DisplayedEntries.Num();
+    return DisplayedEquipment.IsValidIndex(EquipmentIndex) ? DisplayedEquipment[EquipmentIndex].ItemDefinition.Get() : nullptr;
+}
+
+EEWEquipmentSlot UEWInventoryWidget::SelectedEquipmentSlot() const
+{
+    const int32 Index = SelectedIndex - DisplayedEntries.Num();
+    return DisplayedEquipment.IsValidIndex(Index) ? DisplayedEquipment[Index].Slot : EEWEquipmentSlot::None;
+}
+
+void UEWInventoryWidget::PerformEquipmentAction()
+{
+    UEWItemDefinition* Item = SelectedItem();
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (!bShowingDetails || !Item || !Controller) return;
+    EquipmentResultText->SetText(FText::FromString(TEXT("Requesting equipment change…")));
+    if (SelectedEquipmentSlot() != EEWEquipmentSlot::None) Controller->RequestUnequipItem(SelectedEquipmentSlot());
+    else Controller->RequestEquipItem(Item, Item->EquipmentSlot);
+}
+
+void UEWInventoryWidget::ShowEquipmentResult(EEWEquipmentResult Result)
+{
+    FString Message;
+    switch (Result)
+    {
+        case EEWEquipmentResult::Success: Message = TEXT("Equipment updated"); break;
+        case EEWEquipmentResult::InventoryFull: Message = TEXT("Inventory is full — make space before removing or replacing this item"); break;
+        case EEWEquipmentResult::NotOwned: Message = TEXT("That item is no longer in your inventory"); break;
+        case EEWEquipmentResult::AlreadyEquipped: Message = TEXT("That item is already equipped"); break;
+        case EEWEquipmentResult::EmptySlot: Message = TEXT("That slot is already empty"); break;
+        case EEWEquipmentResult::InvalidSlot: Message = TEXT("That item does not fit this equipment slot"); break;
+        default: Message = TEXT("Equipment change could not be completed"); break;
+    }
+    if (EquipmentResultText) EquipmentResultText->SetText(FText::FromString(Message));
 }
 
 UEWInventoryComponent* UEWInventoryWidget::ResolveInventory() const

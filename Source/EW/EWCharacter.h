@@ -13,6 +13,7 @@ class UCameraComponent;
 class UInputAction;
 class UEWSurvivalComponent;
 class UEWInventoryComponent;
+class UEWEquipmentComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 
@@ -61,6 +62,8 @@ class EW_API AEWCharacter : public ACharacter
 	/** Server-authoritative item stacks and carried weight. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UEWInventoryComponent* InventoryComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+    UEWEquipmentComponent* EquipmentComponent;
 	
 protected:
 
@@ -272,5 +275,7 @@ public:
 	/** Returns the character inventory component. */
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+    UFUNCTION(BlueprintPure, Category="Equipment")
+    UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
 };
 

@@ -2,6 +2,7 @@
 
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
+#include "EWEquipmentComponent.h"
 #include "EWSurvivalComponent.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
@@ -30,11 +31,17 @@ void UEWInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 int32 UEWInventoryComponent::AddItem(UEWItemDefinition* ItemDefinition, int32 Quantity)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !ItemDefinition || Quantity <= 0)
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !ItemDefinition || Quantity <= 0 || bEquipmentTransferInProgress)
 	{
 		return 0;
 	}
+    const int32 Added = AddToEntries(Entries, MaxSlots, ItemDefinition, Quantity);
+    if (Added > 0) HandleInventoryChanged();
+    return Added;
+}
 
+int32 UEWInventoryComponent::AddToEntries(TArray<FEWInventoryEntry>& Entries, int32 MaxSlots, UEWItemDefinition* ItemDefinition, int32 Quantity)
+{
 	const int32 MaxStackSize = FMath::Max(1, ItemDefinition->MaxStackSize);
 	int32 Remaining = Quantity;
 
@@ -61,22 +68,22 @@ int32 UEWInventoryComponent::AddItem(UEWItemDefinition* ItemDefinition, int32 Qu
 		Remaining -= NewEntry.Quantity;
 	}
 
-	const int32 AddedQuantity = Quantity - Remaining;
-	if (AddedQuantity > 0)
-	{
-		HandleInventoryChanged();
-	}
-
-	return AddedQuantity;
+    return Quantity - Remaining;
 }
 
 int32 UEWInventoryComponent::RemoveItem(UEWItemDefinition* ItemDefinition, int32 Quantity)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || !ItemDefinition || Quantity <= 0)
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !ItemDefinition || Quantity <= 0 || bEquipmentTransferInProgress)
 	{
 		return 0;
 	}
+    const int32 Removed = RemoveFromEntries(Entries, ItemDefinition, Quantity);
+    if (Removed > 0) HandleInventoryChanged();
+    return Removed;
+}
 
+int32 UEWInventoryComponent::RemoveFromEntries(TArray<FEWInventoryEntry>& Entries, UEWItemDefinition* ItemDefinition, int32 Quantity)
+{
 	int32 Remaining = Quantity;
 	for (int32 Index = Entries.Num() - 1; Index >= 0 && Remaining > 0; --Index)
 	{
@@ -96,13 +103,7 @@ int32 UEWInventoryComponent::RemoveItem(UEWItemDefinition* ItemDefinition, int32
 		}
 	}
 
-	const int32 RemovedQuantity = Quantity - Remaining;
-	if (RemovedQuantity > 0)
-	{
-		HandleInventoryChanged();
-	}
-
-	return RemovedQuantity;
+    return Quantity - Remaining;
 }
 
 int32 UEWInventoryComponent::GetItemCount(const UEWItemDefinition* ItemDefinition) const
@@ -158,7 +159,8 @@ void UEWInventoryComponent::RefreshSurvivalWeight()
 	{
 		if (UEWSurvivalComponent* SurvivalComponent = Owner->FindComponentByClass<UEWSurvivalComponent>())
 		{
-			SurvivalComponent->SetCarriedWeight(GetTotalWeight());
+            const UEWEquipmentComponent* Equipment = Owner->FindComponentByClass<UEWEquipmentComponent>();
+			SurvivalComponent->SetCarriedWeight(GetTotalWeight() + (Equipment ? Equipment->GetTotalWeight() : 0.f));
 		}
 	}
 }

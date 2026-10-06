@@ -113,6 +113,37 @@ void AEWPlayerController::Interact()
         ServerInteract(Target);
 }
 
+void AEWPlayerController::RequestEquipItem(UEWItemDefinition* Item, EEWEquipmentSlot Slot)
+{
+    if (IsLocalPlayerController()) ServerEquipItem(Item, Slot);
+}
+
+void AEWPlayerController::RequestUnequipItem(EEWEquipmentSlot Slot)
+{
+    if (IsLocalPlayerController()) ServerUnequipItem(Slot);
+}
+
+void AEWPlayerController::ServerEquipItem_Implementation(UEWItemDefinition* Item, EEWEquipmentSlot Slot)
+{
+    AEWCharacter* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
+    const EEWEquipmentResult Result = OwnedCharacter && OwnedCharacter->GetController() == this
+        ? OwnedCharacter->GetEquipmentComponent()->EquipItem(Item, Slot) : EEWEquipmentResult::NotOwned;
+    UE_LOG(LogEW, Verbose, TEXT("Equip intent %s slot %d result %d pawn %s"), *GetNameSafe(Item), static_cast<int32>(Slot), static_cast<int32>(Result), *GetNameSafe(OwnedCharacter));
+    ClientEquipmentResult(Result);
+}
+
+void AEWPlayerController::ServerUnequipItem_Implementation(EEWEquipmentSlot Slot)
+{
+    AEWCharacter* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
+    ClientEquipmentResult(OwnedCharacter && OwnedCharacter->GetController() == this
+        ? OwnedCharacter->GetEquipmentComponent()->UnequipItem(Slot) : EEWEquipmentResult::NotOwned);
+}
+
+void AEWPlayerController::ClientEquipmentResult_Implementation(EEWEquipmentResult Result)
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowEquipmentResult(Result);
+}
+
 void AEWPlayerController::ServerInteract_Implementation(AEWPickup* Target)
 {
     if (IsValid(Target)) Target->TryPickup(Cast<AEWCharacter>(GetPawn()));

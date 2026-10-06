@@ -22,7 +22,8 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | M5C persisted test item/grant | Verified: saved asset registration/load, stacking/capacity/weight tests and populated Play panel | Wood (Test), resource stack 250, temporary fixture weight 0.1 kg | Authority check and no client grant RPC; multi-client behavior not verified | `DA_TestWood`, editor-only `EWGrantTestWood`; [verification](M5C_INVENTORY_VERIFICATION.md) |
 | M5D pickups | Verified: server range/aim/visibility/ownership checks, partial transfer and exhaustion | Saved Wood pickup Blueprint and isolated test map; E/controller X draft bindings | Competing host/client intent conserves quantities; inventory/remainder replication verified under 100 ms outgoing lag/1% loss | `EWPickup.*`, `EWPlayerController.*`; [verification](M5D_PICKUP_VERIFICATION.md) |
 | M5E selection/details | Verified: first selection, highlight, keyboard/D-pad/stick/mouse navigation, read-only confirmation and safe live refresh | Native scrolling draft, I/Y open and UI focus; physical controller/final art pending | 19 client UI checkpoints pass with replicated authority changes under local packet emulation | `EWInventoryWidget.*`, `EWPlayerController.*`; [verification](M5E_SELECTION_VERIFICATION.md) |
-| M5F-G equipment/hotbar | Planned | Planned | Planned | Slot enum is metadata only; no equip behavior claimed |
+| M5F equipment | Verified: ownership/slot validation, atomic equip/unequip and occupied-slot swaps; worn weight retained | Equipped rows, action button/R/X and result feedback; opt-in hat fixtures | 12 client checkpoints pass under 100 ms outgoing lag/1% loss; foreign pawn unaffected | `EWEquipmentComponent.*`, inventory/controller/widget; [verification](M5F_EQUIPMENT_VERIFICATION.md) |
+| M5G hotbar | Planned | Planned | Planned | Eight-slot assignment/use/bindings remain open |
 
 ## Verification ledger
 
@@ -39,6 +40,7 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | 2026-10-05 | M2 collision/clearance acceptance on 5.8.3 | Build and four automation tests pass; eight animation/camera and sixteen single-player clearance checkpoints pass; sixteen client/host clearance checkpoints pass with 100 ms outgoing lag/1% loss; eleven stance/sprint/simulated-proxy checkpoints pass. [Scope and evidence](M2_COLLISION_VERIFICATION.md) |
 | 2026-10-05 | M5D pickup acceptance | Build and five automation tests pass; five single-player and five host/client pickup checkpoints pass, including packet emulation and competing intents; actual E collection and I populated panel inspected. [Scope and evidence](M5D_PICKUP_VERIFICATION.md) |
 | 2026-10-05 | M5E selection/details acceptance | Build and existing five regression tests pass; 19 single-player and 19 replicated client UI checkpoints pass; mouse/details and full-list layout inspected; movement and pawn absence/rebinding probed. [Scope and evidence](M5E_SELECTION_VERIFICATION.md) |
+| 2026-10-05 | M5F equipment transfer acceptance | Build and seven regression tests pass; 12 standalone and 12 client equipment checkpoints pass, including full-capacity rejection, swaps, replay safety and carried-weight conservation. [Scope and evidence](M5F_EQUIPMENT_VERIFICATION.md) |
 
 Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft; M5C adds the populated checks below. Full gameplay and multiplayer remain pending.
 

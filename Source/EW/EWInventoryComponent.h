@@ -76,6 +76,10 @@ protected:
 	void OnRep_Entries();
 
 private:
+    friend class UEWEquipmentComponent;
+    bool bEquipmentTransferInProgress = false;
+    static int32 AddToEntries(TArray<FEWInventoryEntry>& Entries, int32 MaxSlots, UEWItemDefinition* Item, int32 Quantity);
+    static int32 RemoveFromEntries(TArray<FEWInventoryEntry>& Entries, UEWItemDefinition* Item, int32 Quantity);
 	void HandleInventoryChanged();
 	void RefreshSurvivalWeight();
 };

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "EWEquipmentComponent.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -17,11 +18,21 @@ class AEWPickup;
  *  Manages input mappings
  */
 UCLASS(abstract)
-class AEWPlayerController : public APlayerController
+class EW_API AEWPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Equipment")
+    void RequestEquipItem(UEWItemDefinition* Item, EEWEquipmentSlot Slot);
+    UFUNCTION(BlueprintCallable, Category="Equipment")
+    void RequestUnequipItem(EEWEquipmentSlot Slot);
+    UFUNCTION(Server, Reliable)
+    void ServerEquipItem(UEWItemDefinition* Item, EEWEquipmentSlot Slot);
+    UFUNCTION(Server, Reliable)
+    void ServerUnequipItem(EEWEquipmentSlot Slot);
+    UFUNCTION(Client, Reliable)
+    void ClientEquipmentResult(EEWEquipmentResult Result);
     /** Local panel lifecycle; no inventory mutation. */
     UFUNCTION(BlueprintCallable, Category="Inventory")
     void SetInventoryOpen(bool bOpen);

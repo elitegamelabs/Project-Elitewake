@@ -1,9 +1,11 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "EWItemDefinition.h"
 #include "EWEditorVerificationLibrary.generated.h"
 
 class AEWPickup;
+class AEWPlayerController;
 class UEWItemDefinition;
 
 class APlayerController;
@@ -17,6 +19,9 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    /** Normal owned-controller equipment intent with editor script RPC bypass disabled in this scope. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationEquipmentRequest(AEWPlayerController* Controller, UEWItemDefinition* Item, EEWEquipmentSlot Slot, bool bUnequip = false);
     /** Route normal Slate input to the focused local PIE UI, including gamepad keys/axes. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIKey(APlayerController* Controller, FName KeyName);

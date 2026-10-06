@@ -3,6 +3,7 @@
 #include "EWCharacter.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
+#include "EWEquipmentComponent.h"
 #include "EWSurvivalComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
@@ -24,6 +25,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
+    EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
