@@ -11,6 +11,8 @@
 #include "Blueprint/UserWidget.h"
 #include "EW.h"
 #include "EWInventoryWidget.h"
+#include "EWHotbarWidget.h"
+#include "InputKeyEventArgs.h"
 #include "EWCharacter.h"
 #include "EWPickup.h"
 #include "EWInventoryComponent.h"
@@ -21,6 +23,11 @@
 void AEWPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+    if (IsLocalPlayerController())
+    {
+        HotbarWidget = CreateWidget<UEWHotbarWidget>(this, UEWHotbarWidget::StaticClass());
+        if (HotbarWidget) HotbarWidget->AddToPlayerScreen(1);
+    }
 
 	// only spawn touch controls on local player controllers
 	if (IsLocalPlayerController() && ShouldUseTouchControls())
@@ -111,6 +118,85 @@ void AEWPlayerController::Interact()
     if (!IsLocalPlayerController() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
     if (AEWPickup* Target = AEWPickup::FindTarget(Cast<AEWCharacter>(GetPawn())))
         ServerInteract(Target);
+}
+
+int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
+{
+    static const FKey Numbers[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight};
+    static const FKey ControllerKeys[] = {EKeys::Gamepad_FaceButton_Bottom,EKeys::Gamepad_FaceButton_Right,
+        EKeys::Gamepad_FaceButton_Left,EKeys::Gamepad_FaceButton_Top,
+        EKeys::Gamepad_DPad_Up,EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,EKeys::Gamepad_DPad_Left};
+    for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
+        if (Key==Numbers[i] || (bControllerModifier && Key==ControllerKeys[i])) return i;
+    return INDEX_NONE;
+}
+
+bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
+{
+    if (SuppressedHotbarKeys.Contains(Params.Key))
+    {
+        if (Params.Event==IE_Released) SuppressedHotbarKeys.Remove(Params.Key);
+        return true;
+    }
+    if (Params.Key==EKeys::Gamepad_LeftShoulder)
+    {
+        if (Params.Event==IE_Pressed) bHotbarModifierHeld=true;
+        if (Params.Event==IE_Released) bHotbarModifierHeld=false;
+        return true;
+    }
+    if (!InventoryWidget || !InventoryWidget->IsInViewport())
+    {
+        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld);
+        if (Slot!=INDEX_NONE && Params.Event==IE_Pressed)
+        {
+            // Consume the complete chord, including releases after LB is released, before Enhanced Input.
+            SuppressedHotbarKeys.Add(Params.Key);
+            RequestHotbarActivation(Slot);
+            return true;
+        }
+        if (Slot!=INDEX_NONE && Params.Event==IE_Repeat) return true;
+    }
+    return Super::InputKey(Params);
+}
+
+void AEWPlayerController::FlushPressedKeys()
+{
+    // The engine also flushes on viewport focus loss; custom chord state must follow it.
+    bHotbarModifierHeld=false;
+    SuppressedHotbarKeys.Reset();
+    Super::FlushPressedKeys();
+}
+
+void AEWPlayerController::RequestHotbarBinding(int32 Slot, UEWItemDefinition* Item)
+{
+    if (IsLocalPlayerController()) ServerBindHotbar(Slot,Item);
+}
+void AEWPlayerController::RequestHotbarActivation(int32 Slot)
+{
+    if (IsLocalPlayerController() && (!InventoryWidget || !InventoryWidget->IsInViewport())) ServerActivateHotbar(Slot);
+}
+void AEWPlayerController::ServerBindHotbar_Implementation(int32 Slot, UEWItemDefinition* Item)
+{
+    auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
+    ClientHotbarResult(OwnedCharacter && OwnedCharacter->GetController()==this
+        ? OwnedCharacter->GetHotbarComponent()->BindItem(Slot,Item) : EEWHotbarResult::NotOwned);
+}
+void AEWPlayerController::ServerActivateHotbar_Implementation(int32 Slot)
+{
+    auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
+    ClientHotbarResult(OwnedCharacter && OwnedCharacter->GetController()==this
+        ? OwnedCharacter->GetHotbarComponent()->ActivateSlot(Slot) : EEWHotbarResult::NotOwned);
+}
+void AEWPlayerController::ClientHotbarResult_Implementation(EEWHotbarResult Result)
+{
+    if (HotbarWidget) HotbarWidget->ShowResult(Result);
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowHotbarResult(Result);
+}
+void AEWPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+    bHotbarModifierHeld=false; SuppressedHotbarKeys.Reset();
+    if (HotbarWidget) HotbarWidget->RemoveFromParent();
+    Super::EndPlay(EndPlayReason);
 }
 
 void AEWPlayerController::RequestEquipItem(UEWItemDefinition* Item, EEWEquipmentSlot Slot)

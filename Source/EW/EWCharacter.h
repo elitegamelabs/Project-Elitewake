@@ -14,6 +14,7 @@ class UInputAction;
 class UEWSurvivalComponent;
 class UEWInventoryComponent;
 class UEWEquipmentComponent;
+class UEWHotbarComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 
@@ -64,6 +65,8 @@ class EW_API AEWCharacter : public ACharacter
 	UEWInventoryComponent* InventoryComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
     UEWEquipmentComponent* EquipmentComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+    UEWHotbarComponent* HotbarComponent;
 	
 protected:
 
@@ -277,5 +280,7 @@ public:
 	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
     UFUNCTION(BlueprintPure, Category="Equipment")
     UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
+    UFUNCTION(BlueprintPure, Category="Hotbar")
+    UEWHotbarComponent* GetHotbarComponent() const { return HotbarComponent; }
 };
 

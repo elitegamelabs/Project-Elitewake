@@ -1,6 +1,6 @@
 # Milestone status
 
-Reviewed: 2026-10-05. Status describes individual layers, not finished-game readiness.
+Reviewed: 2026-10-06. Status describes individual layers, not finished-game readiness.
 
 Current reference is the October 5 Authoritative Revision and later direct owner clarification of the rye sale. See [current revision review](DESIGN_REVISION_2026_10_05.md); the [September reconciliation](CONTEXT_RECONCILIATION.md) remains historical evidence. Owner returned from M2 stance/collision work to M5D on Unreal 5.8.3; the pickup foundation is now verified. M4 HUD, hunger/hydration gameplay and complete stamina exhaustion testing remain open; moving to M5 was an owner direction, not full M4 acceptance. New survival rates are requirements, not implemented behavior.
 
@@ -23,7 +23,7 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | M5D pickups | Verified: server range/aim/visibility/ownership checks, partial transfer and exhaustion | Saved Wood pickup Blueprint and isolated test map; E/controller X draft bindings | Competing host/client intent conserves quantities; inventory/remainder replication verified under 100 ms outgoing lag/1% loss | `EWPickup.*`, `EWPlayerController.*`; [verification](M5D_PICKUP_VERIFICATION.md) |
 | M5E selection/details | Verified: first selection, highlight, keyboard/D-pad/stick/mouse navigation, read-only confirmation and safe live refresh | Native scrolling draft, I/Y open and UI focus; physical controller/final art pending | 19 client UI checkpoints pass with replicated authority changes under local packet emulation | `EWInventoryWidget.*`, `EWPlayerController.*`; [verification](M5E_SELECTION_VERIFICATION.md) |
 | M5F equipment | Verified: ownership/slot validation, atomic equip/unequip and occupied-slot swaps; worn weight retained | Equipped rows, action button/R/X and result feedback; opt-in hat fixtures | 12 client checkpoints pass under 100 ms outgoing lag/1% loss; foreign pawn unaffected | `EWEquipmentComponent.*`, inventory/controller/widget; [verification](M5F_EQUIPMENT_VERIFICATION.md) |
-| M5G hotbar | Planned | Planned | Planned | Eight-slot assignment/use/bindings remain open |
+| M5G hotbar | Verified foundation: eight owned-definition shortcuts, assignment/move/clear, safe equipment activation | Permanent native draft HUD; 1–8, contextual mouse buttons and LB combinations; final art/hardware pending | 42 standalone and 42 client checkpoints pass with packet emulation; owner-only bindings and quantity/weight conservation | `EWHotbarComponent.*`, `EWHotbarWidget.*`, inventory/controller; [verification](M5G_HOTBAR_VERIFICATION.md). Other item actions and persistence remain open |
 
 ## Verification ledger
 
@@ -41,7 +41,8 @@ Current reference is the October 5 Authoritative Revision and later direct owner
 | 2026-10-05 | M5D pickup acceptance | Build and five automation tests pass; five single-player and five host/client pickup checkpoints pass, including packet emulation and competing intents; actual E collection and I populated panel inspected. [Scope and evidence](M5D_PICKUP_VERIFICATION.md) |
 | 2026-10-05 | M5E selection/details acceptance | Build and existing five regression tests pass; 19 single-player and 19 replicated client UI checkpoints pass; mouse/details and full-list layout inspected; movement and pawn absence/rebinding probed. [Scope and evidence](M5E_SELECTION_VERIFICATION.md) |
 | 2026-10-05 | M5F equipment transfer acceptance | Build and seven regression tests pass; 12 standalone and 12 client equipment checkpoints pass, including full-capacity rejection, swaps, replay safety and carried-weight conservation. [Scope and evidence](M5F_EQUIPMENT_VERIFICATION.md) |
-| 2026-10-05 | Owner-requested M5 acceptance recheck before advancing | Fresh build and seven automation tests pass; equipment/selection/pickup rerun standalone and network plus 100-intent equipment probe: 74 Play checkpoints pass. No gameplay fix required; M5G remains Planned. [Recheck record](M5F_EQUIPMENT_VERIFICATION.md#owner-requested-acceptance-recheck) |
+| 2026-10-05 | Owner-requested M5 acceptance recheck before advancing | Fresh build and seven automation tests pass; equipment/selection/pickup rerun standalone and network plus 100-intent equipment probe: 74 Play checkpoints pass. No gameplay fix required; M5G remains Planned at that checkpoint. [Recheck record](M5F_EQUIPMENT_VERIFICATION.md#owner-requested-acceptance-recheck) |
+| 2026-10-06 | M5G hotbar foundation and snag review | Build and eight automation tests pass; 42 standalone and 42 client hotbar checks plus 19 selection/12 equipment regressions pass. Review fixes engine-flush modifier reset and narrow-window layout; mouse assignment/clear/focus and rebuilt client HUD inspected. [Evidence and limits](M5G_HOTBAR_VERIFICATION.md) |
 
 Generated logs are local evidence, not tracked artifacts. Historical handoff play claims are not fresh verification. M5B verification applies to the empty local draft; M5C adds the populated checks below. Full gameplay and multiplayer remain pending.
 

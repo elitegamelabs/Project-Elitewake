@@ -3,6 +3,7 @@
 #include "EWInventoryWidget.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
+#include "EWHotbarWidget.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
@@ -14,6 +15,8 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/ScrollBox.h"
 #include "Components/Button.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
 #include "InputCoreTypes.h"
 #include "Styling/SlateColor.h"
 
@@ -34,6 +37,8 @@ void UEWInventoryWidget::NativeConstruct()
 
 	BoundInventory = ResolveInventory();
     BoundEquipment = ResolveEquipment();
+    if (const auto* Pawn = Cast<AEWCharacter>(GetOwningPlayerPawn())) BoundHotbar = Pawn->GetHotbarComponent();
+    if (BoundHotbar) BoundHotbar->OnHotbarChanged.AddDynamic(this, &UEWInventoryWidget::RefreshHotbarAssignments);
     if (BoundEquipment) BoundEquipment->OnEquipmentChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
 	if (BoundInventory)
 	{
@@ -52,6 +57,8 @@ void UEWInventoryWidget::NativeDestruct()
 	BoundInventory = nullptr;
     if (BoundEquipment) BoundEquipment->OnEquipmentChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
     BoundEquipment = nullptr;
+    if (BoundHotbar) BoundHotbar->OnHotbarChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshHotbarAssignments);
+    BoundHotbar = nullptr;
     AnalogDirection = 0;
 	Super::NativeDestruct();
 }
@@ -102,10 +109,24 @@ void UEWInventoryWidget::BuildWidgetTree()
     EquipmentResultText->SetAutoWrapText(true);
     Content->AddChildToVerticalBox(EquipmentResultText);
 
-	UTextBlock* Hint = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHint"));
-	Hint->SetText(FText::FromString(TEXT("Select: Up/Down, D-pad or left stick, mouse\nDetails: Enter / A / click    Equip/remove: R / X / button\nClose: I / Y / B / Esc")));
-	Hint->SetColorAndOpacity(FSlateColor(FLinearColor(0.55f, 0.6f, 0.65f)));
-	Content->AddChildToVerticalBox(Hint)->SetPadding(FMargin(0.0f, 24.0f, 0.0f, 0.0f));
+    HotbarAssignments = WidgetTree->ConstructWidget<UVerticalBox>();
+    Content->AddChildToVerticalBox(HotbarAssignments)->SetPadding(FMargin(0,8));
+    auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+    Label->SetText(FText::FromString(TEXT("Hotbar assignment")));
+    HotbarAssignments->AddChildToVerticalBox(Label);
+    auto* Buttons = WidgetTree->ConstructWidget<UHorizontalBox>();
+    HotbarAssignments->AddChildToVerticalBox(Buttons);
+    for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
+    {
+        auto* Button = WidgetTree->ConstructWidget<UEWHotbarSlotButton>();
+        Button->InitializeSlot(i);
+        Button->OnSlotPressed.AddDynamic(this,&UEWInventoryWidget::AssignHotbarSlot);
+        auto* Text = WidgetTree->ConstructWidget<UTextBlock>();
+        Button->SetContent(Text);
+        auto* ButtonSlot = Buttons->AddChildToHorizontalBox(Button);
+        ButtonSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); ButtonSlot->SetPadding(FMargin(2));
+        HotbarButtons.Add(Button); HotbarButtonLabels.Add(Text);
+    }
 }
 
 void UEWInventoryWidget::RefreshInventory()
@@ -123,6 +144,7 @@ void UEWInventoryWidget::RefreshInventory()
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
         EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
+        HotbarAssignments->SetVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
 
@@ -210,6 +232,7 @@ void UEWInventoryWidget::UpdateSelection()
     EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
     DetailsText->SetText(FText::FromString(SelectedIndex == INDEX_NONE ? TEXT("No item selected") : TEXT("Confirm to view item details")));
     if (bShowingDetails) ConfirmSelection();
+    RefreshHotbarAssignments();
     if (Rows.IsValidIndex(SelectedIndex)) ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], true);
     RevealSelectionAfterFrames = 2;
 }
@@ -220,6 +243,7 @@ void UEWInventoryWidget::ConfirmSelection()
     if (!Item) return;
     const int32 Quantity = DisplayedEntries.IsValidIndex(SelectedIndex) ? DisplayedEntries[SelectedIndex].Quantity : 1;
     bShowingDetails = true;
+    RefreshHotbarAssignments();
     DetailsText->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s\nQuantity %d    Unit weight %.1f kg    Stack limit %d"),
         *Item->DisplayName.ToString(), *Item->Description.ToString(), Quantity,
         Item->UnitWeight, Item->MaxStackSize)));
@@ -233,6 +257,18 @@ void UEWInventoryWidget::ConfirmSelection()
 FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
+    auto* OwnerController = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (Key==EKeys::Gamepad_LeftShoulder)
+    {
+        if (OwnerController) OwnerController->SetHotbarModifierHeld(true);
+        return FReply::Handled();
+    }
+    const int32 HotbarSlotIndex = AEWPlayerController::HotbarSlotForKey(Key,OwnerController && OwnerController->IsHotbarModifierHeld());
+    if (HotbarSlotIndex!=INDEX_NONE)
+    {
+        if (!Event.IsRepeat()) AssignHotbarSlot(HotbarSlotIndex);
+        return FReply::Handled();
+    }
     if (Key == EKeys::I || Key == EKeys::Gamepad_FaceButton_Top || Key == EKeys::Gamepad_FaceButton_Right || Key == EKeys::Escape)
     {
         if (!Event.IsRepeat()) if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->SetInventoryOpen(false);
@@ -243,6 +279,13 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { ConfirmSelection(); return FReply::Handled(); }
     if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left) { if (!Event.IsRepeat()) PerformEquipmentAction(); return FReply::Handled(); }
     return FReply::Handled(); // UI owns input while open, including gameplay bindings.
+}
+
+FReply UEWInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry, const FKeyEvent& Event)
+{
+    if (Event.GetKey()==EKeys::Gamepad_LeftShoulder)
+        if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->SetHotbarModifierHeld(false);
+    return FReply::Handled();
 }
 
 FReply UEWInventoryWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event)
@@ -281,6 +324,15 @@ FReply UEWInventoryWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, co
 void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
     Super::NativeTick(Geometry, DeltaTime);
+    const auto* OwningCharacter = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    UEWHotbarComponent* Hotbar = OwningCharacter ? OwningCharacter->GetHotbarComponent() : nullptr;
+    if (Hotbar != BoundHotbar)
+    {
+        if (BoundHotbar) BoundHotbar->OnHotbarChanged.RemoveDynamic(this,&UEWInventoryWidget::RefreshHotbarAssignments);
+        BoundHotbar=Hotbar;
+        if (BoundHotbar) BoundHotbar->OnHotbarChanged.AddDynamic(this,&UEWInventoryWidget::RefreshHotbarAssignments);
+        RefreshHotbarAssignments();
+    }
     if (UEWInventoryComponent* Inventory = ResolveInventory(); Inventory != BoundInventory)
     {
         if (BoundInventory) BoundInventory->OnInventoryChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
@@ -364,4 +416,31 @@ UEWInventoryComponent* UEWInventoryWidget::ResolveInventory() const
 		return Character->GetInventoryComponent();
 	}
 	return nullptr;
+}
+
+void UEWInventoryWidget::RefreshHotbarAssignments()
+{
+    if (!HotbarAssignments) return;
+    UEWItemDefinition* Item = SelectedItem();
+    HotbarAssignments->SetVisibility(bShowingDetails && Item && BoundHotbar ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    for (int32 i=0; i<HotbarButtons.Num(); ++i)
+    {
+        const bool bBound = Item && BoundHotbar && BoundHotbar->GetBoundItem(i)==Item;
+        HotbarButtonLabels[i]->SetText(FText::FromString(FString::Printf(TEXT("%d%s"),i+1,bBound ? TEXT(" ✓") : TEXT(""))));
+        HotbarButtons[i]->SetToolTipText(FText::FromString(bBound
+            ? FString::Printf(TEXT("Remove this shortcut from slot %d"),i+1)
+            : FString::Printf(TEXT("Assign selected item to slot %d"),i+1)));
+    }
+}
+void UEWInventoryWidget::AssignHotbarSlot(int32 SlotIndex)
+{
+    UEWItemDefinition* Item = SelectedItem();
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (!bShowingDetails || !Item || !BoundHotbar || !Controller) return;
+    EquipmentResultText->SetText(FText::FromString(TEXT("Updating hotbar…")));
+    Controller->RequestHotbarBinding(SlotIndex,BoundHotbar->GetBoundItem(SlotIndex)==Item ? nullptr : Item);
+}
+void UEWInventoryWidget::ShowHotbarResult(EEWHotbarResult Result)
+{
+    if (EquipmentResultText) EquipmentResultText->SetText(UEWHotbarWidget::ResultText(Result));
 }

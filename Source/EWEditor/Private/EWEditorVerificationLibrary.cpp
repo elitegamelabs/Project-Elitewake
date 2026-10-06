@@ -11,7 +11,19 @@
 #include "Framework/Application/SlateApplication.h"
 #include "InputCoreTypes.h"
 
+bool UEWEditorVerificationLibrary::FlushVerificationInput(AEWPlayerController* Controller)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType!=EWorldType::PIE) return false;
+    Controller->FlushPressedKeys();
+    return !Controller->IsHotbarModifierHeld();
+}
+
 bool UEWEditorVerificationLibrary::SendVerificationUIKey(APlayerController* Controller, FName KeyName)
+{
+    return SendVerificationUIKeyEvent(Controller,KeyName,true) && SendVerificationUIKeyEvent(Controller,KeyName,false);
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationUIKeyEvent(APlayerController* Controller, FName KeyName, bool bPressed)
 {
     if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
     const FKey Key(KeyName);
@@ -20,8 +32,17 @@ bool UEWEditorVerificationLibrary::SendVerificationUIKey(APlayerController* Cont
     const FKeyEvent Event(Key, FModifierKeysState(), User, false, 0, 0);
     // Python's editor execution guard forces actor RPCs local. Exercise normal game input.
     TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
-    FSlateApplication::Get().ProcessKeyDownEvent(Event);
-    FSlateApplication::Get().ProcessKeyUpEvent(Event);
+    if (bPressed) FSlateApplication::Get().ProcessKeyDownEvent(Event);
+    else FSlateApplication::Get().ProcessKeyUpEvent(Event);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationHotbarRequest(AEWPlayerController* Controller, int32 Slot, UEWItemDefinition* Item, bool bActivate)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType!=EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
+    if (bActivate) Controller->RequestHotbarActivation(Slot);
+    else Controller->RequestHotbarBinding(Slot,Item);
     return true;
 }
 

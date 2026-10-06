@@ -7,6 +7,7 @@
 #include "Components/Button.h"
 #include "EWInventoryComponent.h"
 #include "EWEquipmentComponent.h"
+#include "EWHotbarComponent.h"
 #include "EWInventoryWidget.generated.h"
 
 class UTextBlock;
@@ -15,6 +16,8 @@ class UEWInventoryComponent;
 class UBorder;
 class UScrollBox;
 class UButton;
+class UEWHotbarSlotButton;
+class UHorizontalBox;
 
 /** Keep mouse actions from taking navigation focus away from the inventory panel. */
 UCLASS()
@@ -32,6 +35,7 @@ class EW_API UEWInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+    void ShowHotbarResult(EEWHotbarResult Result);
     void ShowEquipmentResult(EEWEquipmentResult Result);
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
@@ -43,6 +47,7 @@ public:
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
+    virtual FReply NativeOnKeyUp(const FGeometry& Geometry, const FKeyEvent& Event) override;
     virtual FReply NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event) override;
     virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
     virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
@@ -52,6 +57,18 @@ protected:
 	void RefreshInventory();
 
 private:
+    UFUNCTION()
+    void AssignHotbarSlot(int32 SlotIndex);
+    UFUNCTION()
+    void RefreshHotbarAssignments();
+    UPROPERTY(Transient)
+    TObjectPtr<UEWHotbarComponent> BoundHotbar;
+    UPROPERTY(Transient)
+    TObjectPtr<UVerticalBox> HotbarAssignments;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UEWHotbarSlotButton>> HotbarButtons;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UTextBlock>> HotbarButtonLabels;
     UFUNCTION()
     void PerformEquipmentAction();
     UEWItemDefinition* SelectedItem() const;

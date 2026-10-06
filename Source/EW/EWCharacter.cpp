@@ -4,6 +4,7 @@
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWEquipmentComponent.h"
+#include "EWHotbarComponent.h"
 #include "EWSurvivalComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
@@ -26,6 +27,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
+    HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);

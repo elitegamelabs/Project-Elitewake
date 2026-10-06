@@ -1,6 +1,6 @@
 # Development roadmap
 
-Updated: 2026-10-05. Active project: `C:\UnrealProjects\EW`; repository: `elitegamelabs/Project-Elitewake`.
+Updated: 2026-10-06. Active project: `C:\UnrealProjects\EW`; repository: `elitegamelabs/Project-Elitewake`.
 
 ## Authority and scope
 
@@ -29,7 +29,7 @@ See [milestone status](MILESTONE_STATUS.md), [requirement traceability](DESIGN_B
 | 5D | C++ pickup actor and server-validated interaction; Blueprint placement | 5C | Verified range/ownership/visibility, partial capacity and competing host/client intents with packet emulation; [evidence](M5D_PICKUP_VERIFICATION.md) |
 | 5E | Inventory item selection and read-only details UI | 5D | First valid focus, highlight, keyboard/D-pad/stick/mouse, confirmation and live refresh verified; [evidence](M5E_SELECTION_VERIFICATION.md) |
 | 5F | Replicated equipment component and equip/unequip | Item slot metadata, 5E | Verified server ownership/slot checks, atomic inventory transfers, worn weight and client agreement under packet emulation; [evidence](M5F_EQUIPMENT_VERIFICATION.md) |
-| 5G | Eight-slot hotbar and bindings | 5F and item-use semantics | 1-8 selection; controller LB modifier with face buttons/d-pad; server validates use |
+| 5G | Eight-slot hotbar and bindings | 5F; other actions depend on their item systems | Verified assignment, 1–8/LB activation and authoritative equipment shortcuts; [evidence](M5G_HOTBAR_VERIFICATION.md). Consumables/maps/taming/harpoon restrictions and persistence remain separate gates |
 
 Controller Y and selection now have draft implementation and scripted input verification; physical hardware testing remains open. The M5C primary item scan is verified; packaging remains a separate gate. Character preview and final artwork follow gameplay and suitable assets.
 

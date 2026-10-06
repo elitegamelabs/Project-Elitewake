@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "EWEquipmentComponent.h"
+#include "EWHotbarComponent.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -12,6 +13,7 @@ class UInputAction;
 class UUserWidget;
 class UEWInventoryWidget;
 class AEWPickup;
+class UEWHotbarWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -23,6 +25,22 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    virtual bool InputKey(const FInputKeyEventArgs& Params) override;
+    virtual void FlushPressedKeys() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+    static int32 HotbarSlotForKey(const FKey& Key, bool bControllerModifier);
+    void SetHotbarModifierHeld(bool bHeld) { bHotbarModifierHeld = bHeld; }
+    bool IsHotbarModifierHeld() const { return bHotbarModifierHeld; }
+    UFUNCTION(BlueprintCallable, Category="Hotbar")
+    void RequestHotbarBinding(int32 Slot, UEWItemDefinition* Item);
+    UFUNCTION(BlueprintCallable, Category="Hotbar")
+    void RequestHotbarActivation(int32 Slot);
+    UFUNCTION(Server, Reliable)
+    void ServerBindHotbar(int32 Slot, UEWItemDefinition* Item);
+    UFUNCTION(Server, Reliable)
+    void ServerActivateHotbar(int32 Slot);
+    UFUNCTION(Client, Reliable)
+    void ClientHotbarResult(EEWHotbarResult Result);
     UFUNCTION(BlueprintCallable, Category="Equipment")
     void RequestEquipItem(UEWItemDefinition* Item, EEWEquipmentSlot Slot);
     UFUNCTION(BlueprintCallable, Category="Equipment")
@@ -48,6 +66,10 @@ public:
 	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
+    UPROPERTY(Transient)
+    TObjectPtr<UEWHotbarWidget> HotbarWidget;
+    bool bHotbarModifierHeld = false;
+    TSet<FKey> SuppressedHotbarKeys;
     UPROPERTY(EditAnywhere, Category="Input|Interaction")
     TObjectPtr<UInputAction> InteractAction;
 

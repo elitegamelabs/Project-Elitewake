@@ -19,6 +19,13 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool FlushVerificationInput(AEWPlayerController* Controller);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationHotbarRequest(AEWPlayerController* Controller, int32 Slot, UEWItemDefinition* Item, bool bActivate = false);
+    /** Separate press/release permits real held-LB and release-order regression checks. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationUIKeyEvent(APlayerController* Controller, FName KeyName, bool bPressed);
     /** Normal owned-controller equipment intent with editor script RPC bypass disabled in this scope. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationEquipmentRequest(AEWPlayerController* Controller, UEWItemDefinition* Item, EEWEquipmentSlot Slot, bool bUnequip = false);
