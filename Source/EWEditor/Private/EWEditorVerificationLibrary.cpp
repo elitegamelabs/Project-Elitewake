@@ -10,10 +10,36 @@
 #include "EWPlayerController.h"
 #include "Framework/Application/SlateApplication.h"
 #include "InputCoreTypes.h"
+#include "EWStation.h"
+#include "EWResourceNode.h"
+
+AEWStation* UEWEditorVerificationLibrary::SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource, bool bHold, bool bSingleUse, float Duration)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
+    FActorSpawnParameters Spawn; Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* Target = World->SpawnActor<AEWStation>(bResource ? AEWResourceNode::StaticClass() : AEWStation::StaticClass(), Location, FRotator::ZeroRotator, Spawn);
+    if (Target) { Target->Mode = bHold ? EEWInteractionMode::Hold : EEWInteractionMode::Press; Target->bSingleUse = bSingleUse; Target->HoldDuration = Duration; Target->ForceNetUpdate(); }
+    return Target;
+}
+bool UEWEditorVerificationLibrary::SetVerificationInteractionAvailable(AEWStation* Target, bool bAvailable)
+{
+    if (!Target || !Target->HasAuthority() || Target->GetWorld()->WorldType != EWorldType::PIE) return false;
+    Target->bAvailable = bAvailable; Target->ForceNetUpdate(); return true;
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationInteractionRequest(AEWPlayerController* Controller, AActor* Target, bool bCancel)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
+    if (bCancel) Controller->ServerCancelInteraction();
+    else Controller->ServerInteract(Target);
+    return true;
+}
 
 bool UEWEditorVerificationLibrary::FlushVerificationInput(AEWPlayerController* Controller)
 {
     if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType!=EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
     Controller->FlushPressedKeys();
     return !Controller->IsHotbarModifierHeld();
 }

@@ -17,10 +17,17 @@
 #include "EWCharacter.h"
 #include "EWPickup.h"
 #include "EWInteractable.h"
+#include "EWInteractionComponent.h"
+#include "EWInteractionWidget.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "Engine/AssetManager.h"
 #include "Widgets/Input/SVirtualJoystick.h"
+
+AEWPlayerController::AEWPlayerController()
+{
+    InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
+}
 
 void AEWPlayerController::BeginPlay()
 {
@@ -31,6 +38,8 @@ void AEWPlayerController::BeginPlay()
         if (HotbarWidget) HotbarWidget->AddToPlayerScreen(1);
         SurvivalWidget = CreateWidget<UEWSurvivalWidget>(this, UEWSurvivalWidget::StaticClass());
         if (SurvivalWidget) SurvivalWidget->AddToPlayerScreen(2);
+        InteractionWidget = CreateWidget<UEWInteractionWidget>(this, UEWInteractionWidget::StaticClass());
+        if (InteractionWidget) InteractionWidget->AddToPlayerScreen(3);
     }
 
 	// only spawn touch controls on local player controllers
@@ -80,6 +89,8 @@ void AEWPlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 	{
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AEWPlayerController::Interact);
+        EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &AEWPlayerController::ReleaseInteraction);
+        EnhancedInput->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AEWPlayerController::ReleaseInteraction);
 		if (InventoryAction)
 		{
 			EnhancedInput->BindAction(InventoryAction, ETriggerEvent::Started, this, &AEWPlayerController::ToggleInventory);
@@ -120,8 +131,25 @@ void AEWPlayerController::SetupInputComponent()
 void AEWPlayerController::Interact()
 {
     if (!IsLocalPlayerController() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
+    bLocalInteractionIntent = true;
     if (AActor* Target = FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())))
         ServerInteract(Target);
+}
+
+void AEWPlayerController::ReleaseInteraction()
+{
+    if (!IsLocalPlayerController() || !bLocalInteractionIntent) return;
+    bLocalInteractionIntent = false;
+    ServerCancelInteraction();
+}
+
+void AEWPlayerController::ServerCancelInteraction_Implementation()
+{
+    InteractionComponent->Cancel();
+}
+void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bBlocked)
+{
+    InteractionComponent->SetMenuBlocked(bBlocked);
 }
 
 int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
@@ -137,6 +165,10 @@ int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerMod
 
 bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
 {
+    // Ignore neutral stick/trigger samples so an idle controller cannot steal keyboard prompts.
+    if (Params.Event != IE_Released && Params.Key.IsValid()
+        && (Params.Event != IE_Axis || FMath::Abs(Params.AmountDepressed) > (Params.Key.IsGamepadKey() ? .2f : KINDA_SMALL_NUMBER)))
+        RecordInputDevice(Params.Key);
     if (SuppressedHotbarKeys.Contains(Params.Key))
     {
         if (Params.Event==IE_Released) SuppressedHotbarKeys.Remove(Params.Key);
@@ -165,6 +197,7 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
 
 void AEWPlayerController::FlushPressedKeys()
 {
+    ReleaseInteraction();
     // The engine also flushes on viewport focus loss; custom chord state must follow it.
     bHotbarModifierHeld=false;
     SuppressedHotbarKeys.Reset();
@@ -201,6 +234,7 @@ void AEWPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
     bHotbarModifierHeld=false; SuppressedHotbarKeys.Reset();
     if (HotbarWidget) HotbarWidget->RemoveFromParent();
     if (SurvivalWidget) SurvivalWidget->RemoveFromParent();
+    if (InteractionWidget) InteractionWidget->RemoveFromParent();
     Super::EndPlay(EndPlayReason);
 }
 
@@ -237,13 +271,7 @@ void AEWPlayerController::ClientEquipmentResult_Implementation(EEWEquipmentResul
 
 void AEWPlayerController::ServerInteract_Implementation(AActor* Target)
 {
-    AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
-    if (HasAuthority() && IsValid(Survivor) && Survivor->GetController() == this
-        && IsValid(Target) && Target->Implements<UEWInteractable>()
-        && FEWInteractionTargeting::FindTarget(Survivor) == Target
-        && IEWInteractable::Execute_CanInteract(Target, Survivor)
-        && IEWInteractable::Execute_GetInteractionMode(Target) == EEWInteractionMode::Press)
-        IEWInteractable::Execute_Interact(Target, Survivor);
+    InteractionComponent->Request(Target);
 }
 
 void AEWPlayerController::EWGrantTestWood(int32 Quantity)
@@ -285,6 +313,7 @@ void AEWPlayerController::SetInventoryOpen(bool bOpen)
 
     if (bInventoryInputBlocked != bOpen)
     {
+        ServerSetInteractionMenuBlocked(bOpen);
         FlushPressedKeys();
         SetIgnoreMoveInput(bOpen);
         SetIgnoreLookInput(bOpen);

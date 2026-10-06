@@ -106,6 +106,8 @@ def run_hotbar_verification():
                   (lambda:world_chord_check(0),.1),
                   (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:key('Gamepad_FaceButton_Right'),.4),
                   (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=1),.1),
+                  # Closing UI recaptures the mouse; re-aim after any resulting cursor delta.
+                  (position_for_pickup,2),
                   (lambda:key('Gamepad_FaceButton_Left'),1.5),
                   (lambda:check('X ordinary pickup restored after LB release',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=11),.1),
                   (lambda:key('Gamepad_FaceButton_Bottom'),.15),

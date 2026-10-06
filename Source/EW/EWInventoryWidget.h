@@ -51,6 +51,7 @@ protected:
     virtual FReply NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event) override;
     virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
     virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnPreviewMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
 
 	UFUNCTION()

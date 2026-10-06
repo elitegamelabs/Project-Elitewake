@@ -12,6 +12,7 @@ class APlayerController;
 class UEnhancedInputLocalPlayerSubsystem;
 class UWorld;
 class AActor;
+class AEWStation;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -19,6 +20,13 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWStation* SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource = false, bool bHold = false, bool bSingleUse = false, float Duration = 1.f);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SetVerificationInteractionAvailable(AEWStation* Target, bool bAvailable);
+    /** Ordinary owned-controller RPCs, including intentionally invalid targets. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationInteractionRequest(AEWPlayerController* Controller, AActor* Target, bool bCancel = false);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool FlushVerificationInput(AEWPlayerController* Controller);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")

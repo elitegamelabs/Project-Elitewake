@@ -258,6 +258,7 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
 {
     const FKey Key = Event.GetKey();
     auto* OwnerController = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (OwnerController) OwnerController->RecordInputDevice(Key);
     if (Key==EKeys::Gamepad_LeftShoulder)
     {
         if (OwnerController) OwnerController->SetHotbarModifierHeld(true);
@@ -290,6 +291,8 @@ FReply UEWInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry, const FKeyEv
 
 FReply UEWInventoryWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event)
 {
+    if (FMath::Abs(Event.GetAnalogValue()) > .2f)
+        if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RecordInputDevice(Event.GetKey());
     if (Event.GetKey() == EKeys::Gamepad_LeftY)
     {
         const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? -1 : 1) : 0;
@@ -309,6 +312,12 @@ FReply UEWInventoryWidget::NativeOnMouseMove(const FGeometry& Geometry, const FP
 {
     if (!Event.GetCursorDelta().IsNearlyZero()) { const int32 Row = RowAt(Event.GetScreenSpacePosition()); if (Row != INDEX_NONE) Select(Row); }
     return Super::NativeOnMouseMove(Geometry, Event);
+}
+
+FReply UEWInventoryWidget::NativeOnPreviewMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RecordInputDevice(Event.GetEffectingButton());
+    return Super::NativeOnPreviewMouseButtonDown(Geometry, Event);
 }
 
 FReply UEWInventoryWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)

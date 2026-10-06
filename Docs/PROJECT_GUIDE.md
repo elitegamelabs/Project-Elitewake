@@ -12,12 +12,13 @@ This is a tested gameplay foundation for version 0.01, not a finished pirate san
 | Crouch/prone | Distinct capsules, clearance-gated exits, prone-body collision; client prediction tested | Moving decks, dedicated server, final animation polish |
 | Survival | Authoritative stats; five HUD gauges and empty-stat warnings; carried weight includes gear | Needs drain/damage, drinking/food, five-second stamina tuning, jump/climb costs, regeneration/fall damage |
 | Inventory | 24 slots, stacking, weight, saved item definitions; selection/details and live refresh | Durability/freshness/item instances, preview/tabs, discard and crafting |
-| Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Full interaction prompts/framework and production world content |
+| Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
+| Interaction | E/X prompts, server Press/Hold timing and cancellation; opt-in Inspect fixtures | Actual drinking/station/storage/ship actions, remapping and final presentation |
 | Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
 | Hotbar | Eight owned-definition shortcuts; 1–8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
 | Ship/world/prologue | Current Bible and owner decisions recorded | Production ship loop, Port/missions, navigation and save/load |
 
-The latest gameplay acceptance includes nine native automation tests, 20 standalone/20 client survival HUD checkpoints and 42 network hotbar regressions. See [verification](VERIFICATION.md) for exact scope and historical evidence. Local listen-server packet emulation is not production multiplayer acceptance. Final artwork, physical controller, packaged and dedicated-server coverage remain open.
+The interaction foundation has ten native automation tests and 31 standalone/31 client checkpoints; see [interaction verification](VERIFICATION.md#interaction-foundation). Earlier gameplay acceptance includes 20 standalone/20 client survival HUD checkpoints and 42 network hotbar regressions. See [verification](VERIFICATION.md) for exact scope and historical evidence. Local listen-server packet emulation is not production multiplayer acceptance. Final artwork, physical controller, packaged and dedicated-server coverage remain open.
 
 Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner confirmed recovery while walking as well as stationary. Hunger is currently normalized 0–100%; 50 kg carry capacity is provisional, displayed rather than enforced as a hard cap. Do not claim full M4 completion or invent unspecified needs-damage/scaling rules.
 
@@ -25,7 +26,7 @@ Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner con
 
 ## Next work
 
-Milestone A interaction work is authorized on `milestone-a-interaction`. First generalize pickups and pass unchanged pickup checks; then add device-aware prompts and server-controlled holds with cancellation verification. Merge to main requires verified Play checks and owner approval. One-second fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures are draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
+Milestone A interaction work is authorized on `milestone-a-interaction`. Pickup generalization is checkpointed with unchanged pickup checks passing. Device-aware prompts and server-controlled holds now pass 31 standalone/31 client checkpoints; all ten pickup and 42 network hotbar regressions also pass; see VERIFICATION.md for branch-review evidence. Merge to main requires verified Play checks and owner approval. One-second fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures are draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
 
 Development guide chapter 41 (archived Master §24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; the later conversational M0-M5 labels are not a one-to-one numbering of that list.
 
@@ -142,3 +143,7 @@ Prefer descriptive names. Avoid names tied to the temporary product title when a
 ## Keeping this tidy
 
 Update these three current documents rather than adding a new top-level document for every session. Put new dated acceptance sections into VERIFICATION.md and new decisions into DESIGN_REFERENCE.md. Archive superseded source reviews with an explicit historical label. Delete unused Unreal assets only after package and native-type dependency checks, then rebuild and load the retained maps/Blueprints.
+
+### Trying the interaction fixtures
+
+Start Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_interaction_play_fixtures.py` from the editor Python console. Look at a fixture within 250 cm and follow E/X or Hold E/X. Campfire uses a one-second draft hold; Smithy, Tree and Rock acknowledge a press. Inspect does not harvest or craft. Stop Play to remove the fixtures; the script never saves a map.

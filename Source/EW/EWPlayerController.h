@@ -15,6 +15,8 @@ class UEWInventoryWidget;
 class AEWPickup;
 class UEWHotbarWidget;
 class UEWSurvivalWidget;
+class UEWInteractionComponent;
+class UEWInteractionWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -26,6 +28,16 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    AEWPlayerController();
+    UFUNCTION(BlueprintPure, Category="Interaction")
+    UEWInteractionComponent* GetInteractionComponent() const { return InteractionComponent; }
+    bool IsInventoryOpen() const { return bInventoryInputBlocked; }
+    bool UsesControllerPrompts() const { return bControllerPrompts; }
+    void RecordInputDevice(const FKey& Key) { if (Key.IsValid()) bControllerPrompts = Key.IsGamepadKey(); }
+    bool HasLocalInteractionIntent() const { return bLocalInteractionIntent; }
+    UFUNCTION(BlueprintCallable, Category="Interaction") void ReleaseInteraction();
+    UFUNCTION(Server, Reliable) void ServerCancelInteraction();
+    UFUNCTION(Server, Reliable) void ServerSetInteractionMenuBlocked(bool bBlocked);
     virtual bool InputKey(const FInputKeyEventArgs& Params) override;
     virtual void FlushPressedKeys() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -67,6 +79,11 @@ public:
 	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
+    TObjectPtr<UEWInteractionComponent> InteractionComponent;
+    UPROPERTY(Transient) TObjectPtr<UEWInteractionWidget> InteractionWidget;
+    bool bControllerPrompts = false;
+    bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
     UPROPERTY(Transient)
