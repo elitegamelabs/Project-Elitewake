@@ -63,6 +63,7 @@ void AEWPlayerController::SetupInputComponent()
 		InventoryAction->ValueType = EInputActionValueType::Boolean;
 		RuntimeInventoryMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Inventory_Runtime"));
 		RuntimeInventoryMappingContext->MapKey(InventoryAction, EKeys::I);
+        RuntimeInventoryMappingContext->MapKey(InventoryAction, EKeys::Gamepad_FaceButton_Top);
 	}
 
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
@@ -154,6 +155,15 @@ void AEWPlayerController::SetInventoryOpen(bool bOpen)
 		return;
 	}
 
+    if (bInventoryInputBlocked != bOpen)
+    {
+        FlushPressedKeys();
+        SetIgnoreMoveInput(bOpen);
+        SetIgnoreLookInput(bOpen);
+        bInventoryInputBlocked = bOpen;
+        if (bOpen && GetPawn()) GetPawn()->ConsumeMovementInputVector();
+    }
+
 	if (bOpen)
 	{
 		if (!InventoryWidget)
@@ -165,11 +175,12 @@ void AEWPlayerController::SetInventoryOpen(bool bOpen)
 			InventoryWidget->AddToPlayerScreen(20);
 		}
 
-		FInputModeGameAndUI InputMode;
-		InputMode.SetHideCursorDuringCapture(false);
+		FInputModeUIOnly InputMode;
+        if (InventoryWidget) InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
 		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 		SetInputMode(InputMode);
 		SetShowMouseCursor(true);
+        if (InventoryWidget) InventoryWidget->SetUserFocus(this);
 	}
 	else
 	{

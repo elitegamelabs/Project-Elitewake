@@ -7,6 +7,29 @@
 #include "Engine/World.h"
 #include "Engine/NetDriver.h"
 #include "EWPickup.h"
+#include "Framework/Application/SlateApplication.h"
+#include "InputCoreTypes.h"
+
+bool UEWEditorVerificationLibrary::SendVerificationUIKey(APlayerController* Controller, FName KeyName)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    const FKey Key(KeyName);
+    if (!Key.IsValid()) return false;
+    const int32 User = FSlateApplication::Get().GetUserIndexForController(Controller->GetLocalPlayer()->GetControllerId());
+    const FKeyEvent Event(Key, FModifierKeysState(), User, false, 0, 0);
+    FSlateApplication::Get().ProcessKeyDownEvent(Event);
+    FSlateApplication::Get().ProcessKeyUpEvent(Event);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationUIAnalog(APlayerController* Controller, float Value)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    const int32 User = FSlateApplication::Get().GetUserIndexForController(Controller->GetLocalPlayer()->GetControllerId());
+    const FAnalogInputEvent Event(EKeys::Gamepad_LeftY, FModifierKeysState(), User, false, 0, 0, Value);
+    FSlateApplication::Get().ProcessAnalogInputEvent(Event);
+    return true;
+}
 
 AEWPickup* UEWEditorVerificationLibrary::SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity)
 {

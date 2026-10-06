@@ -27,11 +27,11 @@ See [milestone status](MILESTONE_STATUS.md), [requirement traceability](DESIGN_B
 | 5B | Native UMG draft; Enhanced Input inventory toggle | 5A, local controller | Build; empty panel; I open/close; cursor and movement/camera recovery; reopen |
 | 5C | Basic Wood test Data Asset and opt-in authority grant | Verified 5B; asset registration | Verified saved fixture scan/load, 250-stack boundary/capacity/weight automation and populated/live-refresh Play panel; normal Play starts empty. [Evidence](M5C_INVENTORY_VERIFICATION.md) |
 | 5D | C++ pickup actor and server-validated interaction; Blueprint placement | 5C | Verified range/ownership/visibility, partial capacity and competing host/client intents with packet emulation; [evidence](M5D_PICKUP_VERIFICATION.md) |
-| 5E | Inventory item selection and interaction UI | 5D | Keyboard/controller selection, visible highlight; exact operations defined per slice |
+| 5E | Inventory item selection and read-only details UI | 5D | First valid focus, highlight, keyboard/D-pad/stick/mouse, confirmation and live refresh verified; [evidence](M5E_SELECTION_VERIFICATION.md) |
 | 5F | Replicated equipment component and equip/unequip | Item slot metadata, 5E | Server validates ownership/slot; inventory transfer atomic; weight conserved; client views agree |
 | 5G | Eight-slot hotbar and bindings | 5F and item-use semantics | 1-8 selection; controller LB modifier with face buttons/d-pad; server validates use |
 
-Controller Y and selection are Design Bible requirements; the current I-only panel is an incremental draft. Establish an asset-manager scan for item Data Assets before relying on primary asset discovery or packaging. Character preview and final artwork follow gameplay and suitable assets.
+Controller Y and selection now have draft implementation and scripted input verification; physical hardware testing remains open. The M5C primary item scan is verified; packaging remains a separate gate. Character preview and final artwork follow gameplay and suitable assets.
 
 ## Bible build order and remaining gates
 

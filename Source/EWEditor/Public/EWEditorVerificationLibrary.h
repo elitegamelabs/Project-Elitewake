@@ -17,6 +17,11 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    /** Route normal Slate input to the focused local PIE UI, including gamepad keys/axes. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationUIKey(APlayerController* Controller, FName KeyName);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationUIAnalog(APlayerController* Controller, float Value);
     /** PIE authority-only pickup fixture; not part of game targets. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor Verification")
     static AEWPickup* SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity);

@@ -22,6 +22,9 @@ class AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    /** Local panel lifecycle; no inventory mutation. */
+    UFUNCTION(BlueprintCallable, Category="Inventory")
+    void SetInventoryOpen(bool bOpen);
     /** Local interaction intent. The owned controller forwards only a target, never item/quantity. */
     UFUNCTION(BlueprintCallable, Category="Interaction")
     void Interact();
@@ -66,6 +69,7 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UEWInventoryWidget> InventoryWidget;
+    bool bInventoryInputBlocked = false;
 
 	/** If true, the player will use UMG touch controls even if not playing on mobile platforms */
 	UPROPERTY(EditAnywhere, Config, Category = "Input|Touch Controls")
@@ -82,6 +86,5 @@ protected:
 
 	/** Opens or closes the inventory and changes local mouse/input focus. */
 	void ToggleInventory();
-	void SetInventoryOpen(bool bOpen);
 
 };
