@@ -3,6 +3,9 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EWEditorVerificationLibrary.generated.h"
 
+class AEWPickup;
+class UEWItemDefinition;
+
 class APlayerController;
 class UEnhancedInputLocalPlayerSubsystem;
 class UWorld;
@@ -14,6 +17,9 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    /** PIE authority-only pickup fixture; not part of game targets. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor Verification")
+    static AEWPickup* SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity);
     /** Access normal Enhanced Input injection for scripted editor Play verification. */
     UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
     static UEnhancedInputLocalPlayerSubsystem* GetPlayerInputSubsystem(APlayerController* Controller);

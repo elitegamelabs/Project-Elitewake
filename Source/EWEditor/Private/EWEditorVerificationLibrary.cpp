@@ -6,6 +6,16 @@
 #include "Components/BoxComponent.h"
 #include "Engine/World.h"
 #include "Engine/NetDriver.h"
+#include "EWPickup.h"
+
+AEWPickup* UEWEditorVerificationLibrary::SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
+    AEWPickup* Pickup = World->SpawnActor<AEWPickup>(Location, FRotator::ZeroRotator);
+    Pickup->ItemDefinition = Item;
+    Pickup->Quantity = Quantity;
+    return Pickup;
+}
 
 UEnhancedInputLocalPlayerSubsystem* UEWEditorVerificationLibrary::GetPlayerInputSubsystem(APlayerController* Controller)
 {

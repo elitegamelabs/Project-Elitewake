@@ -12,6 +12,7 @@
 #include "EW.h"
 #include "EWInventoryWidget.h"
 #include "EWCharacter.h"
+#include "EWPickup.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "Engine/AssetManager.h"
@@ -45,6 +46,15 @@ void AEWPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
+    if (!InteractAction)
+    {
+        InteractAction = NewObject<UInputAction>(this, TEXT("IA_Interact_Runtime"));
+        InteractAction->ValueType = EInputActionValueType::Boolean;
+        RuntimeInteractionMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Interact_Runtime"));
+        RuntimeInteractionMappingContext->MapKey(InteractAction, EKeys::E);
+        RuntimeInteractionMappingContext->MapKey(InteractAction, EKeys::Gamepad_FaceButton_Left);
+    }
+
 	// Milestone 5 fallback: create an Enhanced Input action in code so the draft works
 	// immediately. A designer-authored IA_Inventory asset can be assigned later.
 	if (!InventoryAction)
@@ -57,6 +67,7 @@ void AEWPlayerController::SetupInputComponent()
 
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 	{
+        EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AEWPlayerController::Interact);
 		if (InventoryAction)
 		{
 			EnhancedInput->BindAction(InventoryAction, ETriggerEvent::Started, this, &AEWPlayerController::ToggleInventory);
@@ -69,6 +80,9 @@ void AEWPlayerController::SetupInputComponent()
 		// Add Input Mapping Contexts
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
+
+            if (RuntimeInteractionMappingContext)
+                Subsystem->AddMappingContext(RuntimeInteractionMappingContext, 1);
 			if (RuntimeInventoryMappingContext)
 			{
 				Subsystem->AddMappingContext(RuntimeInventoryMappingContext, 1);
@@ -89,6 +103,18 @@ void AEWPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AEWPlayerController::Interact()
+{
+    if (!IsLocalPlayerController() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
+    if (AEWPickup* Target = AEWPickup::FindTarget(Cast<AEWCharacter>(GetPawn())))
+        ServerInteract(Target);
+}
+
+void AEWPlayerController::ServerInteract_Implementation(AEWPickup* Target)
+{
+    if (IsValid(Target)) Target->TryPickup(Cast<AEWCharacter>(GetPawn()));
 }
 
 void AEWPlayerController::EWGrantTestWood(int32 Quantity)

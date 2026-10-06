@@ -10,6 +10,7 @@ class UInputMappingContext;
 class UInputAction;
 class UUserWidget;
 class UEWInventoryWidget;
+class AEWPickup;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -21,11 +22,23 @@ class AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    /** Local interaction intent. The owned controller forwards only a target, never item/quantity. */
+    UFUNCTION(BlueprintCallable, Category="Interaction")
+    void Interact();
+
+    UFUNCTION(Server, Reliable)
+    void ServerInteract(AEWPickup* Target);
+
 	/** Explicit editor-only fixture grant. No client RPC or normal-game starting items. */
 	UFUNCTION(Exec)
 	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
+    UPROPERTY(EditAnywhere, Category="Input|Interaction")
+    TObjectPtr<UInputAction> InteractAction;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UInputMappingContext> RuntimeInteractionMappingContext;
 
 	/** Input Mapping Contexts */
 	UPROPERTY(EditAnywhere, Category ="Input|Input Mappings")
