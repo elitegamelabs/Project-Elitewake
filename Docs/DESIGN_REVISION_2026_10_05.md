@@ -95,3 +95,7 @@ Authority: direct owner message in this conversation, October 5, 2026. This clar
 6. The sale's 250 Copper is added to the player's funds as soon as the introduction mission is complete. Do not credit it at the earlier prologue/Village arrival or silently credit it earlier during the tour.
 
 Room price, any later room-payment transaction, refusal/revisit behavior for the sale, and exact mission-completion trigger beyond this sequence remain unspecified. Do not invent a room deduction, forced sale, or extra quest. The Journal remains a tutorial/reference system; a guided introduction mission does not automatically convert it into a quest log.
+
+## October 6 owner clarification: stamina recovery
+
+When asked whether recovery should be stationary-only or also occur while walking, the owner selected **also while walking**. This supersedes the stationary-only part of §30.15 for implementation. The original DOCX remains unchanged. Base five-second tuning, upgraded-capacity scaling and other survival mechanics retain their separate implementation/clarification gates.

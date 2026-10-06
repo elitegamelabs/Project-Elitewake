@@ -17,6 +17,7 @@ void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UEWSurvivalComponent, MaxHealth);
 	DOREPLIFETIME(UEWSurvivalComponent, Health);
 	DOREPLIFETIME(UEWSurvivalComponent, MaxStamina);
+    DOREPLIFETIME_CONDITION(UEWSurvivalComponent, StaminaExhaustionCount, COND_OwnerOnly);
 	DOREPLIFETIME(UEWSurvivalComponent, Stamina);
 	DOREPLIFETIME(UEWSurvivalComponent, Hunger);
 	DOREPLIFETIME(UEWSurvivalComponent, Hydration);
@@ -37,6 +38,8 @@ void UEWSurvivalComponent::UpdateStamina(bool bIsSprinting, float DeltaSeconds)
 		? -SprintStaminaDrainRate * DeltaSeconds
 		: StaminaRecoveryRate * DeltaSeconds;
 	Stamina = FMath::Clamp(Stamina + Delta, 0.0f, MaxStamina);
+    if (PreviousStamina > KINDA_SMALL_NUMBER && Stamina <= KINDA_SMALL_NUMBER)
+        StaminaExhaustionCount = StaminaExhaustionCount == MAX_int32 ? 0 : StaminaExhaustionCount + 1;
 
 	if (!FMath::IsNearlyEqual(PreviousStamina, Stamina))
 	{

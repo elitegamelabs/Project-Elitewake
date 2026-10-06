@@ -16,7 +16,7 @@ See [milestone status](MILESTONE_STATUS.md), [requirement traceability](DESIGN_B
 | M1 | Movement, jump, sprint, Enhanced Input | Repeat network validation; controller coverage |
 | M2 | Crouch/prone animations, distinct stance clearance and prone body movement query | Collision fixtures/slope/local packet emulation verified; physical controller and final animation polish remain; [collision record](M2_COLLISION_VERIFICATION.md) |
 | M3 | First/third-person cameras and locomotion states | Final camera/animation presentation and controller binding |
-| M4 | Replicated survival values and stamina | Final HUD, environmental needs and multiplayer validation |
+| M4 | Replicated survival values/stamina; survival HUD gauges and empty-stat notices | [HUD return slice](M4_HUD_VERIFICATION.md); current-stat/client presentation verified, final art and complete needs/stamina gameplay remain open |
 | M5 | Items, inventory, equipment | In Progress; see slices below |
 
 ## M5: small, testable slices
@@ -37,7 +37,7 @@ Controller Y and selection now have draft implementation and scripted input veri
 
 Bible §24.3 specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Village/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; the later conversational M0-M5 labels are not a one-to-one numbering of that list.
 
-M4 remains partially implemented. Preserve a separate survival/HUD return slice for health/stamina/hunger/hydration/weight display, activity-dependent hunger/hydration drain, starvation/dehydration consequences and fresh/salt drinking. October §30.15 now specifies base sprint/recovery timing, 15-minute needs depletion, warnings and regeneration; upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
+M4 remains partially implemented. The [HUD return slice](M4_HUD_VERIFICATION.md) now supplies health/stamina/food/hydration/weight gauges and empty-stat warnings. Activity-dependent needs drain, starvation/dehydration consequences, fresh/salt drinking, five-second base stamina timing, jump/climb costs and regeneration remain open. October 6 owner clarification permits recovery while walking. Upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
 
 ## Proposed 0.01 work packages after M5
 

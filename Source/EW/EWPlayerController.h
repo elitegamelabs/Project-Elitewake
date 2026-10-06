@@ -14,6 +14,7 @@ class UUserWidget;
 class UEWInventoryWidget;
 class AEWPickup;
 class UEWHotbarWidget;
+class UEWSurvivalWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -66,6 +67,8 @@ public:
 	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
+    UPROPERTY(Transient)
+    TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;

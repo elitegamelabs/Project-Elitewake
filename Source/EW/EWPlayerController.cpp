@@ -12,6 +12,7 @@
 #include "EW.h"
 #include "EWInventoryWidget.h"
 #include "EWHotbarWidget.h"
+#include "EWSurvivalWidget.h"
 #include "InputKeyEventArgs.h"
 #include "EWCharacter.h"
 #include "EWPickup.h"
@@ -27,6 +28,8 @@ void AEWPlayerController::BeginPlay()
     {
         HotbarWidget = CreateWidget<UEWHotbarWidget>(this, UEWHotbarWidget::StaticClass());
         if (HotbarWidget) HotbarWidget->AddToPlayerScreen(1);
+        SurvivalWidget = CreateWidget<UEWSurvivalWidget>(this, UEWSurvivalWidget::StaticClass());
+        if (SurvivalWidget) SurvivalWidget->AddToPlayerScreen(2);
     }
 
 	// only spawn touch controls on local player controllers
@@ -196,6 +199,7 @@ void AEWPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     bHotbarModifierHeld=false; SuppressedHotbarKeys.Reset();
     if (HotbarWidget) HotbarWidget->RemoveFromParent();
+    if (SurvivalWidget) SurvivalWidget->RemoveFromParent();
     Super::EndPlay(EndPlayReason);
 }
 

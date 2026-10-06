@@ -64,6 +64,10 @@ public:
 	UFUNCTION(BlueprintPure, Category="Survival|Stamina")
 	float GetMaxStamina() const { return MaxStamina; }
 
+    /** Retained exhaustion event so an owning HUD cannot miss a brief replicated zero. */
+    UFUNCTION(BlueprintPure, Category="Survival|Stamina")
+    int32 GetStaminaExhaustionCount() const { return StaminaExhaustionCount; }
+
 	UFUNCTION(BlueprintPure, Category="Survival|Needs")
 	float GetHunger() const { return Hunger; }
 
@@ -119,5 +123,7 @@ protected:
 	void OnRep_SurvivalStats();
 
 private:
+    UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
+    int32 StaminaExhaustionCount = 0;
 	void NotifyStatsChanged();
 };
