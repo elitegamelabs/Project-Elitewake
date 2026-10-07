@@ -30,7 +30,7 @@ The October 5, 2026 **Master Game Design Bible** is an archive. Its section numb
 2. Clone this repository and run `git lfs pull`.
 3. Open `EW.uproject` and allow the native modules to build.
 
-Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations are declared in `EW.uproject`; shared Unreal/Scenario connector endpoints are in `.codex/config.toml` and `.cursor/mcp.json`. Root `.mcp.json` is local and ignored.
+Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations are declared in `EW.uproject`; shared Unreal/Scenario connector endpoints are in `.codex/config.toml` and `.cursor/mcp.json`. Root `.mcp.json` is local and ignored. Open the active `C:\UnrealProjects\EW\EW.uproject` directly or use Browse in Unreal's Project Browser; both copies display EW, so verify the path. A clearly named shortcut to the active file avoids opening the old backup.
 
 ## Repository
 
