@@ -4,7 +4,7 @@ A ship-centered pirate survival sandbox by **Elite Game Labs**, built in **Unrea
 
 Ships are the center of play: transportation, shelter, storage, workshop, combat platform, crew headquarters and progression, and they are highly customizable. Land bases are allowed but temporary, and players and wildlife can raid them. The loop is Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. (The former "THE SHIP IS HOME" slogan was retired by owner decision on October 6, 2026.)
 
-The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar, contextual interaction, fresh-water drinking, hand-gathered resources and berry food, equipped-hatchet trees, pickaxe mining and the survival HUD have verified foundations. Eating/freshness, the production ship loop, complete survival gameplay, remaining gathering/tools, crafting, persistence and final presentation remain open. Harvesting animations are recorded for later integration.
+The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar, contextual interaction, fresh-water drinking, hand-gathered resources and berry food, equipped-hatchet trees, pickaxe mining and the survival HUD have verified foundations. Native eating/freshness has opt-in automated coverage, but saved berries and player-facing consumption are not connected yet. The production ship loop, complete survival gameplay, remaining gathering/tools, crafting, persistence and final presentation remain open. Harvesting animations are recorded for later integration.
 
 ## Start here
 
@@ -30,7 +30,7 @@ The October 5, 2026 **Master Game Design Bible** is an archive. Its section numb
 2. Clone this repository and run `git lfs pull`.
 3. Open `EW.uproject` and allow the native modules to build.
 
-Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations and shared connector endpoints are declared in the project/configuration files.
+Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations are declared in `EW.uproject`; shared Unreal/Scenario connector endpoints are in `.codex/config.toml` and `.cursor/mcp.json`. Root `.mcp.json` is local and ignored.
 
 ## Repository
 

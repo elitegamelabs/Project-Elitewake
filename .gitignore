@@ -1,3 +1,6 @@
+# Local connector configuration (shared endpoints live in .codex/ and .cursor/)
+/.mcp.json
+
 # Visual Studio and IDE state
 .vs/
 .vscode/
@@ -42,4 +45,3 @@ Thumbs.db
 # Optional local plugins marketplace cache/build output
 Plugins/*/Binaries/
 Plugins/*/Intermediate/
-

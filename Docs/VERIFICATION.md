@@ -14,6 +14,7 @@ Updated October 7, 2026. Each section records a dated implementation slice and i
 - [Integrated M5D–gathering acceptance](#integrated-acceptance)
 - [Food transaction and freshness foundation](#food-foundation)
 - [Resource/ecology source review](#resource-ecology-review)
+- [October 7 repository audit](#repository-audit-october-7)
 
 ## Foundation history
 
@@ -527,3 +528,27 @@ Read the owner-supplied `C:\Users\elite\OneDrive\Desktop\Elitewake\Elitewake_Wor
 Owner identifies four updated resource regions (D058) and explicitly approves Azren/Marad naming with existing gameplay effects preserved (D059). The detailed catalog, new fauna placements, farming candidates, numerical balance, sample recipes and Manatee aquatic-plant proposal retain their stated draft/TBD status. The obsolete closing ship slogan and ambiguous passive-Manta table are resolved by existing owner/Shared authority. Four resource regions do not assign the four Ports' biomes/identities/vendor stock. Review conclusions are recorded in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md#resource-ecology); PROJECT_GUIDE.md records the next data-authoring step and distinguishes approved names from still-unmodified saved fixture displays.
 
 The stated Port changes were already committed locally at `9c383d7` when this review began, rather than pending in the working tree. Confirmed D057 and PROJECT_GUIDE wording preserve PvP safety, specialized vendors, Ferryman links, prologue arrival and the Innkeeper introduction mission, and retire "THE SHIP IS HOME". This review changes documentation only; no code, assets, engine processes, branch, source DOCX or remote repository changes. No new gameplay acceptance is claimed. Owner editor preferences and local MCP configuration remain excluded.
+
+<a id="repository-audit-october-7"></a>
+
+## October 7 repository audit — prepared for owner review
+
+Scope: fetched remote tips, inventoried all **554 tracked files / 174 directories**, scanned 114 text files and parsed all 30 Python scripts, compared exact file hashes, and queried hard/soft/management package dependencies for all 438 registered assets. No exact duplicate files or redirectors were found. Folder/file inventory and package details are local artifacts under `Saved/RepositoryFolderAudit.json`, `Saved/RepositoryDependencyAudit.json` and `Saved/RepositoryCleanupReview.md`; generated audit output is not published.
+
+| Area | Cleanup and disposition |
+| --- | --- |
+| Root, `.codex/`, `.cursor/` | README status clarified; root `.mcp.json` ignored. Shared configurations belong to different clients, contain public endpoints and are retained. LFS integrity passed. |
+| `Config/` | Shared Content Browser path corrected from absent ThirdPersonCPP to Elitewake. Owner's six-line `DefaultEditor.ini` additions remain unchanged and excluded; its older SimpleMapName still needs separate correction/review. Engine startup/game maps already point to the retained ThirdPerson map. |
+| `Docs/`, `Docs/ARCHIVE/` | Repeated status and fixture instructions condensed; prospective directory lists removed; decision table repaired; station/food status reconciled; approval gate recorded as D061. Historical verification and source evidence retained. |
+| `Source/EW/`, `Source/EWEditor/` | Runtime/editor modules, domain folders and native tests retained. No gameplay code changed in this cleanup. |
+| `Scripts/Setup/`, `Scripts/Verification/` | All 30 distinct opt-in authoring and acceptance scripts retained; Python syntax and documented paths checked. Stable historical Azul fixture identity intentionally awaits coordinated display migration. |
+| `Content/LevelPrototyping/Interactable/` | Removed 13 unused Door/JumpPad/Target template assets after zero outside hard/soft/management referencers and no textual source/script/config references. Removed target also eliminates one pre-existing missing material dependency. Shared prototype meshes/materials retained. |
+| Other `Content/` folders | Active foundation, game content, full imported animation library and FBX sources retained. External actor/object packages remain with their map. No folder rename or manual package-reference rewrite. |
+
+After removal, **425 registered assets / 427 retained binary/source files** remain. Nine retained Blueprints compile, and both `/Game/ThirdPerson/Lvl_ThirdPerson` and `/Game/Elitewake/Maps/Lvl_M5PickupTest` load successfully. These checks do not establish final animation quality, packaged/dedicated-server behavior or new food Play acceptance.
+
+`EWEditor Win64 Development` rebuilt successfully, and all **15 native Elitewake tests passed** in `Saved/Logs/RepositoryCleanupNativeOct7.log`. All 114 local Markdown links/anchors and 427 retained asset files checked successfully; Python syntax, LFS integrity and diff whitespace checks passed. Existing garbled range/section characters in PROJECT_GUIDE.md were corrected. Initial engine cache access failed under the filesystem sandbox; the successful authorized retry produced the dependency and retained-content results above.
+
+**Open imported-content finding:** 15 pre-existing missing package references remain across nine animation/skeleton/mesh packages. Missing names include Manny/Quinn preview/source meshes, editable attack source animations and the Free Animation Library demo Control Rig. All affected assets loaded, but playback/reimport consequences are not established. Do not delete the approved library or invent replacement animation sources to hide the finding; resolve through an explicit import/repair pass. The repository is not declared free of asset-reference issues.
+
+**Publication:** `main`/`origin/main` remain `9443259`; remote food branch is `6bc2eee` with food foundation, Port terminology and ecology/mid-1700s direction already published. Cleanup is local on `codex/repository-audit-cleanup`; no push or main merge performed. The owner requires approval before pushing this result. `Config/DefaultEditor.ini` retains SHA256 `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`; local `.mcp.json` remains excluded.

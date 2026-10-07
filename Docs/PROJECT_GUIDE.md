@@ -11,17 +11,17 @@ This is a tested gameplay foundation for version 0.01, not a finished pirate san
 | Locomotion/camera | Move, jump, sprint, first/third-person; locomotion states | Final perspective animation and hardware coverage |
 | Crouch/prone | Distinct capsules, clearance-gated exits, prone-body collision; client prediction tested | Moving decks, dedicated server, final animation polish |
 | Survival | Authoritative stats/HUD/weight; contextual fresh-water drinking | Needs drain/damage, food, other water qualities, five-second stamina tuning, jump/climb costs, regeneration/fall damage |
-| Inventory | 24 slots, stacking, weight, saved item definitions; selection/details and live refresh | Durability/freshness/item instances, preview/tabs, discard and crafting |
+| Inventory | 24 slots, stacking, weight, saved item definitions; selection/details and live refresh | Player-facing freshness and consumption, durability/persistence, preview/tabs, discard and crafting |
 | Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
 | Interaction | M6 foundation: E/X prompts, server Press/Hold timing/cancellation, fresh-water action; opt-in Inspect fixtures | Actual station/storage/ship/vendor actions, remapping and final presentation |
 | Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
 | Gathering | Hand fiber/stick/berry pools use E/X; equipped-hatchet trees and pickaxe nodes use Left Mouse/RT and server validation | Production vegetation/ore distribution/balance, berry eating/freshness, regrowth, bare-hand punching/injuries, deferred swing presentation and durability |
-| Hotbar | Eight owned-definition shortcuts; 1â€“8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
-| Ship/world/prologue | Ships remain central and highly customizable; former Village rules carry forward under the **Port** name; "THE SHIP IS HOME" is retired | Production ship loop, four weather-biome Port islands, missions, navigation and save/load |
+| Hotbar | Eight owned-definition shortcuts; 1–8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
+| Ship/world/prologue | Ships remain central and highly customizable; four **Ports** retain PvP safety, specialized vendors, Ferryman links and introduction rules; "THE SHIP IS HOME" is retired | Production ship loop, four weather-biome Port islands, missions, navigation and save/load |
 
-The interaction foundation has ten native automation tests and 31 standalone/31 client checkpoints; see [interaction verification](VERIFICATION.md#interaction-foundation). Earlier gameplay acceptance includes 20 standalone/20 client survival HUD checkpoints and 42 network hotbar regressions. See [verification](VERIFICATION.md) for exact scope and historical evidence. Local listen-server packet emulation is not production multiplayer acceptance. Final artwork, physical controller, packaged and dedicated-server coverage remain open.
+The original interaction acceptance run had ten native automation tests and 31 standalone/31 client checkpoints; see [interaction verification](VERIFICATION.md#interaction-foundation). Earlier gameplay acceptance includes 20 standalone/20 client survival HUD checkpoints and 42 network hotbar regressions. See [verification](VERIFICATION.md) for exact scope and historical evidence. Local listen-server packet emulation is not production multiplayer acceptance. Final artwork, physical controller, packaged and dedicated-server coverage remain open.
 
-Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner confirmed recovery while walking as well as stationary. Hunger is currently normalized 0â€“100%; 50 kg carry capacity is provisional, displayed rather than enforced as a hard cap. Do not claim full M4 completion or invent unspecified needs-damage/scaling rules.
+Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner confirmed recovery while walking as well as stationary. Hunger is currently normalized 0–100%; 50 kg carry capacity is provisional, displayed rather than enforced as a hard cap. Do not claim full M4 completion or invent unspecified needs-damage/scaling rules.
 
 <a id="next-work"></a>
 
@@ -31,19 +31,17 @@ The October 7 [resource/ecology draft review](DESIGN_REFERENCE.md#resource-ecolo
 
 The October 7 [food transaction/freshness foundation](VERIFICATION.md#food-foundation) adds native, opt-in owned-unit eating and real-time inventory aging. Owner D056 specifies twenty real minutes, then conversion to an inedible toxic crafting resource. Later pickups use separate freshness batches so each retains its full lifetime. Existing saved berries are still disabled for eating and have no configured lifetime; this checkpoint does not change their Play behavior. **Next:** author the toxic/berry fixture data, connect inventory/hotbar eating and freshness presentation, then verify standalone and client requests before publishing the complete food flow. Toxic recipes and persistence remain separate work.
 
-The October 7 [integrated acceptance pass](VERIFICATION.md#integrated-acceptance) verified one continuous collected-inventory flow through selection, hotbar assignment/tool swaps, chopping/mining/berries, fresh water, held interaction and unequip/re-equip: 29 standalone and 29 client checkpoints, plus all 14 native tests. No gameplay fix was needed. This verifies the existing foundations together; the remaining food, survival, crafting, production-content and presentation work below is unchanged.
+**Verified baseline:** M6 interaction/fresh-water foundations and hand resources, equipped-hatchet trees, pickaxe mining and berry gathering. The [integrated acceptance pass](VERIFICATION.md#integrated-acceptance) covered one continuous flow with 29 standalone/29 client checkpoints and the then-current 14 native tests. The later [food foundation](VERIFICATION.md#food-foundation) brought the native suite to 15 tests; it has no player-facing acceptance yet. Dated evidence and limitations belong in [VERIFICATION.md](VERIFICATION.md), rather than repeated release summaries here.
 
-**M6 interaction foundation is verified complete for the October 6 run.** Hand resources, berry gathering, equipped-hatchet trees and pickaxe mining are verified; [hand evidence](VERIFICATION.md#hand-gathering), [berry evidence](VERIFICATION.md#berry-gathering), [hatchet evidence](VERIFICATION.md#hatchet-harvesting), [mining evidence](VERIFICATION.md#pickaxe-mining). Bare hands remain temporarily disabled until injury/treatment rules are resolved. Berry eating/freshness and production resource content remain open alongside the next crafting/skills package. Tree harvesting/mining use Attack; detailed resource/tool/injury decisions stay explicit before their dependent implementation. Harvesting animations are explicitly deferred by the owner and tracked below. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
+**Publication review:** `main` is at `9443259`; food, Port terminology and ecology/technology documentation are already published on `origin/codex/food-consumption-foundation` through `6bc2eee`, not merged into `main`. The repository cleanup is prepared locally on `codex/repository-audit-cleanup`. The owner requires approval before its push; older standing publication approvals do not override this request. Root `.mcp.json` is ignored and local editor changes remain excluded.
 
-Milestone A is approved and published on main at `adc9693` after the owner said "Let's continue. I approve." Device-aware prompts and server-controlled holds passed 31 standalone/31 client checkpoints, with all ten pickup and 42 network hotbar regressions passing. The additional survival return slice is fresh-water drinking on `codex/fresh-water-interaction`: E/X refills hydration instantly at an eligible visible source, without requiring prone. Salt-water consequences remain TBD. One-second Inspect fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures remain draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. The owner confirmed October 7 that the Village-to-Port change is terminology only: PvP safety, specialized vendors, Ferryman links, prologue arrival and the Innkeeper introduction mission all carry forward unchanged.
-
-Development guide chapter 41 (archived Master Â§24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; conversational milestone labels are not a one-to-one numbering of that list. For the owner's October 6 auto-approved run through M6, M6 means the recorded interaction-framework package: shared pickup/world targeting, E/X prompts, Press/Hold authority and cancellation, Inspect-only resource/station fixtures, plus the fresh-water return slice. It does not include gathering/crafting or production ship/vendor/storage actions. See [M6 closeout](VERIFICATION.md#m6-interaction-closeout).
+Development guide chapter 41 (archived Master §24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; conversational milestone labels are not a one-to-one numbering of that list. For the owner's October 6 auto-approved run through M6, M6 means the recorded interaction-framework package: shared pickup/world targeting, E/X prompts, Press/Hold authority and cancellation, Inspect-only resource/station fixtures, plus the fresh-water return slice. It does not include gathering/crafting or production ship/vendor/storage actions. See [M6 closeout](VERIFICATION.md#m6-interaction-closeout).
 
 M4 remains partially implemented. The [HUD return slice](VERIFICATION.md#m4-hud) now supplies health/stamina/food/hydration/weight gauges and empty-stat warnings. Activity-dependent needs drain, starvation/dehydration consequences, salt/other-water drinking, food, five-second base stamina timing, jump/climb costs and regeneration remain open. October 6 owner clarification permits recovery while walking. Upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
 
 ### Proposed 0.01 work packages after M5
 
-1. Gathering and crafting: harvestable tree, tool interaction, recipes, resource costs and unlock prerequisites. C++ authority; Data Assets for recipes/resources; Blueprints for world content; UMG for crafting. Verify no resource duplication or unaffordable crafting.
+1. Production gathering and crafting: extend the verified gathering/tool foundations with authored resources, recipes, resource costs and unlock prerequisites. C++ authority; Data Assets for recipes/resources; Blueprints for world content; UMG for crafting. Verify no resource duplication or unaffordable crafting.
 2. Skills, simple combat and treasure: 15 cumulative points per level, character cap 80, respec from level 10 for 2 Gold, shovel/digging, map objective and small enemy encounter. Deterministic C++/Blueprint behavior; data-driven rewards. Verify progression and authoritative damage/rewards; node costs remain TBD where not assigned.
 3. Small ocean and starter sloop: helm, hold-to-anchor, cargo, ship weight and two opposing cannons with shared limited ammunition. Depends on movement/interaction/inventory; test boarding, moving deck behavior, cargo transfer, anchoring and overload sinking in multiplayer. Implement current hardpoint and storage-only Ammo Bin rules.
 4. Environment, Port/prologue and navigation: 90 real minutes each for day/night, contextual conditions, basic Port vendors, revised schooner battle/dinghy repair/journal opening, then map/compass. M/View opens map; walking allowed, sprint/stance/hotbar/inventory suppressed, world still runs. Command radial uses Middle Mouse / D-pad Right. Survival/HUD return work above must not be silently delayed until final polish.
@@ -55,7 +53,7 @@ M4 remains partially implemented. The [HUD return slice](VERIFICATION.md#m4-hud)
 
 Ports, specialized vendors, Ferryman routes, currency, shipyard progression, larger customizable vessels and belongings transfer; sail damage/repair and deeper naval combat; storms/adventure encounters, ghost ships, floating salvage and dungeons; tribes and communication; crew roles and shared commands; Beast Mastery, taming/breeding; injuries/surgeon, aging/hair; world density and official regional hosting. Davy Jones quest is Removed, not a planned rejuvenation implementation.
 
-Preserve October Â§Â§21,30: far-offshore schooner vs brigantine -> flooding/bailing -> boarding and sword fight -> head injury and lost sword -> unconscious Quartermaster rescue with rare rye -> island amnesia/journal -> gathering/tools -> Repair Kit/hammer and Small Sail on surviving dinghy -> sail/title/Port. Tutorial tools/supplies are discarded, but rare rye stays in player inventory. Survivor starts with zero currency. Innkeeper responds to request for free lodging with work/trade, introduces town-square merchants (quests later), and general merchant offers rye sale. Credit 250 Copper when the introduction mission completes; room charge remains unspecified. Raft/shipyard construction is no longer the opening. Persistent sloop progression placement remains to be designed.
+Preserve October §§21,30: far-offshore schooner vs brigantine -> flooding/bailing -> boarding and sword fight -> head injury and lost sword -> unconscious Quartermaster rescue with rare rye -> island amnesia/journal -> gathering/tools -> Repair Kit/hammer and Small Sail on surviving dinghy -> sail/title/Port. Tutorial tools/supplies are discarded, but rare rye stays in player inventory. Survivor starts with zero currency. Innkeeper responds to request for free lodging with work/trade, introduces town-square merchants (quests later), and general merchant offers rye sale. Credit 250 Copper when the introduction mission completes; room charge remains unspecified. Raft/shipyard construction is no longer the opening. Persistent sloop progression placement remains to be designed.
 
 ## Repository map
 
@@ -87,8 +85,11 @@ Run Play scripts from Unreal's Python console with an absolute path. Pickup/inve
 | Scripts | Purpose |
 | --- | --- |
 | Setup `create_inventory_test_asset.py`, `create_equipment_test_assets.py`, `create_pickup_test_content.py` | Reconcile only named saved fixtures; preserve existing designer edits |
+| Setup `create_hand_gathering_test_assets.py`, `create_hatchet_test_assets.py`, `create_mining_test_assets.py`, `create_berry_test_asset.py` | Create missing named gathering/tool fixtures; do not overwrite authored values |
+| Setup `spawn_interaction_play_fixtures.py`, `spawn_water_play_fixture.py`, `spawn_hand_gathering_play_fixtures.py`, `spawn_hatchet_play_fixtures.py`, `spawn_mining_play_fixtures.py`, `spawn_berry_play_fixture.py` | Temporary Play fixtures; see the compact usage table below |
 | Setup `configure_stance_animations.py` | Audited stance configuration; read prerequisites before using |
 | Verification `verify_stance_play.py`, `verify_stance_clearance_play.py`, `verify_stance_network_play.py` | Animation/clearance/client stance checks |
+| Verification `verify_interaction_play.py` | Device-aware Press/Hold, cancellation and server validation |
 | Verification `verify_pickup_play.py` | Authority and competing pickup checks |
 | Verification `verify_inventory_selection_play.py` | Inventory input, focus and live-refresh checks |
 | Verification `verify_equipment_play.py`, `verify_equipment_network_stress.py` | Transfer/capacity and bounded request stress checks |
@@ -105,42 +106,11 @@ Run Play scripts from Unreal's Python console with an absolute path. Pickup/inve
 
 ## Repository conventions
 
-### Content Convention
+### Content and C++ organization
 
-All new Elitewake-specific assets should be created under `Content/Elitewake/` and grouped by gameplay domain rather than by individual developer.
+Create new game-specific assets under `Content/Elitewake/`, grouped by gameplay domain. Add a domain only when it has real content. Keep the runtime module `EW`; new classes belong beneath `Source/EW/` in the relevant domain, with headers and implementations together. Editor-only tooling stays in `Source/EWEditor/`.
 
-Planned top-level domains include:
-
-- `Characters`
-- `Core`
-- `Input`
-- `Interaction`
-- `Inventory`
-- `Items`
-- `Missions`
-- `Ships`
-- `Survival`
-- `UI`
-- `World`
-
-Do not create every planned directory before it is needed. Add each domain with the first real asset that belongs there.
-
-### C++ Convention
-
-The runtime module remains `EW`. New classes should be grouped beneath `Source/EW/` by gameplay domain. Public headers and implementation files should remain close together until module growth justifies a separate public and private layout.
-
-Recommended initial domains are:
-
-- `Character`
-- `Core`
-- `Input`
-- `Interaction`
-- `Inventory`
-- `Ships`
-- `Survival`
-- `UI`
-
-Keep native class/module identities and Unreal asset paths stable unless their Blueprint dependencies have been audited. Unused template variants were removed after that audit; the active ThirdPerson foundation remains.
+Preserve native class/module identities and Unreal asset paths until package and Blueprint dependencies have been audited. Active ThirdPerson/Mannequin dependencies and the imported Free Animation Library are retained; being unused by today's test scene does not establish redundancy.
 
 ### Naming
 
@@ -161,26 +131,17 @@ Prefer descriptive names. Avoid names tied to the temporary product title when a
 
 Update these three current documents rather than adding a new top-level document for every session. Put new dated acceptance sections into VERIFICATION.md and new decisions into DESIGN_REFERENCE.md. Archive superseded source reviews with an explicit historical label. Delete unused Unreal assets only after package and native-type dependency checks, then rebuild and load the retained maps/Blueprints.
 
-### Trying the interaction fixtures
+### Trying opt-in fixtures
 
-Start Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_interaction_play_fixtures.py` from the editor Python console. Look at a fixture within 250 cm and follow E/X or Hold E/X. Campfire uses a one-second draft hold; Smithy, Tree and Rock acknowledge a press. Inspect does not harvest or craft. Stop Play to remove the fixtures; the script never saves a map.
+Start Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`, then run the desired `Scripts/Setup/` script from Unreal's Python console using its absolute path. These fixtures are temporary: they do not save a map or grant normal-start inventory. Stop Play afterward. Read each script's prerequisites/docstring for coordinates and fixture tuning; production balance is not established by test yields or weights.
 
-### Trying fresh-water drinking
+| Setup script | Action and behavior | Acceptance evidence |
+| --- | --- | --- |
+| `spawn_interaction_play_fixtures.py` | E/X Press or Hold; Campfire/Smithy/Tree/Rock Inspect only, no crafting or yield | [Interaction](VERIFICATION.md#interaction-foundation) |
+| `spawn_water_play_fixture.py` | Starts hydration at 25%; E/X at the visible source restores 100%; no prone required | [Fresh water](VERIFICATION.md#fresh-water) |
+| `spawn_hand_gathering_play_fixtures.py` | E/X transfers finite Fiber/Sticks; unaccepted units stay in the pool | [Hand gathering](VERIFICATION.md#hand-gathering) |
+| `spawn_hatchet_play_fixtures.py` | Pick up/equip Hatchet, aim and press Left Mouse/RT; E/X does not chop | [Hatchet](VERIFICATION.md#hatchet-harvesting) |
+| `spawn_mining_play_fixtures.py` | Pick up/equip Pickaxe, aim and press Left Mouse/RT; Hatchet cannot mine | [Mining](VERIFICATION.md#pickaxe-mining) |
+| `spawn_berry_play_fixture.py` | E/X gathers Azren; saved display/package still says Azul pending supported authoring; eating/freshness disabled on the fixture | [Berries](VERIFICATION.md#berry-gathering) |
 
-Start Play in `Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_water_play_fixture.py`. The opt-in script lowers hydration to 25% and marks a temporary source with blue bounds at (120, 100, 160). Look within 250 cm and press E/X; hydration immediately becomes 100% and the prompt hides until hydration falls. Stop Play removes the fixture and test state. Production ponds should place/size an `EWWaterSource` query surface over their authored water geometry; this slice adds no saved world content.
-
-### Trying hand gathering
-
-Start Play in `Lvl_M5PickupTest` and run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_hand_gathering_play_fixtures.py`. The opt-in cubes at (120, 100, 160) and (120, -100, 160) hold Fiber and Sticks test pools. Look within 250 cm and press E/X. Only accepted inventory units leave a pool; depletion removes the actor. Stop Play removes test inventory/actors. Test yields 10/6 and weights 0.01/0.05 kg are temporary tuning. The script adds no default-world spawns. Existing Tree/Rock Inspect fixtures remain acknowledgement-only.
-
-### Trying the hatchet tree
-
-In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_hatchet_play_fixtures.py`. E/X picks up the hatchet cube at (120, -100, 160); equip it in MainHand through inventory or hotbar. Aim at the tree cube at (120, 100, 160) and press Left Mouse/RT. E/X does not harvest trees. One press attempts a strike; holding does not auto-repeat. A one-second server admission interval, pools 12 Wood/4 Thatch and yields 3/1 are draft test tuning. Full/partial inventory preserves unaccepted resources. Bare-hand harvesting remains gated for this slice, not a permanent hatchet-only design rule. No saved/default world spawns, swing animation, tool mesh, sound, durability, stamina cost or injury gameplay is implied.
-
-### Trying pickaxe mining
-
-In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_mining_play_fixtures.py`. E/X picks up the pickaxe cube at (100, 0, 160); equip it in MainHand through inventory or hotbar. The cubes at (120, 100, 160) and (120, -100, 160) are Stone and generic Ore test nodes. Aim within 250 cm and press Left Mouse/RT. E/X does not mine; a hatchet cannot mine. Each node carries one authored resource. Shared one-second Attack admission, 12-unit pools, three-unit strikes and 1 kg pickaxe/0.1 kg resources are draft test tuning. Partial/full inventory preserves unaccepted stock; depletion removes the node. These PIE fixtures do not save maps or grant normal-start inventory. Animations are deferred; ore species/tiers, production balance, durability, regrowth and crafting remain separate work.
-
-### Trying berry gathering
-
-In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_berry_play_fixture.py`. Look at the bush cube at (120, 100, 160) within 250 cm and press E/X. Ten berries enter inventory when capacity permits; full/partial capacity preserves unaccepted units, and depletion removes the cube. Their approved current name is **Azren**; the saved test asset still displays its historical Azul name pending the next supported authoring pass. Food stacks 500 are specified by the Bible. Yield 10 and 0.01 kg per berry are draft fixture tuning. The saved fixture still gathers/stores food only; the native eating/freshness foundation is opt-in and not enabled for this asset. Player-facing eating, hunger restoration, Azren healing and the freshness bar remain the next pass. No regrowth, production bushes or saved/default-world grants are implied. Gathering animations remain on the deferred backlog.
+Tool strikes require the owned MainHand capability and server admission; holding Attack does not auto-repeat. Bare-hand harvesting awaits injury/treatment decisions. Final held-tool visuals, swing animations, durability, stamina costs, regrowth and production vegetation are separate work. See the deferred animation backlog above.
