@@ -14,6 +14,7 @@ class UWorld;
 class AActor;
 class AEWStation;
 class AEWWaterSource;
+class AEWHandGatherable;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -21,6 +22,8 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWHandGatherable* SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks = false);
     /** PIE-only source; never adds water to a saved map. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWWaterSource* SpawnVerificationWaterSource(UWorld* World, FVector Location, bool bFresh = true);

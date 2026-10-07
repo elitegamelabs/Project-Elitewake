@@ -13,6 +13,22 @@
 #include "EWStation.h"
 #include "EWResourceNode.h"
 #include "Survival/EWWaterSource.h"
+#include "Gathering/EWHandGatherable.h"
+
+AEWHandGatherable* UEWEditorVerificationLibrary::SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Item) || Quantity <= 0) return nullptr;
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* Node = World->SpawnActor<AEWHandGatherable>(Location, FRotator::ZeroRotator, Spawn);
+    if (Node)
+    {
+        Node->ItemDefinition = Item; Node->Quantity = Quantity;
+        Node->GatheringKind = bSticks ? EEWHandGatheringKind::LooseSticks : EEWHandGatheringKind::PlantFiber;
+        Node->ForceNetUpdate();
+    }
+    return Node;
+}
 
 AEWWaterSource* UEWEditorVerificationLibrary::SpawnVerificationWaterSource(UWorld* World, FVector Location, bool bFresh)
 {

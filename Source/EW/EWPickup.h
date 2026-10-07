@@ -31,7 +31,7 @@ public:
     static AEWPickup* FindTarget(const AEWCharacter* Character);
 
     /** Authority only. Requires possession, range, aim/visibility and any assigned actor ownership. */
-    int32 TryPickup(AEWCharacter* Character);
+    virtual int32 TryPickup(AEWCharacter* Character);
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
