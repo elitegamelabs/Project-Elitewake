@@ -28,6 +28,8 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Gathering") void Attack();
+    UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target);
     AEWPlayerController();
     UFUNCTION(BlueprintPure, Category="Interaction")
     UEWInteractionComponent* GetInteractionComponent() const { return InteractionComponent; }
@@ -79,6 +81,9 @@ public:
 	void EWGrantTestWood(int32 Quantity = 1);
 	
 protected:
+    UPROPERTY(Transient) TObjectPtr<UInputAction> AttackAction;
+    UPROPERTY(Transient) TObjectPtr<UInputMappingContext> RuntimeAttackMappingContext;
+    double LastHarvestAttackTime = -100;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
     TObjectPtr<UEWInteractionComponent> InteractionComponent;
     UPROPERTY(Transient) TObjectPtr<UEWInteractionWidget> InteractionWidget;

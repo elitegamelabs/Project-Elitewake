@@ -15,6 +15,7 @@ class AActor;
 class AEWStation;
 class AEWWaterSource;
 class AEWHandGatherable;
+class AEWHarvestTree;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -22,6 +23,10 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWHarvestTree* SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationAttack(AEWPlayerController* Controller, AActor* Target);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWHandGatherable* SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks = false);
     /** PIE-only source; never adds water to a saved map. */

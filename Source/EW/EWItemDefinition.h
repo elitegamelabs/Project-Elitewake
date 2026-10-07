@@ -9,6 +9,9 @@
 class UTexture2D;
 
 UENUM(BlueprintType)
+enum class EEWGatheringTool : uint8 { None, Hatchet };
+
+UENUM(BlueprintType)
 enum class EEWItemCategory : uint8
 {
 	Resource,
@@ -41,6 +44,9 @@ class EW_API UEWItemDefinition : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+    /** Capability used only when this owned unit is equipped in MainHand. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Gathering")
+    EEWGatheringTool GatheringTool = EEWGatheringTool::None;
 	/** Stable identifier used by saving, recipes, vendors, and networking. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item", meta=(AssetRegistrySearchable))
 	FName ItemId;

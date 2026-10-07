@@ -19,6 +19,7 @@
 #include "EWInteractable.h"
 #include "EWInteractionComponent.h"
 #include "EWInteractionWidget.h"
+#include "Gathering/EWHarvestTree.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "Engine/AssetManager.h"
@@ -66,6 +67,12 @@ void AEWPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
+    AttackAction = NewObject<UInputAction>(this, TEXT("IA_Attack_Runtime"));
+    AttackAction->ValueType = EInputActionValueType::Boolean;
+    RuntimeAttackMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Attack_Runtime"));
+    RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::LeftMouseButton);
+    RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::Gamepad_RightTrigger);
+
     if (!InteractAction)
     {
         InteractAction = NewObject<UInputAction>(this, TEXT("IA_Interact_Runtime"));
@@ -88,6 +95,7 @@ void AEWPlayerController::SetupInputComponent()
 
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 	{
+        EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AEWPlayerController::Attack);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AEWPlayerController::Interact);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &AEWPlayerController::ReleaseInteraction);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AEWPlayerController::ReleaseInteraction);
@@ -106,6 +114,7 @@ void AEWPlayerController::SetupInputComponent()
 
             if (RuntimeInteractionMappingContext)
                 Subsystem->AddMappingContext(RuntimeInteractionMappingContext, 1);
+            Subsystem->AddMappingContext(RuntimeAttackMappingContext, 1);
 			if (RuntimeInventoryMappingContext)
 			{
 				Subsystem->AddMappingContext(RuntimeInventoryMappingContext, 1);
@@ -126,6 +135,22 @@ void AEWPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AEWPlayerController::Attack()
+{
+    if (!IsLocalPlayerController() || IsInventoryOpen()) return;
+    ServerAttack(FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())));
+}
+
+void AEWPlayerController::ServerAttack_Implementation(AActor* Target)
+{
+    const double Now = GetWorld()->GetTimeSeconds();
+    // Per-controller admission, across targets. One-second interval is draft tool tuning.
+    if (Now - LastHarvestAttackTime < 1.) return;
+    LastHarvestAttackTime = Now;
+    if (InteractionComponent->IsMenuBlocked() || InteractionComponent->GetHoldState().Target) return;
+    if (auto* Tree = Cast<AEWHarvestTree>(Target)) Tree->TryHarvest(Cast<AEWCharacter>(GetPawn()));
 }
 
 void AEWPlayerController::Interact()

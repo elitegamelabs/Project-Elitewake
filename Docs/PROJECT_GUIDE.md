@@ -15,7 +15,7 @@ This is a tested gameplay foundation for version 0.01, not a finished pirate san
 | Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
 | Interaction | M6 foundation: E/X prompts, server Press/Hold timing/cancellation, fresh-water action; opt-in Inspect fixtures | Actual station/storage/ship/vendor actions, remapping and final presentation |
 | Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
-| Hand gathering | Finite plant-fiber/loose-stick pools using E/X and serialized pickup transfer | Production vegetation, yields/weights, berries, regrowth, Attack/tool tree harvesting and injuries |
+| Gathering | Hand fiber/stick pools use E/X; equipped-hatchet trees use Left Mouse/RT and server validation | Production vegetation/balance, berries, mining/regrowth, bare-hand punching/injuries, swing presentation and durability |
 | Hotbar | Eight owned-definition shortcuts; 1–8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
 | Ship/world/prologue | Current Bible and owner decisions recorded | Production ship loop, Port/missions, navigation and save/load |
 
@@ -27,7 +27,7 @@ Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner con
 
 ## Next work
 
-**M6 interaction foundation is verified complete for the October 6 run.** The first hand-resource gathering slice is verified on `codex/hand-gathering`; [evidence](VERIFICATION.md#hand-gathering). Remaining gathering work includes Attack/tool tree harvesting, berries/mining and resource content before crafting/skills. Tree harvesting remains Attack; detailed resource/tool/injury decisions stay explicit before their dependent implementation. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
+**M6 interaction foundation is verified complete for the October 6 run.** The first hand-resource gathering slice is verified on `codex/hand-gathering`; [evidence](VERIFICATION.md#hand-gathering). Equipped-hatchet Attack harvesting is verified on `codex/hatchet-harvesting`; [evidence](VERIFICATION.md#hatchet-harvesting). Bare hands remain temporarily disabled until injury/treatment rules are resolved. Berries/mining and resource content remain before crafting/skills. Tree harvesting remains Attack; detailed resource/tool/injury decisions stay explicit before their dependent implementation. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
 
 Milestone A is approved and published on main at `adc9693` after the owner said "Let's continue. I approve." Device-aware prompts and server-controlled holds passed 31 standalone/31 client checkpoints, with all ten pickup and 42 network hotbar regressions passing. The additional survival return slice is fresh-water drinking on `codex/fresh-water-interaction`: E/X refills hydration instantly at an eligible visible source, without requiring prone. Salt-water consequences remain TBD. One-second Inspect fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures remain draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
 
@@ -85,6 +85,7 @@ Run Play scripts from Unreal's Python console with an absolute path. Pickup/inve
 | Verification `verify_inventory_selection_play.py` | Inventory input, focus and live-refresh checks |
 | Verification `verify_equipment_play.py`, `verify_equipment_network_stress.py` | Transfer/capacity and bounded request stress checks |
 | Verification `verify_hotbar_play.py` | Assignment, activation, input isolation and conservation |
+| Verification `verify_hatchet_play.py` | Mouse/RT, equipped-tool validation, E exclusion, strike admission and dual-resource conservation |
 | Verification `verify_hand_gathering_play.py` | Hand-resource prompts, authoritative/replicated conservation, full/partial inventory and competition |
 | Verification `verify_water_play.py` | Fresh-water E/X, hydration HUD, invalid requests and shared-source use |
 | Verification `verify_survival_hud_play.py` | Rendered stats/warnings, carried weight and possession lifecycle |
@@ -160,3 +161,7 @@ Start Play in `Lvl_M5PickupTest`, then run `py C:/UnrealProjects/EW/Scripts/Setu
 ### Trying hand gathering
 
 Start Play in `Lvl_M5PickupTest` and run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_hand_gathering_play_fixtures.py`. The opt-in cubes at (120, 100, 160) and (120, -100, 160) hold Fiber and Sticks test pools. Look within 250 cm and press E/X. Only accepted inventory units leave a pool; depletion removes the actor. Stop Play removes test inventory/actors. Test yields 10/6 and weights 0.01/0.05 kg are temporary tuning. The script adds no default-world spawns. Existing Tree/Rock Inspect fixtures remain acknowledgement-only.
+
+### Trying the hatchet tree
+
+In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_hatchet_play_fixtures.py`. E/X picks up the hatchet cube at (120, -100, 160); equip it in MainHand through inventory or hotbar. Aim at the tree cube at (120, 100, 160) and press Left Mouse/RT. E/X does not harvest trees. One press attempts a strike; holding does not auto-repeat. A one-second server admission interval, pools 12 Wood/4 Thatch and yields 3/1 are draft test tuning. Full/partial inventory preserves unaccepted resources. Bare-hand harvesting remains gated for this slice, not a permanent hatchet-only design rule. No saved/default world spawns, swing animation, tool mesh, sound, durability, stamina cost or injury gameplay is implied.

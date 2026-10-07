@@ -3,6 +3,7 @@
 #include "EWCharacter.h"
 #include "EWInteractable.h"
 #include "EWInteractionComponent.h"
+#include "Gathering/EWHarvestTree.h"
 #include "EWSurvivalComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
@@ -51,6 +52,20 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
     auto* Survivor = PC ? Cast<AEWCharacter>(PC->GetPawn()) : nullptr;
     AActor* Target = Survivor && PC && !PC->IsInventoryOpen()
         && Survivor->GetSurvivalComponent()->GetHealth() > 0 ? FEWInteractionTargeting::FindTarget(Survivor) : nullptr;
+    if (const auto* Tree = Cast<AEWHarvestTree>(Target))
+    {
+        if (!Tree->CanAccessSource(Survivor))
+        {
+            Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+            Panel->SetVisibility(ESlateVisibility::Collapsed); return;
+        }
+        Prompt->SetText(Tree->CanHarvest(Survivor)
+            ? (PC->UsesControllerPrompts() ? NSLOCTEXT("Elitewake","HarvestRT","RT: Chop tree")
+                : NSLOCTEXT("Elitewake","HarvestMouse","Left Mouse: Chop tree"))
+            : NSLOCTEXT("Elitewake","HarvestNeedsHatchet","Equip a hatchet to harvest"));
+        Progress->SetPercent(0); Progress->SetVisibility(ESlateVisibility::Collapsed);
+        Panel->SetVisibility(ESlateVisibility::HitTestInvisible); return;
+    }
     if (!Target || !IEWInteractable::Execute_CanInteract(Target, Survivor))
     {
         Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);

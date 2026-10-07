@@ -14,6 +14,21 @@
 #include "EWResourceNode.h"
 #include "Survival/EWWaterSource.h"
 #include "Gathering/EWHandGatherable.h"
+#include "Gathering/EWHarvestTree.h"
+
+AEWHarvestTree* UEWEditorVerificationLibrary::SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
+    auto* Tree = World->SpawnActor<AEWHarvestTree>(Location, FRotator::ZeroRotator);
+    if (Tree) { Tree->Wood = Wood; Tree->Thatch = Thatch; Tree->ForceNetUpdate(); }
+    return Tree;
+}
+bool UEWEditorVerificationLibrary::SendVerificationAttack(AEWPlayerController* Controller, AActor* Target)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Controller->ServerAttack(Target); return true;
+}
 
 AEWHandGatherable* UEWEditorVerificationLibrary::SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks)
 {
