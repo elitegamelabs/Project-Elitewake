@@ -13,6 +13,7 @@ Updated October 7, 2026. Each section records a dated implementation slice and i
 - Gathering: [hand resources](#hand-gathering), [hatchet](#hatchet-harvesting), [pickaxe](#pickaxe-mining), [berries](#berry-gathering)
 - [Integrated M5D–gathering acceptance](#integrated-acceptance)
 - [Food transaction and freshness foundation](#food-foundation)
+- [Resource/ecology source review](#resource-ecology-review)
 
 ## Foundation history
 
@@ -516,3 +517,13 @@ The final EWEditor Win64 Development build succeeded. **All 15 native Elitewake 
 The first header build caught duplicate declarations, which were removed. An expanded clock test initially expected one toxic unit after correcting an invalid target, but inventory refresh had correctly converted the older expired test unit too. The test now removes that older unit before repairing the target; the final suite passes. The failed test diagnostic is retained in `Saved/Logs/FoodFoundationFixtureFailure.log` and is not acceptance evidence.
 
 Next: author the saved toxic/berry fixtures, add inventory/hotbar eating requests and the beneath-item freshness bar, and verify standalone/client ownership, delayed requests, expiry, UI focus and full/partial capacity. No new Play, packet emulation, packaged, dedicated-server or physical-controller acceptance is claimed here. The editor remained closed; owner configuration checksum stayed `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`, and `.mcp.json` remains local/untracked.
+
+<a id="resource-ecology-review"></a>
+
+## October 7, 2026 — Resource and ecology guide reconciliation
+
+Read the owner-supplied `C:\Users\elite\OneDrive\Desktop\Elitewake\Elitewake_World_Resource_and_Ecology_Guide_v1.docx` in document order, including its tables. Source SHA-256: `3D6704701F3F8C0423EECE1DBB0DD606FAF57D408B41973DFC81823991BB9903`. Cross-referenced the extracted Creative/Shared guides, current owner decisions and repository design/workflow records. Original DOCX was not edited; extraction is local scratch in Saved.
+
+Owner identifies four updated resource regions (D058) and explicitly approves Azren/Marad naming with existing gameplay effects preserved (D059). The detailed catalog, new fauna placements, farming candidates, numerical balance, sample recipes and Manatee aquatic-plant proposal retain their stated draft/TBD status. The obsolete closing ship slogan and ambiguous passive-Manta table are resolved by existing owner/Shared authority. Four resource regions do not assign the four Ports' biomes/identities/vendor stock. Review conclusions are recorded in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md#resource-ecology); PROJECT_GUIDE.md records the next data-authoring step and distinguishes approved names from still-unmodified saved fixture displays.
+
+The stated Port changes were already committed locally at `9c383d7` when this review began, rather than pending in the working tree. Confirmed D057 and PROJECT_GUIDE wording preserve PvP safety, specialized vendors, Ferryman links, prologue arrival and the Innkeeper introduction mission, and retire "THE SHIP IS HOME". This review changes documentation only; no code, assets, engine processes, branch, source DOCX or remote repository changes. No new gameplay acceptance is claimed. Owner editor preferences and local MCP configuration remain excluded.
