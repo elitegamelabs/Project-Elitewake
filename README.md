@@ -4,7 +4,7 @@ A ship-centered pirate survival sandbox by **Elite Game Labs**, built in **Unrea
 
 Ships are the center of play: transportation, shelter, storage, workshop, combat platform, crew headquarters and progression, and they are highly customizable. Land bases are allowed but temporary, and players and wildlife can raid them. The loop is Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. (The former "THE SHIP IS HOME" slogan was retired by owner decision on October 6, 2026.)
 
-The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar, contextual interaction, fresh-water drinking, hand-gathered resources, equipped-hatchet trees, pickaxe mining and the survival HUD have verified foundations. The production ship loop, complete survival gameplay, remaining gathering/tools, crafting, persistence and final presentation remain open. Harvesting animations are recorded for later integration.
+The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar, contextual interaction, fresh-water drinking, hand-gathered resources and berry food, equipped-hatchet trees, pickaxe mining and the survival HUD have verified foundations. Eating/freshness, the production ship loop, complete survival gameplay, remaining gathering/tools, crafting, persistence and final presentation remain open. Harvesting animations are recorded for later integration.
 
 ## Start here
 

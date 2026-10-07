@@ -13,14 +13,17 @@ void AEWHandGatherable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 bool AEWHandGatherable::CanInteract_Implementation(AEWCharacter* Survivor) const
 {
     return Super::CanInteract_Implementation(Survivor)
-        && ItemDefinition->Category == EEWItemCategory::Resource && !ItemDefinition->ItemId.IsNone()
+        && (GatheringKind == EEWHandGatheringKind::Berries
+            ? ItemDefinition->Category == EEWItemCategory::Consumable && ItemDefinition->FoodKind == EEWFoodKind::Berry
+            : ItemDefinition->Category == EEWItemCategory::Resource)
+        && !ItemDefinition->ItemId.IsNone()
         && Survivor->GetSurvivalComponent() && Survivor->GetSurvivalComponent()->GetHealth() > 0;
 }
 
 FText AEWHandGatherable::GetInteractionPrompt_Implementation(AEWCharacter* Survivor) const
 {
     if (!IsValid(ItemDefinition)) return FText::GetEmpty();
-    const FText Pattern = GatheringKind == EEWHandGatheringKind::PlantFiber
+    const FText Pattern = GatheringKind != EEWHandGatheringKind::LooseSticks
         ? NSLOCTEXT("Elitewake", "GatherPlantResource", "Gather {0}")
         : NSLOCTEXT("Elitewake", "CollectLooseResource", "Collect {0}");
     return FText::Format(Pattern, ItemDefinition->DisplayName);

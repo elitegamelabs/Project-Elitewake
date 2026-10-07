@@ -15,7 +15,7 @@ This is a tested gameplay foundation for version 0.01, not a finished pirate san
 | Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
 | Interaction | M6 foundation: E/X prompts, server Press/Hold timing/cancellation, fresh-water action; opt-in Inspect fixtures | Actual station/storage/ship/vendor actions, remapping and final presentation |
 | Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
-| Gathering | Hand fiber/stick pools use E/X; equipped-hatchet trees and pickaxe nodes use Left Mouse/RT and server validation | Production vegetation/ore distribution/balance, berries, regrowth, bare-hand punching/injuries, deferred swing presentation and durability |
+| Gathering | Hand fiber/stick/berry pools use E/X; equipped-hatchet trees and pickaxe nodes use Left Mouse/RT and server validation | Production vegetation/ore distribution/balance, berry eating/freshness, regrowth, bare-hand punching/injuries, deferred swing presentation and durability |
 | Hotbar | Eight owned-definition shortcuts; 1â€“8/LB/mouse assignment; safe equipment activation | Consumables, maps/taming/harpoon actions, remapping and persistence |
 | Ship/world/prologue | Current Bible and owner decisions recorded | Production ship loop, Port/missions, navigation and save/load |
 
@@ -27,7 +27,7 @@ Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner con
 
 ## Next work
 
-**M6 interaction foundation is verified complete for the October 6 run.** Hand resources, equipped-hatchet trees and pickaxe mining are verified; [hand evidence](VERIFICATION.md#hand-gathering), [hatchet evidence](VERIFICATION.md#hatchet-harvesting), [mining evidence](VERIFICATION.md#pickaxe-mining). Bare hands remain temporarily disabled until injury/treatment rules are resolved. Berries and production resource content remain before crafting/skills. Tree harvesting/mining use Attack; detailed resource/tool/injury decisions stay explicit before their dependent implementation. Harvesting animations are explicitly deferred by the owner and tracked below. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
+**M6 interaction foundation is verified complete for the October 6 run.** Hand resources, berry gathering, equipped-hatchet trees and pickaxe mining are verified; [hand evidence](VERIFICATION.md#hand-gathering), [berry evidence](VERIFICATION.md#berry-gathering), [hatchet evidence](VERIFICATION.md#hatchet-harvesting), [mining evidence](VERIFICATION.md#pickaxe-mining). Bare hands remain temporarily disabled until injury/treatment rules are resolved. Berry eating/freshness and production resource content remain open alongside the next crafting/skills package. Tree harvesting/mining use Attack; detailed resource/tool/injury decisions stay explicit before their dependent implementation. Harvesting animations are explicitly deferred by the owner and tracked below. [M6 acceptance and remaining gates](VERIFICATION.md#m6-interaction-closeout).
 
 Milestone A is approved and published on main at `adc9693` after the owner said "Let's continue. I approve." Device-aware prompts and server-controlled holds passed 31 standalone/31 client checkpoints, with all ten pickup and 42 network hotbar regressions passing. The additional survival return slice is fresh-water drinking on `codex/fresh-water-interaction`: E/X refills hydration instantly at an eligible visible source, without requiring prone. Salt-water consequences remain TBD. One-second Inspect fixture holds, walking while aimed/in range, and Campfire/Smithy fixtures remain draft choices. Tree punching remains Attack, outside this interaction slice. `.mcp.json` stays local; editor preferences are preserved. Current authority is owner decisions, then Shared, then team guides; the supplied DOCX guides identify October 5 source revision and await the October 6 changes. Port rule carryover awaits confirmation.
 
@@ -89,6 +89,7 @@ Run Play scripts from Unreal's Python console with an absolute path. Pickup/inve
 | Verification `verify_hotbar_play.py` | Assignment, activation, input isolation and conservation |
 | Verification `verify_hatchet_play.py` | Mouse/RT, equipped-tool validation, E exclusion, strike admission and dual-resource conservation |
 | Verification `verify_mining_play.py` | Pickaxe/hatchet separation, stone/ore identity, full/partial capacity, depletion and competing strikes |
+| Verification `verify_berry_play.py` | E/X berry gathering, food-stack capacity, depletion, rejection and replicated conservation |
 | Verification `verify_hand_gathering_play.py` | Hand-resource prompts, authoritative/replicated conservation, full/partial inventory and competition |
 | Verification `verify_water_play.py` | Fresh-water E/X, hydration HUD, invalid requests and shared-source use |
 | Verification `verify_survival_hud_play.py` | Rendered stats/warnings, carried weight and possession lifecycle |
@@ -172,3 +173,7 @@ In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_hat
 ### Trying pickaxe mining
 
 In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_mining_play_fixtures.py`. E/X picks up the pickaxe cube at (100, 0, 160); equip it in MainHand through inventory or hotbar. The cubes at (120, 100, 160) and (120, -100, 160) are Stone and generic Ore test nodes. Aim within 250 cm and press Left Mouse/RT. E/X does not mine; a hatchet cannot mine. Each node carries one authored resource. Shared one-second Attack admission, 12-unit pools, three-unit strikes and 1 kg pickaxe/0.1 kg resources are draft test tuning. Partial/full inventory preserves unaccepted stock; depletion removes the node. These PIE fixtures do not save maps or grant normal-start inventory. Animations are deferred; ore species/tiers, production balance, durability, regrowth and crafting remain separate work.
+
+### Trying berry gathering
+
+In `Lvl_M5PickupTest` Play, run `py C:/UnrealProjects/EW/Scripts/Setup/spawn_berry_play_fixture.py`. Look at the bush cube at (120, 100, 160) within 250 cm and press E/X. Ten Azul Berries enter inventory when capacity permits; full/partial capacity preserves unaccepted units, and depletion removes the cube. Food stacks 500 are specified by the Bible. Yield 10 and 0.01 kg per berry are draft fixture tuning. This slice stores berry food; eating, hunger restoration, Azul healing and per-stack freshness/spoilage remain unimplemented. No regrowth, production bushes or saved/default-world grants are implied. Gathering animations remain on the deferred backlog.

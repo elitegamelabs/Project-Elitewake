@@ -9,6 +9,9 @@
 class UTexture2D;
 
 UENUM(BlueprintType)
+enum class EEWFoodKind : uint8 { None, Berry };
+
+UENUM(BlueprintType)
 enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
 
 UENUM(BlueprintType)
@@ -44,6 +47,9 @@ class EW_API UEWItemDefinition : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+    /** Food identity only; consumption and per-stack freshness are separate systems. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
+    EEWFoodKind FoodKind = EEWFoodKind::None;
     /** Capability used only when this owned unit is equipped in MainHand. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Gathering")
     EEWGatheringTool GatheringTool = EEWGatheringTool::None;
