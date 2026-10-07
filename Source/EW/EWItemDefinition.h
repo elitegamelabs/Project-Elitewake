@@ -9,7 +9,7 @@
 class UTexture2D;
 
 UENUM(BlueprintType)
-enum class EEWGatheringTool : uint8 { None, Hatchet };
+enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
 
 UENUM(BlueprintType)
 enum class EEWItemCategory : uint8

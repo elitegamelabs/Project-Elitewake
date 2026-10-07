@@ -15,6 +15,15 @@
 #include "Survival/EWWaterSource.h"
 #include "Gathering/EWHandGatherable.h"
 #include "Gathering/EWHarvestTree.h"
+#include "Gathering/EWMineable.h"
+
+AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Resource) || Quantity <= 0) return nullptr;
+    auto* Node = World->SpawnActor<AEWMineable>(Location, FRotator::ZeroRotator);
+    if (Node) { Node->Resource = Resource; Node->Remaining = Quantity; Node->ForceNetUpdate(); }
+    return Node;
+}
 
 AEWHarvestTree* UEWEditorVerificationLibrary::SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch)
 {

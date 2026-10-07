@@ -20,6 +20,7 @@
 #include "EWInteractionComponent.h"
 #include "EWInteractionWidget.h"
 #include "Gathering/EWHarvestTree.h"
+#include "Gathering/EWMineable.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "Engine/AssetManager.h"
@@ -151,6 +152,7 @@ void AEWPlayerController::ServerAttack_Implementation(AActor* Target)
     LastHarvestAttackTime = Now;
     if (InteractionComponent->IsMenuBlocked() || InteractionComponent->GetHoldState().Target) return;
     if (auto* Tree = Cast<AEWHarvestTree>(Target)) Tree->TryHarvest(Cast<AEWCharacter>(GetPawn()));
+    else if (auto* Node = Cast<AEWMineable>(Target)) Node->TryMine(Cast<AEWCharacter>(GetPawn()));
 }
 
 void AEWPlayerController::Interact()

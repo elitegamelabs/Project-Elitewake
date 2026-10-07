@@ -16,6 +16,7 @@ class AEWStation;
 class AEWWaterSource;
 class AEWHandGatherable;
 class AEWHarvestTree;
+class AEWMineable;
 
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
@@ -23,6 +24,8 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWHarvestTree* SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")

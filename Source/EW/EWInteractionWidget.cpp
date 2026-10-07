@@ -4,6 +4,7 @@
 #include "EWInteractable.h"
 #include "EWInteractionComponent.h"
 #include "Gathering/EWHarvestTree.h"
+#include "Gathering/EWMineable.h"
 #include "EWSurvivalComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/CanvasPanel.h"
@@ -63,6 +64,20 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
             ? (PC->UsesControllerPrompts() ? NSLOCTEXT("Elitewake","HarvestRT","RT: Chop tree")
                 : NSLOCTEXT("Elitewake","HarvestMouse","Left Mouse: Chop tree"))
             : NSLOCTEXT("Elitewake","HarvestNeedsHatchet","Equip a hatchet to harvest"));
+        Progress->SetPercent(0); Progress->SetVisibility(ESlateVisibility::Collapsed);
+        Panel->SetVisibility(ESlateVisibility::HitTestInvisible); return;
+    }
+    if (const auto* Node = Cast<AEWMineable>(Target))
+    {
+        if (!Node->CanAccessSource(Survivor))
+        {
+            Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+            Panel->SetVisibility(ESlateVisibility::Collapsed); return;
+        }
+        Prompt->SetText(Node->CanMine(Survivor)
+            ? (PC->UsesControllerPrompts() ? NSLOCTEXT("Elitewake","MineRT","RT: Mine resource")
+                : NSLOCTEXT("Elitewake","MineMouse","Left Mouse: Mine resource"))
+            : NSLOCTEXT("Elitewake","MineNeedsPickaxe","Equip a pickaxe to mine"));
         Progress->SetPercent(0); Progress->SetVisibility(ESlateVisibility::Collapsed);
         Panel->SetVisibility(ESlateVisibility::HitTestInvisible); return;
     }
