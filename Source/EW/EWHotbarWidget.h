@@ -7,6 +7,7 @@
 
 class UTextBlock;
 class UBorder;
+class UProgressBar;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWOnHotbarSlotPressed, int32, Slot);
 
@@ -39,6 +40,7 @@ protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
 private:
+    UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> FreshnessBars;
     void BuildWidgetTree();
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTextBlock>> Labels;

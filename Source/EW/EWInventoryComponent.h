@@ -40,6 +40,9 @@ class EW_API UEWInventoryComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+    /** Oldest owned batch's remaining freshness; -1 when no timed berry is owned. */
+    UFUNCTION(BlueprintPure, Category="Inventory|Food")
+    float GetFoodFreshness(const UEWItemDefinition* ItemDefinition) const;
 	UEWInventoryComponent();
 
 	virtual void BeginPlay() override;
@@ -91,6 +94,7 @@ protected:
 	void OnRep_Entries();
 
 private:
+    friend class UEWEditorVerificationLibrary;
     friend class FEWFoodTest;
     friend class UEWEquipmentComponent;
     double LastFoodClockSeconds = 0.;

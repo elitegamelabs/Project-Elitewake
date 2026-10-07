@@ -8,6 +8,8 @@
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
+#include "EWInventoryComponent.h"
 
 void UEWHotbarSlotButton::InitializeSlot(int32 NewSlotIndex)
 {
@@ -54,7 +56,13 @@ void UEWHotbarWidget::BuildWidgetTree()
         Cell->SetPadding(FMargin(4));
         auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
         Label->SetFont(Font); Label->SetAutoWrapText(true);
-        Cell->SetContent(Label);
+        auto* CellContent = WidgetTree->ConstructWidget<UVerticalBox>();
+        CellContent->AddChildToVerticalBox(Label);
+        auto* Freshness = WidgetTree->ConstructWidget<UProgressBar>();
+        Freshness->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
+        CellContent->AddChildToVerticalBox(Freshness);
+        FreshnessBars.Add(Freshness);
+        Cell->SetContent(CellContent);
         auto* CellSlot = Slots->AddChildToHorizontalBox(Cell);
         CellSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); CellSlot->SetPadding(FMargin(2));
         Labels.Add(Label); Cells.Add(Cell);
@@ -76,7 +84,8 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
     {
         UEWItemDefinition* Item = Hotbar ? Hotbar->GetBoundItem(i) : nullptr;
-        Display += FString::Printf(TEXT("%d:%s:%d;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0);
+        const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
+        Display += FString::Printf(TEXT("%d:%s:%d:%.4f;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0,Freshness);
     }
     Display += FString::FromInt(Hotbar ? Hotbar->GetSelectedSlot() : INDEX_NONE);
     if (Display == LastDisplay) return;
@@ -85,6 +94,9 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     {
         const auto* Item = Hotbar ? Hotbar->GetBoundItem(i) : nullptr;
         const int32 Quantity = Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0;
+        const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
+        FreshnessBars[i]->SetVisibility(Freshness >= 0.f ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+        FreshnessBars[i]->SetPercent(FMath::Max(0.f, Freshness));
         FString Name = Item ? Item->DisplayName.ToString() : TEXT("Empty");
         if (Name.Len()>16) Name=Name.Left(15)+TEXT("…");
         Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%d\n%s\n%s"),i+1,*Name,
@@ -103,6 +115,9 @@ FText UEWHotbarWidget::ResultText(EEWHotbarResult Result)
         case EEWHotbarResult::NotOwned: return FText::FromString(TEXT("That item is currently unavailable"));
         case EEWHotbarResult::UnsupportedAction: return FText::FromString(TEXT("That item's action is not available yet"));
         case EEWHotbarResult::InventoryFull: return FText::FromString(TEXT("Inventory is full — make space to return the equipped item"));
+        case EEWHotbarResult::NoBenefit: return FText::FromString(TEXT("Hunger and health are already full"));
+        case EEWHotbarResult::UnavailableSurvivor: return FText::FromString(TEXT("You cannot eat while dead"));
+        case EEWHotbarResult::InvalidFood: return FText::FromString(TEXT("That food cannot be eaten"));
         default: return FText::FromString(TEXT("Hotbar change could not be completed"));
     }
 }

@@ -93,7 +93,7 @@ def competition():
 def competing_requests():
     for c, w in zip(controllers, worlds): assert lib.send_verification_interaction_request(c, peer(w))
 
-step(spawn); step(lambda: check('Berry E prompt; fresh inventory', 0, 0, 10, 'E: Gather Azul Berry'))
+step(spawn); step(lambda: check('Berry E prompt; fresh inventory', 0, 0, 10, 'E: Gather Azren Berry'))
 step(lambda: tap('E')); step(lambda: check('E gathers finite berry pool exactly once', 10, 0, 0, ''))
 step(empty); step(spawn); step(lambda: tap('Gamepad_FaceButton_Left')); step(lambda: check('X gathers berries',10,0,0,''))
 step(lambda: spawn(sticks, 6)); step(lambda: tap('Gamepad_FaceButton_Left')); step(lambda: check('X collects sticks and updates weight', 10, 6, 0, ''))
@@ -103,10 +103,10 @@ step(spawn); step(blocker); step(request); step(lambda: check('Obstructed gather
 step(lambda: turn(90)); step(request); step(lambda: check('Unaimed gather rejected', 10, 6, 10, '')); step(lambda: turn(0))
 step(lambda: tap('I')); step(request); step(lambda: check('Inventory-open gather rejected', 10, 6, 10, '')); step(close_menu)
 step(lambda: server_pawn.get_survival_component().apply_damage(100)); step(request); step(lambda: check('Dead survivor gather rejected', 10, 6, 10, '')); step(lambda: server_pawn.get_survival_component().restore_health(100))
-step(empty); step(lambda: server_pawn.get_inventory_component().add_item(berry, 11997)); step(spawn); step(lambda: tap('E'))
-step(lambda: check('Partial capacity preserves seven units', 12000, 0, 7))
-step(request); step(lambda: check('Full inventory preserves world remainder', 12000, 0, 7))
-step(lambda: server_pawn.get_inventory_component().remove_item(berry, 7)); step(request); step(lambda: check('Freed capacity collects remainder once', 12000, 0, 0, ''))
+step(empty); step(lambda: server_pawn.get_inventory_component().add_item(berry, 11500)); step(lambda: spawn(quantity=600)); step(lambda: tap('E'))
+step(lambda: check('Last empty slot accepts one fresh batch; preserves remainder', 12000, 0, 100))
+step(request); step(lambda: check('Full inventory preserves world remainder', 12000, 0, 100))
+step(lambda: server_pawn.get_inventory_component().remove_item(berry, 500)); step(request); step(lambda: check('Freed batch slot collects remainder once', 11600, 0, 0, ''))
 step(empty); step(spawn); step(competition); step(competing_requests); step(lambda: check('Competing requests conserve one shared pool', 10, 0, 0, ''))
 
 index, next_time, handle = 0, unreal.GameplayStatics.get_time_seconds(server) + 1, None

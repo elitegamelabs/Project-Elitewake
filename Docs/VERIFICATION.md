@@ -15,6 +15,7 @@ Updated October 7, 2026. Each section records a dated implementation slice and i
 - [Food transaction and freshness foundation](#food-foundation)
 - [Resource/ecology source review](#resource-ecology-review)
 - [October 7 repository audit](#repository-audit-october-7)
+- [Playable berry consumption and freshness](#food-player-flow)
 
 ## Foundation history
 
@@ -552,3 +553,29 @@ After removal, **425 registered assets / 427 retained binary/source files** rema
 **Open imported-content finding:** 15 pre-existing missing package references remain across nine animation/skeleton/mesh packages. Missing names include Manny/Quinn preview/source meshes, editable attack source animations and the Free Animation Library demo Control Rig. All affected assets loaded, but playback/reimport consequences are not established. Do not delete the approved library or invent replacement animation sources to hide the finding; resolve through an explicit import/repair pass. The repository is not declared free of asset-reference issues.
 
 **Publication:** `main`/`origin/main` remain `9443259`; remote food branch is `6bc2eee` with food foundation, Port terminology and ecology/mid-1700s direction already published. Cleanup is local on `codex/repository-audit-cleanup`; no push or main merge performed. The owner requires approval before pushing this result. `Config/DefaultEditor.ini` retains SHA256 `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`; local `.mcp.json` remains excluded.
+
+<a id="food-player-flow"></a>
+
+## October 7 playable berry consumption and freshness
+
+Owner authorized the proposed berry loop after approved main integration `8297a20`. Implementation is local on `codex/berry-consumption-flow`; no push or merge is implied by these checks.
+
+The existing `DA_TestAzulBerry` / `Test.AzulBerry` now displays **Azren Berry (Test)**. Approved effects restore 1/16 of the normalized hunger bar and 5% current maximum health, clamped. Its saved lifetime is 1200 real session seconds; expiry changes each batch into `DA_TestToxicBerry`, an inedible Resource with matching stack size/weight. Normal Play still starts empty. No duplicate berry identity, Marad definition, recipe, production bush or save/offline-aging policy was added.
+
+Inventory details provide Eat through R, controller X or the button; existing numbered slots/controller LB chords also consume berries. Owned-controller RPCs call the authoritative one-unit transaction; clients do not supply quantity, age, hunger or healing. Invalid/unowned/expired/toxic food, dead survivors and no-benefit requests preserve units and stats. Full hunger and health do not waste berries. Hotbar activation is server-blocked while the inventory menu is open. Expired original shortcuts remain bound but unavailable, rather than consuming the toxic replacement.
+
+Inventory rows and owned hotbar cells show live freshness bars. Separate pickup batches keep their own twenty-minute lifetimes; oldest fresh food is consumed first. Fresh food requires a free batch slot when older stacks already have age. The gathering capacity regression now explicitly tests this policy instead of merging fresh units into an older partial stack.
+
+| Verification | Result / evidence |
+| --- | --- |
+| `EWEditor Win64 Development` | Final rebuild succeeded; first compile caught two widget declarations in the wrong class, corrected before acceptance |
+| Native filter `Elitewake` | All 15 tests pass; food suite extended for hotbar consumption/no-benefit, live freshness and expired shortcuts; `Saved/Logs/BerryFlowNative.log` |
+| Standalone food flow | 15 checkpoints; `Saved/FoodPlayResult.json` |
+| Client food flow | 15 checkpoints with 100 ms lag / 1% loss; `Saved/FoodNetworkResult.json` |
+| Standalone/client berry gathering regression | 14 checkpoints each; `Saved/BerryPlayResult.json`, `Saved/BerryNetworkResult.json` |
+| Runner lifecycle | All four runs pass; callbacks, inventory/fixtures, input, packet emulation, stats and Play settings restored; `Saved/BerryAcceptanceRun.json` |
+| Visual review | Inventory, Azren details, Eat control, assignment buttons and partially aged freshness bar fit the preview viewport; `Saved/Screenshots/FoodInventoryPreview00000.png`. Small weights still use the existing tenths-of-a-kilogram display precision. |
+
+Food Play checks cover fresh empty start, gathered identity, rendered details/Eat control/freshness bar, R/X, keyboard/controller hotbar use, replicated stats/weight/quantity, no-benefit/unowned/resource/dead rejection, separate batch lifetimes and inedible toxic conversion. Expiry uses an editor-only offset applied to the real clock reference; this is not a wall-clock twenty-minute soak. Native tests also verify real monotonic elapsed time with a 1200-second offset. Two early Play attempts stopped because the test accessed protected UI fields; public read-only presentation accessors resolved this, and final acceptance passes.
+
+Remaining limits: physical controller and mouse-button acceptance, dedicated/packaged server, production world content, Marad and other foods, cooking/sickness, toxicity recipes, offline storage/persistence, final art and deferred harvesting animations. Existing imported-animation missing references remain tracked by the prior repository audit. Owner `DefaultEditor.ini` changes and local `.mcp.json` remain excluded; publication awaits review/approval.

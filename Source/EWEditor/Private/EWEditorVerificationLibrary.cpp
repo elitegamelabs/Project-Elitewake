@@ -8,6 +8,7 @@
 #include "Engine/NetDriver.h"
 #include "EWPickup.h"
 #include "EWPlayerController.h"
+#include "EWInventoryComponent.h"
 #include "Framework/Application/SlateApplication.h"
 #include "InputCoreTypes.h"
 #include "EWStation.h"
@@ -16,6 +17,24 @@
 #include "Gathering/EWHandGatherable.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
+
+bool UEWEditorVerificationLibrary::AdvanceVerificationFoodClock(AActor* Owner, float RealSeconds)
+{
+    if (!Owner || !Owner->HasAuthority() || Owner->GetWorld()->WorldType != EWorldType::PIE
+        || !FMath::IsFinite(RealSeconds) || RealSeconds < 0.f) return false;
+    auto* Inventory = Owner->FindComponentByClass<UEWInventoryComponent>();
+    if (!Inventory) return false;
+    Inventory->LastFoodClockSeconds -= RealSeconds;
+    Inventory->RefreshFoodAge();
+    return true;
+}
+bool UEWEditorVerificationLibrary::SendVerificationFoodRequest(AEWPlayerController* Controller, UEWItemDefinition* Item)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Controller->RequestConsumeFood(Item);
+    return true;
+}
 
 AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity)
 {

@@ -210,6 +210,15 @@ int32 UEWInventoryComponent::GetItemCount(const UEWItemDefinition* ItemDefinitio
 	}
 	return Total;
 }
+float UEWInventoryComponent::GetFoodFreshness(const UEWItemDefinition* Item) const
+{
+    if (!Item || Item->FoodKind != EEWFoodKind::Berry || !FMath::IsFinite(Item->FreshLifetimeSeconds)
+        || Item->FreshLifetimeSeconds <= 0.f) return -1.f;
+    float Oldest = -1.f;
+    for (const auto& Entry : Entries)
+        if (Entry.ItemDefinition == Item && Entry.Quantity > 0) Oldest = FMath::Max(Oldest, Entry.FoodAgeSeconds);
+    return Oldest < 0.f ? -1.f : FMath::Clamp(1.f - Oldest / Item->FreshLifetimeSeconds, 0.f, 1.f);
+}
 
 bool UEWInventoryComponent::HasItem(const UEWItemDefinition* ItemDefinition, int32 Quantity) const
 {

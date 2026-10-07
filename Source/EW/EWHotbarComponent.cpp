@@ -64,6 +64,20 @@ EEWHotbarResult UEWHotbarComponent::ActivateSlot(int32 Slot)
         if (!Item) return EEWHotbarResult::EmptySlot;
         if (!IsValid(Item)) return EEWHotbarResult::InvalidItem;
         if (GetOwnedQuantity(Item) == 0) return EEWHotbarResult::NotOwned;
+        if (Item->bFoodConsumptionEnabled)
+        {
+            auto* Inventory = GetOwner()->FindComponentByClass<UEWInventoryComponent>();
+            if (!Inventory) return EEWHotbarResult::UnsupportedAction;
+            switch (Inventory->ConsumeFood(Item))
+            {
+                case EEWFoodUseResult::Success: return EEWHotbarResult::Success;
+                case EEWFoodUseResult::NotOwned: return EEWHotbarResult::NotOwned;
+                case EEWFoodUseResult::Busy: return EEWHotbarResult::Busy;
+                case EEWFoodUseResult::NoBenefit: return EEWHotbarResult::NoBenefit;
+                case EEWFoodUseResult::UnavailableSurvivor: return EEWHotbarResult::UnavailableSurvivor;
+                default: return EEWHotbarResult::InvalidFood;
+            }
+        }
         if (Item->EquipmentSlot == EEWEquipmentSlot::None) return EEWHotbarResult::UnsupportedAction;
         auto* Equipment = GetOwner()->FindComponentByClass<UEWEquipmentComponent>();
         if (!Equipment) return EEWHotbarResult::UnsupportedAction;

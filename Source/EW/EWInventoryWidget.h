@@ -35,6 +35,13 @@ class EW_API UEWInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintPure, Category="Inventory|Presentation")
+    FText GetDisplayedDetails() const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Food")
+    bool IsFoodActionVisible() const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Food")
+    float GetDisplayedFoodFreshness() const;
+    void ShowFoodResult(EEWFoodUseResult Result);
     void ShowHotbarResult(EEWHotbarResult Result);
     void ShowEquipmentResult(EEWEquipmentResult Result);
 	virtual void NativeConstruct() override;
@@ -58,6 +65,9 @@ protected:
 	void RefreshInventory();
 
 private:
+    UFUNCTION()
+    void PerformFoodAction();
+    UPROPERTY(Transient) TObjectPtr<UButton> FoodActionButton;
     UFUNCTION()
     void AssignHotbarSlot(int32 SlotIndex);
     UFUNCTION()

@@ -24,6 +24,11 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    /** Test clock offset in an authority PIE inventory; never changes saved food policy. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool AdvanceVerificationFoodClock(AActor* Owner, float RealSeconds);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationFoodRequest(AEWPlayerController* Controller, UEWItemDefinition* Item);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")

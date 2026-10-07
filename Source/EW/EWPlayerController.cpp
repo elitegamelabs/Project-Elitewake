@@ -235,6 +235,20 @@ void AEWPlayerController::RequestHotbarBinding(int32 Slot, UEWItemDefinition* It
 {
     if (IsLocalPlayerController()) ServerBindHotbar(Slot,Item);
 }
+void AEWPlayerController::RequestConsumeFood(UEWItemDefinition* Item)
+{
+    if (IsLocalPlayerController()) ServerConsumeFood(Item);
+}
+void AEWPlayerController::ServerConsumeFood_Implementation(UEWItemDefinition* Item)
+{
+    auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
+    ClientFoodResult(OwnedCharacter && OwnedCharacter->GetController() == this
+        ? OwnedCharacter->GetInventoryComponent()->ConsumeFood(Item) : EEWFoodUseResult::NotOwned);
+}
+void AEWPlayerController::ClientFoodResult_Implementation(EEWFoodUseResult Result)
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowFoodResult(Result);
+}
 void AEWPlayerController::RequestHotbarActivation(int32 Slot)
 {
     if (IsLocalPlayerController() && (!InventoryWidget || !InventoryWidget->IsInViewport())) ServerActivateHotbar(Slot);
@@ -249,7 +263,7 @@ void AEWPlayerController::ServerActivateHotbar_Implementation(int32 Slot)
 {
     auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
     ClientHotbarResult(OwnedCharacter && OwnedCharacter->GetController()==this
-        ? OwnedCharacter->GetHotbarComponent()->ActivateSlot(Slot) : EEWHotbarResult::NotOwned);
+        ? (InteractionComponent->IsMenuBlocked() ? EEWHotbarResult::Busy : OwnedCharacter->GetHotbarComponent()->ActivateSlot(Slot)) : EEWHotbarResult::NotOwned);
 }
 void AEWPlayerController::ClientHotbarResult_Implementation(EEWHotbarResult Result)
 {

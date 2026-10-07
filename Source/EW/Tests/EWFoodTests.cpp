@@ -1,6 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
+#include "EWHotbarComponent.h"
 #include "EWSurvivalComponent.h"
 #include "GameFramework/Actor.h"
 #include "Misc/AutomationTest.h"
@@ -16,6 +17,7 @@ bool FEWFoodTest::RunTest(const FString& Parameters)
     auto* Inventory = NewObject<UEWInventoryComponent>(Owner);
     auto* Survival = NewObject<UEWSurvivalComponent>(Owner);
     Owner->AddInstanceComponent(Inventory); Owner->AddInstanceComponent(Survival);
+    auto* Hotbar = NewObject<UEWHotbarComponent>(Owner); Owner->AddInstanceComponent(Hotbar);
     auto* Berry = NewObject<UEWItemDefinition>();
     Berry->ItemId = TEXT("Test.Azul"); Berry->Category = EEWItemCategory::Consumable;
     Berry->FoodKind = EEWFoodKind::Berry; Berry->MaxStackSize = 500; Berry->UnitWeight = .01f;
@@ -85,6 +87,20 @@ bool FEWFoodTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Near-full survivor can use food"), Inventory->ConsumeFood(Berry), EEWFoodUseResult::Success);
     TestEqual(TEXT("Hunger clamps to full bar"), Survival->GetHunger(), 100.f);
     TestEqual(TEXT("Health clamps to upgraded maximum"), Survival->GetHealth(), 200.f);
+    Inventory->RemoveItem(Toxic, 10000);
+    Inventory->AddItem(Berry, 2);
+    TestEqual(TEXT("Food can be assigned without extra storage"), Hotbar->BindItem(0, Berry), EEWHotbarResult::Success);
+    TestEqual(TEXT("Full survivor hotbar action preserves berries"), Hotbar->ActivateSlot(0), EEWHotbarResult::NoBenefit);
+    Survival->SetHunger(50.f);
+    TestEqual(TEXT("Hotbar eats exactly one owned berry"), Hotbar->ActivateSlot(0), EEWHotbarResult::Success);
+    TestEqual(TEXT("Hotbar quantity decreases once"), Inventory->GetItemCount(Berry), 1);
+    TestEqual(TEXT("Hotbar restores hunger"), Survival->GetHunger(), 56.25f);
+    Inventory->AdvanceFoodAge(600.f);
+    TestTrue(TEXT("Freshness presentation reflects oldest batch"), FMath::IsNearlyEqual(Inventory->GetFoodFreshness(Berry), .5f, .01f));
+    Inventory->AdvanceFoodAge(600.f);
+    TestEqual(TEXT("Expired shortcut cannot consume toxic replacement"), Hotbar->ActivateSlot(0), EEWHotbarResult::NotOwned);
+    TestEqual(TEXT("Expired shortcut remains bound to original definition"), Hotbar->GetBoundItem(0), Berry);
+    TestEqual(TEXT("No freshness bar for expired original definition"), Inventory->GetFoodFreshness(Berry), -1.f);
     return true;
 }
 #endif

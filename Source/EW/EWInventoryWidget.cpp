@@ -15,6 +15,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/ScrollBox.h"
 #include "Components/Button.h"
+#include "Components/ProgressBar.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "InputCoreTypes.h"
@@ -105,6 +106,12 @@ void UEWInventoryWidget::BuildWidgetTree()
     EquipmentActionButton->SetContent(EquipmentActionText);
     EquipmentActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformEquipmentAction);
     Content->AddChildToVerticalBox(EquipmentActionButton);
+    FoodActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("FoodAction"));
+    auto* FoodLabel = WidgetTree->ConstructWidget<UTextBlock>();
+    FoodLabel->SetText(FText::FromString(TEXT("Eat (R / X)")));
+    FoodActionButton->SetContent(FoodLabel);
+    FoodActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformFoodAction);
+    Content->AddChildToVerticalBox(FoodActionButton);
     EquipmentResultText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("EquipmentResult"));
     EquipmentResultText->SetAutoWrapText(true);
     Content->AddChildToVerticalBox(EquipmentResultText);
@@ -144,6 +151,7 @@ void UEWInventoryWidget::RefreshInventory()
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
         EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
+        FoodActionButton->SetVisibility(ESlateVisibility::Collapsed);
         HotbarAssignments->SetVisibility(ESlateVisibility::Collapsed);
 		return;
 	}
@@ -181,7 +189,20 @@ void UEWInventoryWidget::RefreshInventory()
         UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
         const FString Name = Entry.ItemDefinition->DisplayName.IsEmpty() ? Entry.ItemDefinition->ItemId.ToString() : Entry.ItemDefinition->DisplayName.ToString();
         Text->SetText(FText::FromString(FString::Printf(TEXT("%s   x%d     %.1f kg"), *Name, Entry.Quantity, Entry.ItemDefinition->UnitWeight * Entry.Quantity)));
-        Row->SetContent(Text);
+        auto* RowContent = WidgetTree->ConstructWidget<UVerticalBox>();
+        RowContent->AddChildToVerticalBox(Text);
+        if (Entry.ItemDefinition->FoodKind == EEWFoodKind::Berry && Entry.ItemDefinition->FreshLifetimeSeconds > 0.f)
+        {
+            const float Freshness = FMath::Clamp(1.f - Entry.FoodAgeSeconds / Entry.ItemDefinition->FreshLifetimeSeconds, 0.f, 1.f);
+            auto* FreshLabel = WidgetTree->ConstructWidget<UTextBlock>();
+            FreshLabel->SetText(FText::FromString(FString::Printf(TEXT("Freshness %.0f%%"), Freshness * 100.f)));
+            RowContent->AddChildToVerticalBox(FreshLabel);
+            auto* Bar = WidgetTree->ConstructWidget<UProgressBar>();
+            Bar->SetPercent(Freshness);
+            Bar->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
+            RowContent->AddChildToVerticalBox(Bar);
+        }
+        Row->SetContent(RowContent);
         ItemsBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,3));
         Rows.Add(Row);
     }
@@ -228,6 +249,7 @@ void UEWInventoryWidget::UpdateSelection()
     if (!DetailsText) return;
     UEWItemDefinition* Item = SelectedItem();
     const bool bEquippable = Item && Item->EquipmentSlot != EEWEquipmentSlot::None;
+    FoodActionButton->SetVisibility(bShowingDetails && Item && Item->bFoodConsumptionEnabled ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionButton->SetVisibility(bShowingDetails && bEquippable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
     DetailsText->SetText(FText::FromString(SelectedIndex == INDEX_NONE ? TEXT("No item selected") : TEXT("Confirm to view item details")));
@@ -243,6 +265,7 @@ void UEWInventoryWidget::ConfirmSelection()
     if (!Item) return;
     const int32 Quantity = DisplayedEntries.IsValidIndex(SelectedIndex) ? DisplayedEntries[SelectedIndex].Quantity : 1;
     bShowingDetails = true;
+    FoodActionButton->SetVisibility(Item->bFoodConsumptionEnabled ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     RefreshHotbarAssignments();
     DetailsText->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s\nQuantity %d    Unit weight %.1f kg    Stack limit %d"),
         *Item->DisplayName.ToString(), *Item->Description.ToString(), Quantity,
@@ -278,7 +301,15 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up) { Select(SelectedIndex-1); return FReply::Handled(); }
     if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down) { Select(SelectedIndex+1); return FReply::Handled(); }
     if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { ConfirmSelection(); return FReply::Handled(); }
-    if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left) { if (!Event.IsRepeat()) PerformEquipmentAction(); return FReply::Handled(); }
+    if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left)
+    {
+        if (!Event.IsRepeat())
+        {
+            if (SelectedItem() && SelectedItem()->bFoodConsumptionEnabled) PerformFoodAction();
+            else PerformEquipmentAction();
+        }
+        return FReply::Handled();
+    }
     return FReply::Handled(); // UI owns input while open, including gameplay bindings.
 }
 
@@ -400,6 +431,42 @@ void UEWInventoryWidget::PerformEquipmentAction()
     EquipmentResultText->SetText(FText::FromString(TEXT("Requesting equipment change…")));
     if (SelectedEquipmentSlot() != EEWEquipmentSlot::None) Controller->RequestUnequipItem(SelectedEquipmentSlot());
     else Controller->RequestEquipItem(Item, Item->EquipmentSlot);
+}
+FText UEWInventoryWidget::GetDisplayedDetails() const
+{
+    return DetailsText ? DetailsText->GetText() : FText::GetEmpty();
+}
+bool UEWInventoryWidget::IsFoodActionVisible() const
+{
+    return FoodActionButton && FoodActionButton->GetVisibility() == ESlateVisibility::Visible;
+}
+float UEWInventoryWidget::GetDisplayedFoodFreshness() const
+{
+    const auto* Content = Rows.IsValidIndex(SelectedIndex) ? Cast<UVerticalBox>(Rows[SelectedIndex]->GetContent()) : nullptr;
+    const auto* Bar = Content && Content->GetChildrenCount() > 2 ? Cast<UProgressBar>(Content->GetChildAt(2)) : nullptr;
+    return Bar ? Bar->GetPercent() : -1.f;
+}
+void UEWInventoryWidget::PerformFoodAction()
+{
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    UEWItemDefinition* Item = SelectedItem();
+    if (!bShowingDetails || !Item || !Item->bFoodConsumptionEnabled || !Controller) return;
+    EquipmentResultText->SetText(FText::FromString(TEXT("Eating…")));
+    Controller->RequestConsumeFood(Item);
+}
+void UEWInventoryWidget::ShowFoodResult(EEWFoodUseResult Result)
+{
+    FString Message;
+    switch (Result)
+    {
+        case EEWFoodUseResult::Success: Message = TEXT("Berry eaten"); break;
+        case EEWFoodUseResult::NoBenefit: Message = TEXT("Hunger and health are already full"); break;
+        case EEWFoodUseResult::NotOwned: Message = TEXT("That food is no longer in your inventory"); break;
+        case EEWFoodUseResult::InvalidFood: Message = TEXT("That item cannot be eaten"); break;
+        case EEWFoodUseResult::UnavailableSurvivor: Message = TEXT("You cannot eat while dead"); break;
+        default: Message = TEXT("Eating could not be completed"); break;
+    }
+    if (EquipmentResultText) EquipmentResultText->SetText(FText::FromString(Message));
 }
 
 void UEWInventoryWidget::ShowEquipmentResult(EEWEquipmentResult Result)

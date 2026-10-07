@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
+#include "EWInventoryComponent.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -28,6 +29,12 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Inventory|Food")
+    void RequestConsumeFood(UEWItemDefinition* Item);
+    UFUNCTION(Server, Reliable)
+    void ServerConsumeFood(UEWItemDefinition* Item);
+    UFUNCTION(Client, Reliable)
+    void ClientFoodResult(EEWFoodUseResult Result);
     UFUNCTION(BlueprintCallable, Category="Gathering") void Attack();
     UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target);
     AEWPlayerController();

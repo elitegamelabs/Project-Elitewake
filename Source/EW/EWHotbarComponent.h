@@ -8,7 +8,8 @@
 UENUM(BlueprintType)
 enum class EEWHotbarResult : uint8
 {
-    Success, NotAuthority, InvalidSlot, InvalidItem, NotOwned, EmptySlot, UnsupportedAction, InventoryFull, Busy
+    Success, NotAuthority, InvalidSlot, InvalidItem, NotOwned, EmptySlot, UnsupportedAction, InventoryFull, Busy,
+    NoBenefit, UnavailableSurvivor, InvalidFood
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnHotbarChanged);
@@ -27,7 +28,7 @@ public:
     /** Null clears. A definition has one binding; reassignment moves its shortcut. Authority only. */
     UFUNCTION(BlueprintCallable, Category="Hotbar")
     EEWHotbarResult BindItem(int32 Slot, UEWItemDefinition* Item);
-    /** Select and attempt its implemented action. Current action is M5F equipment transfer. */
+    /** Select and attempt equipment transfer or consumption of explicitly authored berry food. */
     UFUNCTION(BlueprintCallable, Category="Hotbar")
     EEWHotbarResult ActivateSlot(int32 Slot);
     UFUNCTION(BlueprintPure, Category="Hotbar")

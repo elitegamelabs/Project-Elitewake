@@ -1,4 +1,4 @@
-"""One transient berry-bush cube in Lvl_M5PickupTest. E/X gathers; no eating yet.
+"""One transient Azren bush cube in Lvl_M5PickupTest. E/X gathers; inventory R/X or hotbar eats.
 Ten-unit pool and .01 kg unit weight are test tuning. Never saves a map.
 """
 import unreal
@@ -13,4 +13,4 @@ for a in unreal.GameplayStatics.get_all_actors_of_class(server,cls):
 node=lib.spawn_verification_hand_gatherable(server,unreal.Vector(120,100,160),berry,10)
 assert node
 node.set_editor_property('gathering_kind',unreal.EWHandGatheringKind.BERRIES); node.force_net_update()
-unreal.log('Aim at the berry cube and press E/X. Gathering stores food; eating/freshness remain separate. Stop Play removes the fixture.')
+unreal.log('Aim at the berry cube and press E/X. Inspect berries in inventory, then Eat (R/X) or assign a hotbar slot. Freshness lasts 20 real minutes. Stop Play removes the fixture.')
