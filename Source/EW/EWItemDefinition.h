@@ -47,6 +47,21 @@ class EW_API UEWItemDefinition : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+    /** Opt-in only. Existing food stays disabled until its freshness policy is authored. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
+    bool bFoodConsumptionEnabled = false;
+    /** Fraction of the full hunger bar restored by one unit (berries: 1/16). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    float HungerRestoreFraction = 0.f;
+    /** Fraction of current maximum unlocked health, not remaining health (Azul: .05). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    float HealthRestoreFraction = 0.f;
+    /** Real elapsed seconds in the running session; berries use 1200. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0"))
+    float FreshLifetimeSeconds = 0.f;
+    /** Inedible resource replacing an expired stack, with the same stack size and weight. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
+    TObjectPtr<UEWItemDefinition> SpoiledItemDefinition;
     /** Food identity only; consumption and per-stack freshness are separate systems. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
     EEWFoodKind FoodKind = EEWFoodKind::None;

@@ -1,6 +1,6 @@
 # Design reference
 
-Updated October 6, 2026. This is the current authority/requirement/decision index. [Historical source reviews](ARCHIVE/CONTEXT_AND_DESIGN_REVIEWS.md) preserve the original cross-reference work; they are not competing current plans.
+Updated October 7, 2026. This is the current authority/requirement/decision index. [Historical source reviews](ARCHIVE/CONTEXT_AND_DESIGN_REVIEWS.md) preserve the original cross-reference work; they are not competing current plans.
 
 <a id="authority"></a>
 
@@ -232,5 +232,7 @@ Retained decisions are chronological evidence. Newer owner decisions and the Oct
 | D054 | Begin hand-gathered berries after mining | Owner "Okay. Begin." October 7 after berries identified as the next gathering slice; Development chapter 13 hand berries, chapter 15 Azul Berry, chapter 44 food stack 500 | `codex/berry-gathering`; finite E/X berry-food pool with explicit item identity. Test Azul weight 0.01 kg and yield 10 are draft tuning. Gathering stores food only; eating (1/16 hunger, Azul 5% max-health), food freshness/spoilage and production bushes remain explicit follow-ups. No unlimited-freshness gameplay or final consumable loop claimed |
 
 | D055 | Run an integrated acceptance pass from M5D through gathering before the next system | Owner "Okay, let's go through all that now. Begin the next steps." October 7 after review recommended a continuous standalone and client session | `codex/integrated-acceptance`; fresh build/native suite and one survivor carrying collected items through inventory selection, hotbar assignment/equipment, chopping/mining/berries, water and held interaction. No eating, final animations, production world or complete survival acceptance implied |
+
+| D056 | Berries stay fresh for 20 real minutes; expired berries become an inedible toxic crafting resource | Direct owner answer October 7: "Berries should stay fresh for 20 real minutes and spoiled berries become a non edible toxic crafting resource." | Overrides the berry spoilage TBD. Runtime foundation uses 1200 real session seconds in carried inventory; toxic recipes, offline storage/persistence and world-bush aging remain open. [Foundation evidence](VERIFICATION.md#food-foundation). Separate pickup batches, matching conversion weight/stack size, and preserving food when neither hunger nor health benefits are implementation choices, not additional owner rules |
 
 Update this reference when authority changes; update PROJECT_GUIDE.md when work priorities change and VERIFICATION.md when evidence changes. Keep suggestions distinct from confirmed decisions.

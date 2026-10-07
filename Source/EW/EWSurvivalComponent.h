@@ -123,6 +123,7 @@ protected:
 	void OnRep_SurvivalStats();
 
 private:
+    friend class UEWInventoryComponent;
     UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
     int32 StaminaExhaustionCount = 0;
 	void NotifyStatsChanged();

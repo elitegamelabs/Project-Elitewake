@@ -9,6 +9,12 @@
 class FLifetimeProperty;
 class UEWItemDefinition;
 
+UENUM(BlueprintType)
+enum class EEWFoodUseResult : uint8
+{
+    Success, NotAuthority, InvalidFood, NotOwned, UnavailableSurvivor, Busy, NoBenefit
+};
+
 USTRUCT(BlueprintType)
 struct FEWInventoryEntry
 {
@@ -19,6 +25,10 @@ struct FEWInventoryEntry
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="1"))
 	int32 Quantity = 1;
+
+    /** Oldest unit age in this stack, measured in real session seconds. */
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Inventory|Food")
+    float FoodAgeSeconds = 0.f;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnInventoryChanged);
@@ -33,6 +43,7 @@ public:
 	UEWInventoryComponent();
 
 	virtual void BeginPlay() override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	/** Raised after authoritative or replicated inventory contents change. */
@@ -46,6 +57,10 @@ public:
 	/** Removes up to the requested quantity and returns the quantity removed. Authority only. */
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	int32 RemoveItem(UEWItemDefinition* ItemDefinition, int32 Quantity);
+
+    /** Consume one owned, explicitly enabled berry on authority. No client grant or RPC. */
+    UFUNCTION(BlueprintCallable, Category="Inventory|Food")
+    EEWFoodUseResult ConsumeFood(UEWItemDefinition* ItemDefinition);
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	int32 GetItemCount(const UEWItemDefinition* ItemDefinition) const;
@@ -76,7 +91,11 @@ protected:
 	void OnRep_Entries();
 
 private:
+    friend class FEWFoodTest;
     friend class UEWEquipmentComponent;
+    double LastFoodClockSeconds = 0.;
+    void RefreshFoodAge();
+    void AdvanceFoodAge(float RealSeconds);
     bool bEquipmentTransferInProgress = false;
     static int32 AddToEntries(TArray<FEWInventoryEntry>& Entries, int32 MaxSlots, UEWItemDefinition* Item, int32 Quantity);
     static int32 RemoveFromEntries(TArray<FEWInventoryEntry>& Entries, UEWItemDefinition* Item, int32 Quantity);

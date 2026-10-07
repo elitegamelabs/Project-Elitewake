@@ -9,18 +9,61 @@
 
 UEWInventoryComponent::UEWInventoryComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 1.f;
 	SetIsReplicatedByDefault(true);
 }
 
 void UEWInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+    LastFoodClockSeconds = FPlatformTime::Seconds();
 
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		RefreshSurvivalWeight();
 	}
+}
+
+void UEWInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    RefreshFoodAge();
+}
+
+void UEWInventoryComponent::RefreshFoodAge()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || bEquipmentTransferInProgress) return;
+    const double Now = FPlatformTime::Seconds();
+    const double Elapsed = LastFoodClockSeconds > 0. ? FMath::Max(0., Now - LastFoodClockSeconds) : 0.;
+    LastFoodClockSeconds = Now;
+    AdvanceFoodAge(static_cast<float>(Elapsed));
+}
+
+void UEWInventoryComponent::AdvanceFoodAge(float RealSeconds)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || bEquipmentTransferInProgress
+        || !FMath::IsFinite(RealSeconds) || RealSeconds <= 0.f) return;
+    TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
+    bool bChanged = false;
+    for (FEWInventoryEntry& Entry : Entries)
+    {
+        UEWItemDefinition* Food = Entry.ItemDefinition;
+        if (!Food || Food->FoodKind != EEWFoodKind::Berry || !FMath::IsFinite(Food->FreshLifetimeSeconds)
+            || Food->FreshLifetimeSeconds <= 0.f) continue;
+        Entry.FoodAgeSeconds = FMath::Min(Food->FreshLifetimeSeconds, Entry.FoodAgeSeconds + RealSeconds);
+        bChanged = true;
+        if (Entry.FoodAgeSeconds < Food->FreshLifetimeSeconds) continue;
+        UEWItemDefinition* Spoiled = Food->SpoiledItemDefinition;
+        // Invalid authoring leaves expired, unusable food rather than losing units or enabling eating.
+        if (!IsValid(Spoiled) || Spoiled == Food || Spoiled->ItemId.IsNone()
+            || Spoiled->Category != EEWItemCategory::Resource || Spoiled->FoodKind != EEWFoodKind::None
+            || Spoiled->bFoodConsumptionEnabled || Spoiled->EquipmentSlot != EEWEquipmentSlot::None
+            || Spoiled->MaxStackSize != Food->MaxStackSize || Spoiled->UnitWeight != Food->UnitWeight) continue;
+        Entry.ItemDefinition = Spoiled;
+        Entry.FoodAgeSeconds = 0.f;
+    }
+    if (bChanged) { HandleInventoryChanged(); GetOwner()->ForceNetUpdate(); }
 }
 
 void UEWInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -35,6 +78,7 @@ int32 UEWInventoryComponent::AddItem(UEWItemDefinition* ItemDefinition, int32 Qu
 	{
 		return 0;
 	}
+    RefreshFoodAge();
     const int32 Added = AddToEntries(Entries, MaxSlots, ItemDefinition, Quantity);
     if (Added > 0) HandleInventoryChanged();
     return Added;
@@ -49,6 +93,9 @@ int32 UEWInventoryComponent::AddToEntries(TArray<FEWInventoryEntry>& Entries, in
 	{
 		if (Entry.ItemDefinition == ItemDefinition && Entry.Quantity < MaxStackSize)
 		{
+            // A later pickup gets its own lifetime; never refresh old food or prematurely expire new food.
+            if (ItemDefinition->FoodKind == EEWFoodKind::Berry && ItemDefinition->FreshLifetimeSeconds > 0.f
+                && Entry.FoodAgeSeconds > 0.f) continue;
 			const int32 AddedToStack = FMath::Min(Remaining, MaxStackSize - Entry.Quantity);
 			Entry.Quantity += AddedToStack;
 			Remaining -= AddedToStack;
@@ -77,9 +124,49 @@ int32 UEWInventoryComponent::RemoveItem(UEWItemDefinition* ItemDefinition, int32
 	{
 		return 0;
 	}
+    RefreshFoodAge();
     const int32 Removed = RemoveFromEntries(Entries, ItemDefinition, Quantity);
     if (Removed > 0) HandleInventoryChanged();
     return Removed;
+}
+
+EEWFoodUseResult UEWInventoryComponent::ConsumeFood(UEWItemDefinition* Item)
+{
+    AActor* Owner = GetOwner();
+    if (!Owner || !Owner->HasAuthority()) return EEWFoodUseResult::NotAuthority;
+    if (bEquipmentTransferInProgress) return EEWFoodUseResult::Busy;
+    RefreshFoodAge();
+    // Raw/cooked meat and sickness deliberately remain unsupported in this slice.
+    if (!IsValid(Item) || Item->ItemId.IsNone() || !Item->bFoodConsumptionEnabled
+        || Item->Category != EEWItemCategory::Consumable || Item->FoodKind != EEWFoodKind::Berry
+        || Item->EquipmentSlot != EEWEquipmentSlot::None
+        || !FMath::IsFinite(Item->FreshLifetimeSeconds) || Item->FreshLifetimeSeconds <= 0.f
+        || !FMath::IsFinite(Item->HungerRestoreFraction) || !FMath::IsFinite(Item->HealthRestoreFraction)
+        || Item->HungerRestoreFraction < 0.f || Item->HungerRestoreFraction > 1.f
+        || Item->HealthRestoreFraction < 0.f || Item->HealthRestoreFraction > 1.f)
+        return EEWFoodUseResult::InvalidFood;
+    if (!HasItem(Item)) return EEWFoodUseResult::NotOwned;
+    UEWSurvivalComponent* Survival = Owner->FindComponentByClass<UEWSurvivalComponent>();
+    if (!Survival || Survival->GetHealth() <= 0.f) return EEWFoodUseResult::UnavailableSurvivor;
+    const float Hunger = FMath::Clamp(Survival->Hunger + 100.f * Item->HungerRestoreFraction, 0.f, 100.f);
+    const float Health = FMath::Clamp(Survival->Health + Survival->MaxHealth * Item->HealthRestoreFraction, 0.f, Survival->MaxHealth);
+    if (Hunger == Survival->Hunger && Health == Survival->Health) return EEWFoodUseResult::NoBenefit;
+    // The shared guard also blocks equipment transfers and nested food use during delegates.
+    TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
+    // Choose the oldest still-fresh stack. Expired/misconfigured stacks never qualify.
+    int32 FoodIndex = INDEX_NONE;
+    for (int32 Index = 0; Index < Entries.Num(); ++Index)
+        if (Entries[Index].ItemDefinition == Item && Entries[Index].Quantity > 0
+            && Entries[Index].FoodAgeSeconds < Item->FreshLifetimeSeconds
+            && (FoodIndex == INDEX_NONE || Entries[Index].FoodAgeSeconds > Entries[FoodIndex].FoodAgeSeconds)) FoodIndex = Index;
+    if (FoodIndex == INDEX_NONE) return EEWFoodUseResult::InvalidFood;
+    if (--Entries[FoodIndex].Quantity == 0) Entries.RemoveAt(FoodIndex);
+    Survival->Hunger = Hunger;
+    Survival->Health = Health;
+    // Contents and both food effects are final before weight/stat/inventory observers run.
+    HandleInventoryChanged();
+    Owner->ForceNetUpdate();
+    return EEWFoodUseResult::Success;
 }
 
 int32 UEWInventoryComponent::RemoveFromEntries(TArray<FEWInventoryEntry>& Entries, UEWItemDefinition* ItemDefinition, int32 Quantity)
