@@ -2,7 +2,7 @@
 
 Consolidated October 6, 2026. These are preserved source-review snapshots. Their implementation status and unresolved questions describe their review time. Current owner clarifications, decisions and requirements live in [the design reference](../DESIGN_REFERENCE.md); current development status lives in [the project guide](../PROJECT_GUIDE.md).
 
-Current October 7 progression is **7 skill-tree points + 1 character stat point per level**. The older 15-point and unresolved stat-award passages below are historical, superseded by the [owner consolidation](../DESIGN_REFERENCE.md#october-7-decisions). Current wild-only berry, crop/orchard, anatomy-drop, lineage, treasure and diving rules are recorded there as well.
+Current October 7 progression is **7 skill-tree points + 1 character stat point per level**. The older 15-point and unresolved stat-award passages below are historical, superseded by the [owner consolidation](../DESIGN_REFERENCE.md#october-7-decisions). Current wild-only berry, crop/orchard, anatomy-drop, lineage and treasure rules are recorded there as well.
 
 <a id="september-reconciliation"></a>
 
