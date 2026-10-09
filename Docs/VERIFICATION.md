@@ -1,6 +1,6 @@
 # Verification record
 
-Updated October 7, 2026. Each section records a dated implementation slice and its limits. Use the [project guide](PROJECT_GUIDE.md) for current status and the [design reference](DESIGN_REFERENCE.md) for authority. Historical failures remain here so they cannot be mistaken for successful acceptance.
+Updated October 9, 2026. Each section records a dated implementation slice and its limits. Use the [project guide](PROJECT_GUIDE.md) for current status and the [design reference](DESIGN_REFERENCE.md) for authority. Historical failures remain here so they cannot be mistaken for successful acceptance.
 
 ## Contents
 
@@ -16,6 +16,8 @@ Updated October 7, 2026. Each section records a dated implementation slice and i
 - [Resource/ecology source review](#resource-ecology-review)
 - [October 7 repository audit](#repository-audit-october-7)
 - [Playable berry consumption and freshness](#food-player-flow)
+- [October 8 checkpoint restoration](#checkpoint-restore-october-8)
+- [October 9 repository review](#repository-review-october-9)
 
 ## Foundation history
 
@@ -588,6 +590,8 @@ The owner's missing HUD/input report was traced to the running editor opening `C
 
 Publication scope excludes the owner's `Config/DefaultEditor.ini` and ignored `.mcp.json`. Original DOCX files and the OneDrive backup remain unchanged. Prior dated publication holds above describe their historical checkpoint; the October 7 owner approval supersedes the berry hold.
 
+<a id="checkpoint-restore-october-8"></a>
+
 ## October 8 owner-requested checkpoint restore
 
 Owner requested undoing work after the quoted October 7 publication (`19a6e9d`, 4:45 PM Chicago), then clarified that the berry update remains and the underwater-visibility addition is removed for now. GitHub main was still at that publication commit, so no remote code rollback or force push was required. Restored local project files to that tree, removed the later local crafting-readiness branch, INI drafts/delivered copies, unfinished native recipe loader/test and temporary startup-verification helpers. The unbuilt loader never changed native binaries; the retained EW module is the October 7 berry build.
@@ -597,3 +601,11 @@ Recovered working files and repository history are preserved under local ignored
 Tracked project content outside the documentation adjustment matches `19a6e9d`, with the owner's pre-existing `Config/DefaultEditor.ini` left unchanged. Its SHA256 remains `0E61E2200AEAB9EC14A2CD1C55F024F1CCAB668D1C43759D89B71DD9D7B0185A`. Supplied DOCX originals and the OneDrive backup remain untouched; the new owner decision overrides the deferred source requirement. The berry build/15 native tests/58 Play checks remain the existing acceptance evidence; no new gameplay test or full startup-control acceptance is claimed by this rollback.
 
 Restart point: confirm HUD/controls in the correct checkout, then define the first crafting recipes. Recipe costs and access are unresolved again; do not import withdrawn draft decisions as current authority.
+
+<a id="repository-review-october-9"></a>
+
+## October 9 repository review and documentation cleanup
+
+Reviewed the tracked directory inventory across root settings, connector configurations, Config, Content, Docs, Scripts and both native modules. Hashed all 543 tracked files: no exact duplicate contents were found. Retained Unreal asset paths and imported library dependencies; file names and hashes alone cannot establish whether a binary package is safely removable.
+
+Condensed PROJECT_GUIDE's repeated design, acceptance and fixture descriptions into links to their authoritative records. Clarified superseded wildlife-raiding and underwater rules in the decision history/archive; updated crafting-layout questions to preserve the confirmed inventory-first placement flow. Existing editor preferences remain excluded. This is documentation maintenance, not new gameplay acceptance.

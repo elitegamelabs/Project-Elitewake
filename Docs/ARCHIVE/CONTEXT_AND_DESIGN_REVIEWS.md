@@ -4,6 +4,8 @@ Consolidated October 6, 2026. These are preserved source-review snapshots. Their
 
 Current October 7 progression is **7 skill-tree points + 1 character stat point per level**. The older 15-point and unresolved stat-award passages below are historical, superseded by the [owner consolidation](../DESIGN_REFERENCE.md#october-7-decisions). Current wild-only berry, crop/orchard, anatomy-drop, lineage and treasure rules are recorded there as well.
 
+The [October 8 decisions](../DESIGN_REFERENCE.md#october-8-decisions) also supersede older wildlife-raiding, Magnum and underwater-darkness passages. Historical excerpts below are evidence of earlier sources, not current instructions.
+
 <a id="september-reconciliation"></a>
 
 ## Context reconciliation
