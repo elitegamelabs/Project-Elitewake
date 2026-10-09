@@ -27,7 +27,9 @@ Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner con
 
 ## Next work
 
-October 8 rollback: current project restored to the October 7 publication checkpoint, preserving the berry loop and design decisions except the now-deferred underwater-visibility addition. Subsequent crafting/ecology INI drafts, starter-recipe decisions and unfinished configuration loader are withdrawn. Their recovery copies are local only; no crafting/configuration loading or production wildlife population system is implemented.
+October 8 rollback: current project restored to the October 7 publication checkpoint, preserving the berry loop and design decisions except the underwater-visibility addition deferred at that checkpoint. Subsequent crafting/ecology INI drafts, starter-recipe decisions and unfinished configuration loader are withdrawn. Their recovery copies are local only; no crafting/configuration loading or production wildlife population system is implemented.
+
+The later [October 8 updates and owner clarifications](DESIGN_REFERENCE.md#october-8-decisions) now govern readable blue/navy wreck exploration, inventory-first crafting of campfires/storage chests/stations before placement, a separate Builder's Plan construction mode, Stone/Metal/Tungsten tool progression, a period pistol, Food Cabinets, NPC-only storefronts and gradual catalog progression. Land bases remain temporary and player-raidable. Wild animals must not aggro player items; the animal exception requires both taming and direct player control. These are design requirements, not implemented systems; exact recipes, unlocks, balance and controls remain TBD.
 
 The [October 7 consolidation](DESIGN_REFERENCE.md#october-7-decisions) confirms 1 character stat point + 7 skill-tree points per level, wild-only berries (no seeds/farming), water-dependent crops and persistent orchards, named ores/alloys, anatomy-based drops, readable horizontal lineage, dynamic ocean-treasure currency. These are design requirements; exact recipes, food values, yields, timers, genetics, payout tables remain TBD. No bulk catalog or new runtime system is implied.
 

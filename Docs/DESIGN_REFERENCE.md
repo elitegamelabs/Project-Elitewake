@@ -19,7 +19,7 @@ The October 5 **Elitewake Master Game Design Bible — Authoritative Revision** 
 
 Preserve each guide's status labels: **CONFIRMED**, **FUTURE**, **TBD** and **RECOMMENDED**. Unresolved values stay TBD until the owner decides them; do not invent them. Creative changes that affect gameplay update the Shared guide first, then Development. Technical constraints that would change story or world become Shared issues before Creative canon is rewritten.
 
-Ships are the center of play and highly customizable. Land bases are allowed but temporary, and players and wildlife can raid them. Preserve Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. The first private beta focuses on single player while retaining server authority. "THE SHIP IS HOME", the Village name, Davy Jones, the old raft opening, eight-hour cycle and older economy are superseded; do not revive them from historical records.
+Ships are the center of play and highly customizable. Land bases are allowed but temporary, and players can raid them; wild animals do not aggro player items. Preserve Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. The first private beta focuses on single player while retaining server authority. "THE SHIP IS HOME", the Village name, Davy Jones, the old raft opening, eight-hour cycle and older economy are superseded; do not revive them from historical records.
 
 <a id="october-6"></a>
 
@@ -27,7 +27,7 @@ Ships are the center of play and highly customizable. Land bases are allowed but
 
 Authority: October 6 owner decision brief supplied by the owner. These supersede conflicting wording in the Shared guide, team guides and archived Master Bible. The reviewed DOCX copies have not yet incorporated these decisions.
 
-1. **Ship identity.** "THE SHIP IS HOME" is retired. Ships are highly customizable. Land bases are allowed but temporary, and players and wildlife can raid them.
+1. **Ship identity.** "THE SHIP IS HOME" is retired. Ships are highly customizable. Land bases are allowed but temporary, and players can raid them; wild animals do not aggro player items.
 2. **Ports.** Villages are renamed **Ports**. Each server has four Port islands, each in a weather biome. The owner confirmed October 7 that this is a terminology change only: existing PvP safety, specialized vendors, Ferryman links, prologue arrival and Innkeeper introduction-mission rules carry forward unchanged.
 3. **Servers.** Official servers have wipes, with progression rewards. Unofficial servers use host-defined rules. Players never see a server grid.
 4. **Interact.** The keyboard Interact key is **E**, now CONFIRMED. `EWPlayerController.cpp` already maps E and controller X (face button left).
@@ -36,7 +36,7 @@ Authority: October 6 owner decision brief supplied by the owner. These supersede
 
 TBD from these decisions (ask, do not assume):
 
-- Land bases: how long a base lasts, what makes it decay or expire, and which wildlife raid it and how. Temporary-base lifetime is distinct from the existing five-real-day inactivity threshold unless the owner explicitly unifies them.
+- Land bases: how long a base lasts, what makes it decay or expire, and the player-raid mechanics. Temporary-base lifetime is distinct from the existing five-real-day inactivity threshold unless the owner explicitly unifies them.
 - Ports: which weather biome each Port uses, and each Port's identity and vendor stock.
 - Wipes: schedule, which progression rewards carry over, and how they are granted. Unofficial servers: which rules hosts can change.
 - Hand injury: whether the 25 hits count per tree, per session or across the character's lifetime; whether resting or other actions reset the count; whether gloves or tools affect it; what the injured state does before infection; how long a fatal infection takes and what the Surgeon must do to treat it; how the bandage is crafted or obtained. The real-time length of 10 in-game minutes depends on the game clock, which is not yet defined.
@@ -59,9 +59,24 @@ Source: owner-supplied `Elitewake_Todays_Design_Decisions_Clean.docx`, reviewed 
 | Breeding/lineage | Species-compatible breeding retains inherited stats, appearance/color, temperament, abilities, size, pedigree, raising/bonding and possible mutations. Compact lineage begins at the selected creature and scrolls horizontally through parents and older generations; selecting any ancestor opens its full-stat/details pop-up. | Genetics, inheritance percentages, mutation chances, gestation/incubation, care timing and cooldowns remain TBD. No full-display expanded pedigree. |
 | Ocean loot | Floating crates and sunken-ship treasure can contain currency. Payout potential and overall loot scale with treasure level, dive risk and difficulty reaching/finding treasure; existing surface treasure-level markers remain. | Around 20 Copper and around 100 Copper plus some Silver are illustrative examples, not fixed payouts. Tier ranges and probabilities remain TBD. |
 
-October 8 owner update: the underwater-visibility addition from the supplied October 7 consolidation is deferred and removed from current requirements. Do not reintroduce it from that source without a new owner decision. Existing diving equipment, breath/drowning and fish-oil/tether rules remain unchanged.
+October 8 rollback initially deferred the underwater-visibility addition. The later October 8 consolidation supersedes that deferral with readable muted blue/navy wreck exploration, without modern lighting or night vision. Existing diving equipment, breath/drowning and fish-oil/tether rules remain unchanged.
 
 The berry implementation is compatible with this consolidation: it harvests from opt-in wild bush fixtures and contains no farming/seeds, progression, fixed ocean-currency payouts or lineage/diving implementation. Next crafting work must retain the exact-recipe gate; confirmed resource families are not approved recipe costs.
+
+<a id="october-8-decisions"></a>
+
+## October 8 design updates and owner clarifications
+
+Source: `Elitewake_October_8_2026_Design_Updates.docx`, reviewed without modifying the original, plus direct owner answers after the conflict review. These establish design requirements, not implemented features or instructions to publish.
+
+- **Bases and animal aggression:** full customizable land bases remain temporary and raidable by players, not wildlife. Wild animals must not aggro player items. The only permitted animal exception is a tamed animal under a player's direct control; taming alone is insufficient. Base lifetime, player raids and the exact direct-control mechanics remain TBD. This supersedes D046's wildlife-raiding clause, without changing animal aggression toward survivors.
+- **Crafting and placement:** campfires, storage chests and crafting stations are crafted into inventory first, then placed. Portable tools/weapons/ammunition/armor/food/medicine remain ordinary crafting or specialist-station products. The reusable crafted Builder's Plan opens Build Mode for construction pieces; it does not create ordinary inventory items. Unlocks, recipes, placement controls, final plan name and exact menu nesting remain TBD.
+- **Pistol:** retain the pistol and rework the former Common Magnum into a period piece. Do not retain Magnum damage figures as approved balance. Final name, appearance, ammunition and statistics remain TBD. Rifle bullets/tranquilizer darts, longbow arrows/tranquilizer arrows and crossbow bolts/tranquilizer bolts are approved direction; exact balance remains TBD.
+- **Underwater:** sunken wrecks and nearby navigation remain readable in muted blue/navy, brighter than pitch black, without flashlights or modern night vision. This replaces the earlier darkness direction and temporary deferral.
+- **Tools and resources:** Stone < Metal < Tungsten, with Tungsten Axe/Pickaxe and generally improved damage, efficiency and durability. Expanded practical resource/component families are approved direction; item identities, distribution, balance, costs and unlocks remain TBD. These specific gameplay additions do not authorize unrelated modern technology.
+- **Catalog and naming:** preserve existing Elitewake items; reference-game inspiration adds practical items rather than replacing ours. Exclude non-core reference content such as boss summons, TEK and quest relics. This is interpreted as an import filter, preserving the existing Rye/Journal. Use **Food Cabinet**, not Food Larder. Avoid redundant functions unless items have distinct roles or progression; station overlap remains TBD.
+- **Commerce and food:** functional storefronts are NPC-run only; decorative player shops may exist without retail functionality. Regional stock/prices are data-driven, with formulas and values TBD. Cooking progresses through basic foods, meals and preserved provisions, primarily for Hunger, with modest optional survival benefits. Existing berry effects, wild-only status and twenty-real-minute spoilage remain unchanged.
+- **Progression and presentation:** easy to begin, deep to master; introduce useful resource/recipe families gradually. Separate portable crafting, Build Mode, specialist production, cooking and NPC trade. Locked families stay hidden or unobtrusive. Exact recipes and unlock levels remain TBD; withdrawn starter-recipe costs, level-one decisions and INI drafts are not reinstated.
 
 ## Owner clarifications
 
@@ -107,7 +122,7 @@ Room price, any later room-payment transaction, refusal/revisit behavior for the
 4. **Starter raft/claims (§§29.2,29.5,30.6):** baseline raft recipe versus Small Shipyard prerequisite and claimed-territory placement need a precise early-game route, without reviving tutorial shipyard construction.
 5. **Ship stat upgrades (§30.7):** are crew counts initial caps or absolute ceilings given Crew Capacity upgrades? Schooner configured-cannon count could change if a utility attachment replaces a cannon. Define handling before implementation.
 6. **Currency scope (§§28.5,30.17,30.19):** player UI currency is retained, while crew physically carry wages. Define NPC-loot conversion and avoid treating all Copper as corpse-proof.
-7. **Remaining combat/system integration:** Common Magnum 40 vs 42 before headshots is explicitly unresolved; bed cooldown reset/decay rule unresolved; ordinary-death level/skill retention remains open; administrative ban policy needs operational details before multiplayer.
+7. **Remaining combat/system integration:** The former Common Magnum is to be reworked into a period pistol; its name, damage and other balance remain TBD; bed cooldown reset/decay rule unresolved; ordinary-death level/skill retention remains open; administrative ban policy needs operational details before multiplayer.
 
 Resolved historical conflicts should not be re-asked as if new: Davy Jones removed; latest 500/30 currency; +50 Health/point; single-player ship cap 8; latest shipyard tiers; Ammo Bin storage-only; item and treasure rarity palettes intentionally differ. Stale earlier references to raft prologue, Ammo Bay crafting, unrestricted single-player ships, and +25 Health are historical.
 
@@ -282,5 +297,7 @@ Retained decisions are chronological evidence. Newer owner decisions and the Oct
 | D064 | Record the October 7 progression, resources/farming, anatomy drops, crafting/catalog, lineage and ocean loot decisions | Owner supplies `Elitewake_Todays_Design_Decisions_Clean.docx` and asks to review today's updates | [Consolidated review](#october-7-decisions): 1 stat + 7 skill-tree points/level supersede older awards; berries wild-only, no seeds/farming; named crops/ores/alloys and anatomy drops; horizontal lineage/pop-ups; dynamic treasure currency. Exact recipes, catalog, yields/timing/genetics/payouts stay TBD. These systems are not marked implemented from the source. |
 | D065 | Approve publishing the verified berry update alongside review of today's decisions | Direct owner October 7: "you can publish also take a look at todays updates" after the pending berry push/main integration was explained | Ordinary publication of `7eddba8` and reconciled documentation; no owner editor preferences/local connector configuration or new runtime scope included. Berry checks remain as recorded; startup confusion traced to opening the September Desktop backup, not proof of a gameplay regression. Correct-checkout owner Play confirmation remains pending. |
 | D066 | Restore the quoted October 7 publication checkpoint; retain berry update; defer the underwater-visibility addition | Direct owner October 8 rollback request and clarification: "Keep the berry update and delete the darker deep water visibility for now. Update the local files too." | Restore `19a6e9d` project state except this new documentation decision. Later crafting/ecology sheets, level-one starter recipes/costs/multipliers and unfinished loader work are withdrawn from current guidance. Preserve pre-existing editor preferences, supplied source DOCX and a local recovery archive. Resume correct-project HUD/control confirmation, then first crafting-recipe definition; future publication still requires owner authorization. |
+
+| D067 | October 8 design consolidation and subsequent owner clarifications | Supplied October 8 DOCX and direct owner answers: temporary player-raidable bases; inventory-first placeables; period pistol; no wild-animal aggression toward player items, with tamed/direct-control exception | [Current October 8 decisions](#october-8-decisions). Supersedes wildlife portion of D046, visibility deferral in D066 and former Magnum direction. Documentation only; runtime systems and exact tuning remain pending. |
 
 Update this reference when authority changes; update PROJECT_GUIDE.md when work priorities change and VERIFICATION.md when evidence changes. Keep suggestions distinct from confirmed decisions.
