@@ -8,6 +8,9 @@
 class UTextBlock;
 class UBorder;
 class UProgressBar;
+class UImage;
+class UTexture2D;
+class UHorizontalBox;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWOnHotbarSlotPressed, int32, Slot);
 
@@ -39,8 +42,14 @@ public:
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
+
 private:
+    UPROPERTY(Transient) TObjectPtr<UHorizontalBox> SlotPanel;
     UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> FreshnessBars;
+    UPROPERTY(Transient) TArray<TObjectPtr<UImage>> Icons;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> FallbackIcons;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> Quantities;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SelectionMarkers;
     void BuildWidgetTree();
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTextBlock>> Labels;

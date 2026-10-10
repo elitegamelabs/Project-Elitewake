@@ -1,6 +1,7 @@
 #include "EWHotbarWidget.h"
 #include "EWCharacter.h"
 #include "Blueprint/WidgetTree.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/Border.h"
@@ -10,6 +11,10 @@
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
 #include "EWInventoryComponent.h"
+#include "Components/Image.h"
+#include "Components/SizeBox.h"
+#include "Styling/CoreStyle.h"
+#include "EWHudIcon.h"
 
 void UEWHotbarSlotButton::InitializeSlot(int32 NewSlotIndex)
 {
@@ -34,44 +39,63 @@ void UEWHotbarWidget::NativeConstruct()
 void UEWHotbarWidget::BuildWidgetTree()
 {
     if (!WidgetTree || WidgetTree->RootWidget) return;
+    for (int32 Kind=5;Kind<=11;++Kind) FallbackIcons.Add(EWHudIcon::Make(Kind,Kind>=10));
     auto* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>();
     WidgetTree->RootWidget = Canvas;
-    auto* Panel = WidgetTree->ConstructWidget<UBorder>();
-    Panel->SetBrushColor(FLinearColor(.015f,.025f,.035f,.9f));
-    Panel->SetPadding(FMargin(6));
-    auto* CanvasSlot = Canvas->AddChildToCanvas(Panel);
-    CanvasSlot->SetAnchors(FAnchors(0.f,1.f,1.f,1.f));
-    CanvasSlot->SetOffsets(FMargin(12,-212,12,200));
-    auto* Content = WidgetTree->ConstructWidget<UVerticalBox>();
-    Panel->SetContent(Content);
-    Status = WidgetTree->ConstructWidget<UTextBlock>();
-    auto Font = Status->GetFont(); Font.Size = 22; Status->SetFont(Font);
-    Status->SetAutoWrapText(true);
-    Content->AddChildToVerticalBox(Status);
     auto* Slots = WidgetTree->ConstructWidget<UHorizontalBox>();
-    Content->AddChildToVerticalBox(Slots);
+    SlotPanel=Slots;Slots->SetRenderTransformPivot(FVector2D(.5f,1.f));
+    auto* CanvasSlot = Canvas->AddChildToCanvas(Slots);
+    CanvasSlot->SetAnchors(FAnchors(.5f,1.f));
+    CanvasSlot->SetAlignment(FVector2D(.5f,1.f));
+    CanvasSlot->SetOffsets(FMargin(0,-18,608,80));
+    Status = WidgetTree->ConstructWidget<UTextBlock>();
+    auto Font = Status->GetFont(); Font.Size = 16; Status->SetFont(Font);
+    Status->SetAutoWrapText(true);Status->SetJustification(ETextJustify::Center);
+    auto* StatusSlot=Canvas->AddChildToCanvas(Status);
+    StatusSlot->SetAnchors(FAnchors(.5f,1.f));StatusSlot->SetAlignment(FVector2D(.5f,1.f));
+    StatusSlot->SetOffsets(FMargin(0,-112,608,52));
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
     {
+        auto* Box=WidgetTree->ConstructWidget<USizeBox>();Box->SetWidthOverride(72);Box->SetHeightOverride(76);
+        Slots->AddChildToHorizontalBox(Box)->SetPadding(FMargin(2,0));
         auto* Cell = WidgetTree->ConstructWidget<UBorder>();
-        Cell->SetPadding(FMargin(4));
-        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
-        Label->SetFont(Font); Label->SetAutoWrapText(true);
-        auto* CellContent = WidgetTree->ConstructWidget<UVerticalBox>();
-        CellContent->AddChildToVerticalBox(Label);
+        FSlateBrush Frame=*FCoreStyle::Get().GetBrush("WhiteBrush");
+        Frame.DrawAs=ESlateBrushDrawType::Border;Frame.Margin=FMargin(.04f);
+        Frame.DrawAs=ESlateBrushDrawType::Image;Frame.SetResourceObject(FallbackIcons[5]);
+        Cell->SetBrush(Frame);Cell->SetBrushColor(FLinearColor(.84f,.87f,.9f,1.f));
+        Cell->SetPadding(FMargin(3));Box->SetContent(Cell);
+        auto* CellContent = WidgetTree->ConstructWidget<UCanvasPanel>();Cell->SetContent(CellContent);
+        auto* Icon=WidgetTree->ConstructWidget<UImage>();
+        auto* IconSlot=CellContent->AddChildToCanvas(Icon);IconSlot->SetOffsets(FMargin(6,8,54,54));
+        Icons.Add(Icon);
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();Font.Size=14;Label->SetFont(Font);
+        Label->SetJustification(ETextJustify::Center);
+        auto* LabelSlot=CellContent->AddChildToCanvas(Label);LabelSlot->SetOffsets(FMargin(1,51,32,18));
+        Labels.Add(Label);
+        auto* Key=WidgetTree->ConstructWidget<UTextBlock>();Key->SetFont(Font);
+        Key->SetShadowOffset(FVector2D(1,1));Key->SetShadowColorAndOpacity(FLinearColor::Black);
+        Key->SetText(FText::AsNumber(i+1));CellContent->AddChildToCanvas(Key)->SetOffsets(FMargin(2,0,18,18));
+        auto* Quantity=WidgetTree->ConstructWidget<UTextBlock>();Quantity->SetFont(Font);Quantity->SetShadowOffset(FVector2D(1,1));Quantity->SetShadowColorAndOpacity(FLinearColor::Black);Quantity->SetJustification(ETextJustify::Right);
+        CellContent->AddChildToCanvas(Quantity)->SetOffsets(FMargin(30,51,34,18));Quantities.Add(Quantity);
+        auto* Selected=WidgetTree->ConstructWidget<UTextBlock>();Selected->SetFont(Font);
+        Selected->SetText(FText::FromString(TEXT("▲")));Selected->SetJustification(ETextJustify::Center);
+        CellContent->AddChildToCanvas(Selected)->SetOffsets(FMargin(23,-16,20,18));SelectionMarkers.Add(Selected);
         auto* Freshness = WidgetTree->ConstructWidget<UProgressBar>();
         Freshness->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
-        CellContent->AddChildToVerticalBox(Freshness);
-        FreshnessBars.Add(Freshness);
-        Cell->SetContent(CellContent);
-        auto* CellSlot = Slots->AddChildToHorizontalBox(Cell);
-        CellSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); CellSlot->SetPadding(FMargin(2));
-        Labels.Add(Label); Cells.Add(Cell);
+        CellContent->AddChildToCanvas(Freshness)->SetOffsets(FMargin(2,65,62,3));
+        FreshnessBars.Add(Freshness);Cells.Add(Cell);
     }
 }
 
 void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
     Super::NativeTick(Geometry, DeltaTime);
+    // Keep readable physical sizes in low-resolution or small editor viewports.
+    const float Dpi=UWidgetLayoutLibrary::GetViewportScale(this);
+    const float ReadableScale=FMath::Max(1.f,.8f/FMath::Max(Dpi,.01f));
+    if (SlotPanel) SlotPanel->SetRenderScale(FVector2D(ReadableScale));
+    if (Status) { Status->SetRenderTransformPivot(FVector2D(.5f,1.f));Status->SetRenderScale(FVector2D(ReadableScale)); }
+
     const auto* Pawn = Cast<AEWCharacter>(GetOwningPlayerPawn());
     UEWHotbarComponent* Hotbar = Pawn ? Pawn->GetHotbarComponent() : nullptr;
     if (PreviousHotbar.Get() != Hotbar)
@@ -97,12 +121,30 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
         FreshnessBars[i]->SetVisibility(Freshness >= 0.f ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
         FreshnessBars[i]->SetPercent(FMath::Max(0.f, Freshness));
-        FString Name = Item ? Item->DisplayName.ToString() : TEXT("Empty");
-        if (Name.Len()>16) Name=Name.Left(15)+TEXT("…");
-        Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%d\n%s\n%s"),i+1,*Name,
-            Item ? *(Quantity>0 ? FString::Printf(TEXT("x%d"),Quantity) : FString(TEXT("Unavailable"))) : TEXT(""))));
-        Labels[i]->SetColorAndOpacity(FSlateColor(Item && Quantity==0 ? FLinearColor(.5f,.5f,.5f) : FLinearColor::White));
-        Cells[i]->SetBrushColor(Hotbar && Hotbar->GetSelectedSlot()==i ? FLinearColor(.06f,.35f,.45f) : FLinearColor(.025f,.045f,.06f));
+        const bool Selected=Hotbar && Hotbar->GetSelectedSlot()==i;
+        UTexture2D* Texture=Item ? Item->Icon.LoadSynchronous() : nullptr;
+        const bool AuthoredIcon=Texture!=nullptr;
+        if (Item && !Texture)
+        {
+            int32 Kind=8;
+            if (Item->GatheringTool==EEWGatheringTool::Hatchet) Kind=5;
+            else if (Item->GatheringTool==EEWGatheringTool::Pickaxe) Kind=6;
+            else if (Item->FoodKind==EEWFoodKind::Berry) Kind=7;
+            else if (Item->Category==EEWItemCategory::Clothing) Kind=9;
+            Texture=FallbackIcons[Kind-5];
+        }
+        Icons[i]->SetBrushFromTexture(Texture);
+        Icons[i]->SetVisibility(Texture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        Icons[i]->SetOpacity(Quantity>0 ? 1.f : .35f);
+        // Identify placeholder silhouettes until per-item artwork is authored.
+        Labels[i]->SetText(Item && !AuthoredIcon ? FText::FromString(Item->DisplayName.ToString().Left(3)) : FText::GetEmpty());
+        Labels[i]->SetColorAndOpacity(FSlateColor(Quantity>0 ? FLinearColor::White : FLinearColor(.5f,.5f,.5f)));
+        Quantities[i]->SetText(Item ? FText::AsNumber(Quantity) : FText::GetEmpty());
+        SelectionMarkers[i]->SetVisibility(Selected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        Cells[i]->SetBrushFromTexture(FallbackIcons[Selected ? 6 : 5]);
+        Cells[i]->SetBrushColor(Selected ? FLinearColor(.97f,.98f,1.f,1.f) : FLinearColor(.84f,.87f,.9f,1.f));
+        Cells[i]->SetToolTipText(Item ? Item->DisplayName : FText::FromString(TEXT("Empty slot")));
+
     }
 }
 

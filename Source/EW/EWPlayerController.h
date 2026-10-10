@@ -18,6 +18,10 @@ class UEWHotbarWidget;
 class UEWSurvivalWidget;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
+class UEWObjectiveComponent;
+class UEWObjectiveWidget;
+class UEWMapWidget;
+class UEWSessionWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -29,6 +33,21 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Multiplayer") void SetSessionMenuOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsSessionMenuOpen() const { return bSessionMenuOpen; }
+    UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);
+    UPROPERTY(Transient) TObjectPtr<UEWSessionWidget> SessionWidget;
+    bool bSessionMenuOpen = false;
+    UFUNCTION(BlueprintPure, Category="Objectives")
+    UEWObjectiveComponent* GetObjectiveComponent() const { return ObjectiveComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Objectives")
+    TObjectPtr<UEWObjectiveComponent> ObjectiveComponent;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWObjectiveWidget> ObjectiveWidget;
+    UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
+    void RequestCraft(UEWCraftingRecipe* Recipe);
+    UFUNCTION(Server, Reliable) void ServerCraft(UEWCraftingRecipe* Recipe);
+    UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     void RequestConsumeFood(UEWItemDefinition* Item);
     UFUNCTION(Server, Reliable)
@@ -38,8 +57,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Gathering") void Attack();
     UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target);
     AEWPlayerController();
+    virtual void OnPossess(APawn* InPawn) override;
     UFUNCTION(BlueprintPure, Category="Interaction")
     UEWInteractionComponent* GetInteractionComponent() const { return InteractionComponent; }
+    UFUNCTION(BlueprintCallable, Category="Map") void SetMapOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Map") bool IsMapOpen() const { return bMapOpen; }
+    UFUNCTION(Server, Reliable) void ServerSetMapOpen(bool bOpen);
+    UPROPERTY(Transient) TObjectPtr<UEWMapWidget> MapWidget;
+    bool bMapOpen = false;
     bool IsInventoryOpen() const { return bInventoryInputBlocked; }
     bool UsesControllerPrompts() const { return bControllerPrompts; }
     void RecordInputDevice(const FKey& Key) { if (Key.IsValid()) bControllerPrompts = Key.IsGamepadKey(); }

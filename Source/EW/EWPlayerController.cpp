@@ -2,6 +2,12 @@
 
 
 #include "EWPlayerController.h"
+#include "EWObjectiveComponent.h"
+#include "EWObjectiveWidget.h"
+#include "EWMapWidget.h"
+#include "EWSessionWidget.h"
+#include "EWGameInstance.h"
+#include "EWSurvivalComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "Engine/LocalPlayer.h"
@@ -28,7 +34,14 @@
 
 AEWPlayerController::AEWPlayerController()
 {
+    ObjectiveComponent = CreateDefaultSubobject<UEWObjectiveComponent>(TEXT("Objectives"));
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
+}
+
+void AEWPlayerController::OnPossess(APawn* InPawn)
+{
+    Super::OnPossess(InPawn);
+    if (ObjectiveComponent) ObjectiveComponent->ApplyCompletionRecipes();
 }
 
 void AEWPlayerController::BeginPlay()
@@ -36,12 +49,15 @@ void AEWPlayerController::BeginPlay()
 	Super::BeginPlay();
     if (IsLocalPlayerController())
     {
+        ObjectiveWidget = CreateWidget<UEWObjectiveWidget>(this, UEWObjectiveWidget::StaticClass());
+        if (ObjectiveWidget) ObjectiveWidget->AddToPlayerScreen(2);
         HotbarWidget = CreateWidget<UEWHotbarWidget>(this, UEWHotbarWidget::StaticClass());
         if (HotbarWidget) HotbarWidget->AddToPlayerScreen(1);
         SurvivalWidget = CreateWidget<UEWSurvivalWidget>(this, UEWSurvivalWidget::StaticClass());
         if (SurvivalWidget) SurvivalWidget->AddToPlayerScreen(2);
         InteractionWidget = CreateWidget<UEWInteractionWidget>(this, UEWInteractionWidget::StaticClass());
         if (InteractionWidget) InteractionWidget->AddToPlayerScreen(3);
+        if (auto* Instance=GetGameInstance<UEWGameInstance>()) Instance->LocalControllerReady(this);
     }
 
 	// only spawn touch controls on local player controllers
@@ -140,7 +156,7 @@ void AEWPlayerController::SetupInputComponent()
 
 void AEWPlayerController::Attack()
 {
-    if (!IsLocalPlayerController() || IsInventoryOpen()) return;
+    if (!IsLocalPlayerController() || IsInventoryOpen() || IsMapOpen() || IsSessionMenuOpen()) return;
     ServerAttack(FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())));
 }
 
@@ -157,7 +173,7 @@ void AEWPlayerController::ServerAttack_Implementation(AActor* Target)
 
 void AEWPlayerController::Interact()
 {
-    if (!IsLocalPlayerController() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
+    if (!IsLocalPlayerController() || IsMapOpen() || IsSessionMenuOpen() || (InventoryWidget && InventoryWidget->IsInViewport())) return;
     bLocalInteractionIntent = true;
     if (AActor* Target = FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())))
         ServerInteract(Target);
@@ -176,7 +192,7 @@ void AEWPlayerController::ServerCancelInteraction_Implementation()
 }
 void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bBlocked)
 {
-    InteractionComponent->SetMenuBlocked(bBlocked);
+    InteractionComponent->SetMenuBlocked(bBlocked || IsMapOpen() || IsSessionMenuOpen());
 }
 
 int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
@@ -192,6 +208,24 @@ int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerMod
 
 bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
 {
+    if (Params.Key==EKeys::F10)
+    {
+        if (Params.Event==IE_Pressed) SetSessionMenuOpen(!IsSessionMenuOpen());
+        return true;
+    }
+    if (IsSessionMenuOpen()) return true;
+    if (Params.Key == EKeys::M)
+    {
+        if (Params.Event == IE_Pressed) SetMapOpen(!bMapOpen);
+        return true;
+    }
+    if (bMapOpen && Params.Key == EKeys::Escape)
+    {
+        if (Params.Event == IE_Pressed) SetMapOpen(false);
+        return true;
+    }
+    if (bMapOpen && (Params.Key == EKeys::I || Params.Key == EKeys::C || Params.Key == EKeys::LeftShift
+        || HotbarSlotForKey(Params.Key,bHotbarModifierHeld) != INDEX_NONE)) return true;
     // Ignore neutral stick/trigger samples so an idle controller cannot steal keyboard prompts.
     if (Params.Event != IE_Released && Params.Key.IsValid()
         && (Params.Event != IE_Axis || FMath::Abs(Params.AmountDepressed) > (Params.Key.IsGamepadKey() ? .2f : KINDA_SMALL_NUMBER)))
@@ -233,11 +267,27 @@ void AEWPlayerController::FlushPressedKeys()
 
 void AEWPlayerController::RequestHotbarBinding(int32 Slot, UEWItemDefinition* Item)
 {
-    if (IsLocalPlayerController()) ServerBindHotbar(Slot,Item);
+    if (IsLocalPlayerController() && !IsMapOpen() && !IsSessionMenuOpen()) ServerBindHotbar(Slot,Item);
 }
 void AEWPlayerController::RequestConsumeFood(UEWItemDefinition* Item)
 {
     if (IsLocalPlayerController()) ServerConsumeFood(Item);
+}
+
+void AEWPlayerController::RequestCraft(UEWCraftingRecipe* Recipe)
+{
+    if (IsLocalPlayerController() && !IsMapOpen() && !IsSessionMenuOpen()) ServerCraft(Recipe);
+}
+void AEWPlayerController::ServerCraft_Implementation(UEWCraftingRecipe* Recipe)
+{
+    auto* OwnedCrafter = Cast<AEWCharacter>(GetPawn());
+    if (IsMapOpen() || IsSessionMenuOpen() || !OwnedCrafter || OwnedCrafter->GetController() != this || OwnedCrafter->GetSurvivalComponent()->GetHealth() <= 0.f)
+    { ClientCraftResult(EEWCraftResult::Busy); return; }
+    ClientCraftResult(OwnedCrafter->GetInventoryComponent()->CraftItem(Recipe));
+}
+void AEWPlayerController::ClientCraftResult_Implementation(EEWCraftResult Result)
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowCraftResult(Result);
 }
 void AEWPlayerController::ServerConsumeFood_Implementation(UEWItemDefinition* Item)
 {
@@ -255,12 +305,14 @@ void AEWPlayerController::RequestHotbarActivation(int32 Slot)
 }
 void AEWPlayerController::ServerBindHotbar_Implementation(int32 Slot, UEWItemDefinition* Item)
 {
+    if (IsMapOpen() || IsSessionMenuOpen()) return;
     auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
     ClientHotbarResult(OwnedCharacter && OwnedCharacter->GetController()==this
         ? OwnedCharacter->GetHotbarComponent()->BindItem(Slot,Item) : EEWHotbarResult::NotOwned);
 }
 void AEWPlayerController::ServerActivateHotbar_Implementation(int32 Slot)
 {
+    if (IsMapOpen() || IsSessionMenuOpen()) return;
     auto* OwnedCharacter = Cast<AEWCharacter>(GetPawn());
     ClientHotbarResult(OwnedCharacter && OwnedCharacter->GetController()==this
         ? (InteractionComponent->IsMenuBlocked() ? EEWHotbarResult::Busy : OwnedCharacter->GetHotbarComponent()->ActivateSlot(Slot)) : EEWHotbarResult::NotOwned);
@@ -273,6 +325,9 @@ void AEWPlayerController::ClientHotbarResult_Implementation(EEWHotbarResult Resu
 void AEWPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     bHotbarModifierHeld=false; SuppressedHotbarKeys.Reset();
+    if (SessionWidget) SessionWidget->RemoveFromParent();
+    if (MapWidget) MapWidget->RemoveFromParent();
+    if (ObjectiveWidget) ObjectiveWidget->RemoveFromParent();
     if (HotbarWidget) HotbarWidget->RemoveFromParent();
     if (SurvivalWidget) SurvivalWidget->RemoveFromParent();
     if (InteractionWidget) InteractionWidget->RemoveFromParent();
@@ -347,6 +402,7 @@ void AEWPlayerController::ToggleInventory()
 
 void AEWPlayerController::SetInventoryOpen(bool bOpen)
 {
+    if (bOpen && (IsMapOpen() || IsSessionMenuOpen())) return;
 	if (!IsLocalPlayerController())
 	{
 		return;
@@ -396,4 +452,57 @@ bool AEWPlayerController::ShouldUseTouchControls() const
 {
 	// are we on a mobile platform? Should we force touch?
 	return SVirtualJoystick::ShouldDisplayTouchInterface() || bForceTouchControls;
+}
+
+void AEWPlayerController::SetMapOpen(bool bOpen)
+{
+    if (!IsLocalPlayerController() || bMapOpen == bOpen || (bOpen && IsSessionMenuOpen())) return;
+    if (bOpen && IsInventoryOpen()) SetInventoryOpen(false);
+    FlushPressedKeys();
+    bMapOpen = bOpen;
+    SetIgnoreLookInput(bOpen);
+    if (auto* MapSurvivor = Cast<AEWCharacter>(GetPawn()))
+    { MapSurvivor->CancelRestrictedActions(); }
+    ServerSetMapOpen(bOpen);
+    if (bOpen)
+    {
+        MapWidget = CreateWidget<UEWMapWidget>(this,UEWMapWidget::StaticClass());
+        if (MapWidget) MapWidget->AddToPlayerScreen(30);
+    }
+    else if (MapWidget) { MapWidget->RemoveFromParent(); MapWidget = nullptr; }
+    SetInputMode(FInputModeGameOnly()); SetShowMouseCursor(false);
+}
+void AEWPlayerController::ServerSetMapOpen_Implementation(bool bOpen)
+{
+    bMapOpen = bOpen;
+    InteractionComponent->SetMenuBlocked(bOpen || IsInventoryOpen() || IsSessionMenuOpen());
+    if (bOpen) if (auto* MapSurvivor = Cast<AEWCharacter>(GetPawn()))
+    { MapSurvivor->CancelRestrictedActions(); }
+}
+
+void AEWPlayerController::SetSessionMenuOpen(bool bOpen)
+{
+    if (!IsLocalPlayerController() || bSessionMenuOpen==bOpen) return;
+    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); }
+    FlushPressedKeys(); bSessionMenuOpen=bOpen;
+    SetIgnoreMoveInput(bOpen); SetIgnoreLookInput(bOpen);
+    if (auto* Survivor=Cast<AEWCharacter>(GetPawn())) Survivor->CancelRestrictedActions();
+    ServerSetSessionMenuOpen(bOpen);
+    if (bOpen)
+    {
+        SessionWidget=CreateWidget<UEWSessionWidget>(this,UEWSessionWidget::StaticClass());
+        if (SessionWidget)
+        {
+            SessionWidget->AddToPlayerScreen(100);
+            FInputModeUIOnly Mode; Mode.SetWidgetToFocus(SessionWidget->TakeWidget()); SetInputMode(Mode);
+        }
+    }
+    else { if (SessionWidget) SessionWidget->RemoveFromParent(); SessionWidget=nullptr; SetInputMode(FInputModeGameOnly()); }
+    bShowMouseCursor=bOpen;
+}
+void AEWPlayerController::ServerSetSessionMenuOpen_Implementation(bool bOpen)
+{
+    bSessionMenuOpen=bOpen;
+    InteractionComponent->SetMenuBlocked(bOpen || IsMapOpen() || IsInventoryOpen());
+    if (bOpen) if (auto* Survivor=Cast<AEWCharacter>(GetPawn())) Survivor->CancelRestrictedActions();
 }

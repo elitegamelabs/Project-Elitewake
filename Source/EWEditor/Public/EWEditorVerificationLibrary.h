@@ -5,6 +5,9 @@
 #include "EWEditorVerificationLibrary.generated.h"
 
 class AEWPickup;
+class AEWInnTorchPickup;
+class AEWCharacter;
+class UEWCraftingRecipe;
 class AEWPlayerController;
 class UEWItemDefinition;
 
@@ -24,6 +27,8 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationGameplayKey(AEWPlayerController* Controller, FName KeyName);
     /** Test clock offset in an authority PIE inventory; never changes saved food policy. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool AdvanceVerificationFoodClock(AActor* Owner, float RealSeconds);
@@ -65,6 +70,11 @@ public:
     /** PIE authority-only pickup fixture; not part of game targets. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor Verification")
     static AEWPickup* SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity);
+    UFUNCTION(BlueprintCallable, Category="Verification")
+    static AEWInnTorchPickup* SpawnVerificationInnTorch(UWorld* World, FVector Location, UEWItemDefinition* Item);
+    UFUNCTION(BlueprintCallable, Category="Verification")
+    static AEWCharacter* SpawnVerificationRecipeCharacter(UWorld* World, TSubclassOf<AEWCharacter> CharacterClass,
+        FVector Location, const TArray<UEWCraftingRecipe*>& Recipes);
     /** Access normal Enhanced Input injection for scripted editor Play verification. */
     UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
     static UEnhancedInputLocalPlayerSubsystem* GetPlayerInputSubsystem(APlayerController* Controller);

@@ -4,7 +4,9 @@ A ship-centered pirate survival sandbox by **Elite Game Labs**, built in **Unrea
 
 Ships are the center of play: transportation, shelter, storage, workshop, combat platform, crew headquarters and progression, and they are highly customizable. Land bases are allowed but temporary, and players can raid them; wild animals do not aggro player items. The loop is Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. (The former "THE SHIP IS HOME" slogan was retired by owner decision on October 6, 2026.)
 
-The current target is a small playable **0.01** foundation, with a single-player first private beta and server-authoritative gameplay architecture. Movement/stance, inventory/pickups/equipment/hotbar, contextual interaction, fresh-water drinking, hand-gathered resources and berry food, equipped-hatchet trees, pickaxe mining and the survival HUD have verified foundations. The opt-in Azren fixture supports inventory/hotbar eating, live freshness and twenty-real-minute conversion into an inedible toxic resource. Production bushes and broader food/cooking remain open. The production ship loop, complete survival gameplay, remaining gathering/tools, crafting, persistence and final presentation remain open. Harvesting animations are recorded for later integration.
+The current target is a small playable **0.01** foundation with server-authoritative gameplay and private multiplayer testing. Movement/stance, survival HUD, inventory/equipment/hotbar, interaction, gathering and berry food have verified foundations. New local work adds crafting transactions and larger inventory/crafting grids, an M-key surrounding-map preview, per-player inn torch pickup, ordered objectives and completion recipe rewards, and an F10 Host/Join/Leave test panel. Normal play still starts empty; starter recipes remain opt-in fixtures until the production prologue completion trigger is agreed.
+
+The latest verification passes 18 native tests, ten separate-process connection lifecycle checkpoints and five cooked Windows loopback checks. These are scoped foundation checks, not a finished sandbox or LAN/Internet certification. Production ships, complete survival, combat, world/Port content, prologue, persistence, final artwork/animations and balance remain open. Private packages stay outside Git; see the [private testing guide](Docs/PRIVATE_MULTIPLAYER_TESTING.md) for build steps and remaining acceptance.
 
 ## Start here
 
@@ -17,7 +19,7 @@ The current target is a small playable **0.01** foundation, with a single-player
 
 Design is governed by three guides maintained outside this repository. When sources conflict, the higher one wins:
 
-1. Explicit owner decisions.
+1. Explicit owner decisions, including the overriding [complete October 9 design update](Docs/OCTOBER_9_COMPLETE_REVIEW.md) and subsequent clarifications.
 2. **Elitewake Shared Design Authority & Cross-Team Guide**: common authority, terminology, cross-team contracts, open decisions and retired rules.
 3. Team guides: **Elitewake Game Development & Systems Bible** and **Elitewake Creative & World Bible**.
 4. Repository docs and work notes, including this README and `Docs/`.

@@ -29,12 +29,22 @@ def run_survival_hud_verification():
             assert lib.set_verification_network_settings(world,100,1)
     c.set_inventory_open(False)
     report={'success':False,'network':len(worlds)==2,'checkpoints':[],'errors':[]}
-    path=os.path.join(unreal.Paths.project_saved_dir(),'M4HUDNetworkResult.json' if len(worlds)==2 else 'M4HUDPlayResult.json')
+    path=os.path.join(unreal.Paths.project_saved_dir(),'HudRedesignNetworkResult.json' if len(worlds)==2 else 'HudRedesignPlayResult.json')
     def hud():return next(x for x in unreal.WidgetLibrary.get_all_widgets_of_class(w,unreal.EWSurvivalWidget,False) if x.get_owning_player()==c and x.is_in_viewport())
     def check(label,expected,warnings=None):
         u=hud();text=str(u.get_displayed_summary());notice=str(u.get_displayed_warnings())
         report['checkpoints'].append({'label':label,'display':text,'warnings':notice})
         for value in expected:assert value in text,label+': missing '+value
+        if c.get_controlled_pawn():
+            current=c.get_controlled_pawn().get_survival_component()
+            values=[current.get_health(),current.get_stamina(),current.get_hunger(),current.get_hydration(),current.get_carried_weight()]
+            maxima=[current.get_max_health(),current.get_max_stamina(),100,100,current.get_max_carry_weight()]
+            fills=u.get_displayed_fill_fractions()
+            assert len(fills)==5,label+': missing rendered survival icons'
+            for fill,value,maximum in zip(fills,values,maxima):
+                expected_fill=max(0,min(1,value/maximum)) if maximum>0 else 0
+                assert abs(fill-expected_fill)<.03,label+': rendered icon fill differs from replicated stat'
+
         if warnings is not None:assert notice==warnings,label+': warning differs '+notice
         if other:
             o=other.get_survival_component()
@@ -60,6 +70,9 @@ def run_survival_hud_verification():
         assert start is not None and end is not None and 1.35<=end-start<=1.8,'Stamina warning did not persist for 1.5 seconds'
         check('stamina warning lasts through automatic recovery',['Stamina'],'')
         report['stamina_warning_seconds']=end-start
+    def assert_timed_notice():
+        import re
+        assert re.search(r'Poisoned 00:0[123]',str(hud().get_displayed_warnings())), 'Missing timed effect countdown'
     steps=[(lambda:check('fresh full stats and empty weight',['Health 100 / 100','Stamina 100 / 100','Food 100%','Hydration 100%','Weight 0.0 / 50.0 kg'],''),.1),
            (values,1.5),(lambda:check('replicated damage needs and inventory weight',['Health 75 / 100','Food 25%','Hydration 40%','Weight 27.1 / 50.0 kg'],''),.1),
            (lambda:lib.send_verification_equipment_request(c,hat,unreal.EWEquipmentSlot.HEAD,False),1.5),
@@ -67,11 +80,11 @@ def run_survival_hud_verification():
            (lambda:lib.send_verification_ui_key(c,'I'),.4),(inventory_check,.1),
            (lambda:lib.send_verification_ui_key(c,'I'),.4),
            (lambda:s.set_hunger(0),.5),(lambda:check('empty food warning',['Food 0%'],'You are hungry!'),1.6),
-           (lambda:check('food warning expires while food stays empty',['Food 0%'],''),.1),
-           (lambda:s.set_hydration(0),.5),(lambda:check('empty hydration warning',['Hydration 0%'],'You are thirsty!'),1.6),
-           (lambda:check('hydration warning expires while needs stay empty',['Food 0%','Hydration 0%'],''),.1),
-           (lambda:s.set_hunger(5),.5),(lambda:check('small food refill updates immediately',['Food 5%','Hydration 0%'],''),.1),
-           (lambda:s.set_hunger(0),.5),(lambda:check('new empty transition warns again',['Food 0%'],'You are hungry!'),1.6),
+           (lambda:check('food warning persists while food stays empty',['Food 0%'],'You are hungry!'),.1),
+           (lambda:s.set_hydration(0),.5),(lambda:check('empty hydration warning',['Hydration 0%'],'You are hungry!\nYou are thirsty!'),1.6),
+           (lambda:check('empty needs warnings persist',['Food 0%','Hydration 0%'],'You are hungry!\nYou are thirsty!'),.1),
+           (lambda:s.set_hunger(5),.5),(lambda:check('small food refill clears only hunger warning',['Food 5%','Hydration 0%'],'You are thirsty!'),.1),
+           (lambda:s.set_hunger(0),.5),(lambda:check('new empty transition warns again',['Food 0%'],'You are hungry!\nYou are thirsty!'),1.6),
            (lambda:s.set_hunger(100),.1),(lambda:s.set_hydration(100),.1),(lambda:s.restore_health(50),1.5),
            (lambda:check('health and needs restore',['Health 100 / 100','Food 100%','Hydration 100%'],''),.1),
            (lambda:(s.set_hunger(0),s.set_hydration(0)),.5),
@@ -81,8 +94,14 @@ def run_survival_hud_verification():
            (lambda:lib.send_verification_equipment_request(c,None,unreal.EWEquipmentSlot.HEAD,True),1.5),
            (lambda:check('unequip conserves carried weight',['Weight 2.0 / 50.0 kg'],''),.1),
            (lambda:inv.remove_item(hat,1),1.5),(lambda:check('removal clears carried weight',['Weight 0.0 / 50.0 kg'],''),.1),
-           (lambda:inv.add_item(wood,1000),1.5),(lambda:check('HUD shows real weight above prototype capacity',['Weight 100.0 / 50.0 kg'],''),.1),
+           (lambda:inv.add_item(wood,1000),1.5),(lambda:check('HUD warns above current capacity',['Weight 100.0 / 50.0 kg'],'Over encumbered'),.1),
            (lambda:inv.remove_item(wood,1000),1.5),
+           (lambda:check('removing excess clears encumbrance',['Weight 0.0 / 50.0 kg'],''),.1),
+           (lambda:s.set_debuff_notice('VerificationPoison',unreal.Text('Poisoned'),3),.5),
+           (lambda:check('authoritative timed notice replicates with countdown',['Health 100 / 100'],None),.1),
+           (lambda:assert_timed_notice(),3),
+           (lambda:check('timed notice expires without changing stats',['Health 100 / 100'],''),.1),
+           (lambda:s.clear_debuff_notice('VerificationPoison'),.1),
            (lambda:authority_controller.un_possess(),1.5),(absent,.1),
            (lambda:authority_controller.possess(authority),1.5),
            (lambda:check('repossession restores current stats',['Health 100 / 100','Food 100%','Hydration 100%','Weight 0.0 / 50.0 kg'],''),.1),

@@ -7,6 +7,8 @@ class UEWSurvivalComponent;
 class UTextBlock;
 class UProgressBar;
 class UBorder;
+class UTexture2D;
+class UVerticalBox;
 
 /** Local read-only HUD for the possessed survivor's authoritative values. */
 UCLASS()
@@ -14,11 +16,14 @@ class EW_API UEWSurvivalWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
-    /** The actual rendered labels, also useful for accessibility and verification. */
+    /** Current icon values expressed as text for accessibility and verification. */
     UFUNCTION(BlueprintPure, Category="Survival|HUD")
     FText GetDisplayedSummary() const;
     UFUNCTION(BlueprintPure, Category="Survival|HUD")
     FText GetDisplayedWarnings() const;
+    /** Actual rendered icon fills, for accessibility and acceptance checks. */
+    UFUNCTION(BlueprintPure, Category="Survival|HUD")
+    TArray<float> GetDisplayedFillFractions() const;
     virtual void NativeConstruct() override;
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
@@ -34,6 +39,10 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTextBlock>> Warnings;
     TWeakObjectPtr<UEWSurvivalComponent> PreviousSurvival;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> IconTextures;
+    FString DisplayedSummary;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> NoticePanel;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> EffectWarnings;
     bool WasEmpty[3] = {};
     float WarningRemaining[3] = {};
     float BlinkTime = 0.f;

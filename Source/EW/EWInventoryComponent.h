@@ -8,6 +8,10 @@
 
 class FLifetimeProperty;
 class UEWItemDefinition;
+class UEWCraftingRecipe;
+
+UENUM(BlueprintType)
+enum class EEWCraftResult : uint8 { Success, NotAuthority, Locked, InvalidRecipe, MissingIngredients, InventoryFull, Busy };
 
 UENUM(BlueprintType)
 enum class EEWFoodUseResult : uint8
@@ -44,6 +48,19 @@ public:
     UFUNCTION(BlueprintPure, Category="Inventory|Food")
     float GetFoodFreshness(const UEWItemDefinition* ItemDefinition) const;
 	UEWInventoryComponent();
+
+    /** Trusted server code grants availability; callers cannot grant recipes through an RPC. */
+    UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
+    bool UnlockRecipe(UEWCraftingRecipe* Recipe);
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting")
+    TArray<UEWCraftingRecipe*> GetAvailableRecipes() const;
+
+    /** Crafts exactly one item atomically, using server-owned recipe availability. */
+    UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
+    EEWCraftResult CraftItem(UEWCraftingRecipe* Recipe);
+    /** Read-only local estimate. Authority revalidates when executing the request. */
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting")
+    EEWCraftResult GetCraftReadiness(UEWCraftingRecipe* Recipe) const;
 
 	virtual void BeginPlay() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -84,6 +101,9 @@ public:
 	float GetTotalWeight() const;
 
 protected:
+    /** Designer-authored baseline unlocks. Empty until production availability is approved. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory|Crafting")
+    TArray<TObjectPtr<UEWCraftingRecipe>> StartingRecipes;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="1"))
 	int32 MaxSlots = 24;
 
@@ -94,6 +114,11 @@ protected:
 	void OnRep_Entries();
 
 private:
+    friend class FEWCraftingTest;
+    void InitializeStartingRecipes();
+    EEWCraftResult StageCraft(UEWCraftingRecipe* Recipe, TArray<FEWInventoryEntry>& Proposed) const;
+    UPROPERTY(ReplicatedUsing=OnRep_Entries)
+    TArray<TObjectPtr<UEWCraftingRecipe>> AvailableRecipes;
     friend class UEWEditorVerificationLibrary;
     friend class FEWFoodTest;
     friend class UEWEquipmentComponent;

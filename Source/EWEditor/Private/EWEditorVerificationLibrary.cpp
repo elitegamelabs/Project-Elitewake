@@ -1,4 +1,7 @@
 #include "EWEditorVerificationLibrary.h"
+#include "InputKeyEventArgs.h"
+#include "EWCharacter.h"
+#include "EWCraftingRecipe.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
@@ -7,6 +10,7 @@
 #include "Engine/World.h"
 #include "Engine/NetDriver.h"
 #include "EWPickup.h"
+#include "EWInnTorchPickup.h"
 #include "EWPlayerController.h"
 #include "EWInventoryComponent.h"
 #include "Framework/Application/SlateApplication.h"
@@ -169,6 +173,29 @@ AEWPickup* UEWEditorVerificationLibrary::SpawnVerificationPickup(UWorld* World, 
     return Pickup;
 }
 
+AEWInnTorchPickup* UEWEditorVerificationLibrary::SpawnVerificationInnTorch(UWorld* World, FVector Location, UEWItemDefinition* Item)
+{
+    if (!World || !World->IsGameWorld() || World->GetNetMode()==NM_Client || !Item) return nullptr;
+    auto* Torch = World->SpawnActor<AEWInnTorchPickup>(Location, FRotator::ZeroRotator);
+    if (Torch) Torch->ItemDefinition=Item;
+    return Torch;
+}
+
+AEWCharacter* UEWEditorVerificationLibrary::SpawnVerificationRecipeCharacter(UWorld* World,
+    TSubclassOf<AEWCharacter> CharacterClass, FVector Location, const TArray<UEWCraftingRecipe*>& Recipes)
+{
+    if (!World || World->WorldType!=EWorldType::PIE || World->GetNetMode()==NM_Client || !CharacterClass) return nullptr;
+    const FTransform Transform(FRotator::ZeroRotator, Location);
+    auto* Pawn = World->SpawnActorDeferred<AEWCharacter>(CharacterClass, Transform, nullptr, nullptr,
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!Pawn) return nullptr;
+    auto* Inventory = Pawn->GetInventoryComponent();
+    Inventory->StartingRecipes.Reset();
+    for (auto* Recipe : Recipes) Inventory->StartingRecipes.Add(Recipe);
+    Pawn->FinishSpawning(Transform);
+    return Pawn;
+}
+
 UEnhancedInputLocalPlayerSubsystem* UEWEditorVerificationLibrary::GetPlayerInputSubsystem(APlayerController* Controller)
 {
     ULocalPlayer* Player = Controller ? Controller->GetLocalPlayer() : nullptr;
@@ -228,4 +255,14 @@ bool UEWEditorVerificationLibrary::SetVerificationNetworkSettings(UWorld* World,
     }
 #endif
     return false;
+}
+bool UEWEditorVerificationLibrary::SendVerificationGameplayKey(AEWPlayerController* Controller, FName KeyName)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    const FKey Key(KeyName); if (!Key.IsValid()) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
+    FInputKeyEventArgs Args; Args.Key=Key; Args.Event=IE_Pressed; Args.AmountDepressed=1.f;
+    const bool Handled=Controller->InputKey(Args);
+    Args.Event=IE_Released; Args.AmountDepressed=0.f; Controller->InputKey(Args);
+    return Handled;
 }

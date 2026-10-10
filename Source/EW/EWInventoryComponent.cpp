@@ -2,6 +2,7 @@
 
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
+#include "EWCraftingRecipe.h"
 #include "EWEquipmentComponent.h"
 #include "EWSurvivalComponent.h"
 #include "GameFramework/Actor.h"
@@ -22,7 +23,14 @@ void UEWInventoryComponent::BeginPlay()
 	if (GetOwner() && GetOwner()->HasAuthority())
 	{
 		RefreshSurvivalWeight();
+        InitializeStartingRecipes();
 	}
+}
+
+void UEWInventoryComponent::InitializeStartingRecipes()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    for (const auto& Recipe : StartingRecipes) UnlockRecipe(Recipe.Get());
 }
 
 void UEWInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -70,6 +78,7 @@ void UEWInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(UEWInventoryComponent, Entries);
+    DOREPLIFETIME_CONDITION(UEWInventoryComponent, AvailableRecipes, COND_OwnerOnly);
 }
 
 int32 UEWInventoryComponent::AddItem(UEWItemDefinition* ItemDefinition, int32 Quantity)
@@ -209,6 +218,69 @@ int32 UEWInventoryComponent::GetItemCount(const UEWItemDefinition* ItemDefinitio
 		}
 	}
 	return Total;
+}
+
+bool UEWInventoryComponent::UnlockRecipe(UEWCraftingRecipe* Recipe)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !IsValid(Recipe)) return false;
+    AvailableRecipes.AddUnique(Recipe);
+    OnInventoryChanged.Broadcast();
+    GetOwner()->ForceNetUpdate();
+    return true;
+}
+
+TArray<UEWCraftingRecipe*> UEWInventoryComponent::GetAvailableRecipes() const
+{
+    TArray<UEWCraftingRecipe*> Result;
+    for (const auto& Recipe : AvailableRecipes) if (IsValid(Recipe)) Result.Add(Recipe.Get());
+    return Result;
+}
+
+EEWCraftResult UEWInventoryComponent::CraftItem(UEWCraftingRecipe* Recipe)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return EEWCraftResult::NotAuthority;
+    RefreshFoodAge();
+    TArray<FEWInventoryEntry> Proposed;
+    const EEWCraftResult Result = StageCraft(Recipe, Proposed);
+    if (Result != EEWCraftResult::Success) return Result;
+    TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
+    Entries = MoveTemp(Proposed);
+    HandleInventoryChanged();
+    GetOwner()->ForceNetUpdate();
+    return EEWCraftResult::Success;
+}
+
+EEWCraftResult UEWInventoryComponent::GetCraftReadiness(UEWCraftingRecipe* Recipe) const
+{
+    TArray<FEWInventoryEntry> Proposed;
+    return StageCraft(Recipe, Proposed);
+}
+
+EEWCraftResult UEWInventoryComponent::StageCraft(UEWCraftingRecipe* Recipe, TArray<FEWInventoryEntry>& Proposed) const
+{
+    if (bEquipmentTransferInProgress) return EEWCraftResult::Busy;
+    if (!IsValid(Recipe)) return EEWCraftResult::InvalidRecipe;
+    if (!AvailableRecipes.Contains(Recipe)) return EEWCraftResult::Locked;
+    const auto ValidItem = [](const UEWItemDefinition* Item)
+    {
+        return IsValid(Item) && !Item->ItemId.IsNone() && Item->MaxStackSize > 0
+            && FMath::IsFinite(Item->UnitWeight) && Item->UnitWeight >= 0.f;
+    };
+    if (!ValidItem(Recipe->Output) || Recipe->Ingredients.IsEmpty()) return EEWCraftResult::InvalidRecipe;
+    TMap<UEWItemDefinition*, int32> Costs;
+    for (const auto& Ingredient : Recipe->Ingredients)
+    {
+        if (!ValidItem(Ingredient.Item) || Ingredient.Quantity <= 0) return EEWCraftResult::InvalidRecipe;
+        int32& Total = Costs.FindOrAdd(Ingredient.Item);
+        if (Ingredient.Quantity > MAX_int32 - Total) return EEWCraftResult::InvalidRecipe;
+        Total += Ingredient.Quantity;
+    }
+    Proposed = Entries;
+    for (const auto& Cost : Costs)
+        if (RemoveFromEntries(Proposed, Cost.Key, Cost.Value) != Cost.Value)
+            return EEWCraftResult::MissingIngredients;
+    if (AddToEntries(Proposed, MaxSlots, Recipe->Output, 1) != 1) return EEWCraftResult::InventoryFull;
+    return EEWCraftResult::Success;
 }
 float UEWInventoryComponent::GetFoodFreshness(const UEWItemDefinition* Item) const
 {

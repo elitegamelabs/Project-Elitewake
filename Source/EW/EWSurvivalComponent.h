@@ -8,6 +8,17 @@
 
 class FLifetimeProperty;
 
+/** HUD state supplied by authoritative gameplay effects. */
+USTRUCT(BlueprintType)
+struct FEWDebuffNotice
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly) FName Id;
+    UPROPERTY(BlueprintReadOnly) FText Label;
+    /** Negative means condition-driven; otherwise synchronized server game time. */
+    UPROPERTY(BlueprintReadOnly) double ExpiresAt = -1.;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnSurvivalStatsChanged);
 
 /**
@@ -27,6 +38,14 @@ public:
 	/** Raised whenever a replicated or authoritative survival value changes. */
 	UPROPERTY(BlueprintAssignable, Category="Survival")
 	FEWOnSurvivalStatsChanged OnSurvivalStatsChanged;
+
+    /** Authority only. Negative persists until cleared; zero clears. */
+    UFUNCTION(BlueprintCallable, Category="Survival|Effects")
+    void SetDebuffNotice(FName Id, FText Label, float DurationSeconds);
+    UFUNCTION(BlueprintCallable, Category="Survival|Effects")
+    void ClearDebuffNotice(FName Id);
+    UFUNCTION(BlueprintPure, Category="Survival|Effects")
+    TArray<FEWDebuffNotice> GetDebuffNotices() const { return DebuffNotices; }
 
 	/** Advance stamina on the authority based on current sprint state. */
 	void UpdateStamina(bool bIsSprinting, float DeltaSeconds);
@@ -123,6 +142,8 @@ protected:
 	void OnRep_SurvivalStats();
 
 private:
+    UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
+    TArray<FEWDebuffNotice> DebuffNotices;
     friend class UEWInventoryComponent;
     UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
     int32 StaminaExhaustionCount = 0;

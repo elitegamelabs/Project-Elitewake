@@ -24,6 +24,17 @@ bool FEWSurvivalExhaustionTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Event survives recovery before replication"),Survival->GetStaminaExhaustionCount(),1);
     Survival->UpdateStamina(true,10.f);
     TestEqual(TEXT("Next exhaustion emits a new event"),Survival->GetStaminaExhaustionCount(),2);
+    Survival->SetDebuffNotice(TEXT("Injury"),FText::FromString(TEXT("Injured")),-1.f);
+    TestEqual(TEXT("Condition notice added"),Survival->GetDebuffNotices().Num(),1);
+    Survival->SetDebuffNotice(TEXT("Injury"),FText::FromString(TEXT("Bandaged")),-1.f);
+    TestEqual(TEXT("Same effect updates rather than duplicates"),Survival->GetDebuffNotices().Num(),1);
+    Owner->SetRole(ROLE_SimulatedProxy);
+    Survival->ClearDebuffNotice(TEXT("Injury"));
+    Survival->SetDebuffNotice(TEXT("Poison"),FText::FromString(TEXT("Poisoned")),-1.f);
+    TestEqual(TEXT("Client cannot add or clear effects"),Survival->GetDebuffNotices().Num(),1);
+    Owner->SetRole(ROLE_Authority);
+    Survival->SetDebuffNotice(TEXT("Injury"),FText::GetEmpty(),0.f);
+    TestEqual(TEXT("Authority can clear a condition"),Survival->GetDebuffNotices().Num(),0);
     return true;
 }
 #endif

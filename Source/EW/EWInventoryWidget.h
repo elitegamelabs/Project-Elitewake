@@ -12,12 +12,29 @@
 
 class UTextBlock;
 class UVerticalBox;
+class UWrapBox;
 class UEWInventoryComponent;
 class UBorder;
 class UScrollBox;
 class UButton;
 class UEWHotbarSlotButton;
 class UHorizontalBox;
+class UImage;
+class UTexture2D;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWRecipePressed, int32, Index);
+UCLASS()
+class UEWRecipeButton : public UButton
+{
+    GENERATED_BODY()
+public:
+    UEWRecipeButton() { InitIsFocusable(false); }
+    int32 RecipeIndex = 0;
+    FEWRecipePressed OnRecipePressed;
+    void Initialize(int32 Index) { RecipeIndex = Index; OnClicked.AddDynamic(this, &UEWRecipeButton::Pressed); }
+private:
+    UFUNCTION() void Pressed() { OnRecipePressed.Broadcast(RecipeIndex); }
+};
 
 /** Keep mouse actions from taking navigation focus away from the inventory panel. */
 UCLASS()
@@ -42,6 +59,10 @@ public:
     UFUNCTION(BlueprintPure, Category="Inventory|Food")
     float GetDisplayedFoodFreshness() const;
     void ShowFoodResult(EEWFoodUseResult Result);
+    void ShowCraftResult(EEWCraftResult Result);
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting") bool IsCraftActionEnabled() const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Presentation") UTexture2D* GetDisplayedInventoryIcon(UEWItemDefinition* Item) const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Presentation") UTexture2D* GetDisplayedMaterialIcon(UEWItemDefinition* Item) const;
     void ShowHotbarResult(EEWHotbarResult Result);
     void ShowEquipmentResult(EEWEquipmentResult Result);
 	virtual void NativeConstruct() override;
@@ -65,6 +86,19 @@ protected:
 	void RefreshInventory();
 
 private:
+    UHorizontalBox* MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image);
+    UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> InventoryImages;
+    UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> MaterialImages;
+    UFUNCTION() void ToggleCrafting();
+    UFUNCTION() void SelectRecipe(int32 Index);
+    UFUNCTION() void PerformCraft();
+    void RefreshCrafting();
+    bool bCraftingOpen = false;
+    int32 SelectedRecipeIndex = 0;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> CraftingBox;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> CraftingDetails;
+    UPROPERTY(Transient) TObjectPtr<UButton> CraftButton;
+    UPROPERTY(Transient) TArray<TObjectPtr<UEWCraftingRecipe>> DisplayedRecipes;
     UFUNCTION()
     void PerformFoodAction();
     UPROPERTY(Transient) TObjectPtr<UButton> FoodActionButton;
@@ -114,6 +148,10 @@ private:
     TObjectPtr<UScrollBox> ItemsScroll;
     UPROPERTY(Transient)
     TObjectPtr<UTextBlock> DetailsText;
+    UTexture2D* ResolveIcon(UEWItemDefinition* Item);
+    UPROPERTY(Transient) TMap<int32,TObjectPtr<UTexture2D>> FallbackIcons;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> RecipeDetailsBox;
+    UPROPERTY(Transient) TObjectPtr<UScrollBox> CraftScroll;
 	void BuildWidgetTree();
 	UEWInventoryComponent* ResolveInventory() const;
 
@@ -121,7 +159,7 @@ private:
 	TObjectPtr<UTextBlock> SummaryText;
 
 	UPROPERTY(Transient)
-	TObjectPtr<UVerticalBox> ItemsBox;
+	TObjectPtr<UWrapBox> ItemsBox;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UEWInventoryComponent> BoundInventory;

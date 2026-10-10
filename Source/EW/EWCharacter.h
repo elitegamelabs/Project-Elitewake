@@ -143,6 +143,7 @@ protected:
 	FTimerHandle StanceHoldTimer;
 
 public:
+    void CancelRestrictedActions() { StopSprint(); CancelStanceInput(); }
 
 	/** Constructor */
 	AEWCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());

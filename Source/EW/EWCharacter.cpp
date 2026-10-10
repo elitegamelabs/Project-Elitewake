@@ -19,6 +19,7 @@
 #include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 #include "EW.h"
+#include "EWPlayerController.h"
 
 AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UEWCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -207,6 +208,7 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 void AEWCharacter::StartSprint()
 {
+    if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bSprintInputHeld = true;
 	if (bIsProne)
 	{
@@ -229,6 +231,7 @@ void AEWCharacter::StopSprint()
 
 void AEWCharacter::StartStanceInput()
 {
+    if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bStanceInputHeld = true;
 	bSprintInputHeld = false;
 	SetSprinting(false);
@@ -299,7 +302,8 @@ void AEWCharacter::ToggleCrouch()
 
 void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 {
-	bNewIsSprinting = bNewIsSprinting
+	const auto* PC = Cast<AEWPlayerController>(GetController());
+	bNewIsSprinting = bNewIsSprinting && (!PC || (!PC->IsMapOpen() && !PC->IsSessionMenuOpen()))
 		&& !bIsProne
 		&& !bIsCrouched
 		&& (!SurvivalComponent || SurvivalComponent->CanSprint());

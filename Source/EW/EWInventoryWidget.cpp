@@ -6,6 +6,13 @@
 #include "EWHotbarWidget.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
+#include "EWCraftingRecipe.h"
+#include "Components/Image.h"
+#include "Components/SizeBox.h"
+#include "Components/WrapBox.h"
+#include "EWHudIcon.h"
+#include "Components/WrapBoxSlot.h"
+#include "Engine/Texture2D.h"
 #include "EWSurvivalComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -56,6 +63,7 @@ void UEWInventoryWidget::NativeDestruct()
 		BoundInventory->OnInventoryChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
 	}
 	BoundInventory = nullptr;
+    InventoryImages.Reset(); MaterialImages.Reset();
     if (BoundEquipment) BoundEquipment->OnEquipmentChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
     BoundEquipment = nullptr;
     if (BoundHotbar) BoundHotbar->OnHotbarChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshHotbarAssignments);
@@ -82,42 +90,69 @@ void UEWInventoryWidget::BuildWidgetTree()
 	Panel->SetContent(Content);
 
 	UTextBlock* Title = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryTitle"));
-	Title->SetText(FText::FromString(TEXT("INVENTORY")));
+	Title->SetText(FText::FromString(TEXT("SURVIVOR · INVENTORY & CRAFTING")));
 	Title->SetColorAndOpacity(FSlateColor(FLinearColor(0.25f, 0.85f, 0.95f)));
 	FSlateFontInfo TitleFont = Title->GetFont();
-	TitleFont.Size = 30;
+	TitleFont.Size = 26;
 	Title->SetFont(TitleFont);
 	Content->AddChildToVerticalBox(Title)->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 12.0f));
 
 	SummaryText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventorySummary"));
 	SummaryText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
 	Content->AddChildToVerticalBox(SummaryText)->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 18.0f));
+    auto* CraftTab = WidgetTree->ConstructWidget<UEWInventoryActionButton>();
+    auto* CraftTabLabel = WidgetTree->ConstructWidget<UTextBlock>();
+    CraftTabLabel->SetText(FText::FromString(TEXT("Inventory / Crafting (Tab / RB)")));
+    CraftTab->SetContent(CraftTabLabel);
+    CraftTab->SetBackgroundColor(FLinearColor(.04f,.16f,.2f,1.f));
+    CraftTab->OnClicked.AddDynamic(this, &UEWInventoryWidget::ToggleCrafting);
+    Content->AddChildToVerticalBox(CraftTab);
+    auto* Body = WidgetTree->ConstructWidget<UHorizontalBox>();
+    Content->AddChildToVerticalBox(Body)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* Browser = WidgetTree->ConstructWidget<UVerticalBox>();
+    auto* BrowserSlot = Body->AddChildToHorizontalBox(Browser);
+    BrowserSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); BrowserSlot->SetPadding(FMargin(0,12,12,0));
+    auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>();
+    DetailBorder->SetPadding(FMargin(18)); DetailBorder->SetBrushColor(FLinearColor(.025f,.06f,.075f,.95f));
+    auto* DetailSlot = Body->AddChildToHorizontalBox(DetailBorder);
+    DetailSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); DetailSlot->SetPadding(FMargin(0,12,0,0));
+    auto* DetailPanel = WidgetTree->ConstructWidget<UVerticalBox>(); DetailBorder->SetContent(DetailPanel);
+    RecipeDetailsBox = WidgetTree->ConstructWidget<UVerticalBox>();
+    DetailPanel->AddChildToVerticalBox(RecipeDetailsBox);
+    RecipeDetailsBox->SetVisibility(ESlateVisibility::Collapsed);
+    CraftingBox = WidgetTree->ConstructWidget<UVerticalBox>();
+    CraftingBox->SetVisibility(ESlateVisibility::Collapsed);
+    CraftScroll = WidgetTree->ConstructWidget<UScrollBox>();
+    CraftScroll->AddChild(CraftingBox);
+    Browser->AddChildToVerticalBox(CraftScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    CraftScroll->SetVisibility(ESlateVisibility::Collapsed);
 
-	ItemsBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InventoryItems"));
+	ItemsBox = WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass(), TEXT("InventoryItems"));
+    ItemsBox->SetInnerSlotPadding(FVector2D(8,8));
     ItemsScroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("InventoryScroll"));
     ItemsScroll->AddChild(ItemsBox);
-    auto* ScrollSlot = Content->AddChildToVerticalBox(ItemsScroll);
+    auto* ScrollSlot = Browser->AddChildToVerticalBox(ItemsScroll);
     ScrollSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     DetailsText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryDetails"));
     DetailsText->SetAutoWrapText(true);
-    Content->AddChildToVerticalBox(DetailsText)->SetPadding(FMargin(0,12));
+    DetailPanel->AddChildToVerticalBox(DetailsText)->SetPadding(FMargin(0,12));
     EquipmentActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("EquipmentAction"));
     EquipmentActionText = WidgetTree->ConstructWidget<UTextBlock>();
     EquipmentActionButton->SetContent(EquipmentActionText);
     EquipmentActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformEquipmentAction);
-    Content->AddChildToVerticalBox(EquipmentActionButton);
+    DetailPanel->AddChildToVerticalBox(EquipmentActionButton);
     FoodActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("FoodAction"));
     auto* FoodLabel = WidgetTree->ConstructWidget<UTextBlock>();
     FoodLabel->SetText(FText::FromString(TEXT("Eat (R / X)")));
     FoodActionButton->SetContent(FoodLabel);
     FoodActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformFoodAction);
-    Content->AddChildToVerticalBox(FoodActionButton);
+    DetailPanel->AddChildToVerticalBox(FoodActionButton);
     EquipmentResultText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("EquipmentResult"));
     EquipmentResultText->SetAutoWrapText(true);
-    Content->AddChildToVerticalBox(EquipmentResultText);
+    DetailPanel->AddChildToVerticalBox(EquipmentResultText);
 
     HotbarAssignments = WidgetTree->ConstructWidget<UVerticalBox>();
-    Content->AddChildToVerticalBox(HotbarAssignments)->SetPadding(FMargin(0,8));
+    DetailPanel->AddChildToVerticalBox(HotbarAssignments)->SetPadding(FMargin(0,8));
     auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
     Label->SetText(FText::FromString(TEXT("Hotbar assignment")));
     HotbarAssignments->AddChildToVerticalBox(Label);
@@ -148,6 +183,7 @@ void UEWInventoryWidget::RefreshInventory()
 	{
 		SummaryText->SetText(FText::FromString(TEXT("Inventory unavailable")));
         ItemsBox->ClearChildren(); Rows.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
+        InventoryImages.Reset(); MaterialImages.Reset();
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
         EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
@@ -174,23 +210,27 @@ void UEWInventoryWidget::RefreshInventory()
     SelectedIndex = SelectionCount() == 0 ? INDEX_NONE : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, SelectionCount()-1));
     if (PreviousItem && SelectedItem() != PreviousItem) bShowingDetails = false;
     ItemsBox->ClearChildren();
+    InventoryImages.Reset();
     Rows.Reset();
     if (SelectionCount() == 0)
     {
         UTextBlock* EmptyText = WidgetTree->ConstructWidget<UTextBlock>();
         EmptyText->SetText(FText::FromString(TEXT("Inventory is empty.")));
-        ItemsBox->AddChildToVerticalBox(EmptyText);
+        ItemsBox->AddChildToWrapBox(EmptyText);
         bShowingDetails = false;
     }
     for (const FEWInventoryEntry& Entry : DisplayedEntries)
     {
         UBorder* Row = WidgetTree->ConstructWidget<UBorder>();
-        Row->SetPadding(FMargin(10,8));
+        Row->SetPadding(FMargin(8));
         UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
         const FString Name = Entry.ItemDefinition->DisplayName.IsEmpty() ? Entry.ItemDefinition->ItemId.ToString() : Entry.ItemDefinition->DisplayName.ToString();
-        Text->SetText(FText::FromString(FString::Printf(TEXT("%s   x%d     %.1f kg"), *Name, Entry.Quantity, Entry.ItemDefinition->UnitWeight * Entry.Quantity)));
+        Text->SetText(FText::FromString(FString::Printf(TEXT("%s\nx%d"), *Name, Entry.Quantity)));
+        auto TileFont = Text->GetFont(); TileFont.Size=15; Text->SetFont(TileFont); Text->SetAutoWrapText(true);
         auto* RowContent = WidgetTree->ConstructWidget<UVerticalBox>();
-        RowContent->AddChildToVerticalBox(Text);
+        UImage* ItemImage = nullptr;
+        RowContent->AddChildToVerticalBox(MakeItemRow(Entry.ItemDefinition, Text, ItemImage));
+        if (ItemImage) InventoryImages.Add(Entry.ItemDefinition, ItemImage);
         if (Entry.ItemDefinition->FoodKind == EEWFoodKind::Berry && Entry.ItemDefinition->FreshLifetimeSeconds > 0.f)
         {
             const float Freshness = FMath::Clamp(1.f - Entry.FoodAgeSeconds / Entry.ItemDefinition->FreshLifetimeSeconds, 0.f, 1.f);
@@ -203,19 +243,164 @@ void UEWInventoryWidget::RefreshInventory()
             RowContent->AddChildToVerticalBox(Bar);
         }
         Row->SetContent(RowContent);
-        ItemsBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,3));
+        auto* TileSize = WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(164); TileSize->SetMinDesiredHeight(128); TileSize->SetContent(Row);
+        ItemsBox->AddChildToWrapBox(TileSize);
         Rows.Add(Row);
     }
     for (const FEWEquipmentEntry& Entry : DisplayedEquipment)
     {
-        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(); Row->SetPadding(FMargin(10,8));
+        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(); Row->SetPadding(FMargin(8));
         UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
         Text->SetText(FText::FromString(FString::Printf(TEXT("Equipped — %s: %s    %.1f kg"),
             *StaticEnum<EEWEquipmentSlot>()->GetDisplayNameTextByValue(static_cast<int64>(Entry.Slot)).ToString(),
             *Entry.ItemDefinition->DisplayName.ToString(), Entry.ItemDefinition->UnitWeight)));
-        Row->SetContent(Text); ItemsBox->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,3)); Rows.Add(Row);
+        UImage* ItemImage = nullptr;
+        Row->SetContent(MakeItemRow(Entry.ItemDefinition, Text, ItemImage));
+        if (ItemImage) InventoryImages.Add(Entry.ItemDefinition, ItemImage);
+        auto* TileSize = WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(164); TileSize->SetMinDesiredHeight(128); TileSize->SetContent(Row);
+        Text->SetAutoWrapText(true);
+        ItemsBox->AddChildToWrapBox(TileSize); Rows.Add(Row);
     }
     UpdateSelection();
+    RefreshCrafting();
+}
+
+void UEWInventoryWidget::ToggleCrafting()
+{
+    bCraftingOpen = !bCraftingOpen;
+    bShowingDetails = false;
+    RefreshCrafting();
+    SetUserFocus(GetOwningPlayer());
+}
+void UEWInventoryWidget::SelectRecipe(int32 Index)
+{
+    SelectedRecipeIndex = Index;
+    RefreshCrafting();
+}
+void UEWInventoryWidget::RefreshCrafting()
+{
+    if (!CraftingBox || !ItemsScroll) return;
+    CraftScroll->SetVisibility(bCraftingOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    RecipeDetailsBox->SetVisibility(bCraftingOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    CraftingBox->SetVisibility(bCraftingOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    ItemsScroll->SetVisibility(bCraftingOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    DetailsText->SetVisibility(bCraftingOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    if (!bCraftingOpen) { UpdateSelection(); return; }
+    DetailsText->SetVisibility(ESlateVisibility::Collapsed);
+    EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
+    FoodActionButton->SetVisibility(ESlateVisibility::Collapsed);
+    HotbarAssignments->SetVisibility(ESlateVisibility::Collapsed);
+    CraftingBox->ClearChildren(); RecipeDetailsBox->ClearChildren(); CraftButton=nullptr; DisplayedRecipes.Reset(); MaterialImages.Reset();
+    if (BoundInventory) for (auto* Recipe : BoundInventory->GetAvailableRecipes())
+        if (Recipe && Recipe->Output) DisplayedRecipes.Add(Recipe);
+    if (DisplayedRecipes.IsEmpty())
+    {
+        auto* Empty = WidgetTree->ConstructWidget<UTextBlock>();
+        Empty->SetText(FText::FromString(TEXT("No crafting recipes available yet.")));
+        CraftingBox->AddChildToVerticalBox(Empty); return;
+    }
+    SelectedRecipeIndex = FMath::Clamp(SelectedRecipeIndex, 0, DisplayedRecipes.Num()-1);
+    auto* RecipeGrid = WidgetTree->ConstructWidget<UWrapBox>(); RecipeGrid->SetInnerSlotPadding(FVector2D(8,8));
+    CraftingBox->AddChildToVerticalBox(RecipeGrid);
+    for (int32 Index=0; Index<DisplayedRecipes.Num(); ++Index)
+    {
+        auto* Recipe = DisplayedRecipes[Index].Get();
+        auto* Button = WidgetTree->ConstructWidget<UEWRecipeButton>(); Button->Initialize(Index);
+        Button->SetBackgroundColor(Index==SelectedRecipeIndex ? FLinearColor(.08f,.38f,.45f,1.f) : FLinearColor(.04f,.12f,.15f,1.f));
+        Button->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SelectRecipe);
+        auto* Row = WidgetTree->ConstructWidget<UVerticalBox>();
+        if (auto* Texture = ResolveIcon(Recipe->Output))
+        {
+            auto* Icon = WidgetTree->ConstructWidget<UImage>(); Icon->SetBrushFromTexture(Texture);
+            auto* Size = WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(64); Size->SetHeightOverride(64);
+            Size->SetContent(Icon); Row->AddChildToVerticalBox(Size);
+        }
+        auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
+        Name->SetText(FText::FromString((Index==SelectedRecipeIndex ? TEXT("► ") : TEXT("")) + Recipe->Output->DisplayName.ToString()));
+        Name->SetAutoWrapText(true); auto Font=Name->GetFont(); Font.Size=15; Name->SetFont(Font);
+        Row->AddChildToVerticalBox(Name); Button->SetContent(Row);
+        auto* TileSize=WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(164); TileSize->SetMinDesiredHeight(128); TileSize->SetContent(Button);
+        RecipeGrid->AddChildToWrapBox(TileSize);
+    }
+    auto* Recipe = DisplayedRecipes[SelectedRecipeIndex].Get();
+    if (auto* Texture = ResolveIcon(Recipe->Output))
+    {
+        auto* Preview = WidgetTree->ConstructWidget<UImage>(); Preview->SetBrushFromTexture(Texture);
+        auto* Size = WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(80); Size->SetHeightOverride(80);
+        Size->SetContent(Preview); RecipeDetailsBox->AddChildToVerticalBox(Size);
+    }
+    MaterialImages.Reset();
+    FString Details = Recipe->Output->DisplayName.ToString() + TEXT("\nUnlocked · Inventory crafting\n");
+    for (const auto& Cost : Recipe->Ingredients) if (Cost.Item)
+    {
+        auto* MaterialLabel = WidgetTree->ConstructWidget<UTextBlock>();
+        MaterialLabel->SetText(FText::FromString(FString::Printf(TEXT("%s: %d / %d"), *Cost.Item->DisplayName.ToString(),
+            BoundInventory->GetItemCount(Cost.Item), Cost.Quantity)));
+        UImage* MaterialImage = nullptr;
+        RecipeDetailsBox->AddChildToVerticalBox(MakeItemRow(Cost.Item, MaterialLabel, MaterialImage));
+        if (MaterialImage) MaterialImages.Add(Cost.Item, MaterialImage);
+    }
+    CraftingDetails = WidgetTree->ConstructWidget<UTextBlock>(); CraftingDetails->SetText(FText::FromString(Details));
+    RecipeDetailsBox->AddChildToVerticalBox(CraftingDetails);
+    CraftButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>();
+    auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetText(FText::FromString(TEXT("Craft one (Enter / A)")));
+    CraftButton->SetContent(Label); CraftButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformCraft);
+    const EEWCraftResult Readiness = BoundInventory->GetCraftReadiness(Recipe);
+    CraftButton->SetIsEnabled(Readiness==EEWCraftResult::Success);
+    CraftButton->SetToolTipText(FText::FromString(Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
+        : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory")
+        : Readiness==EEWCraftResult::Success ? TEXT("Craft one item") : TEXT("Recipe unavailable")));
+    if (Readiness!=EEWCraftResult::Success)
+        CraftingDetails->SetText(FText::FromString(Details + (Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
+            : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory") : TEXT("Recipe unavailable"))));
+    RecipeDetailsBox->AddChildToVerticalBox(CraftButton);
+}
+void UEWInventoryWidget::PerformCraft()
+{
+    if (!DisplayedRecipes.IsValidIndex(SelectedRecipeIndex) || !IsCraftActionEnabled()) return;
+    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RequestCraft(DisplayedRecipes[SelectedRecipeIndex]);
+}
+bool UEWInventoryWidget::IsCraftActionEnabled() const
+{
+    return bCraftingOpen && CraftButton && CraftButton->GetIsEnabled();
+}
+
+UHorizontalBox* UEWInventoryWidget::MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image)
+{
+    auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+    Image = nullptr;
+    if (Item) if (auto* Texture = ResolveIcon(Item))
+    {
+        Image = WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(Texture);
+        auto* Size = WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(64); Size->SetHeightOverride(64);
+        Size->SetContent(Image); Row->AddChildToHorizontalBox(Size)->SetPadding(FMargin(0,0,8,0));
+    }
+    auto* LabelSlot=Row->AddChildToHorizontalBox(Label); LabelSlot->SetVerticalAlignment(VAlign_Center);
+    LabelSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    return Row;
+}
+UTexture2D* UEWInventoryWidget::GetDisplayedInventoryIcon(UEWItemDefinition* Item) const
+{
+    const auto* Image = InventoryImages.Find(Item);
+    return Image && *Image ? Cast<UTexture2D>((*Image)->GetBrush().GetResourceObject()) : nullptr;
+}
+UTexture2D* UEWInventoryWidget::GetDisplayedMaterialIcon(UEWItemDefinition* Item) const
+{
+    const auto* Image = MaterialImages.Find(Item);
+    return bCraftingOpen && Image && *Image ? Cast<UTexture2D>((*Image)->GetBrush().GetResourceObject()) : nullptr;
+}
+void UEWInventoryWidget::ShowCraftResult(EEWCraftResult Result)
+{
+    FString Message;
+    switch (Result)
+    {
+        case EEWCraftResult::Success: Message=TEXT("Item crafted"); break;
+        case EEWCraftResult::MissingIngredients: Message=TEXT("Not enough materials"); break;
+        case EEWCraftResult::InventoryFull: Message=TEXT("Make room in your inventory"); break;
+        case EEWCraftResult::Locked: Message=TEXT("Recipe is not unlocked"); break;
+        default: Message=TEXT("Crafting could not be completed"); break;
+    }
+    if (EquipmentResultText) EquipmentResultText->SetText(FText::FromString(Message));
 }
 
 void UEWInventoryWidget::RefreshSummary()
@@ -237,6 +422,11 @@ void UEWInventoryWidget::RefreshSummary()
 
 void UEWInventoryWidget::Select(int32 Index)
 {
+    if (bCraftingOpen)
+    {
+        SelectRecipe(FMath::Clamp(SelectedRecipeIndex + (Index > SelectedIndex ? 1 : -1), 0, FMath::Max(0, DisplayedRecipes.Num()-1)));
+        return;
+    }
     if (SelectionCount() == 0) return;
     Index = FMath::Clamp(Index, 0, SelectionCount()-1);
     if (Index != SelectedIndex) { SelectedIndex = Index; bShowingDetails = false; UpdateSelection(); }
@@ -280,6 +470,13 @@ void UEWInventoryWidget::ConfirmSelection()
 FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
+    if (Key==EKeys::M) { if (!Event.IsRepeat()) if (auto* PC=Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMapOpen(true); return FReply::Handled(); }
+    if (Key == EKeys::Tab || Key == EKeys::Gamepad_RightShoulder)
+    { if (!Event.IsRepeat()) ToggleCrafting(); return FReply::Handled(); }
+    if (bCraftingOpen && (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up || Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down))
+    { SelectRecipe(FMath::Clamp(SelectedRecipeIndex + ((Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) ? -1 : 1),0,FMath::Max(0,DisplayedRecipes.Num()-1))); return FReply::Handled(); }
+    if (bCraftingOpen && (Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom))
+    { if (!Event.IsRepeat()) PerformCraft(); return FReply::Handled(); }
     auto* OwnerController = Cast<AEWPlayerController>(GetOwningPlayer());
     if (OwnerController) OwnerController->RecordInputDevice(Key);
     if (Key==EKeys::Gamepad_LeftShoulder)
@@ -298,11 +495,12 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
         if (!Event.IsRepeat()) if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->SetInventoryOpen(false);
         return FReply::Handled();
     }
-    if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up) { Select(SelectedIndex-1); return FReply::Handled(); }
-    if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down) { Select(SelectedIndex+1); return FReply::Handled(); }
+    if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left || Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up) { Select(SelectedIndex-1); return FReply::Handled(); }
+    if (Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right || Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down) { Select(SelectedIndex+1); return FReply::Handled(); }
     if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { ConfirmSelection(); return FReply::Handled(); }
     if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left)
     {
+        if (bCraftingOpen) return FReply::Handled();
         if (!Event.IsRepeat())
         {
             if (SelectedItem() && SelectedItem()->bFoodConsumptionEnabled) PerformFoodAction();
@@ -380,8 +578,9 @@ void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         if (BoundInventory) BoundInventory->OnInventoryChanged.AddDynamic(this, &UEWInventoryWidget::RefreshInventory);
         DisplayedEntries.Reset(); DisplayedEquipment.Reset(); SelectedIndex = INDEX_NONE; bShowingDetails = false;
         if (!BoundInventory) { ItemsBox->ClearChildren(); Rows.Reset(); DetailsText->SetText(FText::FromString(TEXT("No item selected"))); }
-        RefreshInventory();
-    }
+	RefreshInventory();
+    RefreshCrafting();
+}
     if (UEWEquipmentComponent* Equipment = ResolveEquipment(); Equipment != BoundEquipment)
     {
         if (BoundEquipment) BoundEquipment->OnEquipmentChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
@@ -519,4 +718,17 @@ void UEWInventoryWidget::AssignHotbarSlot(int32 SlotIndex)
 void UEWInventoryWidget::ShowHotbarResult(EEWHotbarResult Result)
 {
     if (EquipmentResultText) EquipmentResultText->SetText(UEWHotbarWidget::ResultText(Result));
+}
+
+UTexture2D* UEWInventoryWidget::ResolveIcon(UEWItemDefinition* Item)
+{
+    if (!Item) return nullptr;
+    if (auto* Texture=Item->Icon.LoadSynchronous()) return Texture;
+    int32 Kind=8;
+    if (Item->GatheringTool==EEWGatheringTool::Hatchet) Kind=5;
+    else if (Item->GatheringTool==EEWGatheringTool::Pickaxe) Kind=6;
+    else if (Item->FoodKind==EEWFoodKind::Berry) Kind=7;
+    else if (Item->Category==EEWItemCategory::Clothing) Kind=9;
+    if (!FallbackIcons.Contains(Kind)) FallbackIcons.Add(Kind,EWHudIcon::Make(Kind,false));
+    return FallbackIcons[Kind];
 }
