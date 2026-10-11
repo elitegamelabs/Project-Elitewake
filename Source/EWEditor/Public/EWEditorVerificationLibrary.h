@@ -55,7 +55,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SetVerificationInteractionAvailable(AEWStation* Target, bool bAvailable);
     /** Ordinary owned-controller RPCs, including intentionally invalid targets. */
+        /** Starts an in-editor Play session in one process: a listen server plus clients, NumPlayers in total.
+     *  For scripted acceptance runs; returns false if a session is already running. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool StartVerificationPlaySession(int32 NumPlayers = 2);
+    /** Requests the end of the running Play session. Close the editor only after Play has stopped. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool StopVerificationPlaySession();
+UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationInteractionRequest(AEWPlayerController* Controller, AActor* Target, bool bCancel = false);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool FlushVerificationInput(AEWPlayerController* Controller);

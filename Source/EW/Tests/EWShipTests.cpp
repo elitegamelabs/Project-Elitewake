@@ -255,6 +255,11 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     for (int32 i = 0; i < 300 && A->GetSpeed() > 0.f; ++i) A->SimulateSailing(.1f);
     TestEqual(TEXT("Collision stops the ship"), A->GetSpeed(), 0.f);
     TestTrue(TEXT("Hulls do not overlap"), Blocker->GetActorLocation().X - A->GetActorLocation().X >= 2.f * Def->HullExtent.X - 5.f);
+    // A pinned ship can always turn away: the rudder keeps a little bite with no way on.
+    const float PinnedYaw = A->GetActorRotation().Yaw;
+    TestTrue(TEXT("Rudder over while pinned"), A->SetRudder(C, -1.f));
+    for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
+    TestTrue(TEXT("A pinned ship turns away from the obstacle"), A->GetActorRotation().Yaw < PinnedYaw - 5.f);
 
     // A dead helmsman is released by the ship.
     C->GetSurvivalComponent()->ApplyDamage(100000.f);

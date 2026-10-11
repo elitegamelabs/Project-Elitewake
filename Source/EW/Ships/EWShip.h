@@ -57,7 +57,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship")
     bool HasFittingOfType(EEWShipMountType Type) const;
     /** The mount under the character's interaction aim, or None. Uses the shared interaction trace. */
+    UFUNCTION(BlueprintPure, Category="Ship")
     FName FindAimedMount(const AEWCharacter* Character) const;
+    UFUNCTION(BlueprintPure, Category="Ship")
     FTransform GetMountWorldTransform(FName MountId) const;
 
     /** Authority only. Moves the first carried fitting this mount accepts from the inventory onto the ship. */
@@ -99,8 +101,10 @@ public:
     static constexpr float MaxCatchUpSeconds = .5f;
     static constexpr float Acceleration = 150.f;
     static constexpr float Deceleration = 250.f;
-    /** The rudder bites fully from this speed (cm/s) and not at all when stopped. */
+    /** The rudder bites fully from this speed (cm/s). */
     static constexpr float FullSteerageSpeed = 200.f;
+    /** Turning still possible when stopped, as a fraction of full, so a ship pinned on land can turn away. */
+    static constexpr float MinSteerage = .2f;
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
@@ -130,6 +134,8 @@ private:
     UPROPERTY(Replicated)
     float Rudder = 0.f;
     float SimulationRemainder = 0.f;
+    /** Set while pressed against an obstacle, so the contact is logged once rather than every step. */
+    bool bAgainstObstacle = false;
 
     const FEWShipMount* FindHelmMount() const;
     bool IsValidHelmsman(const AEWCharacter* Character) const;

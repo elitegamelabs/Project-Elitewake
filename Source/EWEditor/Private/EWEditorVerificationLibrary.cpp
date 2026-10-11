@@ -1,4 +1,6 @@
 #include "EWEditorVerificationLibrary.h"
+#include "Editor.h"
+#include "Settings/LevelEditorPlaySettings.h"
 #include "EWCompanyComponent.h"
 #include "EWPlayerController.h"
 #include "Engine/World.h"
@@ -281,4 +283,26 @@ bool UEWEditorVerificationLibrary::SendVerificationGameplayKey(AEWPlayerControll
     const bool Handled=Controller->InputKey(Args);
     Args.Event=IE_Released; Args.AmountDepressed=0.f; Controller->InputKey(Args);
     return Handled;
+}
+
+bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers)
+{
+    if (!GEditor || GEditor->PlayWorld || GEditor->IsPlaySessionInProgress()) return false;
+    ULevelEditorPlaySettings* Settings = DuplicateObject(GetDefault<ULevelEditorPlaySettings>(), GetTransientPackage());
+    Settings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
+    Settings->SetPlayNumberOfClients(FMath::Clamp(NumPlayers, 1, 4));
+    Settings->SetRunUnderOneProcess(true);
+    FRequestPlaySessionParams Params;
+    Params.WorldType = EPlaySessionWorldType::PlayInEditor;
+    Params.SessionDestination = EPlaySessionDestinationType::InProcess;
+    Params.EditorPlaySettings = Settings;
+    GEditor->RequestPlaySession(Params);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::StopVerificationPlaySession()
+{
+    if (!GEditor || !GEditor->IsPlaySessionInProgress()) return false;
+    GEditor->RequestEndPlayMap();
+    return true;
 }

@@ -410,8 +410,8 @@ void AEWShip::StepSimulation(float Step)
 {
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : Deceleration);
-    if (Speed <= 1.f) { Speed = FMath::Max(Speed, 0.f); return; }
-    const float Steerage = FMath::Clamp(Speed / FullSteerageSpeed, 0.f, 1.f);
+    if (Speed <= 1.f && FMath::IsNearlyZero(Rudder)) { Speed = FMath::Max(Speed, 0.f); return; }
+    const float Steerage = FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
     const FRotator Rotation = GetActorRotation() + FRotator(0, Rudder * Definition->TurnRate * Steerage * Step, 0);
     // People never stop a ship: survivors on deck ride with it and swimmers are pushed aside.
     // Hulls, land and other world geometry still block the sweep.
@@ -419,7 +419,15 @@ void AEWShip::StepSimulation(float Step)
     FHitResult Hit;
     SetActorLocationAndRotation(GetActorLocation() + Rotation.Vector() * Speed * Step, Rotation, true, &Hit);
     HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
-    if (Hit.bBlockingHit) Speed = 0.f;
+    if (Hit.bBlockingHit)
+    {
+        if (!bAgainstObstacle)
+            UE_LOG(LogEW, Log, TEXT("Ship %s stopped by %s (%s) at %s"), *GetName(), *GetNameSafe(Hit.GetActor()),
+                *GetNameSafe(Hit.GetComponent()), *GetActorLocation().ToCompactString());
+        bAgainstObstacle = true;
+        Speed = 0.f;
+    }
+    else bAgainstObstacle = false;
 }
 
 void AEWShip::Tick(float DeltaSeconds)
