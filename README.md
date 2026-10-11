@@ -6,7 +6,7 @@ Ships are the center of the game. They start as bare hulls that players fit out 
 
 ## Status
 
-Early development. Movement, survival stats, inventory, equipment, interaction, gathering, food, crafting, objectives and private multiplayer testing work as tested foundations. One connected test map, a coast you can swim from, exists locally. Sailing, combat, wildlife, the prologue, save/load and final art are not built yet. See the [project guide](Docs/PROJECT_GUIDE.md) for details and known problems.
+Early development. Movement, survival stats, inventory, equipment, interaction, gathering, food, crafting, objectives and private multiplayer testing work as tested foundations. One connected test map exists: a coast you can swim from. Sailing, combat, wildlife, the prologue, save/load and final art are not built yet. See the [project guide](Docs/PROJECT_GUIDE.md) for details and known problems.
 
 ## Documentation
 

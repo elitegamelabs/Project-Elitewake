@@ -6,7 +6,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **22 of 22 pass** (`Saved/Logs/SloopNativeAcceptance.log`, October 11).
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **21 of 21 pass** (`Saved/Logs/StabilizeNative.log`, October 11), after the deleted sloop's `Sailing.HelmAuthority` test was removed.
 - **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 
@@ -16,13 +16,11 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## Results by system
 
-"Local" means the work is not yet committed to GitHub.
-
 | System | Commit | Native test | Play check (passing checkpoints) | Not covered |
 | --- | --- | --- | --- | --- |
 | Stance animation and collision | `19c573c`, `a8996d4` | `Animation.StanceBlendSpaces`, `Movement.StanceCollision` | `verify_stance_play`, `verify_stance_clearance_play`, `verify_stance_network_play` (client to host with 100 ms lag and 1% loss) | Moving decks, final transitions |
 | Survival HUD | `ad0d82b`, redesign in `52678ec` | `Survival.ExhaustionNotification` | `verify_survival_hud_play` (20 standalone, 20 client) | Needs drain and damage, final icon art |
-| Survival invalid-number guard | local | `Survival.InvalidNumericInput` | — | — |
+| Survival invalid-number guard | `3d054fd` | `Survival.InvalidNumericInput` | — | — |
 | Inventory selection | `ecf9f61` | — | `verify_inventory_selection_play` | Physical controller |
 | Pickups | `1e0e05d` | `Inventory.PickupValidation` | `verify_pickup_play` (competing pickups, packet loss) | — |
 | Equipment | `f2d32d4` | `Inventory.EquipmentTransfer`, `Inventory.PersistedEquipmentFixtures` | `verify_equipment_play`, `verify_equipment_network_stress` | Armor effects, durability |
@@ -35,27 +33,22 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | Berries and eating | `a2bf748`, `be80b53`, `7eddba8` | `Gathering.Berries`, `Inventory.FoodConsumptionAndFreshness` | `verify_berry_play`, `verify_food_play` | Freshness across sessions |
 | Integrated loop (pickup through gathering) | `9443259` | — | `verify_integrated_play` | — |
 | Crafting | `52678ec` | `Crafting.AtomicTransaction` | `verify_crafting_play`, `verify_starting_recipes_play`, `verify_item_icons_play` (3) | Stations, timers, item use |
-| Starter tool loop (craft, equip, harvest) | local | — | `verify_starter_tool_loop_play` (7) | Durability |
-| Repair Kit recipe | local | — | `verify_prologue_repair_recipe_play` (7) | Repair use |
+| Starter tool loop (craft, equip, harvest) | `bf5511e` | — | `verify_starter_tool_loop_play` (7) | Durability |
+| Repair Kit recipe | `bf5511e` | — | `verify_prologue_repair_recipe_play` (7) | Repair use |
 | Objectives | `52678ec` | `Objectives.OrderedAuthority` | `verify_objectives_play` (5), `verify_objective_ui_play` (9), `verify_objective_rewards_play` (8) | Real prologue steps |
 | Map preview | `52678ec` | — | `verify_map_play` (6) | Discovery, compass |
 | Inn torch | `52678ec` | — | `verify_inn_torch_play` (7) | Placement, flame, use |
 | Multiplayer setup | `52678ec` | `Multiplayer.PrivateAddress` | `verify_multiplayer_configuration_play` (4); separate-process connection (4) and gameplay (13 observations); Host/Join/Leave lifecycle (10) | Two PCs, LAN, Internet |
-| Late join and recovery | local | — | Three-process late join (17 checks); cancel and host-loss recovery (13) | Two PCs |
-| Windows package | local archive `local-20261010-071931` | — | 16 required packages cooked; 5 loopback checks; HUD rendered at 1280×720, 1920×1080, 2560×1440 | Clean PC, LAN, Shipping. Archive predates the coastal map, Company and sloop |
-| Company | local | `Company.NameValidation`, `Company.TameCapBoundaries` | `verify_company_play` (15 network, 4 menu clicks) | Persistence, world effects |
-| Coastal map and swimming | local | — | `verify_coastal_play` (4), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3) | Buoyancy, underwater effects |
-| Sloop helm | local | `Sailing.HelmAuthority` | `verify_coastal_sloop_play`: **FAILED** | See below |
+| Late join and recovery | `3d054fd` | — | Three-process late join (17 checks); cancel and host-loss recovery (13) | Two PCs |
+| Windows package | local archive `local-20261010-071931` | — | 16 required packages cooked; 5 loopback checks; HUD rendered at 1280×720, 1920×1080, 2560×1440 | Clean PC, LAN, Shipping. Archive predates the coastal map, Company and swimming |
+| Company | `7b024cf` | `Company.NameValidation`, `Company.TameCapBoundaries` | `verify_company_play` (15 network, 4 menu clicks) | Persistence, world effects |
+| Coastal map and swimming | `42636f3` | — | `verify_coastal_play` (4), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3) | Buoyancy, underwater effects |
 
 ## Known failures
 
-**Sloop sailing (October 11).** `verify_coastal_sloop_play.py` passed three phases:
+**Sloop sailing (October 11), prototype deleted.** The client boarded the sloop and held the helm, and an open inventory blocked steering. Then the steering phase failed: the hull stayed put at speed 0 (`Saved/CoastalSloopPlayResult.json`).
 
-1. The saved sloop has two hardpoints, and starting inventory and recipes are unchanged.
-2. The client boards and holds the helm exclusively, and this replicates.
-3. An open inventory blocks steering.
-
-It failed in phase 4, steering: the hull stayed at X 62 m, Y 14 m with speed 0. Sailing, reaching the islet and disembarking are not verified. Evidence: `Saved/CoastalSloopPlayResult.json`.
+The cause was found afterwards. The editor ran in the background at about 3 frames per second, and the server discarded helm input older than 0.25 s. Every input therefore expired as it arrived. The owner deleted the prototype that day. The next ship must not expire held input on elapsed time alone, and its Play test must disable editor background throttling.
 
 **Editor crash on close (October 11).** This was an engine assertion during shutdown, not a test failure; see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#known-problems).
 
