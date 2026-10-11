@@ -6,8 +6,8 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **22 of 22 pass** (`Saved/Logs/ShipFittingNative.log`, October 11).
-- **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`.
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **23 of 23 pass** (`Saved/Logs/SailingNative.log`, October 11).
+- **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`. `run_play_check.py` runs a check unattended: it starts Play, runs the script and closes the editor.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 
 `Saved/` is not in Git, so result files and logs exist only on the machine that produced them.
@@ -43,13 +43,13 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | Windows package | local archive `local-20261010-071931` | — | 16 required packages cooked; 5 loopback checks; HUD rendered at 1280×720, 1920×1080, 2560×1440 | Clean PC, LAN, Shipping. Archive predates the coastal map, Company and swimming |
 | Company | `7b024cf` | `Company.NameValidation`, `Company.TameCapBoundaries` | `verify_company_play` (15 network, 4 menu clicks) | Persistence, world effects |
 | Coastal map and swimming | `42636f3` | — | `verify_coastal_play` (4), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3) | Buoyancy, underwater effects |
-| Ship hull and fittings | `b84ec94` | `Ships.FittingAuthority` | — (Play check pending) | Sailing, client Play, ownership permissions |
+| Ship hull, fittings and sailing | `b84ec94`, `26240ee`, `929fcc8` | `Ships.FittingAuthority`, `Ships.SailingAuthority` | `verify_ship_sailing_play` (9): client installs helm and two sails, takes the helm, sets full sail, sails 12.6 m and turns 52° in 4 s with its copy within 31 cm of the server, centres the rudder, leaves | Walking on a moving deck, anchor, cargo, cannons, ownership, separate processes |
 
 ## Known failures
 
 **Sloop sailing (October 11), prototype deleted.** The client boarded the sloop and held the helm, and an open inventory blocked steering. Then the steering phase failed: the hull stayed put at speed 0 (`Saved/CoastalSloopPlayResult.json`).
 
-The cause was found afterwards. The editor ran in the background at about 3 frames per second, and the server discarded helm input older than 0.25 s. Every input therefore expired as it arrived. The owner deleted the prototype that day. The next ship must not expire held input on elapsed time alone, and its Play test must disable editor background throttling.
+The cause was found afterwards. The editor ran in the background at about 3 frames per second, and the server discarded helm input older than 0.25 s. Every input therefore expired as it arrived. The owner deleted the prototype that day. The next ship must not expire held input on elapsed time alone, and its Play test must disable editor background throttling. The replacement ship system passes this same client test (see the table above).
 
 **Editor crash on close (October 11).** This was an engine assertion during shutdown, not a test failure; see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#known-problems).
 

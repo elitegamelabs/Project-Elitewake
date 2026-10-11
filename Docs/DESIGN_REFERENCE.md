@@ -193,6 +193,8 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - The helmsman uses forward and back to step the sails between three states (furled, half, full) and left and right for the rudder. Sail trim is automatic in the first version; manual trim is a later skill layer.
   - Wind has a world direction. Speed depends on the ship's angle to the wind: full speed running downwind, and never less than about 30% sailing into it, so a ship can always make headway (*tuning*).
   - More and larger sails raise top speed; carried weight lowers it (*tuning*).
+  - The rudder turns best with way on, but keeps 20% of its effect when stopped, so a ship pinned against a shore can always turn away (*tuning*).
+  - Holding Interact at an installed helm takes it. The helm itself is removed through the Builder's Plan, not by Interact.
   - The server owns all ship movement and steps it in fixed small increments, so speed never depends on frame rate. Helm controls are held as the player's last chosen state, never as input that expires after a fixed time (the lesson from the deleted prototype).
 - **Hull health (DECIDED, delegated):** one hull-health pool, upgraded through Hull Health. Holes, flooding and part damage layer on later.
 - **Starter ship (DECIDED, delegated):** no cheap pre-built sloop for now. The prologue dinghy and the craftable raft are the starter boats, and the sloop needs a Small Shipyard. Revisit if playtests show the jump to a sloop is too steep.

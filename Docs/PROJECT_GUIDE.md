@@ -9,7 +9,8 @@ Last updated: October 11, 2026.
 Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
 - **Build:** both Editor and Game targets build.
-- **Native tests:** 22 of 22 pass (October 11, `Saved/Logs/ShipFittingNative.log`).
+- **Native tests:** 23 of 23 pass (October 11, `Saved/Logs/SailingNative.log`).
+- **Client Play check:** a client fits out, sails and steers the sloop (`verify_ship_sailing_play`, 9 of 9).
 - **GitHub:** all work is committed and pushed to `main`.
 
 | System | What works | Not done yet |
@@ -27,7 +28,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
 | Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
 | Coastal map | `Lvl_CoastalPlayground`: beach, dock, islet, resources, freshwater spring, textured sand and timber, sloped shore, swimmable ocean 500 m deep | Real terrain and foliage, wildlife, Port and inn, final art |
-| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts. Players install and remove fittings carried in their inventory (server-checked). One bare sloop floats in the coastal map | Sailing, walking on a moving deck, anchor, cargo, cannons, real hull and fitting art (boxes stand in) |
+| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Walking on a moving deck, anchor, cargo, cannons, docking, ship ownership, real hull and fitting art (boxes stand in) |
 
 ## Known problems
 
@@ -41,10 +42,9 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 Proposed order, pending owner confirmation:
 
 1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
-   1. **Hull and fittings** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items.
-   2. **Sailing:** take the helm, sail states and rudder, the wind model, and movement in fixed steps.
-   3. **On deck:** walk on a moving ship, board and disembark as a client.
-   4. **Anchor, cargo and weight,** in that order.
+   1. **Hull, fittings and sailing** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items, client-verified sailing.
+   2. **On deck:** walk on a moving ship, board and disembark as a client.
+   3. **Anchor, cargo and weight,** in that order.
 2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
 3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
 4. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
@@ -68,7 +68,7 @@ Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. The map gran
 - **Dock and sea:** the dock reaches over swimmable water.
   - Look down and move forward to dive; hold Space to rise.
   - The water surface is at Z −65 cm. The visible waves are cosmetic.
-- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a fitting to remove it. Fittings have no recipe yet, so use test items.
+- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. Fittings have no recipe yet, so use the test items (`DA_TestShipHelm`, `DA_TestSailMedium`, `DA_TestSailSmall`).
 - **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
 
 ## Building and testing
@@ -92,6 +92,22 @@ Do not add an early quit command. The run ends when the test queue is empty.
 - Most use `/Game/Elitewake/Maps/Lvl_M5PickupTest`; the `verify_coastal_*` scripts use the coastal map.
 - Results are written to `Saved/*Result.json`.
 - Scripts may move pawns or create test items during Play only. They never change saved maps or normal starting inventory.
+
+**Unattended Play checks.** `Scripts/Verification/run_play_check.py`:
+
+1. opens the editor on a map
+2. starts a listen-server Play session
+3. runs one check script
+4. stops Play and closes the editor
+
+Launch it from PowerShell, because Git Bash rewrites paths that start with `/`:
+
+```powershell
+$env:EW_PLAY_MAP='/Game/Elitewake/Maps/Lvl_CoastalPlayground'; $env:EW_PLAY_CHECK='C:/UnrealProjects/EW/Scripts/Verification/verify_ship_sailing_play.py'; $env:EW_PLAY_RESULT='ShipSailingPlayResult.json'
+& 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe' C:/UnrealProjects/EW/EW.uproject /Game/Elitewake/Maps/Lvl_CoastalPlayground -unattended -ExecCmds="py C:/UnrealProjects/EW/Scripts/Verification/run_play_check.py"
+```
+
+The outcome is written to `Saved/PlayCheckRun.json`. An editor window opens and closes on its own; leave it alone while it runs.
 
 **Setup scripts** (`Scripts/Setup/*.py`) create test assets and fixtures:
 
