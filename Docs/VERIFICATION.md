@@ -6,7 +6,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **21 of 21 pass** (`Saved/Logs/StabilizeNative.log`, October 11), after the deleted sloop's `Sailing.HelmAuthority` test was removed.
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **22 of 22 pass** (`Saved/Logs/ShipFittingNative.log`, October 11).
 - **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 
@@ -43,6 +43,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | Windows package | local archive `local-20261010-071931` | — | 16 required packages cooked; 5 loopback checks; HUD rendered at 1280×720, 1920×1080, 2560×1440 | Clean PC, LAN, Shipping. Archive predates the coastal map, Company and swimming |
 | Company | `7b024cf` | `Company.NameValidation`, `Company.TameCapBoundaries` | `verify_company_play` (15 network, 4 menu clicks) | Persistence, world effects |
 | Coastal map and swimming | `42636f3` | — | `verify_coastal_play` (4), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3) | Buoyancy, underwater effects |
+| Ship hull and fittings | `b84ec94` | `Ships.FittingAuthority` | — (Play check pending) | Sailing, client Play, ownership permissions |
 
 ## Known failures
 

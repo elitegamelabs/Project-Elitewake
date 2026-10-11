@@ -9,7 +9,7 @@ Last updated: October 11, 2026.
 Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
 - **Build:** both Editor and Game targets build.
-- **Native tests:** 21 of 21 pass (October 11, `Saved/Logs/StabilizeNative.log`).
+- **Native tests:** 22 of 22 pass (October 11, `Saved/Logs/ShipFittingNative.log`).
 - **GitHub:** all work is committed and pushed to `main`.
 
 | System | What works | Not done yet |
@@ -27,7 +27,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
 | Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
 | Coastal map | `Lvl_CoastalPlayground`: beach, dock, islet, resources, freshwater spring, textured sand and timber, sloped shore, swimmable ocean 500 m deep | Real terrain and foliage, wildlife, Port and inn, final art |
-| Ships | Nothing yet. A prototype sloop was deleted on October 11 because it never sailed | Hull, fittings, helm, sailing, anchor, cargo |
+| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts. Players install and remove fittings carried in their inventory (server-checked). One bare sloop floats in the coastal map | Sailing, walking on a moving deck, anchor, cargo, cannons, real hull and fitting art (boxes stand in) |
 
 ## Known problems
 
@@ -41,11 +41,10 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 Proposed order, pending owner confirmation:
 
 1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
-   1. **Hull:** a ship actor driven by data, with its mounts (helm, sails, cannon hardpoints) and a sloop definition.
-   2. **Fittings:** helm and sail items; install and remove at a mount through a server-checked request.
-   3. **Sailing:** take the helm, sail states and rudder, the wind model, and movement in fixed steps.
-   4. **On deck:** walk on a moving ship, board and disembark as a client.
-   5. **Anchor, cargo and weight,** in that order.
+   1. **Hull and fittings** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items.
+   2. **Sailing:** take the helm, sail states and rudder, the wind model, and movement in fixed steps.
+   3. **On deck:** walk on a moving ship, board and disembark as a client.
+   4. **Anchor, cargo and weight,** in that order.
 2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
 3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
 4. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
@@ -69,6 +68,7 @@ Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. The map gran
 - **Dock and sea:** the dock reaches over swimmable water.
   - Look down and move forward to dive; hold Space to rise.
   - The water surface is at Z −65 cm. The visible waves are cosmetic.
+- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a fitting to remove it. Fittings have no recipe yet, so use test items.
 - **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
 
 ## Building and testing
@@ -97,7 +97,7 @@ Do not add an early quit command. The run ends when the test queue is empty.
 
 - `create_*` scripts make missing saved test assets and do not overwrite existing ones.
 - `spawn_*` scripts place temporary fixtures in a running Play session.
-- The coastal scripts (`create_coastal_playground.py`, `shape_coastal_shore.py`, `upgrade_coastal_water.py`, `set_coastal_ocean_depth.py`) built the saved coastal map. Do not rerun them over an edited map.
+- The coastal scripts (`create_coastal_playground.py`, `shape_coastal_shore.py`, `upgrade_coastal_water.py`, `set_coastal_ocean_depth.py`, `create_sloop_test_assets.py`) built the saved coastal map. Do not rerun them over an edited map.
 
 **Evidence lives in `Saved/`,** which Git ignores. Test results and logs exist only on the machine that ran them.
 
