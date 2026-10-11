@@ -127,6 +127,57 @@ int32 UEWInventoryComponent::AddToEntries(TArray<FEWInventoryEntry>& Entries, in
     return Quantity - Remaining;
 }
 
+void UEWInventoryComponent::SetMaxSlots(int32 NewMaxSlots)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    MaxSlots = FMath::Max3(1, NewMaxSlots, Entries.Num());
+}
+
+int32 UEWInventoryComponent::TransferEntryTo(UEWInventoryComponent* Destination, int32 EntryIndex, int32 Quantity)
+{
+    if (!Destination || Destination == this || Quantity <= 0 || !GetOwner() || !GetOwner()->HasAuthority()
+        || !Destination->GetOwner() || !Destination->GetOwner()->HasAuthority()
+        || bEquipmentTransferInProgress || Destination->bEquipmentTransferInProgress) return 0;
+    // Bring both sides' food clocks up to date first, so ages and spoilage are current.
+    RefreshFoodAge();
+    Destination->RefreshFoodAge();
+    if (!Entries.IsValidIndex(EntryIndex) || !Entries[EntryIndex].ItemDefinition || Entries[EntryIndex].Quantity <= 0) return 0;
+    const FEWInventoryEntry Source = Entries[EntryIndex];
+    UEWItemDefinition* Item = Source.ItemDefinition;
+    const int32 Wanted = FMath::Min(Quantity, Source.Quantity);
+    const int32 MaxStack = FMath::Max(1, Item->MaxStackSize);
+    const bool bAgeing = Item->FoodKind == EEWFoodKind::Berry && Item->FreshLifetimeSeconds > 0.f && Source.FoodAgeSeconds > 0.f;
+
+    // Stage the destination first; commit only what it accepted.
+    TArray<FEWInventoryEntry> Staged = Destination->Entries;
+    int32 Moved = 0;
+    if (bAgeing)
+    {
+        // Ageing food never merges with other batches, so it keeps its own clock.
+        while (Moved < Wanted && Staged.Num() < Destination->MaxSlots)
+        {
+            FEWInventoryEntry& Batch = Staged.AddDefaulted_GetRef();
+            Batch.ItemDefinition = Item;
+            Batch.Quantity = FMath::Min(Wanted - Moved, MaxStack);
+            Batch.FoodAgeSeconds = Source.FoodAgeSeconds;
+            Moved += Batch.Quantity;
+        }
+    }
+    else Moved = AddToEntries(Staged, Destination->MaxSlots, Item, Wanted);
+    if (Moved <= 0) return 0;
+
+    TGuardValue<bool> SourceGuard(bEquipmentTransferInProgress, true);
+    TGuardValue<bool> DestinationGuard(Destination->bEquipmentTransferInProgress, true);
+    Entries[EntryIndex].Quantity -= Moved;
+    if (Entries[EntryIndex].Quantity <= 0) Entries.RemoveAt(EntryIndex);
+    Destination->Entries = MoveTemp(Staged);
+    HandleInventoryChanged();
+    Destination->HandleInventoryChanged();
+    GetOwner()->ForceNetUpdate();
+    Destination->GetOwner()->ForceNetUpdate();
+    return Moved;
+}
+
 int32 UEWInventoryComponent::RemoveItem(UEWItemDefinition* ItemDefinition, int32 Quantity)
 {
 	if (!GetOwner() || !GetOwner()->HasAuthority() || !ItemDefinition || Quantity <= 0 || bEquipmentTransferInProgress)

@@ -4,6 +4,8 @@
 #include "EWPlayerController.h"
 #include "EWObjectiveComponent.h"
 #include "EWCompanyComponent.h"
+#include "EWContainerWidget.h"
+#include "Ships/EWShip.h"
 #include "EWObjectiveWidget.h"
 #include "EWMapWidget.h"
 #include "EWSessionWidget.h"
@@ -399,7 +401,59 @@ void AEWPlayerController::EWGrantTestWood(int32 Quantity)
 
 void AEWPlayerController::ToggleInventory()
 {
+    // With a container open, the inventory key closes it rather than stacking screens.
+    if (ContainerWidget && ContainerWidget->IsInViewport()) { SetInventoryOpen(false); return; }
 	SetInventoryOpen(!InventoryWidget || !InventoryWidget->IsInViewport());
+}
+
+void AEWPlayerController::SetMenuInputBlocked(bool bBlocked)
+{
+    if (HotbarWidget) HotbarWidget->SetVisibility(bBlocked ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+    if (SurvivalWidget) SurvivalWidget->SetVisibility(bBlocked ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+    if (bInventoryInputBlocked == bBlocked) return;
+    ServerSetInteractionMenuBlocked(bBlocked);
+    FlushPressedKeys();
+    SetIgnoreMoveInput(bBlocked);
+    SetIgnoreLookInput(bBlocked);
+    bInventoryInputBlocked = bBlocked;
+    if (bBlocked && GetPawn()) GetPawn()->ConsumeMovementInputVector();
+}
+
+void AEWPlayerController::SetContainerOpen(AActor* Container)
+{
+    if (!IsLocalPlayerController()) return;
+    if (!IsValid(Container)) { SetInventoryOpen(false); return; }
+    if (IsMapOpen() || IsSessionMenuOpen()) return;
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->RemoveFromParent();
+    SetMenuInputBlocked(true);
+    OpenContainer = Container;
+    if (!ContainerWidget) ContainerWidget = CreateWidget<UEWContainerWidget>(this, UEWContainerWidget::StaticClass());
+    if (!ContainerWidget) return;
+    ContainerWidget->SetContainer(Container);
+    if (!ContainerWidget->IsInViewport()) ContainerWidget->AddToPlayerScreen(20);
+    FInputModeUIOnly InputMode;
+    InputMode.SetWidgetToFocus(ContainerWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    SetShowMouseCursor(true);
+    ContainerWidget->SetUserFocus(this);
+}
+
+void AEWPlayerController::ClientOpenContainer_Implementation(AActor* Container)
+{
+    SetContainerOpen(Container);
+}
+
+void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    auto* Ship = Cast<AEWShip>(Container);
+    if (!Survivor || !Ship || Ship->GetWorld() != GetWorld() || !Ship->CanAccessCargo(Survivor)) return;
+    UEWInventoryComponent* Carried = Survivor->GetInventoryComponent();
+    UEWInventoryComponent* Hold = Ship->GetCargo();
+    if (!Carried || !Hold) return;
+    if (bToContainer) Carried->TransferEntryTo(Hold, EntryIndex, Quantity);
+    else Hold->TransferEntryTo(Carried, EntryIndex, Quantity);
 }
 
 void AEWPlayerController::SetInventoryOpen(bool bOpen)
@@ -410,18 +464,9 @@ void AEWPlayerController::SetInventoryOpen(bool bOpen)
 		return;
 	}
 
-    if (HotbarWidget) HotbarWidget->SetVisibility(bOpen ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
-    if (SurvivalWidget) SurvivalWidget->SetVisibility(bOpen ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
-
-    if (bInventoryInputBlocked != bOpen)
-    {
-        ServerSetInteractionMenuBlocked(bOpen);
-        FlushPressedKeys();
-        SetIgnoreMoveInput(bOpen);
-        SetIgnoreLookInput(bOpen);
-        bInventoryInputBlocked = bOpen;
-        if (bOpen && GetPawn()) GetPawn()->ConsumeMovementInputVector();
-    }
+    if (ContainerWidget && ContainerWidget->IsInViewport()) ContainerWidget->RemoveFromParent();
+    OpenContainer = nullptr;
+    SetMenuInputBlocked(bOpen);
 
 	if (bOpen)
 	{

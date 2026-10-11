@@ -8,6 +8,7 @@
 
 class AEWCharacter;
 class UBoxComponent;
+class UEWInventoryComponent;
 class UEWItemDefinition;
 class UEWShipDefinition;
 class UStaticMeshComponent;
@@ -45,6 +46,9 @@ public:
     TObjectPtr<UBoxComponent> HullCollision;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UStaticMeshComponent> HullVisual;
+    /** The ship's hold. Separate from anything a survivor carries. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship|Cargo")
+    TObjectPtr<UEWInventoryComponent> Cargo;
     /** Set in the level or before FinishSpawning; it is not meant to change during play. */
     UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Definition, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWShipDefinition> Definition;
@@ -84,6 +88,18 @@ public:
     bool SetAnchored(AEWCharacter* Character, bool bNewAnchored);
     /** Tuning: how hard a dropped anchor slows the ship, in cm/s per second. */
     static constexpr float AnchorDrag = 500.f;
+
+    UFUNCTION(BlueprintPure, Category="Ship|Cargo")
+    UEWInventoryComponent* GetCargo() const { return Cargo; }
+    UFUNCTION(BlueprintPure, Category="Ship|Cargo")
+    bool IsAimingAtCargoHatch(const AEWCharacter* Character) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Cargo")
+    FVector GetCargoHatchWorld() const;
+    /** Whether this survivor may move items in and out of the hold: alive, and aboard or at the hatch. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cargo")
+    bool CanAccessCargo(const AEWCharacter* Character) const;
+    /** Tuning: how far from the hatch a survivor not aboard may still reach the hold, in cm. */
+    static constexpr float CargoReach = 400.f;
 
     /** Authority only. Moves the first carried fitting this mount accepts from the inventory onto the ship. */
     EEWFittingResult InstallFitting(AEWCharacter* Character, FName MountId);
@@ -155,6 +171,10 @@ private:
     TObjectPtr<UBoxComponent> AnchorTarget;
     UPROPERTY(Transient)
     TObjectPtr<UStaticMeshComponent> AnchorVisual;
+    UPROPERTY(Transient)
+    TObjectPtr<UBoxComponent> CargoHatchTarget;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> CargoHatchVisual;
     UPROPERTY(Replicated)
     bool bAnchored = true;
     bool bChangingFittings = false;

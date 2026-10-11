@@ -39,6 +39,12 @@ public:
     /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector AnchorPoint = FVector(350, -90, 130);
+    /** Cargo hatch on deck, relative to the ship. Hold Interact there to open the ship's hold. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo")
+    FVector CargoHatchPoint = FVector(-150, 60, 130);
+    /** Slots in the ship's hold (tuning; Weight/Storage upgrades will raise it). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo", meta=(ClampMin="1"))
+    int32 CargoSlots = 20;
 
     /** Sailing tuning. Top speed with every sail mount fitted and the sails full, running before the wind. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="cm/s"))

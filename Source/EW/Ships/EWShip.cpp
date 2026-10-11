@@ -63,6 +63,7 @@ AEWShip::AEWShip()
     HullCollision->SetMobility(EComponentMobility::Movable);
     HullCollision->SetCollisionProfileName(TEXT("BlockAll"));
     HullCollision->SetBoxExtent(FVector(400, 150, 90));
+    Cargo = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("Cargo"));
     HullVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HullVisual"));
     HullVisual->SetupAttachment(HullCollision);
     HullVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -113,7 +114,29 @@ void AEWShip::ApplyDefinition()
     if (AnchorTarget) AnchorTarget->DestroyComponent();
     if (AnchorVisual) AnchorVisual->DestroyComponent();
     AnchorTarget = nullptr; AnchorVisual = nullptr;
+    if (CargoHatchTarget) CargoHatchTarget->DestroyComponent();
+    if (CargoHatchVisual) CargoHatchVisual->DestroyComponent();
+    CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
     if (!Definition) return;
+    if (HasAuthority() && Cargo) Cargo->SetMaxSlots(Definition->CargoSlots);
+
+    CargoHatchTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("CargoHatch")), RF_Transient);
+    CargoHatchTarget->SetupAttachment(HullCollision);
+    CargoHatchTarget->SetRelativeLocation(Definition->CargoHatchPoint);
+    CargoHatchTarget->SetBoxExtent(FVector(40, 40, 30));
+    CargoHatchTarget->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    CargoHatchTarget->SetCollisionResponseToAllChannels(ECR_Ignore);
+    CargoHatchTarget->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    CargoHatchTarget->SetGenerateOverlapEvents(false);
+    CargoHatchTarget->RegisterComponent();
+    CargoHatchVisual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), TEXT("CargoHatchVisual")), RF_Transient);
+    CargoHatchVisual->SetupAttachment(HullCollision);
+    CargoHatchVisual->SetStaticMesh(StandInCube());
+    // Stand-in hatch: a low square on the deck.
+    CargoHatchVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator,
+        FVector(Definition->CargoHatchPoint.X, Definition->CargoHatchPoint.Y, Definition->HullExtent.Z + 5.f), FVector(.8, .8, .1)));
+    CargoHatchVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CargoHatchVisual->RegisterComponent();
 
     AnchorTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("AnchorCapstan")), RF_Transient);
     AnchorTarget->SetupAttachment(HullCollision);
@@ -284,6 +307,22 @@ bool AEWShip::IsAboard(const AEWCharacter* Character) const
     return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= E.Z;
 }
 
+bool AEWShip::IsAimingAtCargoHatch(const AEWCharacter* Character) const
+{
+    return CargoHatchTarget && TraceAimedComponent(Character) == CargoHatchTarget;
+}
+
+FVector AEWShip::GetCargoHatchWorld() const
+{
+    return Definition ? GetActorTransform().TransformPosition(Definition->CargoHatchPoint) : GetActorLocation();
+}
+
+bool AEWShip::CanAccessCargo(const AEWCharacter* Character) const
+{
+    return Cargo && CanModifyFittings(Character)
+        && (IsAboard(Character) || FVector::Dist(Character->GetActorLocation(), GetCargoHatchWorld()) <= CargoReach);
+}
+
 bool AEWShip::IsAimingAtAnchor(const AEWCharacter* Character) const
 {
     return AnchorTarget && TraceAimedComponent(Character) == AnchorTarget;
@@ -380,6 +419,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (bChangingFittings || !CanModifyFittings(Character)) return false;
     if (Helmsman == Character) return true;  // Leave the helm.
     if (IsAimingAtAnchor(Character)) return true;
+    if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip();
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
@@ -398,6 +438,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
             : NSLOCTEXT("Elitewake", "LeaveHelm", "Leave the helm  (W/S sails, A/D rudder)");
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
+    if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
         return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ClimbAboard", "Climb aboard");
     const FName MountId = FindAimedMount(Character);
@@ -418,6 +459,14 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
     if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
+    if (IsAimingAtCargoHatch(Character))
+    {
+        // The server agrees the hold may be used; the owning client opens its screen.
+        auto* PC = Cast<AEWPlayerController>(Character->GetController());
+        if (!PC || !CanAccessCargo(Character)) return false;
+        PC->ClientOpenContainer(this);
+        return true;
+    }
     if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return ClimbAboard(Character, Ladder);
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);

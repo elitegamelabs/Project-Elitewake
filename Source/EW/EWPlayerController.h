@@ -23,6 +23,7 @@ class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
 class UEWCompanyComponent;
+class UEWContainerWidget;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -68,6 +69,8 @@ public:
     UFUNCTION(Server, Reliable) void ServerSetMapOpen(bool bOpen);
     UPROPERTY(Transient) TObjectPtr<UEWMapWidget> MapWidget;
     bool bMapOpen = false;
+    /** True while a menu screen (inventory or a container) blocks gameplay input. */
+    UFUNCTION(BlueprintPure, Category="Inventory")
     bool IsInventoryOpen() const { return bInventoryInputBlocked; }
     bool UsesControllerPrompts() const { return bControllerPrompts; }
     void RecordInputDevice(const FKey& Key) { if (Key.IsValid()) bControllerPrompts = Key.IsGamepadKey(); }
@@ -101,9 +104,21 @@ public:
     void ServerUnequipItem(EEWEquipmentSlot Slot);
     UFUNCTION(Client, Reliable)
     void ClientEquipmentResult(EEWEquipmentResult Result);
-    /** Local panel lifecycle; no inventory mutation. */
+    /** Local panel lifecycle; no inventory mutation. Closing also closes an open container screen. */
     UFUNCTION(BlueprintCallable, Category="Inventory")
     void SetInventoryOpen(bool bOpen);
+    /** Local container screen (a ship's hold) beside the survivor's inventory. Null closes it. */
+    UFUNCTION(BlueprintCallable, Category="Inventory|Container")
+    void SetContainerOpen(AActor* Container);
+    UFUNCTION(BlueprintPure, Category="Inventory|Container")
+    AActor* GetOpenContainer() const { return OpenContainer; }
+    /** Sent by the server once it has agreed this player may use the container. */
+    UFUNCTION(Client, Reliable)
+    void ClientOpenContainer(AActor* Container);
+    /** Owned request to move one stack between the survivor's inventory and a container. The server checks
+     *  the survivor can reach the container and moves only what fits. */
+    UFUNCTION(Server, Reliable)
+    void ServerTransferContainerItem(AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity);
     /** Local interaction intent. The owned controller forwards only a target, never item/quantity. */
     UFUNCTION(BlueprintCallable, Category="Interaction")
     void Interact();
@@ -163,6 +178,12 @@ protected:
 	UPROPERTY(Transient)
 	TObjectPtr<UEWInventoryWidget> InventoryWidget;
     bool bInventoryInputBlocked = false;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWContainerWidget> ContainerWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<AActor> OpenContainer;
+    /** Shared by the inventory and container screens: blocks gameplay input and tells the server a menu is up. */
+    void SetMenuInputBlocked(bool bBlocked);
 
 	/** If true, the player will use UMG touch controls even if not playing on mobile platforms */
 	UPROPERTY(EditAnywhere, Config, Category = "Input|Touch Controls")

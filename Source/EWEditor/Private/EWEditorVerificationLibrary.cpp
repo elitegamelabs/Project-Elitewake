@@ -306,3 +306,11 @@ bool UEWEditorVerificationLibrary::StopVerificationPlaySession()
     GEditor->RequestEndPlayMap();
     return true;
 }
+
+bool UEWEditorVerificationLibrary::SendVerificationContainerTransfer(AEWPlayerController* Controller, AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Controller->ServerTransferContainerItem(Container, bToContainer, EntryIndex, Quantity);
+    return true;
+}

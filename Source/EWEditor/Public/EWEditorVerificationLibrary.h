@@ -55,7 +55,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SetVerificationInteractionAvailable(AEWStation* Target, bool bAvailable);
     /** Ordinary owned-controller RPCs, including intentionally invalid targets. */
-        /** Starts an in-editor Play session in one process: a listen server plus clients, NumPlayers in total.
+        /** Sends the owned container transfer request, as the container screen does when a stack is clicked. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationContainerTransfer(AEWPlayerController* Controller, AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity);
+    /** Starts an in-editor Play session in one process: a listen server plus clients, NumPlayers in total.
      *  For scripted acceptance runs; returns false if a session is already running. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool StartVerificationPlaySession(int32 NumPlayers = 2);

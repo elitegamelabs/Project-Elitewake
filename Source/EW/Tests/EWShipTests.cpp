@@ -358,6 +358,31 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Interact raises the anchor"), Ship->Interact_Implementation(C) && !Ship->IsAnchored());
     TestTrue(TEXT("Interact drops it again"), Ship->Interact_Implementation(C) && Ship->IsAnchored());
 
+    // The cargo hold: sized by the definition, opened at the hatch, and reachable only aboard or nearby.
+    TestEqual(TEXT("Hold size comes from the definition"), Ship->GetCargo()->GetMaxSlotCount(), Def->CargoSlots);
+    C->SetActorLocation(Ship->GetActorTransform().TransformPosition(
+        FVector(Def->CargoHatchPoint.X - 120.f, Def->CargoHatchPoint.Y, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
+    {
+        FVector Eye; FRotator Unused;
+        C->GetActorEyesViewPoint(Eye, Unused);
+        PC->SetControlRotation((Ship->GetCargoHatchWorld() - Eye).Rotation());
+    }
+    TestTrue(TEXT("Aim finds the cargo hatch"), Ship->IsAimingAtCargoHatch(C));
+    TestTrue(TEXT("Aboard survivors can use the hold"), Ship->CanAccessCargo(C));
+    TestTrue(TEXT("Interact at the hatch opens the hold"), Ship->Interact_Implementation(C));
+    auto* Plank = Item(TEXT("TestPlank"));
+    Plank->MaxStackSize = 50;
+    C->GetInventoryComponent()->AddItem(Plank, 30);
+    const int32 PlankIndex = C->GetInventoryComponent()->GetInventoryEntries().IndexOfByPredicate([&](const FEWInventoryEntry& E) { return E.ItemDefinition == Plank; });
+    PC->ServerTransferContainerItem_Implementation(Ship, true, PlankIndex, 30);
+    TestEqual(TEXT("The controller request stores the stack"), Ship->GetCargo()->GetItemCount(Plank), 30);
+    PC->ServerTransferContainerItem_Implementation(Ship, false, 0, 30);
+    TestEqual(TEXT("The controller request takes it back"), C->GetInventoryComponent()->GetItemCount(Plank), 30);
+    C->SetActorLocation(FVector(3000, 3000, -40));
+    TestFalse(TEXT("A survivor far from the ship cannot reach the hold"), Ship->CanAccessCargo(C));
+    PC->ServerTransferContainerItem_Implementation(Ship, true, 0, 30);
+    TestEqual(TEXT("Out of reach, nothing is stored"), Ship->GetCargo()->GetItemCount(Plank), 0);
+
     // Dead survivors cannot climb.
     C->SetActorLocation(FVector(-100, -330, -40));
     C->GetSurvivalComponent()->ApplyDamage(100000.f);

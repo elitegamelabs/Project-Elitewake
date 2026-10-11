@@ -78,6 +78,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Inventory")
 	int32 RemoveItem(UEWItemDefinition* ItemDefinition, int32 Quantity);
 
+    /**
+     * Authority only. Moves up to Quantity units of the stack at EntryIndex into another inventory, as one
+     * transaction: only what the destination can hold leaves this inventory, so nothing is lost or copied.
+     * Ageing food keeps its age and stays a separate batch. Returns the number of units moved.
+     */
+    int32 TransferEntryTo(UEWInventoryComponent* Destination, int32 EntryIndex, int32 Quantity);
+    /** Authority only. Sets the slot count for containers such as a ship's hold; never below the slots in use. */
+    void SetMaxSlots(int32 NewMaxSlots);
+
     /** Consume one owned, explicitly enabled berry on authority. No client grant or RPC. */
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     EEWFoodUseResult ConsumeFood(UEWItemDefinition* ItemDefinition);
@@ -121,6 +130,7 @@ private:
     TArray<TObjectPtr<UEWCraftingRecipe>> AvailableRecipes;
     friend class UEWEditorVerificationLibrary;
     friend class FEWFoodTest;
+    friend class FEWContainerTransferTest;
     friend class UEWEquipmentComponent;
     double LastFoodClockSeconds = 0.;
     void RefreshFoodAge();
