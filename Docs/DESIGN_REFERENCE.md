@@ -17,6 +17,8 @@ When sources disagree, the higher one wins:
 
 The October 5 *Master Game Design Bible* is an archive. Its section numbers (§0–§30) are still used as references; it is never edited. The guide documents live outside this repository, in the owner's `OneDrive\Desktop\Elitewake\` folder. Original documents are never modified.
 
+Since October 11, 2026 the owner has delegated gap-filling design decisions to the development team. These are marked **DECIDED (delegated)** and carry the owner's authority until the owner overrides them. They never replace an explicit owner decision.
+
 Status words keep their meaning: **CONFIRMED** (build toward it), **FUTURE** (intended, not in the first playable), **TBD** (concept exists, values or rules undecided), **RECOMMENDED** (a suggestion, not a rule). A value that has not been decided stays TBD. Do not fill it in. Ask.
 
 ## The game
@@ -164,6 +166,37 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
 - **Ghost ships** are hostile NPC vessels haunting several areas. They fire on players and stay visible on the map through fog. Ordinary enemy pirates are other players.
 - **Technical rule:** each ship is its own authoritative actor. A player at the helm stays their own character; they do not become the ship.
 
+<a id="ship-model"></a>
+
+### Ship model v1 (decided under owner delegation, October 11, 2026)
+
+The owner delegated these gap-filling decisions. Each is marked **DECIDED (delegated)**; the owner can override any of them. Numbers marked *tuning* are starting values for playtesting, not balance. The model follows ATLAS's "frame plus placed parts" idea while cutting its grind.
+
+- **What a bare hull includes (DECIDED, delegated):**
+  - the complete hull and decks; no plank-by-plank building
+  - built-in masts with fixed sail mounts
+  - a fixed helm mount
+  - the cannon hardpoints and utility mounts
+  - a built-in anchor and boarding ladder
+- **What players fit (DECIDED, delegated):** the **helm** (ship's wheel), **sails**, **cannons**, **utility attachments** (Diving Platform, Docking Platform), storage, railings and decorations.
+  - A ship needs a helm to steer and at least one sail to move. A bare hull floats and can be anchored, nothing more.
+- **How fittings are obtained and placed (DECIDED, delegated):** this reconciles the inventory-first rule with the Builder's Plan.
+  - Fittings are crafted into inventory at their station: sails at the Loom, helm and cannons at the Smithy.
+  - The player installs a carried fitting at a matching empty mount. The fitting leaves the inventory only when the server accepts the install.
+  - The Builder's Plan's ship section is the selection screen for this: choose a carried fitting, a compatible mount, and the cannon variant. The first build uses a simple Interact-at-the-mount step; the Builder's Plan screen uses the same server request later.
+  - Removing a fitting returns it to the inventory if there is room; nothing is destroyed.
+- **Mount sizes (DECIDED, delegated):**
+  - Sail mounts accept their own size only.
+  - The **first sloop** has one mast with a Medium mainsail mount and a Small headsail mount. It also has the two confirmed cannon hardpoints (port and starboard) and one helm mount.
+- **Sail roles (DECIDED, delegated):** none in the first version; sails differ by size only. Handling, speed and cargo roles stay a RECOMMENDED later layer for when sailing is balanced.
+- **Sailing (DECIDED, delegated):**
+  - The helmsman uses forward and back to step the sails between three states (furled, half, full) and left and right for the rudder. Sail trim is automatic in the first version; manual trim is a later skill layer.
+  - Wind has a world direction. Speed depends on the ship's angle to the wind: full speed running downwind, and never less than about 30% sailing into it, so a ship can always make headway (*tuning*).
+  - More and larger sails raise top speed; carried weight lowers it (*tuning*).
+  - The server owns all ship movement and steps it in fixed small increments, so speed never depends on frame rate. Helm controls are held as the player's last chosen state, never as input that expires after a fixed time (the lesson from the deleted prototype).
+- **Hull health (DECIDED, delegated):** one hull-health pool, upgraded through Hull Health. Holes, flooding and part damage layer on later.
+- **Starter ship (DECIDED, delegated):** no cheap pre-built sloop for now. The prologue dinghy and the craftable raft are the starter boats, and the sloop needs a Small Shipyard. Revisit if playtests show the jump to a sloop is too steep.
+
 ## Ocean life and diving
 
 - **Diving Platform:** burns Fish Oil, one unit per 90 seconds, from a 100-unit slot. Divers are on a tether: unlimited vertically, horizontal limit TBD.
@@ -307,7 +340,7 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
 
 Decisions that block or shape upcoming work. Ask the owner; do not assume.
 
-1. **Ship fittings:** recipes, stations, and how fittings are obtained (Builder's Plan or station crafting); cannon variant names; Loom and Tanner recipes and how they overlap.
+1. **Ship fittings:** recipes and costs, cannon variant names, and Loom and Tanner recipes and how they overlap. How fittings are obtained and placed is settled by the [ship model](#ship-model).
 2. **Prologue:** how the dinghy reaches the Port now that sail-building is removed; torch versus Rye as the first carried item; room price.
 3. **Inventory privacy:** should other players see your inventory?
 4. **Survival scaling:** the five-second stamina baseline at higher capacity; needs drain under activity; starvation and dehydration damage.

@@ -40,12 +40,12 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 
 Proposed order, pending owner confirmation:
 
-1. **Ship foundation.**
-   1. Settle the design first: what a bare hull includes, and how players place the helm, mast, sails and cannons.
-   2. Build the hull with two cannon hardpoints.
-   3. Add fitting data with placement checks. Lesson from the deleted prototype: never let held helm input expire on elapsed time alone (see [VERIFICATION.md](VERIFICATION.md#known-failures)).
-   4. Make board, steer, stop and disembark work for a client.
-   5. Add anchor, cargo and weight, in that order.
+1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
+   1. **Hull:** a ship actor driven by data, with its mounts (helm, sails, cannon hardpoints) and a sloop definition.
+   2. **Fittings:** helm and sail items; install and remove at a mount through a server-checked request.
+   3. **Sailing:** take the helm, sail states and rudder, the wind model, and movement in fixed steps.
+   4. **On deck:** walk on a moving ship, board and disembark as a client.
+   5. **Anchor, cargo and weight,** in that order.
 2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
 3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
 4. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
