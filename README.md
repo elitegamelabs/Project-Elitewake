@@ -1,41 +1,38 @@
-# Project Elitewake
+# Elitewake
 
-A ship-centered pirate survival sandbox by **Elite Game Labs**, built in **Unreal Engine 5.8.3**.
+An open-world PvP and PvE pirate survival sandbox by **Elite Game Labs**, built in **Unreal Engine 5.8**. Set in the mid-1700s across four regions of islands and open ocean, players survive, gather, craft, sail, explore, hunt treasure, tame animals, trade and fight. They grow from castaway to captain to pirate legend.
 
-Ships are the center of play: transportation, shelter, storage, workshop, combat platform, crew headquarters and progression, and they are highly customizable. Land bases are allowed but temporary, and players can raid them; wild animals do not aggro player items. The loop is Prepare → Sail → Discover → Fight/Explore → Loot → Escape → Upgrade → Sail Farther. (The former "THE SHIP IS HOME" slogan was retired by owner decision on October 6, 2026.)
+Ships are the center of the game. They start as bare hulls that players fit out and upgrade. Land bases are possible but temporary and raidable. The core loop is **Prepare → Sail → Discover → Fight or Explore → Loot → Escape → Upgrade → Sail Farther.**
 
-The current target is a small playable **0.01** foundation with server-authoritative gameplay and private multiplayer testing. Movement/stance, survival HUD, inventory/equipment/hotbar, interaction, gathering and berry food have verified foundations. New local work adds crafting transactions and larger inventory/crafting grids, an M-key surrounding-map preview, per-player inn torch pickup, ordered objectives and completion recipe rewards, and an F10 Host/Join/Leave test panel. Normal play still starts empty; starter recipes remain opt-in fixtures until the production prologue completion trigger is agreed.
+## Status
 
-The latest verification passes 18 native tests, ten separate-process connection lifecycle checkpoints and five cooked Windows loopback checks. These are scoped foundation checks, not a finished sandbox or LAN/Internet certification. Production ships, complete survival, combat, world/Port content, prologue, persistence, final artwork/animations and balance remain open. Private packages stay outside Git; see the [private testing guide](Docs/PRIVATE_MULTIPLAYER_TESTING.md) for build steps and remaining acceptance.
+Early development. Movement, survival stats, inventory, equipment, interaction, gathering, food, crafting, objectives and private multiplayer testing work as tested foundations. One connected test map, a coast you can swim from, exists locally. Sailing, combat, wildlife, the prologue, save/load and final art are not built yet. See the [project guide](Docs/PROJECT_GUIDE.md) for details and known problems.
 
-## Start here
+## Documentation
 
-- [Project guide](Docs/PROJECT_GUIDE.md): current status, next work, repository map and developer checks.
-- [Design reference](Docs/DESIGN_REFERENCE.md): current authority, requirement tracking and owner decisions.
-- [Verification record](Docs/VERIFICATION.md): dated acceptance results and their limits.
-- [Historical reviews](Docs/ARCHIVE/CONTEXT_AND_DESIGN_REVIEWS.md): preserved source cross-references.
+- [Design reference](Docs/DESIGN_REFERENCE.md): what the game is meant to be, by topic, with open questions.
+- [Project guide](Docs/PROJECT_GUIDE.md): what is built, what is broken, next work, building and testing, conventions.
+- [Verification](Docs/VERIFICATION.md): what has been tested and what has not.
+- [Archive](Docs/ARCHIVE/README.md): earlier reviews and full dated logs.
 
-## Design authority
+The design guides themselves (Shared Design Authority, Development & Systems, Creative & World, Ecology) are maintained outside this repository by the owner.
 
-Design is governed by three guides maintained outside this repository. When sources conflict, the higher one wins:
+## Getting started
 
-1. Explicit owner decisions, including the overriding [complete October 9 design update](Docs/OCTOBER_9_COMPLETE_REVIEW.md) and subsequent clarifications.
-2. **Elitewake Shared Design Authority & Cross-Team Guide**: common authority, terminology, cross-team contracts, open decisions and retired rules.
-3. Team guides: **Elitewake Game Development & Systems Bible** and **Elitewake Creative & World Bible**.
-4. Repository docs and work notes, including this README and `Docs/`.
+1. Install Unreal Engine **5.8.3**, Visual Studio with the Unreal C++ workload, and **Git LFS**.
+2. Clone the repository and run `git lfs pull`.
+3. Open `EW.uproject` and let it build the C++ modules.
+4. Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` (the default startup map is still the Unreal template map).
 
-The October 5, 2026 **Master Game Design Bible** is an archive. Its section numbers are still used as source labels, but it is not edited or used as current authority. Status labels CONFIRMED, FUTURE, TBD and RECOMMENDED are preserved as assigned; missing values stay TBD until the owner decides them. See [Design reference](Docs/DESIGN_REFERENCE.md#authority) for the current decisions.
+Work from a folder outside OneDrive or other sync services. The team's working copy is `C:\UnrealProjects\EW`; a OneDrive copy is only a backup, and opening it by mistake shows outdated work.
 
-## Open the project
+## Repository layout
 
-1. Install Unreal Engine **5.8.3**, Visual Studio's Unreal/C++ build components and **Git LFS**.
-2. Clone this repository and run `git lfs pull`.
-3. Open `EW.uproject` and allow the native modules to build.
-
-Use a checkout outside OneDrive or other cloud synchronization folders. The active development checkout is `C:\UnrealProjects\EW`; its OneDrive copy is a backup. Required editor integrations are declared in `EW.uproject`; shared Unreal/Scenario connector endpoints are in `.codex/config.toml` and `.cursor/mcp.json`. Root `.mcp.json` is local and ignored. Open the active `C:\UnrealProjects\EW\EW.uproject` directly or use Browse in Unreal's Project Browser; both copies display EW, so verify the path. A clearly named shortcut to the active file avoids opening the old backup.
-
-## Repository
-
-`Source/` contains gameplay and editor helpers, `Content/` contains Unreal assets, `Config/` contains shared settings, and `Scripts/Setup` / `Scripts/Verification` contain opt-in tooling. New game-specific assets belong in `Content/Elitewake/`.
-
-Generated Unreal/IDE files are ignored. `main` holds verified, focused changes; use Git LFS for binary assets. Keep gameplay foundations in C++, assemble content in Blueprints, and preserve original code/art/story and the current design authority.
+| Path | Contents |
+| --- | --- |
+| `Source/EW/` | Gameplay C++ and native tests |
+| `Source/EWEditor/` | Editor-only test helpers |
+| `Content/Elitewake/` | Elitewake assets and maps |
+| `Art/` | Source images for placeholder art, with generation records |
+| `Scripts/` | Unreal Python and PowerShell setup and verification scripts |
+| `Docs/` | Project documentation |

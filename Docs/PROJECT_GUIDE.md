@@ -1,188 +1,192 @@
 # Project guide
 
-Updated October 9, 2026. Active checkout: `C:\UnrealProjects\EW`. Engine: **Unreal 5.8.3**. Repository: **elitegamelabs/Project-Elitewake**. The OneDrive copy is a backup, not the working project.
+What is built, what is broken, what comes next, and how to work in this repository. Design rules are in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md); test results are in [VERIFICATION.md](VERIFICATION.md).
 
-## Current state
+Last updated: October 11, 2026.
 
-This is a tested gameplay foundation for version 0.01, not a finished pirate sandbox. Normal Play starts with empty inventory. Test Wood/Hats/Fiber/Sticks and the pickup map are opt-in fixtures.
+## Where things stand
 
-| System | Current foundation | Remaining work |
+Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
+
+- **Build:** both Editor and Game targets build.
+- **Native tests:** 22 automation tests pass.
+- **GitHub:** the last commit pushed to `main` is `52678ec` (October 9).
+- **Local only:** everything from October 10–11 is on this machine only. That covers the Company system, the coastal map and its water, swimming, the sloop prototype, generated placeholder art and several test fixes. See [Uncommitted work](#uncommitted-work).
+
+| System | What works | Not done yet |
 | --- | --- | --- |
-| Locomotion/camera | Move, jump, sprint, first/third-person; locomotion states | Final perspective animation and hardware coverage |
-| Crouch/prone | Distinct capsules, clearance-gated exits, prone-body collision; client prediction tested | Moving decks, dedicated server, final animation polish |
-| Survival | Authoritative stats/HUD/weight; fresh-water drinking and Azren eating/healing | Needs drain/damage, other food/cooking and water qualities, five-second stamina tuning, jump/climb costs, regeneration/fall damage |
-| Inventory | 24 slots, stacking, weight, selection/details; berry freshness batches and live bars | Other item use, durability/persistence, final preview/tabs and discard; crafting foundation verified below |
-| Pickups | Owned requests; server range/aim/visibility validation; partial transfer and competition | Production world content and target-specific actions; see interaction foundation |
-| Interaction | M6 foundation: E/X prompts, server Press/Hold timing/cancellation, fresh-water action; opt-in Inspect fixtures | Actual station/storage/ship/vendor actions, remapping and final presentation |
-| Equipment | Atomic owned-unit equip/unequip/swaps with capacity checks | Cosmetics, armor effects, durability and persistence |
-| Gathering | Hand fiber/stick/berry pools use E/X; equipped-hatchet trees and pickaxe nodes use Left Mouse/RT and server validation | Production vegetation/ore distribution/balance, other berry definitions, regrowth, bare-hand punching/injuries, deferred swing presentation and durability |
-| Hotbar | Eight owned-definition shortcuts; 1–8/LB/mouse assignment; equipment and authored berry consumption | Other consumables, maps/taming/harpoon actions, remapping and persistence |
-| Objectives | Controller-owned, server-controlled ordered sequence and owner-only replicated snapshot; 17 native tests pass | Production events/rewards, final objective layout and persistence |
-| Ship/world/prologue | Ships remain central and highly customizable; one NPC trade **Port** per region (four currently) retains PvP safety, specialized vendors, Ferryman links and introduction rules; "THE SHIP IS HOME" is retired | Production ship loop, four weather-biome Port islands, missions, navigation and save/load |
+| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming, with diving and surfacing *(local)* | Final animations, moving ship decks, physical gamepad testing |
+| Survival | Replicated Health, Stamina, Hunger, Hydration, temperature, weight; HUD icons and warnings; drinking fresh water; rejects invalid numbers *(local)* | Needs drain and damage, temperature effects, regeneration, fall damage. Sprint uses placeholder rates (15/s drain, 10/s recovery) |
+| Inventory and equipment | 24 slots, stacking, weight, item details; equip, unequip and swap; eight-slot hotbar | Durability, save/load, character preview, discard. Inventory is visible to all players (privacy undecided) |
+| Interaction | E / X prompts that follow the device; press and hold actions timed by the server; cancellation | Real station, storage, vendor and ship actions |
+| Gathering | Fiber, sticks and berries by hand; hatchet trees (Wood, Thatch); pickaxe nodes (Stone, ore) | Bare-hand tree punching and injury, regrowth, real world placement, swing animations |
+| Food | Eat Azren berries (Hunger and Health); 20-minute freshness, then toxic | Marad, cooking, other foods, freshness that survives save/load |
+| Crafting | Server-checked crafting with no item loss; menu with icons; four starter recipes and a Repair Kit as test assets | The event that unlocks recipes after the innkeeper introduction; stations; craft timers; using the crafted items (dig, drink, repair) |
+| Objectives | Ordered objective steps per player, current-step display, recipe rewards on completion | The real prologue steps; save/load |
+| Menus and map | Inventory and crafting grids; seven menu sections (Company works, the others are placeholders); M shows the surrounding area | Building, Skills, Tames and Journal screens; real map with discovery and compass |
+| Inn torch | One torch per player, with the owner's message and a highlight | Real inn placement, flame and light, carrying and using it |
+| Company *(local)* | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
+| Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
+| Coastal map *(local)* | `Lvl_CoastalPlayground`: beach, dock, islet, resources, freshwater spring, textured sand and timber, sloped shore, swimmable ocean 500 m deep | Real terrain and foliage, wildlife, Port and inn, final art |
+| Ship *(local, failing)* | `AEWPrototypeSloop`: board, take the helm, inventory blocks steering | **Sailing does not work** (see below). Still has a preset mast, sail and helm, which conflicts with the bare-hull decision |
 
-Acceptance evidence and coverage limits live in [VERIFICATION.md](VERIFICATION.md). Physical-controller, packaged and dedicated-server coverage remain open.
+## Known problems
 
-Survival still uses prototype 15/s sprint drain and 10/s recovery. The owner confirmed recovery while walking as well as stationary. Hunger is currently normalized 0–100%; 50 kg carry capacity is provisional, displayed rather than enforced as a hard cap. Do not claim full M4 completion or invent unspecified needs-damage/scaling rules.
-
-<a id="next-work"></a>
+1. **The sloop does not move.** The client test boards the ship and takes the helm, then fails: the hull stays at its spawn point with zero speed (`Saved/CoastalSloopPlayResult.json`). The cause is not known. Possibilities: the input times out, the background editor is throttled, or the attached character's collision interferes.
+2. **The editor crashed while shutting down** on October 11, 01:52. It hit an engine assertion (`GIsPlayInEditorWorld`, `Editor.cpp` line 1225) after an MCP editor tool requested the close while a Play session was ending. The script stack names `SlateInspectorToolset`. It is not in Elitewake code. Stop Play before closing the editor, and close it normally rather than through a tool. Crash files: `Saved/Crashes/UECC-Windows-129F0C5A…_0001`.
+3. **Startup opens the wrong map.** `Config/DefaultEngine.ini` still starts the editor and game in `/Game/ThirdPerson/Lvl_ThirdPerson`. Open `/Game/Elitewake/Maps/Lvl_CoastalPlayground` yourself to see current work.
+4. **The latest Windows package is stale.** `Saved/PrivateBuilds/local-20261010-071931` predates the coastal map, Company, swimming and the sloop.
+5. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
+6. **The sloop prototype must be converted** to a bare hull with two empty hardpoints before any further ship work.
 
 ## Next work
 
-Owner resumed development after the engineer review and adopted the [private multiplayer testing plan](PRIVATE_MULTIPLAYER_TESTING.md). Advance the next small slice through configured-class/spawn auditing and separate-process host/client acceptance, then a minimal Host/Join/failure flow. This supplements world creation without cancelling the remaining prologue/gameplay backlog. The networked foundations already exist; no rewrite from a single-player baseline is required. Two-PC/Internet/distribution remain unverified. Publishing and external network/account changes still require explicit authorization.
+Proposed order, pending owner confirmation:
 
-Owner authorized automatic continuation on October 9 until account usage prevents further work or the owner pauses/cancels. An hourly chat heartbeat (`continue-elitewake-build`) resumes small verified slices and reports meaningful outcomes or required decisions. This does not change unresolved design gates or confer new publication permission. Build evidence and remaining work must be updated at each slice rather than treating scheduled continuation as feature completion.
+1. **Stabilize.** Commit the local October 10–11 work in reviewed pieces. Confirm the editor opens cleanly.
+2. **Ship foundation.**
+   1. Find out why the sloop doesn't move, using a test that can be repeated.
+   2. Convert the sloop to a bare hull with two hardpoints.
+   3. Add fitting data with placement checks.
+   4. Make board, steer, stop and disembark work for a client.
+   5. Add anchor, cargo and weight, in that order.
+3. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
+4. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
+5. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
+6. **Then,** in dependency order:
+   1. simple combat
+   2. digging and treasure
+   3. cannons and ammo
+   4. weather, time of day and clothing
+   5. vendors
+   6. map and compass
+   7. skills
+   8. save/load
 
-The owner-designated [complete October 9 update](OCTOBER_9_COMPLETE_REVIEW.md) overrides conflicting older design. All 33 sections have been reconciled; creature/ocean/farming expansion remains planned rather than displacing the current crafting slice. Inventory-first placeables have been reaffirmed. The source DOCX is unchanged.
+## Playing the coastal map
 
-Owner confirmed HUD/controls in the active checkout and approved the enlarged [HUD redesign](DESIGN_REFERENCE.md#hud-redesign) on October 9. **Current step:** owner-requested M-key surrounding-map preview and larger inventory/crafting grids are implemented locally; then connect approved post-prologue recipe availability to the objective foundation. Crafting transaction/menu/client requests and four saved opt-in fixtures are implemented and verified. Wooden Shovel, Wooden Axe and Wooden Pickaxe cost 20 Wood each; Hide Water Flask costs 1 Hide + 10 Thatch. Read-only recipe readiness now shares transaction validation and drives the Craft button. Owner now confirms generic Wood and unlocks for all four recipes after the prologue. Next connect normal-player availability to a trusted prologue-completion event; do not silently promote test weights/art to production. The inn torch's session-only per-player pickup/message/highlight foundation is verified; production inn placement/use/save and Rye/Journal ordering remain open. See [first crafting decisions](DESIGN_REFERENCE.md). Campfires, storage chests and crafting stations are crafted into inventory before placement; construction pieces use the separate Builder's Plan. Exact final menu nesting and controls remain TBD. The rolled-back campfire/torch/chest starter set remains withdrawn.
+Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. The map grants no items or recipes.
 
-Use the [October 9 decisions](DESIGN_REFERENCE.md#october-9-decisions) for material variants, regional farming/mining, crafting visuals, skill families and server configuration principles, together with the [October 8 decisions](DESIGN_REFERENCE.md#october-8-decisions) for current design and the [resource/ecology review](DESIGN_REFERENCE.md#resource-ecology) for regional direction. The berry loop remains verified: Azren restores 1/16 Hunger and 5% maximum Health and expires after twenty real minutes into an inedible toxic resource. Marad authoring, production vegetation and persistence remain separate work.
+- **Beach:** loose Wood and Stone stacks. Look at one and press E.
+- **Grove:** fiber plants and Azren bushes (E). Trees need an equipped axe and stone needs an equipped pickaxe; use Left Mouse.
+- **Freshwater spring:** inland at about X −17 m, Y 15 m. Press E while thirsty.
+- **Dock and sea:** the dock reaches over swimmable water.
+  - Look down and move forward to dive; hold Space to rise.
+  - The water surface is at Z −65 cm. The visible waves are cosmetic.
+- **Sloop:** at about X 62 m, Y 14 m. You can board it, but it does not sail yet.
+- **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
 
-The October 8 rollback withdrew later crafting/ecology INIs, starter-recipe costs/unlocks and the unfinished loader. Recovery files are local history, not current configuration. See [checkpoint restoration](VERIFICATION.md#checkpoint-restore-october-8). Root `.mcp.json` and editor preferences remain local; publishing new changes requires owner authorization.
+## Building and testing
 
-Development guide chapter 41 (archived Master §24.3) specifies: baseline -> locomotion/input -> camera/animation state -> survival/HUD -> items/inventory/equipment -> interaction -> gathering -> crafting/skills -> sword/enemy -> shovel/map objective/treasure -> ship/helm/anchor/cargo/weight -> cannons/shared ammo -> day/night/cold/fire/clothing -> Port/vendors -> prologue logic -> map/compass -> additional encounters/polish. Use this dependency order as the reference; conversational milestone labels are not a one-to-one numbering of that list. For the owner's October 6 auto-approved run through M6, M6 means the recorded interaction-framework package: shared pickup/world targeting, E/X prompts, Press/Hold authority and cancellation, Inspect-only resource/station fixtures, plus the fresh-water return slice. It does not include gathering/crafting or production ship/vendor/storage actions. See [M6 closeout](VERIFICATION.md#m6-interaction-closeout).
+Close the editor before building code that adds or changes classes.
 
-M4 remains partially implemented. The [HUD return slice](VERIFICATION.md#m4-hud) now supplies health/stamina/food/hydration/weight gauges and empty-stat warnings. Activity-dependent needs drain, starvation/dehydration consequences, salt/other-water drinking, other food/cooking, five-second base stamina timing, jump/climb costs and regeneration remain open. October 6 owner clarification permits recovery while walking. Upgraded-stat/activity scaling and health-loss interpretation still require clarification. The owner move to M5 does not verify or cancel these requirements.
+```bash
+"C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat" EWEditor Win64 Development -Project="C:/UnrealProjects/EW/EW.uproject" -WaitMutex
+```
 
-### Proposed 0.01 work packages after M5
+Build the `EW` target the same way when runtime code changes. Then run all native tests:
 
-1. Production gathering and crafting: extend the verified gathering/tool foundations with authored resources, recipes, resource costs and unlock prerequisites. C++ authority; Data Assets for recipes/resources; Blueprints for world content; UMG for crafting. Verify no resource duplication or unaffordable crafting.
-2. Skills, simple combat and treasure: 7 skill-tree points and 1 character stat point per level, character cap 80, respec at levels 10/15/20 onward for 2 Gold, shovel/digging, map objective and small enemy encounter. Deterministic C++/Blueprint behavior; data-driven rewards. Verify progression and authoritative damage/rewards; node costs remain TBD where not assigned.
-3. Small ocean and starter sloop: helm, hold-to-anchor, cargo, ship weight and two opposing cannons with shared limited ammunition. Depends on movement/interaction/inventory; test boarding, moving deck behavior, cargo transfer, anchoring and overload sinking in multiplayer. Implement current hardpoint and storage-only Ammo Bin rules.
-4. Environment, Port/prologue and navigation: 90 real minutes each for day/night, contextual conditions, basic Port vendors, revised schooner battle/dinghy repair/journal opening, then map/compass. M opens the local surrounding-map preview; other map bindings remain TBD. Walking is allowed, sprint/stance/hotbar/inventory suppressed, and the world still runs. Command radial uses Middle Mouse / D-pad Right. Survival/HUD return work above must not be silently delayed until final polish.
-5. Integrated 0.01 playthrough: Prepare/Sail/Discover/Loot/Upgrade on a small test world. Repeat dedicated-server and two-client checks, packaging, save/load where implemented, and performance checks. This does not imply the full prologue or finished content is ready.
+```bash
+"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "C:/UnrealProjects/EW/EW.uproject" -unattended -nop4 -NullRHI -ExecCmds="Automation RunTests Elitewake" -TestExit="Automation Test Queue Empty" -log
+```
 
-### Crafting implementation slice — October 9
+Do not add an early quit command. The run ends when the test queue is empty.
 
-Native recipe data, an authority-only inventory transaction and inventory/crafting menu are built. Recipe availability is granted by trusted server code and replicated only to the owning player. Owned-controller requests validate possession and living status. Ingredients are aggregated and the complete post-craft inventory is validated before committing, including space freed by consumed ingredients. Each transaction yields one item. Exact-item ingredients support the owner-confirmed single generic Wood resource; no species-specific inventory/mixing system is required. Four saved opt-in recipe fixtures use the approved costs; generic Wood, 1 kg output/Hide weights and missing item art are prototype content. Authored icons are shared in recipe lists and large previews. I/Y opens inventory; Tab/RB switches crafting; arrows/d-pad or mouse select; Enter/A or the Craft button requests one item. Controls/layout remain a functional draft. Normal inventory still starts empty and normal gameplay does not grant these fixture unlocks. Post-prologue unlock timing is confirmed; its production trigger, final art/weights, tool/flask use and inn torch content remain open. Native regression and a client menu transaction pass; wider controller, latency, dedicated-server and packaging coverage remains pending.
+**Play scripts** (`Scripts/Verification/*.py`) run from the editor's Python console using the full path. Each script's docstring names its map and Play mode.
 
-### Prologue objective foundation — October 9
+- Most use `/Game/Elitewake/Maps/Lvl_M5PickupTest`; the `verify_coastal_*` scripts use the coastal map.
+- Results are written to `Saved/*Result.json`.
+- Scripts may move pawns or create test items during Play only. They never change saved maps or normal starting inventory.
 
-`UEWObjectiveComponent` is a default controller component, so progress is independent of the possessed pawn within the same controller session. Trusted server gameplay starts one authored sequence and reports validated current-step events. The component snapshots ordered IDs/descriptions/counts, rejects invalid or duplicate IDs, clamps progress without spillover, rejects stale-step reports and prevents restarting a completed sequence. Its state uses owner-only replication and a change delegate; no client completion RPC exists. Native tests and five listen-server/client replication/possession checkpoints pass. Read-only current-objective presentation now passes nine client Play checkpoints. Trusted recipe-reward integration now passes eight client Play checkpoints. Next define production objective events and the prologue endpoint. A compact current-step display shows authored description/count at the upper left, hides during inventory and clears on completion. A trusted `StartRecipeSequence` snapshots deduplicated recipe rewards; final completion unlocks them for the controlled survivor, and later server possession reapplies knowledge to the new inventory within the same controller session. The default sequence/reward list remains empty. No production prologue recipe grant, currency, save/reconnect or ship tutorial is claimed. The exact prologue endpoint (Port arrival versus introduction completion) remains pending owner clarification.
+**Setup scripts** (`Scripts/Setup/*.py`) create test assets and fixtures:
 
-### Longer-term backlog
+- `create_*` scripts make missing saved test assets and do not overwrite existing ones.
+- `spawn_*` scripts place temporary fixtures in a running Play session.
+- The coastal scripts (`create_coastal_playground.py`, `shape_coastal_shore.py`, `upgrade_coastal_water.py`, `set_coastal_ocean_depth.py`, `create_coastal_sloop.py`) built the saved coastal map. Do not rerun them over an edited map.
 
-Starting-recipe integration: inventory components expose an editor-authored `StartingRecipes` list. Authority applies it during BeginPlay through the existing owner-replicated availability path; no finished items are granted. Native initialization and a real deferred-spawn/possession/client-menu lifecycle check pass. The production starting list remains empty: the owner confirms the four regular starter recipes unlock after the prologue, rather than at character creation. A trusted completion event still needs to grant them. This hook is not a progression/save system or a prologue-completion trigger. Existing fixture grants remain opt-in.
+**Evidence lives in `Saved/`,** which Git ignores. Test results and logs exist only on the machine that ran them.
 
-Item-image integration now reads each item definition's assigned texture for inventory/equipment rows and selected-recipe material rows, alongside the existing recipe-list/preview and hotbar image support. Icon-less items retain labels; finished tool/flask/torch art is still pending. Diagnostic checkerboard icon fixtures are isolated under Testing and never granted/unlocked in normal gameplay. This presentation work does not resolve species mixing, progression availability or production balance.
+## Private multiplayer testing
 
-Inn torch return slice: `AEWInnTorchPickup` grants one unit per PlayerState in the current session, leaves the actor available to other players, and preserves entitlement on failed transfer. Looking at it displays the exact top-center owner message and retains a local silver bounding-frame highlight until collection. Its mesh becomes locally invisible after collection. This uses existing E/X interaction validation. A separate metadata fixture uses a placeholder cube and temporary 1 kg weight; flame/light, carried use, finished inn placement, cross-session identity/save and split-screen presentation remain pending. No prologue grants/currency or Journal ordering change is made. Seven in-process listen-server/client Play checkpoints passed through the ordinary interaction RPC route, including retained pickup entitlement after possession changes within the same session; physical E/X input is covered only by the existing interaction foundation, not newly certified by this torch script.
+The goal is for the owner to host and play while one approved tester joins from another Windows PC. Test locally first, then on LAN, then over the Internet.
 
-**Deferred harvesting presentation (owner confirmed October 7):** add hatchet chopping and pickaxe mining animations later, with first/third-person state, held-tool visuals and validated multiplayer presentation. The functional gathering slices do not claim these animations are complete. This backlog must remain visible until integrated and verified.
+- **F10** opens the test session panel. Join accepts local or private IPv4 addresses only (default port 7777). Use Standalone Game, because ordinary in-editor Play shows the panel disabled. Host, Join and Leave reload the ThirdPerson map and reset session progress.
+- **`Scripts/Verification/build_private_windows.ps1`** builds, cooks and archives a Development package into `Saved/PrivateBuilds/`, with Microsoft VC++ redistributables and a `TEST_NOTES.md`. The editor must be closed.
+- **Done:** separate-process connection, gameplay, late join, host loss and cancellation recovery, packaged loopback startup.
+- **Next:** test the packaged menus and controls, a clean PC install, and two PCs on LAN.
+- **Later, with owner approval:** Internet transport, a restricted itch.io page, Butler uploads, and tester invites.
 
-Ports, specialized vendors, Ferryman routes, currency, shipyard progression, larger customizable vessels and belongings transfer; sail damage/repair and deeper naval combat; storms/adventure encounters, ghost ships, floating salvage and dungeons; tribes and communication; crew roles and shared commands; Beast Mastery, taming/breeding; injuries/surgeon, aging/hair; world density and official regional hosting. Davy Jones quest is Removed, not a planned rejuvenation implementation.
+Never change firewall or router settings, create accounts, upload builds or invite testers without the owner's explicit go-ahead. Never commit credentials or download keys.
 
-Prologue and Rye-sale requirements are maintained in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md#resource-ecology), including zero starting currency and the 250 Copper introduction reward. Do not revive the old raft/shipyard opening.
+## Art and placeholder assets
+
+The owner has deferred Fab purchases; only free assets have been approved so far. Until final art exists, placeholder art is generated and clearly labeled.
+
+- **Sources** live in `Art/`, with the exact prompt, tool and SHA-256 hash recorded in `generation.json` next to each set:
+  - `Art/Placeholders/ItemIcons/`: transparent item icons.
+  - `Art/Environment/`: base-color textures.
+- **Unreal copies** are imported under `Content/Elitewake/UI/PlaceholderIcons/` and `Content/Elitewake/World/Materials/`, with a `_v1` suffix.
+- **Importing:** `Scripts/Setup/import_placeholder_item_art.py` imports the icons and assigns them to their items.
+- **Replacing:** final art gets a new version or path. Never overwrite a placeholder in place.
+- **Imported library:** `Content/FreeAnimationLibrary/` (Free Animation Library by Voxel Vision) is installed. Only the stance animations are wired up so far.
 
 ## Repository map
 
-| Location | Purpose |
+| Path | Contents |
 | --- | --- |
-| `EW.uproject`, `Config/` | Project descriptor and shared engine/game settings |
-| `Source/EW/` | Active gameplay module; native tests in `Tests/` |
-| `Source/EWEditor/` | Editor-only animation/content/verification helpers |
-| `Content/Elitewake/` | Project-specific animations, items, Blueprint assembly and isolated fixture map |
-| `Content/ThirdPerson/`, `Characters/`, `Input/`, `LevelPrototyping/` | Active foundation and shared dependencies; names retained to preserve asset references |
-| `Content/FreeAnimationLibrary/` | Imported animation library retained for stance/current and future content |
-| `Content/__ExternalActors__/`, `__ExternalObjects__/` | Unreal-managed external data for retained maps; do not edit manually |
-| `Scripts/Setup/` | Opt-in fixture creation and stance-animation configuration |
-| `Scripts/Verification/` | Repeatable Play acceptance checks |
-| `Docs/PROJECT_GUIDE.md` | Current status, work order and repository conventions |
-| `Docs/DESIGN_REFERENCE.md` | Authority, requirements and decisions |
-| `Docs/VERIFICATION.md` | Acceptance evidence and limitations |
-| `Docs/PRIVATE_MULTIPLAYER_TESTING.md` | Adopted private listen-server testing/distribution plan and reconciled audit |
-| `Docs/ARCHIVE/` | Historical source-review snapshots |
-| `.codex/`, `.cursor/` | Shared Unreal/Scenario connector endpoints, without credentials |
+| `EW.uproject`, `Config/` | Project file and shared engine/game settings |
+| `Source/EW/` | Gameplay module; native tests in `Source/EW/Tests/` |
+| `Source/EWEditor/` | Editor-only helpers used by verification scripts; never shipped |
+| `Content/Elitewake/` | All Elitewake assets: items, recipes, maps, materials, meshes, UI, animation setup. Test assets sit in `Testing/` subfolders |
+| `Content/ThirdPerson/`, `Characters/`, `Input/`, `LevelPrototyping/` | Unreal template content the project still depends on; keep the paths |
+| `Content/FreeAnimationLibrary/` | Imported animation library |
+| `Content/__ExternalActors__/`, `__ExternalObjects__/` | Unreal-managed map data; never edit by hand |
+| `Art/` | Source images for placeholder art, with provenance |
+| `Scripts/Setup/`, `Scripts/Verification/` | Fixture creation and acceptance scripts |
+| `Docs/` | This guide, the design reference, the verification summary, and the [archive](ARCHIVE/README.md) |
 
-Generated Binaries, Intermediate, Saved, DerivedDataCache and IDE state are ignored. Use Git LFS for Unreal binary assets; preserve commit history and focused commits. Local editor preferences belong in generated Saved/Config where possible.
+## Conventions
 
-## Development checks
+**Code and content**
 
-Build `EWEditor Win64 Development` against this checkout before Play checks. Run automation filter `Elitewake` with `UnrealEditor-Cmd.exe`, `-unattended -nop4 -NullRHI`, `-ExecCmds="Automation RunTests Elitewake"` and `-TestExit="Automation Test Queue Empty"`. Do not append an early Quit command.
+- **Where things go:** gameplay state, replication and transactions in C++; scenes assembled in Blueprint; tunable content in Data Assets; screens in UMG.
+- **Clients request, the server decides.** Every consequential action goes through an owned request that the server validates.
+- **Production starts stay empty.** Normal play begins with no items and no recipes. Test content stays opt-in.
+- **Editing assets:** change `.uasset` and `.umap` files only through Unreal. Delete an asset only after checking package and native-type references, then rebuild and load the retained maps.
+- **Paths:** keep template paths and class names unless every reference has been checked.
 
-Run Play scripts from Unreal's Python console with an absolute path. Pickup/inventory/equipment/hotbar/HUD checks need fresh Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`; use standalone or in-process listen-server plus one client as their docstrings specify. Test scripts create PIE-only inventory, restore input/network/throttle state and remove callbacks. Stop Play afterward. Editor helpers never ship with the game.
+**Naming**
 
-| Scripts | Purpose |
-| --- | --- |
-| Setup `create_inventory_test_asset.py`, `create_equipment_test_assets.py`, `create_pickup_test_content.py` | Reconcile only named saved fixtures; preserve existing designer edits |
-| Setup `create_hand_gathering_test_assets.py`, `create_hatchet_test_assets.py`, `create_mining_test_assets.py` | Create missing named gathering/tool fixtures; do not overwrite authored values |
-| Setup `create_berry_test_asset.py` | Explicit approved display/effects/freshness migration of the existing berry fixture; authors its toxic resource while retaining identity/weight/stack size |
-| Setup `configure_stance_animations.py` | Audited stance configuration; read prerequisites before using |
-| Verification `verify_stance_play.py`, `verify_stance_clearance_play.py`, `verify_stance_network_play.py` | Animation/clearance/client stance checks |
-| Verification `verify_interaction_play.py` | Device-aware Press/Hold, cancellation and server validation |
-| Verification `verify_pickup_play.py` | Authority and competing pickup checks |
-| Verification `verify_inventory_selection_play.py` | Inventory input, focus and live-refresh checks |
-| Verification `verify_equipment_play.py`, `verify_equipment_network_stress.py` | Transfer/capacity and bounded request stress checks |
-| Verification `verify_hotbar_play.py` | Assignment, activation, input isolation and conservation |
-| Verification `verify_hatchet_play.py` | Mouse/RT, equipped-tool validation, E exclusion, strike admission and dual-resource conservation |
-| Verification `verify_mining_play.py` | Pickaxe/hatchet separation, stone/ore identity, full/partial capacity, depletion and competing strikes |
-| Verification `verify_food_play.py` | Inventory R/X, hotbar keyboard/controller, owned RPC rejection, replicated effects and separate-batch expiry |
-| Verification `verify_berry_play.py` | E/X berry gathering, food-stack capacity, depletion, rejection and replicated conservation |
-| Verification `verify_integrated_play.py` | Continuous collected-inventory flow through selection, hotbar assignment/equipment, gathering, water and held interaction |
-| Verification `verify_hand_gathering_play.py` | Hand-resource prompts, authoritative/replicated conservation, full/partial inventory and competition |
-| Verification `verify_water_play.py` | Fresh-water E/X, hydration HUD, invalid requests and shared-source use |
-| Verification `verify_survival_hud_play.py` | Rendered stats/warnings, carried weight and possession lifecycle |
+- C++ classes use the Unreal prefix plus `EW` (`AEWPrototypeSloop`).
+- Asset prefixes: `BP_` Blueprint, `WBP_` widget, `DA_` data asset, `DT_` data table, `IA_` input action, `IMC_` input mapping context, `M_` material, `T_` texture, `SM_` static mesh, `AC_` actor component, `E_` enum, `ST_` struct.
 
-<a id="repository-conventions"></a>
+**Git**
 
-## Repository conventions
+- Binary files go through Git LFS (`.gitattributes`).
+- Keep `main` to tested, focused commits. Do not force-push or rewrite history.
+- Ask the owner before pushing.
+- Never commit `Config/DefaultEditor.ini` local changes, the root `.mcp.json`, or anything in `Saved/`.
 
-### Content and C++ organization
+**Docs**
 
-Create new game-specific assets under `Content/Elitewake/`, grouped by gameplay domain. Add a domain only when it has real content. Keep the runtime module `EW`; new classes belong beneath `Source/EW/` in the relevant domain, with headers and implementations together. Editor-only tooling stays in `Source/EWEditor/`.
+- Update the three current docs; do not add a new document per session.
+- New design decisions go into the matching topic in `DESIGN_REFERENCE.md`. Answered questions come off its open-questions list.
+- New test results go into `VERIFICATION.md`.
+- Superseded material goes to `Docs/ARCHIVE/` with a date prefix.
 
-Preserve native class/module identities and Unreal asset paths until package and Blueprint dependencies have been audited. Active ThirdPerson/Mannequin dependencies and the imported Free Animation Library are retained; being unused by today's test scene does not establish redundancy.
+<a id="uncommitted-work"></a>
 
-### Naming
+## Uncommitted work (October 10–11)
 
-- C++ classes use Unreal prefixes and `EW` in the class name where it improves project identity.
-- Blueprints use `BP_`.
-- Actor Components use `AC_` for asset names.
-- Input Actions use `IA_`.
-- Input Mapping Contexts use `IMC_`.
-- Widgets use `WBP_`.
-- Data Assets use `DA_`.
-- Data Tables use `DT_`.
-- Enums use `E_` for assets and `E` for C++ types.
-- Structures use `ST_` for assets and `F` for C++ types.
+On top of `52678ec`, this checkout holds:
 
-Prefer descriptive names. Avoid names tied to the temporary product title when a neutral system name will remain valid after rebranding.
+- **Staged new assets:** the coastal map with its materials and meshes, the sloop hull and sail, placeholder icon textures, and the Repair Kit item and recipe.
+- **Modified files:**
+  - source: swimming, survival guards, the inventory menu, session and test harnesses
+  - test items, scripts and docs
+- **New files:**
+  - Company and sloop source and tests
+  - coastal and art setup scripts, and verification scripts
+  - art sources
 
-## Keeping this tidy
-
-Update these three current documents rather than adding a new top-level document for every session. Put new dated acceptance sections into VERIFICATION.md and new decisions into DESIGN_REFERENCE.md. Archive superseded source reviews with an explicit historical label. Delete unused Unreal assets only after package and native-type dependency checks, then rebuild and load the retained maps/Blueprints.
-
-### Trying opt-in fixtures
-
-Start Play in `/Game/Elitewake/Maps/Lvl_M5PickupTest`, then run the desired `Scripts/Setup/` script from Unreal's Python console using its absolute path. These fixtures are temporary: they do not save a map or grant normal-start inventory. Stop Play afterward. Read each script's prerequisites/docstring for coordinates and fixture tuning; production balance is not established by test yields or weights.
-
-| Setup script | Action and behavior | Acceptance evidence |
-| --- | --- | --- |
-| `spawn_interaction_play_fixtures.py` | E/X Press or Hold; Campfire/Smithy/Tree/Rock Inspect only, no crafting or yield | [Interaction](VERIFICATION.md#interaction-foundation) |
-| `spawn_water_play_fixture.py` | Starts hydration at 25%; E/X at the visible source restores 100%; no prone required | [Fresh water](VERIFICATION.md#fresh-water) |
-| `spawn_hand_gathering_play_fixtures.py` | E/X transfers finite Fiber/Sticks; unaccepted units stay in the pool | [Hand gathering](VERIFICATION.md#hand-gathering) |
-| `spawn_hatchet_play_fixtures.py` | Pick up/equip Hatchet, aim and press Left Mouse/RT; E/X does not chop | [Hatchet](VERIFICATION.md#hatchet-harvesting) |
-| `spawn_mining_play_fixtures.py` | Pick up/equip Pickaxe, aim and press Left Mouse/RT; Hatchet cannot mine | [Mining](VERIFICATION.md#pickaxe-mining) |
-| `spawn_berry_play_fixture.py` | E/X gathers Azren; confirm inventory details then Eat (R / X), or assign/use a hotbar slot; original Azul package/ID retained | [Berries](VERIFICATION.md#berry-gathering) |
-
-Tool strikes require the owned MainHand capability and server admission; holding Attack does not auto-repeat. Bare-hand harvesting awaits injury/treatment decisions. Final held-tool visuals, swing animations, durability, stamina costs, regrowth and production vegetation are separate work. See the deferred animation backlog above.
-
-## Surrounding map and menu presentation — October 9
-
-M opens/closes a local overhead preview of the surrounding area; there is no HUD minimap. The capture follows the player, refreshes twice per second only while open, and is destroyed on close. A centered direction marker tracks facing. Walking and world time continue; sprint, stance changes, interaction, inventory and hotbar actions are suppressed. This is a prototype live preview, not explored-world cartography: discovery, ghost markers, zoom/pan, compass and authored map art remain planned. Other map bindings remain TBD.
-
-Inventory and crafting use larger wrapping item/recipe tiles with a separate detail/action pane, following the owner-selected ARK: Survival Ascended direction. Assigned artwork is preferred; native placeholders remain for missing art. I opens inventory, Tab switches inventory/crafting, and M can switch from inventory to map. No character preview, search/categories or production starting unlocks are implied. The four opt-in recipe fixtures remain separate from normal post-prologue availability. See VERIFICATION.md for scoped checks.
-
-Private multiplayer checkpoint: the reusable `Scripts/Verification/verify_separate_process_connection.ps1` passes four headless, loopback-only host/client connection checks. It leaves the regular editor untouched. The -Gameplay repeat now passes cross-process movement, owned crafting and pickup conservation. Inventory visibility and graceful disconnection remain open before private-testing acceptance; Host/Join/Leave and recovery now pass ten local lifecycle checkpoints; two-PC/LAN and physical-input acceptance are next; see PRIVATE_MULTIPLAYER_TESTING.md and VERIFICATION.md. No LAN or Internet acceptance is claimed. A local Development package now passes the bounded loopback smoke check below.
-
-Separate-process gameplay uses explicit editor-build-only EWVerifyRole flags in two disposable loopback game processes, not the owner editor. Both role reports passed; 17 native regressions passed on the rebuilt module. Recipes remain owner-only, but inventory contents currently replicate to peers; that visibility gap is recorded without inventing inspection/loot permissions. See the private-testing guide for exact scope and deferred checks.
-
-Private-test connection controls: F10 opens a separate Host/Join/Leave panel. Use Play > Standalone Game for travel; ordinary in-editor Play shows a disabled preview with instructions. Join uses local/private IPv4 (default port 7777). Host/Join/Leave reload the retained map and do not save session progress; the panel says so. EWGameInstance handles local travel and retained connection errors across arrival. Ten separate-process lifecycle checkpoints and 18 native tests pass; the existing gameplay repeat also passes. This is not a complete pause/main menu, Internet/authentication service or packaged release. Private inventory visibility and two-PC testing remain open. See PRIVATE_MULTIPLAYER_TESTING.md for steps and scope.
-
-## Local Windows diagnostic package — October 9
-
-`Scripts/Verification/build_private_windows.ps1` builds, cooks and archives the two retained test maps into a unique ignored `Saved/PrivateBuilds/` folder. Close the editor and EW games before running it. The current successful package is `Saved/PrivateBuilds/local-20261009-233201/Windows/EW.exe`; keep its entire Windows folder together. It is Development, built from dirty local source at c0084623ed4c1530c114c66a985458be81c405f8, and unpublished. PrivateBuildInfo.json records this scope, not a released version.
-
-Five packaged headless loopback checks pass: archived build-label loading, exclusive local binding, distinct processes, admission/welcome and two replicated character instances with bounded connection stability. The editor connector is editor-only and absent from the runtime manifest. GameFeatureData scanning remains available to editor tools but is editor-only because EW has no runtime Game Feature assets. Next verify rendered packaged HUD/menus and physical controls, prerequisite portability, then two-PC LAN with the same build. Inventory visibility awaits the owner's decision; no replication rule is changed by this package. Production prologue completion and normal recipe unlocks remain unresolved.
-
-The F10 connection panel now shows the package label, short source revision, Development configuration and local-change marker. Packaging writes PrivateBuildLabel.txt beside the packaged project and TEST_NOTES.md alongside the Windows folder. Unpackaged/missing-label launches explicitly say Unlabelled development build. The label is diagnostic information, not network compatibility enforcement or a complete source snapshot. Latest evidence is recorded in VERIFICATION.md.
+None of it is on GitHub. Commit it in reviewed groups. Do not reset, clean, or regenerate the coastal map.
