@@ -1,5 +1,6 @@
 <# Build a local Development package with the two retained test maps.
-No upload, account, installer, firewall, router or tester invitation operations. #>
+Bundles engine-provided prerequisite installers without running them.
+No upload, account, firewall, router or tester invitation operations. #>
 param([string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8')
 $ErrorActionPreference='Stop'
 $projectRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
@@ -15,26 +16,49 @@ $revision=(& git -C $projectRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'Cannot record source revision.' }
 $dirty=[bool](& git -C $projectRoot status --porcelain)
 $arguments=@('BuildCookRun',"-project=$project",'-noP4','-unattended','-platform=Win64','-clientconfig=Development',
-    '-build','-cook','-stage','-pak','-iostore','-package','-archive',"-archivedirectory=$archive",
-    '-map=/Game/ThirdPerson/Lvl_ThirdPerson+/Game/Elitewake/Maps/Lvl_M5PickupTest','-utf8output','-ubtargs=-NoUBA')
+    '-build','-cook','-stage','-prereqs','-pak','-iostore','-package','-archive',"-archivedirectory=$archive",
+    '-map=/Game/ThirdPerson/Lvl_ThirdPerson+/Game/Elitewake/Maps/Lvl_M5PickupTest',
+    "-AdditionalCookerOptions=-CookDir=$projectRoot/Content/Elitewake",
+    '-utf8output','-ubtargs=-NoUBA')
 & $runUAT @arguments
 if ($LASTEXITCODE -ne 0) { throw "Private package failed with exit code $LASTEXITCODE. Inspect Unreal's packaging log; no upload occurred." }
+$registryPath=Join-Path $projectRoot 'Saved/Cooked/Windows/EW/AssetRegistry.bin'
+$registryText=[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($registryPath))
+$requiredAssets=@('T_Axe_v1','T_Shovel_v1','T_Pickaxe_v1','T_Flask_v1','T_Torch_v1',
+    'DA_TestWoodenAxe','DA_TestWoodenShovel','DA_TestWoodenPickaxe','DA_TestHideWaterFlask','DA_TestInnTorch',
+    'DA_RecipeWoodenAxe','DA_RecipeWoodenShovel','DA_RecipeWoodenPickaxe','DA_RecipeHideWaterFlask',
+    'DA_TestRepairKit','DA_RecipePrologueRepairKit')
+$missingAssets=@($requiredAssets | Where-Object { !$registryText.Contains($_) })
+if ($missingAssets.Count) { throw "Diagnostic assets absent from cooked registry: $($missingAssets -join ', '). Do not use this archive as starter-content acceptance." }
+$containerCsv=Join-Path $archive 'StarterContainerListing.csv'
+& (Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealPak.exe') $project IoStore "-List=$archive/Windows/EW/Content/Paks/EW-Windows.utoc" "-Csv=$containerCsv"
+if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect archived diagnostic container.' }
+$containerText=[IO.File]::ReadAllText($containerCsv)
+$missingAssets=@($requiredAssets | Where-Object { !$containerText.Contains('/'+$_+'.uasset,') })
+if ($missingAssets.Count) { throw "Diagnostic assets absent from archived container: $($missingAssets -join ', ')." }
+@{success=$true;scope='Cooked registry and archived container presence only; not gameplay or rendering acceptance';assets=$requiredAssets} |
+    ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'CookedStarterContentResult.json') -Encoding utf8
 $runtimeRoot=Join-Path $archive 'Windows/EW'
 if (!(Test-Path -LiteralPath (Join-Path $runtimeRoot 'Binaries/Win64/EW.exe'))) { throw 'Packaged runtime executable is missing.' }
+& (Join-Path $PSScriptRoot 'verify_private_windows_prerequisites.ps1') -ArchiveDirectory $archive -EngineRoot $EngineRoot
 $displayLabel="$buildLabel | $($revision.Substring(0,12)) | Development"
 if ($dirty) { $displayLabel+=' | local changes' }
 Set-Content -LiteralPath (Join-Path $runtimeRoot 'PrivateBuildLabel.txt') -Value $displayLabel -Encoding utf8
 @{label=$buildLabel;sourceRevision=$revision;sourceHasLocalChanges=$dirty;configuration='Development';platform='Win64';released=$false;
   maps=@('/Game/ThirdPerson/Lvl_ThirdPerson','/Game/Elitewake/Maps/Lvl_M5PickupTest');
+  prerequisites='Engine-provided signed VC runtime installers bundled and hash-checked; not installed or clean-PC verified';
   scope='Local diagnostic package; original editor settings and source documents preserved; no LAN/Internet/distribution acceptance'} |
   ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'PrivateBuildInfo.json') -Encoding utf8
 @'
 # Local private test — unreleased
 
-Added: inventory/crafting grids, M-key surrounding map preview, F10 Host/Join/Leave and visible build label.
-Fixed: packaged startup GameFeatureData ensure; editor connector excluded from runtime targets.
+Added: inventory/crafting grids, M-key surrounding map preview, F10 Host/Join/Leave and visible build label. Five generated placeholder item icons and crafted wooden axe/pickaxe gathering are available in opt-in editor fixtures; normal recipe unlocks remain unassigned.
+An opt-in prologue Repair Kit recipe costs 20 Wood + 20 Stone. Its test output has provisional metadata; repair use and the production tutorial/unlock event remain unimplemented. It is separate from the four regular post-prologue starter recipes.
+Fixed: survival setters reject non-finite inputs; packaged startup GameFeatureData ensure; editor connector excluded from runtime targets; square item/recipe icons and compact equipped-item labels; Leave/Cancel disposes pending connections; established host timeouts show a lost-session message.
 Known issues: session progress is not saved; inventory privacy decision pending; production prologue and starter unlock trigger unresolved. Final animations/art/balance remain unfinished.
-Coverage: this folder is not a certified release. Consult Docs/VERIFICATION.md for acceptance of this exact label. Rendered gameplay, prerequisites/clean PC, two-PC LAN, Internet, Shipping and distribution require separate checks.
+Coverage: this folder is not a certified release. Consult Docs/VERIFICATION.md for acceptance of this exact label. Rendered gameplay, clean PC, two-PC LAN, Internet, Shipping and distribution require separate checks.
 Keep the entire Windows folder together. F10 shows the diagnostic build label; matching labels alone do not enforce network compatibility.
+
+Windows prerequisites: signed Microsoft VC runtime installers are bundled in Windows/Engine/Extras/Redist/en-us. On an x64 tester PC, run vc_redist.x64.exe interactively if the runtime is missing, then launch Windows/EW.exe. The engine also stages vc_redist.arm64.exe for ARM64 emulation; this does not certify native ARM64 support. These installers have not been run by the build script. PrerequisitesResult.json records signatures and matching engine/package hashes, not installation success or clean-PC portability. GameInput redistribution is not opted in by this project; physical controller support remains unverified.
 '@ | Set-Content -LiteralPath (Join-Path $archive 'TEST_NOTES.md') -Encoding utf8
 Write-Output "Local package created: $archive"

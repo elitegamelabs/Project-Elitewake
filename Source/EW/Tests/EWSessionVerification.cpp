@@ -17,8 +17,10 @@ namespace EWSessionTest
 {
 static FTSTicker::FDelegateHandle Handle;
 static bool bHost=false;
+static bool bRecovery=false;
 static int32 Phase=0, Port=17887;
 static double Started=0.;
+static double Changed=0.;
 static TArray<FString> Checks;
 static FString Path(const TCHAR* Name) { return FPaths::ProjectSavedDir()/TEXT("SessionLifecycle")/Name; }
 static void Write(const TCHAR* Name,const FString& Text) { FFileHelper::SaveStringToFile(Text,*Path(Name)); }
@@ -37,7 +39,8 @@ static bool MenuReady(AEWPlayerController* PC)
 }
 static bool Tick(float Delta)
 {
-    if (FPlatformTime::Seconds()-Started>150.) return Finish(false,FString::Printf(TEXT("Lifecycle timed out at phase %d."),Phase));
+    const double Now=FPlatformTime::Seconds();
+    if (Now-Started>240.) return Finish(false,FString::Printf(TEXT("Lifecycle timed out at phase %d."),Phase));
     UWorld* World=nullptr;
     if (GEngine) for (const FWorldContext& Context:GEngine->GetWorldContexts())
         if (Context.WorldType==EWorldType::Game && Context.World()) { World=Context.World(); break; }
@@ -82,6 +85,11 @@ static bool Tick(float Delta)
         {
             int32 Count=0; for (TActorIterator<AEWPlayerController> It(World);It;++It) ++Count;
             if (Count!=2) return true;
+            if (bRecovery)
+            {
+                Checks.Add(TEXT("Host remains active with rejoined client before external abrupt-process shutdown"));
+                Write(TEXT("HostCrashReady"),TEXT("ready")); return Finish(true);
+            }
             if (!Instance->LeaveLocalGame()) return Finish(false,TEXT("Host Leave request failed.")); Phase=4;
         }
         else if (Phase==4 && Mode==NM_Standalone && !Instance->IsConnectionPending())
@@ -97,7 +105,36 @@ static bool Tick(float Delta)
         {
             if (Instance->JoinLocalGame(TEXT("/Game/Other?listen")) || Instance->IsConnectionPending()) return Finish(false,TEXT("Travel URL was accepted."));
             Checks.Add(TEXT("Invalid travel URL is rejected before connection"));
+            if (bRecovery)
+            {
+                if (!Instance->JoinLocalGame(FString::Printf(TEXT("127.0.0.1:%d"),Port+1)) || !Instance->IsConnectionPending())
+                    return Finish(false,TEXT("Cancellation fixture did not start a pending connection."));
+                Changed=Now; Phase=6; return true;
+            }
             if (!Instance->JoinLocalGame(FString::Printf(TEXT("127.0.0.1:%d"),Port))) return Finish(false,TEXT("Join request failed.")); Phase=1;
+        }
+        else if (Phase==6 && Now-Changed>2.)
+        {
+            if (!Instance->IsConnectionPending()) return Finish(false,TEXT("Connection ceased pending before cancellation."));
+            if (!Instance->LeaveLocalGame()) return Finish(false,TEXT("Pending connection cancellation failed."));
+            Phase=7; Changed=0.;
+        }
+        else if (Phase==7 && Mode==NM_Standalone && !Instance->IsConnectionPending())
+        {
+            if (!MenuReady(Local) || !Instance->GetConnectionStatus().ToString().StartsWith(TEXT("Local play.")))
+                return Finish(false,TEXT("Cancelled connection did not restore local play and arrival panel."));
+            Local->SetSessionMenuOpen(false);
+            if (Local->IsMoveInputIgnored() || Local->IsLookInputIgnored()) return Finish(false,TEXT("Cancellation left input locks behind."));
+            Checks.Add(TEXT("Cancel during pending handshake returns locally; closing its arrival panel restores controls"));
+            Changed=Now; Phase=8;
+        }
+        else if (Phase==8 && Now-Changed>25.)
+        {
+            if (Mode!=NM_Standalone || Instance->IsConnectionPending() || Local->IsSessionMenuOpen()
+                || !Instance->GetConnectionStatus().ToString().StartsWith(TEXT("Local play.")))
+                return Finish(false,TEXT("Cancelled handshake later overwrote local play or reopened its panel."));
+            Checks.Add(TEXT("Cancelled handshake remains local without delayed failure/panel after twenty-five seconds"));
+            if (!Instance->JoinLocalGame(FString::Printf(TEXT("127.0.0.1:%d"),Port))) return Finish(false,TEXT("Join after cancellation failed.")); Phase=1;
         }
         else if (Phase==1 && Mode==NM_Client && !Instance->IsConnectionPending())
         {
@@ -121,8 +158,11 @@ static bool Tick(float Delta)
         }
         else if (Phase==4 && Mode==NM_Standalone && !Instance->IsConnectionPending() && Exists(TEXT("HostFinished")))
         {
+            if (bRecovery && MenuReady(Local) && !Instance->GetConnectionStatus().ToString().Contains(TEXT("lost")))
+                return Finish(false,TEXT("Abrupt host recovery did not explain loss of the established session: ")+Instance->GetConnectionStatus().ToString());
             if (!MenuReady(Local) || !Instance->GetConnectionStatus().ToString().Contains(TEXT("lost"))) return true;
-            Checks.Add(TEXT("Host departure returns client to local play with persistent lost-connection message"));
+            Checks.Add(bRecovery ? TEXT("Abrupt host-process shutdown returns client locally with persistent lost-connection message")
+                : TEXT("Host departure returns client to local play with persistent lost-connection message"));
             if (!Instance->JoinLocalGame(FString::Printf(TEXT("127.0.0.1:%d"),Port+1))) return Finish(false,TEXT("Closed-port join did not start.")); Phase=5;
         }
         else if (Phase==5 && Mode==NM_Standalone && !Instance->IsConnectionPending())
@@ -142,6 +182,7 @@ void StartEWSessionVerification()
     FString Role;
     if (!FParse::Value(FCommandLine::Get(),TEXT("EWVerifySessionRole="),Role) || (Role!=TEXT("Host") && Role!=TEXT("Client"))) return;
     EWSessionTest::bHost=Role==TEXT("Host"); EWSessionTest::Started=FPlatformTime::Seconds();
+    EWSessionTest::bRecovery=FParse::Param(FCommandLine::Get(),TEXT("EWVerifyRecovery"));
     FParse::Value(FCommandLine::Get(),TEXT("EWVerifyPort="),EWSessionTest::Port);
     IFileManager::Get().MakeDirectory(*EWSessionTest::Path(TEXT("")),true);
     EWSessionTest::Handle=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&EWSessionTest::Tick),.05f);

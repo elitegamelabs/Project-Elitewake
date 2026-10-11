@@ -34,6 +34,7 @@ private:
     FText Status;
     FText PrivateBuildLabel;
     bool bPending = false;
+    bool bJoinedHost = false;
     bool bHasConnectionError = false;
     bool bShowMenuOnArrival = false;
     FDelegateHandle NetworkFailureHandle, TravelFailureHandle;

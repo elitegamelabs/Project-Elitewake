@@ -19,6 +19,8 @@ namespace EWSeparateTest
 {
 static FTSTicker::FDelegateHandle Handle;
 static bool bHost = false;
+static bool bLateClient = false;
+static bool bLateJoin = false;
 static int32 Phase = 0;
 static double Start = 0., Changed = 0.;
 static FVector LocalStart, OtherStart;
@@ -29,7 +31,7 @@ static void Write(const TCHAR* Name, const FString& Value) { FFileHelper::SaveSt
 static bool Exists(const TCHAR* Name) { return IFileManager::Get().FileExists(*Path(Name)); }
 static bool Finish(bool bSuccess, const FString& Error = FString())
 {
-    Write(bHost ? TEXT("HostResult.txt") : TEXT("ClientResult.txt"),
+    Write(bLateClient ? TEXT("LateClientResult.txt") : bHost ? TEXT("HostResult.txt") : TEXT("ClientResult.txt"),
         (bSuccess ? TEXT("PASS\n") : TEXT("FAIL\n")) + FString::Join(Checks,TEXT("\n")) + TEXT("\n") + Error);
     return false;
 }
@@ -55,6 +57,41 @@ static bool Tick(float Delta)
     auto* Wood=Recipe->Ingredients[0].Item.Get();
     auto* Inventory=Own->GetInventoryComponent();
     auto* OtherInventory=Other->GetInventoryComponent();
+    if (bLateClient)
+    {
+        if (!Exists(TEXT("Host5"))) return true;
+        if (Phase==0)
+        {
+            int32 Peers=0, Stacks=0;
+            for (TActorIterator<AEWCharacter> It(World);It;++It) if (*It!=Own) ++Peers;
+            for (TActorIterator<AEWPickup> It(World);It;++It)
+            {
+                if (It->ItemDefinition!=Wood || It->Quantity!=7) return true;
+                ++Stacks;
+            }
+            if (Peers!=2 || Stacks!=1) return true;
+            if (Inventory->GetUsedSlotCount() || Inventory->GetAvailableRecipes().Num())
+                return Finish(false,TEXT("Late player inherited another player's inventory or recipe knowledge."));
+            Checks.Add(TEXT("Late join receives both existing characters and exactly one current seven-unit pickup; consumed ten-unit pickup stays absent"));
+            Checks.Add(TEXT("Late player starts with empty inventory and no recipe unlocks"));
+            if (Inventory->AddItem(Wood,20)!=0 || Inventory->UnlockRecipe(Recipe))
+                return Finish(false,TEXT("Late client mutated authoritative inventory or recipe knowledge."));
+            Checks.Add(TEXT("Late client cannot grant materials or unlock recipes locally"));
+            // Each peer's inventory is currently public; no privacy rule is decided here.
+            for (TActorIterator<AEWCharacter> It(World);It;++It) if (*It!=Own)
+                Checks.Add(FString::Printf(TEXT("Late peer inventory observed: %d Wood, %d Axe (not privacy acceptance)"),
+                    It->GetInventoryComponent()->GetItemCount(Wood),It->GetInventoryComponent()->GetItemCount(Recipe->Output)));
+            Local->RequestCraft(Recipe); Changed=Now; Phase=1;
+        }
+        else if (Phase==1 && Now-Changed>2.)
+        {
+            if (Inventory->GetUsedSlotCount() || Inventory->GetAvailableRecipes().Num())
+                return Finish(false,TEXT("Late player's unavailable craft changed inventory or knowledge."));
+            Checks.Add(TEXT("Owned late-player craft request rejects unavailable recipe without output or unlock"));
+            return Finish(true);
+        }
+        return true;
+    }
     if (bHost)
     {
         if (!Other->GetController()) return true;
@@ -114,6 +151,17 @@ static bool Tick(float Delta)
                 || Inventory->GetItemCount(Wood)+OtherInventory->GetItemCount(Wood)!=13)
                 return Finish(false,TEXT("Unaffordable/repeated request changed conserved resources."));
             Checks.Add(TEXT("Insufficient-material craft and invalid repeat interaction leave resources unchanged"));
+            if (bLateJoin)
+            {
+                // Prior pickup targeting parks both pawns at the fixture's fallback spawn.
+                // Clear it before admitting another player; never edit the saved map.
+                Own->TeleportTo(FVector(800,-200,92),FRotator::ZeroRotator,false,true);
+                Other->TeleportTo(FVector(800,200,92),FRotator::ZeroRotator,false,true);
+                FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+                auto* Remaining=World->SpawnActor<AEWPickup>(FVector(500,500,156),FRotator::ZeroRotator,Params);
+                if (!Remaining) return Finish(false,TEXT("Late-join pickup setup failed."));
+                Remaining->ItemDefinition=Wood; Remaining->Quantity=7; Remaining->ForceNetUpdate();
+            }
             Write(TEXT("Host5"),TEXT("done")); return Finish(true);
         }
     }
@@ -169,7 +217,9 @@ static bool Tick(float Delta)
 void StartEWSeparateProcessVerification()
 {
     FString Role;
-    if (!FParse::Value(FCommandLine::Get(),TEXT("EWVerifyRole="),Role) || (Role!=TEXT("Host") && Role!=TEXT("Client"))) return;
+    if (!FParse::Value(FCommandLine::Get(),TEXT("EWVerifyRole="),Role) || (Role!=TEXT("Host") && Role!=TEXT("Client") && Role!=TEXT("LateClient"))) return;
+    EWSeparateTest::bLateClient=Role==TEXT("LateClient");
+    EWSeparateTest::bLateJoin=FParse::Param(FCommandLine::Get(),TEXT("EWVerifyLateJoin"));
     EWSeparateTest::bHost=Role==TEXT("Host"); EWSeparateTest::Start=FPlatformTime::Seconds();
     IFileManager::Get().MakeDirectory(*EWSeparateTest::Path(TEXT("")),true);
     EWSeparateTest::Handle=FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateStatic(&EWSeparateTest::Tick));

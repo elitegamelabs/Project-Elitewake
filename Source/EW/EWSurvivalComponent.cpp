@@ -47,7 +47,7 @@ void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 void UEWSurvivalComponent::UpdateStamina(bool bIsSprinting, float DeltaSeconds)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || DeltaSeconds <= 0.0f)
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.0f)
 	{
 		return;
 	}
@@ -68,7 +68,7 @@ void UEWSurvivalComponent::UpdateStamina(bool bIsSprinting, float DeltaSeconds)
 
 void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || DamageAmount <= 0.0f)
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(DamageAmount) || DamageAmount <= 0.0f)
 	{
 		return;
 	}
@@ -79,7 +79,7 @@ void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 
 void UEWSurvivalComponent::RestoreHealth(float RestoreAmount)
 {
-	if (!GetOwner() || !GetOwner()->HasAuthority() || RestoreAmount <= 0.0f)
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(RestoreAmount) || RestoreAmount <= 0.0f)
 	{
 		return;
 	}
@@ -90,7 +90,7 @@ void UEWSurvivalComponent::RestoreHealth(float RestoreAmount)
 
 void UEWSurvivalComponent::SetHunger(float NewHunger)
 {
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (GetOwner() && GetOwner()->HasAuthority() && FMath::IsFinite(NewHunger))
 	{
 		Hunger = FMath::Clamp(NewHunger, 0.0f, 100.0f);
 		NotifyStatsChanged();
@@ -99,7 +99,7 @@ void UEWSurvivalComponent::SetHunger(float NewHunger)
 
 void UEWSurvivalComponent::SetHydration(float NewHydration)
 {
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (GetOwner() && GetOwner()->HasAuthority() && FMath::IsFinite(NewHydration))
 	{
 		Hydration = FMath::Clamp(NewHydration, 0.0f, 100.0f);
 		NotifyStatsChanged();
@@ -108,7 +108,7 @@ void UEWSurvivalComponent::SetHydration(float NewHydration)
 
 void UEWSurvivalComponent::SetBodyTemperature(float NewBodyTemperatureCelsius)
 {
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (GetOwner() && GetOwner()->HasAuthority() && FMath::IsFinite(NewBodyTemperatureCelsius))
 	{
 		BodyTemperatureCelsius = NewBodyTemperatureCelsius;
 		NotifyStatsChanged();
@@ -117,7 +117,7 @@ void UEWSurvivalComponent::SetBodyTemperature(float NewBodyTemperatureCelsius)
 
 void UEWSurvivalComponent::SetCarriedWeight(float NewCarriedWeight)
 {
-	if (GetOwner() && GetOwner()->HasAuthority())
+	if (GetOwner() && GetOwner()->HasAuthority() && FMath::IsFinite(NewCarriedWeight))
 	{
 		CarriedWeight = FMath::Max(0.0f, NewCarriedWeight);
 		NotifyStatsChanged();

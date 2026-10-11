@@ -2,11 +2,12 @@
 Local loopback connection smoke check; optionally accepts a cooked Development executable.
 Does not certify rendered gameplay, LAN/Internet, authentication, distribution or physical input. Leaves the owner's editor alone.
 #>
-param([int]$Port = 17887, [switch]$Gameplay, [string]$PackagedExecutable)
+param([int]$Port = 17887, [switch]$Gameplay, [switch]$LateJoin, [string]$PackagedExecutable)
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $engine = 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe'
 $project = Join-Path $projectRoot 'EW.uproject'
+if ($LateJoin -and (!$Gameplay -or $PackagedExecutable)) { throw 'LateJoin requires the editor-only Gameplay harness.' }
 $launchPrefix = @(('"' + $project + '"'))
 $logPrefix = 'SeparateProcess'
 if ($PackagedExecutable) {
@@ -18,10 +19,12 @@ if ($PackagedExecutable) {
 $logRoot = Join-Path $projectRoot 'Saved/Logs'
 $hostLog = Join-Path $logRoot ($logPrefix + 'Host.log')
 $clientLog = Join-Path $logRoot ($logPrefix + 'Client.log')
-$resultPath = Join-Path $projectRoot $(if ($PackagedExecutable) { 'Saved/PackagedConnectionResult.json' } elseif ($Gameplay) { 'Saved/SeparateProcessGameplayResult.json' } else { 'Saved/SeparateProcessConnectionResult.json' })
+$resultPath = Join-Path $projectRoot $(if ($PackagedExecutable) { 'Saved/PackagedConnectionResult.json' } elseif ($LateJoin) { 'Saved/SeparateProcessLateJoinResult.json' } elseif ($Gameplay) { 'Saved/SeparateProcessGameplayResult.json' } else { 'Saved/SeparateProcessConnectionResult.json' })
 $gameplayRoot = Join-Path $projectRoot 'Saved/SeparateGameplay'
 $hostProcess = $null
 $clientProcess = $null
+$lateProcess = $null
+$lateLog = Join-Path $logRoot 'SeparateProcessLateClient.log'
 $checks = @()
 $passed = $false
 $failure = $null
@@ -31,15 +34,17 @@ try {
     New-Item -ItemType Directory -Path $logRoot -Force | Out-Null
     # These exact diagnostic logs are regenerated; no recursive filesystem actions.
     Remove-Item -LiteralPath $hostLog,$clientLog -ErrorAction SilentlyContinue
+    if ($LateJoin) { Remove-Item -LiteralPath $lateLog -ErrorAction SilentlyContinue }
     $common = @('-game','-unattended','-nop4','-NullRHI','-nosound','-NoSplash','-ExecCmds="t.MaxFPS 60"','-log','-LogCmds="LogNet Verbose,LogGameMode Verbose"')
     $testMap = if ($Gameplay) { '/Game/Elitewake/Maps/Lvl_M5PickupTest?listen' } else { '/Game/ThirdPerson/Lvl_ThirdPerson?listen' }
     $hostArgs = $launchPrefix + @($testMap) + $common + @('-MULTIHOME=127.0.0.1',"-port=$Port",('-abslog="' + $hostLog + '"'))
     if ($Gameplay) {
         New-Item -ItemType Directory -Path $gameplayRoot -Force | Out-Null
-        foreach ($marker in @('Host1','Host2','Host3','Host4','Host5','Client1','Client2','Client3','Client4','HostResult.txt','ClientResult.txt')) {
+        foreach ($marker in @('Host1','Host2','Host3','Host4','Host5','Client1','Client2','Client3','Client4','HostResult.txt','ClientResult.txt','LateClientResult.txt')) {
             Remove-Item -LiteralPath (Join-Path $gameplayRoot $marker) -ErrorAction SilentlyContinue
         }
         $hostArgs += '-EWVerifyRole=Host'
+        if ($LateJoin) { $hostArgs += '-EWVerifyLateJoin' }
     }
     $hostProcess = Start-Process -FilePath $engine -ArgumentList $hostArgs -WindowStyle Hidden -PassThru
     $deadline = (Get-Date).AddSeconds(60)
@@ -51,8 +56,13 @@ try {
         Start-Sleep -Milliseconds 500
     } while ((Get-Date) -lt $deadline)
     if ($text -notmatch "listening on port $Port") { throw 'Host did not begin listening within 60 seconds.' }
-    $endpoints = @(Get-NetUDPEndpoint -OwningProcess $hostProcess.Id -LocalPort $Port -ErrorAction SilentlyContinue)
-    if (!$endpoints -or @($endpoints | Where-Object LocalAddress -ne '127.0.0.1').Count) { throw 'Host binding is not exclusively loopback.' }
+    try {
+        $endpoints = @(Get-NetUDPEndpoint -OwningProcess $hostProcess.Id -LocalPort $Port -ErrorAction Stop)
+    } catch {
+        throw "Cannot inspect the host UDP binding: $($_.Exception.Message). No connection acceptance is claimed."
+    }
+    if (!$endpoints) { throw 'No host UDP endpoint was observed; loopback binding cannot be confirmed.' }
+    if (@($endpoints | Where-Object LocalAddress -ne '127.0.0.1').Count) { throw 'Host binding is not exclusively loopback.' }
     $checks += 'Listen host is bound exclusively to loopback; no firewall/router changes'
     $clientArgs = $launchPrefix + @("127.0.0.1:$Port") + $common + @(('-abslog="' + $clientLog + '"'))
     if ($Gameplay) { $clientArgs += '-EWVerifyRole=Client' }
@@ -109,15 +119,33 @@ try {
             if ($lines[0] -ne 'PASS') { throw 'Gameplay report did not pass.' }
             $checks += $lines[1..($lines.Length-1)] | Where-Object { $_ }
         }
+        if ($LateJoin) {
+            $lateArgs=$launchPrefix + @("127.0.0.1:$Port") + $common + @('-EWVerifyRole=LateClient',('-abslog="' + $lateLog + '"'))
+            $lateProcess=Start-Process -FilePath $engine -ArgumentList $lateArgs -WindowStyle Hidden -PassThru
+            if ($lateProcess.Id -in @($hostProcess.Id,$clientProcess.Id)) { throw 'Late player did not get a distinct process.' }
+            $lateResult=Join-Path $gameplayRoot 'LateClientResult.txt'
+            $deadline=(Get-Date).AddSeconds(100)
+            while (!(Test-Path -LiteralPath $lateResult) -and (Get-Date) -lt $deadline) {
+                if ($hostProcess.HasExited -or $clientProcess.HasExited -or $lateProcess.HasExited) { throw 'A process exited during late-join acceptance.' }
+                Start-Sleep -Milliseconds 500
+            }
+            if (!(Test-Path -LiteralPath $lateResult)) { throw 'Late-join report did not complete.' }
+            $lines=@(Get-Content -LiteralPath $lateResult)
+            if ($lines[0] -ne 'PASS') { throw (Get-Content -LiteralPath $lateResult -Raw) }
+            $lateText=Get-Content -LiteralPath $lateLog -Raw
+            if ($lateText -notmatch 'Welcomed by server' -or $lateText -match 'Fatal error:|NetworkFailure|TravelFailure|CreateSavedMove: Hit limit') { throw 'Late player startup/connection did not remain healthy.' }
+            $checks += 'Third distinct process joins after initial craft/pickup acceptance completes'
+            $checks += $lines[1..($lines.Length-1)] | Where-Object { $_ }
+        }
     }
     $passed = $true
 } catch { $failure = $_.Exception.Message }
 finally {
     # Terminate only the disposable processes created by this script.
-    foreach ($ownedProcess in @($clientProcess,$hostProcess)) {
+    foreach ($ownedProcess in @($lateProcess,$clientProcess,$hostProcess)) {
         if ($ownedProcess -and !$ownedProcess.HasExited) { $ownedProcess.Kill(); $ownedProcess.WaitForExit() }
     }
-    @{success=$passed;checks=$checks;error=$failure;hostLog=$hostLog;clientLog=$clientLog;executable=$engine;scope=$(if ($PackagedExecutable) { 'Cooked Development package headless loopback connection only' } elseif ($Gameplay) { 'Headless loopback gameplay; inventory visibility recorded separately' } else { 'Headless separate-process loopback connection only' })} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $resultPath -Encoding utf8
+    @{success=$passed;checks=$checks;error=$failure;hostLog=$hostLog;clientLog=$clientLog;lateClientLog=$(if ($LateJoin) { $lateLog } else { $null });executable=$engine;scope=$(if ($PackagedExecutable) { 'Cooked Development package headless loopback connection only' } elseif ($LateJoin) { 'Three-process late join after crafting/pickup; inventory visibility observed separately' } elseif ($Gameplay) { 'Headless loopback gameplay; inventory visibility recorded separately' } else { 'Headless separate-process loopback connection only' })} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $resultPath -Encoding utf8
 }
 if (!$passed) { throw $failure }
 Write-Output "Passed $($checks.Count) checks. Rendering, physical input, LAN and distribution remain separate."

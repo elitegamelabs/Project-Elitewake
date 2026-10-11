@@ -76,6 +76,7 @@ bool UEWGameInstance::CanStart()
 bool UEWGameInstance::HostLocalGame()
 {
     if (!CanStart()) return false;
+    bJoinedHost=false;
     bHasConnectionError=false; bPending=true; bShowMenuOnArrival=true;
     Status=NSLOCTEXT("Elitewake","SessionHosting","Starting a local host...");
     UGameplayStatics::OpenLevel(this,LocalMap,true,TEXT("listen")); return true;
@@ -88,6 +89,7 @@ bool UEWGameInstance::JoinLocalGame(const FString& Address)
     if (!CanStart()) return false;
     auto* Controller=UGameplayStatics::GetPlayerController(this,0);
     if (!Controller || !Controller->IsLocalController()) return false;
+    bJoinedHost=false;
     bHasConnectionError=false; bPending=true; bShowMenuOnArrival=true;
     Status=NSLOCTEXT("Elitewake","SessionJoining","Connecting... Use Leave / Cancel to return to local play.");
     Controller->ClientTravel(Target,TRAVEL_Absolute); return true;
@@ -96,6 +98,12 @@ bool UEWGameInstance::LeaveLocalGame()
 {
     if (!GetWorld() || GetWorld()->WorldType!=EWorldType::Game)
     { Status=NSLOCTEXT("Elitewake","SessionLeavePIE","Stop Play to leave an in-editor test session."); return false; }
+    // Reloading local play alone does not dispose a pending connection attempt.
+    // Cancel its driver before travel so its later timeout cannot overwrite recovery.
+    if (GEngine) GEngine->CancelPending(GetWorld());
+    if (RecoveryHandle.IsValid()) FTSTicker::GetCoreTicker().RemoveTicker(RecoveryHandle);
+    if (ArrivalHandle.IsValid()) FTSTicker::GetCoreTicker().RemoveTicker(ArrivalHandle);
+    bJoinedHost=false;
     bHasConnectionError=false; bPending=true; bShowMenuOnArrival=true;
     Status=NSLOCTEXT("Elitewake","SessionLeaving","Returning to local play...");
     UGameplayStatics::OpenLevel(this,LocalMap,true); return true;
@@ -119,6 +127,7 @@ void UEWGameInstance::CompleteArrival(AEWPlayerController* Controller)
     const bool bWasPending=bPending;
     bPending=false;
     const ENetMode Mode=Controller->GetWorld()->GetNetMode();
+    bJoinedHost=Mode==NM_Client;
     if (Mode==NM_ListenServer) Status=NSLOCTEXT("Elitewake","SessionHostReady","Hosting a local/LAN game. Leaving disconnects all joined players.");
     else if (Mode==NM_Client) Status=NSLOCTEXT("Elitewake","SessionClientReady","Connected to the host. The world continues while this menu is open.");
     else if (!bHasConnectionError && (bWasPending || !bShowMenuOnArrival)) Status=NSLOCTEXT("Elitewake","SessionLocalReady","Local play. F10 opens the private-test connection panel.");
@@ -145,7 +154,9 @@ void UEWGameInstance::NetworkFailed(UWorld* World, UNetDriver* Driver, ENetworkF
     const FWorldContext* PendingContext=GEngine && Driver ? GEngine->GetWorldContextFromPendingNetGameNetDriver(Driver) : nullptr;
     if ((!World || World->GetGameInstance()!=this) && (!PendingContext || PendingContext->OwningGameInstance!=this)) return;
     UE_LOG(LogEW,Warning,TEXT("Private-test network failure (%d): %s"),static_cast<int32>(Type),*Error);
-    Status=Type==ENetworkFailure::ConnectionLost ? NSLOCTEXT("Elitewake","SessionLost","Connection to the host was lost. You are back in local play.")
+    const bool bLostJoinedHost=bJoinedHost;
+    bJoinedHost=false;
+    Status=(bLostJoinedHost || Type==ENetworkFailure::ConnectionLost) ? NSLOCTEXT("Elitewake","SessionLost","Connection to the host was lost. You are back in local play.")
         : NSLOCTEXT("Elitewake","SessionConnectFailed","Could not connect. Check the address, matching build and that the host is running, then try again.");
     ReturnAfterFailure();
 }
@@ -154,6 +165,7 @@ void UEWGameInstance::TravelFailed(UWorld* World, ETravelFailure::Type Type, con
     if (!World || World->GetGameInstance()!=this) return;
     UE_LOG(LogEW,Warning,TEXT("Private-test travel failure (%d): %s"),static_cast<int32>(Type),*Error);
     Status=NSLOCTEXT("Elitewake","SessionTravelFailed","Could not open the session map. Return to local play and check that both builds include the same map.");
+    bJoinedHost=false;
     // Avoid a retry loop if the retained local map itself is missing.
     bHasConnectionError=true; bPending=false; bShowMenuOnArrival=true;
     if (auto* PC=Cast<AEWPlayerController>(UGameplayStatics::GetPlayerController(this,0))) PC->SetSessionMenuOpen(true);
