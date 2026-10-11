@@ -205,6 +205,12 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Ships start anchored, so a moored ship never drifts.
   - An anchored ship cannot sail, whatever its sails are set to. Dropping anchor under way drags the ship to a stop within about 2 seconds (*tuning*), with no damage for now.
   - The helmsman's prompt shows "Anchored" while it is down. A full ship HUD (sails, speed, anchor) comes with the HUD art pass.
+- **Cargo hold (DECIDED, delegated):**
+  - Every ship has a built-in hold, separate from what survivors carry. Its slot count comes from the ship definition (the sloop has 20, *tuning*); Weight/Storage upgrades will raise it.
+  - Hold Interact at the cargo hatch on deck to open the hold beside your inventory, then move whole stacks across.
+  - Anyone aboard, or standing at the hatch, can use it. Who may use a ship's hold once ownership and Company permissions exist: TBD.
+  - Moves are all-or-nothing on the server: only what fits leaves your inventory. Ageing food keeps its age, so storing it never refreshes it.
+  - Placeable storage containers on deck are a separate, later fitting.
   - The server owns all ship movement and steps it in fixed small increments, so speed never depends on frame rate. Helm controls are held as the player's last chosen state, never as input that expires after a fixed time (the lesson from the deleted prototype).
 - **Hull health (DECIDED, delegated):** one hull-health pool, upgraded through Hull Health. Holes, flooding and part damage layer on later.
 - **Starter ship (DECIDED, delegated):** no cheap pre-built sloop for now. The prologue dinghy and the craftable raft are the starter boats, and the sloop needs a Small Shipyard. Revisit if playtests show the jump to a sloop is too steep.
