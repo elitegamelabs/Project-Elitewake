@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Ships/EWShipTypes.h"
 #include "EWItemDefinition.generated.h"
 
 class UTexture2D;
+class UStaticMesh;
 
 UENUM(BlueprintType)
 enum class EEWFoodKind : uint8 { None, Berry };
@@ -95,6 +97,18 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
 	TSoftObjectPtr<UTexture2D> Icon;
+
+    /** None means this item is not a ship fitting. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    EEWShipMountType FittingMountType = EEWShipMountType::None;
+    /** Sails only: the mount size this sail fits. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    EEWSailSize FittingSailSize = EEWSailSize::None;
+    /** Shown on the ship while installed, attached at the mount. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    TSoftObjectPtr<UStaticMesh> FittingMesh;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    FTransform FittingMeshTransform;
 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };
