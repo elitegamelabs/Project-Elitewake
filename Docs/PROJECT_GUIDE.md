@@ -9,8 +9,10 @@ Last updated: October 11, 2026.
 Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
 - **Build:** both Editor and Game targets build.
-- **Native tests:** 23 of 23 pass (October 11, `Saved/Logs/SailingNative.log`).
-- **Client Play check:** a client fits out, sails and steers the sloop (`verify_ship_sailing_play`, 9 of 9).
+- **Native tests:** 24 of 24 pass (October 11, `Saved/Logs/DeckNative.log`).
+- **Client Play checks:**
+  - A client fits out, sails and steers the sloop (`verify_ship_sailing_play`, 9 of 9).
+  - A client crew rides, walks, goes overboard and climbs back aboard while the host sails (`verify_ship_deck_play`, 13 of 13).
 - **GitHub:** all work is committed and pushed to `main`.
 
 | System | What works | Not done yet |
@@ -28,23 +30,26 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
 | Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
 | Coastal map | `Lvl_CoastalPlayground`: beach, dock, islet, resources, freshwater spring, textured sand and timber, sloped shore, swimmable ocean 500 m deep | Real terrain and foliage, wildlife, Port and inn, final art |
-| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Walking on a moving deck, anchor, cargo, cannons, docking, ship ownership, real hull and fitting art (boxes stand in) |
+| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts and a boarding ladder on each side. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). Crew stand and walk on deck while it sails, and climb aboard from the water by the ladders. The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Anchor, cargo, cannons, docking, ship ownership, smooth client-side ship motion, real hull and fitting art (boxes stand in) |
 
 ## Known problems
 
 1. **The editor crashed while shutting down** on October 11, 01:52. It hit an engine assertion (`GIsPlayInEditorWorld`, `Editor.cpp` line 1225) after an MCP editor tool requested the close while a Play session was ending. The script stack names `SlateInspectorToolset`. It is not in Elitewake code. Stop Play before closing the editor, and close it normally rather than through a tool. Crash files: `Saved/Crashes/UECC-Windows-129F0C5A…_0001`.
 2. **Startup opens the wrong map.** `Config/DefaultEngine.ini` still starts the editor and game in `/Game/ThirdPerson/Lvl_ThirdPerson`. Open `/Game/Elitewake/Maps/Lvl_CoastalPlayground` yourself to see current work.
 3. **The latest Windows package is stale.** `Saved/PrivateBuilds/local-20261010-071931` predates the coastal map, Company and swimming.
-4. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
+4. **Ship edge cases.**
+   - A ship placed so its hull already overlaps something (a dock, a shore) cannot move until it is moved clear.
+   - Client ships move in small steps 30 times a second rather than smoothly.
+   - Idle swimmers sink at about 1 m/s.
+5. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
 
 ## Next work
 
 Proposed order, pending owner confirmation:
 
 1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
-   1. **Hull, fittings and sailing** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items, client-verified sailing.
-   2. **On deck:** walk on a moving ship, board and disembark as a client.
-   3. **Anchor, cargo and weight,** in that order.
+   1. **Hull, fittings, sailing and crew on deck** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items, boarding ladders, all client-verified.
+   2. **Anchor, cargo and weight,** in that order.
 2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
 3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
 4. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
@@ -68,7 +73,7 @@ Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. The map gran
 - **Dock and sea:** the dock reaches over swimmable water.
   - Look down and move forward to dive; hold Space to rise.
   - The water surface is at Z −65 cm. The visible waves are cosmetic.
-- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. Fittings have no recipe yet, so use the test items (`DA_TestShipHelm`, `DA_TestSailMedium`, `DA_TestSailSmall`).
+- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. From the water, look at the ladder on either side and hold E to climb aboard. The sloop is moored facing the islet about 15 m east, so steer north for open water. Fittings have no recipe yet, so use the test items (`DA_TestShipHelm`, `DA_TestSailMedium`, `DA_TestSailSmall`).
 - **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
 
 ## Building and testing
