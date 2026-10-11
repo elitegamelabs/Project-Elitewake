@@ -29,7 +29,8 @@ enum class EEWLocomotionState : uint8
 	Sprinting,
 	Crouching,
 	Prone,
-	Airborne
+	Airborne,
+	Swimming
 };
 
 /**
@@ -130,6 +131,8 @@ protected:
 	bool bStanceInputHeld = false;
 
     bool bSprintInputHeld = false;
+    /** Local swim ascent intent; movement acceleration uses the standard saved-move path. */
+    bool bSwimAscendInputHeld = false;
 
 	/** Whether the locally controlled player is using the first-person camera. */
 	UPROPERTY(BlueprintReadOnly, Category="Camera", meta=(AllowPrivateAccess="true"))

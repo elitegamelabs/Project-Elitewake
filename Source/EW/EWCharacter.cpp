@@ -42,6 +42,9 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
+	GetCharacterMovement()->MaxSwimSpeed = 450.f;
+	GetCharacterMovement()->Buoyancy = 1.f;
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
@@ -125,6 +128,7 @@ void AEWCharacter::BeginPlay()
 
 	// Older Blueprint defaults can retain the template's non-crouching navigation flag.
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
 	SetFirstPerson(false);
 	ApplyMovementSpeed();
 }
@@ -132,6 +136,11 @@ void AEWCharacter::BeginPlay()
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (GetCharacterMovement()->IsSwimming())
+	{
+		CancelRestrictedActions();
+		if (IsLocallyControlled() && bSwimAscendInputHeld) AddMovementInput(FVector::UpVector);
+	}
 
 	if (HasAuthority() && SurvivalComponent)
 	{
@@ -231,6 +240,7 @@ void AEWCharacter::StopSprint()
 
 void AEWCharacter::StartStanceInput()
 {
+	if (GetCharacterMovement()->IsSwimming()) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bStanceInputHeld = true;
 	bSprintInputHeld = false;
@@ -304,6 +314,7 @@ void AEWCharacter::SetSprinting(bool bNewIsSprinting)
 {
 	const auto* PC = Cast<AEWPlayerController>(GetController());
 	bNewIsSprinting = bNewIsSprinting && (!PC || (!PC->IsMapOpen() && !PC->IsSessionMenuOpen()))
+		&& !GetCharacterMovement()->IsSwimming()
 		&& !bIsProne
 		&& !bIsCrouched
 		&& (!SurvivalComponent || SurvivalComponent->CanSprint());
@@ -381,6 +392,7 @@ void AEWCharacter::ApplyMovementSpeed()
 
 EEWLocomotionState AEWCharacter::GetLocomotionState() const
 {
+	if (GetCharacterMovement()->IsSwimming()) return EEWLocomotionState::Swimming;
 	if (bIsProne)
 	{
 		return EEWLocomotionState::Prone;
@@ -413,7 +425,7 @@ void AEWCharacter::DoMove(float Right, float Forward)
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
 		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector ForwardDirection = FRotationMatrix(GetCharacterMovement()->IsSwimming() ? Rotation : YawRotation).GetUnitAxis(EAxis::X);
 
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
@@ -436,6 +448,8 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 
 void AEWCharacter::DoJumpStart()
 {
+	bSwimAscendInputHeld = true;
+	if (GetCharacterMovement()->IsSwimming()) return;
 	if (bIsProne)
 	{
 		SetProne(false);
@@ -455,6 +469,7 @@ void AEWCharacter::DoJumpStart()
 
 void AEWCharacter::DoJumpEnd()
 {
+	bSwimAscendInputHeld = false;
 	// signal the character to stop jumping
 	StopJumping();
 }
