@@ -1,6 +1,7 @@
 # Unreal binary assets
 *.uasset filter=lfs diff=lfs merge=lfs -text
 *.umap filter=lfs diff=lfs merge=lfs -text
+Art/**/*.png filter=lfs diff=lfs merge=lfs -text
 
 # Common large source-art and media files
 *.fbx filter=lfs diff=lfs merge=lfs -text
@@ -13,4 +14,3 @@
 *.ogg filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mov filter=lfs diff=lfs merge=lfs -text
-

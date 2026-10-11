@@ -1,6 +1,7 @@
 """Opt-in crafting metadata fixtures; costs confirmed, weights are temporary testing values.
-No normal-player unlocks/grants, wood substitution, tool behavior or flask use.
-Run through Unreal Python. Existing assets are preserved.
+No normal-player unlocks/grants, wood substitution or flask use.
+Wooden axe/pickaxe fixtures use existing gathering capabilities; no new yield balance.
+Run through Unreal Python. Existing recipes and tuning are preserved.
 """
 import unreal
 
@@ -33,6 +34,12 @@ for name, label, costs in [
     ('WoodenPickaxe', 'Wooden Pickaxe', [(wood,20)]),
     ('HideWaterFlask', 'Hide Water Flask', [(hide,1),(thatch,10)])]:
     output = item(name,label,unreal.EWItemCategory.TOOL)
+    capability = {'WoodenAxe':unreal.EWGatheringTool.HATCHET,
+                  'WoodenPickaxe':unreal.EWGatheringTool.PICKAXE}.get(name)
+    if capability is not None:
+        output.set_editor_property('equipment_slot',unreal.EWEquipmentSlot.MAIN_HAND)
+        output.set_editor_property('gathering_tool',capability)
+        assert unreal.EditorAssetLibrary.save_loaded_asset(output)
     recipe_folder = '/Game/Elitewake/Crafting/Testing'
     recipe_name = 'DA_Recipe'+name
     if unreal.EditorAssetLibrary.does_asset_exist(recipe_folder+'/'+recipe_name):

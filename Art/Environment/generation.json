@@ -1,0 +1,19 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "status": "Original provisional game texture sources, visually reviewed and imported into the coastal map",
+  "assets": [
+    {
+      "file": "TropicalSand-v1.png",
+      "sha256": "11F7C47214A4729BB25CD7CE8C9540CC738B778DE44C65C258E91EB118BEC39E",
+      "prompt": "Create an original production game texture: seamless tileable photorealistic pale warm tropical beach sand base color texture. Orthographic directly overhead view, flat diffuse even illumination, no shadows, no perspective, no vignette. Fine grains and subtle wind-ripple variation, few very tiny shell fragments, no large stones, no footprints, no water or plants. Material albedo only, no baked specular highlights or directional lighting. Uniform natural sand surface filling entire square image, edges seamlessly tile. Intended for Unreal Engine coastal pirate survival game realistic PBR material. Save generated asset to disk.",
+      "texture": "/Game/Elitewake/World/Materials/T_Sand_v1"
+    },
+    {
+      "file": "WeatheredTimber-v1.png",
+      "sha256": "AB8405DB52CD6CE369AE5A557DBB5794C48357881F30FCFC56E240F4C945E5F9",
+      "prompt": "Original seamless tileable game material albedo, photorealistic aged oak dock timber, one continuous weathered wood surface filling entire square image. Grain runs vertically, warm muted brown sun bleached grey highlights, fine rough fibrous pores and small natural splits. Orthographic flat directly overhead scan, uniform diffuse lighting no shadows no baked reflections, no perspective or vignette. No nails, no metal, no plank border or objects. Repeatable edges for realistic Unreal Engine pirate port dock timber material.",
+      "texture": "/Game/Elitewake/World/Materials/T_Timber_v1"
+    }
+  ],
+  "limits": "Base-color textures only; dedicated normal/roughness/height maps and measured seamlessness remain future material work. Ocean uses an authored animated material, not a generated bitmap. No generated audio is claimed."
+}
