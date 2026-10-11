@@ -17,6 +17,7 @@ class UEWEquipmentComponent;
 class UEWHotbarComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
+class AEWShip;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -147,6 +148,27 @@ protected:
 
 public:
     void CancelRestrictedActions() { StopSprint(); CancelStanceInput(); }
+
+    /** The ship whose helm this survivor holds, if any. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    AEWShip* GetHelmShip() const { return HelmShip; }
+    /** Authority only; called by the ship when the helm is taken or left. */
+    void SetHelmShip(AEWShip* Ship);
+    UFUNCTION(Server, Reliable)
+    void ServerHelmRudder(float Rudder);
+    UFUNCTION(Server, Reliable)
+    void ServerSailStep(int8 Direction);
+private:
+    UPROPERTY(ReplicatedUsing=OnRep_HelmShip)
+    TObjectPtr<AEWShip> HelmShip;
+    UFUNCTION()
+    void OnRep_HelmShip();
+    /** Local helm controls gathered from movement input, sent as state changes in Tick. */
+    float PendingHelmRight = 0.f;
+    float PendingHelmForward = 0.f;
+    float SentHelmRudder = 0.f;
+    int8 LastHelmForwardSign = 0;
+public:
 
 	/** Constructor */
 	AEWCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());

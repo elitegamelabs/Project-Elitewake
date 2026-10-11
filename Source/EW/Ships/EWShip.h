@@ -15,11 +15,19 @@ class UStaticMeshComponent;
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
 
+/** How much sail is set. The helmsman steps between these; trim is automatic. */
+UENUM(BlueprintType)
+enum class EEWSailState : uint8 { Furled, Half, Full };
+
 /**
  * A vessel built from a ship definition: a complete hull with fixed mounts. Players install fittings
  * (helm, sails, cannons, utility attachments) carried in their inventory at matching empty mounts.
  * The server owns every change; clients rebuild visuals from the replicated definition and fitting list.
  * The actor origin is the centre of the hull collision box.
+ *
+ * Sailing: a survivor holds Interact at an installed helm to take it. Their controls arrive as state
+ * changes (sail steps, rudder position) that persist until changed, never as input that expires.
+ * The server steps the ship in fixed increments, so speed does not depend on frame rate.
  */
 UCLASS(Blueprintable)
 class EW_API AEWShip : public AActor, public IEWInteractable
@@ -30,6 +38,8 @@ public:
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void BeginPlay() override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void Tick(float DeltaSeconds) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UBoxComponent> HullCollision;
@@ -55,6 +65,43 @@ public:
     /** Authority only. Returns an installed fitting to the inventory; fails without loss if it is full. */
     EEWFittingResult RemoveFitting(AEWCharacter* Character, FName MountId);
 
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    AEWCharacter* GetHelmsman() const { return Helmsman; }
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    EEWSailState GetSailState() const { return SailState; }
+    /** Forward speed in cm/s. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSpeed() const { return Speed; }
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetRudder() const { return Rudder; }
+    /** 0–1: how much of the hull's sail capacity is fitted, weighted by sail size. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetFittedSailFraction() const;
+    /** The speed the ship is accelerating toward, from its sails, fittings and heading to the wind. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float ComputeTargetSpeed() const;
+    /** Where the helmsman stands, relative to the ship. */
+    FVector GetHelmSeatLocal(float CapsuleHalfHeight) const;
+
+    /** Authority only. The survivor must be able to act and the helm must be installed and free. */
+    bool TakeHelm(AEWCharacter* Character);
+    /** Authority only. Fails if the exit spot is blocked, unless forced. */
+    bool LeaveHelm(AEWCharacter* Character, bool bForce = false);
+    /** Authority only, from the helmsman: -1 hard to port, +1 hard to starboard. Held until changed. */
+    bool SetRudder(AEWCharacter* Character, float NewRudder);
+    /** Authority only, from the helmsman: +1 sets more sail, -1 takes it in. */
+    bool StepSails(AEWCharacter* Character, int32 Direction);
+    /** Authority only. Advances movement in fixed steps, carrying leftover time to the next call. */
+    void SimulateSailing(float DeltaSeconds);
+
+    /** Simulation and handling tuning. */
+    static constexpr float SimulationStep = .05f;
+    static constexpr float MaxCatchUpSeconds = .5f;
+    static constexpr float Acceleration = 150.f;
+    static constexpr float Deceleration = 250.f;
+    /** The rudder bites fully from this speed (cm/s) and not at all when stopped. */
+    static constexpr float FullSteerageSpeed = 200.f;
+
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
     virtual EEWInteractionMode GetInteractionMode_Implementation() const override { return EEWInteractionMode::Hold; }
@@ -73,6 +120,20 @@ private:
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> FittingVisuals;
     bool bChangingFittings = false;
+
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWCharacter> Helmsman;
+    UPROPERTY(Replicated)
+    EEWSailState SailState = EEWSailState::Furled;
+    UPROPERTY(Replicated)
+    float Speed = 0.f;
+    UPROPERTY(Replicated)
+    float Rudder = 0.f;
+    float SimulationRemainder = 0.f;
+
+    const FEWShipMount* FindHelmMount() const;
+    bool IsValidHelmsman(const AEWCharacter* Character) const;
+    void StepSimulation(float Step);
 
     UFUNCTION()
     void OnRep_Definition();

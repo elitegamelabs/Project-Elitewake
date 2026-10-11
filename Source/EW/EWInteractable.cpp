@@ -1,5 +1,6 @@
 #include "EWInteractable.h"
 #include "EWCharacter.h"
+#include "Ships/EWShip.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 
@@ -13,6 +14,8 @@ AActor* FEWInteractionTargeting::FindTarget(const AEWCharacter* Character)
 {
     if (!IsValid(Character) || !Character->GetWorld() || !Character->GetController()
         || Character->GetController()->GetPawn() != Character) return nullptr;
+    // Leaving the helm does not depend on where the helmsman looks.
+    if (IsValid(Character->GetHelmShip())) return Character->GetHelmShip();
     FVector Eye; FRotator Rotation;
     Character->GetActorEyesViewPoint(Eye, Rotation);
     FCollisionQueryParams Query(SCENE_QUERY_STAT(EWInteraction), false, Character);

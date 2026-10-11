@@ -20,6 +20,7 @@
 #include "TimerManager.h"
 #include "EW.h"
 #include "EWPlayerController.h"
+#include "Ships/EWShip.h"
 
 AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UEWCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -136,6 +137,21 @@ void AEWCharacter::BeginPlay()
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+    if (IsLocallyControlled() && IsValid(HelmShip))
+    {
+        // Send helm controls only when they change. The ship holds them until the next change,
+        // so slow frames or a lost frame of input never stop it.
+        const float NewRudder = FMath::Clamp(PendingHelmRight, -1.f, 1.f);
+        if (!FMath::IsNearlyEqual(NewRudder, SentHelmRudder, .05f) || (NewRudder == 0.f && SentHelmRudder != 0.f))
+        {
+            ServerHelmRudder(NewRudder);
+            SentHelmRudder = NewRudder;
+        }
+        const int8 ForwardSign = PendingHelmForward > .5f ? 1 : PendingHelmForward < -.5f ? -1 : 0;
+        if (ForwardSign != 0 && ForwardSign != LastHelmForwardSign) ServerSailStep(ForwardSign);
+        LastHelmForwardSign = ForwardSign;
+        PendingHelmRight = PendingHelmForward = 0.f;
+    }
 	if (GetCharacterMovement()->IsSwimming())
 	{
 		CancelRestrictedActions();
@@ -182,6 +198,50 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AEWCharacter, bIsSprinting);
 	DOREPLIFETIME(AEWCharacter, bIsProne);
+    DOREPLIFETIME(AEWCharacter, HelmShip);
+}
+
+void AEWCharacter::SetHelmShip(AEWShip* Ship)
+{
+    if (!HasAuthority()) return;
+    HelmShip = Ship;
+    OnRep_HelmShip();
+    ForceNetUpdate();
+}
+
+void AEWCharacter::OnRep_HelmShip()
+{
+    CancelRestrictedActions();
+    bSwimAscendInputHeld = false;
+    StopJumping();
+    PendingHelmRight = PendingHelmForward = SentHelmRudder = 0.f;
+    LastHelmForwardSign = 0;
+    GetCharacterMovement()->StopMovementImmediately();
+    if (IsValid(HelmShip))
+    {
+        // The helmsman rides the ship at the wheel; the ship owns all motion while they steer.
+        GetCharacterMovement()->DisableMovement();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        AttachToActor(HelmShip, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        SetActorRelativeLocation(HelmShip->GetHelmSeatLocal(GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+        SetActorRelativeRotation(FRotator::ZeroRotator);
+    }
+    else
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+    }
+}
+
+void AEWCharacter::ServerHelmRudder_Implementation(float NewRudder)
+{
+    if (IsValid(HelmShip)) HelmShip->SetRudder(this, NewRudder);
+}
+
+void AEWCharacter::ServerSailStep_Implementation(int8 Direction)
+{
+    if (IsValid(HelmShip)) HelmShip->StepSails(this, Direction);
 }
 
 void AEWCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
@@ -217,6 +277,7 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 void AEWCharacter::StartSprint()
 {
+    if (HelmShip) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bSprintInputHeld = true;
 	if (bIsProne)
@@ -240,6 +301,7 @@ void AEWCharacter::StopSprint()
 
 void AEWCharacter::StartStanceInput()
 {
+    if (HelmShip) return;
 	if (GetCharacterMovement()->IsSwimming()) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bStanceInputHeld = true;
@@ -418,6 +480,12 @@ EEWLocomotionState AEWCharacter::GetLocomotionState() const
 
 void AEWCharacter::DoMove(float Right, float Forward)
 {
+    if (HelmShip)
+    {
+        PendingHelmRight = Right;
+        PendingHelmForward = Forward;
+        return;
+    }
 	if (GetController() != nullptr)
 	{
 		// find out which way is forward
@@ -448,6 +516,7 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 
 void AEWCharacter::DoJumpStart()
 {
+    if (HelmShip) return;
 	bSwimAscendInputHeld = true;
 	if (GetCharacterMovement()->IsSwimming()) return;
 	if (bIsProne)

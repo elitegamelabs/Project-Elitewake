@@ -6,8 +6,13 @@
 #include "EWItemDefinition.h"
 #include "EWPlayerController.h"
 #include "EWSurvivalComponent.h"
+#include "EWInteractionComponent.h"
+#include "Ships/EWWindSubsystem.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Misc/AutomationTest.h"
+#include <limits>
 
 namespace EWShipTest
 {
@@ -115,6 +120,147 @@ bool FEWShipFittingTest::RunTest(const FString& Parameters)
     C->GetSurvivalComponent()->ApplyDamage(100000.f);
     TestEqual(TEXT("Dead survivor rejected"), Ship->InstallFitting(C, TEXT("Helm")), EEWFittingResult::NotAllowed);
     TestEqual(TEXT("Dead survivor keeps the helm"), Inventory->GetItemCount(Helm), 1);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipSailingTest, "Elitewake.Ships.SailingAuthority",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWShipSailingTest::RunTest(const FString& Parameters)
+{
+    using namespace EWShipTest;
+    auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
+    Def->ShipId = TEXT("TestSloop");
+    Def->TopSpeed = 700.f; Def->TurnRate = 30.f;
+    Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-250, 0, 130)),
+                   Mount(TEXT("Mainsail"), EEWShipMountType::Sail, FVector(0, 0, 130), EEWSailSize::Medium),
+                   Mount(TEXT("Headsail"), EEWShipMountType::Sail, FVector(300, 0, 130), EEWSailSize::Small)};
+    UEWItemDefinition* Helm = Item(TEXT("TestHelm"), EEWShipMountType::Helm);
+    UEWItemDefinition* MediumSail = Item(TEXT("TestMediumSail"), EEWShipMountType::Sail, EEWSailSize::Medium);
+
+    const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    auto* CharClass = LoadClass<AEWCharacter>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C"));
+    auto* PCClass = LoadClass<AEWPlayerController>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C"));
+    UEWWindSubsystem* Wind = World->GetSubsystem<UEWWindSubsystem>();
+    if (!TestNotNull(TEXT("Survivor class"), CharClass) || !TestNotNull(TEXT("Controller class"), PCClass) || !TestNotNull(TEXT("Wind"), Wind))
+    { World->DestroyWorld(false); return false; }
+    auto SpawnShip = [&](FVector Location)
+    {
+        auto* S = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), FTransform(Location));
+        S->Definition = Def;
+        S->FinishSpawning(FTransform(Location));
+        return S;
+    };
+    // Two identical ships side by side, and a third hull dead ahead of the first to collide with.
+    AEWShip* A = SpawnShip(FVector(0, 0, 0));
+    AEWShip* B = SpawnShip(FVector(0, 3000, 0));
+    AEWShip* Blocker = SpawnShip(FVector(2400, 0, 0));
+    FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* C = World->SpawnActor<AEWCharacter>(CharClass, FVector(-120, 0, 186), FRotator::ZeroRotator, Params);
+    auto* Other = World->SpawnActor<AEWCharacter>(CharClass, FVector(-120, 60, 186), FRotator::ZeroRotator, Params);
+    auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
+    auto* OtherPC = World->SpawnActor<AEWPlayerController>(PCClass);
+    PC->Possess(C); OtherPC->Possess(Other);
+    C->GetInventoryComponent()->AddItem(Helm, 2);
+    C->GetInventoryComponent()->AddItem(MediumSail, 2);
+
+    // A bare hull cannot be steered or sailed.
+    TestFalse(TEXT("No helm, no helmsman"), A->TakeHelm(C));
+    TestEqual(TEXT("No sails fitted"), A->GetFittedSailFraction(), 0.f);
+    for (AEWShip* S : {A, B})
+    {
+        TestEqual(TEXT("Helm installs"), S->InstallFitting(C, TEXT("Helm")), EEWFittingResult::Installed);
+        TestEqual(TEXT("Mainsail installs"), S->InstallFitting(C, TEXT("Mainsail")), EEWFittingResult::Installed);
+    }
+    TestTrue(TEXT("Mainsail is 2 of 3 sail capacity"), FMath::IsNearlyEqual(A->GetFittedSailFraction(), 2.f / 3.f));
+
+    // Taking the helm through the ordinary interaction.
+    Aim(PC, C, A, TEXT("Helm"));
+    TestTrue(TEXT("Can take the free helm"), A->CanInteract_Implementation(C));
+    TestTrue(TEXT("Interact takes the helm"), A->Interact_Implementation(C));
+    TestEqual(TEXT("Helmsman recorded"), A->GetHelmsman(), C);
+    TestEqual(TEXT("Survivor knows its helm"), C->GetHelmShip(), A);
+    TestTrue(TEXT("Helmsman rides the ship"), C->GetAttachParentActor() == A);
+    TestTrue(TEXT("Survivor movement is off at the helm"), C->GetCharacterMovement()->MovementMode == MOVE_None);
+    TestEqual(TEXT("Interaction targets the helm ship from any aim"), FEWInteractionTargeting::FindTarget(C), static_cast<AActor*>(A));
+    TestFalse(TEXT("A second survivor cannot take an occupied helm"), A->TakeHelm(Other));
+    TestEqual(TEXT("The occupied helm cannot be removed"), A->RemoveFitting(C, TEXT("Helm")), EEWFittingResult::Occupied);
+
+    // Only the helmsman commands, with sane values.
+    TestFalse(TEXT("Others cannot set sails"), A->StepSails(Other, 1));
+    TestFalse(TEXT("Others cannot steer"), A->SetRudder(Other, 1));
+    TestFalse(TEXT("Rudder beyond hard over rejected"), A->SetRudder(C, 2));
+    TestFalse(TEXT("NaN rudder rejected"), A->SetRudder(C, std::numeric_limits<float>::quiet_NaN()));
+    TestFalse(TEXT("Sail step must be one notch"), A->StepSails(C, 2));
+    PC->GetInteractionComponent()->SetMenuBlocked(true);
+    TestFalse(TEXT("An open menu blocks commands"), A->StepSails(C, 1));
+    PC->GetInteractionComponent()->SetMenuBlocked(false);
+    TestTrue(TEXT("Half sail"), A->StepSails(C, 1));
+    TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
+    TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
+
+    // Wind: never zero into the wind, full speed running before it.
+    Wind->SetWindYaw(0.f);   // Blowing toward +X, the way the ships face.
+    const float Downwind = A->ComputeTargetSpeed();
+    TestTrue(TEXT("Downwind target is top speed times fitted sail"), FMath::IsNearlyEqual(Downwind, 700.f * 2.f / 3.f, 1.f));
+    Wind->SetWindYaw(180.f);
+    TestTrue(TEXT("Upwind still makes headway (30 percent)"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Downwind * .3f, 1.f));
+    Wind->SetWindYaw(90.f);
+    TestTrue(TEXT("Beam reach is in between"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Downwind * .65f, 1.f));
+    Wind->SetWindYaw(0.f);
+
+    // Leaving the helm keeps the sails set; the ship sails on.
+    TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));
+    TestNull(TEXT("Helm is free"), A->GetHelmsman());
+    TestNull(TEXT("Survivor released"), C->GetHelmShip());
+    TestTrue(TEXT("Survivor collision restored"), C->GetCapsuleComponent()->GetCollisionEnabled() != ECollisionEnabled::NoCollision);
+    TestEqual(TEXT("Sails stay full after leaving"), A->GetSailState(), EEWSailState::Full);
+
+    // Set ship B the same way, then sail both for 2 seconds: A at 20 fps, B at 3 fps.
+    C->SetActorLocation(B->GetActorTransform().TransformPosition(FVector(-120, 0, 186)));
+    Aim(PC, C, B, TEXT("Helm"));
+    TestTrue(TEXT("Take the helm of ship B"), B->Interact_Implementation(C));
+    B->StepSails(C, 1); B->StepSails(C, 1);
+    TestTrue(TEXT("Leave the helm of ship B"), B->LeaveHelm(C));
+    const FVector StartA = A->GetActorLocation(), StartB = B->GetActorLocation();
+    for (int32 i = 0; i < 40; ++i) A->SimulateSailing(.05f);
+    for (int32 i = 0; i < 6; ++i) B->SimulateSailing(1.f / 3.f);
+    const float DistA = FVector::Dist(StartA, A->GetActorLocation()), DistB = FVector::Dist(StartB, B->GetActorLocation());
+    TestTrue(TEXT("The ship moves under sail"), DistA > 100.f && A->GetSpeed() > 0.f);
+    // Fixed steps make frame rate irrelevant up to one step of leftover time (0.05 s).
+    TestTrue(TEXT("3 fps covers the same distance as 20 fps, within one step"),
+        FMath::Abs(DistA - DistB) <= Def->TopSpeed * AEWShip::SimulationStep);
+    TestTrue(TEXT("3 fps reaches the same speed, within one step"),
+        FMath::Abs(A->GetSpeed() - B->GetSpeed()) <= AEWShip::Acceleration * AEWShip::SimulationStep + .01f);
+
+    // The rudder is held until changed, even across slow frames, and turns the ship.
+    C->SetActorLocation(A->GetActorTransform().TransformPosition(FVector(-120, 0, 186)));
+    Aim(PC, C, A, TEXT("Helm"));
+    TestTrue(TEXT("Retake the helm of ship A"), A->Interact_Implementation(C));
+    TestTrue(TEXT("Hard to starboard"), A->SetRudder(C, 1.f));
+    const float YawBefore = A->GetActorRotation().Yaw;
+    for (int32 i = 0; i < 3; ++i) A->SimulateSailing(1.f / 3.f);
+    TestEqual(TEXT("Rudder is not dropped by slow frames"), A->GetRudder(), 1.f);
+    TestTrue(TEXT("The ship turns to starboard"), A->GetActorRotation().Yaw > YawBefore + 5.f);
+    TestTrue(TEXT("Centre the rudder"), A->SetRudder(C, 0.f));
+    const float YawSteady = A->GetActorRotation().Yaw;
+    for (int32 i = 0; i < 10; ++i) A->SimulateSailing(.1f);
+    TestTrue(TEXT("Centred rudder holds course"), FMath::IsNearlyEqual(A->GetActorRotation().Yaw, YawSteady, .01f));
+
+    // Another hull ahead stops the ship instead of passing through it.
+    A->SetActorLocationAndRotation(Blocker->GetActorLocation() - FVector(1400, 0, 0), FRotator::ZeroRotator);
+    for (int32 i = 0; i < 300 && A->GetSpeed() > 0.f; ++i) A->SimulateSailing(.1f);
+    TestEqual(TEXT("Collision stops the ship"), A->GetSpeed(), 0.f);
+    TestTrue(TEXT("Hulls do not overlap"), Blocker->GetActorLocation().X - A->GetActorLocation().X >= 2.f * Def->HullExtent.X - 5.f);
+
+    // A dead helmsman is released by the ship.
+    C->GetSurvivalComponent()->ApplyDamage(100000.f);
+    A->Tick(.05f);
+    TestNull(TEXT("Dead helmsman released"), A->GetHelmsman());
+    TestNull(TEXT("Dead survivor no longer at a helm"), C->GetHelmShip());
 
     World->DestroyWorld(false);
     return true;
