@@ -21,6 +21,7 @@ class UEWHotbarSlotButton;
 class UHorizontalBox;
 class UImage;
 class UTexture2D;
+class UEWCompanyWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWRecipePressed, int32, Index);
 UCLASS()
@@ -52,6 +53,8 @@ class EW_API UEWInventoryWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+    UPROPERTY(Transient) TObjectPtr<UEWCompanyWidget> CompanyPanel;
+    UPROPERTY(Transient) TObjectPtr<UWidget> SurvivorPanel;
     UFUNCTION(BlueprintPure, Category="Inventory|Presentation")
     FText GetDisplayedDetails() const;
     UFUNCTION(BlueprintPure, Category="Inventory|Food")
@@ -86,6 +89,20 @@ protected:
 	void RefreshInventory();
 
 private:
+    UVerticalBox* MakeItemTile(UEWItemDefinition* Item, UWidget* Label, UImage*& Image);
+    UFUNCTION() void ShowInventoryTab();
+    UFUNCTION() void ShowCraftingTab();
+    UPROPERTY(Transient) TObjectPtr<UButton> InventoryTab;
+    UPROPERTY(Transient) TObjectPtr<UButton> CraftingTab;
+    UPROPERTY(Transient) TObjectPtr<UImage> ItemPreview;
+    UFUNCTION() void SelectSection(int32 Index);
+    UPROPERTY(Transient) TArray<TObjectPtr<UButton>> SectionButtons;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> BrowserPanel;
+    UPROPERTY(Transient) TObjectPtr<UBorder> DetailsPanel;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> SectionMessage;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> SurvivorSummary;
+    int32 SelectedSection = 0;
+
     UHorizontalBox* MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image);
     UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> InventoryImages;
     UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> MaterialImages;

@@ -3,6 +3,7 @@
 
 #include "EWPlayerController.h"
 #include "EWObjectiveComponent.h"
+#include "EWCompanyComponent.h"
 #include "EWObjectiveWidget.h"
 #include "EWMapWidget.h"
 #include "EWSessionWidget.h"
@@ -34,6 +35,7 @@
 
 AEWPlayerController::AEWPlayerController()
 {
+    CompanyComponent = CreateDefaultSubobject<UEWCompanyComponent>(TEXT("Company"));
     ObjectiveComponent = CreateDefaultSubobject<UEWObjectiveComponent>(TEXT("Objectives"));
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
 }
@@ -407,6 +409,9 @@ void AEWPlayerController::SetInventoryOpen(bool bOpen)
 	{
 		return;
 	}
+
+    if (HotbarWidget) HotbarWidget->SetVisibility(bOpen ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+    if (SurvivalWidget) SurvivalWidget->SetVisibility(bOpen ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 
     if (bInventoryInputBlocked != bOpen)
     {

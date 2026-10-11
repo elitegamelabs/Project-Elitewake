@@ -1,4 +1,20 @@
 #include "EWEditorVerificationLibrary.h"
+#include "EWCompanyComponent.h"
+#include "EWPlayerController.h"
+#include "Engine/World.h"
+
+bool UEWEditorVerificationLibrary::SendVerificationCompanyCommand(AEWPlayerController* Controller, EEWCompanyAction Action, const FString& Text, int32 TargetPlayerId)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType!=EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
+    Controller->GetCompanyComponent()->ServerCommand(Action,Text,TargetPlayerId); return true;
+}
+bool UEWEditorVerificationLibrary::SendVerificationCompanyPolicy(AEWPlayerController* Controller,int32 Kind,EEWCompanyOwnership Policy)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType!=EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor,false);
+    Controller->GetCompanyComponent()->ServerSetPolicy(Kind,Policy); return true;
+}
 #include "InputKeyEventArgs.h"
 #include "EWCharacter.h"
 #include "EWCraftingRecipe.h"

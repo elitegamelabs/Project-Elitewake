@@ -22,6 +22,7 @@ class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
+class UEWCompanyComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -33,6 +34,8 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintPure, Category="Company") UEWCompanyComponent* GetCompanyComponent() const { return CompanyComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Company") TObjectPtr<UEWCompanyComponent> CompanyComponent;
     UFUNCTION(BlueprintCallable, Category="Multiplayer") void SetSessionMenuOpen(bool bOpen);
     UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsSessionMenuOpen() const { return bSessionMenuOpen; }
     UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);

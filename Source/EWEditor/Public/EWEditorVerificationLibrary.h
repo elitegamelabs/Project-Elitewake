@@ -2,6 +2,7 @@
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EWItemDefinition.h"
+#include "EWCompanyComponent.h"
 #include "EWEditorVerificationLibrary.generated.h"
 
 class AEWPickup;
@@ -27,6 +28,10 @@ class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibra
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationCompanyCommand(AEWPlayerController* Controller, EEWCompanyAction Action, const FString& Text, int32 TargetPlayerId);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationCompanyPolicy(AEWPlayerController* Controller, int32 AssetKind, EEWCompanyOwnership Policy);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationGameplayKey(AEWPlayerController* Controller, FName KeyName);
     /** Test clock offset in an authority PIE inventory; never changes saved food policy. */
