@@ -2,7 +2,7 @@
 
 Follows the ship model in Docs/DESIGN_REFERENCE.md#ship-model: a complete hull with a helm mount, a Medium
 mainsail mount, a Small headsail mount, the two confirmed cannon hardpoints and a boarding ladder on each
-side. The hull starts bare.
+side, and an anchor capstan near the bow. The hull starts bare and anchored.
 Sizes, weights and speeds are labelled test tuning, not balance.
 
 Run outside Play, from the editor's Python console or headless:
@@ -68,6 +68,7 @@ def configure_sloop(ship):
     ship.set_editor_property('top_speed', 700.0)
     ship.set_editor_property('turn_rate', 30.0)
     ship.set_editor_property('boarding_points', LADDERS)
+    ship.set_editor_property('anchor_point', unreal.Vector(350, -90, 130))  # Capstan near the bow, port side.
     ship.set_editor_property('mounts', [
         mount('Helm', unreal.EWShipMountType.HELM, (-380, 0, 140)),
         mount('Mainsail', unreal.EWShipMountType.SAIL, (0, 0, 140), unreal.EWSailSize.MEDIUM),

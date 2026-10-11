@@ -77,6 +77,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, SailState);
     DOREPLIFETIME(AEWShip, Speed);
     DOREPLIFETIME(AEWShip, Rudder);
+    DOREPLIFETIME(AEWShip, bAnchored);
 }
 
 void AEWShip::OnConstruction(const FTransform& Transform)
@@ -109,7 +110,28 @@ void AEWShip::ApplyDefinition()
     BoardingTargets.Reset();
     for (UStaticMeshComponent* Ladder : LadderVisuals) if (Ladder) Ladder->DestroyComponent();
     LadderVisuals.Reset();
+    if (AnchorTarget) AnchorTarget->DestroyComponent();
+    if (AnchorVisual) AnchorVisual->DestroyComponent();
+    AnchorTarget = nullptr; AnchorVisual = nullptr;
     if (!Definition) return;
+
+    AnchorTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("AnchorCapstan")), RF_Transient);
+    AnchorTarget->SetupAttachment(HullCollision);
+    AnchorTarget->SetRelativeLocation(Definition->AnchorPoint);
+    AnchorTarget->SetBoxExtent(FVector(30, 30, 40));
+    AnchorTarget->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    AnchorTarget->SetCollisionResponseToAllChannels(ECR_Ignore);
+    AnchorTarget->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    AnchorTarget->SetGenerateOverlapEvents(false);
+    AnchorTarget->RegisterComponent();
+    AnchorVisual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), TEXT("AnchorVisual")), RF_Transient);
+    AnchorVisual->SetupAttachment(HullCollision);
+    AnchorVisual->SetStaticMesh(StandInCube());
+    // Stand-in capstan: a short post on the deck.
+    AnchorVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator,
+        FVector(Definition->AnchorPoint.X, Definition->AnchorPoint.Y, Definition->HullExtent.Z + 35.f), FVector(.4, .4, .7)));
+    AnchorVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    AnchorVisual->RegisterComponent();
 
     for (int32 i = 0; i < Definition->BoardingPoints.Num(); ++i)
     {
@@ -262,6 +284,24 @@ bool AEWShip::IsAboard(const AEWCharacter* Character) const
     return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= E.Z;
 }
 
+bool AEWShip::IsAimingAtAnchor(const AEWCharacter* Character) const
+{
+    return AnchorTarget && TraceAimedComponent(Character) == AnchorTarget;
+}
+
+FVector AEWShip::GetAnchorPointWorld() const
+{
+    return Definition ? GetActorTransform().TransformPosition(Definition->AnchorPoint) : GetActorLocation();
+}
+
+bool AEWShip::SetAnchored(AEWCharacter* Character, bool bNewAnchored)
+{
+    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || bAnchored == bNewAnchored) return false;
+    bAnchored = bNewAnchored;
+    ForceNetUpdate();
+    return true;
+}
+
 bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
 {
     if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || Character->GetHelmShip()
@@ -339,6 +379,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 {
     if (bChangingFittings || !CanModifyFittings(Character)) return false;
     if (Helmsman == Character) return true;  // Leave the helm.
+    if (IsAimingAtAnchor(Character)) return true;
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip();
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
@@ -353,7 +394,10 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
     if (Character && Helmsman == Character)
-        return NSLOCTEXT("Elitewake", "LeaveHelm", "Leave the helm  (W/S sails, A/D rudder)");
+        return bAnchored ? NSLOCTEXT("Elitewake", "LeaveHelmAnchored", "Leave the helm  (W/S sails, A/D rudder)  -  Anchored")
+            : NSLOCTEXT("Elitewake", "LeaveHelm", "Leave the helm  (W/S sails, A/D rudder)");
+    if (IsAimingAtAnchor(Character))
+        return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
         return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ClimbAboard", "Climb aboard");
     const FName MountId = FindAimedMount(Character);
@@ -373,6 +417,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
     if (!HasAuthority() || !Character || !Character->HasAuthority() || !CanInteract_Implementation(Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
+    if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
     if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return ClimbAboard(Character, Ladder);
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);
@@ -475,7 +520,7 @@ float AEWShip::GetFittedSailFraction() const
 
 float AEWShip::ComputeTargetSpeed() const
 {
-    if (!Definition || SailState == EEWSailState::Furled) return 0.f;
+    if (!Definition || bAnchored || SailState == EEWSailState::Furled) return 0.f;
     const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
     const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
     const float Heading = Wind ? Wind->GetHeadingFactor(GetActorForwardVector()) : 1.f;
@@ -496,8 +541,9 @@ void AEWShip::SimulateSailing(float DeltaSeconds)
 void AEWShip::StepSimulation(float Step)
 {
     const float Target = ComputeTargetSpeed();
-    Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : Deceleration);
-    if (Speed <= 1.f && FMath::IsNearlyZero(Rudder)) { Speed = FMath::Max(Speed, 0.f); return; }
+    Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
+    // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
+    if (Speed <= 1.f && (bAnchored || FMath::IsNearlyZero(Rudder))) { Speed = FMath::Max(Speed, 0.f); return; }
     const float Steerage = FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
     const FRotator Rotation = GetActorRotation() + FRotator(0, Rudder * Definition->TurnRate * Steerage * Step, 0);
     // People never stop a ship: survivors on deck ride with it and swimmers are pushed aside.

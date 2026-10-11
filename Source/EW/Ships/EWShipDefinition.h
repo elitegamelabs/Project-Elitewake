@@ -36,6 +36,9 @@ public:
     /** Built-in boarding ladders on the hull sides, relative to the ship. Hold Interact there to climb aboard. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     TArray<FVector> BoardingPoints;
+    /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    FVector AnchorPoint = FVector(350, -90, 130);
 
     /** Sailing tuning. Top speed with every sail mount fitted and the sails full, running before the wind. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="cm/s"))

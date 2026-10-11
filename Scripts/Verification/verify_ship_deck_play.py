@@ -81,12 +81,14 @@ def keep_aim():
 
 # --- Host fits out the ship -------------------------------------------------------------------
 def host_install(mount_id):
+    def target():
+        return ship.get_anchor_point_world() if mount_id == 'Anchor' else ship.get_mount_world_transform(mount_id).translation
     def begin():
-        mount = ship.get_mount_world_transform(mount_id).translation
+        mount = target()
         forward = ship.get_actor_forward_vector()
         spot = unreal.Vector(mount.x - forward.x * 120, mount.y - forward.y * 120, ship.get_actor_location().z + DECK_TOP + HALF_HEIGHT)
         assert host.teleport(spot, ship.get_actor_rotation())
-        state['aim'] = ('host', lambda: ship.get_mount_world_transform(mount_id).translation)
+        state['aim'] = ('host', target)
         keep_aim()
         assert lib.send_verification_interaction_request(host_pc, ship)
     return begin
@@ -204,6 +206,7 @@ STEPS = [
     ('Host installs the mainsail', host_install('Mainsail'), lambda: peer.get_fitting('Mainsail') == mainsail, 6),
     ('Host installs the headsail', host_install('Headsail'), lambda: peer.get_fitting('Headsail') == headsail, 6),
     ('Client crew stands on deck; server and client agree it is aboard and walking', board_crew, crew_settled, 6),
+    ('Host raises the anchor', host_install('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
     ('Host takes the helm', host_install('Helm'), lambda: ship.get_helmsman() == host and peer.get_helmsman() is not None, 6),
     ('Host sets full sail', host_full_sail, lambda: ship.get_sail_state() == unreal.EWSailState.FULL, 6),
     ('Crew rides 6 s of sailing without sliding or falling', start_voyage, rode_along, 10),

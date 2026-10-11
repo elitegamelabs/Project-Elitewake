@@ -72,6 +72,19 @@ public:
     /** Authority only. Lifts a survivor from the water or a dock onto the deck beside the ladder. */
     bool ClimbAboard(AEWCharacter* Character, int32 BoardingIndex);
 
+    /** An anchored ship cannot sail. Ships start anchored so a moored ship never drifts. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    bool IsAnchored() const { return bAnchored; }
+    /** True when the character is aiming at the anchor capstan. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    bool IsAimingAtAnchor(const AEWCharacter* Character) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    FVector GetAnchorPointWorld() const;
+    /** Authority only. Raises or drops the anchor; anyone able to act may work the capstan. */
+    bool SetAnchored(AEWCharacter* Character, bool bNewAnchored);
+    /** Tuning: how hard a dropped anchor slows the ship, in cm/s per second. */
+    static constexpr float AnchorDrag = 500.f;
+
     /** Authority only. Moves the first carried fitting this mount accepts from the inventory onto the ship. */
     EEWFittingResult InstallFitting(AEWCharacter* Character, FName MountId);
     /** Authority only. Returns an installed fitting to the inventory; fails without loss if it is full. */
@@ -138,6 +151,12 @@ private:
     TArray<TObjectPtr<UBoxComponent>> BoardingTargets;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> LadderVisuals;
+    UPROPERTY(Transient)
+    TObjectPtr<UBoxComponent> AnchorTarget;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> AnchorVisual;
+    UPROPERTY(Replicated)
+    bool bAnchored = true;
     bool bChangingFittings = false;
 
     UPROPERTY(Replicated)

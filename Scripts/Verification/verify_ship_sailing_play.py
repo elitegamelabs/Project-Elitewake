@@ -6,8 +6,9 @@ that Play session yourself and run this from the editor's Python console.
 
 Through ordinary owned requests and movement input, the client:
   1. installs the helm, mainsail and headsail at their mounts (test fittings granted in Play only),
-  2. takes the helm, sets full sail with forward input (W) and steers with right input (D),
-  3. releases the rudder and leaves the helm.
+  2. raises the anchor at the capstan,
+  3. takes the helm, sets full sail with forward input (W) and steers with right input (D),
+  4. releases the rudder, leaves the helm, and drops the anchor to stop the ship.
 Each step waits for its result on the server and on the client's copy of the ship, with a timeout.
 Aim is re-applied every frame while a hold runs, so a stray mouse over the Play window cannot cancel it.
 Editor background throttling is turned off while it runs (the deleted prototype failed on throttled frames).
@@ -47,9 +48,12 @@ settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'handle': None, 'memo': {}}
 
+def target_of(name):
+    return ship.get_anchor_point_world() if name == 'Anchor' else ship.get_mount_world_transform(name).translation
+
 def stand_at(mount_id):
-    """Stand on deck 1.2 m aft of the mount, within interaction reach."""
-    mount = ship.get_mount_world_transform(mount_id).translation
+    """Stand on deck 1.2 m aft of the mount (or the anchor capstan), within interaction reach."""
+    mount = target_of(mount_id)
     forward = ship.get_actor_forward_vector()
     spot = unreal.Vector(mount.x - forward.x * 120, mount.y - forward.y * 120, ship.get_actor_location().z + 100 + 98)
     for p in (owner, pawn):
@@ -59,7 +63,7 @@ def stand_at(mount_id):
 def keep_aim():
     if not state['aim']:
         return
-    mount = ship.get_mount_world_transform(state['aim']).translation
+    mount = target_of(state['aim'])
     eye = owner.get_actor_location() + unreal.Vector(0, 0, owner.get_editor_property('base_eye_height'))
     rotation = unreal.MathLibrary.find_look_at_rotation(eye, mount)
     owner.get_controller().set_control_rotation(rotation)
@@ -120,6 +124,7 @@ def left_helm():
 
 def grant():
     assert not ship.get_installed_fittings(), 'The sloop must start as a bare hull'
+    assert ship.is_anchored() and peer.is_anchored(), 'The moored sloop must start anchored'
     for item in (helm, mainsail, headsail):
         assert owner.get_inventory_component().add_item(item, 1) == 1
 
@@ -130,6 +135,7 @@ STEPS = [
     ('Client installs the Medium mainsail', install('Mainsail'), fitted('Mainsail', mainsail), 6),
     ('Client installs the Small headsail; all three fittings left the inventory', install('Headsail'),
      lambda: fitted('Headsail', headsail)() and owner.get_inventory_component().get_item_count(helm) == 0, 6),
+    ('Client raises the anchor at the capstan', install('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
     ('Client takes the helm; helmsman replicates and the survivor stays possessed', install('Helm'),
      lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn and pawn.get_helm_ship() == peer
      and client.get_controlled_pawn() == pawn, 6),
@@ -138,6 +144,8 @@ STEPS = [
     ('Client sails and steers for 4 s', begin_steering, steered, 8),
     ('Releasing the rudder centres it; the sails stay set', release_rudder, rudder_centred, 4),
     ('Client leaves the helm; movement and collision return', interact, left_helm, 6),
+    ('Client drops the anchor and the ship comes to a stop', install('Anchor'),
+     lambda: ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1, 8),
 ]
 
 def finish(error=None):

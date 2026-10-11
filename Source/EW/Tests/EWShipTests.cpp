@@ -170,6 +170,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     // A bare hull cannot be steered or sailed.
     TestFalse(TEXT("No helm, no helmsman"), A->TakeHelm(C));
     TestEqual(TEXT("No sails fitted"), A->GetFittedSailFraction(), 0.f);
+    TestTrue(TEXT("Ships start anchored"), A->IsAnchored());
     for (AEWShip* S : {A, B})
     {
         TestEqual(TEXT("Helm installs"), S->InstallFitting(C, TEXT("Helm")), EEWFittingResult::Installed);
@@ -201,6 +202,10 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Half sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
+    TestEqual(TEXT("An anchored ship does not sail, even under full sail"), A->ComputeTargetSpeed(), 0.f);
+    TestTrue(TEXT("Raise anchor on A"), A->SetAnchored(C, false));
+    TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
+    TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
 
     // Wind: never zero into the wind, full speed running before it.
     Wind->SetWindYaw(0.f);   // Blowing toward +X, the way the ships face.
@@ -250,9 +255,26 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     for (int32 i = 0; i < 10; ++i) A->SimulateSailing(.1f);
     TestTrue(TEXT("Centred rudder holds course"), FMath::IsNearlyEqual(A->GetActorRotation().Yaw, YawSteady, .01f));
 
+    // Dropping the anchor under way drags the ship to a stop, whatever the sails say.
+    TestTrue(TEXT("Under way before anchoring"), A->GetSpeed() > 100.f);
+    TestTrue(TEXT("Drop anchor"), A->SetAnchored(C, true));
+    for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
+    TestEqual(TEXT("The anchor stops the ship within 2 s"), A->GetSpeed(), 0.f);
+    const FVector Moored = A->GetActorLocation();
+    for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
+    TestTrue(TEXT("An anchored ship stays put"), FVector::Dist(Moored, A->GetActorLocation()) < 1.f);
+    TestTrue(TEXT("Raise anchor again"), A->SetAnchored(C, false));
+
     // Another hull ahead stops the ship instead of passing through it.
     A->SetActorLocationAndRotation(Blocker->GetActorLocation() - FVector(1400, 0, 0), FRotator::ZeroRotator);
-    for (int32 i = 0; i < 300 && A->GetSpeed() > 0.f; ++i) A->SimulateSailing(.1f);
+    bool bGotGoing = false;
+    for (int32 i = 0; i < 300; ++i)
+    {
+        A->SimulateSailing(.1f);
+        bGotGoing |= A->GetSpeed() > 100.f;
+        if (bGotGoing && A->GetSpeed() == 0.f) break;
+    }
+    TestTrue(TEXT("The ship got under way toward the blocker"), bGotGoing);
     TestEqual(TEXT("Collision stops the ship"), A->GetSpeed(), 0.f);
     TestTrue(TEXT("Hulls do not overlap"), Blocker->GetActorLocation().X - A->GetActorLocation().X >= 2.f * Def->HullExtent.X - 5.f);
     // A pinned ship can always turn away: the rudder keeps a little bite with no way on.
@@ -271,7 +293,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipBoardingTest, "Elitewake.Ships.BoardingLadders",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipBoardingTest, "Elitewake.Ships.BoardingAndAnchor",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEWShipBoardingTest::RunTest(const FString& Parameters)
 {
@@ -322,10 +344,25 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("The survivor is aboard"), Ship->IsAboard(C));
     TestFalse(TEXT("No climb prompt once aboard"), Ship->ClimbAboard(C, 0));
 
+    // The anchor capstan on deck, worked with the ordinary interaction.
+    C->SetActorLocation(Ship->GetActorTransform().TransformPosition(
+        FVector(Def->AnchorPoint.X - 120.f, Def->AnchorPoint.Y, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
+    {
+        FVector Eye; FRotator Unused;
+        C->GetActorEyesViewPoint(Eye, Unused);
+        PC->SetControlRotation((Ship->GetAnchorPointWorld() - Eye).Rotation());
+    }
+    TestTrue(TEXT("Aim finds the capstan"), Ship->IsAimingAtAnchor(C));
+    TestTrue(TEXT("The capstan can be worked"), Ship->CanInteract_Implementation(C));
+    TestTrue(TEXT("The ship starts anchored"), Ship->IsAnchored());
+    TestTrue(TEXT("Interact raises the anchor"), Ship->Interact_Implementation(C) && !Ship->IsAnchored());
+    TestTrue(TEXT("Interact drops it again"), Ship->Interact_Implementation(C) && Ship->IsAnchored());
+
     // Dead survivors cannot climb.
     C->SetActorLocation(FVector(-100, -330, -40));
     C->GetSurvivalComponent()->ApplyDamage(100000.f);
     TestFalse(TEXT("A dead survivor cannot climb"), Ship->ClimbAboard(C, 0));
+    TestFalse(TEXT("A dead survivor cannot work the anchor"), Ship->SetAnchored(C, false));
 
     World->DestroyWorld(false);
     return true;
