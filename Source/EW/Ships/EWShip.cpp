@@ -79,6 +79,10 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, Speed);
     DOREPLIFETIME(AEWShip, Rudder);
     DOREPLIFETIME(AEWShip, bAnchored);
+    DOREPLIFETIME(AEWShip, Load);
+    DOREPLIFETIME(AEWShip, bOverloaded);
+    DOREPLIFETIME(AEWShip, bSwamped);
+    DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
 }
 
 void AEWShip::OnConstruction(const FTransform& Transform)
@@ -323,6 +327,47 @@ bool AEWShip::CanAccessCargo(const AEWCharacter* Character) const
         && (IsAboard(Character) || FVector::Dist(Character->GetActorLocation(), GetCargoHatchWorld()) <= CargoReach);
 }
 
+float AEWShip::GetLoad() const
+{
+    if (!HasAuthority()) return Load;
+    float Total = Cargo ? Cargo->GetTotalWeight() : 0.f;
+    for (const FEWInstalledFitting& Fitting : Fittings) if (Fitting.Item) Total += Fitting.Item->UnitWeight;
+    return Total;
+}
+
+float AEWShip::GetWeightCapacity() const
+{
+    return Definition ? Definition->WeightCapacity : 1.f;
+}
+
+float AEWShip::GetLoadSpeedFactor() const
+{
+    const float Ratio = GetLoad() / FMath::Max(GetWeightCapacity(), 1.f);
+    if (Ratio > 1.f) return .4f;
+    if (Ratio <= .5f) return 1.f;
+    return FMath::Lerp(1.f, .6f, (Ratio - .5f) / .5f);
+}
+
+void AEWShip::UpdateLoad(float DeltaSeconds)
+{
+    if (!HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds < 0.f) return;
+    Load = GetLoad();
+    const bool bWasOverloaded = bOverloaded, bWasSwamped = bSwamped;
+    bOverloaded = Load > GetWeightCapacity();
+    if (!bOverloaded)
+    {
+        // Lightening below capacity clears the countdown and frees a swamped ship.
+        OverloadSecondsLeft = OverloadGraceSeconds;
+        bSwamped = false;
+    }
+    else if (!bSwamped)
+    {
+        OverloadSecondsLeft = FMath::Max(0.f, OverloadSecondsLeft - DeltaSeconds);
+        bSwamped = OverloadSecondsLeft <= 0.f;
+    }
+    if (bWasOverloaded != bOverloaded || bWasSwamped != bSwamped) ForceNetUpdate();
+}
+
 bool AEWShip::IsAimingAtAnchor(const AEWCharacter* Character) const
 {
     return AnchorTarget && TraceAimedComponent(Character) == AnchorTarget;
@@ -434,8 +479,14 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
     if (Character && Helmsman == Character)
-        return bAnchored ? NSLOCTEXT("Elitewake", "LeaveHelmAnchored", "Leave the helm  (W/S sails, A/D rudder)  -  Anchored")
-            : NSLOCTEXT("Elitewake", "LeaveHelm", "Leave the helm  (W/S sails, A/D rudder)");
+    {
+        FText Status = FText::GetEmpty();
+        if (bSwamped) Status = NSLOCTEXT("Elitewake", "HelmSwamped", "  -  Swamped: too heavy to sail. Lighten the hold");
+        else if (bOverloaded) Status = FText::Format(NSLOCTEXT("Elitewake", "HelmOverloaded", "  -  Overloaded: lighten the hold within {0} s"),
+            FText::AsNumber(FMath::CeilToInt(OverloadSecondsLeft)));
+        else if (bAnchored) Status = NSLOCTEXT("Elitewake", "HelmAnchored", "  -  Anchored");
+        return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder){0}"), Status);
+    }
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
@@ -569,11 +620,11 @@ float AEWShip::GetFittedSailFraction() const
 
 float AEWShip::ComputeTargetSpeed() const
 {
-    if (!Definition || bAnchored || SailState == EEWSailState::Furled) return 0.f;
+    if (!Definition || bAnchored || bSwamped || SailState == EEWSailState::Furled) return 0.f;
     const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
     const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
     const float Heading = Wind ? Wind->GetHeadingFactor(GetActorForwardVector()) : 1.f;
-    return Definition->TopSpeed * SailSet * GetFittedSailFraction() * Heading;
+    return Definition->TopSpeed * SailSet * GetFittedSailFraction() * Heading * GetLoadSpeedFactor();
 }
 
 void AEWShip::SimulateSailing(float DeltaSeconds)
@@ -622,6 +673,7 @@ void AEWShip::Tick(float DeltaSeconds)
         else Helmsman = nullptr;
         Rudder = 0.f;
     }
+    UpdateLoad(DeltaSeconds);
     // An open menu centres the rudder; the sails keep their setting.
     if (Helmsman)
         if (const auto* PC = Cast<AEWPlayerController>(Helmsman->GetController()); !PC || PC->GetInteractionComponent()->IsMenuBlocked())

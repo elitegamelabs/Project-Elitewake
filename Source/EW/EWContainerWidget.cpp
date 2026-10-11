@@ -126,7 +126,14 @@ void UEWContainerWidget::Refresh()
     const UEWInventoryComponent* Carried = CarriedInventory();
     const UEWInventoryComponent* Hold = HoldInventory();
     CarriedSummary->SetText(FText::FromString(Summarize(Carried)));
-    HoldSummary->SetText(FText::FromString(Summarize(Hold)));
+    FString HoldText = Summarize(Hold);
+    if (const auto* Ship = Cast<AEWShip>(Container.Get()))
+    {
+        HoldText += FString::Printf(TEXT("\nShip load %.0f / %.0f kg"), Ship->GetLoad(), Ship->GetWeightCapacity());
+        if (Ship->IsSwamped()) HoldText += TEXT("   SWAMPED: lighten the ship to sail");
+        else if (Ship->IsOverloaded()) HoldText += FString::Printf(TEXT("   OVERLOADED: %d s to lighten"), FMath::CeilToInt(Ship->GetOverloadSecondsLeft()));
+    }
+    HoldSummary->SetText(FText::FromString(HoldText));
     FString Next;
     for (const UEWInventoryComponent* Inventory : {Carried, Hold})
     {

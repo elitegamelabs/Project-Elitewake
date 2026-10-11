@@ -111,8 +111,9 @@ def far_refused():
 STEPS = [
     ('Client holds Interact at the hatch; the hold screen opens on the client', open_hold,
      lambda: client.get_open_container() == peer and client.is_inventory_open(), 6),
-    ('Client stores 40 Wood; server and client copies of the hold agree', store,
-     lambda: hold_count(ship) == 40 and hold_count(peer) == 40 and crew.get_inventory_component().get_item_count(wood) == 0, 6),
+    ('Client stores 40 Wood; server and client agree on the hold and the ship load', store,
+     lambda: hold_count(ship) == 40 and hold_count(peer) == 40 and crew.get_inventory_component().get_item_count(wood) == 0
+     and ship.get_load() > 0 and abs(peer.get_load() - ship.get_load()) < 0.01, 6),
     ('Host aboard sees the stack and takes 15 out; the hold is shared', host_takes,
      lambda: host.get_inventory_component().get_item_count(wood) == 15 and hold_count(ship) == 25 and hold_count(peer) == 25, 6),
     ('Client leaves the ship; its hold screen closes by itself', walk_away,

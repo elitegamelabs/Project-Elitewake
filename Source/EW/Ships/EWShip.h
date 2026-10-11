@@ -101,6 +101,27 @@ public:
     /** Tuning: how far from the hatch a survivor not aboard may still reach the hold, in cm. */
     static constexpr float CargoReach = 400.f;
 
+    /** Ship load: everything in the hold plus installed fittings, in kg. Survivors' carried weight is separate. */
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    float GetLoad() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    float GetWeightCapacity() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    bool IsOverloaded() const { return bOverloaded; }
+    /** Too heavy for too long: the ship cannot sail until it is lightened below capacity. */
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    bool IsSwamped() const { return bSwamped; }
+    /** Seconds left to lighten an overloaded ship before it is swamped. */
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    float GetOverloadSecondsLeft() const { return OverloadSecondsLeft; }
+    /** Speed multiplier from load: 1 up to half capacity, easing to 0.6 when full, 0.4 when overloaded (tuning). */
+    UFUNCTION(BlueprintPure, Category="Ship|Weight")
+    float GetLoadSpeedFactor() const;
+    /** Authority only. Re-reads the load, updates the overload state and advances its countdown. */
+    void UpdateLoad(float DeltaSeconds);
+    /** Tuning: how long an overloaded ship can sail before it is swamped. */
+    static constexpr float OverloadGraceSeconds = 60.f;
+
     /** Authority only. Moves the first carried fitting this mount accepts from the inventory onto the ship. */
     EEWFittingResult InstallFitting(AEWCharacter* Character, FName MountId);
     /** Authority only. Returns an installed fitting to the inventory; fails without loss if it is full. */
@@ -177,6 +198,14 @@ private:
     TObjectPtr<UStaticMeshComponent> CargoHatchVisual;
     UPROPERTY(Replicated)
     bool bAnchored = true;
+    UPROPERTY(Replicated)
+    float Load = 0.f;
+    UPROPERTY(Replicated)
+    bool bOverloaded = false;
+    UPROPERTY(Replicated)
+    bool bSwamped = false;
+    UPROPERTY(Replicated)
+    float OverloadSecondsLeft = OverloadGraceSeconds;
     bool bChangingFittings = false;
 
     UPROPERTY(Replicated)

@@ -45,6 +45,10 @@ public:
     /** Slots in the ship's hold (tuning; Weight/Storage upgrades will raise it). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo", meta=(ClampMin="1"))
     int32 CargoSlots = 20;
+    /** Load the ship carries at full speed-penalty but not yet overloaded: hold plus fittings, in kg (tuning;
+     *  Weight/Storage upgrades will raise it). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo", meta=(ClampMin="1", Units="kg"))
+    float WeightCapacity = 1500.f;
 
     /** Sailing tuning. Top speed with every sail mount fitted and the sails full, running before the wind. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="cm/s"))

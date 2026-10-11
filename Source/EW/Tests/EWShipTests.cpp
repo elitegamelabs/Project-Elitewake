@@ -293,6 +293,76 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipWeightTest, "Elitewake.Ships.WeightAndOverload",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWShipWeightTest::RunTest(const FString& Parameters)
+{
+    using namespace EWShipTest;
+    auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
+    Def->ShipId = TEXT("TestSloop");
+    Def->WeightCapacity = 1000.f;
+    Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-250, 0, 130)),
+                   Mount(TEXT("Mainsail"), EEWShipMountType::Sail, FVector(0, 0, 130), EEWSailSize::Medium)};
+    UEWItemDefinition* HeavyHelm = Item(TEXT("TestHeavyHelm"), EEWShipMountType::Helm);
+    HeavyHelm->UnitWeight = 100.f;
+    UEWItemDefinition* Sail = Item(TEXT("TestSail"), EEWShipMountType::Sail, EEWSailSize::Medium);
+    UEWItemDefinition* Ballast = Item(TEXT("TestBallast"));
+    Ballast->UnitWeight = 10.f; Ballast->MaxStackSize = 100;
+
+    const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    auto* CharClass = LoadClass<AEWCharacter>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C"));
+    auto* PCClass = LoadClass<AEWPlayerController>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C"));
+    if (!TestNotNull(TEXT("Survivor class"), CharClass) || !TestNotNull(TEXT("Controller class"), PCClass))
+    { World->DestroyWorld(false); return false; }
+    auto* Ship = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), FTransform::Identity);
+    Ship->Definition = Def;
+    Ship->FinishSpawning(FTransform::Identity);
+    FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* C = World->SpawnActor<AEWCharacter>(CharClass, FVector(-120, 0, 186), FRotator::ZeroRotator, Params);
+    auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
+    PC->Possess(C);
+    UEWInventoryComponent* Hold = Ship->GetCargo();
+
+    // Fittings count toward the load; what a survivor carries does not.
+    C->GetInventoryComponent()->AddItem(HeavyHelm, 1);
+    C->GetInventoryComponent()->AddItem(Sail, 1);
+    C->GetInventoryComponent()->AddItem(Ballast, 50);
+    TestEqual(TEXT("Helm installs"), Ship->InstallFitting(C, TEXT("Helm")), EEWFittingResult::Installed);
+    TestEqual(TEXT("Sail installs"), Ship->InstallFitting(C, TEXT("Mainsail")), EEWFittingResult::Installed);
+    Ship->UpdateLoad(0.f);
+    TestTrue(TEXT("Load counts fittings, not carried ballast"), FMath::IsNearlyEqual(Ship->GetLoad(), 100.f));
+
+    // Speed falls off past half capacity.
+    Hold->AddItem(Ballast, 30);                                 // 400 kg total
+    TestTrue(TEXT("Under half load: full speed"), FMath::IsNearlyEqual(Ship->GetLoadSpeedFactor(), 1.f));
+    Hold->AddItem(Ballast, 30);                                 // 700 kg
+    TestTrue(TEXT("At 70% load the ship is slower"), FMath::IsNearlyEqual(Ship->GetLoadSpeedFactor(), .84f, .001f));
+
+    // Overloaded: slower still, with a countdown to lighten the ship.
+    Hold->AddItem(Ballast, 40);                                 // 1100 kg
+    Ship->UpdateLoad(0.f);
+    TestTrue(TEXT("Over capacity is overloaded"), Ship->IsOverloaded());
+    TestTrue(TEXT("Overloaded speed factor"), FMath::IsNearlyEqual(Ship->GetLoadSpeedFactor(), .4f));
+    TestEqual(TEXT("Countdown starts full"), Ship->GetOverloadSecondsLeft(), AEWShip::OverloadGraceSeconds);
+    Ship->UpdateLoad(30.f);
+    TestFalse(TEXT("Not swamped within the grace period"), Ship->IsSwamped());
+    TestTrue(TEXT("Countdown runs"), FMath::IsNearlyEqual(Ship->GetOverloadSecondsLeft(), AEWShip::OverloadGraceSeconds - 30.f));
+    Ship->UpdateLoad(31.f);
+    TestTrue(TEXT("Swamped once the grace period runs out"), Ship->IsSwamped());
+
+    // Lightening the ship below capacity frees it and resets the countdown.
+    Hold->RemoveItem(Ballast, 20);                              // 900 kg
+    Ship->UpdateLoad(0.f);
+    TestFalse(TEXT("No longer overloaded"), Ship->IsOverloaded());
+    TestFalse(TEXT("No longer swamped"), Ship->IsSwamped());
+    TestEqual(TEXT("Countdown reset"), Ship->GetOverloadSecondsLeft(), AEWShip::OverloadGraceSeconds);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipBoardingTest, "Elitewake.Ships.BoardingAndAnchor",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEWShipBoardingTest::RunTest(const FString& Parameters)
