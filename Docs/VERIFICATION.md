@@ -6,7 +6,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **25 of 25 pass** (`Saved/Logs/CargoNative.log`, October 11).
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **26 of 26 pass** (`Saved/Logs/WeightNative.log`, October 11).
 - **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`. `run_play_check.py` runs a check unattended: it starts Play, runs the script and closes the editor.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 
@@ -47,6 +47,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | Crew on deck and boarding ladders | `75c038b` | `Ships.BoardingAndAnchor` | `verify_ship_deck_play` (13): while the host sails 25 m, the client crew stays put on deck (0 cm slide, client copy within 3 mm), walks 2.4 m along the deck at 6.3 m/s, walks overboard and swims, then climbs the ladder back aboard | Separate processes, rough seas, many crew |
 | Anchor | `dcf33ad` | `Ships.SailingAuthority`, `Ships.BoardingAndAnchor` | `verify_ship_sailing_play` (11): the client raises the anchor, sails, then drops it and the ship stops; `verify_ship_deck_play` (14): the host raises it before sailing | Anchor HUD art, dragging and damage |
 | Ship cargo hold | `d4bb392` | `Inventory.ContainerTransfer`, `Ships.BoardingAndAnchor` | `verify_ship_cargo_play` (5): the client opens the hold at the hatch, stores 40 Wood; the host takes 15 out (server and client agree); the client's screen closes when it leaves; a request from out of reach is refused. Nothing lost or duplicated | Hold screen visual review, controller navigation, ownership permissions |
+| Ship weight and overload | `4913fdc` | `Ships.WeightAndOverload` | `verify_ship_cargo_play`: the client's copy shows the same ship load as the server | Sinking, wrecks, weight HUD art |
 
 ## Known failures
 

@@ -211,6 +211,12 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Anyone aboard, or standing at the hatch, can use it. Who may use a ship's hold once ownership and Company permissions exist: TBD.
   - Moves are all-or-nothing on the server: only what fits leaves your inventory. Ageing food keeps its age, so storing it never refreshes it.
   - Placeable storage containers on deck are a separate, later fitting.
+- **Weight and overload (DECIDED, delegated, within the owner's rule that overload can sink a ship):**
+  - Ship load is everything in the hold plus installed fittings. A survivor's carried weight is not ship weight.
+  - Each ship definition sets a weight capacity (the sloop carries 1,500 kg, *tuning*); Weight/Storage upgrades will raise it.
+  - Speed: full up to half capacity, easing to 60% when full, and 40% when overloaded (*tuning*).
+  - Overloaded ships get a warning and 60 seconds to lighten (*tuning*). After that they are swamped and cannot sail until lightened below capacity.
+  - Actual sinking (losing the ship, floating wreck crates) comes with the hull damage and flooding system, which shares the same wreck rules. Until then overload is never destructive.
   - The server owns all ship movement and steps it in fixed small increments, so speed never depends on frame rate. Helm controls are held as the player's last chosen state, never as input that expires after a fixed time (the lesson from the deleted prototype).
 - **Hull health (DECIDED, delegated):** one hull-health pool, upgraded through Hull Health. Holes, flooding and part damage layer on later.
 - **Starter ship (DECIDED, delegated):** no cheap pre-built sloop for now. The prologue dinghy and the craftable raft are the starter boats, and the sloop needs a Small Shipyard. Revisit if playtests show the jump to a sloop is too steep.

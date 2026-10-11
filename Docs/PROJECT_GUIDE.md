@@ -9,11 +9,11 @@ Last updated: October 11, 2026.
 Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
 - **Build:** both Editor and Game targets build.
-- **Native tests:** 25 of 25 pass (October 11, `Saved/Logs/CargoNative.log`).
+- **Native tests:** 26 of 26 pass (October 11, `Saved/Logs/WeightNative.log`).
 - **Client Play checks:**
   - A client fits out the sloop, raises the anchor, sails, steers, and anchors again (`verify_ship_sailing_play`, 11 of 11).
   - A client crew rides, walks, goes overboard and climbs back aboard while the host sails (`verify_ship_deck_play`, 14 of 14).
-  - A client stores cargo in the ship's hold and the host takes some out (`verify_ship_cargo_play`, 5 of 5).
+  - A client stores cargo in the ship's hold and the host takes some out; both see the same ship load (`verify_ship_cargo_play`, 5 of 5).
 - **GitHub:** all work is committed and pushed to `main`.
 
 | System | What works | Not done yet |
@@ -31,7 +31,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
 | Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
 | Coastal map | `Lvl_CoastalPlayground`: beach, dock, islet, resources, freshwater spring, textured sand and timber, sloped shore, swimmable ocean 500 m deep | Real terrain and foliage, wildlife, Port and inn, final art |
-| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts, a boarding ladder on each side, an anchor capstan and a shared cargo hold. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). Crew stand and walk on deck while it sails, and climb aboard from the water by the ladders. The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Weight and overload, cannons, docking, ship ownership, smooth client-side ship motion, real hull and fitting art (boxes stand in) |
+| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts, a boarding ladder on each side, an anchor capstan and a shared cargo hold. Load slows the ship, and an overloaded ship is swamped after 60 s until lightened. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). Crew stand and walk on deck while it sails, and climb aboard from the water by the ladders. The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Sinking and wrecks, cannons, docking, ship ownership, smooth client-side ship motion, real hull and fitting art (boxes stand in) |
 
 ## Known problems
 
@@ -42,6 +42,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
    - A ship placed so its hull already overlaps something (a dock, a shore) cannot move until it is moved clear.
    - Client ships move in small steps 30 times a second rather than smoothly.
    - Idle swimmers sink at about 1 m/s.
+   - Overload never sinks a ship yet: a swamped ship simply cannot sail until lightened. Real sinking comes with hull damage.
    - The hold screen is functional only: mouse-driven, not yet controller-navigable, and not yet visually reviewed.
    - The temporary movement debug text ("Perspective / Movement State / Stamina") still prints at the top of the screen; switch it off before testers play.
 5. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
@@ -51,8 +52,8 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 Proposed order, pending owner confirmation:
 
 1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
-   1. **Hull, fittings, sailing, crew on deck, anchor and cargo hold** (done): `AEWShip`, `DA_Ship_Sloop`, helm and sail test items, boarding ladders, anchor capstan, cargo hatch, all client-verified.
-   2. **Weight:** cargo slows the ship, and overload risks sinking.
+   1. **Done (client-verified):** `AEWShip` and `DA_Ship_Sloop`; helm and sail fittings; sailing with wind; crew on a moving deck; boarding ladders; anchor; shared cargo hold; weight and overload.
+   2. **Later, with combat:** hull damage, flooding, actual sinking and wreck crates; cannons on the hardpoints.
 2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
 3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
 4. **World content.** Regional resources, real wildlife with AI, terrain and foliage, survival HUD art.
