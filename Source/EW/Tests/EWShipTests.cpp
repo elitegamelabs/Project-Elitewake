@@ -270,4 +270,64 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipBoardingTest, "Elitewake.Ships.BoardingLadders",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWShipBoardingTest::RunTest(const FString& Parameters)
+{
+    using namespace EWShipTest;
+    auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
+    Def->ShipId = TEXT("TestSloop");
+    Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-250, 0, 130))};
+    Def->BoardingPoints = {FVector(-100, -175, -10), FVector(-100, 175, -10)};
+
+    const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    auto* CharClass = LoadClass<AEWCharacter>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C"));
+    auto* PCClass = LoadClass<AEWPlayerController>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C"));
+    if (!TestNotNull(TEXT("Survivor class"), CharClass) || !TestNotNull(TEXT("Controller class"), PCClass))
+    { World->DestroyWorld(false); return false; }
+    auto* Ship = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), FTransform::Identity);
+    Ship->Definition = Def;
+    Ship->FinishSpawning(FTransform::Identity);
+    FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    // A swimmer alongside the starboard ladder, head just above the water.
+    auto* C = World->SpawnActor<AEWCharacter>(CharClass, FVector(-100, 330, -40), FRotator::ZeroRotator, Params);
+    auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
+    PC->Possess(C);
+    auto AimAtLadder = [&](int32 Index)
+    {
+        FVector Eye; FRotator Unused;
+        C->GetActorEyesViewPoint(Eye, Unused);
+        PC->SetControlRotation((Ship->GetBoardingPointWorld(Index) - Eye).Rotation());
+    };
+
+    TestFalse(TEXT("A swimmer is not aboard"), Ship->IsAboard(C));
+    AimAtLadder(1);
+    TestEqual(TEXT("Aim finds the starboard ladder"), Ship->FindAimedBoardingPoint(C), 1);
+    TestEqual(TEXT("Ladder aim is not a mount"), Ship->FindAimedMount(C), FName());
+    TestTrue(TEXT("A swimmer can climb the ladder"), Ship->CanInteract_Implementation(C));
+
+    // Something standing on the landing spot blocks the climb rather than overlapping it.
+    auto* Other = World->SpawnActor<AEWCharacter>(CharClass,
+        FVector(-100, Def->HullExtent.Y - 70.f, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f),
+        FRotator::ZeroRotator, Params);
+    TestFalse(TEXT("A blocked landing spot refuses the climb"), Ship->ClimbAboard(C, 1));
+    Other->Destroy();
+
+    TestTrue(TEXT("Interact climbs aboard"), Ship->Interact_Implementation(C));
+    const FVector Local = Ship->GetActorTransform().InverseTransformPosition(C->GetActorLocation());
+    TestTrue(TEXT("The survivor lands on the deck, starboard side"), Local.Z > Def->HullExtent.Z && Local.Y > 0.f && Local.Y < Def->HullExtent.Y);
+    TestTrue(TEXT("The survivor is aboard"), Ship->IsAboard(C));
+    TestFalse(TEXT("No climb prompt once aboard"), Ship->ClimbAboard(C, 0));
+
+    // Dead survivors cannot climb.
+    C->SetActorLocation(FVector(-100, -330, -40));
+    C->GetSurvivalComponent()->ApplyDamage(100000.f);
+    TestFalse(TEXT("A dead survivor cannot climb"), Ship->ClimbAboard(C, 0));
+
+    World->DestroyWorld(false);
+    return true;
+}
 #endif

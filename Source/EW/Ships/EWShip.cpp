@@ -13,6 +13,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 
@@ -104,7 +105,36 @@ void AEWShip::ApplyDefinition()
 {
     for (auto& Pair : MountTargets) if (Pair.Value) Pair.Value->DestroyComponent();
     MountTargets.Reset();
+    for (UBoxComponent* Target : BoardingTargets) if (Target) Target->DestroyComponent();
+    BoardingTargets.Reset();
+    for (UStaticMeshComponent* Ladder : LadderVisuals) if (Ladder) Ladder->DestroyComponent();
+    LadderVisuals.Reset();
     if (!Definition) return;
+
+    for (int32 i = 0; i < Definition->BoardingPoints.Num(); ++i)
+    {
+        const FVector Point = Definition->BoardingPoints[i];
+        // The ladder runs from below the waterline up the hull side, so it can be reached by a swimmer or from a dock.
+        auto* Target = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(),
+            *FString::Printf(TEXT("Ladder_%d"), i)), RF_Transient);
+        Target->SetupAttachment(HullCollision);
+        Target->SetRelativeLocation(Point);
+        Target->SetBoxExtent(FVector(40, 25, 90));
+        Target->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        Target->SetCollisionResponseToAllChannels(ECR_Ignore);
+        Target->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+        Target->SetGenerateOverlapEvents(false);
+        Target->RegisterComponent();
+        BoardingTargets.Add(Target);
+        auto* Ladder = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+            *FString::Printf(TEXT("LadderVisual_%d"), i)), RF_Transient);
+        Ladder->SetupAttachment(HullCollision);
+        Ladder->SetStaticMesh(StandInCube());
+        Ladder->SetRelativeTransform(FTransform(FRotator::ZeroRotator, Point, FVector(.6, .08, 1.8)));
+        Ladder->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Ladder->RegisterComponent();
+        LadderVisuals.Add(Ladder);
+    }
 
     HullCollision->SetBoxExtent(Definition->HullExtent);
     if (UStaticMesh* Mesh = Definition->HullMesh.LoadSynchronous())
@@ -188,18 +218,71 @@ FTransform AEWShip::GetMountWorldTransform(FName MountId) const
     return Mount ? Mount->Transform * GetActorTransform() : FTransform::Identity;
 }
 
-FName AEWShip::FindAimedMount(const AEWCharacter* Character) const
+const UPrimitiveComponent* AEWShip::TraceAimedComponent(const AEWCharacter* Character) const
 {
     if (!IsValid(Character) || !Character->GetWorld() || !Character->GetController()
-        || Character->GetController()->GetPawn() != Character) return NAME_None;
+        || Character->GetController()->GetPawn() != Character) return nullptr;
     FVector Eye; FRotator Rotation;
     Character->GetActorEyesViewPoint(Eye, Rotation);
-    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipMount), false, Character);
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipAim), false, Character);
     FHitResult Hit;
     if (!GetWorld()->LineTraceSingleByChannel(Hit, Eye, Eye + Rotation.Vector() * FEWInteractionTargeting::Range, ECC_Visibility, Query)
-        || Hit.GetActor() != this) return NAME_None;
-    for (const auto& Pair : MountTargets) if (Pair.Value == Hit.GetComponent()) return Pair.Key;
+        || Hit.GetActor() != this) return nullptr;
+    return Hit.GetComponent();
+}
+
+FName AEWShip::FindAimedMount(const AEWCharacter* Character) const
+{
+    const UPrimitiveComponent* Aimed = TraceAimedComponent(Character);
+    if (!Aimed) return NAME_None;
+    for (const auto& Pair : MountTargets) if (Pair.Value == Aimed) return Pair.Key;
     return NAME_None;
+}
+
+int32 AEWShip::FindAimedBoardingPoint(const AEWCharacter* Character) const
+{
+    const UPrimitiveComponent* Aimed = TraceAimedComponent(Character);
+    return Aimed ? BoardingTargets.IndexOfByKey(Aimed) : INDEX_NONE;
+}
+
+FVector AEWShip::GetBoardingPointWorld(int32 Index) const
+{
+    return Definition && Definition->BoardingPoints.IsValidIndex(Index)
+        ? GetActorTransform().TransformPosition(Definition->BoardingPoints[Index]) : FVector::ZeroVector;
+}
+
+bool AEWShip::IsAboard(const AEWCharacter* Character) const
+{
+    if (!IsValid(Character) || !Definition) return false;
+    if (Character->GetHelmShip() == this) return true;
+    if (const auto* Base = Cast<UPrimitiveComponent>(Character->GetMovementBaseObject()); Base && Base->GetOwner() == this) return true;
+    // Standing over the deck counts too, for the moment before movement settles onto it.
+    const FVector Local = GetActorTransform().InverseTransformPosition(Character->GetActorLocation());
+    const FVector& E = Definition->HullExtent;
+    return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= E.Z;
+}
+
+bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
+{
+    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || Character->GetHelmShip()
+        || !Definition->BoardingPoints.IsValidIndex(BoardingIndex) || IsAboard(Character)) return false;
+    const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
+    const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f;
+    const FVector Point = Definition->BoardingPoints[BoardingIndex];
+    // Step onto the deck just inboard of the ladder.
+    const float Side = Point.Y >= 0.f ? 1.f : -1.f;
+    const FVector Deck(Point.X, Side * FMath::Max(Definition->HullExtent.Y - 70.f, 0.f), Definition->HullExtent.Z + HalfHeight + 2.f);
+    const FVector Destination = GetActorTransform().TransformPosition(Deck);
+    if (Capsule)
+    {
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipBoarding), false, Character);
+        if (GetWorld()->OverlapBlockingTestByChannel(Destination, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
+            return false;
+    }
+    Character->SetActorLocation(Destination, false, nullptr, ETeleportType::TeleportPhysics);
+    if (UCharacterMovementComponent* Movement = Character->GetCharacterMovement()) Movement->SetMovementMode(MOVE_Falling);
+    Character->ForceNetUpdate();
+    return true;
 }
 
 bool AEWShip::CanModifyFittings(const AEWCharacter* Character) const
@@ -256,6 +339,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 {
     if (bChangingFittings || !CanModifyFittings(Character)) return false;
     if (Helmsman == Character) return true;  // Leave the helm.
+    if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip();
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return false;
@@ -270,6 +354,8 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
 {
     if (Character && Helmsman == Character)
         return NSLOCTEXT("Elitewake", "LeaveHelm", "Leave the helm  (W/S sails, A/D rudder)");
+    if (FindAimedBoardingPoint(Character) != INDEX_NONE)
+        return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ClimbAboard", "Climb aboard");
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Mount) return FText::GetEmpty();
@@ -287,6 +373,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
     if (!HasAuthority() || !Character || !Character->HasAuthority() || !CanInteract_Implementation(Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
+    if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return ClimbAboard(Character, Ladder);
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);
     if (Installed && Installed->FittingMountType == EEWShipMountType::Helm) return TakeHelm(Character);

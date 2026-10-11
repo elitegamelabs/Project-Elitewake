@@ -1,7 +1,8 @@
 """Create the first sloop: ship definition, helm and sail test fittings, and one bare hull in the coastal map.
 
 Follows the ship model in Docs/DESIGN_REFERENCE.md#ship-model: a complete hull with a helm mount, a Medium
-mainsail mount, a Small headsail mount and the two confirmed cannon hardpoints. The hull starts bare.
+mainsail mount, a Small headsail mount, the two confirmed cannon hardpoints and a boarding ladder on each
+side. The hull starts bare.
 Sizes, weights and speeds are labelled test tuning, not balance.
 
 Run outside Play, from the editor's Python console or headless:
@@ -66,6 +67,7 @@ def configure_sloop(ship):
     ship.set_editor_property('crew_capacity', 6)
     ship.set_editor_property('top_speed', 700.0)
     ship.set_editor_property('turn_rate', 30.0)
+    ship.set_editor_property('boarding_points', LADDERS)
     ship.set_editor_property('mounts', [
         mount('Helm', unreal.EWShipMountType.HELM, (-380, 0, 140)),
         mount('Mainsail', unreal.EWShipMountType.SAIL, (0, 0, 140), unreal.EWSailSize.MEDIUM),
@@ -74,12 +76,19 @@ def configure_sloop(ship):
         mount('StarboardCannon', unreal.EWShipMountType.CANNON, (-80, 130, 140)),
     ])
 
+LADDERS = [unreal.Vector(-100, -185, -20), unreal.Vector(-100, 185, -20)]  # Port and starboard, just outside the hull.
 sloop, new = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Sloop', unreal.EWShipDefinition, configure_sloop)
 if new:
     created.append('DA_Ship_Sloop')
+if not sloop.get_editor_property('boarding_points'):
+    # Added after the first version of this script; fills in only the missing ladders.
+    sloop.set_editor_property('boarding_points', LADDERS)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(sloop)
+    created.append('DA_Ship_Sloop boarding ladders')
 mounts = sloop.get_editor_property('mounts')
 assert [str(m.get_editor_property('mount_id')) for m in mounts] == ['Helm', 'Mainsail', 'Headsail', 'PortCannon', 'StarboardCannon']
 assert sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON) == 2
+assert len(sloop.get_editor_property('boarding_points')) == 2
 
 # Place one bare sloop off the coastal dock, floating with its hull bottom HullDraft below the waterline.
 map_path = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'

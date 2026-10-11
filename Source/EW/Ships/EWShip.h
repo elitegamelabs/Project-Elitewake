@@ -61,6 +61,16 @@ public:
     FName FindAimedMount(const AEWCharacter* Character) const;
     UFUNCTION(BlueprintPure, Category="Ship")
     FTransform GetMountWorldTransform(FName MountId) const;
+    /** The boarding ladder under the character's aim, or INDEX_NONE. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    int32 FindAimedBoardingPoint(const AEWCharacter* Character) const;
+    UFUNCTION(BlueprintPure, Category="Ship")
+    FVector GetBoardingPointWorld(int32 Index) const;
+    /** True when the character stands on this ship's deck or rides its movement. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    bool IsAboard(const AEWCharacter* Character) const;
+    /** Authority only. Lifts a survivor from the water or a dock onto the deck beside the ladder. */
+    bool ClimbAboard(AEWCharacter* Character, int32 BoardingIndex);
 
     /** Authority only. Moves the first carried fitting this mount accepts from the inventory onto the ship. */
     EEWFittingResult InstallFitting(AEWCharacter* Character, FName MountId);
@@ -123,6 +133,11 @@ private:
     TMap<FName, TObjectPtr<UBoxComponent>> MountTargets;
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> FittingVisuals;
+    /** Local query boxes and stand-in visuals for the built-in boarding ladders. */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UBoxComponent>> BoardingTargets;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> LadderVisuals;
     bool bChangingFittings = false;
 
     UPROPERTY(Replicated)
@@ -138,6 +153,8 @@ private:
     bool bAgainstObstacle = false;
 
     const FEWShipMount* FindHelmMount() const;
+    /** The ship component under the character's interaction aim, if any. */
+    const UPrimitiveComponent* TraceAimedComponent(const AEWCharacter* Character) const;
     bool IsValidHelmsman(const AEWCharacter* Character) const;
     void StepSimulation(float Step);
 

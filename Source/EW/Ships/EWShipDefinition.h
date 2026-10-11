@@ -33,6 +33,9 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
     TArray<FEWShipMount> Mounts;
+    /** Built-in boarding ladders on the hull sides, relative to the ship. Hold Interact there to climb aboard. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    TArray<FVector> BoardingPoints;
 
     /** Sailing tuning. Top speed with every sail mount fitted and the sails full, running before the wind. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="cm/s"))
