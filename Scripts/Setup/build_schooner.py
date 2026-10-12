@@ -5,7 +5,8 @@ Run in the editor after build_ship_fittings.py, outside Play, with no unsaved ma
 
 About 22 m long and 6.6 m in beam, half again the sloop's length. Like the sloop it is double-ended, the stern
 rising to a post as the bow does. A raised aft deck carries the helm and the mizzen, with stairs up each side and
-a breast rail. The main deck has a hatch with stairs down to a lower deck under it: twelve gunports, six a side, a
+a breast rail; under it is the captain's cabin, entered by a doorway from the main deck and lit by windows in the
+hull sides and its front, and by a skylight grating in the deck above. The main deck has a hatch with stairs down to a lower deck under it: twelve gunports, six a side, a
 mast step at each mast, pillars, ribs and beams, and an aft bulkhead with a doorway into a small aft hold.
 
 Three masts stand in the art's three sockets. The foremast carries the Large square topsail; the main and
@@ -33,13 +34,21 @@ T = unreal.EWShipMountType
 
 PORT_XS = (-480.0, -280.0, -80.0, 120.0, 320.0, 520.0)
 PORT = (56.0, 105.0, 160.0)          # width, sill and head heights
-QUARTERDECK = (-560.0, 150.0)        # front x, rise above the main deck
+QUARTERDECK = (-560.0, 220.0)        # front x, rise above the main deck: standing room in the cabin under it
+# The captain's cabin under the raised aft deck: lights (windows) in the hull sides, a doorway and two windows in
+# its front, a skylight grating in the deck above, and beams overhead clear of the skylight.
+CABIN_WINDOWS = (-660.0, -770.0, -880.0)
+CABIN_WINDOW = (40.0, 400.0, 450.0)  # width, sill and head heights
+CABIN_DOOR = (90.0, 205.0)           # width, height
+SKYLIGHT = (-715.0, -645.0, 30.0)    # aft x, forward x, half-width
+CABIN_BEAMS = (-620.0, -740.0, -860.0, -960.0)
 HULL = Hull(stern_x=-1100.0, bow_x=1100.0, beam=330.0, keel_z=-170.0,
             deck_z=300.0, floor_z=40.0,
             sheer_mid=395.0, sheer_rise=130.0, sheer_flat=100.0,
             beam_power=2.1, keel_flat=450.0, keel_power=2.2, full_mid=2.9, full_end=1.5, full_len=350.0,
             strakes=14, wales=(9, 12), tar_line=95.0,
-            gunports=[(x, PORT[0], PORT[1], PORT[2]) for x in PORT_XS],
+            gunports=[(x, PORT[0], PORT[1], PORT[2]) for x in PORT_XS]
+                     + [(x, *CABIN_WINDOW) for x in CABIN_WINDOWS],
             quarterdeck=QUARTERDECK)
 DECK_Z, FLOOR_Z, QD_Z = HULL.deck_z, HULL.floor_z, HULL.deck_z + QUARTERDECK[1]
 UV_TILE = HULL.uv_tile
@@ -49,13 +58,17 @@ LOWER_BULKHEAD_X = -600.0
 LADDER_X = -180.0                    # between two gunports, clear of the stairs to the aft deck
 CAPSTAN = (780.0, -110.0)
 FRAMES = range(-1040, 1060, 60)
+# Shrouds for each mast, (x where each meets its channel); the foremast's are led aft, behind its topsail.
+FORE_SHROUDS = (540.0, 500.0, 460.0)
+MAIN_SHROUDS = (-20.0, -60.0, -100.0)
+MIZZEN_SHROUDS = (-780.0, -830.0)
 
 # Rig.
 FORE_X, FORE_TOP = 560.0, 2150.0
 MAIN_X, MAIN_TOP = -60.0, 2050.0
-MIZZEN_X, MIZZEN_TOP = -800.0, 1550.0
+MIZZEN_X, MIZZEN_TOP = -800.0, 1700.0
 YARD_Z = 1900.0                      # the fore topsail's yard
-BOOM_Z = 680.0                       # main and mizzen booms, above heads on the raised aft deck
+BOOM_Z = 760.0                       # main and mizzen booms, above heads on the raised aft deck
 BOWSPRIT = ((1010.0, 0.0, HULL.sheer(1010.0) + 30), (1650.0, 0.0, 640.0))   # resting on the stem head
 # Jib stays: (on the bowsprit, on the foremast). The outer stay meets the foremast's head, in front of the
 # topsail; the inner two meet it below the topsail's foot.
@@ -90,21 +103,31 @@ def bulkhead(b, x, z0, z1, openings=(), thick=8.0, plank=20.0):
 
 
 def quarterdeck(b):
+    """The raised aft deck and, under it, the captain's cabin."""
     front, rise = QUARTERDECK
-    HULL.deck(b, QD_Z, x_range=(HULL.stern_x, front), underside=False, tone_seed=11)
-    bulkhead(b, front, DECK_Z, QD_Z)
-    # Its front: a cabin door between two small windows, all closed, and a beam along the top.
-    b.box((front + 6, 0.0, DECK_Z + 65), (4, 80, 130))
-    for z in (DECK_Z + 25, DECK_Z + 105):
-        b.box((front + 9, 0.0, z), (3, 74, 6), iron=1.0)
-    for y in (-120.0, 120.0):
-        b.box((front + 6, y, DECK_Z + 95), (3, 34, 26), tar=1.0)
-        b.box((front + 7, y, DECK_Z + 95), (4, 42, 34))
+    HULL.deck(b, QD_Z, [SKYLIGHT], x_range=(HULL.stern_x, front), tone_seed=11)
+    HULL.beams(b, CABIN_BEAMS, QD_Z)
+    # The skylight: a grating over its opening lets daylight into the cabin.
+    aft, fwd, half = SKYLIGHT
+    for y in (-half / 2, 0.0, half / 2):
+        b.box(((aft + fwd) / 2, y, QD_Z + 10), (fwd - aft + 10, 5, 6))
+    # The cabin's front: a doorway from the main deck between two windows, framed, and a beam along the top.
+    door_w, door_h = CABIN_DOOR
+    windows = [(y - 20.0, y + 20.0, DECK_Z + 95, DECK_Z + 140) for y in (-130.0, 130.0)]
+    bulkhead(b, front, DECK_Z, QD_Z, openings=[(-door_w / 2, door_w / 2, DECK_Z, DECK_Z + door_h)] + windows)
     b.box((front + 2, 0.0, QD_Z - 6), (16, 2 * HULL.inner_y(front, QD_Z), 12))
+    # Each light in the hull sides gets a cross of glazing bars.
+    w, z0, z1 = CABIN_WINDOW
+    for x in CABIN_WINDOWS:
+        for side in (1, -1):
+            y_out, y_in = HULL.half_beam(x), HULL.inner_y(x, (z0 + z1) / 2)
+            yc, depth = side * (y_out + y_in) / 2, y_out - y_in + 2
+            b.box((x, yc, (z0 + z1) / 2), (4, depth, z1 - z0))
+            b.box((x, yc, (z0 + z1) / 2), (w, depth, 4))
     # Stairs up each side against the bulwark, and a breast rail between them.
     stair_y = HULL.inner_y(front, DECK_Z) - 55
     for side in (1, -1):
-        HULL.stairs(b, front, front + 175, QD_Z, DECK_Z, 7, width=70.0, y=side * stair_y)
+        HULL.stairs(b, front, front + 275, QD_Z, DECK_Z, 11, width=70.0, y=side * stair_y)
     rail_y = stair_y - 40
     for k in range(7):
         y = -rail_y + 2 * rail_y * k / 6
@@ -164,19 +187,28 @@ def hull_mesh():
     h.mast(b, MAIN_X, MAIN_TOP, radius=20.0, top_radius=12.0)
     h.mast(b, MIZZEN_X, MIZZEN_TOP, radius=16.0, top_radius=10.0)
     h.bowsprit(b, *BOWSPRIT, radius=(14.0, 9.0))
+    # Working detail: channels with deadeyes for each mast's shrouds, pin rails at the masts, the rudder on the
+    # stern and an anchor catted at each bow.
+    for xs in (FORE_SHROUDS, MAIN_SHROUDS, MIZZEN_SHROUDS):
+        h.channels(b, xs)
+    for x in (FORE_X, MAIN_X, MIZZEN_X):
+        h.pin_rail(b, x)
+    h.rudder(b, -140.0, 60.0, 110.0, 80.0, 16.0)
+    for side in (1, -1):
+        h.cathead_and_anchor(b, 880.0, side, 1.3)
     return b
 
 
 def rigging():
     """Standing rigging as tarred rope: the three jib stays, a stay from the main to the fore masthead, and
-    shrouds, the foremast's led aft so they stay behind its topsail."""
+    shrouds with ratlines down to their deadeyes."""
     r = Builder()
     for low, high in STAYS.values():
         r.tube([high, low], 2.0, sides=6)
     r.tube([(MAIN_X + 10, 0.0, MAIN_TOP - 10), (FORE_X - 10, 0.0, FORE_TOP - 30)], 2.0, sides=6)
-    HULL.shrouds(r, FORE_X, FORE_TOP - 100, (FORE_X - 20, FORE_X - 60, FORE_X - 100), radius=1.9, spread=13.0)
-    HULL.shrouds(r, MAIN_X, MAIN_TOP - 90, (MAIN_X + 20, MAIN_X - 30, MAIN_X - 80), radius=1.9, spread=13.0)
-    HULL.shrouds(r, MIZZEN_X, MIZZEN_TOP - 70, (MIZZEN_X + 20, MIZZEN_X - 30), radius=1.7, spread=11.0)
+    HULL.shrouds(r, FORE_X, FORE_TOP - 100, FORE_SHROUDS, radius=1.9, spread=13.0)
+    HULL.shrouds(r, MAIN_X, MAIN_TOP - 90, MAIN_SHROUDS, radius=1.9, spread=13.0)
+    HULL.shrouds(r, MIZZEN_X, MIZZEN_TOP - 70, MIZZEN_SHROUDS, radius=1.7, spread=11.0)
     return tar_rope(r)
 
 
@@ -193,7 +225,7 @@ def sail_looks(timber, sails):
                             write(fittings.square_sail(True), 'SM_SchoonerTopsailFurled_v1', 'Large'),
                             unreal.Transform(location=unreal.Vector(24, 0, YARD_Z - at[2])))
     for mount_id, x, deck, gaff in (('Mainsail', MAIN_X, DECK_Z, dict(boom=600.0, throat=760.0, peak=(-560.0, 1050.0), belly=55.0)),
-                                    ('MizzenSail', MIZZEN_X, QD_Z, dict(boom=300.0, throat=520.0, peak=(-290.0, 760.0), belly=34.0))):
+                                    ('MizzenSail', MIZZEN_X, QD_Z, dict(boom=300.0, throat=560.0, peak=(-290.0, 820.0), belly=34.0))):
         at = (x, 0.0, deck + 50)
         name = 'SM_Schooner' + mount_id
         looks[mount_id] = (at, write(fittings.gaff_sail(False, **gaff), name + '_v1', 'Medium'),

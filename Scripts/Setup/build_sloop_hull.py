@@ -5,8 +5,10 @@ Safe to run again. Run in the editor, outside Play, with no unsaved maps:
 A bare double-ended hull in weathered oak: the stern mirrors the bow, both sweeping up in a deep curve to a post.
 Planked sides with seams and two wales, a tarred bottom, low bulwarks with a rail and posts, one gunport each side. A flat deck
 has a cargo hatch with a coaming and stairs down into a cramped hold of ribs, floorboards, deck beams and a post.
-Boarding ladders on both sides, a capstan near the bow, the mast and bowsprit are part of the hull, and the
-standing rigging (shrouds and forestay) is a separate mesh drawn without collision. Sails, the helm and cannons
+Boarding ladders on both sides, a capstan near the bow, the mast and bowsprit are part of the hull, as are the
+working details of a real vessel: channels with deadeyes and chainplates for the shrouds, a pin rail at the mast,
+a rudder hung on the stern and an anchor catted at each bow. The standing rigging (shrouds with ratlines, and the
+forestay) is a separate mesh drawn without collision. Sails, the helm and cannons
 are fittings, built by build_ship_fittings.py, which reads the rig's positions from here.
 
 Coordinates are the ship's own, in cm: X forward to the bow, Y to starboard, Z up, the waterline at Z 0. The hold
@@ -44,6 +46,7 @@ BOOM_Z = 460.0                       # boom height, above the heads of crew on d
 STAY_TOP = (MAST_X + 8, 0.0, MAST_TOP - 30)
 STAY_BOW = (925.0, 0.0, 500.0)       # bowsprit end, where the forestay and the jib's tack meet
 FRAMES = range(-640, 660, 60)
+SHROUD_XS = (MAST_X - 30, MAST_X + 30)
 
 
 def hull_mesh():
@@ -67,14 +70,22 @@ def hull_mesh():
     # starting clear of heads on the foredeck.
     h.mast(b, MAST_X, MAST_TOP)
     h.bowsprit(b, (BOW_X - 70, 0.0, h.sheer(BOW_X - 70) + 30), STAY_BOW)
+    # Working detail: the shrouds' channels and deadeyes, a pin rail at the mast, a rudder on the stern and an
+    # anchor catted at each bow.
+    h.channels(b, SHROUD_XS)
+    h.pin_rail(b, MAST_X)
+    h.rudder(b, -80.0, 40.0, 70.0, 50.0, 12.0)
+    for side in (1, -1):
+        h.cathead_and_anchor(b, 560.0, side, 1.0)
     return b
 
 
 def rigging():
-    """Standing rigging: a forestay to the bowsprit and two shrouds a side, as tarred rope."""
+    """Standing rigging: a forestay to the bowsprit and two shrouds a side to their deadeyes, with ratlines,
+    as tarred rope."""
     r = Builder()
     r.tube([STAY_TOP, STAY_BOW], 1.8, sides=6)
-    HULL.shrouds(r, MAST_X, MAST_TOP - 90, (MAST_X - 30, MAST_X + 30))
+    HULL.shrouds(r, MAST_X, MAST_TOP - 90, SHROUD_XS)
     return tar_rope(r)
 
 

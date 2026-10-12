@@ -214,7 +214,8 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - The mast, bowsprit and standing rigging come with the hull. The mainsail fitting brings its boom and gaff; the jib hangs on the forestay. Sails show the helmsman's setting: rolled on their spars when furled, shortened at half, fully set at full. The owner's sail art is the cloth itself. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.
 - **The schooner (DECIDED, delegated, October 12, from the owner's schooner art):**
   - About 22 m long and 6.6 m in beam. It is double-ended like the sloop, following the owner's dislike of a square stern (*tuning*).
-  - It keeps the art's raised aft deck, 1.5 m above the main deck, with stairs up each side and a breast rail (*tuning*).
+  - It keeps the art's raised aft deck, raised to 2.2 m above the main deck so a full-height captain's cabin fits under it (owner request, October 12), with stairs up each side and a breast rail (*tuning*).
+  - **Captain's cabin:** under the raised aft deck, entered by a doorway from the main deck. It is lit by three windows in each hull side, two in its front wall and a skylight grating in the deck above; the mizzen mast passes through it. It is a bare room: furniture and storage are later fittings.
   - **Rig:** three masts stand in the art's three mast sockets. The six sail mounts follow the confirmed schooner rig of 2 Medium, 1 Large and 3 Small:
     - a Large square topsail on the foremast,
     - Medium gaff sails on the main and mizzen masts,
@@ -226,6 +227,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - **Handling:** top speed 8 m/s, turn rate 22° per second, hold 40 slots and 4,000 kg (*tuning*).
   - **Sail looks:** each sail mount sets how a sail of its size looks on that rig, so the same Small, Medium and Large sail items fit any ship.
   - **Built by script:** `Scripts/Setup/build_schooner.py`, from the shared hull builder `ship_hull.py` that also draws the sloop.
+- **Working detail on every hull (DECIDED, delegated, October 12, owner asked for more realistic ships):** shrouds end in deadeyes on channels outboard of the rail, carried by iron chainplates, with ratlines between them; pin rails at each mast; a rudder hung on the stern by iron pintles; and an anchor catted at each bow. These are part of the hull and do nothing yet: the rudder's movement, anchors that drop and climbable ratlines are later work.
 - **Anchor (DECIDED, delegated, within the owner's hold-to-anchor rule):**
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
   - Ships start anchored, so a moored ship never drifts.

@@ -8,7 +8,8 @@ Through ordinary owned requests and its own movement input, the client:
      aft deck (each granted in Play only, just before it is fitted),
   2. raises the anchor, takes the helm, sets full sail and sails for 4 s, then leaves the helm and anchors,
   3. walks down the hatch stairs to the lower deck, aims at a cannon port there, and walks back up,
-  4. climbs the stairs to the raised aft deck,
+  4. walks through the doorway into the captain's cabin under the raised aft deck, then climbs the stairs to
+     that deck,
   5. swims beside the hull, looks up at the starboard ladder's rungs and climbs aboard.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/SchoonerPlayResult.json.
@@ -48,7 +49,7 @@ checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'frame0': 0, 'handle': None, 'memo': {}}
 
 DECK = ship.get_deck_height()
-LOWER, RAISED = 40.0, DECK + 150.0      # the lower deck's floor and the raised aft deck, from build_schooner.py
+LOWER, RAISED = 40.0, DECK + 220.0      # the lower deck's floor and the raised aft deck, from build_schooner.py
 STAND = 98.0                            # capsule half height plus clearance
 # Where to stand, in the ship's frame, to reach each place: (x, y, floor height).
 STANDS = {'ForeTopsail': (440, -80, DECK), 'Mainsail': (30, -80, DECK), 'Helm': (-740, -100, RAISED),
@@ -183,7 +184,22 @@ def climbed():
 
 down = walk(40, 0, DECK, 0.0, lambda z: z < LOWER + STAND + 30, 'down')
 up = walk(450, 0, LOWER, 180.0, lambda z: z > DECK + 60, 'up')
-raised = walk(-330, -231, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
+raised = walk(-250, -231, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
+
+
+def into_cabin():
+    """From the main deck, walk aft through the doorway under the raised deck until well inside the cabin."""
+    begin, _ = walk(-470, 0, DECK, 180.0, lambda z: True, 'cabin')
+
+    def done():
+        here, there = local_of(owner), local_of(pawn, peer)
+        state['memo']['cabin'].update(server=[round(here.x), round(here.z)], client=[round(there.x), round(there.z)])
+        inside = lambda p: p.x < -660 and p.z < RAISED
+        if not (inside(here) and inside(there) and ship.is_aboard(owner) and peer.is_aboard(pawn)):
+            return False
+        state['input'] = None
+        return True
+    return begin, done
 STEPS = [
     ('Bare schooner, anchored, with 1 Large, 2 Medium and 3 Small sail mounts and 12 cannon hardpoints', prepare, lambda: True, 2),
     ('Client installs a Large sail as the fore topsail', go('ForeTopsail', large),
@@ -203,6 +219,7 @@ STEPS = [
     ('Client aims at a starboard cannon port from the lower deck', aim_cannon,
      lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon4', 4),
     ('Client walks back up the stairs to the main deck', *up, 8),
+    ("Client walks through the doorway into the captain's cabin under the raised aft deck", *into_cabin(), 8),
     ('Client climbs the stairs to the raised aft deck', *raised, 8),
     ('Client, swimming beside the hull, looks up at the starboard ladder and climbs aboard', climb_ladder, climbed, 8),
 ]
@@ -215,7 +232,7 @@ def finish(error=None):
     RESULT.write_text(json.dumps({
         'success': error is None, 'checks': checks, 'error': error,
         'run': {k: round(m[k]) for k in ('moved', 'gap') if k in m},
-        'walks': {k: m[k] for k in ('down', 'up', 'raised') if k in m},
+        'walks': {k: m[k] for k in ('down', 'up', 'cabin', 'raised') if k in m},
         'client_local': str(local_of(pawn, peer)), 'server_local': str(local_of(owner)),
     }, indent=2), encoding='utf-8')
     unreal.log(f'EWPLAYCHECK Schooner success={error is None} error={error}')

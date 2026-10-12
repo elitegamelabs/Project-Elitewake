@@ -375,11 +375,112 @@ class Hull:
         b.tube([heel, end], lambda k: radius[k], sides=12)
         b.tube([lerp3(heel, end, 0.97), end], radius[1] + 1.5, sides=12, iron=1.0)  # iron band where stays meet
 
-    def shrouds(self, r, mast_x, top_z, xs, radius=1.6, spread=11.0):
-        """Shrouds from just below a masthead down to the rail at each x, on both sides."""
+    # ---- Rig ironwork, rudder and anchors ----------------------------------------------------------------
+
+    CHANNEL_DROP = 25.0     # channels sit this far below the rail
+    DEADEYE_OUT = 20.0      # deadeyes stand this far outboard of the hull's widest point
+
+    def deadeye_top(self, x, side):
+        """Where a shroud ends: on top of its deadeye, on the channel outboard of the rail."""
+        return (x, side * (self.half_beam(x) + self.DEADEYE_OUT), self.sheer(x) - self.CHANNEL_DROP + 24)
+
+    def channels(self, b, xs):
+        """A channel (a ledge on the hull side) for a mast's shrouds, a deadeye for each, and the iron chainplate
+        that carries it down the planking, on both sides."""
+        xm = sum(xs) / len(xs)
+        z = self.sheer(xm) - self.CHANNEL_DROP
         for side in (1, -1):
+            out = self.half_beam(xm)
+            b.box((xm, side * (out + 12), z), (max(xs) - min(xs) + 70, 30, 8))
             for x in xs:
-                r.tube([(mast_x, side * spread, top_z), (x, side * (self.half_beam(x) + 1), self.sheer(x) + 3)], radius, sides=6)
+                y = side * (self.half_beam(x) + self.DEADEYE_OUT)
+                b.tube([(x, y - 3.5, z + 13), (x, y + 3.5, z + 13)], 9.0, sides=12)      # deadeye
+                b.tube([(x, y - 4.5, z + 13), (x, y + 4.5, z + 13)], 9.6, sides=12, iron=1.0, capped=False)  # its iron strop
+                low = z - 70
+                t = self.theta_at(x, low)
+                hull_y, _ = self.section_point(x, t)
+                b.sweep([(x, y, z + 4), (x, side * (hull_y + 2), low)], 4.0, 1.5, side=(1, 0, 0), iron=1.0)  # chainplate
+
+    def shrouds(self, r, mast_x, top_z, xs, radius=1.6, spread=11.0, ratlines=True):
+        """Shrouds from just below a masthead down to their deadeyes, on both sides, with ratlines (the rope rungs
+        crew climb by) across them every 38 cm."""
+        for side in (1, -1):
+            lines = []
+            for x in xs:
+                end = self.deadeye_top(x, side)
+                r.tube([(mast_x, side * spread, top_z), end], radius, sides=6)
+                lines.append(((mast_x, side * spread, top_z), end))
+            if not ratlines or len(lines) < 2:
+                continue
+            low = max(line[1][2] for line in lines) + 45
+            z = low
+            while z < top_z - 120:
+                pts = [lerp3(a, e, (top_z - z) / (top_z - e[2])) for a, e in lines]
+                for p0, p1 in zip(pts, pts[1:]):
+                    r.tube([p0, p1], 0.7, sides=4, capped=False)
+                z += 38.0
+
+    def stern_post_x(self, z):
+        """Where the curve of the stern meets height z, on the keel's centreline."""
+        lo, hi = self.stern_x, -self.keel_flat
+        for _ in range(40):
+            mid = (lo + hi) / 2
+            if self.keel(mid) > z:
+                lo = mid
+            else:
+                hi = mid
+        return (lo + hi) / 2
+
+    def rudder(self, b, z_low, z_high, chord_low, chord_high, thick):
+        """A straight, raked rudder hung on the curve of the stern by iron pintles: its leading edge runs between
+        the stern's points at z_low and z_high, and the blade reaches aft of it, tarred below the waterline."""
+        a = (self.stern_post_x(z_low), z_low)
+        e = (self.stern_post_x(z_high), z_high)
+        rows = 8
+        lead = [(a[0] + (e[0] - a[0]) * k / rows, a[1] + (e[1] - a[1]) * k / rows) for k in range(rows + 1)]
+        chord = [chord_low + (chord_high - chord_low) * k / rows for k in range(rows + 1)]
+        tar = lambda p: 1.0 if p[2] < 20 else 0.0
+        for side in (1, -1):
+            face = [[(x, side * thick / 2, z), (x - c, side * thick / 2, z)] for (x, z), c in zip(lead, chord)]
+            b.grid(face, lambda i, j, side=side: (0, side, 0), tar_of=tar)
+        edge = lambda pts: [[(x, -thick / 2, z), (x, thick / 2, z)] for x, z in pts]
+        b.grid(edge([(x - c, z) for (x, z), c in zip(lead, chord)]), lambda i, j: (-1, 0, 0), tar_of=tar)   # trailing edge
+        b.grid(edge(lead), lambda i, j: (1, 0, 0), tar_of=tar)                                              # leading edge
+        for (x, z), c, sign in ((lead[0], chord[0], -1), (lead[-1], chord[-1], 1)):                          # foot and head
+            b.grid([[(x, -thick / 2, z), (x, thick / 2, z)], [(x - c, -thick / 2, z), (x - c, thick / 2, z)]],
+                   lambda i, j, sign=sign: (0, 0, sign), tar_of=tar)
+        for k in (1, 4, 7):  # pintle straps wrapping the post
+            x, z = lead[k]
+            b.box((x + 6, 0.0, z), (26, thick + 8, 7), iron=1.0)
+
+    def cathead_and_anchor(self, b, x, side, size):
+        """A cathead beam jutting from the bow's rail with an anchor catted beneath it, clear of the water."""
+        inner, outer = self.half_beam(x) - 30, self.half_beam(x) + 50 * size
+        z = self.sheer(x) - 8
+        b.sweep([(x, side * inner, z), (x, side * outer, z + 6)], 16.0 * size, 16.0 * size, side=(1, 0, 0))
+        b.box((x, side * (outer - 3), z + 6), (18 * size, 6, 18 * size), iron=1.0)
+        y = side * (outer - 8)
+        top, length = z - 18, 120.0 * size
+        crown = top - length
+        b.tube([(x, y, top + 10), (x, y, top)], 7.0 * size, sides=10, iron=1.0, capped=False)  # ring
+        b.tube([(x, y, top), (x, y, crown)], 4.5 * size, sides=8, iron=1.0)                       # shank
+        b.sweep([(x, y - 45 * size, top - 12), (x, y + 45 * size, top - 12)], 9 * size, 9 * size, side=(1, 0, 0))  # wooden stock
+        for sign in (1, -1):  # arms curving up from the crown to the flukes
+            arm = [(x + sign * 40 * size * math.sin(a), y, crown + 40 * size * (1 - math.cos(a))) for a in (0.0, 0.5, 1.0, 1.35)]
+            b.tube(arm, 4.0 * size, sides=8, iron=1.0)
+            fx, _, fz = arm[-1]
+            b.box((fx - sign * 4 * size, y, fz - 6 * size), (16 * size, 3, 22 * size), iron=1.0)
+
+    def pin_rail(self, b, x, length=110.0):
+        """A pin rail inside the bulwark at a mast, with belaying pins, on both sides."""
+        base = self.deck_at(x)
+        z = base + 75
+        for side in (1, -1):
+            y = side * (self.inner_y(x, z) - 9)
+            b.box((x, y, z), (length, 11, 6))
+            for k in range(6):
+                px = x - length / 2 + 12 + (length - 24) * k / 5
+                b.tube([(px, y, z + 13), (px, y, z - 12)], lambda q: (1.8, 1.4)[q], sides=6)
 
 
 def tar_rope(r):
