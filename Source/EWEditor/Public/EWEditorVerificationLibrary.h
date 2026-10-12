@@ -8,6 +8,7 @@
 class AEWPickup;
 class AEWInnTorchPickup;
 class AEWCharacter;
+class AEWShip;
 class UEWCraftingRecipe;
 class AEWPlayerController;
 class UEWItemDefinition;
@@ -108,4 +109,10 @@ UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     /** Apply bounded packet emulation to an existing PIE driver only. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SetVerificationNetworkSettings(UWorld* World, int32 LagMilliseconds, int32 LossPercent);
+
+    /** Play, authority only, for visual review: installs whatever the survivor carries onto every mount that
+     *  accepts it, then sets the sails from furled by SailSteps (0 furled, 1 half, 2 full) and anchors the ship.
+     *  Returns the number of fittings installed. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static int32 FitOutShipForReview(AEWShip* Ship, AEWCharacter* Character, int32 SailSteps);
 };

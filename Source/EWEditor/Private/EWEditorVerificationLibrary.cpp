@@ -39,6 +39,8 @@ bool UEWEditorVerificationLibrary::SendVerificationCompanyPolicy(AEWPlayerContro
 #include "Gathering/EWHandGatherable.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
+#include "Ships/EWShip.h"
+#include "Ships/EWShipDefinition.h"
 
 bool UEWEditorVerificationLibrary::AdvanceVerificationFoodClock(AActor* Owner, float RealSeconds)
 {
@@ -313,4 +315,20 @@ bool UEWEditorVerificationLibrary::SendVerificationContainerTransfer(AEWPlayerCo
     TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
     Controller->ServerTransferContainerItem(Container, bToContainer, EntryIndex, Quantity);
     return true;
+}
+
+int32 UEWEditorVerificationLibrary::FitOutShipForReview(AEWShip* Ship, AEWCharacter* Character, int32 SailSteps)
+{
+    if (!Ship || !Character || !Ship->HasAuthority() || !Ship->Definition) return 0;
+    int32 Installed = 0;
+    for (const FEWShipMount& Mount : Ship->Definition->Mounts)
+        if (Ship->InstallFitting(Character, Mount.MountId) == EEWFittingResult::Installed) ++Installed;
+    if (Ship->TakeHelm(Character))
+    {
+        for (int32 Step = 0; Step < 2; ++Step) Ship->StepSails(Character, -1);
+        for (int32 Step = 0; Step < SailSteps; ++Step) Ship->StepSails(Character, 1);
+        Ship->LeaveHelm(Character, true);
+    }
+    Ship->SetAnchored(Character, true);
+    return Installed;
 }

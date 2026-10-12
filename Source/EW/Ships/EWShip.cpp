@@ -69,6 +69,9 @@ AEWShip::AEWShip()
     HullVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HullVisual"));
     HullVisual->SetupAttachment(HullCollision);
     HullVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    RiggingVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RiggingVisual"));
+    RiggingVisual->SetupAttachment(HullCollision);
+    RiggingVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -110,6 +113,7 @@ void AEWShip::BeginPlay()
 
 void AEWShip::OnRep_Definition() { ApplyDefinition(); RefreshFittingVisuals(); }
 void AEWShip::OnRep_Fittings() { RefreshFittingVisuals(); }
+void AEWShip::OnRep_SailState() { RefreshFittingVisuals(); }
 
 void AEWShip::ApplyDefinition()
 {
@@ -196,6 +200,8 @@ void AEWShip::ApplyDefinition()
     }
 
     HullCollision->SetBoxExtent(Definition->HullExtent);
+    RiggingVisual->SetStaticMesh(Definition->RiggingMesh.LoadSynchronous());
+    RiggingVisual->SetRelativeTransform(Definition->HullMeshTransform);
     if (bModelledHull)
     {
         HullVisual->SetStaticMesh(HullMesh);
@@ -266,7 +272,22 @@ void AEWShip::RefreshFittingVisuals()
             const FVector Scale = StandInScale(Fitting.Item);
             Local = FTransform(FRotator::ZeroRotator, FVector(0, 0, Scale.Z * 50.f), Scale);
         }
+        // Sails follow the helmsman's setting: rolled on their spars when furled, lowered toward their foot at half.
+        bool bShown = true;
+        if (Mount->Type == EEWShipMountType::Sail && Mesh != StandInCube())
+        {
+            if (SailState == EEWSailState::Furled)
+            {
+                Mesh = Fitting.Item->FittingFurledMesh.LoadSynchronous();
+                bShown = Mesh != nullptr;
+            }
+            else if (SailState == EEWSailState::Half)
+            {
+                Local.SetScale3D(Local.GetScale3D() * FVector(1, 1, .55f));
+            }
+        }
         Visual->SetStaticMesh(Mesh);
+        Visual->SetVisibility(bShown);
         Visual->SetRelativeTransform(Local * Mount->Transform);
     }
 }
@@ -642,6 +663,7 @@ bool AEWShip::StepSails(AEWCharacter* Character, int32 Direction)
     const auto* PC = Cast<AEWPlayerController>(Character->GetController());
     if (!PC || PC->GetInteractionComponent()->IsMenuBlocked()) return false;
     SailState = static_cast<EEWSailState>(FMath::Clamp(static_cast<int32>(SailState) + Direction, 0, 2));
+    RefreshFittingVisuals();
     return true;
 }
 

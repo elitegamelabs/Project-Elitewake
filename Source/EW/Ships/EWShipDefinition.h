@@ -34,6 +34,10 @@ public:
      *  on, inside its bulwarks and hold; the extent box then only meets docks, land and other hulls. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     float DeckHeight = 90.f;
+    /** Optional ropes and other thin rigging, drawn with the hull but without collision so they never snag
+     *  walkers or the camera. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    TSoftObjectPtr<UStaticMesh> RiggingMesh;
     /** Lowest walkable floor inside the hull (the hold), above the ship's origin, in cm. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     float HoldFloorHeight = 0.f;

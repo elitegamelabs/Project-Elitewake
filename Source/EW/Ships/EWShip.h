@@ -46,6 +46,8 @@ public:
     TObjectPtr<UBoxComponent> HullCollision;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UStaticMeshComponent> HullVisual;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
+    TObjectPtr<UStaticMeshComponent> RiggingVisual;
     /** The ship's hold. Separate from anything a survivor carries. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship|Cargo")
     TObjectPtr<UEWInventoryComponent> Cargo;
@@ -213,7 +215,7 @@ private:
 
     UPROPERTY(Replicated)
     TObjectPtr<AEWCharacter> Helmsman;
-    UPROPERTY(Replicated)
+    UPROPERTY(ReplicatedUsing=OnRep_SailState)
     EEWSailState SailState = EEWSailState::Furled;
     UPROPERTY(Replicated)
     float Speed = 0.f;
@@ -235,6 +237,8 @@ private:
     void OnRep_Definition();
     UFUNCTION()
     void OnRep_Fittings();
+    UFUNCTION()
+    void OnRep_SailState();
     void ApplyDefinition();
     void RefreshFittingVisuals();
     /** Who may change fittings. Ship ownership and Company permissions will narrow this later. */

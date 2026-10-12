@@ -5,19 +5,24 @@ Safe to run again. Run in the editor, outside Play, with no unsaved maps:
 A bare hull in weathered oak: planked sides with seams and two wales, a tarred bottom, a deep curved bow with a
 tall stem post, a modest rounded stern, low bulwarks with a rail and posts, and one gunport each side. A flat deck
 has a cargo hatch with a coaming and stairs down into a cramped hold of ribs, floorboards, deck beams and a post.
-Boarding ladders on both sides and a capstan near the bow are part of the hull. Masts, sails, the helm and
-cannons are fittings and are not built here.
+Boarding ladders on both sides, a capstan near the bow, the mast and bowsprit are part of the hull, and the
+standing rigging (shrouds and forestay) is a separate mesh drawn without collision. Sails, the helm and cannons
+are fittings, built by build_ship_fittings.py, which reads the rig's positions from here.
 
 Coordinates are the ship's own, in cm: X forward to the bow, Y to starboard, Z up, the waterline at Z 0. The hold
 floor sits above the waves so the sea neither shows nor counts as swimmable inside. All sizes are tuning.
 """
 import json
 import math
+import sys
 from pathlib import Path
 import unreal
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
+
 MESH = '/Game/Elitewake/World/Ships/SM_SloopHull_v2'
-MATERIAL = '/Game/Elitewake/World/Ships/M_ShipTimber_v1'
+RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Sloop'
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 
@@ -34,6 +39,11 @@ LADDER_X = -100.0
 CAPSTAN = (380.0, -60.0)
 UV_TILE = 120.0         # one timber texture repeat, in cm
 STRAKES = 11
+# Rig: one mast with a gaff mainsail and a jib on the forestay out to the bowsprit.
+MAST_X, MAST_TOP = 90.0, 1300.0
+BOOM_Z = 460.0                       # boom height, above the heads of crew on deck
+STAY_TOP = (MAST_X + 8, 0.0, MAST_TOP - 30)
+STAY_BOW = (775.0, 0.0, 468.0)       # bowsprit end
 
 
 # ---- Hull lines --------------------------------------------------------------------------------------------
@@ -108,125 +118,6 @@ def inner_y(x, z):
     return max(y - SHELL * max(ny, 0.3), 0.0)
 
 
-# ---- Mesh accumulator ------------------------------------------------------------------------------------------
-
-def sub(a, b): return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
-def cross(a, b): return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0])
-def dot(a, b): return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
-
-
-class Builder:
-    """Vertices with colour flags (R tar, G iron, B plank tone, 0.5 neutral) and optional fixed UVs; triangles
-    oriented to face a hint direction."""
-
-    def __init__(self):
-        self.verts, self.colours, self.uvs, self.tris = [], [], [], []
-
-    def vertex(self, p, tar=0.0, iron=0.0, tone=0.5, uv=None):
-        self.verts.append(p)
-        self.colours.append((tar, iron, tone))
-        self.uvs.append(uv)
-        return len(self.verts) - 1
-
-    def tri(self, a, b, c, hint):
-        n = cross(sub(self.verts[b], self.verts[a]), sub(self.verts[c], self.verts[a]))
-        if dot(n, hint) < 0:
-            b, c = c, b
-        self.tris.append((a, b, c))
-
-    def quad(self, a, b, c, d, hint):
-        self.tri(a, b, c, hint)
-        self.tri(a, c, d, hint)
-
-    def grid(self, rows, hint_of, skip=None, tar_of=None, tone_of=None, uv_of=None):
-        """rows[i][j] points; quads between neighbours face hint_of(i, j)."""
-        ids = [[self.vertex(p, tar_of(p) if tar_of else 0.0, 0.0, tone_of(i, j) if tone_of else 0.5,
-                            uv_of(p) if uv_of else None)
-                for j, p in enumerate(row)] for i, row in enumerate(rows)]
-        for i in range(len(rows) - 1):
-            for j in range(len(rows[i]) - 1):
-                if skip and skip(i, j):
-                    continue
-                self.quad(ids[i][j], ids[i + 1][j], ids[i + 1][j + 1], ids[i][j + 1], hint_of(i, j))
-        return ids
-
-    def box(self, centre, size, iron=0.0, tar=0.0):
-        cx, cy, cz = centre
-        hx, hy, hz = size[0] / 2, size[1] / 2, size[2] / 2
-        for axis in range(3):
-            for sign in (-1, 1):
-                corners = []
-                for u in (-1, 1):
-                    for v in (-1, 1):
-                        p = [0, 0, 0]
-                        p[axis] = sign
-                        p[(axis + 1) % 3] = u
-                        p[(axis + 2) % 3] = v
-                        corners.append((cx + p[0] * hx, cy + p[1] * hy, cz + p[2] * hz))
-                hint = [0, 0, 0]
-                hint[axis] = sign
-                ids = [self.vertex(c, tar, iron) for c in corners]
-                self.quad(ids[0], ids[1], ids[3], ids[2], tuple(hint))
-
-    def sweep(self, path, width, height, side=(0, 1, 0), iron=0.0, tar=0.0, capped=True):
-        """A rectangular timber along a polyline; `side` is the direction of its width."""
-        rings = []
-        for k, p in enumerate(path):
-            a = path[max(k - 1, 0)]
-            b = path[min(k + 1, len(path) - 1)]
-            t = sub(b, a)
-            length = math.sqrt(dot(t, t)) or 1.0
-            t = (t[0] / length, t[1] / length, t[2] / length)
-            up = cross(t, side)
-            ul = math.sqrt(dot(up, up)) or 1.0
-            up = (up[0] / ul, up[1] / ul, up[2] / ul)
-            sd = cross(up, t)
-            ring = []
-            for su, uu in ((-1, -1), (1, -1), (1, 1), (-1, 1)):
-                q = (p[0] + sd[0] * su * width / 2 + up[0] * uu * height / 2,
-                     p[1] + sd[1] * su * width / 2 + up[1] * uu * height / 2,
-                     p[2] + sd[2] * su * width / 2 + up[2] * uu * height / 2)
-                ring.append(self.vertex(q, tar, iron))
-            rings.append((ring, sd, up, t))
-        for k in range(len(rings) - 1):
-            r0, sd, up, _ = rings[k]
-            r1 = rings[k + 1][0]
-            for f in range(4):
-                g = (f + 1) % 4
-                hint = [(-up[0], -up[1], -up[2]), sd, up, (-sd[0], -sd[1], -sd[2])][f]
-                self.quad(r0[f], r1[f], r1[g], r0[g], hint)
-        if capped:
-            for end, sign in ((rings[0], -1), (rings[-1], 1)):
-                ring, _, _, t = end
-                self.quad(ring[0], ring[1], ring[2], ring[3], (t[0] * sign, t[1] * sign, t[2] * sign))
-
-    def cylinder(self, base, radius, height, sides=16, iron=0.0):
-        x, y, z = base
-        ring0, ring1 = [], []
-        for k in range(sides + 1):
-            a = 2 * math.pi * k / sides
-            ring0.append(self.vertex((x + radius * math.cos(a), y + radius * math.sin(a), z), 0.0, iron))
-            ring1.append(self.vertex((x + radius * math.cos(a), y + radius * math.sin(a), z + height), 0.0, iron))
-        for k in range(sides):
-            a = 2 * math.pi * (k + 0.5) / sides
-            self.quad(ring0[k], ring0[k + 1], ring1[k + 1], ring1[k], (math.cos(a), math.sin(a), 0))
-        top = self.vertex((x, y, z + height), 0.0, iron)
-        bottom = self.vertex((x, y, z), 0.0, iron)
-        for k in range(sides):
-            self.tri(top, ring1[k], ring1[k + 1], (0, 0, 1))
-            self.tri(bottom, ring0[k], ring0[k + 1], (0, 0, -1))
-
-
-def uv_for(p, n):
-    """Local triplanar mapping chosen so planks and deck boards run fore and aft."""
-    ax, ay, az = abs(n[0]), abs(n[1]), abs(n[2])
-    if ay >= ax and ay >= az:
-        return (p[2] / UV_TILE, p[0] / UV_TILE)
-    if az >= ax:
-        return (p[1] / UV_TILE, p[0] / UV_TILE)
-    return (p[1] / UV_TILE, p[2] / UV_TILE)
-
-
 # ---- Parts -------------------------------------------------------------------------------------------------
 
 STATIONS = [STERN_X + 20 * i for i in range(int((BOW_X - STERN_X) / 20) + 1)]
@@ -260,7 +151,7 @@ def tarred(p):
     return min(1.0, max(0.0, (75 - p[2]) / 40))
 
 
-def along_hull(p):
+def along_hull(i, j, p):
     """Planking UVs: grain runs fore and aft wherever the hull curves."""
     return (p[2] / UV_TILE, p[0] / UV_TILE)
 
@@ -325,7 +216,7 @@ def transom(b):
     params = [k / 30 * math.pi / 2 for k in range(31)]
     outer = [[(x, -section_point(x, t)[0], section_point(x, t)[1]) for t in params],
              [(x, section_point(x, t)[0], section_point(x, t)[1]) for t in params]]
-    across = lambda p: (p[2] / UV_TILE, p[1] / UV_TILE)  # transom planks run athwartships
+    across = lambda i, j, p: (p[2] / UV_TILE, p[1] / UV_TILE)  # transom planks run athwartships
     b.grid(list(map(list, zip(*outer))), lambda i, j: (-1, 0, 0), tar_of=tarred, uv_of=across)
     xi = x + SHELL
     t0 = theta_at(x, FLOOR_Z - 4)
@@ -409,8 +300,7 @@ def hold(b):
         for side in (1, -1):
             path = [(x, side * (inner_y(x, min(z, sheer(x))) - 5), z) for z in (DECK_Z, (DECK_Z + sheer(x)) / 2, sheer(x) + 12)]
             b.sweep(path, 10.0, 10.0, side=(1, 0, 0))
-    # A post under the mast step, and stairs down from the hatch.
-    b.box((90, 0.0, (FLOOR_Z + DECK_Z - DECK_THICK - 10) / 2), (16, 16, DECK_Z - DECK_THICK - 10 - FLOOR_Z))
+    # Stairs down from the hatch; the mast stands in the hold forward of them.
     steps = 10
     rise = (DECK_Z - FLOOR_Z) / steps
     run = (hatch_fwd - hatch_aft - 10) / steps
@@ -462,6 +352,27 @@ def ladders(b):
             b.sweep([(LADDER_X - 24, y, z), (LADDER_X + 24, y, z)], 4.0, 4.0, side=(0, 1, 0))
 
 
+def mast_and_bowsprit(b):
+    """The mast steps on the hold floor and rises through the deck; the bowsprit reaches out over the bow."""
+    b.tube([(MAST_X, 0.0, FLOOR_Z), (MAST_X, 0.0, DECK_Z), (MAST_X, 0.0, MAST_TOP)],
+           lambda k: (15.0, 15.0, 10.0)[k], sides=14)
+    b.box((MAST_X, 0.0, MAST_TOP + 6), (26, 26, 12))                       # masthead cap
+    b.tube([(MAST_X, 0.0, DECK_Z), (MAST_X, 0.0, DECK_Z + 12)], 19.0, sides=14, iron=1.0)  # mast coat
+    b.tube([(470.0, 0.0, sheer(470) - 25), STAY_BOW[:2] + (STAY_BOW[2] + 2,)], lambda k: (11.0, 7.0)[k], sides=12)
+
+
+def rigging():
+    """Standing rigging: a forestay to the bowsprit and two shrouds a side, as tarred rope."""
+    r = Builder()
+    r.tube([STAY_TOP, STAY_BOW], 1.8, sides=6)
+    for side in (1, -1):
+        for x in (MAST_X - 30, MAST_X + 30):
+            r.tube([(MAST_X, side * 11, MAST_TOP - 90), (x, side * (half_beam(x) + 1), sheer(x) + 3)], 1.6, sides=6)
+    for k in range(len(r.colours)):
+        r.colours[k] = (1.0, 0.0, 0.5)
+    return r
+
+
 def capstan(b):
     x, y = CAPSTAN
     b.cylinder((x, y, DECK_Z), 26, 6)
@@ -474,94 +385,6 @@ def capstan(b):
 
 # ---- Assets ------------------------------------------------------------------------------------------------
 
-def make_material():
-    assets = unreal.AssetToolsHelpers.get_asset_tools()
-    mel = unreal.MaterialEditingLibrary
-    material = unreal.load_asset(MATERIAL) or assets.create_asset(MATERIAL.rsplit('/', 1)[1], MATERIAL.rsplit('/', 1)[0],
-                                                                  unreal.Material, unreal.MaterialFactoryNew())
-    mel.delete_all_material_expressions(material)
-
-    def node(cls, **props):
-        n = mel.create_material_expression(material, cls)
-        for k, v in props.items():
-            n.set_editor_property(k, v)
-        return n
-
-    def custom(code, kind, inputs):
-        n = node(unreal.MaterialExpressionCustom, code=code, output_type=kind)
-        pins = []
-        for name in inputs:
-            pin = unreal.CustomInput()
-            pin.set_editor_property('input_name', name)
-            pins.append(pin)
-        n.set_editor_property('inputs', pins)
-        return n
-
-    timber = node(unreal.MaterialExpressionTextureSample, texture=unreal.load_asset('/Game/Elitewake/World/Materials/T_Timber_v1'))
-    tint = node(unreal.MaterialExpressionVertexColor)
-    # Warm the grey driftwood toward the oak in the art; tar darkens the bottom; iron reads as dark metal.
-    colour = custom('float3 oak = Wood * float3(0.98, 0.7, 0.44);'
-                    ' float3 tarred = Wood * float3(0.2, 0.16, 0.13);'
-                    ' float3 c = lerp(oak, tarred, Flags.r) * lerp(0.72, 1.15, Flags.b);'
-                    ' return lerp(c, float3(0.05, 0.05, 0.055), Flags.g);',
-                    unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('Wood', 'Flags'))
-    rough = custom('return lerp(lerp(0.82, 0.62, Flags.r), 0.45, Flags.g);', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags',))
-    metal = custom('return Flags.g * 0.85;', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags',))
-    assert mel.connect_material_expressions(timber, 'RGB', colour, 'Wood')
-    for n in (colour, rough, metal):
-        assert mel.connect_material_expressions(tint, '', n, 'Flags')
-    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
-    assert mel.connect_material_property(rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
-    assert mel.connect_material_property(metal, '', unreal.MaterialProperty.MP_METALLIC)
-    mel.recompile_material(material)
-    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
-    return material
-
-
-def make_mesh(b, material):
-    geo = unreal.GeometryScript_MeshEdits
-    lists = unreal.GeometryScript_List
-    mesh = unreal.DynamicMesh()
-    geo.add_vertices_to_mesh(mesh, lists.convert_array_to_vector_list([unreal.Vector(*p) for p in b.verts]))
-    # The builder winds triangles counter-clockwise about their outward normal; Unreal's front faces wind the other way.
-    triangles = lists.convert_array_to_triangle_list([unreal.IntVector(a, c, d) for a, d, c in b.tris])
-    geo.add_triangles_to_mesh(mesh, triangles)
-    tri_ids = range(len(b.tris))  # a fresh mesh numbers its triangles in the order they were added
-    uvs = unreal.GeometryScript_UVs
-    uvs.set_num_uv_sets(mesh, 1)
-    for tid, (a, d, c) in zip(tri_ids, b.tris):
-        n = cross(sub(b.verts[c], b.verts[a]), sub(b.verts[d], b.verts[a]))
-        corner = unreal.GeometryScriptUVTriangle()
-        fixed = all(b.uvs[v] is not None for v in (a, c, d))
-        for name, v in (('uv0', a), ('uv1', c), ('uv2', d)):
-            corner.set_editor_property(name, unreal.Vector2D(*(b.uvs[v] if fixed else uv_for(b.verts[v], n))))
-        uvs.set_mesh_triangle_u_vs(mesh, 0, tid, corner)
-    colours = lists.convert_array_to_color_list([unreal.LinearColor(r, g, t, 1) for r, g, t in b.colours])
-    unreal.GeometryScript_VertexColors.set_mesh_per_vertex_colors(mesh, colours)
-    split = unreal.GeometryScriptSplitNormalsOptions()
-    split.set_editor_property('split_by_opening_angle', True)
-    split.set_editor_property('opening_angle_deg', 40.0)
-    unreal.GeometryScript_Normals.compute_split_normals(mesh, split, unreal.GeometryScriptCalculateNormalsOptions())
-    hull = unreal.load_asset(MESH)
-    if hull:
-        # Rebuilt in place: the sloop definition and placed ships keep pointing at the same asset.
-        options = unreal.GeometryScriptCopyMeshToAssetOptions()
-        options.set_editor_property('enable_recompute_normals', False)
-        options.set_editor_property('enable_recompute_tangents', True)
-        _, outcome = unreal.GeometryScript_AssetUtils.copy_mesh_to_static_mesh(
-            mesh, hull, options, unreal.GeometryScriptMeshWriteLOD())
-        assert outcome == unreal.GeometryScriptOutcomePins.SUCCESS, outcome
-    else:
-        hull, outcome = unreal.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(
-            mesh, MESH, unreal.GeometryScriptCreateNewStaticMeshAssetOptions(enable_collision=True,
-            enable_recompute_normals=False, enable_recompute_tangents=True))
-        assert hull, outcome
-    hull.get_editor_property('body_setup').set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
-    hull.set_material(0, material)
-    assert unreal.EditorAssetLibrary.save_loaded_asset(hull)
-    return hull
-
-
 def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE):
     m = unreal.EWShipMount()
     m.set_editor_property('mount_id', mount_id)
@@ -571,13 +394,14 @@ def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE):
     return m
 
 
-def update_definition(hull):
+def update_definition(hull, rig):
     definition = unreal.load_asset(DEFINITION)
     assert definition, DEFINITION
     deck_y = lambda x: inner_y(x, DECK_Z)
     t = unreal.EWShipMountType
     values = {
         'hull_mesh': hull,
+        'rigging_mesh': rig,
         'hull_mesh_transform': unreal.Transform(),
         'hull_extent': unreal.Vector(BOW_X - 10, BEAM + 5, -KEEL_Z + 5),
         'hull_draft': -KEEL_Z,
@@ -614,8 +438,11 @@ def main():
     studs(b)
     ladders(b)
     capstan(b)
-    hull = make_mesh(b, make_material())
-    report = {'vertices': len(b.verts), 'triangles': len(b.tris), 'definition': update_definition(hull)}
+    mast_and_bowsprit(b)
+    timber = make_timber_material()
+    hull = write_static_mesh(b, MESH, [timber], UV_TILE)
+    rig = write_static_mesh(rigging(), RIGGING, [timber], UV_TILE, collision=False)
+    report = {'vertices': len(b.verts), 'triangles': len(b.tris), 'definition': update_definition(hull, rig)}
     # The sloop floats with its waterline (local Z 0) on the sea's surface.
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     assert level.load_level(MAP)
@@ -630,4 +457,5 @@ def main():
     unreal.log('Sloop hull built')
 
 
-main()
+if __name__ == '__main__':
+    main()

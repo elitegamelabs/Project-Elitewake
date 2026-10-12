@@ -109,6 +109,10 @@ public:
     TSoftObjectPtr<UStaticMesh> FittingMesh;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     FTransform FittingMeshTransform;
+    /** Sails only: shown while the sails are furled (cloth rolled on its spars). Without it a furled sail hides.
+     *  Half sail shows FittingMesh lowered toward its origin, so build sails standing up from their foot. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    TSoftObjectPtr<UStaticMesh> FittingFurledMesh;
 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };
