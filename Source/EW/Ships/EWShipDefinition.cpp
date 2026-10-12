@@ -27,7 +27,18 @@ FString UEWShipDefinition::Validate() const
         if ((Mount.Type == EEWShipMountType::Sail) != (Mount.SailSize != EEWSailSize::None))
             return FString::Printf(TEXT("mount %s: only sail mounts have a sail size, and every sail mount needs one"), *Mount.MountId.ToString());
     }
+    for (const FEWInstalledFitting& BuiltIn : BuiltInFittings)
+    {
+        const FEWShipMount* Mount = FindMount(BuiltIn.MountId);
+        if (!Mount || !Accepts(*Mount, BuiltIn.Item))
+            return FString::Printf(TEXT("built-in fitting at %s does not fit that mount"), *BuiltIn.MountId.ToString());
+    }
     return FString();
+}
+
+bool UEWShipDefinition::IsBuiltIn(FName MountId) const
+{
+    return BuiltInFittings.ContainsByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
 }
 
 FPrimaryAssetId UEWShipDefinition::GetPrimaryAssetId() const

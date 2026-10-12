@@ -32,7 +32,7 @@ public:
     /** Carried by each survivor. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Starter Kit")
     TArray<FEWStarterKitItem> Items;
-    /** Put in every ship's hold; heavy fittings belong here rather than on a survivor's back. */
+    /** Put in the hold of every ship that can use it; heavy fittings belong here rather than on a survivor's back. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Starter Kit")
     TArray<FEWStarterKitItem> ShipCargo;
 

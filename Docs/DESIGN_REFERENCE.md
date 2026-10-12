@@ -202,6 +202,11 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
 - **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m; the schooner and larger ships step up from there.
+- **Raft and dinghy (DECIDED, delegated, October 12, from the owner's art):**
+  - Both steer by fittings built into the hull, fitted when the boat enters play and never removed: a long steering oar over the raft's stern, a rudder and tiller on the dinghy. Neither takes a ship's wheel.
+  - Each has one Small sail mount on its own short mast and boom. A mount can set how a fitting looks on that hull, so the same Small sail is the sloop's jib but sets on the raft's or dinghy's own mast.
+  - Their holds are a lashed crate on the raft (8 slots, 400 kg) and a sea chest under the dinghy's aft thwart (6 slots, 250 kg); both have an anchor at the bow and boarding points on each side (*tuning*).
+  - Raft top speed 3.5 m/s, dinghy 4.5 m/s, sloop 7 m/s (*tuning*).
 - **The sloop's hull (DECIDED, delegated, October 12, from the owner's sloop art):**
   - About 14 m long and 5 m in beam, double-ended: the stern mirrors the deep curved bow, each rising to a post, with no square transom (owner, October 12). Low bulwarks with a rail and posts, one gunport each side, side ladders clear of the gunports, and a planked, tarred hull (*tuning*).
   - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.

@@ -2,6 +2,8 @@
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
 #include "Ships/EWShip.h"
+#include "Ships/EWShipDefinition.h"
+#include "EWItemDefinition.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerState.h"
 
@@ -19,10 +21,15 @@ void AEWStarterKit::BeginPlay()
     for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
     {
         UEWInventoryComponent* Hold = It->GetCargo();
-        if (!Hold) continue;
+        const UEWShipDefinition* Def = It->Definition;
+        if (!Hold || !Def) continue;
         for (const FEWStarterKitItem& Entry : ShipCargo)
         {
-            if (Entry.Item) Hold->AddItem(Entry.Item, Entry.Quantity);
+            // Fittings go only to ships with a mount for them that is not built into the hull.
+            const bool bUseful = Entry.Item && (Entry.Item->FittingMountType == EEWShipMountType::None
+                || Def->Mounts.ContainsByPredicate([&](const FEWShipMount& Mount)
+                    { return UEWShipDefinition::Accepts(Mount, Entry.Item) && !Def->IsBuiltIn(Mount.MountId); }));
+            if (bUseful) Hold->AddItem(Entry.Item, Entry.Quantity);
         }
     }
 }

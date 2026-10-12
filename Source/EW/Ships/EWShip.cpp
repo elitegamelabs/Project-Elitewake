@@ -111,6 +111,18 @@ void AEWShip::BeginPlay()
     for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
 
+void AEWShip::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+    // Fittings that are part of the hull, fitted as the ship enters play (never in the editor, so maps stay bare).
+    if (HasAuthority() && Definition && GetWorld() && GetWorld()->IsGameWorld())
+    {
+        for (const FEWInstalledFitting& BuiltIn : Definition->BuiltInFittings)
+            if (BuiltIn.Item && !GetFitting(BuiltIn.MountId)) Fittings.Add(BuiltIn);
+        RefreshFittingVisuals();
+    }
+}
+
 void AEWShip::OnRep_Definition() { ApplyDefinition(); RefreshFittingVisuals(); }
 void AEWShip::OnRep_Fittings() { RefreshFittingVisuals(); }
 void AEWShip::OnRep_SailState() { RefreshFittingVisuals(); }
@@ -263,8 +275,10 @@ void AEWShip::RefreshFittingVisuals()
             Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
             Visual->RegisterComponent();
         }
-        FTransform Local = Fitting.Item->FittingMeshTransform;
-        UStaticMesh* Mesh = Fitting.Item->FittingMesh.LoadSynchronous();
+        // The mount's own look wins: the ship's rig decides how a fitting sits on it.
+        const bool bMountLook = !Mount->FittedMesh.IsNull();
+        FTransform Local = bMountLook ? Mount->FittedMeshTransform : Fitting.Item->FittingMeshTransform;
+        UStaticMesh* Mesh = bMountLook ? Mount->FittedMesh.LoadSynchronous() : Fitting.Item->FittingMesh.LoadSynchronous();
         if (!Mesh)
         {
             // Stand-in box resting on the mount point until real fitting art exists.
@@ -278,7 +292,7 @@ void AEWShip::RefreshFittingVisuals()
         {
             if (SailState == EEWSailState::Furled)
             {
-                Mesh = Fitting.Item->FittingFurledMesh.LoadSynchronous();
+                Mesh = bMountLook ? Mount->FittedFurledMesh.LoadSynchronous() : Fitting.Item->FittingFurledMesh.LoadSynchronous();
                 bShown = Mesh != nullptr;
             }
             else if (SailState == EEWSailState::Half)
@@ -497,6 +511,7 @@ EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
     if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
     const int32 Index = Fittings.IndexOfByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
     if (Index == INDEX_NONE) return EEWFittingResult::NoMount;
+    if (Definition && Definition->IsBuiltIn(MountId)) return EEWFittingResult::NotAllowed;
     if (Helmsman && Fittings[Index].Item && Fittings[Index].Item->FittingMountType == EEWShipMountType::Helm)
         return EEWFittingResult::Occupied;
     TGuardValue<bool> Guard(bChangingFittings, true);
@@ -621,8 +636,9 @@ bool AEWShip::LeaveHelm(AEWCharacter* Character, bool bForce)
     if (!HasAuthority() || !Character || Helmsman != Character) return false;
     const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
     const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f;
-    // Step off beside the wheel, or forward of it where the hull is too narrow beside it.
-    const FVector Seat = GetHelmSeatLocal(HalfHeight);
+    // Step off beside the wheel, or forward of it where the hull is too narrow beside it. Exits start a little
+    // above the deck so boards and stringers proud of it never block them; the survivor settles onto them.
+    const FVector Seat = GetHelmSeatLocal(HalfHeight) + FVector(0, 0, 10.f);
     FVector Exit = GetActorTransform().TransformPosition(Seat + FVector(0, 90.f, 0));
     if (Capsule)
     {

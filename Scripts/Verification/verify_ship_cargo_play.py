@@ -30,7 +30,8 @@ def player_id(p):
     return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'), ['PlayerId']))['PlayerId']
 
 crew = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
-ship = unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)[0]
+ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)
+            if str(s.get_editor_property('definition').get_editor_property('ship_id')) == 'Sloop')
 peer = next(a for a in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWShip) if a.get_name() == ship.get_name())
 wood = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
 assert wood, 'DA_TestWood is missing.'

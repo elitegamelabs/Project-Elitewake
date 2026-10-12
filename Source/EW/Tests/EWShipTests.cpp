@@ -462,4 +462,50 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     World->DestroyWorld(false);
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipBuiltInFittingTest, "Elitewake.Ships.BuiltInFittings",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
+{
+    using namespace EWShipTest;
+
+    // A small craft whose steering oar is part of the hull.
+    UEWItemDefinition* Oar = Item(TEXT("TestSteeringOar"), EEWShipMountType::Helm);
+    auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
+    Def->ShipId = TEXT("TestRaft");
+    Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-150, 0, 130)),
+                   Mount(TEXT("Sail"), EEWShipMountType::Sail, FVector(0, 0, 130), EEWSailSize::Small)};
+    FEWInstalledFitting BuiltIn; BuiltIn.MountId = TEXT("Helm"); BuiltIn.Item = Oar;
+    Def->BuiltInFittings = {BuiltIn};
+    TestTrue(TEXT("Valid definition"), Def->Validate().IsEmpty());
+    auto* Bad = DuplicateObject(Def, GetTransientPackage());
+    Bad->BuiltInFittings[0].MountId = TEXT("Sail");
+    TestFalse(TEXT("A built-in fitting must suit its mount"), Bad->Validate().IsEmpty());
+
+    const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    auto* CharClass = LoadClass<AEWCharacter>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C"));
+    auto* PCClass = LoadClass<AEWPlayerController>(nullptr, TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C"));
+    if (!TestNotNull(TEXT("Survivor class"), CharClass) || !TestNotNull(TEXT("Controller class"), PCClass))
+    { World->DestroyWorld(false); return false; }
+    auto* Ship = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), FTransform::Identity);
+    Ship->Definition = Def;
+    Ship->FinishSpawning(FTransform::Identity);
+    World->InitializeActorsForPlay(FURL()); World->BeginPlay();
+    TestEqual(TEXT("The steering oar is fitted when the raft starts"), Ship->GetFitting(TEXT("Helm")), Oar);
+    TestTrue(TEXT("A built-in helm steers"), Ship->HasFittingOfType(EEWShipMountType::Helm));
+
+    FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* C = World->SpawnActor<AEWCharacter>(CharClass, FVector(-60, 0, 186), FRotator::ZeroRotator, Params);
+    auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
+    PC->Possess(C);
+    TestEqual(TEXT("A built-in fitting cannot be removed"), Ship->RemoveFitting(C, TEXT("Helm")), EEWFittingResult::NotAllowed);
+    TestEqual(TEXT("The oar stays on the raft"), Ship->GetFitting(TEXT("Helm")), Oar);
+    TestEqual(TEXT("Nothing went to the inventory"), C->GetInventoryComponent()->GetItemCount(Oar), 0);
+    TestTrue(TEXT("The built-in helm can be taken"), Ship->TakeHelm(C));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
 #endif

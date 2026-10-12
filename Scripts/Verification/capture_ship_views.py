@@ -15,7 +15,9 @@ world = unreal.EWEditorVerificationLibrary.get_play_worlds()[0]
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
 pawn = pc.get_controlled_pawn()
 movement = pawn.get_component_by_class(unreal.CharacterMovementComponent)
-ship = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)[0]
+SHIP_ID = 'Sloop'
+ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
+            if str(s.get_editor_property('definition').get_editor_property('ship_id')) == SHIP_ID)
 deck = ship.get_deck_height()
 HALF = 98
 

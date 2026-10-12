@@ -4,6 +4,7 @@
 #include "EWShipTypes.generated.h"
 
 class UEWItemDefinition;
+class UStaticMesh;
 
 /** What a ship mount accepts. None marks an item that is not a ship fitting. */
 UENUM(BlueprintType)
@@ -30,6 +31,16 @@ struct FEWShipMount
     /** Relative to the ship. Players aim here to install, and the fitting mesh attaches here. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     FTransform Transform;
+    /** Optional: how whatever is fitted here looks, instead of the item's own mesh. A ship's rig shapes its sails,
+     *  so the same Small sail is a jib on one hull and sets on a short mast on another. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
+    TSoftObjectPtr<UStaticMesh> FittedMesh;
+    /** Sails only: shown while furled, replacing the item's furled mesh. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
+    TSoftObjectPtr<UStaticMesh> FittedFurledMesh;
+    /** Relative to the mount; used with FittedMesh. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
+    FTransform FittedMeshTransform;
 };
 
 /** One installed fitting. Replicated as part of the ship's fitting list. */
@@ -38,8 +49,8 @@ struct FEWInstalledFitting
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadOnly, Category="Ship")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     FName MountId;
-    UPROPERTY(BlueprintReadOnly, Category="Ship")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWItemDefinition> Item;
 };

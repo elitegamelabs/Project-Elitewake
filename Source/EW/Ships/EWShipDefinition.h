@@ -48,6 +48,13 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
     TArray<FEWShipMount> Mounts;
+    /** Part of the hull rather than fitted by players, such as a raft's steering oar: installed when the ship
+     *  starts if the mount is empty, and never removed. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
+    TArray<FEWInstalledFitting> BuiltInFittings;
+
+    UFUNCTION(BlueprintPure, Category="Mounts")
+    bool IsBuiltIn(FName MountId) const;
     /** Built-in boarding ladders on the hull sides, relative to the ship. Hold Interact there to climb aboard. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     TArray<FVector> BoardingPoints;

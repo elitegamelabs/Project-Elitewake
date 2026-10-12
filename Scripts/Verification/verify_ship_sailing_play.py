@@ -34,8 +34,7 @@ def player_id(p):
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 ships = unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)
-assert len(ships) == 1, 'Expected exactly one ship in the map.'
-ship = ships[0]
+ship = next(s for s in ships if str(s.get_editor_property('definition').get_editor_property('ship_id')) == 'Sloop')
 peer = next(a for a in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWShip) if a.get_name() == ship.get_name())
 folder = '/Game/Elitewake/Items/Testing'
 helm, mainsail, headsail = (unreal.load_asset(f'{folder}/{n}') for n in ('DA_TestShipHelm', 'DA_TestSailMedium', 'DA_TestSailSmall'))
