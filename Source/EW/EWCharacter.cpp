@@ -45,7 +45,8 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
 	GetCharacterMovement()->MaxSwimSpeed = 450.f;
-	GetCharacterMovement()->Buoyancy = 1.f;
+	// Above 1 a survivor floats with head and shoulders out of the water and drifts back up after a dive (tuning).
+	GetCharacterMovement()->Buoyancy = 1.3f;
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
@@ -155,7 +156,9 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	if (GetCharacterMovement()->IsSwimming())
 	{
 		CancelRestrictedActions();
-		if (IsLocallyControlled() && bSwimAscendInputHeld) AddMovementInput(FVector::UpVector);
+		// Rising only while fully under: at the surface, buoyancy holds the survivor and Space must not launch them out.
+		if (IsLocallyControlled() && bSwimAscendInputHeld && GetCharacterMovement()->ImmersionDepth() >= .99f)
+			AddMovementInput(FVector::UpVector);
 	}
 
 	if (HasAuthority() && SurvivalComponent)

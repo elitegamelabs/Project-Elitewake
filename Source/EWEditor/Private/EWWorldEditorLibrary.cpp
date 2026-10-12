@@ -2,6 +2,7 @@
 #include "GerstnerWaterWaves.h"
 #include "WaterBodyActor.h"
 #include "WaterBodyComponent.h"
+#include "WaterTerrainComponent.h"
 #include "WaterZoneActor.h"
 #include "Materials/Material.h"
 #include "WaterWaves.h"
@@ -54,4 +55,15 @@ FString UEWWorldEditorLibrary::RebuildWaterBody(AWaterBody* WaterBody)
         Zone ? *Zone->GetName() : TEXT("none"), Body->ShouldGenerateWaterMeshTile(), Body->AffectsWaterMesh(),
         Body->AffectsWaterInfo(), Surface ? *Surface->GetPathName() : TEXT("none"), Base ? *Base->GetPathName() : TEXT("none"),
         Base ? Base->bUsedWithWater : -1);
+}
+
+bool UEWWorldEditorLibrary::AddWaterTerrain(AActor* Actor)
+{
+    if (!Actor) return false;
+    if (Actor->FindComponentByClass<UWaterTerrainComponent>()) return true;
+    Actor->Modify();
+    auto* Terrain = NewObject<UWaterTerrainComponent>(Actor, TEXT("WaterTerrain"), RF_Transactional);
+    Actor->AddInstanceComponent(Terrain);
+    Terrain->RegisterComponent();
+    return true;
 }

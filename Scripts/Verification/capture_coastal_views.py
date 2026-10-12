@@ -23,6 +23,7 @@ VIEWS = [
     ('03_shore_to_islet', (3200, 1500, 120), (-6, 10)),
     ('04_swimming', (6600, -300, -80), (-5, 60)),
     ('05_underwater', (6600, -300, -400), (5, 60)),
+    ('06_shoreline', (3700, -1400, 200), (-18, 50)),
 ]
 state = {'index': 0, 'phase': 'place', 'at': time.monotonic(), 'shots': []}
 

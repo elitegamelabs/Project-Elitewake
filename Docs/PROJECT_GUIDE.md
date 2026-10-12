@@ -18,7 +18,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 
 | System | What works | Not done yet |
 | --- | --- | --- |
-| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming, with diving and surfacing | Final animations, moving ship decks, physical gamepad testing |
+| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming that floats head-out at the surface, with diving and surfacing | Final animations, moving ship decks, physical gamepad testing |
 | Survival | Replicated Health, Stamina, Hunger, Hydration, temperature, weight; painted HUD icons (owner's matte set) that fill from the bottom, and warnings; drinking fresh water; rejects invalid numbers | Needs drain and damage, temperature effects, regeneration, fall damage. Sprint uses placeholder rates (15/s drain, 10/s recovery) |
 | Inventory and equipment | 24 slots, stacking, weight, item details; equip, unequip and swap; eight-slot hotbar | Durability, save/load, character preview, discard. Inventory is visible to all players (privacy undecided) |
 | Interaction | E / X prompts that follow the device; press and hold actions timed by the server; cancellation | Real station, storage, vendor and ship actions |
@@ -30,7 +30,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Inn torch | One torch per player, with the owner's message and a highlight | Real inn placement, flame and light, carrying and using it |
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
 | Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
-| Coastal map | `Lvl_CoastalPlayground`: a generated sand island and islet with wet shoreline and dunes, Unreal Water ocean with a gentle swell and underwater view, volumetric clouds, dock, freshwater spring, a test starter kit, swimming down to 500 m | Vegetation, rocks and gatherable resources (removed with the blockout; real meshes next), wildlife, Port and inn |
+| Coastal map | `Lvl_CoastalPlayground`: a generated sand island and islet with wet shoreline and dunes, animated surf washing up both beaches, Unreal Water ocean with a gentle swell and underwater view, volumetric clouds, dock, freshwater spring, a test starter kit, swimming down to 500 m | Vegetation, rocks and gatherable resources (removed with the blockout; real meshes next), wildlife, Port and inn |
 | Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts, a boarding ladder on each side, an anchor capstan and a shared cargo hold. Load slows the ship, and an overloaded ship is swamped after 60 s until lightened. Players install fittings from their inventory, take the helm, set sail (W/S) and steer (A/D). Crew stand and walk on deck while it sails, and climb aboard from the water by the ladders. The server moves ships in fixed steps, driven by a world wind. One bare sloop floats in the coastal map | Sinking and wrecks, cannons, docking, ship ownership, smooth client-side ship motion, real hull and fitting art (boxes stand in) |
 
 ## Known problems
@@ -41,7 +41,6 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 4. **Ship edge cases.**
    - A ship placed so its hull already overlaps something (a dock, a shore) cannot move until it is moved clear.
    - Client ships move in small steps 30 times a second rather than smoothly.
-   - Idle swimmers sink at about 1 m/s.
    - Overload never sinks a ship yet: a swamped ship simply cannot sail until lightened. Real sinking comes with hull damage.
    - The hold screen is functional only: mouse-driven, not yet controller-navigable, and not yet visually reviewed.
 5. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
@@ -74,7 +73,7 @@ Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. This test ma
 
 - **Freshwater spring:** inland at about X −17 m, Y 15 m. Press E while thirsty.
 - **Dock and sea:** the dock reaches over swimmable water.
-  - Look down and move forward to dive; hold Space to rise.
+  - You float with your head out. Look down and move forward to dive; hold Space to rise; let go and you drift back up.
   - The water surface is at Z −65 cm. The visible waves are cosmetic.
 - **Sloop:** a bare hull floats off the dock at about X 62 m, Y 14 m. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. The sloop starts anchored: hold E at the capstan near the bow to raise or drop the anchor. Hold E at the hatch amidships to open the ship's hold; click a stack to move it. From the water, look at the ladder on either side and hold E to climb aboard. The sloop is moored facing the islet about 15 m east, so steer north for open water. Fittings have no recipe yet; take the helm and sails from the hold and fit them.
 - **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.

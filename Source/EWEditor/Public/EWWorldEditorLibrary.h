@@ -23,6 +23,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|World")
     static bool SetWaterBodyWaves(AWaterBody* WaterBody, UWaterWavesAsset* Waves);
 
+    /** Lets an actor's meshes render into overlapping water zones as terrain, so water knows its depth and shore. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|World")
+    static bool AddWaterTerrain(AActor* Actor);
+
     /** Rebuilds a water body's shape, render data and its zone's mesh and info texture; returns what the water
      *  renderer decides about it, for diagnosing water that does not draw. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|World")

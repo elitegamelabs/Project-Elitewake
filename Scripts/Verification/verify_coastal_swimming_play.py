@@ -72,6 +72,14 @@ def tick(delta):
             assert not movement(owner).is_swimming() and not movement(owner).is_falling(), [(str(p.get_actor_location()),str(movement(p).movement_mode),str(movement(p).velocity)) for p in [owner,pawn]]
             assert len(owner.get_inventory_component().get_available_recipes()) == 0
             checks.append('Client swims from offshore up the sloped beach to grounded movement; intro recipe locks remain intact')
+            place((6200,0,-400))
+            deadline = time.monotonic() + 8
+        elif phase == 9:
+            # An idle swimmer rises from 3 m down and floats with head and shoulders out (water surface Z -65).
+            for p in [owner, pawn]:
+                z = p.get_actor_location().z
+                assert movement(p).is_swimming() and -140 < z < -90, (p.get_name(), z, str(movement(p).movement_mode))
+            checks.append('An idle swimmer floats back up and rests at the surface, head out, on authority and client')
             finish(); return
         phase += 1
     except Exception as e: finish('phase '+str(phase)+': '+repr(e))
