@@ -23,7 +23,7 @@ def place(xyz):
 def finish(error=None):
     unreal.unregister_slate_post_tick_callback(handle)
     pawn.do_jump_end()
-    place((150,0,100))
+    place((150,0,200))
     client.set_control_rotation(unreal.Rotator())
     (Path(unreal.Paths.project_saved_dir())/'CoastalSwimmingResult.json').write_text(json.dumps({'success':error is None,'checks':checks,'error':error},indent=2))
 def tick(delta):

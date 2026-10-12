@@ -24,7 +24,7 @@ for p in [owner,pawn]:
 def finish(error=None):
     unreal.unregister_slate_post_tick_callback(handle)
     for p in [owner,pawn]:
-        p.teleport(unreal.Vector(150,0,100),unreal.Rotator())
+        p.teleport(unreal.Vector(150,0,200),unreal.Rotator())
         move(p).stop_movement_immediately()
     client.set_control_rotation(unreal.Rotator())
     Path(unreal.Paths.project_saved_dir(),'CoastalOceanDepthPlayResult.json').write_text(json.dumps({'success':error is None,'checks':checks,'error':error},indent=2))

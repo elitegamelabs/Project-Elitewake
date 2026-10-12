@@ -44,6 +44,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> NoticePanel;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> EffectWarnings;
     bool WasEmpty[3] = {};
+    bool bHasArt[5] = {};
     float WarningRemaining[3] = {};
     float BlinkTime = 0.f;
     int32 LastExhaustionCount = 0;

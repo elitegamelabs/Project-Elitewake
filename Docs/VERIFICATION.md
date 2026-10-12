@@ -6,7 +6,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **26 of 26 pass** (`Saved/Logs/WeightNative.log`, October 11).
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **26 of 26 pass** (`Saved/Logs/VisualsNative.log`, October 11).
 - **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`. `run_play_check.py` runs a check unattended: it starts Play, runs the script and closes the editor.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 
@@ -19,7 +19,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | System | Commit | Native test | Play check (passing checkpoints) | Not covered |
 | --- | --- | --- | --- | --- |
 | Stance animation and collision | `19c573c`, `a8996d4` | `Animation.StanceBlendSpaces`, `Movement.StanceCollision` | `verify_stance_play`, `verify_stance_clearance_play`, `verify_stance_network_play` (client to host with 100 ms lag and 1% loss) | Moving decks, final transitions |
-| Survival HUD | `ad0d82b`, redesign in `52678ec` | `Survival.ExhaustionNotification` | `verify_survival_hud_play` (20 standalone, 20 client) | Needs drain and damage, final icon art |
+| Survival HUD | `ad0d82b`, redesign in `52678ec` | `Survival.ExhaustionNotification` | `verify_survival_hud_play` (20 standalone, 20 client; rerun with the painted icons October 11) | Needs drain and damage |
 | Survival invalid-number guard | `3d054fd` | `Survival.InvalidNumericInput` | — | — |
 | Inventory selection | `ecf9f61` | — | `verify_inventory_selection_play` | Physical controller |
 | Pickups | `1e0e05d` | `Inventory.PickupValidation` | `verify_pickup_play` (competing pickups, packet loss) | — |
@@ -42,7 +42,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 | Late join and recovery | `3d054fd` | — | Three-process late join (17 checks); cancel and host-loss recovery (13) | Two PCs |
 | Windows package | local archive `local-20261010-071931` | — | 16 required packages cooked; 5 loopback checks; HUD rendered at 1280×720, 1920×1080, 2560×1440 | Clean PC, LAN, Shipping. Archive predates the coastal map, Company and swimming |
 | Company | `7b024cf` | `Company.NameValidation`, `Company.TameCapBoundaries` | `verify_company_play` (15 network, 4 menu clicks) | Persistence, world effects |
-| Coastal map and swimming | `42636f3` | — | `verify_coastal_play` (4), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3) | Buoyancy, underwater effects |
+| Coastal map and swimming | `42636f3`; terrain, ocean and starter kit pending commit | — | `verify_coastal_play` (3: kit replicated, spring, dock), `verify_coastal_swimming_play` (6), `verify_coastal_ocean_depth_play` (3); all six coastal and ship checks rerun on the new ground and ocean, October 11. Screenshots by `capture_coastal_views` | Buoyancy; a person still has to judge the look |
 | Ship hull, fittings and sailing | `b84ec94`, `26240ee`, `929fcc8` | `Ships.FittingAuthority`, `Ships.SailingAuthority` | `verify_ship_sailing_play` (9): client installs helm and two sails, takes the helm, sets full sail, sails 12.6 m and turns 52° in 4 s with its copy within 31 cm of the server, centres the rudder, leaves | Walking on a moving deck, anchor, cargo, cannons, ownership, separate processes |
 | Crew on deck and boarding ladders | `75c038b` | `Ships.BoardingAndAnchor` | `verify_ship_deck_play` (13): while the host sails 25 m, the client crew stays put on deck (0 cm slide, client copy within 3 mm), walks 2.4 m along the deck at 6.3 m/s, walks overboard and swims, then climbs the ladder back aboard | Separate processes, rough seas, many crew |
 | Anchor | `dcf33ad` | `Ships.SailingAuthority`, `Ships.BoardingAndAnchor` | `verify_ship_sailing_play` (11): the client raises the anchor, sails, then drops it and the ship stops; `verify_ship_deck_play` (14): the host raises it before sailing | Anchor HUD art, dragging and damage |

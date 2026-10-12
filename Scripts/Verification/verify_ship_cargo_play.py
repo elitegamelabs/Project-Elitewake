@@ -67,8 +67,13 @@ def entry_index(inventory, item):
             return i
     return -1
 
+def carried(character):
+    return character.get_inventory_component().get_item_count(wood)
+
 def open_hold():
-    assert hold_count(ship) == 0, 'The hold must start empty'
+    assert hold_count(ship) == 0, 'The hold must start with no Wood'
+    # Survivors may already carry Wood from the map's starter kit; counts below are relative to it.
+    state['memo'].update(crew_wood=carried(crew), host_wood=carried(host))
     assert crew.get_inventory_component().add_item(wood, 40) == 40
     spot = stand_near_hatch(crew, 0)
     for p in (crew, pawn):
@@ -106,16 +111,16 @@ def far_refused():
     if time.monotonic() - state['memo']['far_at'] < 1.5:
         return False
     assert hold_count(ship) == 25, f'hold changed to {hold_count(ship)}'
-    return crew.get_inventory_component().get_item_count(wood) == 5
+    return carried(crew) == state['memo']['crew_wood'] + 5
 
 STEPS = [
     ('Client holds Interact at the hatch; the hold screen opens on the client', open_hold,
      lambda: client.get_open_container() == peer and client.is_inventory_open(), 6),
     ('Client stores 40 Wood; server and client agree on the hold and the ship load', store,
-     lambda: hold_count(ship) == 40 and hold_count(peer) == 40 and crew.get_inventory_component().get_item_count(wood) == 0
+     lambda: hold_count(ship) == 40 and hold_count(peer) == 40 and carried(crew) == state['memo']['crew_wood']
      and ship.get_load() > 0 and abs(peer.get_load() - ship.get_load()) < 0.01, 6),
     ('Host aboard sees the stack and takes 15 out; the hold is shared', host_takes,
-     lambda: host.get_inventory_component().get_item_count(wood) == 15 and hold_count(ship) == 25 and hold_count(peer) == 25, 6),
+     lambda: carried(host) == state['memo']['host_wood'] + 15 and hold_count(ship) == 25 and hold_count(peer) == 25, 6),
     ('Client leaves the ship; its hold screen closes by itself', walk_away,
      lambda: client.get_open_container() is None and not client.is_inventory_open(), 6),
     ('A transfer request from out of reach is refused', far_request, far_refused, 6),

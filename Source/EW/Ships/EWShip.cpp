@@ -13,9 +13,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
+#include "WaterBodyActor.h"
 
 namespace
 {
@@ -102,6 +104,8 @@ void AEWShip::BeginPlay()
     }
     ApplyDefinition();
     RefreshFittingVisuals();
+    // Water bodies answer swimming and wave queries; their collision boxes must never stop a hull.
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
 
 void AEWShip::OnRep_Definition() { ApplyDefinition(); RefreshFittingVisuals(); }

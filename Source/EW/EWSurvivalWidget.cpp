@@ -16,6 +16,17 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 
+namespace
+{
+    /** Painted status art, in HUD order. A missing texture falls back to the generated icon. */
+    const TCHAR* const StatArt[]={
+        TEXT("/Game/Elitewake/UI/HUD/T_Health_Matte_v2.T_Health_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Stamina_Matte_v2.T_Stamina_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Hunger_Matte_v2.T_Hunger_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Hydration_Matte_v2.T_Hydration_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Weight_Matte_v2.T_Weight_Matte_v2")};
+}
+
 TSharedRef<SWidget> UEWSurvivalWidget::RebuildWidget()
 {
     BuildWidgetTree();
@@ -50,11 +61,14 @@ void UEWSurvivalWidget::BuildWidgetTree()
         Column->AddChildToVerticalBox(Box);
         auto* Bar = WidgetTree->ConstructWidget<UProgressBar>();
         auto Style=Bar->GetWidgetStyle();
-        auto* Outline=EWHudIcon::Make(i,true);auto* Fill=EWHudIcon::Make(i,false);
+        // Painted art: a dark copy shows the empty part and the full-colour copy fills from the bottom.
+        UTexture2D* Art=i<UE_ARRAY_COUNT(StatArt) ? LoadObject<UTexture2D>(nullptr,StatArt[i]) : nullptr;
+        bHasArt[i]=Art!=nullptr;
+        auto* Outline=Art ? Art : EWHudIcon::Make(i,true);auto* Fill=Art ? Art : EWHudIcon::Make(i,false);
         IconTextures.Add(Outline);IconTextures.Add(Fill);
         Style.BackgroundImage.SetResourceObject(Outline);
         Style.BackgroundImage.DrawAs=ESlateBrushDrawType::Image;
-        Style.BackgroundImage.TintColor=FSlateColor(FLinearColor(.8f,.82f,.85f));
+        Style.BackgroundImage.TintColor=FSlateColor(Art ? FLinearColor(.16f,.16f,.17f,.85f) : FLinearColor(.8f,.82f,.85f));
         Style.FillImage.SetResourceObject(Fill);Style.FillImage.DrawAs=ESlateBrushDrawType::Image;
         Style.FillImage.TintColor=FSlateColor(FLinearColor::White);
         Bar->SetWidgetStyle(Style);Bar->SetBorderPadding(FVector2D::ZeroVector);
@@ -134,7 +148,7 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%.0f%%"),Fraction*100.f)));
         Bars[i]->SetToolTipText(FText::FromString(Text));
         Bars[i]->SetPercent(Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f);
-        Bars[i]->SetFillColorAndOpacity(Colors[i]);
+        Bars[i]->SetFillColorAndOpacity(bHasArt[i] ? FLinearColor::White : Colors[i]);
     }
     const int32 Indices[]={2,3,1};
     const bool bNewExhaustion=LastExhaustionCount!=Survival->GetStaminaExhaustionCount();

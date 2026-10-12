@@ -19,7 +19,7 @@ public class EW : ModuleRules
             "SlateCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Water" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"EW"

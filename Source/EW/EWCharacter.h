@@ -141,7 +141,7 @@ protected:
 
 	/** Show temporary movement-state text while the locomotion foundation is validated. */
 	UPROPERTY(EditDefaultsOnly, Category="Debug")
-	bool bShowMovementDebug = true;
+	bool bShowMovementDebug = false;
 
 	/** Delays prone entry so a quick press remains a crouch toggle. */
 	FTimerHandle StanceHoldTimer;
