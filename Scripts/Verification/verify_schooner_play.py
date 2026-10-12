@@ -9,7 +9,7 @@ Through ordinary owned requests and its own movement input, the client:
   2. raises the anchor, takes the helm, sets full sail and sails for 4 s, then leaves the helm and anchors,
   3. walks down the hatch stairs to the lower deck, aims at a cannon port there, and walks back up,
   4. climbs the stairs to the raised aft deck,
-  5. climbs aboard from the sea by the starboard ladder.
+  5. swims beside the hull, looks up at the starboard ladder's rungs and climbs aboard.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/SchoonerPlayResult.json.
 """
@@ -165,7 +165,8 @@ def climb_ladder():
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
-    state['aim'] = lambda: ship.get_boarding_point_world(1)
+    # Look up at the rungs, about 2 m above the water, as a swimmer beside the hull sees them.
+    state['aim'] = lambda: ship.get_boarding_point_world(1) + unreal.Vector(0, 0, 180)
     state['memo'].update(climb_at=time.monotonic() + 0.5, climb_sent=False)
 
 
@@ -203,7 +204,7 @@ STEPS = [
      lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon4', 4),
     ('Client walks back up the stairs to the main deck', *up, 8),
     ('Client climbs the stairs to the raised aft deck', *raised, 8),
-    ('Client climbs aboard from the sea by the starboard ladder', climb_ladder, climbed, 8),
+    ('Client, swimming beside the hull, looks up at the starboard ladder and climbs aboard', climb_ladder, climbed, 8),
 ]
 
 

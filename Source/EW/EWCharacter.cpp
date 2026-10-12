@@ -21,6 +21,8 @@
 #include "EW.h"
 #include "EWPlayerController.h"
 #include "Ships/EWShip.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimSequenceBase.h"
 
 AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer.SetDefaultSubobjectClass<UEWCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
@@ -551,4 +553,55 @@ void AEWCharacter::DoJumpEnd()
 	bSwimAscendInputHeld = false;
 	// signal the character to stop jumping
 	StopJumping();
+}
+
+bool AEWCharacter::CanAttack() const
+{
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsSwimming();
+}
+
+void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const
+{
+    if (!Animation || !GetMesh()) return;
+    if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+        Anim->PlaySlotAnimationAsDynamicMontage(Animation, TEXT("DefaultSlot"), .1f, .15f);
+}
+
+void AEWCharacter::PlayAttackAnimation(int32 Variant)
+{
+    if (AttackAnimations.Num()) PlayOneShot(AttackAnimations[FMath::Abs(Variant) % AttackAnimations.Num()]);
+}
+
+void AEWCharacter::BroadcastAttack(int32 Variant)
+{
+    if (HasAuthority()) MulticastAttack(Variant);
+}
+
+void AEWCharacter::MulticastAttack_Implementation(int32 Variant)
+{
+    // The owner already swung the moment the button went down.
+    if (!IsLocallyControlled()) PlayAttackAnimation(Variant);
+}
+
+void AEWCharacter::MulticastHitReact_Implementation()
+{
+    PlayOneShot(HitReactAnimation);
+}
+
+AEWCharacter* AEWCharacter::MeleeStrike()
+{
+    if (!HasAuthority() || !CanAttack() || !GetWorld()) return nullptr;
+    FVector Eye; FRotator View;
+    GetActorEyesViewPoint(Eye, View);
+    // From the chest along where the survivor looks; the first thing in the way takes the blow, so walls shield.
+    const FVector From = GetActorLocation() + FVector(0, 0, BaseEyeHeight * .5f);
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWMelee), false, this);
+    FHitResult Hit;
+    if (!GetWorld()->SweepSingleByChannel(Hit, From, From + View.Vector() * MeleeReach, FQuat::Identity, ECC_Pawn,
+            FCollisionShape::MakeSphere(MeleeRadius), Query)) return nullptr;
+    auto* Victim = Cast<AEWCharacter>(Hit.GetActor());
+    if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
+    Victim->SurvivalComponent->ApplyDamage(FistDamage);
+    Victim->MulticastHitReact();
+    return Victim;
 }

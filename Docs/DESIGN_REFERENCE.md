@@ -303,6 +303,14 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
 - The period pistol stays (the old Magnum is reworked; name and stats TBD).
 - Rifles use bullets and tranquilizer darts. Longbows and crossbows use regular and tranquilizer arrows. Harpoon ammo is separate.
 - Simple melee and a small enemy encounter come before deeper combat.
+- **Simple melee (DECIDED, delegated, October 12):**
+  - Attack swings once a second (*tuning*), with a swing everyone sees.
+  - What it does depends on the target:
+    - A tree or rock with the right tool equipped is gathered, as before.
+    - Anything else takes a strike at the first survivor within 1.7 m in the direction the attacker looks (*tuning*). Walls and hulls in the way block the strike.
+  - A strike deals the confirmed fist damage of 10 and makes the target flinch. Tools strike as fists until tool and weapon damage values are set.
+  - No swinging while prone, swimming or at a helm.
+  - Whether Company members can hurt each other: TBD.
 
 ## Economy
 

@@ -312,5 +312,36 @@ public:
     UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
     UFUNCTION(BlueprintPure, Category="Hotbar")
     UEWHotbarComponent* GetHotbarComponent() const { return HotbarComponent; }
+
+    /** Attack (Left Mouse / RT): a swing everyone sees. With nothing to gather in front, it strikes the survivor
+     *  there. Swings the owner predicts locally first; the server decides every hit. */
+    /** Whether this survivor may swing now: alive, on their feet or crouched, not swimming and not at a helm. */
+    UFUNCTION(BlueprintPure, Category="Combat")
+    bool CanAttack() const;
+    /** Plays a swing on this machine. Variant picks among AttackAnimations. */
+    void PlayAttackAnimation(int32 Variant);
+    /** Authority: plays the swing for everyone else and, unless the owner already did, for the owner. */
+    void BroadcastAttack(int32 Variant);
+    /** Authority: strikes the first survivor within reach where this one is looking. Returns who was hit. */
+    UFUNCTION(BlueprintCallable, Category="Combat")
+    AEWCharacter* MeleeStrike();
+
+    /** Bare-handed damage (confirmed) and the reach of a swing (tuning). Weapons bring their own damage later. */
+    static constexpr float FistDamage = 10.f;
+    static constexpr float MeleeReach = 170.f;
+    static constexpr float MeleeRadius = 30.f;
+
+    /** Swing animations, played in turn, and the flinch of a survivor who is struck. */
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TArray<TObjectPtr<UAnimSequenceBase>> AttackAnimations;
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TObjectPtr<UAnimSequenceBase> HitReactAnimation;
+
+private:
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastAttack(int32 Variant);
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastHitReact();
+    void PlayOneShot(UAnimSequenceBase* Animation) const;
 };
 

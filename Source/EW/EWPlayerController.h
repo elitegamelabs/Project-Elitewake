@@ -59,7 +59,7 @@ public:
     UFUNCTION(Client, Reliable)
     void ClientFoodResult(EEWFoodUseResult Result);
     UFUNCTION(BlueprintCallable, Category="Gathering") void Attack();
-    UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target);
+    UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target, int32 Variant);
     AEWPlayerController();
     virtual void OnPossess(APawn* InPawn) override;
     UFUNCTION(BlueprintPure, Category="Interaction")
@@ -134,6 +134,11 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UInputAction> AttackAction;
     UPROPERTY(Transient) TObjectPtr<UInputMappingContext> RuntimeAttackMappingContext;
     double LastHarvestAttackTime = -100;
+    /** The owner's own swing pacing, so it never shows a swing the server would refuse. */
+    double LastLocalAttackTime = -100;
+    int32 AttackVariant = 0;
+    /** One swing a second: the draft tool pace, now for every swing (tuning). */
+    static constexpr double AttackInterval = 1.0;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
     TObjectPtr<UEWInteractionComponent> InteractionComponent;
     UPROPERTY(Transient) TObjectPtr<UEWInteractionWidget> InteractionWidget;

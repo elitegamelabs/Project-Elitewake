@@ -192,8 +192,12 @@ void AEWShip::ApplyDefinition()
         auto* Target = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(),
             *FString::Printf(TEXT("Ladder_%d"), i)), RF_Transient);
         Target->SetupAttachment(HullCollision);
-        Target->SetRelativeLocation(Point);
-        Target->SetBoxExtent(FVector(40, 25, 90));
+        // Aim anywhere on it, from just below the water up to the rail: on a tall hull the rungs a swimmer sees are
+        // well above the boarding point.
+        const float Bottom = Point.Z - 90.f;
+        const float Top = FMath::Max(Point.Z + 90.f, Definition->GetDeckHeight() + 60.f);
+        Target->SetRelativeLocation(FVector(Point.X, Point.Y, (Bottom + Top) / 2.f));
+        Target->SetBoxExtent(FVector(40, 25, (Top - Bottom) / 2.f));
         Target->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         Target->SetCollisionResponseToAllChannels(ECR_Ignore);
         Target->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -718,12 +722,61 @@ float AEWShip::ComputeTargetSpeed() const
 void AEWShip::SimulateSailing(float DeltaSeconds)
 {
     if (!HasAuthority() || !Definition || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f) return;
+    // Steps run from the last simulated pose, not the blended one shown since, unless something else moved the ship.
+    if (bHasSimulatedPose && GetActorTransform().Equals(ShownPose, .01f)) SetActorTransform(SimulatedPose);
+    else PreviousSimulatedPose = GetActorTransform();
     SimulationRemainder += FMath::Min(DeltaSeconds, MaxCatchUpSeconds);
     while (SimulationRemainder >= SimulationStep)
     {
         SimulationRemainder -= SimulationStep;
+        PreviousSimulatedPose = GetActorTransform();
         StepSimulation(SimulationStep);
     }
+    SimulatedPose = ShownPose = GetActorTransform();
+    bHasSimulatedPose = true;
+}
+
+void AEWShip::ShowSimulatedPose()
+{
+    if (!bHasSimulatedPose) return;
+    const float Alpha = FMath::Clamp(SimulationRemainder / SimulationStep, 0.f, 1.f);
+    FTransform Shown;
+    Shown.Blend(PreviousSimulatedPose, SimulatedPose, Alpha);
+    SetActorTransform(Shown);
+    ShownPose = GetActorTransform();
+}
+
+float AEWShip::CurrentTurnRate() const
+{
+    if (!Definition) return 0.f;
+    return Rudder * Definition->TurnRate * FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
+}
+
+void AEWShip::PostNetReceiveLocationAndRotation()
+{
+    const FTransform Shown = GetActorTransform();
+    Super::PostNetReceiveLocationAndRotation();
+    NetPose = GetActorTransform();
+    NetPoseTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+    // The first update, or one far from what is shown (a teleport), is taken at once; otherwise glide to it.
+    if (!bHasNetPose || FVector::Dist(Shown.GetLocation(), NetPose.GetLocation()) > ClientSnapDistance)
+    {
+        bHasNetPose = true;
+        return;
+    }
+    SetActorTransform(Shown);
+}
+
+void AEWShip::SmoothClientMotion(float DeltaSeconds)
+{
+    if (!bHasNetPose || !GetWorld()) return;
+    // Carry the last update forward at the ship's replicated speed and turn, then ease toward that.
+    const float Ahead = FMath::Clamp(float(GetWorld()->GetTimeSeconds() - NetPoseTime), 0.f, MaxClientPrediction);
+    const FRotator Heading = NetPose.Rotator() + FRotator(0, CurrentTurnRate() * Ahead, 0);
+    FTransform Predicted(Heading, NetPose.GetLocation() + Heading.Vector() * Speed * Ahead, NetPose.GetScale3D());
+    FTransform Shown;
+    Shown.Blend(GetActorTransform(), Predicted, 1.f - FMath::Exp(-ClientCatchUpRate * DeltaSeconds));
+    SetActorTransform(Shown);
 }
 
 void AEWShip::StepSimulation(float Step)
@@ -732,8 +785,7 @@ void AEWShip::StepSimulation(float Step)
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
     if (Speed <= 1.f && (bAnchored || FMath::IsNearlyZero(Rudder))) { Speed = FMath::Max(Speed, 0.f); return; }
-    const float Steerage = FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
-    const FRotator Rotation = GetActorRotation() + FRotator(0, Rudder * Definition->TurnRate * Steerage * Step, 0);
+    const FRotator Rotation = GetActorRotation() + FRotator(0, CurrentTurnRate() * Step, 0);
     // People never stop a ship: survivors on deck ride with it and swimmers are pushed aside.
     // Hulls, land and other world geometry still block the sweep.
     HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
@@ -754,7 +806,11 @@ void AEWShip::StepSimulation(float Step)
 void AEWShip::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (!HasAuthority()) return;
+    if (!HasAuthority())
+    {
+        SmoothClientMotion(DeltaSeconds);
+        return;
+    }
     if (Helmsman && !IsValidHelmsman(Helmsman))
     {
         if (IsValid(Helmsman)) LeaveHelm(Helmsman, true);
@@ -767,6 +823,7 @@ void AEWShip::Tick(float DeltaSeconds)
         if (const auto* PC = Cast<AEWPlayerController>(Helmsman->GetController()); !PC || PC->GetInteractionComponent()->IsMenuBlocked())
             Rudder = 0.f;
     SimulateSailing(DeltaSeconds);
+    ShowSimulatedPose();
 }
 
 void AEWShip::EndPlay(const EEndPlayReason::Type Reason)

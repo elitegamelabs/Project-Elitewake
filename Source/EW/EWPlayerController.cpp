@@ -161,18 +161,30 @@ void AEWPlayerController::SetupInputComponent()
 void AEWPlayerController::Attack()
 {
     if (!IsLocalPlayerController() || IsInventoryOpen() || IsMapOpen() || IsSessionMenuOpen()) return;
-    ServerAttack(FEWInteractionTargeting::FindTarget(Cast<AEWCharacter>(GetPawn())));
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || !Survivor->CanAttack()) return;
+    // Swing at once on this screen, at the pace the server allows; the server decides what it hits.
+    const double Now = GetWorld()->GetTimeSeconds();
+    if (Now - LastLocalAttackTime < AttackInterval) return;
+    LastLocalAttackTime = Now;
+    Survivor->PlayAttackAnimation(++AttackVariant);
+    ServerAttack(FEWInteractionTargeting::FindTarget(Survivor), AttackVariant);
 }
 
-void AEWPlayerController::ServerAttack_Implementation(AActor* Target)
+void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Variant)
 {
     const double Now = GetWorld()->GetTimeSeconds();
-    // Per-controller admission, across targets. One-second interval is draft tool tuning.
-    if (Now - LastHarvestAttackTime < 1.) return;
-    LastHarvestAttackTime = Now;
+    // Per-controller admission, across targets, a little looser than the owner's own pacing so that network
+    // timing never refuses a swing the owner saw.
+    if (Now - LastHarvestAttackTime < AttackInterval - .1) return;
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || !Survivor->CanAttack()) return;
     if (InteractionComponent->IsMenuBlocked() || InteractionComponent->GetHoldState().Target) return;
-    if (auto* Tree = Cast<AEWHarvestTree>(Target)) Tree->TryHarvest(Cast<AEWCharacter>(GetPawn()));
-    else if (auto* Node = Cast<AEWMineable>(Target)) Node->TryMine(Cast<AEWCharacter>(GetPawn()));
+    LastHarvestAttackTime = Now;
+    Survivor->BroadcastAttack(Variant);
+    if (auto* Tree = Cast<AEWHarvestTree>(Target)) Tree->TryHarvest(Survivor);
+    else if (auto* Node = Cast<AEWMineable>(Target)) Node->TryMine(Survivor);
+    else Survivor->MeleeStrike();
 }
 
 void AEWPlayerController::Interact()

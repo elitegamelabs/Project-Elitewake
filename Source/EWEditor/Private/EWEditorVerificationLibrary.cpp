@@ -79,7 +79,7 @@ bool UEWEditorVerificationLibrary::SendVerificationAttack(AEWPlayerController* C
 {
     if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
     TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
-    Controller->ServerAttack(Target); return true;
+    Controller->ServerAttack(Target, 0); return true;
 }
 
 AEWHandGatherable* UEWEditorVerificationLibrary::SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks)

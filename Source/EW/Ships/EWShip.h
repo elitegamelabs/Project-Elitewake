@@ -42,6 +42,8 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void Tick(float DeltaSeconds) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+    /** Clients glide to each replicated position instead of jumping to it (see SmoothClientMotion). */
+    virtual void PostNetReceiveLocationAndRotation() override;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UBoxComponent> HullCollision;
@@ -171,6 +173,11 @@ public:
     static constexpr float FullSteerageSpeed = 200.f;
     /** Turning still possible when stopped, as a fraction of full, so a ship pinned on land can turn away. */
     static constexpr float MinSteerage = .2f;
+    /** Clients: how quickly the shown ship closes on where the server has it (per second), how far ahead of the
+     *  last update it may be predicted (s), and how far off it may be before it simply jumps there (cm). */
+    static constexpr float ClientCatchUpRate = 12.f;
+    static constexpr float MaxClientPrediction = .3f;
+    static constexpr float ClientSnapDistance = 500.f;
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
@@ -223,6 +230,17 @@ private:
     UPROPERTY(Replicated)
     float Rudder = 0.f;
     float SimulationRemainder = 0.f;
+    /** Authority: the pose after the latest fixed step and the one before it. Each frame shows the ship between
+     *  the two, so it moves smoothly at any frame rate while the simulation keeps its fixed steps. */
+    FTransform SimulatedPose;
+    FTransform PreviousSimulatedPose;
+    /** The blended pose last shown; if the actor is found elsewhere, something moved it and the steps restart there. */
+    FTransform ShownPose;
+    bool bHasSimulatedPose = false;
+    /** Clients: the latest replicated pose and when it arrived. */
+    FTransform NetPose;
+    double NetPoseTime = 0.0;
+    bool bHasNetPose = false;
     /** Set while pressed against an obstacle, so the contact is logged once rather than every step. */
     bool bAgainstObstacle = false;
     /** The definition supplies a hull mesh: crew collide with it rather than with the extent box. */
@@ -233,6 +251,10 @@ private:
     const UPrimitiveComponent* TraceAimedComponent(const AEWCharacter* Character) const;
     bool IsValidHelmsman(const AEWCharacter* Character) const;
     void StepSimulation(float Step);
+    /** Degrees per second the ship turns at its current speed and rudder. */
+    float CurrentTurnRate() const;
+    void ShowSimulatedPose();
+    void SmoothClientMotion(float DeltaSeconds);
 
     UFUNCTION()
     void OnRep_Definition();
