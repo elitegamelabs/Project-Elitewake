@@ -2,8 +2,8 @@
 Safe to run again. Run in the editor, outside Play, with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
-A bare hull in weathered oak: planked sides with seams and two wales, a tarred bottom, a deep curved bow with a
-tall stem post, a modest rounded stern, low bulwarks with a rail and posts, and one gunport each side. A flat deck
+A bare double-ended hull in weathered oak: the stern mirrors the bow, both sweeping up in a deep curve to a post.
+Planked sides with seams and two wales, a tarred bottom, low bulwarks with a rail and posts, one gunport each side. A flat deck
 has a cargo hatch with a coaming and stairs down into a cramped hold of ribs, floorboards, deck beams and a post.
 Boarding ladders on both sides, a capstan near the bow, the mast and bowsprit are part of the hull, and the
 standing rigging (shrouds and forestay) is a separate mesh drawn without collision. Sails, the helm and cannons
@@ -26,59 +26,49 @@ RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Sloop'
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 
-STERN_X, BOW_X = -520.0, 540.0
-BEAM = 185.0            # half-beam at its widest
+STERN_X, BOW_X = -700.0, 700.0      # about 14 m overall, ends alike
+BEAM = 250.0            # half-beam at its widest (5 m beam)
 KEEL_Z = -110.0
 DECK_Z = 250.0          # deck top
 DECK_THICK = 8.0
 FLOOR_Z = 30.0          # hold floor top, above the swell
 SHELL = 9.0             # planking thickness
-HATCH = (-220.0, 20.0, 50.0)   # hatch opening: aft x, forward x, half-width
-GUNPORT = (-60.0, 48.0, 268.0, 306.0)  # centre x, width, bottom z, top z
-LADDER_X = -100.0
-CAPSTAN = (380.0, -60.0)
+HATCH = (-280.0, -40.0, 50.0)  # hatch opening: aft x, forward x, half-width
+GUNPORT = (-140.0, 48.0, 268.0, 306.0)  # centre x, width, bottom z, top z
+LADDER_X = -360.0       # aft of the gunports
+CAPSTAN = (480.0, -70.0)
 UV_TILE = 120.0         # one timber texture repeat, in cm
 STRAKES = 11
 # Rig: one mast with a gaff mainsail and a jib on the forestay out to the bowsprit.
-MAST_X, MAST_TOP = 90.0, 1300.0
+MAST_X, MAST_TOP = 120.0, 1420.0
 BOOM_Z = 460.0                       # boom height, above the heads of crew on deck
 STAY_TOP = (MAST_X + 8, 0.0, MAST_TOP - 30)
-STAY_BOW = (775.0, 0.0, 468.0)       # bowsprit end
+STAY_BOW = (925.0, 0.0, 500.0)       # bowsprit end, where the forestay and the jib's tack meet
 
 
 # ---- Hull lines --------------------------------------------------------------------------------------------
 
 def half_beam(x):
-    if x >= -40:
-        return BEAM * max(0.0, 1 - ((x + 40) / (BOW_X + 40)) ** 2.2) ** 0.5
-    return BEAM * (1 - 0.35 * ((-40 - x) / (-40 - STERN_X)) ** 2.2)
+    return BEAM * max(0.0, 1 - (abs(x) / BOW_X) ** 2.4) ** 0.5
 
 
 def sheer(x):
-    """Top of the bulwark: low amidships, sweeping up to a high bow and a raised stern."""
-    if x > 60:
-        return 315 + 115 * ((x - 60) / (BOW_X - 60)) ** 2
-    if x < -200:
-        return 315 + 50 * ((-200 - x) / (-200 - STERN_X)) ** 2
-    return 315.0
+    """Top of the bulwark: low amidships, sweeping up alike to the bow and the stern."""
+    return 315 + 115 * max(0.0, (abs(x) - 60) / (BOW_X - 60)) ** 2
 
 
 def keel(x):
-    """Bottom of the hull: flat amidships, sweeping up into the stem at the bow and a little at the stern."""
-    if x > 80:
-        return KEEL_Z + (sheer(x) - 12 - KEEL_Z) * ((x - 80) / (BOW_X - 80)) ** 1.7
-    if x < -430:
-        return KEEL_Z + 70 * ((-430 - x) / (-430 - STERN_X)) ** 1.5
+    """Bottom of the hull: flat amidships, sweeping up alike into the stem and the sternpost."""
+    ax = abs(x)
+    if ax > 120:
+        return KEEL_Z + (sheer(x) - 12 - KEEL_Z) * ((ax - 120) / (BOW_X - 120)) ** 1.7
     return KEEL_Z
 
 
 def fullness(x):
-    """Superellipse exponent of the sections: full amidships, sharp at the bow."""
-    if x > 150:
-        return 2.8 - 1.2 * (x - 150) / (BOW_X - 150)
-    if x < -300:
-        return 2.8 - 0.5 * (-300 - x) / (-300 - STERN_X)
-    return 2.8
+    """Superellipse exponent of the sections: full amidships, sharp at both ends."""
+    ax = abs(x)
+    return 2.8 - 1.2 * (ax - 200) / (BOW_X - 200) if ax > 200 else 2.8
 
 
 def section_point(x, theta):
@@ -211,45 +201,27 @@ def inner_shell(b):
         b.grid(rows, hint, skip, uv_of=along_hull)
 
 
-def transom(b):
-    x = STERN_X
-    params = [k / 30 * math.pi / 2 for k in range(31)]
-    outer = [[(x, -section_point(x, t)[0], section_point(x, t)[1]) for t in params],
-             [(x, section_point(x, t)[0], section_point(x, t)[1]) for t in params]]
-    across = lambda i, j, p: (p[2] / UV_TILE, p[1] / UV_TILE)  # transom planks run athwartships
-    b.grid(list(map(list, zip(*outer))), lambda i, j: (-1, 0, 0), tar_of=tarred, uv_of=across)
-    xi = x + SHELL
-    t0 = theta_at(x, FLOOR_Z - 4)
-    inner_params = [t0 + (math.pi / 2 - t0) * k / 20 for k in range(21)]
-    inner = [[(xi, -inner_y(x, section_point(x, t)[1]), section_point(x, t)[1]) for t in inner_params],
-             [(xi, inner_y(x, section_point(x, t)[1]), section_point(x, t)[1]) for t in inner_params]]
-    b.grid(list(map(list, zip(*inner))), lambda i, j: (1, 0, 0), uv_of=across)
-
-
 def rail_and_keel(b):
     for side in (1, -1):
-        path = [(x, side * (half_beam(x) - SHELL / 2), sheer(x) + 4.5) for x in STATIONS if half_beam(x) > 2]
+        path = [(STERN_X + 2, 0.0, sheer(STERN_X) + 4.5)]
+        path += [(x, side * (half_beam(x) - SHELL / 2), sheer(x) + 4.5) for x in STATIONS if half_beam(x) > 2]
         path.append((BOW_X - 2, 0.0, sheer(BOW_X) + 4.5))
         b.sweep(path, 16.0, 9.0, side=(0, 1, 0))
-    stern_path = [(STERN_X + 4, y, sheer(STERN_X) + 4.5) for y in (-half_beam(STERN_X), half_beam(STERN_X))]
-    b.sweep(stern_path, 16.0, 9.0, side=(1, 0, 0))
-    # Keel along the bottom, then the stem rising out of it and standing proud above the bow.
-    keel_path = [(x, 0.0, keel(x) - 6) for x in STATIONS if x <= 80]
+    # Keel along the bottom, rising into a stem at the bow and a matching sternpost; the bowsprit rests on the stem head.
+    keel_path = [(x, 0.0, keel(x) - 6) for x in STATIONS if abs(x) <= 120]
     b.sweep(keel_path, 18.0, 14.0, tar=1.0)
-    stem = [(x, 0.0, keel(x) - 4) for x in [80 + 20 * k for k in range(24)] if x <= BOW_X]
-    stem += [(BOW_X + 12, 0.0, sheer(BOW_X) + 30), (BOW_X + 20, 0.0, sheer(BOW_X) + 60), (BOW_X + 14, 0.0, sheer(BOW_X) + 75)]
-    b.sweep(stem, 20.0, 22.0)
-    # Iron straps binding the stem.
-    for k, x in enumerate((330, 430, 500)):
-        z = keel(x) - 4
-        b.box((x + 10, 0.0, z + 4), (8, 26, 26), iron=1.0)
+    for end in (1, -1):
+        post = [(end * x, 0.0, keel(x) - 4) for x in [120 + 20 * k for k in range(30)] if x <= BOW_X]
+        post += [(end * (BOW_X + 10), 0.0, sheer(BOW_X)), (end * (BOW_X + 12), 0.0, sheer(BOW_X) + 8)]
+        b.sweep(post, 20.0, 22.0, side=(0, 1, 0))
+        for x in (450, 560, 640):  # iron straps binding the post
+            b.box((end * (x + 10), 0.0, keel(x)), (8, 26, 26), iron=1.0)
 
 
 def deck(b):
     hatch_aft, hatch_fwd, hatch_half = HATCH
     ys = [-200 + 25 * k for k in range(17)]
-    stations = [x for x in STATIONS if x >= STERN_X + SHELL and inner_y(x, DECK_Z) > 8]
-    stations[0] = STERN_X + SHELL
+    stations = [x for x in STATIONS if inner_y(x, DECK_Z) > 8]
 
     def rows_at(z):
         return [[(x, max(-inner_y(x, z), min(inner_y(x, z), y)), z) for y in ys] for x in stations]
@@ -276,24 +248,26 @@ def deck(b):
 def hold(b):
     hatch_aft, hatch_fwd, hatch_half = HATCH
     ys = [-150 + 25 * k for k in range(13)]
-    stations = [x for x in STATIONS if x >= STERN_X + SHELL and inner_y(x, FLOOR_Z) > 20]
+    stations = [x for x in STATIONS if inner_y(x, FLOOR_Z) > 20]
     rows = [[(x, max(-inner_y(x, FLOOR_Z), min(inner_y(x, FLOOR_Z), y)), FLOOR_Z) for y in ys] for x in stations]
     b.grid(rows, lambda i, j: (0, 0, 1))
     # Deck beams, framing the hatch; the hold keeps 2 m of headroom beneath them.
-    for x in (-460, -370, -290, hatch_aft - 8, hatch_fwd + 8, 110, 200, 290, 380):
+    for x in (-580, -490, -400, hatch_aft - 8, hatch_fwd + 8, 60, 200, 290, 380, 470):
         half = inner_y(x, DECK_Z - DECK_THICK)
         if half > 10:
             b.box((x, 0.0, DECK_Z - DECK_THICK - 5), (14, 2 * half, 10))
     # Ribs following the planking, from the floor to the underside of the deck, and posts in the bulwark above it.
-    for x in range(-460, 420, 60):
+    for x in range(-640, 660, 60):
         x = float(x)
+        if inner_y(x, FLOOR_Z) < 20:
+            continue
         for side in (1, -1):
             path = []
             for k in range(13):
                 z = FLOOR_Z + (DECK_Z - DECK_THICK - 10 - FLOOR_Z) * k / 12
                 path.append((x, side * (inner_y(x, z) - 4), z))
             b.sweep(path, 9.0, 8.0, side=(1, 0, 0))
-    for x in range(-460, 470, 90):
+    for x in range(-630, 640, 90):
         x = float(x)
         if abs(x - GUNPORT[0]) < 40:
             continue
@@ -313,7 +287,7 @@ def hold(b):
 def studs(b):
     """Iron nail heads where each strake crosses a frame."""
     span = (math.pi / 2) / STRAKES
-    for x in range(-460, 420, 60):
+    for x in range(-640, 660, 60):
         x = float(x)
         for k in range(STRAKES):
             theta = (k + 0.5) * span
@@ -358,7 +332,13 @@ def mast_and_bowsprit(b):
            lambda k: (15.0, 15.0, 10.0)[k], sides=14)
     b.box((MAST_X, 0.0, MAST_TOP + 6), (26, 26, 12))                       # masthead cap
     b.tube([(MAST_X, 0.0, DECK_Z), (MAST_X, 0.0, DECK_Z + 12)], 19.0, sides=14, iron=1.0)  # mast coat
-    b.tube([(470.0, 0.0, sheer(470) - 25), STAY_BOW[:2] + (STAY_BOW[2] + 2,)], lambda k: (11.0, 7.0)[k], sides=12)
+    heel = (BOW_X - 70, 0.0, sheer(BOW_X - 70) + 30)  # starts at the bow, clear of heads on the foredeck
+    b.tube([heel, STAY_BOW], lambda k: (11.0, 7.0)[k], sides=12)
+    b.tube([lerp3(heel, STAY_BOW, 0.97), STAY_BOW], 8.5, sides=12, iron=1.0)  # iron band where the forestay and jib tack meet
+
+
+def lerp3(a, b, t):
+    return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
 
 
 def rigging():
@@ -411,9 +391,9 @@ def update_definition(hull, rig):
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         'mounts': [
-            mount('Helm', t.HELM, (-430, 0, DECK_Z + 50)),
-            mount('Mainsail', t.SAIL, (90, 0, DECK_Z + 50), sail=unreal.EWSailSize.MEDIUM),
-            mount('Headsail', t.SAIL, (420, 0, DECK_Z + 50), sail=unreal.EWSailSize.SMALL),
+            mount('Helm', t.HELM, (-520, 0, DECK_Z + 50)),
+            mount('Mainsail', t.SAIL, (MAST_X, 0, DECK_Z + 50), sail=unreal.EWSailSize.MEDIUM),
+            mount('Headsail', t.SAIL, (560, 0, DECK_Z + 50), sail=unreal.EWSailSize.SMALL),
             mount('PortCannon', t.CANNON, (GUNPORT[0], -(deck_y(GUNPORT[0]) - 45), DECK_Z + 40), yaw=-90),
             mount('StarboardCannon', t.CANNON, (GUNPORT[0], deck_y(GUNPORT[0]) - 45, DECK_Z + 40), yaw=90),
         ],
@@ -430,7 +410,6 @@ def main():
     b = Builder()
     outer_shell(b)
     inner_shell(b)
-    transom(b)
     rail_and_keel(b)
     deck(b)
     hold(b)
@@ -449,7 +428,7 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     for ship in [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip)]:
         p = ship.get_actor_location()
-        ship.set_actor_location(unreal.Vector(p.x, 1650, -65), False, False)  # moored clear of the dock
+        ship.set_actor_location(unreal.Vector(p.x, 1750, -65), False, False)  # moored clear of the dock
         ship.set_actor_label('Sloop')
     assert level.save_current_level()
     report['success'] = True

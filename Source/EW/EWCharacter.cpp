@@ -195,6 +195,11 @@ void AEWCharacter::Tick(float DeltaSeconds)
 #endif
 }
 
+bool AEWCharacter::IsSwimming() const
+{
+	return GetCharacterMovement() && GetCharacterMovement()->IsSwimming();
+}
+
 void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -495,8 +500,10 @@ void AEWCharacter::DoMove(float Right, float Forward)
 		const FRotator Rotation = GetController()->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
 
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(GetCharacterMovement()->IsSwimming() ? Rotation : YawRotation).GetUnitAxis(EAxis::X);
+		// get forward vector. Swimmers follow the camera's pitch only when it clearly looks up or down (tuning),
+		// so the usual slightly lowered camera swims level instead of diving.
+		const bool bDiveOrClimb = GetCharacterMovement()->IsSwimming() && FMath::Abs(FRotator::NormalizeAxis(Rotation.Pitch)) > 25.f;
+		const FVector ForwardDirection = FRotationMatrix(bDiveOrClimb ? Rotation : YawRotation).GetUnitAxis(EAxis::X);
 
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);

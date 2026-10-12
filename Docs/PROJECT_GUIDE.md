@@ -18,7 +18,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 
 | System | What works | Not done yet |
 | --- | --- | --- |
-| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming that floats head-out at the surface, with diving and surfacing | Final animations, moving ship decks, physical gamepad testing |
+| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming with its own animations, floating head-out at the surface, diving only when the camera clearly looks down | Final animations, moving ship decks, physical gamepad testing |
 | Survival | Replicated Health, Stamina, Hunger, Hydration, temperature, weight; painted HUD icons (owner's matte set) that fill from the bottom, and warnings; drinking fresh water; rejects invalid numbers | Needs drain and damage, temperature effects, regeneration, fall damage. Sprint uses placeholder rates (15/s drain, 10/s recovery) |
 | Inventory and equipment | 24 slots, stacking, weight, item details; equip, unequip and swap; eight-slot hotbar | Durability, save/load, character preview, discard. Inventory is visible to all players (privacy undecided) |
 | Interaction | E / X prompts that follow the device; press and hold actions timed by the server; cancellation | Real station, storage, vendor and ship actions |
@@ -73,9 +73,9 @@ Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. This test ma
 
 - **Freshwater spring:** inland at about X −17 m, Y 15 m. Press E while thirsty.
 - **Dock and sea:** the dock reaches over swimmable water.
-  - You float with your head out. Look down and move forward to dive; hold Space to rise; let go and you drift back up.
+  - You float with your head out and swim level. Look well down and move forward to dive; hold Space to rise; let go and you drift back up.
   - The water surface is at Z −65 cm. The visible waves are cosmetic.
-- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 16.5 m. Climb a side ladder, walk the deck, and take the stairs through the hatch into the hold. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. The sloop starts anchored: hold E at the capstan near the bow to raise or drop the anchor. Hold E at the hatch amidships to open the ship's hold; click a stack to move it. From the water, look at the ladder on either side and hold E to climb aboard. The sloop is moored facing the islet about 15 m east, so steer north for open water. Fittings have no recipe yet; take the helm and sails from the hold and fit them.
+- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 17.5 m. Climb a side ladder, walk the deck, and take the stairs through the hatch into the hold. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, and hold E again to leave. The sloop starts anchored: hold E at the capstan near the bow to raise or drop the anchor. Hold E at the hatch amidships to open the ship's hold; click a stack to move it. From the water, look at the ladder on either side and hold E to climb aboard. The sloop is moored facing the islet about 15 m east, so steer north for open water. Fittings have no recipe yet; take the helm and sails from the hold and fit them.
 - **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
 
 ## Building and testing

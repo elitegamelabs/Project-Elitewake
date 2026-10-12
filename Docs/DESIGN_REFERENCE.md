@@ -201,8 +201,9 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, hold Interact to climb aboard.
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
+- **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m; the schooner and larger ships step up from there.
 - **The sloop's hull (DECIDED, delegated, October 12, from the owner's sloop art):**
-  - About 10.6 m long and 3.7 m in beam, deep curved bow with a tall stem post, raised stern, low bulwarks with a rail and posts, one gunport each side, and a planked, tarred hull (*tuning*).
+  - About 14 m long and 5 m in beam, double-ended: the stern mirrors the deep curved bow, each rising to a post, with no square transom (owner, October 12). Low bulwarks with a rail and posts, one gunport each side, side ladders clear of the gunports, and a planked, tarred hull (*tuning*).
   - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.
   - Hulls are built by script in the editor (`Scripts/Setup/build_sloop_hull.py`), not bought or generated, so they can be reshaped and re-run.
   - The mast, bowsprit and standing rigging come with the hull. The mainsail fitting brings its boom and gaff; the jib hangs on the forestay. Sails show the helmsman's setting: rolled on their spars when furled, shortened at half, fully set at full. The owner's sail art is the cloth itself. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.

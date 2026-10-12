@@ -27,9 +27,10 @@ ITEMS = '/Game/Elitewake/Items/Testing'
 UV_TILE = hull.UV_TILE
 TIMBER, CLOTH = 0, 1
 
-# Corners of the sail cloth in the art, in pixels (image 1536 x 1024), found from each image's alpha.
-MAIN_ART = {'tack': (134, 956), 'throat': (398, 172), 'peak': (1110, 10), 'clew': (1502, 944)}
-JIB_ART = {'tack': (114, 986), 'head': (296, 10), 'clew': (1420, 910)}
+# Corners of the sail cloth in the art, in pixels (image 1536 x 1024): found from each image's alpha with the
+# thin corner rope loops eroded away, so the cloth's own edges meet the mast, boom, gaff and stay.
+MAIN_ART = {'tack': (186, 940), 'throat': (416, 208), 'peak': (1086, 54), 'clew': (1460, 928)}
+JIB_ART = {'tack': (176, 968), 'head': (330, 80), 'clew': (1348, 906)}
 ART_SIZE = (1536.0, 1024.0)
 
 
@@ -89,9 +90,9 @@ def mainsail(furled):
 
 
 def jib_frame():
-    tack = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.06)
-    head = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.70)
-    clew = (225.0, 0.0, 445.0)
+    tack = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.04)
+    head = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.68)
+    clew = (hull.MAST_X + 140, 0.0, 445.0)
     rotation = unreal.MathLibrary.make_rot_from_zx(unreal.Vector(*[head[i] - tack[i] for i in range(3)]),
                                                    unreal.Vector(*[clew[i] - tack[i] for i in range(3)]))
     return unreal.Transform(location=unreal.Vector(*tack), rotation=rotation), tack, head, clew

@@ -6,7 +6,7 @@ Last updated: October 11, 2026. The full dated log of every run, including earli
 
 ## How things are tested
 
-- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **26 of 26 pass** (`Saved/Logs/RigNative.log`, October 12).
+- **Native tests:** C++ automation tests under `Source/EW/Tests/`, run headless with the `Elitewake` filter (see [PROJECT_GUIDE.md](PROJECT_GUIDE.md#building-and-testing)). Latest run: **26 of 26 pass** (`Saved/Logs/HullV3Native.log`, October 12).
 - **Play checks:** Python scripts in `Scripts/Verification/` that run inside the editor. Most use a listen server and one client in the same process. Some launch separate game processes over loopback. Results go to `Saved/*Result.json`. `run_play_check.py` runs a check unattended: it starts Play, runs the script and closes the editor.
 - **Package checks:** PowerShell scripts that verify a cooked Windows Development build.
 

@@ -278,6 +278,10 @@ public:
 	UFUNCTION(BlueprintPure, Category="Movement|Stance")
 	bool IsProne() const { return bIsProne; }
 
+	/** Returns whether the character is swimming; drives the swim animations. */
+	UFUNCTION(BlueprintPure, Category="Movement|Swimming")
+	bool IsSwimming() const;
+
 	/** Returns whether the local player is using first person. */
 	UFUNCTION(BlueprintPure, Category="Camera")
 	bool IsFirstPerson() const { return bIsFirstPerson; }

@@ -442,9 +442,9 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
     const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
     const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f;
     const FVector Point = Definition->BoardingPoints[BoardingIndex];
-    // Step onto the deck just inboard of the ladder.
+    // Step onto the deck about a metre inboard of the ladder, clear of the bulwark.
     const float Side = Point.Y >= 0.f ? 1.f : -1.f;
-    const FVector Deck(Point.X, Side * FMath::Max(Definition->HullExtent.Y - 70.f, 0.f), Definition->GetDeckHeight() + HalfHeight + 2.f);
+    const FVector Deck(Point.X, Side * FMath::Max(FMath::Abs(Point.Y) - 110.f, 0.f), Definition->GetDeckHeight() + HalfHeight + 2.f);
     const FVector Destination = GetActorTransform().TransformPosition(Deck);
     if (Capsule)
     {

@@ -1,7 +1,8 @@
-"""Create the initial stance assets in the active project. Requires EWEditor.
+"""Create the stance and swim animation assets in the active project. Requires EWEditor.
 
 An existing configured animation graph is preserved; its blend spaces are
-revalidated and compiled. Run with Unreal's PythonScript commandlet or console.
+revalidated and compiled, and the swim layer is added if it is missing.
+Run with Unreal's PythonScript commandlet or console.
 """
 import unreal, json, os
 assert os.path.normcase(os.path.abspath(unreal.Paths.project_dir())) == os.path.normcase('C:/UnrealProjects/EW')
@@ -64,6 +65,7 @@ def blendspace(name, folder, speed, clips):
     unreal.EditorAssetLibrary.save_loaded_asset(bs)
     return bs
 crouch=blendspace('BS_EWCrouch','Crouch',300,{'idle':'anim_Crouch_Idle','front':'anim_Crouch_Fwd_Loop','back':'anim_Crouch_Bwd_Loop','left':'anim_Crouch_Left_Loop','right':'anim_Crouch_Right_Loop','front_left':'anim_Crouch_Fwd_Left_Loop','front_right':'anim_Crouch_Fwd_Right_Loop','back_left':'anim_Crouch_Bwd_Left_Loop','back_right':'anim_Crouch_Bwd_Right_Loop'})
+swim=blendspace('BS_EWSwim','Swim',450,{'idle':'anim_SwimIdle','front':'anim_Swim_Surface_Fwd','back':'anim_SwimIdle','left':'anim_Swim_Surface_Left','right':'anim_Swim_Surface_Right','front_left':'anim_Swim_Surface_Fwd','front_right':'anim_Swim_Surface_Fwd','back_left':'anim_Swim_Surface_Left','back_right':'anim_Swim_Surface_Right'})
 prone=blendspace('BS_EWProne','UnarmedProne',150,{'idle':'anim_Prone_Idle','front':'anim_Prone_Fwd_Loop_R','back':'anim_Prone_Bwd_Loop_R','left':'anim_Prone_Left_loop','right':'anim_Prone_Right_Loop','front_left':'anim_Prone_Fwd_Left_Loop','front_right':'anim_Prone_Fwd_Right_Loop','back_left':'anim_Prone_Bwd_Left_Loop','back_right':'anim_Prone_Bwd_Right_Loop'})
 bp=unreal.load_asset(ROOT+'/ABP_EWLocomotion')
 if not bp:
@@ -154,3 +156,69 @@ def configure_graph(bp):
     with open('C:/UnrealProjects/EW/Saved/M2ConfigurationResult.json','w') as f:json.dump({'success':True,'animation_blueprint':bp.get_path_name(),'crouch_samples':len(crouch.get_editor_property('sample_data')),'prone_samples':len(prone.get_editor_property('sample_data'))},f,indent=2)
 
 configure_graph(bp)
+
+
+def configure_swim(bp):
+    """Swimming plays BS_EWSwim over every stance, and turns off the foot-placement rig."""
+    graph=unreal.BlueprintGraphEditor.get_graph_editor_by_name(bp,'AnimGraph')
+    event=unreal.BlueprintGraphEditor.get_graph_editor_by_name(bp,'EventGraph')
+    if 'EWIsSwimming' in [str(x) for x in unreal.BlueprintEditorLibrary.list_member_variable_names(bp,False)]:
+        unreal.log('Swim layer already present.')
+        return
+    def pin(n,name):
+        return next(p for p in n.list_all_pins() if str(p.get_pin_name())==name)
+    def link(a,b):
+        assert a.try_create_connection(b), str(a.get_pin_name())+' -> '+str(b.get_pin_name())
+    def get(g,name,x,y):
+        n=g.add_get_member_variable_node(name)
+        n.set_node_pos(unreal.IntPoint(x,y))
+        return n
+    assert event.add_member_variable('EWIsSwimming')
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    player=graph.create_node_from_name('Animation|BlendSpaces|BlendspacePlayer',unreal.Vector2D(200,1200),[])
+    data=player.get_editor_property('node')
+    data.set_editor_property('blend_space',swim)
+    player.set_editor_property('node',data)
+    link(pin(get(graph,'Direction',-50,1200),'Direction'),pin(player,'X'))
+    link(pin(get(graph,'GroundSpeed',-50,1280),'GroundSpeed'),pin(player,'Y'))
+    blend=graph.create_node_from_name('Animation|Blends|BlendPosesbybool',unreal.Vector2D(600,1200),[])
+    slot=next(n for n in graph.list_all_nodes() if n.get_class().get_name()=='AnimGraphNode_Slot')
+    stances=pin(slot,'Source').list_connected_pins()[0]
+    pin(slot,'Source').break_pin_links()
+    link(stances,pin(blend,'BlendPose_1'))  # Bool false = index 1; true = index 0.
+    link(pin(player,'Pose'),pin(blend,'BlendPose_0'))
+    link(pin(blend,'Pose'),pin(slot,'Source'))
+    link(pin(get(graph,'EWIsSwimming',400,1100),'EWIsSwimming'),pin(blend,'bActiveValue'))
+    pin(blend,'BlendTime_0').set_pin_value('0.25')
+    pin(blend,'BlendTime_1').set_pin_value('0.25')
+    # Foot placement stays off while prone or swimming.
+    rig=next(n for n in graph.list_all_nodes() if n.get_class().get_name()=='AnimGraphNode_ControlRig')
+    pin(rig,'Alpha').break_pin_links()
+    either=graph.add_call_function_node('/Script/Engine.KismetMathLibrary.BooleanOR')
+    link(pin(get(graph,'EWIsProne',850,1350),'EWIsProne'),pin(either,'A'))
+    link(pin(get(graph,'EWIsSwimming',850,1420),'EWIsSwimming'),pin(either,'B'))
+    alpha=graph.add_call_function_node('/Script/Engine.KismetMathLibrary.SelectFloat')
+    pin(alpha,'A').set_pin_value('0')
+    pin(alpha,'B').set_pin_value('1')
+    link(pin(either,'ReturnValue'),pin(alpha,'bPickA'))
+    link(pin(alpha,'ReturnValue'),pin(rig,'Alpha'))
+    # Refresh the swimming flag from the character on every update, before the stance flags.
+    cast=next(n for n in event.list_all_nodes() if n.get_class().get_name()=='K2Node_DynamicCast'
+              and any(str(p.get_pin_name())=='AsEWCharacter' for p in n.list_all_pins()))
+    after=pin(cast,'then').list_connected_pins()[0]
+    pin(cast,'then').break_pin_links()
+    swimming=event.add_call_function_node('/Script/EW.EWCharacter.IsSwimming')
+    link(pin(cast,'AsEWCharacter'),pin(swimming,'self'))
+    set_swim=event.add_set_member_variable_node('EWIsSwimming')
+    link(pin(cast,'then'),pin(set_swim,'execute'))
+    link(pin(swimming,'ReturnValue'),pin(set_swim,'EWIsSwimming'))
+    link(pin(set_swim,'then'),after)
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    errors=[]
+    for g in unreal.BlueprintEditorLibrary.list_graphs(bp):
+        errors += list(unreal.BlueprintGraphEditor.get_graph_editor(g).list_nodes_with_errors())
+    assert not errors, [n.get_name() for n in errors]
+    unreal.EditorAssetLibrary.save_loaded_asset(bp)
+    with open('C:/UnrealProjects/EW/Saved/SwimAnimationResult.json','w') as f:json.dump({'success':True,'swim_samples':len(swim.get_editor_property('sample_data'))},f,indent=2)
+
+configure_swim(bp)

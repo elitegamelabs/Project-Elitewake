@@ -45,3 +45,6 @@ Thumbs.db
 # Optional local plugins marketplace cache/build output
 Plugins/*/Binaries/
 Plugins/*/Intermediate/
+
+# Python caches from running setup scripts
+__pycache__/
