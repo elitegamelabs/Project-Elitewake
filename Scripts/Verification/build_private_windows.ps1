@@ -55,10 +55,10 @@ Set-Content -LiteralPath (Join-Path $runtimeRoot 'PrivateBuildLabel.txt') -Value
 
 Single-player testing: double-click Play Elitewake.bat. It opens the coastal playground: the island, ocean and swimming, the dock, and the raft, dinghy, sloop and schooner, with a test starter kit (tools on you, each ship's helm and sails in its own hold). Launching Windows/EW.exe directly opens the plain test map, where F10 hosts or joins a session.
 
-Added: inventory/crafting grids, M-key surrounding map preview, F10 Host/Join/Leave and visible build label. Five generated placeholder item icons and crafted wooden axe/pickaxe gathering are available in opt-in editor fixtures; normal recipe unlocks remain unassigned.
-An opt-in prologue Repair Kit recipe costs 20 Wood + 20 Stone. Its test output has provisional metadata; repair use and the production tutorial/unlock event remain unimplemented. It is separate from the four regular post-prologue starter recipes.
-Fixed: survival setters reject non-finite inputs; packaged startup GameFeatureData ensure; editor connector excluded from runtime targets; square item/recipe icons and compact equipped-item labels; Leave/Cancel disposes pending connections; established host timeouts show a lost-session message.
-Known issues: session progress is not saved; inventory privacy decision pending; production prologue and starter unlock trigger unresolved. Final animations/art/balance remain unfinished.
+Controls: WASD move, Space jump, Left Shift sprint, tap C crouch / hold C prone, Z first or third person, E interact (hold for ships), Left Mouse attack, 1-8 hotbar, I inventory and crafting, M map, F10 host/join.
+Ships: raft, dinghy, sloop and schooner. Swim to a ship and look at its side ladder, then hold E to climb aboard. Each ship's helm and sails are in its own hold (hold E at the hatch). Fit them by looking at a mount and holding E, raise the anchor at the capstan, take the helm, then W/S set sail and A/D steer.
+Latest fixes: ladders can be aimed at anywhere up the hull; ships move smoothly on deck and for network clients; darker, deeper ocean; weathered dock; Attack swings (fists hit another survivor for 10, tools gather trees and rocks).
+Known issues: nothing to gather or fight on the coast yet (vegetation and wildlife pending); cannons are stand-in boxes; session progress is not saved; production prologue and starter recipe unlocks unresolved. Final animations, art and balance remain unfinished.
 Coverage: this folder is not a certified release. Consult Docs/VERIFICATION.md for acceptance of this exact label. Rendered gameplay, clean PC, two-PC LAN, Internet, Shipping and distribution require separate checks.
 Keep the entire Windows folder together. F10 shows the diagnostic build label; matching labels alone do not enforce network compatibility.
 
