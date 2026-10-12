@@ -21,6 +21,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_ship_fittings as fittings  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
+from ship_hull import plank_tone  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
 SHIPS = '/Game/Elitewake/Ships'
@@ -223,7 +224,7 @@ def dinghy_hull():
             rows.append(row)
         b.grid(rows, lambda i, j, side=side: (0.3 if D_STATIONS[i] > 100 else 0.0, side * d_normal(D_STATIONS[i], params[j][0])[0],
                                              d_normal(D_STATIONS[i], params[j][0])[1]),
-               tar_of=tarred, tone_of=lambda i, j, side=side: fittings.hull.plank_tone(params[j][2], side), uv_of=along)
+               tar_of=tarred, tone_of=lambda i, j, side=side: plank_tone(params[j][2], side), uv_of=along)
         inner = []
         for x in D_STATIONS:
             t0 = d_theta_at(x, D_FLOOR - 3) if d_keel(x) < D_FLOOR - 3 else 0.0
@@ -389,7 +390,7 @@ def moor(definitions):
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     for label, d, where in (('Raft', definitions[0], (5000, 300, -65)), ('Dinghy', definitions[1], (5650, 350, -65))):
-        ship = next((a for a in actors.get_all_level_actors() if a.get_actor_label() == label), None)
+        ship = next((a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == d), None)
         if not ship:
             ship = actors.spawn_actor_from_class(unreal.EWShip, unreal.Vector(*where))
             ship.set_actor_label(label)

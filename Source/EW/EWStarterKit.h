@@ -32,7 +32,8 @@ public:
     /** Carried by each survivor. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Starter Kit")
     TArray<FEWStarterKitItem> Items;
-    /** Put in the hold of every ship that can use it; heavy fittings belong here rather than on a survivor's back. */
+    /** Put in the hold of every ship that can use it; heavy fittings belong here rather than on a survivor's back.
+     *  A fitting's Quantity is per matching mount, so each ship gets enough to fit out. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Starter Kit")
     TArray<FEWStarterKitItem> ShipCargo;
 

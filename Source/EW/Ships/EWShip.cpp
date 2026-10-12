@@ -609,9 +609,19 @@ FVector AEWShip::GetHelmSeatLocal(float CapsuleHalfHeight) const
 {
     const FEWShipMount* Helm = FindHelmMount();
     const FVector Wheel = Helm ? Helm->Transform.GetLocation() : FVector::ZeroVector;
-    const float DeckTop = GetDeckHeight();
-    // Stand just aft of the wheel, on the deck.
-    return FVector(Wheel.X - 60.f, Wheel.Y, DeckTop + CapsuleHalfHeight + 2.f);
+    const FVector Stand(Wheel.X - 60.f, Wheel.Y, 0.f);
+    // Stand just aft of the wheel, on the deck under it: a modelled hull may raise the helm onto an aft deck.
+    // The mount sits above its own deck, so look down from there.
+    float Floor = GetDeckHeight();
+    if (bModelledHull && HullVisual)
+    {
+        const FTransform& Ship = GetActorTransform();
+        FHitResult Hit;
+        if (HullVisual->LineTraceComponent(Hit, Ship.TransformPosition(FVector(Stand.X, Stand.Y, Wheel.Z)),
+                Ship.TransformPosition(FVector(Stand.X, Stand.Y, Floor - 20.f)), FCollisionQueryParams(SCENE_QUERY_STAT(EWHelmSeat), true)))
+            Floor = FMath::Max(Floor, Ship.InverseTransformPosition(Hit.ImpactPoint).Z);
+    }
+    return FVector(Stand.X, Stand.Y, Floor + CapsuleHalfHeight + 2.f);
 }
 
 bool AEWShip::IsValidHelmsman(const AEWCharacter* Character) const

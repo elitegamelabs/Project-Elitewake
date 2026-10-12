@@ -10,6 +10,7 @@ Run in the editor after build_sloop_hull.py, outside Play:
 
 The cloth is the art itself mapped corner to corner onto a gently filled sail; its alpha cuts the outline. Every
 fitting is placed relative to its mount on DA_Ship_Sloop and the hull's rig positions. All sizes are tuning.
+The sail builders here (gaff, square and jib) are shared: build_schooner.py sizes them to its own rig.
 """
 import json
 import math
@@ -32,21 +33,25 @@ TIMBER, CLOTH = 0, 1
 MAIN_ART = {'tack': (186, 940), 'throat': (416, 208), 'peak': (1086, 54), 'clew': (1460, 928)}
 JIB_ART = {'tack': (176, 968), 'head': (330, 80), 'clew': (1348, 906)}
 ART_SIZE = (1536.0, 1024.0)
+# The Large square sail (image 1254 x 1254): head along the yard, foot below.
+SQUARE_ART = {'head_port': (82, 130), 'head_starboard': (1174, 150), 'foot_port': (56, 1098), 'foot_starboard': (1210, 1142)}
+SQUARE_ART_SIZE = (1254.0, 1254.0)
 
 
 def lerp(a, b, t):
     return tuple(a[i] + (b[i] - a[i]) * t for i in range(len(a)))
 
 
-def art_uv(p):
-    return (p[0] / ART_SIZE[0], p[1] / ART_SIZE[1])
+def art_uv(p, size=ART_SIZE):
+    return (p[0] / size[0], p[1] / size[1])
 
 
-def cloth(b, corners, art, belly, steps=18):
+def cloth(b, corners, art, belly, steps=18, sheet=0.0, axis=1, art_size=ART_SIZE):
     """A four-cornered sail (tack, clew along the foot; throat, peak along the head) filled by the wind toward
-    starboard, with the art stretched corner to corner."""
+    starboard (or forward, for axis 0), with the art stretched corner to corner. `sheet` carries the aft edge
+    that far to leeward, as when a jib is sheeted out past the sails inside it."""
     tack, clew, throat, peak = corners
-    a_tack, a_clew, a_throat, a_peak = (art_uv(c) for c in art)
+    a_tack, a_clew, a_throat, a_peak = (art_uv(c, art_size) for c in art)
     rows = []
     uvs = []
     for i in range(steps + 1):
@@ -55,13 +60,15 @@ def cloth(b, corners, art, belly, steps=18):
         for j in range(steps + 1):
             t = j / steps
             p = lerp(lerp(tack, clew, s), lerp(throat, peak, s), t)
-            depth = belly * math.sin(math.pi * s) * (0.55 + 0.45 * math.sin(math.pi * t))
-            row.append((p[0], p[1] + depth, p[2]))
+            depth = belly * math.sin(math.pi * s) * (0.55 + 0.45 * math.sin(math.pi * t)) + sheet * s
+            q = list(p)
+            q[axis] += depth
+            row.append(tuple(q))
             uv_row.append(lerp(lerp(a_tack, a_clew, s), lerp(a_throat, a_peak, s), t))
         rows.append(row)
         uvs.append(uv_row)
     b.slot = CLOTH
-    b.grid(rows, lambda i, j: (0, 1, 0), uv_of=lambda i, j, p: uvs[i][j])
+    b.grid(rows, lambda i, j: tuple(1 if k == axis else 0 for k in range(3)), uv_of=lambda i, j, p: uvs[i][j])
     b.slot = TIMBER
 
 
@@ -73,34 +80,59 @@ def bundle(b, path, radius):
     b.slot = TIMBER
 
 
-def mainsail(furled):
-    """In the mainsail's frame: origin on the mast at boom height, X forward, Z up."""
+def gaff_sail(furled, boom=575.0, throat=516.0, peak=(-470.0, 778.0), belly=42.0):
+    """A gaff sail in its own frame: origin on the mast at boom height, X forward, Z up. `boom` is the boom's
+    length, `throat` the height of the gaff's jaws on the mast and `peak` where the gaff ends (x, z)."""
     b = Builder()
-    b.tube([(-18, 0, -6), (-575, 0, -6)], lambda k: (8.0, 6.0)[k], sides=10)        # boom
+    b.tube([(-18, 0, -6), (-boom, 0, -6)], lambda k: (8.0, 6.0)[k], sides=10)        # boom
     b.box((-22, 0, -6), (16, 30, 16))                                                # boom jaws on the mast
     if furled:
-        b.tube([(-18, 0, 30), (-470, 0, 40)], lambda k: (6.0, 4.5)[k], sides=10)     # gaff lowered onto the boom
-        bundle(b, [(-24 - 26 * k, 0, 15) for k in range(21)], 13.0)
+        b.tube([(-18, 0, 30), (peak[0], 0, 40)], lambda k: (6.0, 4.5)[k], sides=10)  # gaff lowered onto the boom
+        bundle(b, [(-24 - (boom - 55) / 20 * k, 0, 15) for k in range(21)], 13.0)
     else:
-        b.tube([(-18, 0, 516), (-470, 0, 778)], lambda k: (6.0, 4.5)[k], sides=10)   # gaff
-        b.box((-22, 0, 516), (16, 30, 16))                                           # gaff jaws
-        cloth(b, ((-16, 0, 8), (-560, 0, 8), (-16, 0, 512), (-455, 0, 770)),
-              (MAIN_ART['tack'], MAIN_ART['clew'], MAIN_ART['throat'], MAIN_ART['peak']), belly=42)
+        b.tube([(-18, 0, throat), (peak[0], 0, peak[1])], lambda k: (6.0, 4.5)[k], sides=10)   # gaff
+        b.box((-22, 0, throat), (16, 30, 16))                                        # gaff jaws
+        cloth(b, ((-16, 0, 8), (-(boom - 15), 0, 8), (-16, 0, throat - 4), (peak[0] + 15, 0, peak[1] - 8)),
+              (MAIN_ART['tack'], MAIN_ART['clew'], MAIN_ART['throat'], MAIN_ART['peak']), belly=belly)
     return b
 
 
-def jib_frame():
-    tack = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.04)
-    head = lerp(hull.STAY_BOW, hull.STAY_TOP, 0.68)
-    clew = (hull.MAST_X + 140, 0.0, 445.0)
+def mainsail(furled):
+    """The sloop's mainsail."""
+    return gaff_sail(furled)
+
+
+def square_sail(furled, head=900.0, foot=1000.0, drop=760.0, belly=70.0):
+    """A square sail in its own frame: origin on the middle of its yard, Y across, hanging down to its foot and
+    filled forward by a following wind; furled, it is bundled on the yard."""
+    b = Builder()
+    yard = head / 2 + 40
+    b.tube([(0, -yard, 0), (0, yard, 0)], 7.0, sides=10)                             # yard
+    b.box((-10, 0, 0), (14, 34, 18))                                                 # parrel on the mast
+    if furled:
+        bundle(b, [(6, -head / 2 + head / 20 * k, -8) for k in range(21)], 16.0)
+    else:
+        cloth(b, ((6, -foot / 2, -drop), (6, foot / 2, -drop), (6, -head / 2, -6), (6, head / 2, -6)),
+              (SQUARE_ART['foot_port'], SQUARE_ART['foot_starboard'], SQUARE_ART['head_port'], SQUARE_ART['head_starboard']),
+              belly=belly, axis=0, art_size=SQUARE_ART_SIZE)
+    return b
+
+
+def jib_frame(stay_bow=None, stay_top=None, tack_t=0.04, head_t=0.68, clew=None):
+    """A jib's frame on its stay: origin at the tack, Z up the stay, X toward the clew."""
+    stay_bow = stay_bow or hull.STAY_BOW
+    stay_top = stay_top or hull.STAY_TOP
+    tack = lerp(stay_bow, stay_top, tack_t)
+    head = lerp(stay_bow, stay_top, head_t)
+    clew = clew or (hull.MAST_X + 140, 0.0, 445.0)
     rotation = unreal.MathLibrary.make_rot_from_zx(unreal.Vector(*[head[i] - tack[i] for i in range(3)]),
                                                    unreal.Vector(*[clew[i] - tack[i] for i in range(3)]))
     return unreal.Transform(location=unreal.Vector(*tack), rotation=rotation), tack, head, clew
 
 
-def jib(furled):
-    """In the jib's frame: origin at the tack on the forestay, Z up the stay, so lowering Z shortens the sail."""
-    frame, tack, head, clew = jib_frame()
+def jib(furled, frame_args=(), belly=28.0, sheet=0.0):
+    """In the jib's frame: origin at the tack on its stay, Z up the stay, so lowering Z shortens the sail."""
+    frame, tack, head, clew = jib_frame(*frame_args)
     local = lambda p: tuple(getattr(frame.inverse_transform_location(unreal.Vector(*p)), a) for a in 'xyz')
     b = Builder()
     if furled:
@@ -108,7 +140,7 @@ def jib(furled):
     else:
         # A triangle: the head stands in for both upper corners.
         corners = (local(tack), local(clew), local(head), local(head))
-        cloth(b, corners, (JIB_ART['tack'], JIB_ART['clew'], JIB_ART['head'], JIB_ART['head']), belly=28)
+        cloth(b, corners, (JIB_ART['tack'], JIB_ART['clew'], JIB_ART['head'], JIB_ART['head']), belly=belly, sheet=sheet)
     return b
 
 
@@ -149,7 +181,8 @@ def cloth_materials():
     """Sailcloth: the art's colour, its alpha as the outline, seen from both sides."""
     mel = unreal.MaterialEditingLibrary
     textures = {'Medium': import_art('T_SailMedium_v1', ART / 'Medium-Sail-v1.png'),
-                'Small': import_art('T_SailSmall_v1', ART / 'Small-Sail-v1.png')}
+                'Small': import_art('T_SailSmall_v1', ART / 'Small-Sail-v1.png'),
+                'Large': import_art('T_SailLarge_v1', ART / 'Large-Sail-v1.png')}
     base, node, _ = material_builder(f'{FOLDER}/M_SailCloth_v1')
     base.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
     base.set_editor_property('two_sided', True)

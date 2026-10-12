@@ -201,7 +201,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, hold Interact to climb aboard.
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
-- **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m; the schooner and larger ships step up from there.
+- **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m, schooner about 22 m; the brigantine and larger ships step up from there.
 - **Raft and dinghy (DECIDED, delegated, October 12, from the owner's art):**
   - Both steer by fittings built into the hull, fitted when the boat enters play and never removed: a long steering oar over the raft's stern, a rudder and tiller on the dinghy. Neither takes a ship's wheel.
   - Each has one Small sail mount on its own short mast and boom. A mount can set how a fitting looks on that hull, so the same Small sail is the sloop's jib but sets on the raft's or dinghy's own mast.
@@ -212,6 +212,20 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.
   - Hulls are built by script in the editor (`Scripts/Setup/build_sloop_hull.py`), not bought or generated, so they can be reshaped and re-run.
   - The mast, bowsprit and standing rigging come with the hull. The mainsail fitting brings its boom and gaff; the jib hangs on the forestay. Sails show the helmsman's setting: rolled on their spars when furled, shortened at half, fully set at full. The owner's sail art is the cloth itself. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.
+- **The schooner (DECIDED, delegated, October 12, from the owner's schooner art):**
+  - About 22 m long and 6.6 m in beam. It is double-ended like the sloop, following the owner's dislike of a square stern (*tuning*).
+  - It keeps the art's raised aft deck, 1.5 m above the main deck, with stairs up each side and a breast rail (*tuning*).
+  - **Rig:** three masts stand in the art's three mast sockets. The six sail mounts follow the confirmed schooner rig of 2 Medium, 1 Large and 3 Small:
+    - a Large square topsail on the foremast,
+    - Medium gaff sails on the main and mizzen masts,
+    - three Small jibs on stays out to the bowsprit.
+  - **Guns:** twelve cannon hardpoints, six a side, at gunports on a lower deck under the main deck. This matches the prologue schooner's 12 cannons.
+  - **Lower deck:** reached by stairs through the main hatch. It has about 2.4 m of headroom (*tuning*), pillars, a mast step at each mast, and an aft bulkhead with a doorway into a small aft hold. Its floor sits above the swell.
+  - **Helm:** on the raised aft deck. A helmsman always stands on whichever deck is under the wheel.
+  - **Crew capacity:** 14, the twelve cannons' crews plus the player and the Surgeon, reading "its configured cannons" as the full fit. Whether capacity drops when fewer cannons are fitted stays an open question (see item 9 below).
+  - **Handling:** top speed 8 m/s, turn rate 22° per second, hold 40 slots and 4,000 kg (*tuning*).
+  - **Sail looks:** each sail mount sets how a sail of its size looks on that rig, so the same Small, Medium and Large sail items fit any ship.
+  - **Built by script:** `Scripts/Setup/build_schooner.py`, from the shared hull builder `ship_hull.py` that also draws the sloop.
 - **Anchor (DECIDED, delegated, within the owner's hold-to-anchor rule):**
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
   - Ships start anchored, so a moored ship never drifts.
@@ -384,6 +398,6 @@ Decisions that block or shape upcoming work. Ask the owner; do not assume.
 6. **Land bases:** lifetime, decay and raid mechanics.
 7. **Ports:** which island, identity and stock each Port has.
 8. **Servers:** wipe schedule and rewards; which rules unofficial hosts can change.
-9. **Ships:** crew caps as starting values or absolute limits; schooner crew when a utility attachment replaces a cannon; starter raft recipe versus Small Shipyard.
+9. **Ships:** crew caps as starting values or absolute limits; schooner crew when fewer cannons are fitted or a utility attachment replaces one; starter raft recipe versus Small Shipyard.
 10. **Combat and death:** pistol name and stats; level and skill effects of death; bed cooldown.
 11. **Content values:** flask capacity, tortoise drops, horse and bear taming foods, and all yields, weights and prices not listed above.

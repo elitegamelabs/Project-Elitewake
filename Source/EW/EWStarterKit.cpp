@@ -25,11 +25,16 @@ void AEWStarterKit::BeginPlay()
         if (!Hold || !Def) continue;
         for (const FEWStarterKitItem& Entry : ShipCargo)
         {
-            // Fittings go only to ships with a mount for them that is not built into the hull.
-            const bool bUseful = Entry.Item && (Entry.Item->FittingMountType == EEWShipMountType::None
-                || Def->Mounts.ContainsByPredicate([&](const FEWShipMount& Mount)
-                    { return UEWShipDefinition::Accepts(Mount, Entry.Item) && !Def->IsBuiltIn(Mount.MountId); }));
-            if (bUseful) Hold->AddItem(Entry.Item, Entry.Quantity);
+            if (!Entry.Item) continue;
+            if (Entry.Item->FittingMountType == EEWShipMountType::None)
+            {
+                Hold->AddItem(Entry.Item, Entry.Quantity);
+                continue;
+            }
+            // A fitting goes to each ship that can take it, Quantity for every mount that is not built into the hull.
+            const int32 Mounts = Def->Mounts.FilterByPredicate([&](const FEWShipMount& Mount)
+                { return UEWShipDefinition::Accepts(Mount, Entry.Item) && !Def->IsBuiltIn(Mount.MountId); }).Num();
+            if (Mounts > 0) Hold->AddItem(Entry.Item, Entry.Quantity * Mounts);
         }
     }
 }

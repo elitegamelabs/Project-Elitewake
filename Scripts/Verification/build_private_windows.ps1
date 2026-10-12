@@ -1,4 +1,5 @@
-<# Build a local Development package with the two retained test maps.
+<# Build a local Development package with the retained test maps and the coastal playground, plus a launcher
+that starts the coastal playground for single-player testing.
 Bundles engine-provided prerequisite installers without running them.
 No upload, account, firewall, router or tester invitation operations. #>
 param([string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8')
@@ -17,7 +18,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Cannot record source revision.' }
 $dirty=[bool](& git -C $projectRoot status --porcelain)
 $arguments=@('BuildCookRun',"-project=$project",'-noP4','-unattended','-platform=Win64','-clientconfig=Development',
     '-build','-cook','-stage','-prereqs','-pak','-iostore','-package','-archive',"-archivedirectory=$archive",
-    '-map=/Game/ThirdPerson/Lvl_ThirdPerson+/Game/Elitewake/Maps/Lvl_M5PickupTest',
+    '-map=/Game/ThirdPerson/Lvl_ThirdPerson+/Game/Elitewake/Maps/Lvl_M5PickupTest+/Game/Elitewake/Maps/Lvl_CoastalPlayground',
     "-AdditionalCookerOptions=-CookDir=$projectRoot/Content/Elitewake",
     '-utf8output','-ubtargs=-NoUBA')
 & $runUAT @arguments
@@ -45,12 +46,14 @@ $displayLabel="$buildLabel | $($revision.Substring(0,12)) | Development"
 if ($dirty) { $displayLabel+=' | local changes' }
 Set-Content -LiteralPath (Join-Path $runtimeRoot 'PrivateBuildLabel.txt') -Value $displayLabel -Encoding utf8
 @{label=$buildLabel;sourceRevision=$revision;sourceHasLocalChanges=$dirty;configuration='Development';platform='Win64';released=$false;
-  maps=@('/Game/ThirdPerson/Lvl_ThirdPerson','/Game/Elitewake/Maps/Lvl_M5PickupTest');
+  maps=@('/Game/ThirdPerson/Lvl_ThirdPerson','/Game/Elitewake/Maps/Lvl_M5PickupTest','/Game/Elitewake/Maps/Lvl_CoastalPlayground');
   prerequisites='Engine-provided signed VC runtime installers bundled and hash-checked; not installed or clean-PC verified';
   scope='Local diagnostic package; original editor settings and source documents preserved; no LAN/Internet/distribution acceptance'} |
   ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'PrivateBuildInfo.json') -Encoding utf8
 @'
 # Local private test — unreleased
+
+Single-player testing: double-click Play Elitewake.bat. It opens the coastal playground: the island, ocean and swimming, the dock, and the raft, dinghy, sloop and schooner, with a test starter kit (tools on you, each ship's helm and sails in its own hold). Launching Windows/EW.exe directly opens the plain test map, where F10 hosts or joins a session.
 
 Added: inventory/crafting grids, M-key surrounding map preview, F10 Host/Join/Leave and visible build label. Five generated placeholder item icons and crafted wooden axe/pickaxe gathering are available in opt-in editor fixtures; normal recipe unlocks remain unassigned.
 An opt-in prologue Repair Kit recipe costs 20 Wood + 20 Stone. Its test output has provisional metadata; repair use and the production tutorial/unlock event remain unimplemented. It is separate from the four regular post-prologue starter recipes.
@@ -61,4 +64,9 @@ Keep the entire Windows folder together. F10 shows the diagnostic build label; m
 
 Windows prerequisites: signed Microsoft VC runtime installers are bundled in Windows/Engine/Extras/Redist/en-us. On an x64 tester PC, run vc_redist.x64.exe interactively if the runtime is missing, then launch Windows/EW.exe. The engine also stages vc_redist.arm64.exe for ARM64 emulation; this does not certify native ARM64 support. These installers have not been run by the build script. PrerequisitesResult.json records signatures and matching engine/package hashes, not installation success or clean-PC portability. GameInput redistribution is not opted in by this project; physical controller support remains unverified.
 '@ | Set-Content -LiteralPath (Join-Path $archive 'TEST_NOTES.md') -Encoding utf8
+# Single-player testing starts on the coastal playground, which holds the ships, ocean and test starter kit.
+Set-Content -LiteralPath (Join-Path $archive 'Play Elitewake.bat') -Encoding ascii -Value @'
+@echo off
+start "" "%~dp0Windows\EW.exe" /Game/Elitewake/Maps/Lvl_CoastalPlayground
+'@
 Write-Output "Local package created: $archive"
