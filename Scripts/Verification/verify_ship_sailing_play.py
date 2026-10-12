@@ -52,10 +52,12 @@ def target_of(name):
     return ship.get_anchor_point_world() if name == 'Anchor' else ship.get_mount_world_transform(name).translation
 
 def stand_at(mount_id):
-    """Stand on deck 1.2 m aft of the mount (or the anchor capstan), within interaction reach."""
+    """Stand on deck within reach of the mount (or the anchor capstan): forward of the helm and mast, aft of the
+    headsail and capstan near the bow."""
     mount = target_of(mount_id)
     forward = ship.get_actor_forward_vector()
-    spot = unreal.Vector(mount.x - forward.x * 120, mount.y - forward.y * 120, ship.get_actor_location().z + 100 + 98)
+    off = {'Helm': 110, 'Mainsail': 110}.get(mount_id, -120)
+    spot = unreal.Vector(mount.x + forward.x * off, mount.y + forward.y * off, ship.get_actor_location().z + ship.get_deck_height() + 98)
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
     state['aim'] = mount_id

@@ -403,20 +403,20 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
 
     // Something standing on the landing spot blocks the climb rather than overlapping it.
     auto* Other = World->SpawnActor<AEWCharacter>(CharClass,
-        FVector(-100, Def->HullExtent.Y - 70.f, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f),
+        FVector(-100, Def->HullExtent.Y - 70.f, Def->GetDeckHeight() + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f),
         FRotator::ZeroRotator, Params);
     TestFalse(TEXT("A blocked landing spot refuses the climb"), Ship->ClimbAboard(C, 1));
     Other->Destroy();
 
     TestTrue(TEXT("Interact climbs aboard"), Ship->Interact_Implementation(C));
     const FVector Local = Ship->GetActorTransform().InverseTransformPosition(C->GetActorLocation());
-    TestTrue(TEXT("The survivor lands on the deck, starboard side"), Local.Z > Def->HullExtent.Z && Local.Y > 0.f && Local.Y < Def->HullExtent.Y);
+    TestTrue(TEXT("The survivor lands on the deck, starboard side"), Local.Z > Def->GetDeckHeight() && Local.Y > 0.f && Local.Y < Def->HullExtent.Y);
     TestTrue(TEXT("The survivor is aboard"), Ship->IsAboard(C));
     TestFalse(TEXT("No climb prompt once aboard"), Ship->ClimbAboard(C, 0));
 
     // The anchor capstan on deck, worked with the ordinary interaction.
     C->SetActorLocation(Ship->GetActorTransform().TransformPosition(
-        FVector(Def->AnchorPoint.X - 120.f, Def->AnchorPoint.Y, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
+        FVector(Def->AnchorPoint.X - 120.f, Def->AnchorPoint.Y, Def->GetDeckHeight() + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
     {
         FVector Eye; FRotator Unused;
         C->GetActorEyesViewPoint(Eye, Unused);
@@ -431,7 +431,7 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     // The cargo hold: sized by the definition, opened at the hatch, and reachable only aboard or nearby.
     TestEqual(TEXT("Hold size comes from the definition"), Ship->GetCargo()->GetMaxSlotCount(), Def->CargoSlots);
     C->SetActorLocation(Ship->GetActorTransform().TransformPosition(
-        FVector(Def->CargoHatchPoint.X - 120.f, Def->CargoHatchPoint.Y, Def->HullExtent.Z + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
+        FVector(Def->CargoHatchPoint.X - 120.f, Def->CargoHatchPoint.Y, Def->GetDeckHeight() + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f)));
     {
         FVector Eye; FRotator Unused;
         C->GetActorEyesViewPoint(Eye, Unused);

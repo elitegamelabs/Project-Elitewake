@@ -40,18 +40,17 @@ old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'handle': None, 'memo': {}}
-DECK = 100 + 98
+DECK = ship.get_deck_height() + 98
 
 def hold_count(s):
     return s.get_cargo().get_item_count(wood)
 
 def stand_near_hatch(character, side_offset):
+    """Beside the hatch coaming, on the starboard (positive offset) or port side."""
     hatch = ship.get_cargo_hatch_world()
-    forward = ship.get_actor_forward_vector()
     right = ship.get_actor_right_vector()
-    spot = unreal.Vector(hatch.x - forward.x * 120 + right.x * side_offset, hatch.y - forward.y * 120 + right.y * side_offset,
-                         ship.get_actor_location().z + DECK)
-    return spot
+    side = 90 if side_offset >= 0 else -90
+    return unreal.Vector(hatch.x + right.x * side, hatch.y + right.y * side, ship.get_actor_location().z + DECK)
 
 def keep_aim():
     if state['aim']:
@@ -75,7 +74,7 @@ def open_hold():
     # Survivors may already carry Wood from the map's starter kit; counts below are relative to it.
     state['memo'].update(crew_wood=carried(crew), host_wood=carried(host))
     assert crew.get_inventory_component().add_item(wood, 40) == 40
-    spot = stand_near_hatch(crew, 0)
+    spot = stand_near_hatch(crew, -1)
     for p in (crew, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
     state['aim'] = True

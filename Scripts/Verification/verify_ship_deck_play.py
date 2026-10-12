@@ -47,8 +47,10 @@ settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 
 checks = []
 state = {'trace': [], 'next_trace': 0.0, 'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'frame0': 0, 'handle': None, 'memo': {}}
-DECK_TOP = 100.0     # DA_Ship_Sloop hull half height
+DECK_TOP = ship.get_deck_height()
 HALF_HEIGHT = 98.0   # capsule half height plus clearance
+# Where to stand to reach each fitting: forward of the helm and mast, aft of the headsail and capstan near the bow.
+STAND_OFF = {'Helm': 110, 'Mainsail': 110, 'Headsail': -120, 'Anchor': -120}
 
 def deck_point(local):
     return ship.get_actor_transform().transform_location(unreal.Vector(local[0], local[1], DECK_TOP + HALF_HEIGHT))
@@ -86,7 +88,8 @@ def host_install(mount_id):
     def begin():
         mount = target()
         forward = ship.get_actor_forward_vector()
-        spot = unreal.Vector(mount.x - forward.x * 120, mount.y - forward.y * 120, ship.get_actor_location().z + DECK_TOP + HALF_HEIGHT)
+        off = STAND_OFF[mount_id]
+        spot = unreal.Vector(mount.x + forward.x * off, mount.y + forward.y * off, ship.get_actor_location().z + DECK_TOP + HALF_HEIGHT)
         assert host.teleport(spot, ship.get_actor_rotation())
         state['aim'] = ('host', target)
         keep_aim()
@@ -106,7 +109,7 @@ def grant():
 # --- Crew rides along --------------------------------------------------------------------------
 def board_crew():
     state['aim'] = None
-    teleport_crew(deck_point((-150, -60)))
+    teleport_crew(deck_point((-330, -100)))  # port side, aft of the hatch
 
 def crew_settled():
     if not (ship.is_aboard(crew) and peer.is_aboard(pawn) and mode(crew) == unreal.MovementMode.MOVE_WALKING):
@@ -161,14 +164,19 @@ def walked():
     return True
 
 def walk_overboard():
+    # The bulwarks keep walkers aboard, so jump the port rail.
     client.set_control_rotation(ship.get_actor_rotation())
-    state['input'] = lambda f: pawn.do_move(1, 0)
+    def go(f):
+        pawn.do_move(-1, 0)
+        pawn.do_jump_start() if f % 20 < 10 else pawn.do_jump_end()
+    state['input'] = go
 
 def overboard():
     client.set_control_rotation(ship.get_actor_rotation())
     return not ship.is_aboard(crew) and mode(crew) == unreal.MovementMode.MOVE_SWIMMING
 
 def host_furl():
+    pawn.do_jump_end()
     state['frame0'] = state['frame']
     state['input'] = lambda f: host.do_move(0, -1) if (f < 5 or 10 <= f < 15) else None
 

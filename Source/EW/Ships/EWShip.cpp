@@ -127,6 +127,9 @@ void AEWShip::ApplyDefinition()
     CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
     if (!Definition) return;
     if (HasAuthority() && Cargo) Cargo->SetMaxSlots(Definition->CargoSlots);
+    // A modelled hull carries its own hatch, capstan and ladders, and crew walk on the mesh itself.
+    UStaticMesh* HullMesh = Definition->HullMesh.LoadSynchronous();
+    bModelledHull = HullMesh != nullptr;
 
     CargoHatchTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("CargoHatch")), RF_Transient);
     CargoHatchTarget->SetupAttachment(HullCollision);
@@ -142,8 +145,9 @@ void AEWShip::ApplyDefinition()
     CargoHatchVisual->SetStaticMesh(StandInCube());
     // Stand-in hatch: a low square on the deck.
     CargoHatchVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator,
-        FVector(Definition->CargoHatchPoint.X, Definition->CargoHatchPoint.Y, Definition->HullExtent.Z + 5.f), FVector(.8, .8, .1)));
+        FVector(Definition->CargoHatchPoint.X, Definition->CargoHatchPoint.Y, Definition->GetDeckHeight() + 5.f), FVector(.8, .8, .1)));
     CargoHatchVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    CargoHatchVisual->SetVisibility(!bModelledHull);
     CargoHatchVisual->RegisterComponent();
 
     AnchorTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("AnchorCapstan")), RF_Transient);
@@ -160,8 +164,9 @@ void AEWShip::ApplyDefinition()
     AnchorVisual->SetStaticMesh(StandInCube());
     // Stand-in capstan: a short post on the deck.
     AnchorVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator,
-        FVector(Definition->AnchorPoint.X, Definition->AnchorPoint.Y, Definition->HullExtent.Z + 35.f), FVector(.4, .4, .7)));
+        FVector(Definition->AnchorPoint.X, Definition->AnchorPoint.Y, Definition->GetDeckHeight() + 35.f), FVector(.4, .4, .7)));
     AnchorVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    AnchorVisual->SetVisibility(!bModelledHull);
     AnchorVisual->RegisterComponent();
 
     for (int32 i = 0; i < Definition->BoardingPoints.Num(); ++i)
@@ -185,20 +190,32 @@ void AEWShip::ApplyDefinition()
         Ladder->SetStaticMesh(StandInCube());
         Ladder->SetRelativeTransform(FTransform(FRotator::ZeroRotator, Point, FVector(.6, .08, 1.8)));
         Ladder->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Ladder->SetVisibility(!bModelledHull);
         Ladder->RegisterComponent();
         LadderVisuals.Add(Ladder);
     }
 
     HullCollision->SetBoxExtent(Definition->HullExtent);
-    if (UStaticMesh* Mesh = Definition->HullMesh.LoadSynchronous())
+    if (bModelledHull)
     {
-        HullVisual->SetStaticMesh(Mesh);
+        HullVisual->SetStaticMesh(HullMesh);
         HullVisual->SetRelativeTransform(Definition->HullMeshTransform);
+        // Crew stand on the mesh (deck, hold, stairs) and its bulwarks keep them aboard; the camera stays inside it
+        // below deck. Interaction traces pass through to the hull's interaction points.
+        HullVisual->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        HullVisual->SetCollisionObjectType(ECC_WorldDynamic);
+        HullVisual->SetCollisionResponseToAllChannels(ECR_Block);
+        HullVisual->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+        HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+        HullCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+        HullCollision->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
     }
     else
     {
         HullVisual->SetStaticMesh(StandInCube());
         HullVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator, FVector::ZeroVector, Definition->HullExtent / 50.f));
+        HullVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        HullCollision->SetCollisionProfileName(TEXT("BlockAll"));
     }
 
     for (const FEWShipMount& Mount : Definition->Mounts)
@@ -304,6 +321,11 @@ FVector AEWShip::GetBoardingPointWorld(int32 Index) const
         ? GetActorTransform().TransformPosition(Definition->BoardingPoints[Index]) : FVector::ZeroVector;
 }
 
+float AEWShip::GetDeckHeight() const
+{
+    return Definition ? Definition->GetDeckHeight() : 0.f;
+}
+
 bool AEWShip::IsAboard(const AEWCharacter* Character) const
 {
     if (!IsValid(Character) || !Definition) return false;
@@ -312,7 +334,9 @@ bool AEWShip::IsAboard(const AEWCharacter* Character) const
     // Standing over the deck counts too, for the moment before movement settles onto it.
     const FVector Local = GetActorTransform().InverseTransformPosition(Character->GetActorLocation());
     const FVector& E = Definition->HullExtent;
-    return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= E.Z;
+    // Anywhere from the hold floor up, within the hull's footprint.
+    const float Floor = bModelledHull ? Definition->HoldFloorHeight : Definition->GetDeckHeight();
+    return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= Floor;
 }
 
 bool AEWShip::IsAimingAtCargoHatch(const AEWCharacter* Character) const
@@ -399,7 +423,7 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
     const FVector Point = Definition->BoardingPoints[BoardingIndex];
     // Step onto the deck just inboard of the ladder.
     const float Side = Point.Y >= 0.f ? 1.f : -1.f;
-    const FVector Deck(Point.X, Side * FMath::Max(Definition->HullExtent.Y - 70.f, 0.f), Definition->HullExtent.Z + HalfHeight + 2.f);
+    const FVector Deck(Point.X, Side * FMath::Max(Definition->HullExtent.Y - 70.f, 0.f), Definition->GetDeckHeight() + HalfHeight + 2.f);
     const FVector Destination = GetActorTransform().TransformPosition(Deck);
     if (Capsule)
     {
@@ -549,7 +573,7 @@ FVector AEWShip::GetHelmSeatLocal(float CapsuleHalfHeight) const
 {
     const FEWShipMount* Helm = FindHelmMount();
     const FVector Wheel = Helm ? Helm->Transform.GetLocation() : FVector::ZeroVector;
-    const float DeckTop = Definition ? Definition->HullExtent.Z : 0.f;
+    const float DeckTop = GetDeckHeight();
     // Stand just aft of the wheel, on the deck.
     return FVector(Wheel.X - 60.f, Wheel.Y, DeckTop + CapsuleHalfHeight + 2.f);
 }
@@ -576,12 +600,24 @@ bool AEWShip::LeaveHelm(AEWCharacter* Character, bool bForce)
     if (!HasAuthority() || !Character || Helmsman != Character) return false;
     const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
     const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f;
-    const FVector Exit = GetActorTransform().TransformPosition(GetHelmSeatLocal(HalfHeight) + FVector(0, 90.f, 0));
-    if (!bForce && Capsule)
+    // Step off beside the wheel, or forward of it where the hull is too narrow beside it.
+    const FVector Seat = GetHelmSeatLocal(HalfHeight);
+    FVector Exit = GetActorTransform().TransformPosition(Seat + FVector(0, 90.f, 0));
+    if (Capsule)
     {
         FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipHelmExit), false, Character);
-        if (GetWorld()->OverlapBlockingTestByChannel(Exit, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
-            return false;
+        bool bFree = false;
+        for (const FVector& Offset : {FVector(0, 90.f, 0), FVector(0, -90.f, 0), FVector(150.f, 0, 0)})
+        {
+            const FVector Candidate = GetActorTransform().TransformPosition(Seat + Offset);
+            if (!GetWorld()->OverlapBlockingTestByChannel(Candidate, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
+            {
+                Exit = Candidate;
+                bFree = true;
+                break;
+            }
+        }
+        if (!bFree && !bForce) return false;
     }
     Helmsman = nullptr;
     Rudder = 0.f;  // Sails stay as they were set; the ship keeps sailing until someone changes them.
@@ -655,7 +691,7 @@ void AEWShip::StepSimulation(float Step)
     HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
     FHitResult Hit;
     SetActorLocationAndRotation(GetActorLocation() + Rotation.Vector() * Speed * Step, Rotation, true, &Hit);
-    HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+    if (!bModelledHull) HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
     if (Hit.bBlockingHit)
     {
         if (!bAgainstObstacle)

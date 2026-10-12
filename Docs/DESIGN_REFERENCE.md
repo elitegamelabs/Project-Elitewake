@@ -201,6 +201,10 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, hold Interact to climb aboard.
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
+- **The sloop's hull (DECIDED, delegated, October 12, from the owner's sloop art):**
+  - About 10.6 m long and 3.7 m in beam, deep curved bow with a tall stem post, raised stern, low bulwarks with a rail and posts, one gunport each side, and a planked, tarred hull (*tuning*).
+  - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.
+  - Hulls are built by script in the editor (`Scripts/Setup/build_sloop_hull.py`), not bought or generated, so they can be reshaped and re-run. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.
 - **Anchor (DECIDED, delegated, within the owner's hold-to-anchor rule):**
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
   - Ships start anchored, so a moored ship never drifts.

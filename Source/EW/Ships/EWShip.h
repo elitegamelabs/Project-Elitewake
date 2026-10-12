@@ -53,6 +53,9 @@ public:
     UPROPERTY(EditAnywhere, ReplicatedUsing=OnRep_Definition, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWShipDefinition> Definition;
 
+    /** Deck height above the ship's origin, in cm. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    float GetDeckHeight() const;
     UFUNCTION(BlueprintPure, Category="Ship")
     TArray<FEWInstalledFitting> GetInstalledFittings() const { return Fittings; }
     UFUNCTION(BlueprintPure, Category="Ship")
@@ -219,6 +222,8 @@ private:
     float SimulationRemainder = 0.f;
     /** Set while pressed against an obstacle, so the contact is logged once rather than every step. */
     bool bAgainstObstacle = false;
+    /** The definition supplies a hull mesh: crew collide with it rather than with the extent box. */
+    bool bModelledHull = false;
 
     const FEWShipMount* FindHelmMount() const;
     /** The ship component under the character's interaction aim, if any. */

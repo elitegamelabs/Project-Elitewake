@@ -30,6 +30,17 @@ public:
     TSoftObjectPtr<UStaticMesh> HullMesh;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FTransform HullMeshTransform;
+    /** With a hull mesh: the walkable deck's height above the ship's origin, in cm. The mesh is what crew stand
+     *  on, inside its bulwarks and hold; the extent box then only meets docks, land and other hulls. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    float DeckHeight = 90.f;
+    /** Lowest walkable floor inside the hull (the hold), above the ship's origin, in cm. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    float HoldFloorHeight = 0.f;
+
+    /** Where crew stand on deck: the mesh's deck, or the stand-in box's top when there is no mesh. */
+    UFUNCTION(BlueprintPure, Category="Hull")
+    float GetDeckHeight() const { return HullMesh.IsNull() ? HullExtent.Z : DeckHeight; }
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
     TArray<FEWShipMount> Mounts;
