@@ -22,6 +22,7 @@
 #include "EWPlayerController.h"
 #include "Ships/EWShip.h"
 #include "Ships/EWShipDefinition.h"
+#include "Wildlife/EWFish.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
 
@@ -697,7 +698,7 @@ void AEWCharacter::DoJumpEnd()
 
 bool AEWCharacter::CanAttack() const
 {
-    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsOnLadder() && !IsSwimming();
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsOnLadder();
 }
 
 void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const
@@ -737,9 +738,16 @@ AEWCharacter* AEWCharacter::MeleeStrike()
     const FVector From = GetActorLocation() + FVector(0, 0, BaseEyeHeight * .5f);
     FCollisionQueryParams Query(SCENE_QUERY_STAT(EWMelee), false, this);
     FHitResult Hit;
-    if (!GetWorld()->SweepSingleByChannel(Hit, From, From + View.Vector() * MeleeReach, FQuat::Identity, ECC_Pawn,
-            FCollisionShape::MakeSphere(MeleeRadius), Query)) return nullptr;
-    auto* Victim = Cast<AEWCharacter>(Hit.GetActor());
+    const bool bHit = GetWorld()->SweepSingleByChannel(Hit, From, From + View.Vector() * MeleeReach, FQuat::Identity, ECC_Pawn,
+        FCollisionShape::MakeSphere(MeleeRadius), Query);
+    auto* Victim = bHit ? Cast<AEWCharacter>(Hit.GetActor()) : nullptr;
+    // Fish and sea creatures take blows too, when no survivor is in the way first.
+    if (!Victim)
+    {
+        if (AEWFish* Fish = AEWFish::FindStruck(this, bHit ? FMath::Min(MeleeReach, Hit.Distance + MeleeRadius) : MeleeReach))
+            Fish->TakeStrike(this, FistDamage);
+        return nullptr;
+    }
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
     Victim->SurvivalComponent->ApplyDamage(FistDamage);
     Victim->MulticastHitReact();

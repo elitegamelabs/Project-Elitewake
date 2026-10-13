@@ -102,9 +102,23 @@ The sea gets deep a short way past the sand, beyond a sharp edge where the water
     ('The coast', 'Water and food', '''- Fresh water: the spring is a pool inland, north-west of where you start. Look at it and press E while thirsty.
 - Berries: eat them from your inventory. Fresh berries go bad after a while and then make you sick.
 - Watch the bars in the corner: health, stamina, hunger, thirst and the weight you carry.'''),
-    ('The coast', 'Fighting', '''Left Mouse (RT) swings once a second. A swing that reaches another survivor within arm's length deals 10 damage, and they flinch.
+    ('The coast', 'Fighting', '''Left Mouse (RT) swings once a second. A swing that reaches another survivor or a sea creature within arm's length deals 10 damage, and they flinch.
 
-You cannot swing while swimming, lying prone or at a helm. There is nothing on the coast to fight yet but each other.'''),
+You can swing while swimming, but not while lying prone, on a ladder or at a helm.'''),
+    ('The coast', 'Sea creatures', '''The sea around the island has life in it. Swim out past the sand and look down.
+
+Peaceful:
+- Manatees graze the shallower water. Struck, they swim off.
+
+Dangerous: they come for a swimmer who gets close, and keep at it while you stay in the water.
+- Great white and hammerhead sharks, out in deep water. A bite takes a fifth to a quarter of your health.
+- Manta rays sting with their tails.
+- Squid lurk deepest of all and grab.
+Climb out onto a boat or the shore and they give up.
+
+Harvesting: strike a creature with Left Mouse until it dies. It floats up belly-first; look at it and press E to harvest Raw Fish (Raw Meat from a manatee). Raw food is for cooking, which is not in yet.
+
+Bass, catfish and piranhas live in fresh water, which this coast does not have yet.'''),
 ]
 
 

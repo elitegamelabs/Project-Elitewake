@@ -278,6 +278,13 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Manatee: peaceful, warm water, tamed passively with Marad.
   - Great White, Hammerhead and Squid: aggressive.
   - Sirens: always hostile, never tameable, around level 45–50.
+- **Sea creatures in play (owner, October 12: implement fish and make them harvestable, from the owner's art):**
+  - Bass, catfish, piranha, manta ray, manatee, great white, hammerhead and squid, each built from the owner's painting of it (`Art/Concepts/Fish/2026-10-12`): the art cut from its background and its outline rounded into a body, swimming by a tail sway or, for the manta, a wing beat.
+  - Habits follow the list above. Aggressive kinds go for a swimmer who comes near and bite, sting or grab; they give up when the swimmer leaves the water (DECIDED, delegated). Peaceful kinds dart away when struck. Survivors may now swing while swimming, to fight back (DECIDED, delegated).
+  - A killed creature floats up belly-first; Interact harvests it for Raw Fish, or Raw Meat from a manatee (DECIDED, delegated: manatees are mammals). Whatever does not fit stays on the body. It returns to its home 5 minutes after dying (*tuning*). Raw Fish and Raw Meat are items now; eating them (10% health and sickness, confirmed) waits for the cooking and raw-food pass, and the Fillet Knife's Fish Pieces (yield TBD) for fishing.
+  - Working numbers (*tuning*): health from 15 (bass, piranha) to 400 (great white); a great white bites for 25 every 1.5 s, a hammerhead for 20, a manta stings for 15 every 2 s, a squid grabs for 12, a piranha bites for 4. Sharks notice a swimmer from 13–15 m, mantas from 6 m. Yields: bass 2, catfish 3, piranha 1, manta 6, squid 6, hammerhead 10, great white 12 Raw Fish; manatee 12 Raw Meat.
+  - The coastal map is salt water: three mantas, three manatees, two of each shark and three squid live around the island and islet, the aggressive ones at least 35–60 m from the spawn, the dock and the moorings. Freshwater fish wait for ponds (TBD).
+  - Taming manatees, sirens, fishing with a pole and diving gear are later work.
 - **Treasure:**
   - Floating crates and sunken treasure can hold currency, scaling with treasure level, risk and difficulty (amounts TBD).
   - Treasure maps come in bottles. Dig with a shovel; on cave maps, X marks the treasure, not the cave entrance.

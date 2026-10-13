@@ -369,7 +369,7 @@ public:
 
     /** Attack (Left Mouse / RT): a swing everyone sees. With nothing to gather in front, it strikes the survivor
      *  there. Swings the owner predicts locally first; the server decides every hit. */
-    /** Whether this survivor may swing now: alive, on their feet or crouched, not swimming and not at a helm. */
+    /** Whether this survivor may swing now: alive, on their feet, crouched or swimming, and not at a helm or on a ladder. */
     UFUNCTION(BlueprintPure, Category="Combat")
     bool CanAttack() const;
     /** Plays a swing on this machine. Variant picks among AttackAnimations. */
@@ -379,6 +379,8 @@ public:
     /** Authority: strikes the first survivor within reach where this one is looking. Returns who was hit. */
     UFUNCTION(BlueprintCallable, Category="Combat")
     AEWCharacter* MeleeStrike();
+    /** Authority: the survivor flinches on every screen, as from a blow. */
+    void ReactToHit() { if (HasAuthority()) MulticastHitReact(); }
 
     /** Bare-handed damage (confirmed) and the reach of a swing (tuning). Weapons bring their own damage later. */
     static constexpr float FistDamage = 10.f;
