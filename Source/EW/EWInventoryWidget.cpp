@@ -2,6 +2,7 @@
 
 #include "EWInventoryWidget.h"
 #include "EWCompanyWidget.h"
+#include "EWJournalWidget.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
 #include "EWHotbarWidget.h"
@@ -120,6 +121,9 @@ void UEWInventoryWidget::BuildWidgetTree()
     CompanyPanel=CreateWidget<UEWCompanyWidget>(GetOwningPlayer());
     Body->AddChildToHorizontalBox(CompanyPanel)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     CompanyPanel->SetVisibility(ESlateVisibility::Collapsed);
+    JournalPanel=CreateWidget<UEWJournalWidget>(GetOwningPlayer());
+    Body->AddChildToHorizontalBox(JournalPanel)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    JournalPanel->SetVisibility(ESlateVisibility::Collapsed);
     auto* Browser = WidgetTree->ConstructWidget<UVerticalBox>(); BrowserPanel=Browser;
     auto* BrowserSlot = Body->AddChildToHorizontalBox(Browser);
     auto BrowserSize=FSlateChildSize(ESlateSizeRule::Fill); BrowserSize.Value=1.2f;
@@ -324,10 +328,11 @@ void UEWInventoryWidget::RefreshCrafting()
         SectionButtons[Index]->SetBackgroundColor(Index==SelectedSection ? FLinearColor(.5f,.52f,.55f) : FLinearColor(.055f,.065f,.075f));
     const bool BrowserVisible=SelectedSection<2;
     CompanyPanel->SetVisibility(SelectedSection==4 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    SurvivorPanel->SetVisibility(SelectedSection==4 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    JournalPanel->SetVisibility(SelectedSection==6 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    SurvivorPanel->SetVisibility(SelectedSection==4 || SelectedSection==6 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
     BrowserPanel->SetVisibility(BrowserVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     DetailsPanel->SetVisibility(BrowserVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    const TCHAR* Messages[]={TEXT(""),TEXT(""),TEXT("BUILDING\nUse the Builder's Plan to place unlocked structures."),TEXT("SKILLS\nSkill branches will appear here."),TEXT("COMPANY\nCompany membership and shared permissions will appear here."),TEXT("TAMES\nYour claimed animals will appear here."),TEXT("JOURNAL\nThe Quartermaster's guidance will live here permanently.")};
+    const TCHAR* Messages[]={TEXT(""),TEXT(""),TEXT("BUILDING\nUse the Builder's Plan to place unlocked structures."),TEXT("SKILLS\nSkill branches will appear here."),TEXT("COMPANY\nCompany membership and shared permissions will appear here."),TEXT("TAMES\nYour claimed animals will appear here."),TEXT("")};
     SectionMessage->SetText(FText::FromString(Messages[SelectedSection]));
     SectionMessage->SetVisibility(BrowserVisible || SelectedSection==4 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
     ItemPreview->GetParent()->SetVisibility(ESlateVisibility::Collapsed);

@@ -4,12 +4,13 @@ Run in the editor after build_ship_fittings.py, outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
 - Raft, about 5 m by 2.5 m: a bed of lashed logs under cross beams and a plank deck, rail logs along the sides,
-  rope-wrapped corner posts, a short mast, a lashed crate for its hold and a stone anchor on a rope coil.
-  Steered by a long oar over the stern.
+  rope-wrapped corner posts, a lashed crate for its hold and a stone anchor on a rope coil. No mast or sail: it is
+  paddled (owner, October 12). Its two paddles rest in lashings on the side rails, blades in the water, and
+  are part of the raft; taking them up is taking its helm, and forward and back set the stroke.
 - Dinghy, about 3.5 m by 1.4 m: a small plank boat with a pointed bow and a rounded transom, ribs, floor boards,
   two thwarts, a short mast, a sea chest for its hold and a grapnel. Steered by a rudder and tiller.
 
-Both carry one Small sail, which sets on their own mast and boom (the mount's look), not as the sloop's jib.
+The dinghy carries one Small sail, which sets on its own mast and boom (the mount's look), not as the sloop's jib.
 Coordinates are each boat's own, in cm, with the waterline at Z 0; floors stay above the water. Sizes are tuning.
 """
 import json
@@ -68,8 +69,7 @@ def bermuda_sail(mast_x, boom_z, head_z, boom_len, furled):
 
 RAFT_HALF = (250.0, 125.0)
 RAFT_DECK = 32.0
-RAFT_MAST = (20.0, 480.0)          # x, masthead z
-RAFT_BOOM_Z = 232.0
+RAFT_SPEED = 250.0                 # cm/s at a hard stroke (tuning)
 
 
 def raft_hull():
@@ -104,10 +104,7 @@ def raft_hull():
             b.cylinder((c[0], c[1], RAFT_DECK - 5), 13, 70, sides=12)
             for z in (RAFT_DECK + 18, RAFT_DECK + 45):
                 rope_ring(b, (c[0], c[1], z), 2, 15.5)
-    # Mast, the crate that is the raft's hold, and a stone anchor on a coil of rope.
-    mx, mtop = RAFT_MAST
-    b.box((mx, 0, RAFT_DECK + 6), (34, 34, 12))
-    b.tube([(mx, 0, RAFT_DECK), (mx, 0, mtop)], lambda k: (9.0, 6.0)[k], sides=12)
+    # The crate that is the raft's hold, and a stone anchor on a coil of rope.
     crate = (120.0, 60.0)
     b.box((crate[0], crate[1], RAFT_DECK + 22), (70, 55, 44))
     for dx in (-30, 0, 30):
@@ -117,26 +114,24 @@ def raft_hull():
     return b
 
 
-def raft_rigging():
-    r = Builder()
-    mx, mtop = RAFT_MAST
-    for sy in (1, -1):
-        for x in (mx - 60, mx + 60):
-            r.tube([(mx, sy * 5, mtop - 20), (x, sy * (RAFT_HALF[1] - 8), RAFT_DECK + 40)], 1.3, sides=6)
-    r.colours = [(1.0, 0.0, 0.5)] * len(r.colours)
-    return r
-
-
-def steering_oar(mount):
-    """In the helm mount's frame: a crutch post at the stern carrying a long oar into the water."""
+def paddles(mount):
+    """In the helm mount's frame: a paddle resting in a rope lashing on each side rail, its blade in the water
+    beside the raft, its grip inboard where the paddler kneels."""
     b = Builder()
     loc = lambda p: (p[0] - mount[0], p[1] - mount[1], p[2] - mount[2])
-    stern = -RAFT_HALF[0]
-    b.box(loc((stern + 14, 0, RAFT_DECK + 45)), (12, 12, 90))
-    b.box(loc((stern + 14, 0, RAFT_DECK + 92)), (20, 26, 8))
-    grip, pivot, blade = (stern + 90, 0, RAFT_DECK + 100), (stern + 14, 0, RAFT_DECK + 96), (stern - 170, 0, -45)
-    b.tube([loc(grip), loc(pivot), loc(blade)], lambda k: (3.5, 4.5, 4.5)[k], sides=8)
-    b.box(loc((stern - 185, 0, -52)), (70, 4, 28))
+    half_y = RAFT_HALF[1]
+    for side in (1, -1):
+        grip = (-95.0, side * 55.0, RAFT_DECK + 48)
+        rest = (-120.0, side * (half_y - 7), RAFT_DECK + 46)
+        throat = (-150.0, side * (half_y + 60), -4.0)
+        b.tube([loc(grip), loc(rest), loc(throat)], lambda k: (2.6, 2.8, 3.0)[k], sides=8)
+        b.tube([loc((grip[0] + 6, grip[1], grip[2])), loc((grip[0] - 6, grip[1], grip[2]))], 3.6, sides=8)  # T-grip
+        # The blade, flattened and broad, continuing the shaft's line down into the water.
+        dx, dy, dz = (throat[i] - rest[i] for i in range(3))
+        n = (dx * dx + dy * dy + dz * dz) ** 0.5
+        tip = (throat[0] + dx / n * 55, throat[1] + dy / n * 55, throat[2] + dz / n * 55)
+        b.sweep([loc(throat), loc(tip)], 18.0, 2.5, side=(1, 0, 0))
+        rope_ring(b, rest, 0, 6.0, 1.6)
     return b
 
 
@@ -340,26 +335,30 @@ def definition(name, values, helm_item):
     return d
 
 
-def build_raft(timber, sail_mi):
+def rename_if_present(folder, old, new):
+    """Rename one of this script's own assets, so references follow and nothing is left behind."""
+    library = unreal.EditorAssetLibrary
+    if library.does_asset_exist(f'{folder}/{old}') and not library.does_asset_exist(f'{folder}/{new}'):
+        assert library.rename_asset(f'{folder}/{old}', f'{folder}/{new}'), old
+
+
+def build_raft(timber):
     hull = write_static_mesh(raft_hull(), f'{FOLDER}/SM_RaftHull_v1', [timber], UV_TILE)
-    rig = write_static_mesh(raft_rigging(), f'{FOLDER}/SM_RaftRigging_v1', [timber], UV_TILE, collision=False)
     helm_at = (-140.0, 0.0, RAFT_DECK + 50)
-    oar = write_static_mesh(steering_oar(helm_at), f'{FOLDER}/SM_RaftSteeringOar_v1', [timber], UV_TILE, collision=False)
-    sail_at = (RAFT_MAST[0], 0.0, RAFT_DECK + 50)
-    sail_args = (RAFT_MAST[0], RAFT_BOOM_Z, RAFT_MAST[1] - 15, 215)
-    sail = write_static_mesh(bermuda_sail(*sail_args, False), f'{FOLDER}/SM_RaftSail_v1', [timber, sail_mi], UV_TILE, collision=False)
-    furled = write_static_mesh(bermuda_sail(*sail_args, True), f'{FOLDER}/SM_RaftSailFurled_v1', [timber, sail_mi], UV_TILE, collision=False)
-    helm = built_in_helm('DA_RaftSteeringOar', 'Ship.RaftSteeringOar', 'Steering Oar', oar)
+    # The raft was first steered by an oar; its paddles take that item's and mesh's place.
+    rename_if_present(FOLDER, 'SM_RaftSteeringOar_v1', 'SM_RaftPaddles_v1')
+    rename_if_present(ITEMS, 'DA_RaftSteeringOar', 'DA_RaftPaddles')
+    paddle_mesh = write_static_mesh(paddles(helm_at), f'{FOLDER}/SM_RaftPaddles_v1', [timber], UV_TILE, collision=False)
+    helm = built_in_helm('DA_RaftPaddles', 'Ship.RaftPaddles', 'Paddles', paddle_mesh)
     hx, hy = RAFT_HALF
     return definition('DA_Ship_Raft', {
-        'ship_id': 'Raft', 'display_name': 'Raft', 'hull_mesh': hull, 'rigging_mesh': rig,
+        'ship_id': 'Raft', 'display_name': 'Raft', 'hull_mesh': hull, 'rigging_mesh': None, 'paddled': True,
         'hull_extent': unreal.Vector(hx + 5, hy + 5, 40), 'hull_draft': 17.0,
         'deck_height': RAFT_DECK, 'hold_floor_height': RAFT_DECK,
         'anchor_point': unreal.Vector(205, -75, RAFT_DECK + 30), 'cargo_hatch_point': unreal.Vector(120, 60, RAFT_DECK + 30),
         'boarding_points': [unreal.Vector(0, s * (hy + 30), -10) for s in (-1, 1)],
-        'cargo_slots': 8, 'weight_capacity': 400.0, 'top_speed': 350.0, 'turn_rate': 25.0, 'crew_capacity': 2,
-        'mounts': [mount('Helm', T.HELM, helm_at),
-                   mount('Sail', T.SAIL, sail_at, unreal.EWSailSize.SMALL, (sail, furled, (0, 0, RAFT_BOOM_Z - sail_at[2])))],
+        'cargo_slots': 8, 'weight_capacity': 400.0, 'top_speed': RAFT_SPEED, 'turn_rate': 25.0, 'crew_capacity': 2,
+        'mounts': [mount('Helm', T.HELM, helm_at)],
     }, helm)
 
 
@@ -385,11 +384,12 @@ def build_dinghy(timber, sail_mi):
 
 
 def moor(definitions):
-    """Raft and dinghy wait on the beach side of the dock, clear of the swimming checks' lane along Y 0."""
+    """Raft and dinghy wait side by side on the beach side of the dock, bows out to sea so neither runs into the
+    other, clear of the swimming checks' lane along Y 0."""
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
-    for label, d, where in (('Raft', definitions[0], (5000, 300, -65)), ('Dinghy', definitions[1], (5650, 350, -65))):
+    for label, d, where in (('Raft', definitions[0], (5300, 230, -65)), ('Dinghy', definitions[1], (5300, 480, -65))):
         ship = next((a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == d), None)
         if not ship:
             ship = actors.spawn_actor_from_class(unreal.EWShip, unreal.Vector(*where))
@@ -404,7 +404,7 @@ def main():
     timber = make_timber_material()
     sail_mi = unreal.load_asset(f'{FOLDER}/MI_SailSmall_v1')
     assert sail_mi, 'Run build_ship_fittings.py first'
-    definitions = (build_raft(timber, sail_mi), build_dinghy(timber, sail_mi))
+    definitions = (build_raft(timber), build_dinghy(timber, sail_mi))
     moor(definitions)
     Path(unreal.Paths.project_saved_dir(), 'SmallCraftResult.json').write_text(json.dumps({'success': True}))
     unreal.log('Raft and dinghy built')

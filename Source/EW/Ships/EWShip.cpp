@@ -553,6 +553,8 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         else if (bOverloaded) Status = FText::Format(NSLOCTEXT("Elitewake", "HelmOverloaded", "  -  Overloaded: lighten the hold within {0} s"),
             FText::AsNumber(FMath::CeilToInt(OverloadSecondsLeft)));
         else if (bAnchored) Status = NSLOCTEXT("Elitewake", "HelmAnchored", "  -  Anchored");
+        if (Definition && Definition->bPaddled)
+            return FText::Format(NSLOCTEXT("Elitewake", "LeavePaddlesStatus", "Put down the paddles  (W/S stroke, A/D steer){0}"), Status);
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder){0}"), Status);
     }
     if (IsAimingAtAnchor(Character))
@@ -565,7 +567,8 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     if (!Mount) return FText::GetEmpty();
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
         return Installed->FittingMountType == EEWShipMountType::Helm
-            ? (Helmsman ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm"))
+            ? (Helmsman ? FText::GetEmpty() : Definition->bPaddled ? NSLOCTEXT("Elitewake", "TakePaddles", "Take up the paddles")
+                : NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm"))
             : FText::Format(NSLOCTEXT("Elitewake", "RemoveFitting", "Remove {0}"), Installed->DisplayName);
     if (const UEWItemDefinition* Carried = IsValid(Character) && Character->GetInventoryComponent() ? FindCarriedFitting(Character, *Mount) : nullptr)
         return FText::Format(NSLOCTEXT("Elitewake", "InstallFitting", "Install {0}"), Carried->DisplayName);
@@ -714,6 +717,8 @@ float AEWShip::ComputeTargetSpeed() const
 {
     if (!Definition || bAnchored || bSwamped || SailState == EEWSailState::Furled) return 0.f;
     const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
+    // Paddlers set their own pace whatever the wind, with no sails to fill.
+    if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
     const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
     const float Heading = Wind ? Wind->GetHeadingFactor(GetActorForwardVector()) : 1.f;
     return Definition->TopSpeed * SailSet * GetFittedSailFraction() * Heading * GetLoadSpeedFactor();

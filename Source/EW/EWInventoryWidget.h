@@ -22,6 +22,7 @@ class UHorizontalBox;
 class UImage;
 class UTexture2D;
 class UEWCompanyWidget;
+class UEWJournalWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWRecipePressed, int32, Index);
 UCLASS()
@@ -54,6 +55,11 @@ class EW_API UEWInventoryWidget : public UUserWidget
 
 public:
     UPROPERTY(Transient) TObjectPtr<UEWCompanyWidget> CompanyPanel;
+    UPROPERTY(Transient) TObjectPtr<UEWJournalWidget> JournalPanel;
+    /** The Journal section's panel, for tests and tools. */
+    UFUNCTION(BlueprintPure, Category="Menu") UEWJournalWidget* GetJournalPanel() const { return JournalPanel; }
+    /** Opens a menu section by its tab: 0 inventory, 1 crafting, ... 6 journal. */
+    UFUNCTION(BlueprintCallable, Category="Menu") void OpenSection(int32 Index) { SelectSection(Index); }
     UPROPERTY(Transient) TObjectPtr<UWidget> SurvivorPanel;
     UFUNCTION(BlueprintPure, Category="Inventory|Presentation")
     FText GetDisplayedDetails() const;

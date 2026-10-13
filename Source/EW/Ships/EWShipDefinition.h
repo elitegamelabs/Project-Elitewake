@@ -48,7 +48,7 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
     TArray<FEWShipMount> Mounts;
-    /** Part of the hull rather than fitted by players, such as a raft's steering oar: installed when the ship
+    /** Part of the hull rather than fitted by players, such as a raft's paddles: installed when the ship
      *  starts if the mount is empty, and never removed. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Mounts")
     TArray<FEWInstalledFitting> BuiltInFittings;
@@ -75,6 +75,10 @@ public:
     /** Sailing tuning. Top speed with every sail mount fitted and the sails full, running before the wind. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="cm/s"))
     float TopSpeed = 700.f;
+    /** Moved by paddles rather than sails, like a raft: speed ignores the wind and fitted sails, and the helmsman's
+     *  forward and back set the stroke (resting, easy, hard) instead of the sails. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing")
+    bool bPaddled = false;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="deg/s"))
     float TurnRate = 30.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship", meta=(ClampMin="1"))

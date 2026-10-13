@@ -468,10 +468,11 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
 {
     using namespace EWShipTest;
 
-    // A small craft whose steering oar is part of the hull.
-    UEWItemDefinition* Oar = Item(TEXT("TestSteeringOar"), EEWShipMountType::Helm);
+    // A paddled raft whose paddles are part of the hull: no sails at all.
+    UEWItemDefinition* Oar = Item(TEXT("TestPaddles"), EEWShipMountType::Helm);
     auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
     Def->ShipId = TEXT("TestRaft");
+    Def->bPaddled = true;
     Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-150, 0, 130)),
                    Mount(TEXT("Sail"), EEWShipMountType::Sail, FVector(0, 0, 130), EEWSailSize::Small)};
     FEWInstalledFitting BuiltIn; BuiltIn.MountId = TEXT("Helm"); BuiltIn.Item = Oar;
@@ -492,7 +493,7 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
     Ship->Definition = Def;
     Ship->FinishSpawning(FTransform::Identity);
     World->InitializeActorsForPlay(FURL()); World->BeginPlay();
-    TestEqual(TEXT("The steering oar is fitted when the raft starts"), Ship->GetFitting(TEXT("Helm")), Oar);
+    TestEqual(TEXT("The paddles are fitted when the raft starts"), Ship->GetFitting(TEXT("Helm")), Oar);
     TestTrue(TEXT("A built-in helm steers"), Ship->HasFittingOfType(EEWShipMountType::Helm));
 
     FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -500,9 +501,19 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
     auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
     PC->Possess(C);
     TestEqual(TEXT("A built-in fitting cannot be removed"), Ship->RemoveFitting(C, TEXT("Helm")), EEWFittingResult::NotAllowed);
-    TestEqual(TEXT("The oar stays on the raft"), Ship->GetFitting(TEXT("Helm")), Oar);
+    TestEqual(TEXT("The paddles stay on the raft"), Ship->GetFitting(TEXT("Helm")), Oar);
     TestEqual(TEXT("Nothing went to the inventory"), C->GetInventoryComponent()->GetItemCount(Oar), 0);
     TestTrue(TEXT("The built-in helm can be taken"), Ship->TakeHelm(C));
+    // Paddling: no sail fitted, yet a hard stroke reaches full speed and an easy one half, wind or no wind.
+    TestTrue(TEXT("Raise the anchor"), Ship->SetAnchored(C, false));
+    TestEqual(TEXT("Resting paddles do not move the raft"), Ship->ComputeTargetSpeed(), 0.f);
+    TestTrue(TEXT("Easy stroke"), Ship->StepSails(C, 1));
+    TestEqual(TEXT("An easy stroke is half speed without any sail"), Ship->ComputeTargetSpeed(), Def->TopSpeed * .5f);
+    TestTrue(TEXT("Hard stroke"), Ship->StepSails(C, 1));
+    TestEqual(TEXT("A hard stroke is full speed"), Ship->ComputeTargetSpeed(), Def->TopSpeed);
+    const FVector Start = Ship->GetActorLocation();
+    for (int32 i = 0; i < 20; ++i) Ship->SimulateSailing(.1f);
+    TestTrue(TEXT("Paddling moves the raft"), FVector::Dist(Start, Ship->GetActorLocation()) > 50.f);
 
     World->DestroyWorld(false);
     return true;

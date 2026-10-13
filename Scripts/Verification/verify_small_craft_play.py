@@ -4,9 +4,10 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 Scripts/Setup/build_small_craft.py. Run unattended with run_play_check.py.
 
 For each craft, through ordinary owned requests and movement input, the client:
-  1. finds the built-in steering already fitted and installs a carried Small sail on the craft's own mast,
-  2. raises the anchor, takes the built-in helm and sets full sail with forward input,
-  3. sails for 4 s, leaves the helm and drops the anchor.
+  1. finds the built-in steering already fitted (the raft's paddles, the dinghy's tiller); on the dinghy it also
+     installs a carried Small sail on the dinghy's own mast; the raft has no sail at all,
+  2. raises the anchor, takes the built-in helm and sets full sail (on the raft, a hard stroke) with forward input,
+  3. sails or paddles for 4 s, leaves the helm and drops the anchor.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/SmallCraftPlayResult.json.
 """
@@ -48,7 +49,7 @@ checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'handle': None, 'memo': {}}
 
 # Where to stand, in each craft's frame, to reach each place without bumping its thwarts, crate or mast.
-STANDS = {'Raft': {'Sail': (-60, 0), 'Anchor': (120, -40), 'Helm': (-70, 0)},
+STANDS = {'Raft': {'Anchor': (120, -40), 'Helm': (-70, 0)},
           'Dinghy': {'Sail': (-30, 0), 'Anchor': (85, 0), 'Helm': (-30, 0)}}
 
 
@@ -69,12 +70,18 @@ def steps_for(ship_id):
             assert lib.send_verification_interaction_request(client, peer)
         return begin
 
+    paddled = ship.get_editor_property('definition').get_editor_property('paddled')
+
     def prepare():
         state['current'] = ship_id
         builtin = ship.get_fitting('Helm')
         assert builtin and peer.get_fitting('Helm') == builtin, 'built-in steering must be fitted on both copies'
         assert ship.get_fitting('Sail') is None and ship.is_anchored()
-        assert owner.get_inventory_component().add_item(sail, 1) == 1
+        mounts = [str(m.get_editor_property('mount_id')) for m in ship.get_editor_property('definition').get_editor_property('mounts')]
+        if paddled:
+            assert mounts == ['Helm'], f'a paddled raft has no sail mount: {mounts}'
+        else:
+            assert owner.get_inventory_component().add_item(sail, 1) == 1
 
     def full_sail():
         state['aim'] = None
@@ -98,16 +105,20 @@ def steps_for(ship_id):
     def leave():
         assert lib.send_verification_interaction_request(client, peer)
 
-    return [
-        (f'{ship_id}: built-in steering is fitted on server and client; Small sail granted in Play only', prepare, lambda: True, 2),
-        (f'{ship_id}: client installs the Small sail on its own mast', go('Sail'),
-         lambda: ship.get_fitting('Sail') == sail and peer.get_fitting('Sail') == sail, 6),
+    if paddled:
+        rigging = [(f'{ship_id}: its paddles are fitted on server and client, and it has no mast or sail mount', prepare, lambda: True, 2)]
+    else:
+        rigging = [(f'{ship_id}: built-in steering is fitted on server and client; Small sail granted in Play only', prepare, lambda: True, 2),
+                   (f'{ship_id}: client installs the Small sail on its own mast', go('Sail'),
+                    lambda: ship.get_fitting('Sail') == sail and peer.get_fitting('Sail') == sail, 6)]
+    effort = 'a hard stroke' if paddled else 'full sail'
+    return rigging + [
         (f'{ship_id}: client raises the anchor', go('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
         (f'{ship_id}: client takes the built-in helm', go('Helm'),
          lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
-        (f'{ship_id}: forward input twice sets full sail', full_sail,
+        (f'{ship_id}: forward input twice sets {effort}', full_sail,
          lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
-        (f'{ship_id}: the craft sails for 4 s and the client copy keeps up', begin_run, ran, 8),
+        (f'{ship_id}: the craft moves for 4 s and the client copy keeps up', begin_run, ran, 8),
         (f'{ship_id}: client leaves the helm', leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),
         (f'{ship_id}: client drops the anchor', go('Anchor'), lambda: ship.is_anchored() and peer.is_anchored(), 6),
     ]
