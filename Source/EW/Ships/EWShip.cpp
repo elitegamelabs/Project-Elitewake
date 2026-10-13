@@ -903,10 +903,26 @@ void AEWShip::SmoothClientMotion(float DeltaSeconds)
     // Carry the last update forward at the ship's replicated speed and turn, then ease toward that.
     const float Ahead = FMath::Clamp(float(GetWorld()->GetTimeSeconds() - NetPoseTime), 0.f, MaxClientPrediction);
     const FRotator Heading = NetPose.Rotator() + FRotator(0, CurrentTurnRate() * Ahead, 0);
-    FTransform Predicted(Heading, NetPose.GetLocation() + Heading.Vector() * Speed * Ahead, NetPose.GetScale3D());
+    const FVector Along = FRotator(0, Heading.Yaw, 0).Vector();   // the swell's roll and pitch never move it
+    FTransform Predicted(Heading, NetPose.GetLocation() + Along * Speed * Ahead, NetPose.GetScale3D());
     FTransform Shown;
     Shown.Blend(GetActorTransform(), Predicted, 1.f - FMath::Exp(-ClientCatchUpRate * DeltaSeconds));
     SetActorTransform(Shown);
+}
+
+float AEWShip::SwayScale() const
+{
+    return Definition ? FMath::Clamp(250.f / FMath::Max(Definition->HullExtent.Y, 1.f), .6f, 2.f) : 1.f;
+}
+
+void AEWShip::GetSwayAt(float Time, float& OutRoll, float& OutPitch, float& OutRise) const
+{
+    // Each ship rides its own swell (offset by its name), so a fleet never rocks in step.
+    const float Phase = float(GetTypeHash(GetFName()) % 628) * .01f;
+    const float Scale = SwayScale();
+    OutRoll = Heel + SwellRoll * Scale * FMath::Sin(Time * .9f + Phase);
+    OutPitch = SwellPitch * Scale * FMath::Sin(Time * .7f + Phase * 1.7f + 1.3f);
+    OutRise = SwellRise * Scale * FMath::Sin(Time * .8f + Phase * .6f);
 }
 
 void AEWShip::StepSimulation(float Step)
@@ -915,14 +931,35 @@ void AEWShip::StepSimulation(float Step)
         SailAngle = FMath::Clamp(SailAngle + SailTrimDirection * SailTrimRate * Step, -MaxSailAngle, MaxSailAngle);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
+    // The swell rocks every ship, moving or not; under sail it also leans to leeward, more with more wind in the
+    // sails. Movement follows the heading alone, never the roll or pitch.
+    if (!bHasRestZ) { RestZ = GetActorLocation().Z; bHasRestZ = true; }
+    SwayTime += Step;
+    const float SailSet = SailState == EEWSailState::Full ? 1.f : SailState == EEWSailState::Half ? .5f : 0.f;
+    const float WantedHeel = HasTrimmableSails() && !bAnchored
+        ? MaxHeel * SwayScale() * SailSet * GetFittedSailFraction() * GetWindFactor() * (SailAngle >= 0.f ? 1.f : -1.f) : 0.f;
+    Heel = FMath::FInterpConstantTo(Heel, WantedHeel, Step, 2.f);
+    float Roll, Pitch, Rise;
+    GetSwayAt(SwayTime, Roll, Pitch, Rise);
+    const float Yaw = GetActorRotation().Yaw;
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
-    if (Speed <= 1.f && (bAnchored || FMath::IsNearlyZero(Rudder))) { Speed = FMath::Max(Speed, 0.f); return; }
-    const FRotator Rotation = GetActorRotation() + FRotator(0, CurrentTurnRate() * Step, 0);
+    if (Speed <= 1.f && (bAnchored || FMath::IsNearlyZero(Rudder)))
+    {
+        Speed = FMath::Max(Speed, 0.f);
+        FVector Here = GetActorLocation();
+        Here.Z = RestZ + Rise;
+        SetActorLocationAndRotation(Here, FRotator(Pitch, Yaw, Roll), false, nullptr, ETeleportType::None);
+        return;
+    }
+    const FRotator Heading(0, Yaw + CurrentTurnRate() * Step, 0);
+    FVector Next = GetActorLocation() + Heading.Vector() * Speed * Step;
+    Next.Z = RestZ + Rise;
+    const FRotator Rotation(Pitch, Heading.Yaw, Roll);
     // People never stop a ship: survivors on deck ride with it and swimmers are pushed aside.
     // Hulls, land and other world geometry still block the sweep.
     HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
     FHitResult Hit;
-    SetActorLocationAndRotation(GetActorLocation() + Rotation.Vector() * Speed * Step, Rotation, true, &Hit);
+    SetActorLocationAndRotation(Next, Rotation, true, &Hit);
     if (!bModelledHull) HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
     if (Hit.bBlockingHit)
     {

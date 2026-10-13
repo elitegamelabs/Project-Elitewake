@@ -286,7 +286,9 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("The anchor stops the ship within 2 s"), A->GetSpeed(), 0.f);
     const FVector Moored = A->GetActorLocation();
     for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
-    TestTrue(TEXT("An anchored ship stays put"), FVector::Dist(Moored, A->GetActorLocation()) < 1.f);
+    // It does not drift across the water; the swell only bobs it in place.
+    TestTrue(TEXT("An anchored ship stays put"), FVector::Dist2D(Moored, A->GetActorLocation()) < 1.f);
+    TestTrue(TEXT("The swell bobs it gently"), FMath::Abs(Moored.Z - A->GetActorLocation().Z) <= 2.f * AEWShip::SwellRise * 2.f + .1f);
     TestTrue(TEXT("Raise anchor again"), A->SetAnchored(C, false));
 
     // Another hull ahead stops the ship instead of passing through it.

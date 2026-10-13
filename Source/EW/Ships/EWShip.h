@@ -58,6 +58,17 @@ public:
     /** Height of the sea surface the ship floats in, in world cm. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     float SurfaceZ = -65.f;
+    /** How far the ship leans to leeward under sail now, in degrees (part of its roll). */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetHeel() const { return Heel; }
+    /** The swell and the heel, as a roll and pitch in degrees and a rise in cm, for a moment of the ship's own time. */
+    void GetSwayAt(float Time, float& OutRoll, float& OutPitch, float& OutRise) const;
+    /** How hard the swell rocks a sloop-sized hull, and how far full sail heels it, at most (tuning); smaller
+     *  hulls rock more. */
+    static constexpr float SwellRoll = 1.4f;
+    static constexpr float SwellPitch = .8f;
+    static constexpr float SwellRise = 6.f;
+    static constexpr float MaxHeel = 6.f;
     /** 0-1: how strongly the wake shows now. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetWakeStrength() const { return WakeStrength; }
@@ -283,6 +294,13 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UMaterialInstanceDynamic> WakeMaterial;
     float WakeStrength = 0.f;
+    /** Server: the ship's own clock for its swell, its resting height and its current heel. */
+    float SwayTime = 0.f;
+    float RestZ = 0.f;
+    bool bHasRestZ = false;
+    float Heel = 0.f;
+    /** How much more a hull this size rocks than a sloop. */
+    float SwayScale() const;
     void PlaceWake();
     void ShowWake(float DeltaSeconds);
     /** Authority: the pose after the latest fixed step and the one before it. Each frame shows the ship between
