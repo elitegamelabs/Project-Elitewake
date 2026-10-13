@@ -43,7 +43,8 @@ def tick(delta):
             checks.append('Both worlds load coastal map; client possesses survivor; beach spawn grounded with the test starter kit replicated and recipes locked')
             target=next(a for a in unreal.GameplayStatics.get_all_actors_of_class(server,unreal.EWWaterSource))
             owner.get_survival_component().set_hydration(40)
-            face(target,(-1920,1500,110))
+            at=target.get_actor_location(); out=unreal.Vector(at.x+1700,at.y-1500,0).normal()  # away from the pond's middle
+            face(target,(at.x+out.x*120,at.y+out.y*120,at.z+100))
         elif phase==1:
             assert lib.send_verification_interaction_request(client,peer(target))
         elif phase==2:

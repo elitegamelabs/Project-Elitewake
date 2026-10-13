@@ -8,9 +8,9 @@ Every creature has a definition with its habits from the design reference: bass,
 peaceful; piranhas, mantas (a tail sting), sharks (a bite) and squid are aggressive. Killed, a creature floats up
 and is harvested for Raw Fish, or Raw Meat from a manatee; both are new items, not yet edible.
 
-The coastal map is salt water, so only the sea creatures are placed: mantas and manatees in the warmer shallows,
-sharks and squid out in deeper water, the aggressive ones well away from the spawn, the dock and the moorings.
-Bass, catfish and piranhas wait for freshwater ponds. All numbers are tuning.
+In the coastal sea: mantas and manatees in the warmer shallows, sharks and squid out in deeper water, the aggressive
+ones well away from the spawn, the dock and the moorings. In the island's freshwater pond (build_freshwater_pond.py
+first): bass, catfish and piranhas. All numbers are tuning.
 """
 import json
 import math
@@ -22,6 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_flora import Ground, SEA  # noqa: E402
+from coastal_layout import POND, POND_RADIUS, POND_SURFACE  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/Wildlife/Fish'
@@ -58,7 +59,9 @@ ITEMS = {'RawFish': ('Raw Fish', 'Raw-Fish-v1.png', 'Fresh from the sea or a pon
 # the spawn, the dock and the moorings they must start (cm).
 PLACEMENT = {'MantaRay': (3, 250, 3500), 'Manatee': (3, 180, 1500), 'GreatWhiteShark': (2, 700, 6000),
              'HammerheadShark': (2, 700, 6000), 'Squid': (3, 900, 5500)}
-PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 1750.0)]   # spawn, dock landing, moorings
+# Freshwater kinds in the island's pond (build_freshwater_pond.py): how many of each.
+POND_FISH = {'Bass': 3, 'Catfish': 2, 'Piranha': 2}
+PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 2350.0)]   # spawn, dock landing, moorings
 SEARCH = ((-13000.0, 17000.0), (-12000.0, 13000.0))   # within reach of the island and the islet, x and y ranges
 
 
@@ -230,6 +233,19 @@ def main():
             fish.set_folder_path(LEVEL_FOLDER)
         placed += spots
         report[name] = [[round(v) for v in s] for s in spots]
+    # The pond's fish, spread about its middle a metre down, living under its surface.
+    rng = random.Random(7)
+    for name, count in POND_FISH.items():
+        report[name] = []
+        for k in range(count):
+            angle, reach = rng.uniform(0, 2 * math.pi), POND_RADIUS * rng.uniform(.1, .5)
+            spot = unreal.Vector(POND[0] + math.cos(angle) * reach, POND[1] + math.sin(angle) * reach, POND_SURFACE - 100)
+            fish = actors.spawn_actor_from_class(unreal.EWFish, spot, unreal.Rotator(0, 0, rng.uniform(-180, 180)))
+            fish.set_editor_property('definition', definitions[name])
+            fish.set_editor_property('surface_z', POND_SURFACE)
+            fish.set_actor_label(f'{CREATURES[name]["display"]} {k + 1}')
+            fish.set_folder_path(LEVEL_FOLDER)
+            report[name].append([round(spot.x), round(spot.y), round(spot.z)])
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'FishResult.json').write_text(json.dumps({'success': True, 'placed': report}, indent=2))
     unreal.log('Fish built and placed')

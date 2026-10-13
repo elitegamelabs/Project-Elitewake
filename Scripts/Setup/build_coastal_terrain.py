@@ -5,15 +5,19 @@ editor after the ground changes), outside Play with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
 The island is generated from the shapes below, not painted: a sand island with a wet shoreline,
-low dunes and two hills to the west, a hollow for the freshwater spring, the islet to the
+low dunes and two hills to the west, a basin for the freshwater pond, the islet to the
 north-east, and a sandy shelf that falls away to deep water. Animated surf washes up both beaches. The beach spawn, dock landing and
 sloop keep their places; the spawn is lifted onto the new ground and the dock posts reach the seabed.
 The deep floor stays at the owner's 500 m beyond the terrain's edge. All heights are tuning.
 """
 import json
 import math
+import sys
 from pathlib import Path
 import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from coastal_layout import POND, POND_DEPTH, POND_RADIUS, POND_SURFACE  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 LABEL = 'Coastal island terrain'
@@ -70,11 +74,14 @@ def height(x, y):
         inland = -d
         dunes = min(1.0, max(0.0, (inland - 1500) / 1500)) * (45 * math.sin(x / 650 + 1) * math.sin(y / 1100))
         main = land(inland) + dunes + bump(x, y, -3300, -1700, 1600, 700) + bump(x, y, -3500, 1300, 1200, 420)
-        # Freshwater spring: a flat clearing with a shallow hollow under the pool.
-        spring = math.hypot(x + 1700, y - 1500)
-        if spring < 900:
-            blend = min(1.0, max(0.0, (spring - 500) / 400))
-            floor = -25 if spring < 230 else min(20.0, -25 + (spring - 230) * 0.6)
+        # Freshwater pond: a round basin, deepest in the middle, with a low bank and a clearing around it.
+        spring = math.hypot(x - POND[0], y - POND[1])
+        if spring < POND_RADIUS + 300:
+            blend = min(1.0, max(0.0, (spring - POND_RADIUS - 50) / 250))
+            if spring < POND_RADIUS:
+                floor = POND_SURFACE - 10 - POND_DEPTH * (1 - (spring / POND_RADIUS) ** 2)
+            else:
+                floor = min(20.0, POND_SURFACE - 10 + (spring - POND_RADIUS) * 0.3)
             main = floor * (1 - blend) + main * blend
     # North-east islet.
     di = radial_distance(x, y, *ISLET_SHORE[:4], wobble=ISLET_SHORE[4])
