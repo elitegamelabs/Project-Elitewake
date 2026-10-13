@@ -6,6 +6,8 @@
 #include "EWTitleGameMode.generated.h"
 
 class UEWTitleWidget;
+class UMaterialInterface;
+class UTexture2D;
 
 /** The title map's rules: no survivor, just the title controller. */
 UCLASS()
@@ -28,11 +30,11 @@ public:
     UEWTitleWidget* GetTitleWidget() const { return Title; }
     /** Where Single Player goes. */
     static inline const TCHAR* JourneyMap = TEXT("/Game/Elitewake/Maps/Lvl_CoastalPlayground");
-    static inline const TCHAR* TitleArt = TEXT("/Game/Elitewake/UI/Title/T_TitleBackground_20261013.T_TitleBackground_20261013");
-    static inline const TCHAR* LogoArt = TEXT("/Game/Elitewake/UI/Title/T_ElitewakeLogo_20261013.T_ElitewakeLogo_20261013");
-    static inline const TCHAR* PromptArt = TEXT("/Game/Elitewake/UI/Title/T_PressAnyKey_20261013.T_PressAnyKey_20261013");
+    static inline const TCHAR* TitleArt = TEXT("/Game/Elitewake/UI/Title/T_ElitewakeStarterScreen_20261013.T_ElitewakeStarterScreen_20261013");
+    static inline const TCHAR* PromptArt = TEXT("/Game/Elitewake/UI/Title/T_PressAnyKeyToStart_20261013_v2.T_PressAnyKeyToStart_20261013_v2");
     static inline const TCHAR* MainMenuArt = TEXT("/Game/Elitewake/UI/Title/T_MainMenu_20261013.T_MainMenu_20261013");
-    static inline const TCHAR* TitleWavesArt = TEXT("/Game/Elitewake/UI/Title/T_TitleWaves_4Frame_20261013.T_TitleWaves_4Frame_20261013");
+    static inline const TCHAR* TitleWaterMask = TEXT("/Game/Elitewake/UI/Title/T_TitleWaterMask_20261013.T_TitleWaterMask_20261013");
+    static inline const TCHAR* TitleWaterMaterial = TEXT("/Game/Elitewake/UI/Title/M_TitleScreenWater_20261013.M_TitleScreenWater_20261013");
     /** Set by acceptance tests so Single Player can be recorded without leaving the title map. */
     UPROPERTY(BlueprintReadWrite, Category="Title")
     bool bStayOnSetSail = false;

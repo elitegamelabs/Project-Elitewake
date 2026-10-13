@@ -5,6 +5,8 @@
 #include "EWTitleWidget.generated.h"
 
 class UTexture2D;
+class UMaterialInterface;
+class UMaterialInstanceDynamic;
 DECLARE_DELEGATE(FEWOnTitleContinue);
 DECLARE_DELEGATE(FEWOnSinglePlayer);
 
@@ -22,10 +24,10 @@ class EW_API UEWTitleWidget : public UUserWidget
     GENERATED_BODY()
 public:
     UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> Art;
-    UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> LogoArt;
     UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> PromptArt;
     UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> MainMenuArt;
-    UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> WaveArt;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UTexture2D> WaterMaskArt;
+    UPROPERTY(Transient, BlueprintReadOnly, Category="Title") TObjectPtr<UMaterialInterface> WaterMaterial;
 
     FEWOnTitleContinue OnContinue;
     FEWOnSinglePlayer OnSinglePlayer;
@@ -59,6 +61,7 @@ private:
     FSlateRect SinglePlayerRect(const FVector2D& Size) const;
     FVector2D LastSize = FVector2D(1920, 1080);
     EEWTitleScreen Screen = EEWTitleScreen::Splash;
+    UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> WaterMaterialInstance;
     bool bHovered = false;
     float Age = 0.f;
     float Glow = 0.f;

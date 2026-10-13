@@ -1,5 +1,6 @@
 #include "Title/EWTitleWidget.h"
 #include "Engine/Texture2D.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/CoreStyle.h"
 
@@ -8,6 +9,12 @@ void UEWTitleWidget::NativeConstruct()
     Super::NativeConstruct();
     SetIsFocusable(true);
     SetKeyboardFocus();
+    if (WaterMaterial && Art && WaterMaskArt)
+    {
+        WaterMaterialInstance = UMaterialInstanceDynamic::Create(WaterMaterial, this);
+        WaterMaterialInstance->SetTextureParameterValue(TEXT("TitleImage"), Art);
+        WaterMaterialInstance->SetTextureParameterValue(TEXT("WaterMask"), WaterMaskArt);
+    }
 }
 
 FSlateRect UEWTitleWidget::CoverRect(const FVector2D& Size, const UTexture2D* Texture) const
@@ -120,42 +127,34 @@ int32 UEWTitleWidget::NativePaint(const FPaintArgs& Args, const FGeometry& Allot
             AllottedGeometry.ToPaintGeometry(FVector2f(R.GetSize()), FSlateLayoutTransform(FVector2f(R.GetTopLeft()))),
             Brush, ESlateDrawEffect::None, Colour);
     };
-    auto Texture = [&](int32 L, UTexture2D* Image, const FSlateRect& Rect, const FLinearColor& Tint = FLinearColor::White)
+    auto Brush = [&](int32 L, UObject* Image, const FVector2D& ImageSize, const FSlateRect& Rect, const FLinearColor& Tint = FLinearColor::White)
     {
         if (!Image) return;
-        FSlateBrush Brush;
-        Brush.SetResourceObject(Image);
-        Brush.ImageSize = FVector2D(Image->GetSizeX(), Image->GetSizeY());
-        if (Image == WaveArt)
-        {
-            constexpr int32 FrameCount = 4;
-            const int32 Frame = FMath::FloorToInt(Age / .42f) % FrameCount;
-            Brush.SetUVRegion(FBox2f(FVector2f(static_cast<float>(Frame) / FrameCount, 0.f),
-                FVector2f(static_cast<float>(Frame + 1) / FrameCount, 1.f)));
-        }
-        Box(L, Rect, &Brush, Tint);
+        FSlateBrush SlateBrush;
+        SlateBrush.SetResourceObject(Image);
+        SlateBrush.ImageSize = ImageSize;
+        Box(L, Rect, &SlateBrush, Tint);
     };
 
     Box(1, FSlateRect(FVector2D::ZeroVector, Size), White, FLinearColor::Black);
     if (Screen == EEWTitleScreen::Splash)
     {
-        Texture(2, Art, CoverRect(Size, Art));
-        Texture(2, WaveArt, CoverRect(Size, Art));
-        const float LogoW = Size.X * .47f;
-        const float LogoH = LogoArt ? LogoW * LogoArt->GetSizeY() / LogoArt->GetSizeX() : Size.Y * .14f;
-        const FVector2D LogoTop((Size.X - LogoW) * .5f, Size.Y * .055f);
-        Texture(3, LogoArt, FSlateRect(LogoTop, LogoTop + FVector2D(LogoW, LogoH)));
+        const FSlateRect Background = CoverRect(Size, Art);
+        const FVector2D BackgroundSize = Art ? FVector2D(Art->GetSizeX(), Art->GetSizeY()) : Size;
+        Brush(2, WaterMaterialInstance ? static_cast<UObject*>(WaterMaterialInstance.Get()) : static_cast<UObject*>(Art.Get()), BackgroundSize, Background);
 
-        // The title prompt pulses over the sea. The underlying plate keeps the ship, person, dock and sunlight still.
-        const float PromptW = Size.X * .42f;
+        // Keep the key prompt separate from the supplied title art so only the water is animated.
+        const float PromptW = Size.X * .40f;
         const float PromptH = PromptArt ? PromptW * PromptArt->GetSizeY() / PromptArt->GetSizeX() : Size.Y * .09f;
-        const FVector2D PromptTop((Size.X - PromptW) * .5f, Size.Y * .76f);
-        const float Pulse = .72f + .28f * FMath::Sin(Age * 2.6f);
-        Texture(4, PromptArt, FSlateRect(PromptTop, PromptTop + FVector2D(PromptW, PromptH)), FLinearColor(1.f, 1.f, 1.f, Pulse));
+        const FVector2D PromptTop((Size.X - PromptW) * .5f, Size.Y * .865f);
+        const float Pulse = .78f + .22f * FMath::Sin(Age * 2.6f);
+        Brush(4, PromptArt, FVector2D(PromptArt ? PromptArt->GetSizeX() : 1, PromptArt ? PromptArt->GetSizeY() : 1),
+            FSlateRect(PromptTop, PromptTop + FVector2D(PromptW, PromptH)), FLinearColor(1.f, 1.f, 1.f, Pulse));
     }
     else
     {
-        Texture(2, MainMenuArt, CoverRect(Size, MainMenuArt));
+        Brush(2, MainMenuArt, MainMenuArt ? FVector2D(MainMenuArt->GetSizeX(), MainMenuArt->GetSizeY()) : Size,
+            CoverRect(Size, MainMenuArt));
         if (Glow > .01f)
         {
             const FSlateRect R = SinglePlayerRect(Size);

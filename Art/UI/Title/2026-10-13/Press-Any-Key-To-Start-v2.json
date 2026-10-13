@@ -1,0 +1,15 @@
+{
+  "asset": "Press-Any-Key-To-Start-v2.png",
+  "purpose": "Bottom-center title screen prompt",
+  "text": "PRESS ANY KEY TO START",
+  "rendering": {
+    "sourceSpec": "Press-Any-Key-To-Start-v2.svg",
+    "method": "Windows System.Drawing, antialiased text rasterization",
+    "fontFamily": "Times New Roman",
+    "fontSizePixels": 142,
+    "color": "#F2E8D7",
+    "canvas": [2200, 360],
+    "background": "transparent RGBA",
+    "sha256": "F701F62D6FE7AA003030FDA5D0CDF607D24624380581A887AA960810B3972FC5"
+  }
+}

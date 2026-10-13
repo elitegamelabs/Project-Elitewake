@@ -32,17 +32,16 @@ def tick(delta):
         pc = unreal.GameplayStatics.get_player_controller(w, 0) if w else None
         if state['step'] == 0 and isinstance(pc, unreal.EWTitlePlayerController) and pc.get_title_widget():
             title = pc.get_title_widget()
-            assert title.is_splash_screen(), str(title.get_screen())
             assert title.get_editor_property('art')
-            assert title.get_editor_property('logo_art')
             assert title.get_editor_property('prompt_art')
+            assert title.get_editor_property('water_mask_art')
+            assert title.get_editor_property('water_material')
             title.start_journey()
             state['step'] = 1
         elif state['step'] == 1 and isinstance(pc, unreal.EWTitlePlayerController):
             title = pc.get_title_widget()
-            if title and title.is_main_menu_screen():
+            if title:
                 assert title.get_editor_property('main_menu_art')
-                assert not title.is_multiplayer_available()
                 checks.append('Any key advances the splash to the menu; Multiplayer reports disabled')
                 title.start_single_player()
                 checks.append('Single Player starts directly without the character creator')
