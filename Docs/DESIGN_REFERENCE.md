@@ -363,6 +363,10 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
 
 Room price, dialogue, the storm line, and whether the torch or the Rye counts as the first carried item: TBD.
 
+- **Title screen (owner, October 13):** the game opens on the owner's title art (`Art/UI/Title/Elitewake-Title-v1.png`). Its painted "Start your journey" is the button: it glows under the mouse and starts on a click, Enter or the gamepad's bottom face button. This is the front of the game; the prologue's letter-by-letter title reveal over the afternoon sky stays as written.
+- **Character creation (owner, October 13: characters and their customization right after Start Your Journey):** the survivor is made on the end of a dock at dusk. Choices (DECIDED, delegated): body (a man or a woman for now), colouring (six skin tones, fair to deep) and height (92-108%, *tuning*); drag to turn the survivor. Set Sail opens the coast. The look is remembered for the next launch, sent to the server when the survivor arrives, kept within what the roster offers, and seen by every player.
+  - The bodies are the Unreal mannequins as stand-ins. The owner's own characters were not on disk on October 13; MetaHumans made in MetaHuman Creator share the mannequin skeleton and are the recommended route if they cannot be used. New bodies are added to the roster asset without code. Faces, hair and clothing choices come with real bodies (TBD).
+
 ## Company and multiplayer
 
 - **Company** is the player group. ATLAS's Company page is a mechanics reference only.

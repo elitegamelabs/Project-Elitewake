@@ -166,6 +166,14 @@ bool UEWEditorVerificationLibrary::SendVerificationHotbarRequest(AEWPlayerContro
     return true;
 }
 
+bool UEWEditorVerificationLibrary::SendVerificationAppearanceRequest(AEWPlayerController* Controller, const FEWAppearance& Appearance)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Controller->RequestAppearance(Appearance);
+    return true;
+}
+
 bool UEWEditorVerificationLibrary::SendVerificationEquipmentRequest(AEWPlayerController* Controller, UEWItemDefinition* Item, EEWEquipmentSlot Slot, bool bUnequip)
 {
     if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;

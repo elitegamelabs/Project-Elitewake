@@ -38,6 +38,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
+    BodyRoster = TSoftObjectPtr<UEWBodyRoster>(FSoftObjectPath(TEXT("/Game/Elitewake/Characters/DA_BodyRoster.DA_BodyRoster")));
     HeldItem = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldItem"));
     HeldItem->SetupAttachment(GetMesh(), TEXT("hand_r"));
     HeldItem->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -153,6 +154,22 @@ void AEWCharacter::BeginPlay()
 	ApplyMovementSpeed();
     EquipmentComponent->OnEquipmentChanged.AddUniqueDynamic(this, &AEWCharacter::RefreshHeldItem);
     RefreshHeldItem();
+    OnRep_Appearance();
+}
+
+void AEWCharacter::SetAppearance(const FEWAppearance& NewAppearance)
+{
+    if (!HasAuthority()) return;
+    Appearance = NewAppearance.Clamped(BodyRoster.LoadSynchronous());
+    OnRep_Appearance();
+    ForceNetUpdate();
+}
+
+void AEWCharacter::OnRep_Appearance()
+{
+    // Survivors who never chose keep the body their blueprint was made with.
+    if (Appearance == FEWAppearance()) return;
+    Appearance.ApplyTo(GetMesh(), BodyRoster.LoadSynchronous());
 }
 
 void AEWCharacter::RefreshHeldItem()
@@ -296,6 +313,7 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AEWCharacter, bIsProne);
     DOREPLIFETIME(AEWCharacter, HelmShip);
     DOREPLIFETIME(AEWCharacter, Ladder);
+    DOREPLIFETIME(AEWCharacter, Appearance);
 }
 
 void AEWCharacter::SetHelmShip(AEWShip* Ship)

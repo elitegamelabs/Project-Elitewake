@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "TimerManager.h"
+#include "Characters/EWAppearance.h"
 #include "EWCharacter.generated.h"
 
 class USpringArmComponent;
@@ -417,6 +418,14 @@ public:
     /** The item shown in the right hand, if any. */
     UFUNCTION(BlueprintPure, Category="Combat")
     UStaticMesh* GetHeldMesh() const;
+
+    /** The bodies and tones survivors are made from. */
+    UPROPERTY(EditDefaultsOnly, Category="Appearance")
+    TSoftObjectPtr<UEWBodyRoster> BodyRoster;
+    UFUNCTION(BlueprintPure, Category="Appearance")
+    FEWAppearance GetAppearance() const { return Appearance; }
+    /** Authority only: changes how this survivor looks on every screen. */
+    void SetAppearance(const FEWAppearance& NewAppearance);
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TObjectPtr<UAnimSequenceBase> HitReactAnimation;
 
@@ -424,6 +433,10 @@ private:
     /** Shows the main-hand item in the right hand; runs whenever equipment changes, on every machine. */
     UFUNCTION()
     void RefreshHeldItem();
+    UPROPERTY(ReplicatedUsing=OnRep_Appearance)
+    FEWAppearance Appearance;
+    UFUNCTION()
+    void OnRep_Appearance();
     /** Every machine: plays the ladder loop that matches how the climber moves, or stops it off the ladder. */
     void UpdateLadderAnimation(float DeltaSeconds);
     UPROPERTY(Transient)

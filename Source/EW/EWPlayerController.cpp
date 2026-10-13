@@ -210,6 +210,23 @@ void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Vari
     else Survivor->MeleeStrike();
 }
 
+void AEWPlayerController::RequestAppearance(const FEWAppearance& Appearance)
+{
+    if (IsLocalController()) ServerSetAppearance(Appearance);
+}
+
+void AEWPlayerController::ServerSetAppearance_Implementation(const FEWAppearance& Appearance)
+{
+    if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->SetAppearance(Appearance);
+}
+
+void AEWPlayerController::AcknowledgePossession(APawn* P)
+{
+    Super::AcknowledgePossession(P);
+    const auto* Instance = Cast<UEWGameInstance>(GetGameInstance());
+    if (Instance && Instance->HasChosenAppearance() && Cast<AEWCharacter>(P)) RequestAppearance(Instance->GetChosenAppearance());
+}
+
 void AEWPlayerController::Interact()
 {
     if (!IsLocalPlayerController() || IsMapOpen() || IsSessionMenuOpen() || (InventoryWidget && InventoryWidget->IsInViewport())) return;

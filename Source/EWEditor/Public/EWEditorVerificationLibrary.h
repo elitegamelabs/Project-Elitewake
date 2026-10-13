@@ -3,6 +3,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "EWItemDefinition.h"
 #include "EWCompanyComponent.h"
+#include "Characters/EWAppearance.h"
 #include "EWEditorVerificationLibrary.generated.h"
 
 class AEWPickup;
@@ -79,6 +80,9 @@ UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIKeyEvent(APlayerController* Controller, FName KeyName, bool bPressed);
     /** Normal owned-controller equipment intent with editor script RPC bypass disabled in this scope. */
+    /** The owner's ordinary request for its survivor's look, as the character creator sends it. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationAppearanceRequest(AEWPlayerController* Controller, const FEWAppearance& Appearance);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationEquipmentRequest(AEWPlayerController* Controller, UEWItemDefinition* Item, EEWEquipmentSlot Slot, bool bUnequip = false);
     /** Route normal Slate input to the focused local PIE UI, including gamepad keys/axes. */

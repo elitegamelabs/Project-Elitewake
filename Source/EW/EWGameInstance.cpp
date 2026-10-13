@@ -1,5 +1,6 @@
 #include "EWGameInstance.h"
 #include "EWPlayerController.h"
+#include "Characters/EWAppearanceSave.h"
 #include "EW.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -34,9 +35,25 @@ bool UEWGameInstance::NormalizePrivateAddress(const FString& Input, FString& Out
     Output=FString::Printf(TEXT("%d.%d.%d.%d:%d"),Values[0],Values[1],Values[2],Values[3],Port.IsEmpty()?7777:FCString::Atoi(*Port));
     return true;
 }
+void UEWGameInstance::SetChosenAppearance(const FEWAppearance& Appearance)
+{
+    ChosenAppearance = Appearance;
+    bHasChosenAppearance = true;
+    if (auto* Save = Cast<UEWAppearanceSave>(UGameplayStatics::CreateSaveGameObject(UEWAppearanceSave::StaticClass())))
+    {
+        Save->Appearance = Appearance;
+        UGameplayStatics::SaveGameToSlot(Save, UEWAppearanceSave::Slot, 0);
+    }
+}
+
 void UEWGameInstance::Init()
 {
     Super::Init();
+    if (const auto* Saved = Cast<UEWAppearanceSave>(UGameplayStatics::LoadGameFromSlot(UEWAppearanceSave::Slot, 0)))
+    {
+        ChosenAppearance = Saved->Appearance;
+        bHasChosenAppearance = true;
+    }
     FString Label;
     const bool bLoadedLabel = FFileHelper::LoadFileToString(Label, *(FPaths::ProjectDir() / TEXT("PrivateBuildLabel.txt")));
     Label.TrimStartAndEndInline();

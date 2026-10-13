@@ -74,7 +74,8 @@ def advance():
     elif step == 'wait_play':
         worlds = lib.get_play_worlds()
         pawns = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
-        if len(worlds) == players and all(pc and pc.get_controlled_pawn() for pc in pawns):
+        # A survivor for each player, or the title screen's controller, which has none.
+        if len(worlds) == players and all(pc and (pc.get_controlled_pawn() or isinstance(pc, unreal.EWTitlePlayerController)) for pc in pawns):
             state.update(step='settle', at=now + 3.0)
         elif now >= state['at']:
             state.update(step='stop', outcome='Play session did not start')

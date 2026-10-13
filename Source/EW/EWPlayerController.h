@@ -7,6 +7,7 @@
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
 #include "EWInventoryComponent.h"
+#include "Characters/EWAppearance.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -37,6 +38,13 @@ class EW_API AEWPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
+    /** Owner: asks the server to dress this player's survivor in a look (from the character creator). */
+    UFUNCTION(BlueprintCallable, Category="Appearance")
+    void RequestAppearance(const FEWAppearance& Appearance);
+    UFUNCTION(Server, Reliable)
+    void ServerSetAppearance(const FEWAppearance& Appearance);
+    /** Sends the look chosen at the title, once this controller has its survivor. */
+    virtual void AcknowledgePossession(APawn* P) override;
     UFUNCTION(BlueprintPure, Category="Company") UEWCompanyComponent* GetCompanyComponent() const { return CompanyComponent; }
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Company") TObjectPtr<UEWCompanyComponent> CompanyComponent;
     UFUNCTION(BlueprintCallable, Category="Multiplayer") void SetSessionMenuOpen(bool bOpen);
