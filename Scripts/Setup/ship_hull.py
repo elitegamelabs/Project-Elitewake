@@ -52,6 +52,7 @@ class Hull:
     station_step: float = 20.0
     gunports: list = field(default_factory=list)  # (centre x, width, bottom z, top z)
     quarterdeck: Optional[tuple] = None           # (front x, rise): a raised aft deck
+    forecastle: Optional[tuple] = None            # (back x, rise): a raised deck at the bow
 
     # ---- Lines -------------------------------------------------------------------------------------------
 
@@ -59,12 +60,16 @@ class Hull:
         return self.beam * max(0.0, 1 - (abs(x) / self.bow_x) ** self.beam_power) ** 0.5
 
     def quarterdeck_lift(self, x):
-        """How far the raised aft deck lifts the sheer at x, easing up over 80 cm to full height just aft of its front."""
-        if not self.quarterdeck:
-            return 0.0
-        front, rise = self.quarterdeck
-        # The raised deck keeps the bulwark's height above it, until the sweep up to the stern catches up.
-        return max(0.0, self.sheer_mid + rise - self.end_sheer(x)) * smoothstep((front + 60 - x) / 80)
+        """How far the raised decks lift the sheer at x, easing up over 80 cm to full height just inside their edge."""
+        lift = 0.0
+        # Each raised deck keeps the bulwark's height above it, until the sweep up to the end catches up.
+        if self.quarterdeck:
+            front, rise = self.quarterdeck
+            lift += max(0.0, self.sheer_mid + rise - self.end_sheer(x)) * smoothstep((front + 60 - x) / 80)
+        if self.forecastle:
+            back, rise = self.forecastle
+            lift += max(0.0, self.sheer_mid + rise - self.end_sheer(x)) * smoothstep((x - back + 60) / 80)
+        return lift
 
     def sheer(self, x):
         """Top of the bulwark: low amidships, sweeping up alike to the bow and the stern."""
@@ -128,6 +133,8 @@ class Hull:
         """Height of the deck underfoot at x: the main deck, or the raised aft deck over it."""
         if self.quarterdeck and x <= self.quarterdeck[0]:
             return self.deck_z + self.quarterdeck[1]
+        if self.forecastle and x >= self.forecastle[0]:
+            return self.deck_z + self.forecastle[1]
         return self.deck_z
 
     @property
@@ -312,6 +319,55 @@ class Hull:
             top = z_top - rise * (k + 1)
             xa = x0 + run * k
             b.box((xa + run / 2, y, (z_bottom + top) / 2), (abs(run), width, top - z_bottom))
+
+    def bulkhead(self, b, x, z0, z1, openings=(), thick=8.0, plank=20.0):
+        """A bulkhead of horizontal planks across the hull at x from z0 to z1, each cut to the planking, with
+        framed openings (y0, y1, z0, z1) left clear."""
+        n = max(1, round((z1 - z0) / plank))
+        for k in range(n):
+            za, zb = z0 + (z1 - z0) * k / n, z0 + (z1 - z0) * (k + 1) / n
+            zm = (za + zb) / 2
+            half = self.inner_y(x, zm) + 2
+            edges = [-half] + [y for o in sorted(openings) if o[2] < zm < o[3] for y in o[:2]] + [half]
+            for ya, yb in zip(edges[0::2], edges[1::2]):
+                if yb - ya > 1:
+                    b.box((x, (ya + yb) / 2, zm), (thick, yb - ya, zb - za - 0.6))
+        for y0, y1, oz0, oz1 in openings:
+            for y in (y0 - 5, y1 + 5):
+                b.box((x, y, (oz0 + oz1) / 2), (thick + 6, 10, oz1 - oz0))
+            b.box((x, (y0 + y1) / 2, oz1 + 5), (thick + 6, y1 - y0 + 20, 10))
+
+    def raised_deck(self, b, edge, rise, facing, x_range, beams=(), skylight=None, door=(90.0, 205.0),
+                    side_lights=(), side_light=(40.0, 400.0, 450.0), steps=11, tone_seed=11):
+        """A raised deck over the main deck with a room under it: its deck (with an optional skylight grating),
+        beams, a front wall facing the main deck (`facing` +1 forward, -1 aft) with a doorway between two windows,
+        glazed lights in the hull sides, stairs up each side against the bulwark, and a breast rail."""
+        top = self.deck_z + rise
+        self.deck(b, top, [skylight] if skylight else [], x_range=x_range, tone_seed=tone_seed)
+        self.beams(b, beams, top)
+        if skylight:
+            aft, fwd, half = skylight
+            for y in (-half / 2, 0.0, half / 2):
+                b.box(((aft + fwd) / 2, y, top + 10), (fwd - aft + 10, 5, 6))
+        door_w, door_h = door
+        windows = [(y - 20.0, y + 20.0, self.deck_z + 95, self.deck_z + 140) for y in (-130.0, 130.0)]
+        self.bulkhead(b, edge, self.deck_z, top, openings=[(-door_w / 2, door_w / 2, self.deck_z, self.deck_z + door_h)] + windows)
+        b.box((edge + 2 * facing, 0.0, top - 6), (16, 2 * self.inner_y(edge, top), 12))
+        w, z0, z1 = side_light
+        for x in side_lights:
+            for side in (1, -1):
+                y_out, y_in = self.half_beam(x), self.inner_y(x, (z0 + z1) / 2)
+                yc, depth = side * (y_out + y_in) / 2, y_out - y_in + 2
+                b.box((x, yc, (z0 + z1) / 2), (4, depth, z1 - z0))
+                b.box((x, yc, (z0 + z1) / 2), (w, depth, 4))
+        stair_y = self.inner_y(edge, self.deck_z) - 55
+        for side in (1, -1):
+            self.stairs(b, edge, edge + 25 * steps * facing, top, self.deck_z, steps, width=70.0, y=side * stair_y)
+        rail_y = stair_y - 40
+        for k in range(7):
+            y = -rail_y + 2 * rail_y * k / 6
+            b.box((edge + 4 * facing, y, top + 45), (8, 8, 90))
+        b.sweep([(edge + 4 * facing, -rail_y - 4, top + 92), (edge + 4 * facing, rail_y + 4, top + 92)], 10.0, 8.0, side=(1, 0, 0))
 
     # ---- Fittings in the hull ----------------------------------------------------------------------------
 

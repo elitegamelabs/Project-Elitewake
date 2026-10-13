@@ -84,55 +84,11 @@ JIB_MOUNTS = {'FlyingJib': 1010.0, 'Jib': 930.0, 'Staysail': 850.0}
 
 # ---- Hull --------------------------------------------------------------------------------------------------
 
-def bulkhead(b, x, z0, z1, openings=(), thick=8.0, plank=20.0):
-    """A bulkhead of horizontal planks across the hull at x from z0 to z1, each cut to the planking, with
-    framed openings (y0, y1, z0, z1) left clear."""
-    n = max(1, round((z1 - z0) / plank))
-    for k in range(n):
-        za, zb = z0 + (z1 - z0) * k / n, z0 + (z1 - z0) * (k + 1) / n
-        zm = (za + zb) / 2
-        half = HULL.inner_y(x, zm) + 2
-        edges = [-half] + [y for o in sorted(openings) if o[2] < zm < o[3] for y in o[:2]] + [half]
-        for ya, yb in zip(edges[0::2], edges[1::2]):
-            if yb - ya > 1:
-                b.box((x, (ya + yb) / 2, zm), (thick, yb - ya, zb - za - 0.6))
-    for y0, y1, oz0, oz1 in openings:
-        for y in (y0 - 5, y1 + 5):
-            b.box((x, y, (oz0 + oz1) / 2), (thick + 6, 10, oz1 - oz0))
-        b.box((x, (y0 + y1) / 2, oz1 + 5), (thick + 6, y1 - y0 + 20, 10))
-
-
 def quarterdeck(b):
     """The raised aft deck and, under it, the captain's cabin."""
     front, rise = QUARTERDECK
-    HULL.deck(b, QD_Z, [SKYLIGHT], x_range=(HULL.stern_x, front), tone_seed=11)
-    HULL.beams(b, CABIN_BEAMS, QD_Z)
-    # The skylight: a grating over its opening lets daylight into the cabin.
-    aft, fwd, half = SKYLIGHT
-    for y in (-half / 2, 0.0, half / 2):
-        b.box(((aft + fwd) / 2, y, QD_Z + 10), (fwd - aft + 10, 5, 6))
-    # The cabin's front: a doorway from the main deck between two windows, framed, and a beam along the top.
-    door_w, door_h = CABIN_DOOR
-    windows = [(y - 20.0, y + 20.0, DECK_Z + 95, DECK_Z + 140) for y in (-130.0, 130.0)]
-    bulkhead(b, front, DECK_Z, QD_Z, openings=[(-door_w / 2, door_w / 2, DECK_Z, DECK_Z + door_h)] + windows)
-    b.box((front + 2, 0.0, QD_Z - 6), (16, 2 * HULL.inner_y(front, QD_Z), 12))
-    # Each light in the hull sides gets a cross of glazing bars.
-    w, z0, z1 = CABIN_WINDOW
-    for x in CABIN_WINDOWS:
-        for side in (1, -1):
-            y_out, y_in = HULL.half_beam(x), HULL.inner_y(x, (z0 + z1) / 2)
-            yc, depth = side * (y_out + y_in) / 2, y_out - y_in + 2
-            b.box((x, yc, (z0 + z1) / 2), (4, depth, z1 - z0))
-            b.box((x, yc, (z0 + z1) / 2), (w, depth, 4))
-    # Stairs up each side against the bulwark, and a breast rail between them.
-    stair_y = HULL.inner_y(front, DECK_Z) - 55
-    for side in (1, -1):
-        HULL.stairs(b, front, front + 275, QD_Z, DECK_Z, 11, width=70.0, y=side * stair_y)
-    rail_y = stair_y - 40
-    for k in range(7):
-        y = -rail_y + 2 * rail_y * k / 6
-        b.box((front + 4, y, QD_Z + 45), (8, 8, 90))
-    b.sweep([(front + 4, -rail_y - 4, QD_Z + 92), (front + 4, rail_y + 4, QD_Z + 92)], 10.0, 8.0, side=(1, 0, 0))
+    HULL.raised_deck(b, front, rise, 1, (HULL.stern_x, front), beams=CABIN_BEAMS, skylight=SKYLIGHT, door=CABIN_DOOR,
+                     side_lights=CABIN_WINDOWS, side_light=CABIN_WINDOW)
 
 
 def grating(b):
@@ -155,7 +111,7 @@ def lower_deck(b):
     h.ribs(b, FRAMES, FLOOR_Z, DECK_Z - h.deck_thick - 10)
     h.stairs(b, HATCH[0] + 5, HATCH[1] - 5, DECK_Z, FLOOR_Z, 13)
     # The aft bulkhead and its doorway into the aft hold.
-    bulkhead(b, LOWER_BULKHEAD_X, FLOOR_Z, DECK_Z - h.deck_thick, openings=[(-50.0, 50.0, FLOOR_Z, FLOOR_Z + 200)])
+    HULL.bulkhead(b, LOWER_BULKHEAD_X, FLOOR_Z, DECK_Z - h.deck_thick, openings=[(-50.0, 50.0, FLOOR_Z, FLOOR_Z + 200)])
     # Pillars under the beams, and a step at the foot of each mast.
     for x in (-320.0, 480.0):
         for y in (-110.0, 110.0):

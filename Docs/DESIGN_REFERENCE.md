@@ -206,7 +206,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, hold Interact to climb aboard.
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
-- **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m, schooner about 22 m; the brigantine and larger ships step up from there.
+- **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m, schooner about 22 m, brigantine about 30 m; the larger multi-deck ship steps up from there.
 - **Raft and dinghy (DECIDED, delegated, October 12, from the owner's art):**
   - Both steer by fittings built into the hull, fitted when the boat enters play and never removed: a long steering oar over the raft's stern, a rudder and tiller on the dinghy. Neither takes a ship's wheel.
   - Each has one Small sail mount on its own short mast and boom. A mount can set how a fitting looks on that hull, so the same Small sail is the sloop's jib but sets on the raft's or dinghy's own mast.
@@ -232,6 +232,13 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - **Handling:** top speed 8 m/s, turn rate 22° per second, hold 40 slots and 4,000 kg (*tuning*).
   - **Sail looks:** each sail mount sets how a sail of its size looks on that rig, so the same Small, Medium and Large sail items fit any ship.
   - **Built by script:** `Scripts/Setup/build_schooner.py`, from the shared hull builder `ship_hull.py` that also draws the sloop.
+- **The brigantine (DECIDED, delegated, October 12, from the owner's brigantine art and its mast-socket revision):**
+  - About 30 m long and 8.4 m in beam: stout and ocean-going, clearly larger than the schooner, and double-ended like the other hulls (*tuning*).
+  - **Decks:** as in the art, a raised forecastle at the bow (2 m) and a raised quarterdeck at the stern (2.2 m), each reached by stairs up both sides. Under the quarterdeck is the captain's cabin; under the forecastle, the crew's quarters, each through a doorway from the main deck with windows in the hull sides.
+  - **Guns:** a single gun deck under the main deck carries the prologue brigantine's 24 cannons, twelve a side, reached by stairs through the main hatch, with small holds through doorways at each end.
+  - **Rig:** two masts in the art's two sockets. The foremast is square-rigged with a course and a topsail; the mainmast carries a gaff mainsail with a square topsail above it. That makes four Large sail mounts, matching the prologue brigantine's four large sails. Two Small headsails set on stays to the bowsprit, because a square-rigged ship without them is unseaworthy.
+  - **Crew** up to 25 (confirmed). **Handling:** top speed 7.5 m/s, turn rate 16° per second, hold 60 slots and 8,000 kg (*tuning*).
+  - **Built by script:** `Scripts/Setup/build_brigantine.py`, from the shared hull builder.
 - **Working detail on every hull (DECIDED, delegated, October 12, owner asked for more realistic ships):** shrouds end in deadeyes on channels outboard of the rail, carried by iron chainplates, with ratlines between them; pin rails at each mast; a rudder hung on the stern by iron pintles; and an anchor catted at each bow. These are part of the hull and do nothing yet: the rudder's movement, anchors that drop and climbable ratlines are later work.
 - **Anchor (DECIDED, delegated, within the owner's hold-to-anchor rule):**
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
