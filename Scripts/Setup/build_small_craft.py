@@ -277,10 +277,28 @@ def dinghy_hull():
     return b
 
 
-def tiller(mount):
-    """In the helm mount's frame: a rudder hung on the transom and its tiller reaching forward."""
+TILLER_TURN = -35.0   # degrees the rudder swings with the helm hard to starboard (tuning)
+
+
+def rudder_post():
+    """Where the dinghy's rudder hangs and swings: on the transom's centre line."""
+    return (D_STERN - 6, 0.0, 0.0)
+
+
+def gudgeons(mount):
+    """In the helm mount's frame: the iron pintle fittings on the transom that the rudder hangs from."""
     b = Builder()
-    loc = lambda p: (p[0] - mount[0], p[1] - mount[1], p[2] - mount[2])
+    post = rudder_post()
+    for z in (5.0, 35.0):
+        b.box((post[0] - mount[0] + 2, -mount[1], z - mount[2]), (6, 8, 4), iron=1.0)
+    return b
+
+
+def tiller():
+    """Around the rudder post: the rudder blade and the tiller reaching forward, which swing together."""
+    b = Builder()
+    post = rudder_post()
+    loc = lambda p: (p[0] - post[0], p[1] - post[1], p[2] - post[2])
     b.box(loc((D_STERN - 6, 0, 10)), (4, 30, 80))
     b.tube([loc((D_STERN - 6, 0, d_sheer(D_STERN) + 6)), loc((D_STERN + 60, 0, d_sheer(D_STERN) + 4))], lambda k: (2.6, 2.0)[k], sides=8)
     return b
@@ -299,10 +317,15 @@ def data_asset(folder, name, cls):
     return asset
 
 
-def built_in_helm(name, item_id, display, mesh):
+def built_in_helm(name, item_id, display, mesh, turning=None):
+    """`turning` is (mesh, pivot location in the helm's frame, rotator at full starboard rudder), if part of it
+    turns with the rudder."""
     item = data_asset(ITEMS, name, unreal.EWItemDefinition)
+    turning_mesh, pivot, turn = turning or (None, (0, 0, 0), unreal.Rotator())
     for k, v in {'item_id': item_id, 'display_name': display, 'category': unreal.EWItemCategory.MISCELLANEOUS,
                  'max_stack_size': 1, 'unit_weight': 0.0, 'fitting_mount_type': T.HELM, 'fitting_mesh': mesh,
+                 'fitting_turning_mesh': turning_mesh, 'fitting_turning_pivot': unreal.Transform(location=unreal.Vector(*pivot)),
+                 'fitting_turn_at_full': turn,
                  'description': 'Part of the hull: steers the boat and is never removed.'}.items():
         item.set_editor_property(k, v)
     assert unreal.EditorAssetLibrary.save_loaded_asset(item)
@@ -365,12 +388,16 @@ def build_raft(timber):
 def build_dinghy(timber, sail_mi):
     hull = write_static_mesh(dinghy_hull(), f'{FOLDER}/SM_DinghyHull_v1', [timber], UV_TILE)
     helm_at = (-110.0, 0.0, D_FLOOR + 40)
-    rudder = write_static_mesh(tiller(helm_at), f'{FOLDER}/SM_DinghyTiller_v1', [timber], UV_TILE, collision=False)
+    fittings = write_static_mesh(gudgeons(helm_at), f'{FOLDER}/SM_DinghyRudderFittings_v1', [timber], UV_TILE, collision=False)
+    rudder = write_static_mesh(tiller(), f'{FOLDER}/SM_DinghyTiller_v1', [timber], UV_TILE, collision=False)
+    post = rudder_post()
     sail_at = (D_MAST[0], 0.0, D_FLOOR + 60)
     sail_args = (D_MAST[0], D_BOOM_Z, D_MAST[1] - 10, 170)
     sail = write_static_mesh(bermuda_sail(*sail_args, False), f'{FOLDER}/SM_DinghySail_v1', [timber, sail_mi], UV_TILE, collision=False)
     furled = write_static_mesh(bermuda_sail(*sail_args, True), f'{FOLDER}/SM_DinghySailFurled_v1', [timber, sail_mi], UV_TILE, collision=False)
-    helm = built_in_helm('DA_DinghyTiller', 'Ship.DinghyTiller', 'Tiller', rudder)
+    helm = built_in_helm('DA_DinghyTiller', 'Ship.DinghyTiller', 'Tiller', fittings,
+                         turning=(rudder, (post[0] - helm_at[0], post[1] - helm_at[1], post[2] - helm_at[2]),
+                                  unreal.Rotator(roll=0, pitch=0, yaw=TILLER_TURN)))
     return definition('DA_Ship_Dinghy', {
         'ship_id': 'Dinghy', 'display_name': 'Dinghy', 'hull_mesh': hull,
         'hull_extent': unreal.Vector(D_BOW + 5, D_BEAM + 5, 35), 'hull_draft': 28.0,

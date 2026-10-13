@@ -24,7 +24,8 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Small craft pass: wake behind moving boats; sloop moored with its bow to open water | ✅ `6b5829f` |
 | Small craft pass: ships rock on the swell and heel under sail | ✅ `6aaf8cb` |
 | Small craft pass: the rudder swings over instead of snapping | ✅ `ff74ff9` |
-| Small craft pass: the wheel and tiller visibly turn; a finish pass on the raft, dinghy and sloop | ⏳ |
+| Small craft pass: the wheel and tiller visibly turn with the rudder | ✅ pending commit |
+| Small craft pass: a finish pass on the raft, dinghy and sloop | ⏳ |
 | Paddling animation for the raft; helm and capstan animations | ⏳ |
 | Freshwater pond on the island for bass, catfish and piranha (a basin carved in the terrain and a lake water body; the spring is a 4.5 m puddle) | ⏳ |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |

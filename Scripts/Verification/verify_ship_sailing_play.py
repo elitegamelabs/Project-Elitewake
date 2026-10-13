@@ -99,10 +99,13 @@ def steered():
     m['roll_seen'] = max(m.get('roll_seen', 0.0), abs(peer.get_actor_rotation().roll))
     m['pitch_seen'] = max(m.get('pitch_seen', 0.0), abs(peer.get_actor_rotation().pitch))
     m['heel'] = max(m.get('heel', 0.0), abs(ship.get_heel()))
+    wheel = next((c for c in peer.get_components_by_class(unreal.StaticMeshComponent) if 'Turning_Helm' in c.get_name()), None)
+    m['wheel_turn'] = abs(wheel.get_editor_property('relative_rotation').roll) if wheel else 0.0
     if time.monotonic() - m['t'] < 4.0:
         return False
     assert m['roll_seen'] > .5 and m['pitch_seen'] > .2, f"no swell on the client (roll {m['roll_seen']:.2f}, pitch {m['pitch_seen']:.2f})"
     assert m['heel'] > .5, f"no heel under sail ({m['heel']:.2f})"
+    assert m['wheel_turn'] > 30, f"the client's wheel has not turned with the rudder ({m['wheel_turn']:.1f})"
     moved = (ship.get_actor_location() - m['start']).length()
     turned = ship.get_actor_rotation().yaw - m['yaw']
     gap = (ship.get_actor_location() - peer.get_actor_location()).length()
@@ -150,7 +153,7 @@ STEPS = [
      and client.get_controlled_pawn() == pawn, 6),
     ('Forward input twice sets full sail on the server and client', begin_sailing,
      lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
-    ('Client sails and steers for 4 s; its copy of the ship rocks on the swell, heels under sail and trails a wake', begin_steering, steered, 8),
+    ('Client sails and steers for 4 s; its copy of the ship rocks on the swell, heels under sail, trails a wake and its wheel turns', begin_steering, steered, 8),
     ('Releasing the rudder centres it; the sails stay set', release_rudder, rudder_centred, 4),
     ('Client leaves the helm; movement and collision return', interact, left_helm, 6),
     ('Client drops the anchor and the ship comes to a stop', install('Anchor'),
@@ -163,7 +166,7 @@ def finish(error=None):
     m = state['memo']
     RESULT.write_text(json.dumps({
         'success': error is None, 'checks': checks, 'error': error,
-        'sailing': {k: round(m[k], 2) for k in ('moved', 'turned', 'gap', 'wake', 'roll_seen', 'pitch_seen', 'heel') if k in m},
+        'sailing': {k: round(m[k], 2) for k in ('moved', 'turned', 'gap', 'wake', 'roll_seen', 'pitch_seen', 'heel', 'wheel_turn') if k in m},
         'state': {'server_ship': str(ship.get_actor_location()), 'client_ship': str(peer.get_actor_location()),
                   'speed': ship.get_speed(), 'sail_state': str(ship.get_sail_state()), 'rudder': ship.get_rudder(),
                   'helmsman': str(ship.get_helmsman()), 'fittings': len(ship.get_installed_fittings())},

@@ -297,6 +297,12 @@ private:
     float ShownSailAngle = 0.f;
     /** Each fitted sail's look relative to its mount, before it is swung to its trim. */
     TMap<FName, FTransform> SailLooks;
+    /** Helm parts that turn with the rudder, where they rest centred, and the rudder angle they show. */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> TurningVisuals;
+    TMap<FName, FTransform> TurningRest;
+    float ShownRudderAngle = 0.f;
+    void ShowTurning(float DeltaSeconds);
     void ShowSailTrim();
     float SimulationRemainder = 0.f;
     UPROPERTY(Transient)

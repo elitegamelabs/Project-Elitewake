@@ -6,7 +6,7 @@ Run in the editor after build_sloop_hull.py, outside Play:
   and gaff, standing up from the boom so half sail lowers it; furled, the cloth is bundled on the boom.
 - Headsail (Small): the jib from Small-Sail-v1.png hanked to the forestay, built along the stay so half sail
   shortens it down the stay; furled, it is rolled on the stay.
-- Helm: a spoked ship's wheel on a timber stand.
+- Helm: a spoked ship's wheel on a timber stand; the wheel turns with the rudder.
 
 The cloth is the art itself mapped corner to corner onto a gently filled sail; its alpha cuts the outline. Every
 fitting is placed relative to its mount on DA_Ship_Sloop and the hull's rig positions. All sizes are tuning.
@@ -144,23 +144,33 @@ def jib(furled, frame_args=(), belly=28.0, sheet=0.0):
     return b
 
 
-def wheel():
-    """In the helm's frame: origin on the deck under the mount; the helmsman stands aft of the wheel."""
+WHEEL_HUB = (-12.0, 0.0, 128.0)     # where the wheel turns, in the helm's frame
+WHEEL_TURN = 270.0                  # degrees the wheel turns with the rudder hard over (tuning)
+
+
+def wheel_stand():
+    """In the helm's frame: origin on the deck under the mount; the helmsman stands aft of the wheel. The stand
+    and its axle; the wheel turns on it (wheel_spokes)."""
     b = Builder()
     b.box((0, 0, 3), (36, 56, 6))
     for y in (-22, 22):
         b.box((4, y, 66), (12, 8, 120))
     b.box((4, 0, 124), (18, 52, 14))
-    cx, cz = -12.0, 128.0
-    b.tube([(-4, 0, cz), (-22, 0, cz)], 9.0, sides=12)
-    b.tube([(-8, 0, cz), (-16, 0, cz)], 10.0, sides=12, iron=1.0)
-    rim = [(cx, 52 * math.cos(2 * math.pi * k / 24), cz + 52 * math.sin(2 * math.pi * k / 24)) for k in range(25)]
+    b.tube([(-4, 0, WHEEL_HUB[2]), (-22, 0, WHEEL_HUB[2])], 9.0, sides=12)
+    return b
+
+
+def wheel_spokes():
+    """The wheel itself, centred on its hub, turning about X: iron hub, eight spokes with handles, and the rim."""
+    b = Builder()
+    b.tube([(4, 0, 0), (-4, 0, 0)], 10.0, sides=12, iron=1.0)
+    rim = [(0, 52 * math.cos(2 * math.pi * k / 24), 52 * math.sin(2 * math.pi * k / 24)) for k in range(25)]
     b.tube(rim, 3.6, sides=8, capped=False)
     for k in range(8):
         a = 2 * math.pi * k / 8
         c, s = math.cos(a), math.sin(a)
-        b.tube([(cx, 8 * c, cz + 8 * s), (cx, 60 * c, cz + 60 * s)], 2.4, sides=6)
-        b.tube([(cx, 60 * c, cz + 60 * s), (cx, 75 * c, cz + 75 * s)], lambda q: (3.0, 2.6)[q], sides=8)
+        b.tube([(0, 8 * c, 8 * s), (0, 60 * c, 60 * s)], 2.4, sides=6)
+        b.tube([(0, 60 * c, 60 * s), (0, 75 * c, 75 * s)], lambda q: (3.0, 2.6)[q], sides=8)
     return b
 
 
@@ -210,12 +220,18 @@ def mount_location(definition, mount_id):
     return m.get_editor_property('transform').translation
 
 
-def set_fitting(item_name, mesh, transform, furled=None):
+def set_fitting(item_name, mesh, transform, furled=None, turning=None):
+    """`turning` is (mesh, pivot location in the fitting's frame, rotator at full starboard rudder) for a part
+    that turns with the rudder."""
     item = unreal.load_asset(f'{ITEMS}/{item_name}')
     assert item, item_name
     item.set_editor_property('fitting_mesh', mesh)
     item.set_editor_property('fitting_mesh_transform', transform)
     item.set_editor_property('fitting_furled_mesh', furled)
+    turning_mesh, pivot, turn = turning or (None, (0, 0, 0), unreal.Rotator())
+    item.set_editor_property('fitting_turning_mesh', turning_mesh)
+    item.set_editor_property('fitting_turning_pivot', unreal.Transform(location=unreal.Vector(*pivot)))
+    item.set_editor_property('fitting_turn_at_full', turn)
     assert unreal.EditorAssetLibrary.save_loaded_asset(item)
 
 
@@ -240,9 +256,11 @@ def main():
                 unreal.Transform(location=unreal.Vector(tack[0] - at.x, tack[1] - at.y, tack[2] - at.z),
                                  rotation=frame.rotation.rotator()), jib_furled)
 
-    wheel_mesh = write_static_mesh(wheel(), f'{FOLDER}/SM_ShipWheel_v1', [timber], UV_TILE, collision=False)
+    wheel_mesh = write_static_mesh(wheel_stand(), f'{FOLDER}/SM_ShipWheel_v1', [timber], UV_TILE, collision=False)
+    spokes = write_static_mesh(wheel_spokes(), f'{FOLDER}/SM_ShipWheelSpokes_v1', [timber], UV_TILE, collision=False)
     at = mount_location(definition, 'Helm')
-    set_fitting('DA_TestShipHelm', wheel_mesh, unreal.Transform(location=unreal.Vector(0, 0, hull.DECK_Z - at.z)))
+    set_fitting('DA_TestShipHelm', wheel_mesh, unreal.Transform(location=unreal.Vector(0, 0, hull.DECK_Z - at.z)),
+                turning=(spokes, WHEEL_HUB, unreal.Rotator(roll=WHEEL_TURN, pitch=0, yaw=0)))
 
     Path(unreal.Paths.project_saved_dir(), 'ShipFittingsResult.json').write_text(json.dumps({'success': True}))
     unreal.log('Ship fittings built')

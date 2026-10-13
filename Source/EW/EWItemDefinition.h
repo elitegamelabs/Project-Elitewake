@@ -124,6 +124,15 @@ public:
      *  Half sail shows FittingMesh lowered toward its origin, so build sails standing up from their foot. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     TSoftObjectPtr<UStaticMesh> FittingFurledMesh;
+    /** A helm's part that turns with the rudder (a wheel on its axle, a tiller and rudder on their post), built
+     *  with its pivot at the origin; where that pivot sits in the fitting's frame; and how it is turned with the
+     *  rudder hard to starboard. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    TSoftObjectPtr<UStaticMesh> FittingTurningMesh;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    FTransform FittingTurningPivot;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    FRotator FittingTurnAtFull = FRotator::ZeroRotator;
 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };

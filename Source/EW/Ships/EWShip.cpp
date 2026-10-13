@@ -342,6 +342,49 @@ void AEWShip::RefreshFittingVisuals()
     }
     for (auto It = SailLooks.CreateIterator(); It; ++It) if (!FittingVisuals.Contains(It.Key())) It.RemoveCurrent();
     ShowSailTrim();
+
+    // A helm's turning part (wheel, tiller) is its own piece, so it can turn with the rudder.
+    for (auto It = TurningVisuals.CreateIterator(); It; ++It)
+    {
+        const UEWItemDefinition* Item = GetFitting(It.Key());
+        if (!Item || Item->FittingTurningMesh.IsNull())
+        {
+            if (It.Value()) It.Value()->DestroyComponent();
+            TurningRest.Remove(It.Key());
+            It.RemoveCurrent();
+        }
+    }
+    for (const FEWInstalledFitting& Fitting : Fittings)
+    {
+        const FEWShipMount* Mount = Definition->FindMount(Fitting.MountId);
+        UStaticMesh* Turning = Fitting.Item ? Fitting.Item->FittingTurningMesh.LoadSynchronous() : nullptr;
+        if (!Mount || !Turning) continue;
+        TObjectPtr<UStaticMeshComponent>& Visual = TurningVisuals.FindOrAdd(Fitting.MountId);
+        if (!Visual)
+        {
+            Visual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+                *FString::Printf(TEXT("Turning_%s"), *Fitting.MountId.ToString())), RF_Transient);
+            Visual->SetupAttachment(HullCollision);
+            Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Visual->RegisterComponent();
+        }
+        Visual->SetStaticMesh(Turning);
+        TurningRest.Add(Fitting.MountId, Fitting.Item->FittingTurningPivot * Fitting.Item->FittingMeshTransform * Mount->Transform);
+    }
+    ShowTurning(0.f);
+}
+
+void AEWShip::ShowTurning(float DeltaSeconds)
+{
+    // Ease toward the replicated blade angle so a client's wheel turns smoothly between updates.
+    ShownRudderAngle = DeltaSeconds > 0.f ? FMath::FInterpConstantTo(ShownRudderAngle, RudderAngle, DeltaSeconds, RudderRate * 1.5f) : RudderAngle;
+    for (const TPair<FName, TObjectPtr<UStaticMeshComponent>>& Pair : TurningVisuals)
+    {
+        const UEWItemDefinition* Item = GetFitting(Pair.Key);
+        const FTransform* Rest = TurningRest.Find(Pair.Key);
+        if (Item && Rest && Pair.Value)
+            Pair.Value->SetRelativeTransform(FTransform(Item->FittingTurnAtFull * ShownRudderAngle) * *Rest);
+    }
 }
 
 void AEWShip::ShowSailTrim()
@@ -979,6 +1022,7 @@ void AEWShip::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     ShowWake(DeltaSeconds);
+    if (TurningVisuals.Num()) ShowTurning(DeltaSeconds);
     if (ShownSailAngle != SailAngle)
     {
         // Swing at the trim rate, a little faster to catch up on a client, never overshooting.
