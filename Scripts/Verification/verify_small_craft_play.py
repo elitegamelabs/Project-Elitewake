@@ -100,6 +100,14 @@ def steps_for(ship_id):
         m['gap'] = (ship.get_actor_location() - peer.get_actor_location()).length()
         assert m['moved'] > 100, f'moved only {m["moved"]:.0f} cm'
         assert m['gap'] < 300, f'client copy {m["gap"]:.0f} cm from server'
+        # The helmsman works the helm on every screen: a paddle stroke with a paddle in hand, or hands on the tiller.
+        wanted = 'AS_Paddle_v1' if paddled else 'AS_HelmHold_v1'
+        for who, where in ((pawn, 'client'), (owner, 'host')):
+            loop = who.get_loop_animation()
+            assert loop and loop.get_name() == wanted, f'{where} plays {loop.get_name() if loop else None}, not {wanted}'
+            held = who.get_held_mesh()
+            if paddled:
+                assert held and held.get_name() == 'SM_HeldPaddle_v1', f'{where} holds {held}'
         return True
 
     def leave():
@@ -118,7 +126,7 @@ def steps_for(ship_id):
          lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
         (f'{ship_id}: forward input twice sets {effort}', full_sail,
          lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
-        (f'{ship_id}: the craft moves for 4 s and the client copy keeps up', begin_run, ran, 8),
+        (f'{ship_id}: the craft moves for 4 s, the client copy keeps up, and the helmsman ' + ('paddles with a paddle in hand' if paddled else 'holds the tiller'), begin_run, ran, 8),
         (f'{ship_id}: client leaves the helm', leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),
         (f'{ship_id}: client drops the anchor', go('Anchor'), lambda: ship.is_anchored() and peer.is_anchored(), 6),
     ]

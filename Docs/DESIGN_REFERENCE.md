@@ -427,8 +427,9 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
   
   NPC voices must differ from player voices. Licensed AI voices are allowed; cloning real people is not.
 - **Held tools (owner, October 12: hotbar items must show in the hand and work):** whatever is in the main hand is held in the right hand on every screen, built in-engine: the wooden axe, wooden pickaxe and wooden shovel of the starter kit, the iron hatchet and pickaxe, and the inn torch. The shovel and the torch are now main-hand items too, and the torch casts a warm light while held (DECIDED, delegated). With a tool in hand, Attack plays an overhead chop instead of a punch; the chop is made for Elitewake from the mannequin's idle (`Scripts/Setup/build_tool_swing.py`), as the project had none.
+- **Helm animations (DECIDED, delegated, October 13):** a helmsman holds the wheel or tiller with both hands; on the raft they take up a paddle and stroke with it, side to side, faster at a hard stroke than an easy one, and hold it still at rest. Both are made for Elitewake on the mannequin skeleton (`Scripts/Setup/build_crew_animations.py`).
 - **Ladder animations (DECIDED, delegated):** a survivor on a ladder plays the animation library's ladder loops, climbing up, climbing down or holding on, judged from how they move, so every screen shows the same climb.
-- **Animations needed:** swimming, digging, eating and drinking, aiming, firing and reloading, helm, anchor and cannons, station use, medical treatment, and first-person versions; the tool chop and ladder climbing are in, and paddling still uses the standing pose.
+- **Animations needed:** swimming, digging, eating and drinking, aiming, firing and reloading, helm, anchor and cannons, station use, medical treatment, and first-person versions; the tool chop, ladder climbing, holding the helm and paddling are in.
 
 <a id="open-questions"></a>
 

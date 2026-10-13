@@ -6,7 +6,8 @@ Attack plays the three unarmed swings in turn; a survivor who is struck plays a 
 through the locomotion blueprint's default slot, over whatever the legs are doing. The swings' root motion is
 turned off: a swing must never move the survivor, or it would shift their aim and their place on a deck.
 With a tool in hand the survivor chops instead (AS_ToolChop_v1, from Scripts/Setup/build_tool_swing.py, run that
-first). On a ladder it plays the animation library's ladder loops: climbing up, climbing down and holding on.
+first). On a ladder it plays the animation library's ladder loops: climbing up, climbing down and holding on. At a
+helm it holds the wheel, or strokes with a paddle on the raft (build_crew_animations.py, run that first).
 """
 import json
 from pathlib import Path
@@ -18,6 +19,7 @@ SWINGS = [f'{ANIMS}/Unarmed/Attack/MM_Attack_0{k}' for k in (1, 2, 3)]
 FLINCH = f'{ANIMS}/Rifle/HitReact/MM_HitReact_Front_Lgt_01'
 CHOP = '/Game/Elitewake/Animations/Tools/AS_ToolChop_v1'
 LADDER = '/Game/FreeAnimationLibrary/Animations/Ladder'
+CREW = '/Game/Elitewake/Animations/Crew'
 
 
 def main():
@@ -26,7 +28,9 @@ def main():
     flinch = unreal.load_asset(FLINCH)
     chop = unreal.load_asset(CHOP)
     ladder = {k: unreal.load_asset(f'{LADDER}/anim_Ladder_{k}') for k in ('Up', 'Down', 'Idle')}
-    assert all(swings) and flinch and chop and all(ladder.values()), 'animations missing (run build_tool_swing.py first)'
+    stroke, hold = unreal.load_asset(f'{CREW}/AS_Paddle_v1'), unreal.load_asset(f'{CREW}/AS_HelmHold_v1')
+    assert all(swings) and flinch and chop and all(ladder.values()) and stroke and hold, \
+        'animations missing (run build_tool_swing.py and build_crew_animations.py first)'
     for animation in swings + [flinch, chop] + list(ladder.values()):
         if animation.get_editor_property('enable_root_motion'):
             animation.set_editor_property('enable_root_motion', False)
@@ -39,6 +43,8 @@ def main():
     defaults.set_editor_property('ladder_up_animation', ladder['Up'])
     defaults.set_editor_property('ladder_down_animation', ladder['Down'])
     defaults.set_editor_property('ladder_idle_animation', ladder['Idle'])
+    defaults.set_editor_property('paddle_animation', stroke)
+    defaults.set_editor_property('helm_hold_animation', hold)
     unreal.BlueprintEditorLibrary.compile_blueprint(blueprint)
     assert unreal.EditorAssetLibrary.save_loaded_asset(blueprint)
     Path(unreal.Paths.project_saved_dir(), 'AttackAnimationsResult.json').write_text(json.dumps(

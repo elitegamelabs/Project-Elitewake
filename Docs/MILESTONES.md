@@ -26,7 +26,8 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Small craft pass: the rudder swings over instead of snapping | ✅ `ff74ff9` |
 | Small craft pass: the wheel and tiller visibly turn with the rudder | ✅ `15414cd` |
 | Small craft pass: a finish pass on the raft, dinghy and sloop | ⏳ |
-| Paddling animation for the raft; helm and capstan animations | ⏳ |
+| Paddling animation for the raft; holding the helm | ✅ pending commit |
+| Capstan animation (the anchor is raised instantly for now) | ⏳ |
 | Freshwater pond on the island for bass, catfish and piranha (a basin carved in the terrain and a lake water body; the spring is a 4.5 m puddle) | ⏳ |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
 | Inventory and crafting screen redesign | ⛔ owner's layout images did not arrive |

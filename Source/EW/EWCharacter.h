@@ -412,9 +412,15 @@ public:
     TObjectPtr<UAnimSequenceBase> LadderDownAnimation;
     UPROPERTY(EditDefaultsOnly, Category="Ship")
     TObjectPtr<UAnimSequenceBase> LadderIdleAnimation;
-    /** The ladder loop playing now, if any. */
+    /** At a helm: hands on the wheel or tiller, and a paddle stroke on a paddled boat (played faster at a hard
+     *  stroke than an easy one). */
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> HelmHoldAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> PaddleAnimation;
+    /** The ladder or helm loop playing now, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
-    UAnimSequenceBase* GetLadderAnimation() const { return PlayingLadderAnimation; }
+    UAnimSequenceBase* GetLoopAnimation() const { return PlayingLoopAnimation; }
     /** The item shown in the right hand, if any. */
     UFUNCTION(BlueprintPure, Category="Combat")
     UStaticMesh* GetHeldMesh() const;
@@ -437,10 +443,11 @@ private:
     FEWAppearance Appearance;
     UFUNCTION()
     void OnRep_Appearance();
-    /** Every machine: plays the ladder loop that matches how the climber moves, or stops it off the ladder. */
-    void UpdateLadderAnimation(float DeltaSeconds);
+    /** Every machine: plays the loop for what the survivor is doing on a ladder or at a helm, or stops it. */
+    void UpdateLoopAnimation(float DeltaSeconds);
     UPROPERTY(Transient)
-    TObjectPtr<UAnimSequenceBase> PlayingLadderAnimation;
+    TObjectPtr<UAnimSequenceBase> PlayingLoopAnimation;
+    float PlayingLoopRate = 1.f;
     float LastLadderHeight = 0.f;
     float LadderStillSeconds = 0.f;
     UFUNCTION(NetMulticast, Unreliable)

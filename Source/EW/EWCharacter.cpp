@@ -175,6 +175,10 @@ void AEWCharacter::OnRep_Appearance()
 void AEWCharacter::RefreshHeldItem()
 {
     const UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    if (IsValid(HelmShip))
+        for (const FEWInstalledFitting& Fitting : HelmShip->GetInstalledFittings())
+            if (Fitting.Item && Fitting.Item->FittingMountType == EEWShipMountType::Helm && !Fitting.Item->HeldMesh.IsNull())
+                Item = Fitting.Item;
     UStaticMesh* Held = Item ? Item->HeldMesh.LoadSynchronous() : nullptr;
     HeldItem->SetStaticMesh(Held);
     HeldItem->SetVisibility(Held != nullptr);
@@ -189,25 +193,38 @@ void AEWCharacter::RefreshHeldItem()
     }
 }
 
-void AEWCharacter::UpdateLadderAnimation(float DeltaSeconds)
+void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
 {
     UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
     if (!Anim) return;
     UAnimSequenceBase* Wanted = nullptr;
-    if (IsOnLadder())
+    float Rate = 1.f;
+    if (IsValid(HelmShip) && HelmShip->Definition)
+    {
+        // Paddlers stroke at their stroke's pace and rest with the paddle in hand; a helmsman holds the wheel.
+        if (HelmShip->Definition->bPaddled)
+        {
+            const EEWSailState Stroke = HelmShip->GetSailState();
+            Wanted = Stroke == EEWSailState::Furled ? nullptr : PaddleAnimation.Get();
+            Rate = Stroke == EEWSailState::Full ? 1.25f : .8f;
+        }
+        else Wanted = HelmHoldAnimation;
+    }
+    else if (IsOnLadder())
     {
         // Judged from the height itself, which every machine has, so watchers see the same climb.
         const float Moved = Ladder.Height - LastLadderHeight;
         LastLadderHeight = Ladder.Height;
         LadderStillSeconds = FMath::Abs(Moved) > KINDA_SMALL_NUMBER ? 0.f : LadderStillSeconds + DeltaSeconds;
         Wanted = LadderStillSeconds > .15f ? LadderIdleAnimation.Get()
-            : Moved > 0.f ? LadderUpAnimation.Get() : Moved < 0.f ? LadderDownAnimation.Get() : PlayingLadderAnimation.Get();
+            : Moved > 0.f ? LadderUpAnimation.Get() : Moved < 0.f ? LadderDownAnimation.Get() : PlayingLoopAnimation.Get();
         if (!Wanted) Wanted = LadderIdleAnimation;
     }
-    if (Wanted == PlayingLadderAnimation) return;
-    if (PlayingLadderAnimation) Anim->StopSlotAnimation(.15f, TEXT("DefaultSlot"));
-    PlayingLadderAnimation = Wanted;
-    if (Wanted) Anim->PlaySlotAnimationAsDynamicMontage(Wanted, TEXT("DefaultSlot"), .15f, .15f, 1.f, 100000);
+    if (Wanted == PlayingLoopAnimation && Rate == PlayingLoopRate) return;
+    if (PlayingLoopAnimation) Anim->StopSlotAnimation(.15f, TEXT("DefaultSlot"));
+    PlayingLoopAnimation = Wanted;
+    PlayingLoopRate = Rate;
+    if (Wanted) Anim->PlaySlotAnimationAsDynamicMontage(Wanted, TEXT("DefaultSlot"), .2f, .2f, Rate, 100000);
 }
 
 UStaticMesh* AEWCharacter::GetHeldMesh() const
@@ -238,7 +255,7 @@ void AEWCharacter::Tick(float DeltaSeconds)
         }
         ApplyLadderPose();
     }
-    UpdateLadderAnimation(DeltaSeconds);
+    UpdateLoopAnimation(DeltaSeconds);
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -349,6 +366,7 @@ void AEWCharacter::OnRep_HelmShip()
         GetCharacterMovement()->SetMovementMode(MOVE_Falling);
     }
     SetHelmCamera(IsValid(HelmShip));
+    RefreshHeldItem();
 }
 
 void AEWCharacter::SetHelmCamera(bool bAtHelm)
