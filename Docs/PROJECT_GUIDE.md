@@ -1,11 +1,213 @@
 # Project guide
 
-## Local packaging
+What is built, what is broken, what comes next, and how to work in this repository. Design rules are in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md); test results are in [VERIFICATION.md](VERIFICATION.md).
 
-`Scripts/Verification/build_private_windows.ps1` builds a Windows Development package for local diagnostics. Close Unreal Editor and EW test games before using this local package script.
+Last updated: October 13, 2026.
 
-## Private release automation
+## Where things stand
 
-`.github/workflows/private-playtest-release.yml` builds Windows Shipping packages and updates the private rolling GitHub prerelease on pushes to `main`. It requires a Windows x64 self-hosted runner labeled `elitewake-ue58`, Unreal Engine 5.8, GitHub CLI, Actions release permissions and the `EW_PAK_AES_KEY` repository secret. Setup and encryption limitations are documented in [PRIVATE_RELEASE_AUTOMATION.md](PRIVATE_RELEASE_AUTOMATION.md). This automation has not run yet. It does not silently update already installed copies; friends download each new release.
+Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
-Never commit credentials or download keys. Friends need repository read access to download the private release.
+- **Build:** both Editor and Game targets build.
+- **Native tests:** 27 of 27 passed in the latest recorded run before the October 13 title-menu edit (`Saved/Logs/EW_5.log`).
+- **Client Play checks:**
+  - A client fits out the sloop, raises the anchor, sails, steers, and anchors again (`verify_ship_sailing_play`, 11 of 11).
+  - A client crew rides, walks, goes overboard and climbs back aboard while the host sails (`verify_ship_deck_play`, 14 of 14).
+  - A client stores cargo in the ship's hold and the host takes some out; both see the same ship load (`verify_ship_cargo_play`, 5 of 5).
+- **GitHub:** all work is committed and pushed to `main`.
+
+| System | What works | Not done yet |
+| --- | --- | --- |
+| Movement | Walk, sprint, jump, crouch and prone with clearance checks; first/third-person toggle; swimming with its own animations, floating head-out at the surface, diving only when the camera clearly looks down | Final animations, moving ship decks, physical gamepad testing |
+| Survival | Replicated Health, Stamina, Hunger, Hydration, temperature, weight; painted HUD icons (owner's matte set) that fill from the bottom, and warnings; drinking fresh water; rejects invalid numbers | Needs drain and damage, temperature effects, regeneration, fall damage. Sprint uses placeholder rates (15/s drain, 10/s recovery) |
+| Inventory and equipment | 24 slots, stacking, weight, item details; equip, unequip and swap; eight-slot hotbar | Durability, save/load, character preview, discard. Inventory is visible to all players (privacy undecided) |
+| Interaction | E / X prompts that follow the device; press and hold actions timed by the server; cancellation | Real station, storage, vendor and ship actions |
+| Gathering | Fiber, sticks and berries by hand; hatchet trees (Wood, Thatch); pickaxe nodes (Stone, ore); all of them placed on the coast with real-looking palms, boulders and plants | Bare-hand tree punching and injury, regrowth, ore nodes and other regions' plants, tool-specific swing animations |
+| Combat | Attack (Left Mouse / RT) swings, seen by everyone, once a second. With a hatchet or pickaxe aimed at a tree or rock it gathers; otherwise it strikes the survivor in front for 10 (fists), who flinches | Weapons and their damage, blocking, wildlife and enemies to fight, death and loot drops in play, tool and weapon swing animations |
+| Food | Eat Azren berries (Hunger and Health); 20-minute freshness, then toxic | Marad, cooking, other foods, freshness that survives save/load |
+| Crafting | Server-checked crafting with no item loss; menu with icons; four starter recipes and a Repair Kit as test assets | The event that unlocks recipes after the innkeeper introduction; stations; craft timers; using the crafted items (dig, drink, repair) |
+| Objectives | Ordered objective steps per player, current-step display, recipe rewards on completion | The real prologue steps; save/load |
+| Sea creatures | Bass, catfish, piranha, manta ray, manatee, great white, hammerhead and squid, built from the owner's art (cut-out painting on a rounded body, swimming in the material). They roam about a home in the water; aggressive kinds chase and bite a swimmer, peaceful ones flee when struck. Killed, they float up and E harvests Raw Fish or Raw Meat. Thirteen sea creatures live around the coastal island | Freshwater ponds for bass, catfish and piranha; eating raw food; fishing pole; taming; sirens |
+| Title and main menu | Project startup uses the owner's exact `Elitewake-Starter-Screen-Owner-v1.png`: “ELITEWAKE” and “START YOUR JOURNEY” remain part of the still image. A separate, crisp ivory classical-serif “PRESS ANY KEY TO START” prompt sits at bottom center and pulses; it is composed as transparent raster type to match the title lettering. Any key or click moves to the two-panel menu. Only pixels inside the title water mask are UV-animated; the sky, sunlight, ship, survivor, dock, coast and text stay still. The main-menu art shows an active Single Player panel and softened pirate-fight art behind disabled Multiplayer / COMING SOON. Single Player opens `Lvl_CoastalPlayground` directly and uses its regular survivor spawn; the character creator remains in source but is not in this path. A normal editor build succeeded after stale automation sessions were closed. Fresh title-to-coast Play acceptance passed all three checks: title assets load, the title advances to the main menu, and Single Player opens the coastal map with the normal survivor pawn. Sources and setup scripts are under `Art/UI/Title/2026-10-13` and `Scripts/Setup/`. | Human visual review of water-only motion and prompt placement at multiple resolutions; multiplayer implementation |
+| Menus and map | Inventory and crafting grids; seven menu sections (Company works; the Journal holds twelve playtest guides to boarding, the anchor, fitting sails and the wheel, sailing, paddling, getting about a ship, gathering, swimming, food, fighting and sea creatures; the others are placeholders); M shows the surrounding area; a compass strip across the top of the HUD | Building, Skills, Tames and Journal screens; real map with discovery |
+| Inn torch | One torch per player, with the owner's message and a highlight | Real inn placement, flame and light, carrying and using it |
+| Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
+| Private multiplayer | F10 Host / Join / Leave panel (local and private IPv4); recovery from failed or dropped connections; separate-process tests; local Windows package | Two-PC LAN test, Internet, Shipping build, distribution |
+| Coastal map | `Lvl_CoastalPlayground`: a generated sand island and islet with wet shoreline and dunes, animated surf washing up both beaches, Unreal Water ocean with a gentle swell and underwater view (clear turquoise over the sand, deep navy past the shelf), volumetric clouds, a weathered timber dock, about thirty harvestable Veyran Palms behind the beaches, twenty minable boulders, and fiber plants, stick piles and berry bushes to gather by hand, freshwater spring, a test starter kit, swimming down to 500 m | Vegetation, rocks and gatherable resources (removed with the blockout; real meshes next), wildlife, Port and inn |
+| Ships | `AEWShip` built from a ship definition: a bare hull with helm, sail and cannon mounts, a boarding ladder on each side, an anchor capstan and a shared cargo hold. Load slows the ship, and an overloaded ship is swamped after 60 s until lightened. Players install fittings from their inventory, take the helm, set sail (W/S), steer (A/D) and trim the sails to the wind (Shift+A/D), as in ATLAS: speed depends on the heading and on how well the sails face the wind, shown on a trim bar at the helm, and the helm camera stands back to show the ship. A compass strip across the top of the screen scrolls as the view turns and marks the wind. Crew stand and walk on deck while it sails, and climb aboard from the water by pressing E at a side ladder and climbing with Up and Down. On-screen labels mark each ship's ladders, mounts, anchor and hold. The server moves ships in fixed steps, driven by a world wind, and every screen shows them gliding smoothly between steps and network updates. The sloop has a real hull modelled in-engine from the owner's art: planked and tarred, with bulwarks, a gunport each side, side ladders, a capstan, a hatch with stairs down to a walkable hold, and a mast, bowsprit and standing rigging. Its helm is a spoked wheel and its sails are the owner's gaff mainsail and jib art, shown rolled up, half set or full to match the helmsman's setting. A raft and a dinghy, also from the owner's art, have built-in steering: the raft is paddled (no sail), the dinghy has a tiller and a Small sail on its own mast. Parked off the map while their designs are reworked (owner, October 12): the schooner, from the owner's art, is about 22 m long with three masts (a Large square topsail, two Medium gaff sails and three Small jibs), a raised aft deck carrying the helm with the captain's cabin beneath it, and a lower deck with twelve gunports reached by stairs from the main hatch. The brigantine, from the owner's art, is about 30 m long with a raised forecastle (crew quarters beneath) and quarterdeck (captain's cabin beneath), a square-rigged foremast, a gaff mainsail under a square topsail, two headsails, and a gun deck of 24 gunports. The modelled hulls carry a real ship's working detail: deadeyes on channels, chainplates and ratlines, pin rails, a rudder and catted anchors | Sinking and wrecks, cannon art and firing, docking, ship ownership, ship motion under heavy packet loss; the schooner and brigantine are parked off the map pending the owner's new designs, and the multi-deck ship is not built |
+
+## Known problems
+
+1. **The editor crashed while shutting down** on October 11, 01:52. It hit an engine assertion (`GIsPlayInEditorWorld`, `Editor.cpp` line 1225) after an MCP editor tool requested the close while a Play session was ending. The script stack names `SlateInspectorToolset`. It is not in Elitewake code. Stop Play before closing the editor, and close it normally rather than through a tool. Crash files: `Saved/Crashes/UECC-Windows-129F0C5A…_0001`.
+2. **Editor and game start in different maps.** `Config/DefaultEngine.ini` opens the editor in `/Game/ThirdPerson/Lvl_ThirdPerson`; the packaged game starts at `/Game/Elitewake/Maps/Lvl_Title`. Use the editor Play button on `Lvl_Title` to test the front-end flow, or open `Lvl_CoastalPlayground` directly to test the coast.
+3. **The latest Windows package is stale.** `Saved/PrivateBuilds/local-20261010-071931` predates the coastal map, Company and swimming.
+4. **Ship edge cases.**
+   - A ship placed so its hull already overlaps something (a dock, a shore) cannot move until it is moved clear.
+   - Client ships move in small steps 30 times a second rather than smoothly.
+   - Overload never sinks a ship yet: a swamped ship simply cannot sail until lightened. Real sinking comes with hull damage.
+   - The hold screen is functional only: mouse-driven, not yet controller-navigable, and not yet visually reviewed.
+5. **The Repair Kit icon is not imported.** The source PNG exists but has no Unreal texture yet; the kit shows fallback art.
+6. **The coast's gatherables never grow back.** Palms, boulders, fiber plants, stick piles and berry bushes are gone once emptied until the map reloads; regrowth is not built.
+7. **The ocean must be rebuilt in a rendering editor.** After changing the coastal ground or water headless, run `build_coastal_terrain.py` in the editor (it rebuilds the ocean), or the ocean does not draw.
+
+## Next work
+
+Proposed order, pending owner confirmation:
+
+1. **Ship foundation,** following the [ship model](DESIGN_REFERENCE.md#ship-model). Each step is built, tested and committed before the next:
+   1. **Done (client-verified):** `AEWShip` and `DA_Ship_Sloop`; helm and sail fittings; sailing with wind; crew on a moving deck; boarding ladders; anchor; shared cargo hold; weight and overload.
+   2. **Later, with combat:** hull damage, flooding, actual sinking and wreck crates; cannons on the hardpoints.
+2. **Builder's Plan, Loom and Tanner,** once fitting and recipe questions are answered (see [open questions](DESIGN_REFERENCE.md#open-questions)).
+3. **Prologue and Port connection.** Innkeeper introduction completion gives 250 Copper and unlocks the four starter recipes. Place the per-player inn torch for real.
+4. **World content.** Regional resources, real wildlife with AI, vegetation and rocks.
+5. **Then,** in dependency order:
+   1. simple combat
+   2. digging and treasure
+   3. cannons and ammo
+   4. weather, time of day and clothing
+   5. vendors
+   6. map (the HUD compass is done)
+   7. skills
+   8. save/load
+
+## Playing the coastal map
+
+Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. This test map's starter kit gives each survivor the wooden axe, pickaxe and shovel, the water flask, the inn torch, 20 Wood, 10 Stone, 10 Fiber and 10 Azul berries, and stocks each ship's hold with what its mounts take: a helm, and one sail for every sail mount (the sloop gets a Medium and a Small; the schooner a Large, two Medium and three Small). Other maps and normal starts grant nothing.
+
+- **From the title:** Play from `Lvl_Title` (the packaged game's start map). Press any key or click for the main menu, then click Single Player to load the coastal map and its normal survivor pawn. Multiplayer is disabled and marked Coming Soon. Playing the coastal map directly skips both menus.
+- **Playing alone:** set the editor's Play options to one player (Standalone). With a listen server and two players, Play runs two games in one editor, which is slower; the second window is the network client.
+- **Tools in hand:** put a tool on the hotbar and press its number: it appears in your right hand (the torch lights up), and Left Mouse chops with it.
+- **Attack:** Left Mouse (RT) swings once a second. Aim at another survivor within reach to strike for 10; with the wooden axe equipped (from your starter kit), aim at a palm's trunk to gather Wood and Thatch; with the wooden pickaxe, strike a boulder for Stone.
+- **Plants:** look at a fiber plant, a pile of fallen sticks or a berry bush and press E to gather it all.
+- **Freshwater spring:** inland at about X −17 m, Y 15 m. Press E while thirsty.
+- **Dock and sea:** the dock reaches over swimmable water.
+  - You float with your head out and swim level. Look well down and move forward to dive; hold Space to rise; let go and you drift back up.
+  - The water surface is at Z −65 cm. The visible waves are cosmetic.
+- **Sloop:** a bare hull floats off the dock at about X 62 m, Y 17.5 m. Climb a side ladder, walk the deck, and take the stairs through the hatch into the hold. Look at a mount and hold E to install a carried helm or sail; hold E on a sail to remove it. Hold E at the installed helm to take it: W/S set more or less sail, A/D steer, Shift+A/D swing the sails (bring the marker on the SAILS bar under the compass into the green band), and hold E again to leave. The sloop starts anchored: hold E at the capstan near the bow to raise or drop the anchor. Hold E at the hatch amidships to open the ship's hold; click a stack to move it. From the water, look at the ladder on either side and press E to take hold; Up and Down arrows (or W and S) climb, you step onto the deck at the top, and Space lets go. Near a ship, labels on screen mark its ladders, mounts (green where a sail or wheel you carry fits), anchor and hold. The sloop is moored facing the islet about 15 m east, so steer north for open water. Fittings have no recipe yet; take the helm and sails from the hold and fit them.
+- **Schooner and brigantine:** taken off the map while their designs are reworked; `build_schooner.py` and `build_brigantine.py` put them back.
+- **Raft and dinghy:** moored side by side on the beach side of the dock, at about X 53 m (raft at Y 2.3 m, dinghy at Y 4.8 m), both anchored at the bow. The raft is paddled: hold E at its paddles to take them up, then W/S set the stroke and A/D steer; it has no sail. The dinghy has a Small sail in its chest for its mast and steers by its tiller.
+- **Sea creatures:** swim out past the sand and look down. Manatees are peaceful; mantas, squid and the sharks (in deeper water, away from the dock) come for you. Left Mouse strikes while swimming; a killed creature floats up, and E harvests it. Climb out of the water and they give up.
+- **Menus:** I opens inventory and crafting; M shows the map. Starter recipes stay locked because the innkeeper introduction isn't built yet.
+
+## Building and testing
+
+Close the editor before building code that adds or changes classes.
+
+```bash
+"C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat" EWEditor Win64 Development -Project="C:/UnrealProjects/EW/EW.uproject" -WaitMutex
+```
+
+Build the `EW` target the same way when runtime code changes. Then run all native tests:
+
+```bash
+"C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "C:/UnrealProjects/EW/EW.uproject" -unattended -nop4 -NullRHI -ExecCmds="Automation RunTests Elitewake" -TestExit="Automation Test Queue Empty" -log
+```
+
+Do not add an early quit command. The run ends when the test queue is empty.
+
+**Play scripts** (`Scripts/Verification/*.py`) run from the editor's Python console using the full path. Each script's docstring names its map and Play mode.
+
+- Most use `/Game/Elitewake/Maps/Lvl_M5PickupTest`; the `verify_coastal_*` scripts use the coastal map.
+- Results are written to `Saved/*Result.json`.
+- Scripts may move pawns or create test items during Play only. They never change saved maps or normal starting inventory.
+
+**Unattended Play checks.** `Scripts/Verification/run_play_check.py`:
+
+1. opens the editor on a map
+2. starts a listen-server Play session
+3. runs one check script
+4. stops Play and closes the editor
+
+Launch it from PowerShell, because Git Bash rewrites paths that start with `/`:
+
+```powershell
+$env:EW_PLAY_MAP='/Game/Elitewake/Maps/Lvl_CoastalPlayground'; $env:EW_PLAY_CHECK='C:/UnrealProjects/EW/Scripts/Verification/verify_ship_sailing_play.py'; $env:EW_PLAY_RESULT='ShipSailingPlayResult.json'
+& 'C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe' C:/UnrealProjects/EW/EW.uproject /Game/Elitewake/Maps/Lvl_CoastalPlayground -unattended -ExecCmds="py C:/UnrealProjects/EW/Scripts/Verification/run_play_check.py"
+```
+
+The outcome is written to `Saved/PlayCheckRun.json`. An editor window opens and closes on its own; leave it alone while it runs.
+
+**Setup scripts** (`Scripts/Setup/*.py`) create test assets and fixtures:
+
+- `create_*` scripts make missing saved test assets and do not overwrite existing ones.
+- `spawn_*` scripts place temporary fixtures in a running Play session.
+- The older coastal scripts (`create_coastal_playground.py`, `shape_coastal_shore.py`, `upgrade_coastal_water.py`, `set_coastal_ocean_depth.py`, `create_sloop_test_assets.py`) built the original map. Do not rerun them over the current map.
+- The raft and dinghy come from `build_small_craft.py` (run after the two sloop scripts).
+- The sloop comes from `build_sloop_hull.py` (hull, mast, rigging, definition) then `build_ship_fittings.py` (wheel and sails, given to the test items). The schooner comes from `build_schooner.py` and the brigantine from `build_brigantine.py` (run after those two, in that order). The hull scripts draw from `ship_hull.py`, and all of them use `ship_geometry.py`. They run in the editor and are safe to rerun; each moves and relabels only its own ship. `Scripts/Verification/capture_ship_views.py` takes review screenshots.
+- The current coastal look comes from `refresh_coastal_visuals.py`, then `build_coastal_terrain.py`, then `refresh_coastal_materials.py` (weathered dock, ocean colour), all run in the editor (not headless) and safe to rerun.
+- `build_coastal_flora.py` grows the coast's plants (Veyran Palms, fiber plants, stick piles, berry bushes) and `build_coastal_rocks.py` then sets its boulders clear of them, from meshes they build in the editor; the frond texture is drawn by `Scripts/Art/make_palm_frond.py` (ordinary Python with Pillow).
+- `create_test_journal.py` writes the Journal's playtest guides (keep them true to the controls).
+- `configure_attack_animations.py` gives the survivor its swing and flinch animations; `configure_stance_animations.py` sets up stances and swimming. `Scripts/Verification/capture_coastal_views.py` takes review screenshots in Play.
+
+**Evidence lives in `Saved/`,** which Git ignores. Test results and logs exist only on the machine that ran them.
+
+## Private multiplayer testing
+
+The goal is for the owner to host and play while one approved tester joins from another Windows PC. Test locally first, then on LAN, then over the Internet.
+
+- **F10** opens the test session panel. Join accepts local or private IPv4 addresses only (default port 7777). Use Standalone Game, because ordinary in-editor Play shows the panel disabled. Host, Join and Leave reload the ThirdPerson map and reset session progress.
+- **Local package:** `Scripts/Verification/build_private_windows.ps1` builds a Development package into `Saved/PrivateBuilds/` with Microsoft VC++ redistributables and test notes. Close Unreal Editor and EW test games before using it.
+- **Automatic private release:** `.github/workflows/private-playtest-release.yml` builds Windows Shipping on pushes to `main` and updates the private rolling GitHub prerelease `playtest-latest`. A single push containing several commits builds its final revision.
+- **One-time setup:** In repository **Settings → Actions → Runners**, register a Windows x64 self-hosted runner labeled `elitewake-ue58`; install Unreal Engine 5.8 at the path in the workflow and GitHub CLI. In **Settings → Secrets and variables → Actions**, add `EW_PAK_AES_KEY` as a random 32-byte AES key encoded in Base64. Enable Actions and allow workflow release writes. Keep the key in GitHub Secrets only. Setup and limitations are described in [PRIVATE_RELEASE_AUTOMATION.md](PRIVATE_RELEASE_AUTOMATION.md).
+- **Current checkpoint:** workflow files are on a review branch. The runner and key are not configured, so no Shipping executable or release exists yet. GitHub releases do not silently update installed copies; friends download the new package. Friends need private-repository read access.
+- **Done:** separate-process connection, gameplay, late join, host loss and cancellation recovery, packaged loopback startup.
+- **Next:** configure the runner and secret, publish and test the first Shipping package, then test a clean PC install and two PCs on LAN.
+- **Later, with owner approval:** Internet transport, a restricted itch.io page, Butler uploads and tester invitations.
+
+Never change firewall or router settings, create accounts, upload builds or invite testers without the owner's explicit go-ahead. Never commit credentials or download keys. Unreal AES makes casual asset browsing harder; it cannot guarantee that recipients cannot recover assets or keys from a client build.
+
+## Art and placeholder assets
+
+The owner has deferred Fab purchases; only free assets have been approved so far. Until final art exists, placeholder art is generated and clearly labeled.
+
+- **Sources** live in `Art/`, with the exact prompt, tool and SHA-256 hash recorded in `generation.json` next to each set:
+  - `Art/Placeholders/ItemIcons/`: transparent item icons.
+  - `Art/Environment/`: base-color textures.
+- **Unreal copies** are imported under `Content/Elitewake/UI/PlaceholderIcons/` and `Content/Elitewake/World/Materials/`, with a `_v1` suffix.
+- **Importing:** `Scripts/Setup/import_placeholder_item_art.py` imports the icons and assigns them to their items.
+- **Replacing:** final art gets a new version or path. Never overwrite a placeholder in place.
+- **Imported library:** `Content/FreeAnimationLibrary/` (Free Animation Library by Voxel Vision) is installed. Only the stance animations are wired up so far.
+
+## Repository map
+
+| Path | Contents |
+| --- | --- |
+| `EW.uproject`, `Config/` | Project file and shared engine/game settings |
+| `Source/EW/` | Gameplay module; native tests in `Source/EW/Tests/` |
+| `Source/EWEditor/` | Editor-only helpers used by verification scripts; never shipped |
+| `Content/Elitewake/` | All Elitewake assets: items, recipes, maps, materials, meshes, UI, animation setup. Test assets sit in `Testing/` subfolders |
+| `Content/ThirdPerson/`, `Characters/`, `Input/`, `LevelPrototyping/` | Unreal template content the project still depends on; keep the paths |
+| `Content/FreeAnimationLibrary/` | Imported animation library |
+| `Content/__ExternalActors__/`, `__ExternalObjects__/` | Unreal-managed map data; never edit by hand |
+| `Art/` | Source images for placeholder art, with provenance |
+| `Scripts/Setup/`, `Scripts/Verification/` | Fixture creation and acceptance scripts |
+| `Docs/` | This guide, the design reference, the verification summary, and the [archive](ARCHIVE/README.md) |
+
+## Conventions
+
+**Code and content**
+
+- **Where things go:** gameplay state, replication and transactions in C++; scenes assembled in Blueprint; tunable content in Data Assets; screens in UMG.
+- **Clients request, the server decides.** Every consequential action goes through an owned request that the server validates.
+- **Production starts stay empty.** Normal play begins with no items and no recipes. Test content stays opt-in.
+- **Editing assets:** change `.uasset` and `.umap` files only through Unreal. Delete an asset only after checking package and native-type references, then rebuild and load the retained maps.
+- **Paths:** keep template paths and class names unless every reference has been checked.
+
+**Naming**
+
+- C++ classes use the Unreal prefix plus `EW` (`AEWCharacter`).
+- Asset prefixes: `BP_` Blueprint, `WBP_` widget, `DA_` data asset, `DT_` data table, `IA_` input action, `IMC_` input mapping context, `M_` material, `T_` texture, `SM_` static mesh, `AC_` actor component, `E_` enum, `ST_` struct.
+
+**Git**
+
+- Binary files go through Git LFS (`.gitattributes`).
+- Keep `main` to tested, focused commits. Do not force-push or rewrite history.
+- Ask the owner before pushing.
+- Never commit `Config/DefaultEditor.ini` local changes, the root `.mcp.json`, or anything in `Saved/`.
+
+**Docs**
+
+- Update the three current docs; do not add a new document per session.
+- New design decisions go into the matching topic in `DESIGN_REFERENCE.md`. Answered questions come off its open-questions list.
+- New test results go into `VERIFICATION.md`.
+- Superseded material goes to `Docs/ARCHIVE/` with a date prefix.
