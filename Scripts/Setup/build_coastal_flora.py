@@ -6,7 +6,11 @@ Veyran Palms: three shapes of feather palm built in the editor, each a ringed, l
 arching fronds (the frond is Art/Flora/Veyran-Palm-Frond-v1.png, drawn by Scripts/Art/make_palm_frond.py) with a
 few hanging dry fronds and a cluster of fruit. About thirty stand behind the beaches of the island and the islet,
 singly and in pairs, kept clear of the spawn, the dock and the spring. Each is a harvestable tree: a hatchet
-gives Wood and Thatch (the existing test yields), and its trunk is solid. All sizes and counts are tuning.
+gives Wood and Thatch (the existing test yields), and its trunk is solid.
+
+Under and between them, things to gather by hand with Interact, at the existing test amounts: low fern-like
+fiber plants (10 Fiber), piles of fallen sticks near the palms (6 Sticks) and berry bushes hung with berries
+(10 berries). Plants can be walked through. All sizes and counts are tuning.
 """
 import json
 import math
@@ -24,7 +28,12 @@ FLORA_FOLDER = 'Coast/Flora'
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 FROND_ART = ROOT / 'Art/Flora/Veyran-Palm-Frond-v1.png'
 TIMBER = '/Game/Elitewake/World/Materials/T_Timber_v1'
-WOOD, THATCH = '/Game/Elitewake/Items/Testing/DA_TestWood', '/Game/Elitewake/Items/Testing/DA_TestThatch'
+ITEMS = '/Game/Elitewake/Items/Testing'
+WOOD, THATCH = f'{ITEMS}/DA_TestWood', f'{ITEMS}/DA_TestThatch'
+# Hand-gathered plants (tuning): item, amount, gathering kind, how many on the island and on the islet.
+PLANTS = {'Fiber Plant': ('DA_TestFiber', 10, 'PLANT_FIBER', (18, 5)),
+          'Fallen Sticks': ('DA_TestSticks', 6, 'LOOSE_STICKS', (12, 4)),
+          'Berry Bush': ('DA_TestAzulBerry', 10, 'BERRIES', (8, 3))}
 SEA = -65.0
 BARK, FROND = 0, 1
 # Palm shapes (tuning): height, lean at the crown, frond count and length.
@@ -104,6 +113,54 @@ def frond_strip(b, base, heading, rise, length, droop, dry):
             b.quad(ids[i][j], ids[i + 1][j], ids[i + 1][j + 1], ids[i][j + 1], (0, 0, 1))
 
 
+def fiber_plant(seed):
+    """A low clump of fern-like fronds springing from the sand."""
+    rng = random.Random(seed)
+    b = Builder()
+    for k in range(9):
+        a = 2 * math.pi * k / 9 + rng.uniform(-0.25, 0.25)
+        frond_strip(b, (0.0, 0.0, 2.0), a, math.radians(rng.uniform(45, 70)), rng.uniform(80, 120), rng.uniform(0.6, 0.9), False)
+    return b
+
+
+def stick_pile(seed):
+    """A few fallen branches lying crossed on the sand, one forked."""
+    rng = random.Random(seed)
+    b = Builder()
+    for k in range(6):
+        a = rng.uniform(0, math.pi)
+        length = rng.uniform(70, 130)
+        cx, cy = rng.uniform(-25, 25), rng.uniform(-25, 25)
+        dx, dy = math.cos(a) * length / 2, math.sin(a) * length / 2
+        z = 3.0 + 4.0 * k / 6
+        path = [(cx - dx, cy - dy, z), (cx + dx * 0.1, cy + dy * 0.1, z + 2), (cx + dx, cy + dy, z + 1)]
+        b.tube(path, lambda q, r=rng.uniform(2.2, 3.4): r * (1.0, 0.85, 0.6)[q], sides=7, uv_of=lambda q, s: (s / 7 * 0.3, q * length / 240))
+        if k == 0:  # a fork
+            b.tube([path[1], (path[1][0] + dy * 0.5, path[1][1] - dx * 0.5, z + 3)], 1.8, sides=6)
+    return b
+
+
+def berry_bush(seed):
+    """A rounded leafy bush with clusters of berries among its leaves."""
+    rng = random.Random(seed)
+    b = Builder()
+    b.slot = 1
+    for k in range(14):
+        a = 2 * math.pi * k / 14 + rng.uniform(-0.2, 0.2)
+        frond_strip(b, (rng.uniform(-10, 10), rng.uniform(-10, 10), 5.0), a, math.radians(rng.uniform(50, 80)),
+                    rng.uniform(70, 100), rng.uniform(0.9, 1.2), False)
+    b.slot = 2
+    for k in range(9):
+        a = rng.uniform(0, 2 * math.pi)
+        d = rng.uniform(25, 45)
+        cx, cy, cz = d * math.cos(a), d * math.sin(a), rng.uniform(35, 65)
+        for j in range(5):
+            bx, by, bz = cx + rng.uniform(-5, 5), cy + rng.uniform(-5, 5), cz + rng.uniform(-5, 4)
+            b.tube([(bx, by, bz - 2.2), (bx, by, bz), (bx, by, bz + 2.2)], lambda q: (1.2, 2.6, 1.2)[q], sides=8)
+    b.slot = 0
+    return b
+
+
 # ---- Materials ---------------------------------------------------------------------------------------------
 
 def import_texture(name, source):
@@ -128,6 +185,18 @@ def bark_material():
     assert mel.connect_material_expressions(wood, 'RGB', colour, 'W')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.9), '', unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
+def berry_material():
+    """Glossy deep blue-violet berries."""
+    mel = unreal.MaterialEditingLibrary
+    material, node, _ = material_builder(f'{FOLDER}/M_Berry_v1')
+    colour = node(unreal.MaterialExpressionConstant3Vector, constant=unreal.LinearColor(0.08, 0.07, 0.3, 1))
+    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.3), '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -227,13 +296,14 @@ def main():
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
-    # Replace this script's earlier palms.
+    # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith('Veyran Palm'):
+        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
     placed = []
-    for k, (x, y, z) in enumerate(spots(Ground())):
+    ground = Ground()
+    for k, (x, y, z) in enumerate(spots(ground)):
         tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 8),
                                              unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
         tree.set_actor_label(f'Veyran Palm {k + 1:02d}')
@@ -244,10 +314,62 @@ def main():
         for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 26.0, 'blocker_half_height': 160.0}.items():
             tree.set_editor_property(prop, value)
         placed.append([round(x), round(y), round(z)])
+    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed], materials)
     assert level.save_current_level()
-    report = {'success': True, 'palms': len(placed), 'positions': placed}
+    report = {'success': True, 'palms': len(placed), 'positions': placed, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Coastal flora: {len(placed)} palms')
+
+
+def place_plants(actors, ground, palms, materials):
+    """Fiber plants and berry bushes in the open sand behind the beach; stick piles under the palms."""
+    berry = berry_material()
+    looks = {'Fiber Plant': [write_static_mesh(fiber_plant(k), f'{FOLDER}/SM_FiberPlant_{k + 1}', [materials[FROND]], 120.0) for k in range(3)],
+             'Fallen Sticks': [write_static_mesh(stick_pile(k), f'{FOLDER}/SM_FallenSticks_{k + 1}', [materials[BARK]], 120.0) for k in range(3)],
+             'Berry Bush': [write_static_mesh(berry_bush(k), f'{FOLDER}/SM_BerryBush_{k + 1}', [materials[BARK], materials[FROND], berry], 120.0)
+                            for k in range(2)]}
+    rng = random.Random(31)
+    taken = list(palms)
+    counts = {}
+    for label, (item_name, amount, kind, per_area) in PLANTS.items():
+        item = unreal.load_asset(f'{ITEMS}/{item_name}')
+        assert item, item_name
+        n = 0
+        for (area, count) in zip(AREAS, per_area):
+            (x0, x1), (y0, y1), _ = area
+            placed, tries = 0, 0
+            while placed < count and tries < 5000:
+                tries += 1
+                if label == 'Fallen Sticks':
+                    px, py = rng.choice(palms)
+                    a, d = rng.uniform(0, 2 * math.pi), rng.uniform(150, 400)
+                    x, y = px + d * math.cos(a), py + d * math.sin(a)
+                    if not (x0 <= x <= x1 and y0 <= y <= y1):
+                        continue
+                else:
+                    x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+                z = ground(x, y)
+                if z is None or not (SEA + 70 < z < 160):
+                    continue
+                if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
+                    continue
+                if any(math.hypot(x - tx, y - ty) < 140 for tx, ty in taken):
+                    continue
+                plant = actors.spawn_actor_from_class(unreal.EWHandGatherable, unreal.Vector(x, y, z - 2),
+                                                      unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+                n += 1
+                plant.set_actor_label(f'{label} {n:02d}')
+                plant.set_folder_path(FLORA_FOLDER)
+                mesh = plant.get_editor_property('mesh')
+                mesh.set_static_mesh(rng.choice(looks[label]))
+                mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(0.85, 1.15)] * 3))
+                for prop, value in {'item_definition': item, 'quantity': amount,
+                                    'gathering_kind': getattr(unreal.EWHandGatheringKind, kind)}.items():
+                    plant.set_editor_property(prop, value)
+                taken.append((x, y))
+                placed += 1
+        counts[label] = n
+    return counts
 
 
 if __name__ == '__main__':

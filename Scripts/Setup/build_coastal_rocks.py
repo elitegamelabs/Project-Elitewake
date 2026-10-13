@@ -84,7 +84,10 @@ def boulder(seed, size):
     b = Builder()
     shaped, depth = [], []
     for p in verts:
-        bump = 0.22 * noise(p[0] * 1.6 + seed, p[1] * 1.6, p[2] * 1.6) + 0.08 * noise(p[0] * 4.5, p[1] * 4.5 + seed, p[2] * 4.5)
+        # Broad lumps, then sharp ridges (folded noise) so the stone reads fractured rather than smooth.
+        bump = (0.22 * noise(p[0] * 1.6 + seed, p[1] * 1.6, p[2] * 1.6)
+                + 0.12 * (0.5 - abs(noise(p[0] * 3.2, p[1] * 3.2 + seed, p[2] * 3.2)))
+                + 0.05 * noise(p[0] * 8.0 + seed, p[1] * 8.0, p[2] * 8.0))
         r = 1.0 + bump
         z = p[2] * r
         if z < -0.35:  # flatten the buried underside
@@ -101,23 +104,27 @@ def boulder(seed, size):
 
 
 def rock_material():
-    """Weathered grey stone: mottled by world-space noise, shaded by the shape's crevices, with lichen on top."""
+    """Weathered dark grey stone: mottled at two scales by world-space noise, darkened in the shape's crevices,
+    with pale salt and lichen on top."""
     mel = unreal.MaterialEditingLibrary
     material, node, custom = material_builder(f'{FOLDER}/M_CoastalRock_v1')
     position = node(unreal.MaterialExpressionWorldPosition)
     normal = node(unreal.MaterialExpressionVertexNormalWS)
     flags = node(unreal.MaterialExpressionVertexColor)
     colour = custom(
-        'float3 q = P / 40;'
-        ' float3 i = floor(q); float3 f = frac(q); f = f * f * (3 - 2 * f);'
-        ' float n = 0;'
-        ' [unroll] for (int k = 0; k < 8; k++) { float3 o = float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);'
+        'float n = 0, fine = 0;'
+        ' [unroll] for (int s = 0; s < 2; s++) {'
+        '  float3 q = P / (s == 0 ? 45.0 : 7.0); float3 i = floor(q); float3 f = frac(q); f = f * f * (3 - 2 * f); float v = 0;'
+        '  [unroll] for (int k = 0; k < 8; k++) { float3 o = float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);'
         '   float3 c = frac((i + o) * 0.3183099 + 0.1) * 17.0; float r = frac(c.x * c.y * c.z * (c.x + c.y + c.z));'
-        '   float3 w = lerp(1 - f, f, o); n += r * w.x * w.y * w.z; }'
-        ' float3 stone = lerp(float3(0.26, 0.25, 0.23), float3(0.47, 0.45, 0.41), n);'
-        ' stone *= lerp(0.55, 1.15, F.b);'
-        ' float lichen = saturate((N.z - 0.55) * 3) * saturate(n * 1.8 - 0.6);'
-        ' return lerp(stone, float3(0.42, 0.44, 0.24), lichen * 0.7);',
+        '   float3 w = lerp(1 - f, f, o); v += r * w.x * w.y * w.z; }'
+        '  if (s == 0) n = v; else fine = v; }'
+        ' float3 stone = lerp(float3(0.085, 0.082, 0.076), float3(0.23, 0.215, 0.195), n) * lerp(0.75, 1.2, fine);'
+        ' stone *= lerp(0.35, 1.2, F.b);'
+        ' float top = saturate((N.z - 0.5) * 3);'
+        ' float lichen = top * saturate(n * 2.2 - 1.0);'
+        ' stone = lerp(stone, float3(0.36, 0.34, 0.3), top * saturate(fine * 1.6 - 0.9) * 0.6);'
+        ' return lerp(stone, float3(0.3, 0.32, 0.17), lichen * 0.6);',
         unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'F'))
     rough = custom('return lerp(0.92, 0.75, F.b);', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('F',))
     for source, pin in ((position, 'P'), (normal, 'N'), (flags, 'F')):
@@ -170,7 +177,7 @@ def main():
     for k, (x, y, z) in enumerate(spots(Ground(), plants)):
         shape = SHAPES[k % len(SHAPES)]
         scale = rng.uniform(0.85, 1.2)
-        lift = 0.15 * shape['size'][2] * scale  # sit proud of the sand rather than half-buried
+        lift = 0.08 * shape['size'][2] * scale  # proud of the sand, yet bedded in on slopes too
         rock = actors.spawn_actor_from_class(unreal.EWMineable, unreal.Vector(x, y, z + lift),
                                              unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
         rock.set_actor_label(f'Boulder {k + 1:02d}')
