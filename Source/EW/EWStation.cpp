@@ -1,6 +1,7 @@
 #include "EWStation.h"
 #include "EWCharacter.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
@@ -14,6 +15,27 @@ AEWStation::AEWStation()
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
     if (Cube.Succeeded()) Mesh->SetStaticMesh(Cube.Object);
     Mesh->SetRelativeScale3D(FVector(.3));
+    Blocker = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Blocker"));
+    Blocker->SetupAttachment(Mesh);
+    Blocker->SetUsingAbsoluteScale(true);
+    Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Blocker->SetCapsuleSize(1.f, 1.f);
+}
+
+void AEWStation::OnConstruction(const FTransform& Transform)
+{
+    Super::OnConstruction(Transform);
+    if (!Blocker) return;
+    const bool bSolid = BlockerRadius > 0.f && BlockerHalfHeight > 0.f;
+    Blocker->SetCapsuleSize(FMath::Max(BlockerRadius, 1.f), FMath::Max3(BlockerHalfHeight, BlockerRadius, 1.f));
+    // Upright from the actor's origin whatever the mesh's own rotation and scale.
+    Blocker->SetUsingAbsoluteRotation(true);
+    Blocker->SetWorldRotation(FRotator::ZeroRotator);
+    Blocker->SetWorldLocation(Transform.GetLocation() + FVector(0, 0, BlockerHalfHeight));
+    Blocker->SetCollisionEnabled(bSolid ? ECollisionEnabled::QueryAndPhysics : ECollisionEnabled::NoCollision);
+    Blocker->SetCollisionResponseToAllChannels(ECR_Block);
+    // Aiming and interaction trace the mesh, so the core never hides it.
+    Blocker->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
 }
 void AEWStation::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

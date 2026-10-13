@@ -5,6 +5,7 @@
 #include "EWStation.generated.h"
 
 class UStaticMeshComponent;
+class UCapsuleComponent;
 UENUM(BlueprintType)
 enum class EEWStationType : uint8 { Campfire, Smithy };
 
@@ -16,7 +17,13 @@ class EW_API AEWStation : public AActor, public IEWInteractable
 public:
     AEWStation();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const override;
+    virtual void OnConstruction(const FTransform& Transform) override;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TObjectPtr<UStaticMeshComponent> Mesh;
+    /** Optional solid core that people and cameras cannot pass, such as a tree's trunk, standing upright from the
+     *  actor's origin. Aiming still uses the mesh. Off while its radius is 0. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TObjectPtr<UCapsuleComponent> Blocker;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Fixture", meta=(ClampMin="0")) float BlockerRadius = 0.f;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Fixture", meta=(ClampMin="0")) float BlockerHalfHeight = 0.f;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category="Fixture") EEWStationType StationType = EEWStationType::Campfire;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category="Fixture") EEWInteractionMode Mode = EEWInteractionMode::Press;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadWrite, Category="Fixture", meta=(ClampMin="0.01")) float HoldDuration = 1.f;
