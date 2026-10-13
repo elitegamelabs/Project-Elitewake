@@ -336,7 +336,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
     - A tree or rock with the right tool equipped is gathered, as before.
     - Anything else takes a strike at the first survivor within 1.7 m in the direction the attacker looks (*tuning*). Walls and hulls in the way block the strike.
   - A strike deals the confirmed fist damage of 10 and makes the target flinch. Tools strike as fists until tool and weapon damage values are set.
-  - No swinging while prone, swimming or at a helm.
+  - No swinging while prone, on a ladder or at a helm. Swimmers may swing, to fight sea creatures (October 12).
   - Whether Company members can hurt each other: TBD.
 
 ## Economy
@@ -418,7 +418,9 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
   - short contextual crew shouts, with no random chatter
   
   NPC voices must differ from player voices. Licensed AI voices are allowed; cloning real people is not.
-- **Animations needed:** swimming, tool swings, digging, eating and drinking, melee and hit reactions, aiming, firing and reloading, climbing, helm, anchor and cannons, station use, medical treatment, and first-person versions.
+- **Held tools (owner, October 12: hotbar items must show in the hand and work):** whatever is in the main hand is held in the right hand on every screen, built in-engine: the wooden axe, wooden pickaxe and wooden shovel of the starter kit, the iron hatchet and pickaxe, and the inn torch. The shovel and the torch are now main-hand items too, and the torch casts a warm light while held (DECIDED, delegated). With a tool in hand, Attack plays an overhead chop instead of a punch; the chop is made for Elitewake from the mannequin's idle (`Scripts/Setup/build_tool_swing.py`), as the project had none.
+- **Ladder animations (DECIDED, delegated):** a survivor on a ladder plays the animation library's ladder loops, climbing up, climbing down or holding on, judged from how they move, so every screen shows the same climb.
+- **Animations needed:** swimming, digging, eating and drinking, aiming, firing and reloading, helm, anchor and cannons, station use, medical treatment, and first-person versions; the tool chop and ladder climbing are in, and paddling still uses the standing pose.
 
 <a id="open-questions"></a>
 

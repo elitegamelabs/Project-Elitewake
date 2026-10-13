@@ -10,6 +10,9 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UStaticMesh;
+class UStaticMeshComponent;
+class UPointLightComponent;
 class UInputAction;
 class UEWSurvivalComponent;
 class UEWInventoryComponent;
@@ -66,6 +69,14 @@ class EW_API AEWCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	/** The main-hand item, in the right hand, on every screen. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* HeldItem;
+
+	/** The held item's own light, when it has one (a torch). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UPointLightComponent* HeldLight;
 
 	/** Dedicated local first-person camera. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -390,10 +401,35 @@ public:
     /** Swing animations, played in turn, and the flinch of a survivor who is struck. */
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TArray<TObjectPtr<UAnimSequenceBase>> AttackAnimations;
+    /** Swings with a tool or weapon in hand, played in turn instead of the bare-handed ones. */
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TArray<TObjectPtr<UAnimSequenceBase>> ToolSwingAnimations;
+    /** Loops played on a ladder: climbing up, climbing down and holding still. */
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> LadderUpAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> LadderDownAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> LadderIdleAnimation;
+    /** The ladder loop playing now, if any. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    UAnimSequenceBase* GetLadderAnimation() const { return PlayingLadderAnimation; }
+    /** The item shown in the right hand, if any. */
+    UFUNCTION(BlueprintPure, Category="Combat")
+    UStaticMesh* GetHeldMesh() const;
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TObjectPtr<UAnimSequenceBase> HitReactAnimation;
 
 private:
+    /** Shows the main-hand item in the right hand; runs whenever equipment changes, on every machine. */
+    UFUNCTION()
+    void RefreshHeldItem();
+    /** Every machine: plays the ladder loop that matches how the climber moves, or stops it off the ladder. */
+    void UpdateLadderAnimation(float DeltaSeconds);
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> PlayingLadderAnimation;
+    float LastLadderHeight = 0.f;
+    float LadderStillSeconds = 0.f;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastAttack(int32 Variant);
     UFUNCTION(NetMulticast, Unreliable)

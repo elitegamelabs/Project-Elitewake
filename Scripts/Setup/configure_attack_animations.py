@@ -1,10 +1,12 @@
-"""Give the survivor its swing and flinch animations, from the Unreal mannequin's unarmed set. Safe to run again.
+"""Give the survivor its swings, flinch and ladder climbing animations. Safe to run again.
 Run in the editor, outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
 Attack plays the three unarmed swings in turn; a survivor who is struck plays a light hit reaction. Both play
 through the locomotion blueprint's default slot, over whatever the legs are doing. The swings' root motion is
 turned off: a swing must never move the survivor, or it would shift their aim and their place on a deck.
+With a tool in hand the survivor chops instead (AS_ToolChop_v1, from Scripts/Setup/build_tool_swing.py, run that
+first). On a ladder it plays the animation library's ladder loops: climbing up, climbing down and holding on.
 """
 import json
 from pathlib import Path
@@ -14,14 +16,18 @@ CHARACTER = '/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter'
 ANIMS = '/Game/Characters/Mannequins/Anims'
 SWINGS = [f'{ANIMS}/Unarmed/Attack/MM_Attack_0{k}' for k in (1, 2, 3)]
 FLINCH = f'{ANIMS}/Rifle/HitReact/MM_HitReact_Front_Lgt_01'
+CHOP = '/Game/Elitewake/Animations/Tools/AS_ToolChop_v1'
+LADDER = '/Game/FreeAnimationLibrary/Animations/Ladder'
 
 
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     swings = [unreal.load_asset(p) for p in SWINGS]
     flinch = unreal.load_asset(FLINCH)
-    assert all(swings) and flinch, 'mannequin animations missing'
-    for animation in swings + [flinch]:
+    chop = unreal.load_asset(CHOP)
+    ladder = {k: unreal.load_asset(f'{LADDER}/anim_Ladder_{k}') for k in ('Up', 'Down', 'Idle')}
+    assert all(swings) and flinch and chop and all(ladder.values()), 'animations missing (run build_tool_swing.py first)'
+    for animation in swings + [flinch, chop] + list(ladder.values()):
         if animation.get_editor_property('enable_root_motion'):
             animation.set_editor_property('enable_root_motion', False)
             assert unreal.EditorAssetLibrary.save_loaded_asset(animation)
@@ -29,10 +35,15 @@ def main():
     defaults = unreal.get_default_object(unreal.load_object(None, f'{CHARACTER}.BP_ThirdPersonCharacter_C'))
     defaults.set_editor_property('attack_animations', swings)
     defaults.set_editor_property('hit_react_animation', flinch)
+    defaults.set_editor_property('tool_swing_animations', [chop])
+    defaults.set_editor_property('ladder_up_animation', ladder['Up'])
+    defaults.set_editor_property('ladder_down_animation', ladder['Down'])
+    defaults.set_editor_property('ladder_idle_animation', ladder['Idle'])
     unreal.BlueprintEditorLibrary.compile_blueprint(blueprint)
     assert unreal.EditorAssetLibrary.save_loaded_asset(blueprint)
     Path(unreal.Paths.project_saved_dir(), 'AttackAnimationsResult.json').write_text(json.dumps(
-        {'success': True, 'swings': [s.get_name() for s in swings], 'flinch': flinch.get_name()}, indent=2))
+        {'success': True, 'swings': [s.get_name() for s in swings], 'flinch': flinch.get_name(), 'tool_swing': chop.get_name(),
+         'ladder': [a.get_name() for a in ladder.values()]}, indent=2))
     unreal.log('Attack animations configured')
 
 

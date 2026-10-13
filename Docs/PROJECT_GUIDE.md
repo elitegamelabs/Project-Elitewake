@@ -74,6 +74,7 @@ Proposed order, pending owner confirmation:
 Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. This test map's starter kit gives each survivor the wooden axe, pickaxe and shovel, the water flask, the inn torch, 20 Wood, 10 Stone, 10 Fiber and 10 Azul berries, and stocks each ship's hold with what its mounts take: a helm, and one sail for every sail mount (the sloop gets a Medium and a Small; the schooner a Large, two Medium and three Small). Other maps and normal starts grant nothing.
 
 - **Playing alone:** set the editor's Play options to one player (Standalone). With a listen server and two players, Play runs two games in one editor, which is slower; the second window is the network client.
+- **Tools in hand:** put a tool on the hotbar and press its number: it appears in your right hand (the torch lights up), and Left Mouse chops with it.
 - **Attack:** Left Mouse (RT) swings once a second. Aim at another survivor within reach to strike for 10; with the wooden axe equipped (from your starter kit), aim at a palm's trunk to gather Wood and Thatch; with the wooden pickaxe, strike a boulder for Stone.
 - **Plants:** look at a fiber plant, a pile of fallen sticks or a berry bush and press E to gather it all.
 - **Freshwater spring:** inland at about X −17 m, Y 15 m. Press E while thirsty.

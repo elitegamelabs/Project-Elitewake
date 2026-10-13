@@ -90,6 +90,7 @@ Paddling ignores the wind, but a raft is slow: about 2.5 metres a second at a ha
     ('The coast', 'Gathering', '''- Fiber plants, piles of fallen sticks and berry bushes: look at one and press E to gather all of it.
 - Palms: equip the wooden axe (open your inventory with I, select it and choose Equip, or put it on the hotbar and press its number). Aim at the trunk and press Left Mouse (RT): Wood and Thatch.
 - Boulders: equip the wooden pickaxe the same way and strike a boulder with Left Mouse: Stone.
+- The tool you equip is in your hand, and Left Mouse chops with it. The torch lights your way at night.
 
 Nothing grows back yet, so share the island.'''),
     ('The coast', 'Swimming', '''Walk into the sea to swim. You float with your head out of the water.

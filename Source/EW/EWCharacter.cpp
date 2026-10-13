@@ -10,6 +10,10 @@
 #include "Engine/Engine.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
+#include "Engine/StaticMesh.h"
+#include "EWItemDefinition.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
@@ -34,6 +38,16 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
+    HeldItem = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldItem"));
+    HeldItem->SetupAttachment(GetMesh(), TEXT("hand_r"));
+    HeldItem->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    HeldItem->SetGenerateOverlapEvents(false);
+    HeldLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("HeldLight"));
+    HeldLight->SetupAttachment(HeldItem);
+    HeldLight->SetLightColor(FLinearColor(1.f, .62f, .3f));
+    HeldLight->SetAttenuationRadius(1200.f);
+    HeldLight->SetCastShadows(false);
+    HeldLight->SetVisibility(false);
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -137,6 +151,51 @@ void AEWCharacter::BeginPlay()
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanSwim = true;
 	SetFirstPerson(false);
 	ApplyMovementSpeed();
+    EquipmentComponent->OnEquipmentChanged.AddUniqueDynamic(this, &AEWCharacter::RefreshHeldItem);
+    RefreshHeldItem();
+}
+
+void AEWCharacter::RefreshHeldItem()
+{
+    const UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    UStaticMesh* Held = Item ? Item->HeldMesh.LoadSynchronous() : nullptr;
+    HeldItem->SetStaticMesh(Held);
+    HeldItem->SetVisibility(Held != nullptr);
+    if (Held) HeldItem->SetRelativeTransform(Item->HeldMeshTransform);
+    const bool bLit = Held && Item->HeldLightIntensity > 0.f;
+    HeldLight->SetVisibility(bLit);
+    if (bLit)
+    {
+        HeldLight->SetIntensityUnits(ELightUnits::Candelas);
+        HeldLight->SetIntensity(Item->HeldLightIntensity);
+        HeldLight->SetRelativeLocation(Item->HeldLightOffset);
+    }
+}
+
+void AEWCharacter::UpdateLadderAnimation(float DeltaSeconds)
+{
+    UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
+    if (!Anim) return;
+    UAnimSequenceBase* Wanted = nullptr;
+    if (IsOnLadder())
+    {
+        // Judged from the height itself, which every machine has, so watchers see the same climb.
+        const float Moved = Ladder.Height - LastLadderHeight;
+        LastLadderHeight = Ladder.Height;
+        LadderStillSeconds = FMath::Abs(Moved) > KINDA_SMALL_NUMBER ? 0.f : LadderStillSeconds + DeltaSeconds;
+        Wanted = LadderStillSeconds > .15f ? LadderIdleAnimation.Get()
+            : Moved > 0.f ? LadderUpAnimation.Get() : Moved < 0.f ? LadderDownAnimation.Get() : PlayingLadderAnimation.Get();
+        if (!Wanted) Wanted = LadderIdleAnimation;
+    }
+    if (Wanted == PlayingLadderAnimation) return;
+    if (PlayingLadderAnimation) Anim->StopSlotAnimation(.15f, TEXT("DefaultSlot"));
+    PlayingLadderAnimation = Wanted;
+    if (Wanted) Anim->PlaySlotAnimationAsDynamicMontage(Wanted, TEXT("DefaultSlot"), .15f, .15f, 1.f, 100000);
+}
+
+UStaticMesh* AEWCharacter::GetHeldMesh() const
+{
+    return HeldItem ? HeldItem->GetStaticMesh() : nullptr;
 }
 
 void AEWCharacter::Tick(float DeltaSeconds)
@@ -162,6 +221,7 @@ void AEWCharacter::Tick(float DeltaSeconds)
         }
         ApplyLadderPose();
     }
+    UpdateLadderAnimation(DeltaSeconds);
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -710,7 +770,9 @@ void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const
 
 void AEWCharacter::PlayAttackAnimation(int32 Variant)
 {
-    if (AttackAnimations.Num()) PlayOneShot(AttackAnimations[FMath::Abs(Variant) % AttackAnimations.Num()]);
+    // A tool or weapon in hand swings as one; bare hands punch.
+    const TArray<TObjectPtr<UAnimSequenceBase>>& Swings = GetHeldMesh() && ToolSwingAnimations.Num() ? ToolSwingAnimations : AttackAnimations;
+    if (Swings.Num()) PlayOneShot(Swings[FMath::Abs(Variant) % Swings.Num()]);
 }
 
 void AEWCharacter::BroadcastAttack(int32 Variant)

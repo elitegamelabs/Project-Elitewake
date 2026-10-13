@@ -98,6 +98,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
 	TSoftObjectPtr<UTexture2D> Icon;
 
+    /** What a survivor holding it in the main hand carries, gripped at its origin, and how it sits in the right hand. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
+    TSoftObjectPtr<UStaticMesh> HeldMesh;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
+    FTransform HeldMeshTransform;
+    /** A held light, such as a torch's flame: brightness in candelas (0 for none) and where it sits on the held mesh. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation", meta=(ClampMin="0"))
+    float HeldLightIntensity = 0.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
+    FVector HeldLightOffset = FVector::ZeroVector;
+
     /** None means this item is not a ship fitting. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     EEWShipMountType FittingMountType = EEWShipMountType::None;
