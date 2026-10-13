@@ -14,10 +14,10 @@
 
 namespace
 {
-const FLinearColor Empty(1.f, .72f, .25f);          // a mount waiting for a fitting
-const FLinearColor Fits(.45f, 1.f, .45f);           // a mount a carried fitting fits
-const FLinearColor Fitted(.85f, .87f, .9f);         // something already in place
-const FLinearColor Working(.55f, .8f, 1.f);         // the anchor, the hold, the ladders
+const FLinearColor MarkerEmpty(1.f, .72f, .25f);          // a mount waiting for a fitting
+const FLinearColor MarkerFits(.45f, 1.f, .45f);           // a mount a carried fitting fits
+const FLinearColor MarkerFitted(.85f, .87f, .9f);         // something already in place
+const FLinearColor MarkerWorking(.55f, .8f, 1.f);         // the anchor, the hold, the ladders
 
 FString SailSizeName(EEWSailSize Size)
 {
@@ -75,32 +75,32 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
             if (Mount.Type == EEWShipMountType::Helm)
             {
                 if (bHelmsman) continue;
-                if (Installed) Add(Where, Def->bPaddled ? TEXT("Paddles") : TEXT("Helm"), Fitted, bThis, false);
+                if (Installed) Add(Where, Def->bPaddled ? TEXT("Paddles") : TEXT("Helm"), MarkerFitted, bThis, false);
                 else
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
-                    Add(Where, bFits ? TEXT("Fit the wheel here") : TEXT("Wheel mount"), bFits ? Fits : Empty, bThis, bFits);
+                    Add(Where, bFits ? TEXT("Fit the wheel here") : TEXT("Wheel mount"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
                 }
             }
             else if (Mount.Type == EEWShipMountType::Sail)
             {
                 const FString Size = SailSizeName(Mount.SailSize);
-                if (Installed) Add(Where, FString::Printf(TEXT("%s sail"), *Size), Fitted, bThis, false);
+                if (Installed) Add(Where, FString::Printf(TEXT("%s sail"), *Size), MarkerFitted, bThis, false);
                 else
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
                     Add(Where, bFits ? FString::Printf(TEXT("Fit %s sail here"), *Size) : FString::Printf(TEXT("%s sail mount"), *Size),
-                        bFits ? Fits : Empty, bThis, bFits);
+                        bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
                 }
             }
             else if (Mount.Type == EEWShipMountType::Cannon && !Installed && FVector::Dist(Here, Where) < Range * .5f)
             {
-                Add(Where, TEXT("Cannon port"), Empty * FLinearColor(1, 1, 1, .7f), bThis, false);
+                Add(Where, TEXT("Cannon port"), MarkerEmpty * FLinearColor(1, 1, 1, .7f), bThis, false);
             }
         }
         Add(Ship->GetAnchorPointWorld() + FVector(0, 0, 40), Ship->IsAnchored() ? TEXT("Anchor (down) - raise") : TEXT("Anchor (up) - drop"),
-            Working, Ship->IsAimingAtAnchor(Survivor), false);
-        if (!bHelmsman && !bOutside) Add(Ship->GetCargoHatchWorld() + FVector(0, 0, 30), TEXT("Hold"), Working, Ship->IsAimingAtCargoHatch(Survivor), false);
+            MarkerWorking, Ship->IsAimingAtAnchor(Survivor), false);
+        if (!bHelmsman && !bOutside) Add(Ship->GetCargoHatchWorld() + FVector(0, 0, 30), TEXT("Hold"), MarkerWorking, Ship->IsAimingAtCargoHatch(Survivor), false);
         if (bOutside && !Survivor->IsOnLadder())
         {
             const int32 AimedLadder = Ship->FindAimedBoardingPoint(Survivor);
@@ -110,7 +110,7 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
                 const FVector Point = Ship->GetBoardingPointWorld(Index);
                 const float LadderSide = Ship->GetActorTransform().InverseTransformPosition(Point).Y;
                 if (Side * LadderSide < 0.f && FMath::Abs(Side) > 100.f) continue;   // on the far side of the hull
-                Add(Point + FVector(0, 0, 140), TEXT("Ladder"), Working, AimedLadder == Index, false);
+                Add(Point + FVector(0, 0, 140), TEXT("Ladder"), MarkerWorking, AimedLadder == Index, false);
             }
         }
     }

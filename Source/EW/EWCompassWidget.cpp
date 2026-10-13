@@ -11,11 +11,11 @@
 
 namespace
 {
-const FLinearColor Ink(.93f, .9f, .82f);           // bearings
-const FLinearColor North(1.f, .55f, .35f);         // N stands out
-const FLinearColor WindInk(.55f, .8f, 1.f);        // the wind, as the ship markers' working blue
-const FLinearColor Good(.45f, 1.f, .45f);
-const FLinearColor Backing(.02f, .03f, .04f, .5f);
+const FLinearColor CompassInk(.93f, .9f, .82f);           // bearings
+const FLinearColor CompassNorth(1.f, .55f, .35f);         // N stands out
+const FLinearColor CompassWind(.55f, .8f, 1.f);        // the wind, as the ship markers' working blue
+const FLinearColor CompassGood(.45f, 1.f, .45f);
+const FLinearColor CompassBacking(.02f, .03f, .04f, .5f);
 
 float Bearing(float Yaw) { return FMath::Fmod(FMath::Fmod(Yaw, 360.f) + 360.f, 360.f); }
 
@@ -83,7 +83,7 @@ int32 UEWCompassWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
     // Bearings fade toward the strip's ends.
     auto Fade = [&](float Offset) { return FMath::Clamp(1.f - FMath::Square(Offset / Half), 0.f, 1.f); };
 
-    Box(1, FVector2f(Centre - Width * .5f, Top), FVector2f(Width, StripHeight), Backing);
+    Box(1, FVector2f(Centre - Width * .5f, Top), FVector2f(Width, StripHeight), CompassBacking);
     const int32 First = FMath::CeilToInt((Heading - Half) / 5.f) * 5;
     for (int32 Degrees = First; Degrees <= Heading + Half; Degrees += 5)
     {
@@ -96,20 +96,20 @@ int32 UEWCompassWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
         {
             const bool bCardinal = Point % 90 == 0;
             const FSlateFontInfo Font = FCoreStyle::GetDefaultFontStyle("Bold", bCardinal ? 15 : 11);
-            const FLinearColor Colour = (Point == 0 ? North : Ink).CopyWithNewOpacity(Alpha);
+            const FLinearColor Colour = (Point == 0 ? CompassNorth : CompassInk).CopyWithNewOpacity(Alpha);
             Text(PointName(Point), Font, FVector2f(X, Top + (bCardinal ? 6.f : 9.f)), Colour);
         }
         else if (Point % 15 == 0)
         {
-            Box(2, FVector2f(X - .5f, Top + StripHeight - 10.f), FVector2f(1.f, 10.f), Ink.CopyWithNewOpacity(.8f * Alpha));
-            Text(FString::FromInt(Point), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(X, Top + 4.f), Ink.CopyWithNewOpacity(.7f * Alpha));
+            Box(2, FVector2f(X - .5f, Top + StripHeight - 10.f), FVector2f(1.f, 10.f), CompassInk.CopyWithNewOpacity(.8f * Alpha));
+            Text(FString::FromInt(Point), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(X, Top + 4.f), CompassInk.CopyWithNewOpacity(.7f * Alpha));
         }
-        else Box(2, FVector2f(X - .5f, Top + StripHeight - 6.f), FVector2f(1.f, 6.f), Ink.CopyWithNewOpacity(.6f * Alpha));
+        else Box(2, FVector2f(X - .5f, Top + StripHeight - 6.f), FVector2f(1.f, 6.f), CompassInk.CopyWithNewOpacity(.6f * Alpha));
     }
     // The fixed centre mark and the bearing faced.
-    Box(2, FVector2f(Centre - 1.f, Top - 4.f), FVector2f(2.f, StripHeight + 8.f), Ink.CopyWithNewOpacity(.9f));
+    Box(2, FVector2f(Centre - 1.f, Top - 4.f), FVector2f(2.f, StripHeight + 8.f), CompassInk.CopyWithNewOpacity(.9f));
     const FString Faced = FString::Printf(TEXT("%03d"), FMath::RoundToInt(Heading) % 360);
-    Text(Faced, FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, Top + StripHeight + 4.f), Ink);
+    Text(Faced, FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, Top + StripHeight + 4.f), CompassInk);
 
     // The wind, where it blows from; off the strip it waits at the nearer end, pointing the way.
     {
@@ -117,8 +117,8 @@ int32 UEWCompassWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
         const bool bOnStrip = FMath::Abs(Offset) <= Half - 6.f;
         const float X = Centre + FMath::Clamp(Offset, -(Half - 6.f), Half - 6.f) * PerDegree;
         const FString Label = bOnStrip ? TEXT("WIND") : Offset < 0.f ? TEXT("< WIND") : TEXT("WIND >");
-        Box(2, FVector2f(X - 1.5f, Top), FVector2f(3.f, StripHeight), WindInk.CopyWithNewOpacity(bOnStrip ? .9f : .5f));
-        Text(Label, FCoreStyle::GetDefaultFontStyle("Bold", 9), FVector2f(X, Top + StripHeight + (FMath::Abs(X - Centre) < 30.f ? 18.f : 4.f)), WindInk);
+        Box(2, FVector2f(X - 1.5f, Top), FVector2f(3.f, StripHeight), CompassWind.CopyWithNewOpacity(bOnStrip ? .9f : .5f));
+        Text(Label, FCoreStyle::GetDefaultFontStyle("Bold", 9), FVector2f(X, Top + StripHeight + (FMath::Abs(X - Centre) < 30.f ? 18.f : 4.f)), CompassWind);
     }
 
     if (!bShowTrim) return Layer + 4;
@@ -126,23 +126,23 @@ int32 UEWCompassWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
     const float BarWidth = 300.f, BarTop = Top + StripHeight + 40.f;
     const float BarLeft = Centre - BarWidth * .5f;
     auto AngleX = [&](float Angle) { return Centre + Angle / MaxSailAngle * BarWidth * .5f; };
-    Box(1, FVector2f(BarLeft - 8.f, BarTop - 22.f), FVector2f(BarWidth + 16.f, 64.f), Backing);
-    Text(TEXT("SAILS"), FCoreStyle::GetDefaultFontStyle("Bold", 9), FVector2f(Centre, BarTop - 19.f), Ink);
-    Text(TEXT("Port"), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(BarLeft + 14.f, BarTop - 17.f), Ink.CopyWithNewOpacity(.7f));
-    Text(TEXT("Starboard"), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(BarLeft + BarWidth - 26.f, BarTop - 17.f), Ink.CopyWithNewOpacity(.7f));
-    Box(2, FVector2f(BarLeft, BarTop), FVector2f(BarWidth, 10.f), Ink.CopyWithNewOpacity(.18f));
+    Box(1, FVector2f(BarLeft - 8.f, BarTop - 22.f), FVector2f(BarWidth + 16.f, 64.f), CompassBacking);
+    Text(TEXT("SAILS"), FCoreStyle::GetDefaultFontStyle("Bold", 9), FVector2f(Centre, BarTop - 19.f), CompassInk);
+    Text(TEXT("Port"), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(BarLeft + 14.f, BarTop - 17.f), CompassInk.CopyWithNewOpacity(.7f));
+    Text(TEXT("Starboard"), FCoreStyle::GetDefaultFontStyle("Regular", 8), FVector2f(BarLeft + BarWidth - 26.f, BarTop - 17.f), CompassInk.CopyWithNewOpacity(.7f));
+    Box(2, FVector2f(BarLeft, BarTop), FVector2f(BarWidth, 10.f), CompassInk.CopyWithNewOpacity(.18f));
     auto Shade = [&](float Best)
     {
         const float From = AngleX(FMath::Clamp(Best - 18.f, -MaxSailAngle, MaxSailAngle));
         const float To = AngleX(FMath::Clamp(Best + 18.f, -MaxSailAngle, MaxSailAngle));
-        Box(2, FVector2f(From, BarTop), FVector2f(FMath::Max(To - From, 2.f), 10.f), Good.CopyWithNewOpacity(.45f));
+        Box(2, FVector2f(From, BarTop), FVector2f(FMath::Max(To - From, 2.f), 10.f), CompassGood.CopyWithNewOpacity(.45f));
     };
     Shade(BestSailAngle);
     if (FMath::Abs(BestSailAngle) > MaxSailAngle - 10.f) Shade(-BestSailAngle);
-    Box(2, FVector2f(Centre - .5f, BarTop - 3.f), FVector2f(1.f, 16.f), Ink.CopyWithNewOpacity(.5f));
-    const FLinearColor Marker = FMath::Lerp(FLinearColor(1.f, .45f, .3f), Good, TrimQuality);
+    Box(2, FVector2f(Centre - .5f, BarTop - 3.f), FVector2f(1.f, 16.f), CompassInk.CopyWithNewOpacity(.5f));
+    const FLinearColor Marker = FMath::Lerp(FLinearColor(1.f, .45f, .3f), CompassGood, TrimQuality);
     Box(3, FVector2f(AngleX(SailAngle) - 2.5f, BarTop - 4.f), FVector2f(5.f, 18.f), Marker);
     Text(FString::Printf(TEXT("%s  -  %d%%"), *TrimAdvice, FMath::RoundToInt(TrimQuality * 100.f)),
-        FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, BarTop + 16.f), TrimQuality >= .9f ? Good : Ink);
+        FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, BarTop + 16.f), TrimQuality >= .9f ? CompassGood : CompassInk);
     return Layer + 4;
 }
