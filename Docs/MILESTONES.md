@@ -28,7 +28,7 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Small craft pass: a finish pass on the raft, dinghy and sloop | ⏳ |
 | Paddling animation for the raft; holding the helm | ✅ `50e1c5f` |
 | Capstan animation (the anchor is raised instantly for now) | ⏳ |
-| Freshwater pond on the island for bass, catfish and piranha | ✅ COMMIT |
+| Freshwater pond on the island for bass, catfish and piranha | ✅ `24f1418` |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
 | Inventory and crafting screen redesign | ⛔ owner's layout images did not arrive |
 | Integrated First Voyage Play check | ⏳ |
