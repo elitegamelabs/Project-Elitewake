@@ -1,0 +1,51 @@
+name: Private Windows playtest release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    # Unreal Engine 5.8 is installed on the repository's private Windows runner.
+    runs-on: [self-hosted, windows, x64, elitewake-ue58]
+    timeout-minutes: 240
+    steps:
+      - name: Check out source and LFS assets
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Build encrypted Shipping package
+        id: package
+        shell: pwsh
+        env:
+          EW_PAK_AES_KEY: ${{ secrets.EW_PAK_AES_KEY }}
+        run: ./Scripts/Verification/build_private_release.ps1 -EngineRoot 'C:/Program Files/Epic Games/UE_5.8'
+
+      - name: Publish or update the private rolling release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $mainSha = (gh api "repos/$env:GITHUB_REPOSITORY/commits/main" --jq '.sha').Trim()
+          if ($mainSha -ne $env:GITHUB_SHA) {
+            Write-Output "Skipping stale release from $($env:GITHUB_SHA.Substring(0,12)); main is already at $($mainSha.Substring(0,12))."
+            exit 0
+          }
+          $tag = 'playtest-latest'
+          $releaseTitle = "Elitewake private playtest $($env:GITHUB_SHA.Substring(0,12))"
+          git tag -f $tag $env:GITHUB_SHA
+          git push --force origin "refs/tags/$tag"
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag '${{ steps.package.outputs.zip }}' --clobber
+            gh release edit $tag --title $releaseTitle --notes 'Latest encrypted Windows Shipping playtest build from main. Download the ZIP, extract the full folder, and run Play Elitewake.bat. This is a private test build; encrypted assets deter casual extraction but cannot prevent a determined client from recovering game data.' --prerelease
+          } else {
+            gh release create $tag '${{ steps.package.outputs.zip }}' --title $releaseTitle --notes 'Latest encrypted Windows Shipping playtest build from main. Download the ZIP, extract the full folder, and run Play Elitewake.bat. This is a private test build; encrypted assets deter casual extraction but cannot prevent a determined client from recovering game data.' --prerelease
+          }
