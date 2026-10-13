@@ -50,7 +50,7 @@ bEncryptAllAssetFiles=True
     $metadata.contentEncryption='Unreal AES content encryption configured; key held in repository Actions secret; extraction resistance only'
     $metadata | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $metadataPath -Encoding utf8
     # Rebuild the zip so its metadata describes the encryption configuration.
-    Remove-Item -LiteralPath $zipPath -Force
+    if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
     Compress-Archive -Path (Join-Path $archive '*') -DestinationPath $zipPath -CompressionLevel Fastest
     $zipInfo=Get-Item -LiteralPath $zipPath
     if ($zipInfo.Length -ge 2GB) { throw 'The package exceeds the GitHub Releases 2 GiB per-file limit.' }
@@ -64,3 +64,4 @@ finally {
     $secret=$null
     $env:EW_PAK_AES_KEY=$null
 }
+
