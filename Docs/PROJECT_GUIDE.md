@@ -2,14 +2,14 @@
 
 What is built, what is broken, what comes next, and how to work in this repository. Design rules are in [DESIGN_REFERENCE.md](DESIGN_REFERENCE.md); test results are in [VERIFICATION.md](VERIFICATION.md).
 
-Last updated: October 11, 2026.
+Last updated: October 13, 2026.
 
 ## Where things stand
 
 Elitewake is a tested set of gameplay foundations, with one connected test map. It is not yet a playable pirate game. Every system below runs server-authoritative and has been tested with a listen server and a client, unless noted otherwise.
 
 - **Build:** both Editor and Game targets build.
-- **Native tests:** 26 of 26 pass (October 11, `Saved/Logs/WeightNative.log`).
+- **Native tests:** 27 of 27 passed in the latest recorded run before the October 13 title-menu edit (`Saved/Logs/EW_5.log`).
 - **Client Play checks:**
   - A client fits out the sloop, raises the anchor, sails, steers, and anchors again (`verify_ship_sailing_play`, 11 of 11).
   - A client crew rides, walks, goes overboard and climbs back aboard while the host sails (`verify_ship_deck_play`, 14 of 14).
@@ -28,7 +28,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 | Crafting | Server-checked crafting with no item loss; menu with icons; four starter recipes and a Repair Kit as test assets | The event that unlocks recipes after the innkeeper introduction; stations; craft timers; using the crafted items (dig, drink, repair) |
 | Objectives | Ordered objective steps per player, current-step display, recipe rewards on completion | The real prologue steps; save/load |
 | Sea creatures | Bass, catfish, piranha, manta ray, manatee, great white, hammerhead and squid, built from the owner's art (cut-out painting on a rounded body, swimming in the material). They roam about a home in the water; aggressive kinds chase and bite a swimmer, peaceful ones flee when struck. Killed, they float up and E harvests Raw Fish or Raw Meat. Thirteen sea creatures live around the coastal island | Freshwater ponds for bass, catfish and piranha; eating raw food; fishing pole; taming; sirens |
-| Title and character creation | The game opens on the owner's title art; "Start your journey" leads to a character creator on a dock at dusk (body, colouring, height, drag to turn), and Set Sail opens the coast. The chosen look is saved, applied on arrival and replicated | Real character bodies (the mannequins stand in), faces, hair and clothing; name entry |
+| Title and main menu | Project startup points at a dock-at-dawn splash with ELITEWAKE and a pulsing PRESS ANY KEY prompt. Any key or click moves directly to the two-panel menu. The main-menu art shows an active Single Player panel and softened pirate-fight art behind disabled Multiplayer / COMING SOON. Single Player opens `Lvl_CoastalPlayground` directly and uses its regular survivor spawn; the character creator remains in source but is not in this path. The splash's four-frame wave overlay and button states are implemented in `EWTitleWidget`; the five imported UI textures are sourced from `Art/UI/Title/2026-10-13`. Editor target compilation succeeded October 13. | Run the title-to-coast Play acceptance in Unreal, review layout and wave motion at multiple resolutions; multiplayer implementation |
 | Menus and map | Inventory and crafting grids; seven menu sections (Company works; the Journal holds twelve playtest guides to boarding, the anchor, fitting sails and the wheel, sailing, paddling, getting about a ship, gathering, swimming, food, fighting and sea creatures; the others are placeholders); M shows the surrounding area; a compass strip across the top of the HUD | Building, Skills, Tames and Journal screens; real map with discovery |
 | Inn torch | One torch per player, with the owner's message and a highlight | Real inn placement, flame and light, carrying and using it |
 | Company | Create, invite, accept, roster, rename, promote and demote, remove, leave, transfer leadership, ownership policy settings | Policies don't affect anything yet; alliances, logs, crew groups, save/load |
@@ -39,7 +39,7 @@ Elitewake is a tested set of gameplay foundations, with one connected test map. 
 ## Known problems
 
 1. **The editor crashed while shutting down** on October 11, 01:52. It hit an engine assertion (`GIsPlayInEditorWorld`, `Editor.cpp` line 1225) after an MCP editor tool requested the close while a Play session was ending. The script stack names `SlateInspectorToolset`. It is not in Elitewake code. Stop Play before closing the editor, and close it normally rather than through a tool. Crash files: `Saved/Crashes/UECC-Windows-129F0C5A…_0001`.
-2. **Startup opens the wrong map.** `Config/DefaultEngine.ini` still starts the editor and game in `/Game/ThirdPerson/Lvl_ThirdPerson`. Open `/Game/Elitewake/Maps/Lvl_CoastalPlayground` yourself to see current work.
+2. **Editor and game start in different maps.** `Config/DefaultEngine.ini` opens the editor in `/Game/ThirdPerson/Lvl_ThirdPerson`; the packaged game starts at `/Game/Elitewake/Maps/Lvl_Title`. Use the editor Play button on `Lvl_Title` to test the front-end flow, or open `Lvl_CoastalPlayground` directly to test the coast.
 3. **The latest Windows package is stale.** `Saved/PrivateBuilds/local-20261010-071931` predates the coastal map, Company and swimming.
 4. **Ship edge cases.**
    - A ship placed so its hull already overlaps something (a dock, a shore) cannot move until it is moved clear.
@@ -74,7 +74,7 @@ Proposed order, pending owner confirmation:
 
 Open `Content/Elitewake/Maps/Lvl_CoastalPlayground` and press Play. This test map's starter kit gives each survivor the wooden axe, pickaxe and shovel, the water flask, the inn torch, 20 Wood, 10 Stone, 10 Fiber and 10 Azul berries, and stocks each ship's hold with what its mounts take: a helm, and one sail for every sail mount (the sloop gets a Medium and a Small; the schooner a Large, two Medium and three Small). Other maps and normal starts grant nothing.
 
-- **From the title:** Play from `Lvl_Title` (the packaged game's start map) to go through the title screen and character creator to the coast. Playing the coastal map directly skips them and keeps your last saved look.
+- **From the title:** Play from `Lvl_Title` (the packaged game's start map). Press any key or click for the main menu, then click Single Player to load the coastal map and its normal survivor pawn. Multiplayer is disabled and marked Coming Soon. Playing the coastal map directly skips both menus.
 - **Playing alone:** set the editor's Play options to one player (Standalone). With a listen server and two players, Play runs two games in one editor, which is slower; the second window is the network client.
 - **Tools in hand:** put a tool on the hotbar and press its number: it appears in your right hand (the torch lights up), and Left Mouse chops with it.
 - **Attack:** Left Mouse (RT) swings once a second. Aim at another survivor within reach to strike for 10; with the wooden axe equipped (from your starter kit), aim at a palm's trunk to gather Wood and Thatch; with the wooden pickaxe, strike a boulder for Stone.
