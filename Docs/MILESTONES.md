@@ -22,7 +22,7 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Tools held in the hand, tool chop, ladder animations | ✅ `5ae3fbc` |
 | Title splash and main menu (Single Player) | ✅ `6f9ac2c`, `1f7d505`, `3673627` |
 | Small craft pass: wake behind moving boats; sloop moored with its bow to open water | ✅ `6b5829f` |
-| Small craft pass: ships rock on the swell and heel under sail | ✅ pending commit |
+| Small craft pass: ships rock on the swell and heel under sail | ✅ `6aaf8cb` |
 | Small craft pass: rudder feel and a finish pass on the raft, dinghy and sloop | ⏳ |
 | Paddling animation for the raft; helm and capstan animations | ⏳ |
 | Freshwater pond on the island for bass, catfish and piranha (a basin carved in the terrain and a lake water body; the spring is a 4.5 m puddle) | ⏳ |
