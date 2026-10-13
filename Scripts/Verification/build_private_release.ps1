@@ -24,8 +24,8 @@ $utf8NoBom=New-Object System.Text.UTF8Encoding($false)
 $engineAdded=$false
 try {
     $updatedEngine=$engineText.TrimEnd()+"`r`n`r`n[PlatformCrypto]`r`nPlatformRequiresDataCrypto=True`r`nPakEncryptionRequired=True`r`n"
-    [IO.File]::WriteAllText($engineConfig,$updatedEngine,$utf8NoBom)
     $engineAdded=$true
+    [IO.File]::WriteAllText($engineConfig,$updatedEngine,$utf8NoBom)
     $cryptoText=@"
 [/Script/CryptoKeys.CryptoKeysSettings]
 EncryptionKey=$secret
