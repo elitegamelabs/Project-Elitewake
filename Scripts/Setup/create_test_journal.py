@@ -20,10 +20,8 @@ The raft and the dinghy sit low in the water. Look at either side of them and ho
 
 To leave a ship, walk to the rail and jump over the side.
 
-Where the ships are:
+Where the boats are:
 - Sloop: off the end of the dock.
-- Schooner: south of the dock, bow out to sea.
-- Brigantine: further out to the south-east.
 - Raft and dinghy: side by side next to the dock.'''),
     ('Ships', 'Raising and dropping the anchor', '''Every ship starts anchored, and an anchored ship cannot move.
 
@@ -43,13 +41,11 @@ To take a sail off, look at it and hold E ("Remove ..."); it goes back into your
 
 Which sail goes where:
 - Sloop: Medium on the mast, Small at the bow.
-- Schooner: Large on the foremast (a square topsail), Medium on the main and mizzen masts, Small on the three mounts near the bow.
-- Brigantine: two Large on the foremast (mounts either side of it), a Large gaff mainsail and a Large topsail on the mainmast, two Small on the forecastle.
 - Dinghy: one Small on its mast.
 - Raft: no sail. It is paddled.'''),
     ('Ships', 'Fitting the wheel', '''A ship cannot be steered until its wheel is fitted.
 
-The wheel is in the hold with the sails. Its mount is at the stern: on the main deck of the sloop, on the raised deck at the back of the schooner and the brigantine (take the stairs up either side).
+The wheel is in the hold with the sails. Its mount is on the sloop's deck near the stern.
 
 Carrying the wheel, look at the empty helm mount and hold E: "Install Ship's Wheel".
 
@@ -76,9 +72,7 @@ Good to know:
 Paddling ignores the wind, but a raft is slow: about 2.5 metres a second at a hard stroke.'''),
     ('Ships', 'Finding your way about a ship', '''You can walk about the deck while the ship sails; you ride along with it.
 
-- Hatch stairs: the stairs in the main hatch lead down to the hold (sloop) or the gun deck with its gunports (schooner, brigantine).
-- Cabins: the doorway under the raised deck at the stern opens into the captain's cabin (schooner, brigantine). On the brigantine, the doorway under the forecastle at the bow opens into the crew's quarters.
-- Raised decks: stairs on both sides lead up to them. The wheel is on the raised deck at the stern.
+- Hatch stairs: the stairs in the sloop's hatch lead down to its hold.
 - The hold: hold E at the cargo hatch to open it beside your inventory, then click a stack to move it across. Anyone aboard can use it.
 - Load: everything in the hold plus the fitted sails and wheel is the ship's load. Past half its capacity she slows, and an overloaded ship is swamped after 60 seconds until you lighten her.'''),
     ('The coast', 'Gathering', '''- Fiber plants, piles of fallen sticks and berry bushes: look at one and press E to gather all of it.

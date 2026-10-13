@@ -218,6 +218,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.
   - Hulls are built by script in the editor (`Scripts/Setup/build_sloop_hull.py`), not bought or generated, so they can be reshaped and re-run.
   - The mast, bowsprit and standing rigging come with the hull. The mainsail fitting brings its boom and gaff; the jib hangs on the forestay. Sails show the helmsman's setting: rolled on their spars when furled, shortened at half, fully set at full. The owner's sail art is the cloth itself. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.
+- **Larger ships on hold (owner, October 12):** the schooner and brigantine below are taken out of the game while the owner supplies better designs; work focuses on the raft, the dinghy and the sloop first.
 - **The schooner (DECIDED, delegated, October 12, from the owner's schooner art):**
   - About 22 m long and 6.6 m in beam. It is double-ended like the sloop, following the owner's dislike of a square stern (*tuning*).
   - It keeps the art's raised aft deck, raised to 2.2 m above the main deck so a full-height captain's cabin fits under it (owner request, October 12), with stairs up each side and a breast rail (*tuning*).
