@@ -35,7 +35,7 @@ TSharedRef<SWidget> UEWInteractionWidget::RebuildWidget()
         InnMessage->SetShadowColorAndOpacity(FLinearColor::Black); InnMessage->SetShadowOffset(FVector2D(1,1));
         auto* InnSlot = Canvas->AddChildToCanvas(InnMessage);
         InnSlot->SetAnchors(FAnchors(.5f,0)); InnSlot->SetAlignment(FVector2D(.5f,0));
-        InnSlot->SetOffsets(FMargin(0,35,600,64)); InnMessage->SetVisibility(ESlateVisibility::Collapsed);
+        InnSlot->SetOffsets(FMargin(0,76,600,64));   // below the compass InnMessage->SetVisibility(ESlateVisibility::Collapsed);
         Panel = WidgetTree->ConstructWidget<UBorder>();
         Panel->SetPadding(FMargin(12));
         Panel->SetBrushColor(FLinearColor(.015f,.025f,.035f,.85f));
@@ -64,6 +64,13 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
     if (!Panel || !Prompt || !Progress) return;
     const auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
     auto* Survivor = PC ? Cast<AEWCharacter>(PC->GetPawn()) : nullptr;
+    // At the helm the prompt carries the ship's controls; it sits low and wide, clear of the ship ahead.
+    if (auto* PanelSlot = Cast<UCanvasPanelSlot>(Panel->Slot))
+    {
+        const bool bAtHelm = Survivor && Survivor->GetHelmShip();
+        PanelSlot->SetAnchors(FAnchors(.5f, bAtHelm ? .8f : .62f));
+        PanelSlot->SetOffsets(FMargin(0, 0, bAtHelm ? 720 : 460, 90));
+    }
     AActor* Target = Survivor && PC && !PC->IsInventoryOpen()
         && Survivor->GetSurvivalComponent()->GetHealth() > 0 ? FEWInteractionTargeting::FindTarget(Survivor) : nullptr;
     auto* Torch = Cast<AEWInnTorchPickup>(Target);

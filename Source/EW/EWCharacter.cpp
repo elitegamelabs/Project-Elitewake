@@ -21,6 +21,7 @@
 #include "EW.h"
 #include "EWPlayerController.h"
 #include "Ships/EWShip.h"
+#include "Ships/EWShipDefinition.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
 
@@ -164,7 +165,11 @@ void AEWCharacter::Tick(float DeltaSeconds)
     {
         // Send helm controls only when they change. The ship holds them until the next change,
         // so slow frames or a lost frame of input never stop it.
-        const float NewRudder = FMath::Clamp(PendingHelmRight, -1.f, 1.f);
+        // With the sprint key held, left and right swing the sails; otherwise they put the rudder over.
+        const bool bTrim = bHelmTrimHeld && HelmShip->HasTrimmableSails();
+        const int8 Trim = !bTrim ? 0 : PendingHelmRight > .5f ? 1 : PendingHelmRight < -.5f ? -1 : 0;
+        if (Trim != SentSailTrim) { ServerSailTrim(Trim); SentSailTrim = Trim; }
+        const float NewRudder = bTrim ? 0.f : FMath::Clamp(PendingHelmRight, -1.f, 1.f);
         if (!FMath::IsNearlyEqual(NewRudder, SentHelmRudder, .05f) || (NewRudder == 0.f && SentHelmRudder != 0.f))
         {
             ServerHelmRudder(NewRudder);
@@ -246,7 +251,8 @@ void AEWCharacter::OnRep_HelmShip()
     bSwimAscendInputHeld = false;
     StopJumping();
     PendingHelmRight = PendingHelmForward = SentHelmRudder = 0.f;
-    LastHelmForwardSign = 0;
+    LastHelmForwardSign = SentSailTrim = 0;
+    bHelmTrimHeld = false;
     GetCharacterMovement()->StopMovementImmediately();
     if (IsValid(HelmShip))
     {
@@ -262,6 +268,33 @@ void AEWCharacter::OnRep_HelmShip()
         DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+    }
+    SetHelmCamera(IsValid(HelmShip));
+}
+
+void AEWCharacter::SetHelmCamera(bool bAtHelm)
+{
+    if (!CameraBoom) return;
+    if (bAtHelm)
+    {
+        if (SavedArmLength < 0.f)
+        {
+            SavedArmLength = CameraBoom->TargetArmLength;
+            SavedTargetOffset = CameraBoom->TargetOffset;
+            bSavedCameraCollision = CameraBoom->bDoCollisionTest;
+        }
+        // Back and up by the ship's size, clear of its own rails and rigging (tuning).
+        const float Length = HelmShip->Definition ? HelmShip->Definition->HullExtent.X : 400.f;
+        CameraBoom->TargetArmLength = FMath::Clamp(Length * 1.6f, 600.f, 2400.f);
+        CameraBoom->TargetOffset = FVector(0, 0, FMath::Clamp(Length * .45f, 150.f, 700.f));
+        CameraBoom->bDoCollisionTest = false;
+    }
+    else if (SavedArmLength >= 0.f)
+    {
+        CameraBoom->TargetArmLength = SavedArmLength;
+        CameraBoom->TargetOffset = SavedTargetOffset;
+        CameraBoom->bDoCollisionTest = bSavedCameraCollision;
+        SavedArmLength = -1.f;
     }
 }
 
@@ -343,6 +376,11 @@ void AEWCharacter::ServerHelmRudder_Implementation(float NewRudder)
     if (IsValid(HelmShip)) HelmShip->SetRudder(this, NewRudder);
 }
 
+void AEWCharacter::ServerSailTrim_Implementation(int8 Direction)
+{
+    if (IsValid(HelmShip)) HelmShip->SetSailTrim(this, Direction);
+}
+
 void AEWCharacter::ServerSailStep_Implementation(int8 Direction)
 {
     if (IsValid(HelmShip)) HelmShip->StepSails(this, Direction);
@@ -381,7 +419,7 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 
 void AEWCharacter::StartSprint()
 {
-    if (HelmShip) return;
+    if (HelmShip) { bHelmTrimHeld = true; return; }
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bSprintInputHeld = true;
 	if (bIsProne)
@@ -399,6 +437,7 @@ void AEWCharacter::StartSprint()
 
 void AEWCharacter::StopSprint()
 {
+    bHelmTrimHeld = false;
 	bSprintInputHeld = false;
 	SetSprinting(false);
 }

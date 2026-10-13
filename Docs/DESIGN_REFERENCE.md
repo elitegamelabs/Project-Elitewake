@@ -196,8 +196,10 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - The **first sloop** has one mast with a Medium mainsail mount and a Small headsail mount. It also has the two confirmed cannon hardpoints (port and starboard) and one helm mount.
 - **Sail roles (DECIDED, delegated):** none in the first version; sails differ by size only. Handling, speed and cargo roles stay a RECOMMENDED later layer for when sailing is balanced.
 - **Sailing (DECIDED, delegated):**
-  - The helmsman uses forward and back to step the sails between three states (furled, half, full) and left and right for the rudder. Sail trim is automatic in the first version; manual trim is a later skill layer.
-  - Wind has a world direction. Speed depends on the ship's angle to the wind: full speed running downwind, and never less than about 30% sailing into it, so a ship can always make headway (*tuning*).
+  - The helmsman uses forward and back to step the sails between three states (furled, half, full) and left and right for the rudder, which returns to centre when released.
+  - **Sail trim (owner, October 12: sails should work on wind and movement like ATLAS):** the helmsman swings the sails with Sprint held and left or right (Shift+A/D on a keyboard, as in ATLAS). All of a ship's sails swing together, up to 85 degrees either side of the centreline at 45 degrees a second (*tuning*); they turn on their mast or stay and every screen shows them swung. The angle stays where it is left. A paddled boat has nothing to trim.
+  - Wind has a world direction, the same on every machine. Speed depends on the ship's angle to the wind and on the trim (DECIDED, delegated): the best angle has the sails out on the side the wind blows toward, square across running before it, half way out with it on the beam and in along the centreline heading into it. Well trimmed, a ship makes full speed running downwind; badly trimmed, or heading into the wind, never less than about 30%, so it can always make headway. Trim quality falls off sharply: about 70% a quarter of the way off, nothing from 60 degrees off (*tuning*).
+  - At the helm the camera stands back over the ship so the helmsman sees the sails and the water ahead, and a trim bar under the compass shows the sails' angle, the best angle and how well they draw (DECIDED, delegated).
   - More and larger sails raise top speed; carried weight lowers it (*tuning*).
   - The rudder turns best with way on, but keeps 20% of its effect when stopped, so a ship pinned against a shore can always turn away (*tuning*).
   - Holding Interact at an installed helm takes it. The helm itself is removed through the Builder's Plan, not by Interact.
@@ -248,7 +250,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
   - Ships start anchored, so a moored ship never drifts.
   - An anchored ship cannot sail, whatever its sails are set to. Dropping anchor under way drags the ship to a stop within about 2 seconds (*tuning*), with no damage for now.
-  - The helmsman's prompt shows "Anchored" while it is down. A full ship HUD (sails, speed, anchor) comes with the HUD art pass.
+  - The helmsman's prompt shows "Anchored" while it is down. The trim bar shows the sails; a full ship HUD (speed, anchor, hull) comes with the HUD art pass.
 - **Cargo hold (DECIDED, delegated):**
   - Every ship has a built-in hold, separate from what survivors carry. Its slot count comes from the ship definition (the sloop has 20, *tuning*); Weight/Storage upgrades will raise it.
   - Hold Interact at the cargo hatch on deck to open the hold beside your inventory, then move whole stacks across.
@@ -395,7 +397,8 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
   - Left side, five stat icons that fill from the bottom and keep an outline when empty: red heart (Health), yellow lightning (Stamina), blue flask (Hydration), gray weight (carried weight), orange meat (Hunger). The owner wants detailed painted icons here.
   - Right side: condition notices with timers.
   - No minimap.
-- **Map:** M shows the surrounding area. You can walk but not sprint, change stance, use the hotbar or open inventory, and the world keeps running. Fog-of-war discovery, ghost-ship markers and a physical compass (N, E, S, W) are planned.
+  - **Compass (owner, October 12):** a straight strip across the top of the screen. The bearings (N, NE, E and so on, with degree marks between) scroll past a fixed centre mark as the view turns, and the bearing faced shows under it. The wind is marked where it blows from. North is the map's up.
+- **Map:** M shows the surrounding area. You can walk but not sprint, change stance, use the hotbar or open inventory, and the world keeps running. Fog-of-war discovery and ghost-ship markers are planned. The HUD compass is in (see HUD); a physical compass item is not.
 - **Pause:** in single player it freezes the world and hides the HUD. In multiplayer it does not.
 - **Camera:** third person by default; Z toggles first person.
 

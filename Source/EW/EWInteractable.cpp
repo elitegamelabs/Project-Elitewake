@@ -10,7 +10,7 @@ EEWInteractionMode IEWInteractable::GetInteractionMode_Implementation() const { 
 float IEWInteractable::GetHoldDuration_Implementation() const { return 1.f; }
 EEWInteractionMode IEWInteractable::GetInteractionModeFor_Implementation(AEWCharacter* Character) const
 {
-    return Execute_GetInteractionMode(_getUObject());
+    return Execute_GetInteractionMode(Cast<UObject>(this));
 }
 bool IEWInteractable::Interact_Implementation(AEWCharacter* Character) { return false; }
 

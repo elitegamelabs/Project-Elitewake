@@ -83,6 +83,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, SailState);
     DOREPLIFETIME(AEWShip, Speed);
     DOREPLIFETIME(AEWShip, Rudder);
+    DOREPLIFETIME(AEWShip, SailAngle);
     DOREPLIFETIME(AEWShip, bAnchored);
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
@@ -307,6 +308,23 @@ void AEWShip::RefreshFittingVisuals()
         Visual->SetStaticMesh(Mesh);
         Visual->SetVisibility(bShown);
         Visual->SetRelativeTransform(Local * Mount->Transform);
+        if (Mount->Type == EEWShipMountType::Sail) SailLooks.Add(Fitting.MountId, Local);
+    }
+    for (auto It = SailLooks.CreateIterator(); It; ++It) if (!FittingVisuals.Contains(It.Key())) It.RemoveCurrent();
+    ShowSailTrim();
+}
+
+void AEWShip::ShowSailTrim()
+{
+    if (!Definition) return;
+    // Every sail's look has its origin where it turns, on the mast or the stay, with Z up it. A boom and a jib's
+    // clew both lie aft, so swinging the sails out to starboard turns them about Z the negative way.
+    for (const TPair<FName, FTransform>& Look : SailLooks)
+    {
+        const FEWShipMount* Mount = Definition->FindMount(Look.Key);
+        const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Look.Key);
+        if (Mount && Visual && *Visual)
+            (*Visual)->SetRelativeTransform(FTransform(FRotator(0, -ShownSailAngle, 0)) * Look.Value * Mount->Transform);
     }
 }
 
@@ -589,7 +607,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         else if (bAnchored) Status = NSLOCTEXT("Elitewake", "HelmAnchored", "  -  Anchored");
         if (Definition && Definition->bPaddled)
             return FText::Format(NSLOCTEXT("Elitewake", "LeavePaddlesStatus", "Put down the paddles  (W/S stroke, A/D steer){0}"), Status);
-        return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder){0}"), Status);
+        return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder, Shift + A/D trim){0}"), Status);
     }
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
@@ -677,6 +695,7 @@ bool AEWShip::TakeHelm(AEWCharacter* Character)
         return false;
     Helmsman = Character;
     Rudder = 0.f;
+    SailTrimDirection = 0;
     Character->SetHelmShip(this);
     ForceNetUpdate();
     return true;
@@ -708,7 +727,8 @@ bool AEWShip::LeaveHelm(AEWCharacter* Character, bool bForce)
         if (!bFree && !bForce) return false;
     }
     Helmsman = nullptr;
-    Rudder = 0.f;  // Sails stay as they were set; the ship keeps sailing until someone changes them.
+    Rudder = 0.f;
+    SailTrimDirection = 0;  // Sails stay as they were set and trimmed; the ship keeps sailing until someone changes them.
     Character->SetHelmShip(nullptr);
     if (!Character->IsActorBeingDestroyed()) Character->SetActorLocation(Exit, false, nullptr, ETeleportType::TeleportPhysics);
     ForceNetUpdate();
@@ -734,6 +754,50 @@ bool AEWShip::StepSails(AEWCharacter* Character, int32 Direction)
     return true;
 }
 
+bool AEWShip::SetSailTrim(AEWCharacter* Character, int32 Direction)
+{
+    if (!HasAuthority() || !IsValidHelmsman(Character) || Direction < -1 || Direction > 1) return false;
+    SailTrimDirection = static_cast<int8>(Direction);
+    return true;
+}
+
+bool AEWShip::HasTrimmableSails() const
+{
+    return Definition && !Definition->bPaddled
+        && Definition->Mounts.ContainsByPredicate([](const FEWShipMount& M) { return M.Type == EEWShipMountType::Sail; });
+}
+
+float AEWShip::GetBestSailAngle() const
+{
+    const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
+    if (!Wind) return 0.f;
+    // Where the wind blows toward, relative to the bow: 0 running before it, 180 heading into it, positive when it
+    // blows across toward starboard. The sails go out on the side it blows toward: square across at a run, half way
+    // on a beam reach, along the centreline heading into it.
+    const float Toward = FRotator::NormalizeAxis(Wind->GetWindYaw() - GetActorRotation().Yaw);
+    return (Toward >= 0.f ? 1.f : -1.f) * FMath::Min(MaxSailAngle, 90.f - FMath::Abs(Toward) * .5f);
+}
+
+float AEWShip::GetTrimQuality() const
+{
+    const float Best = GetBestSailAngle();
+    float Error = FMath::Abs(SailAngle - Best);
+    // Running nearly dead before the wind, the sails draw on either side.
+    if (FMath::Abs(Best) > MaxSailAngle - 10.f) Error = FMath::Min(Error, FMath::Abs(SailAngle + Best));
+    // Sharp enough that trim matters: about 70% a quarter of the way out, nothing from 60 degrees off (tuning).
+    return FMath::Cos(FMath::DegreesToRadians(FMath::Min(Error * 1.5f, 90.f)));
+}
+
+float AEWShip::GetWindFactor() const
+{
+    const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
+    if (!Wind) return 1.f;
+    // Badly trimmed sails lose the heading's advantage, down to the least any sail gives, so a ship always makes
+    // some headway.
+    const float Heading = Wind->GetHeadingFactor(GetActorForwardVector());
+    return UEWWindSubsystem::MinUpwindFactor + (Heading - UEWWindSubsystem::MinUpwindFactor) * GetTrimQuality();
+}
+
 float AEWShip::GetFittedSailFraction() const
 {
     if (!Definition) return 0.f;
@@ -753,9 +817,7 @@ float AEWShip::ComputeTargetSpeed() const
     const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
     // Paddlers set their own pace whatever the wind, with no sails to fill.
     if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
-    const UEWWindSubsystem* Wind = GetWorld() ? GetWorld()->GetSubsystem<UEWWindSubsystem>() : nullptr;
-    const float Heading = Wind ? Wind->GetHeadingFactor(GetActorForwardVector()) : 1.f;
-    return Definition->TopSpeed * SailSet * GetFittedSailFraction() * Heading * GetLoadSpeedFactor();
+    return Definition->TopSpeed * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
 }
 
 void AEWShip::SimulateSailing(float DeltaSeconds)
@@ -820,6 +882,8 @@ void AEWShip::SmoothClientMotion(float DeltaSeconds)
 
 void AEWShip::StepSimulation(float Step)
 {
+    if (SailTrimDirection != 0 && HasTrimmableSails())
+        SailAngle = FMath::Clamp(SailAngle + SailTrimDirection * SailTrimRate * Step, -MaxSailAngle, MaxSailAngle);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
@@ -845,6 +909,12 @@ void AEWShip::StepSimulation(float Step)
 void AEWShip::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    if (ShownSailAngle != SailAngle)
+    {
+        // Swing at the trim rate, a little faster to catch up on a client, never overshooting.
+        ShownSailAngle = FMath::FInterpConstantTo(ShownSailAngle, SailAngle, DeltaSeconds, SailTrimRate * 1.5f);
+        ShowSailTrim();
+    }
     if (!HasAuthority())
     {
         SmoothClientMotion(DeltaSeconds);
@@ -855,12 +925,16 @@ void AEWShip::Tick(float DeltaSeconds)
         if (IsValid(Helmsman)) LeaveHelm(Helmsman, true);
         else Helmsman = nullptr;
         Rudder = 0.f;
+        SailTrimDirection = 0;
     }
     UpdateLoad(DeltaSeconds);
-    // An open menu centres the rudder; the sails keep their setting.
+    // An open menu centres the rudder and stops the sails swinging; they keep their setting and trim.
     if (Helmsman)
         if (const auto* PC = Cast<AEWPlayerController>(Helmsman->GetController()); !PC || PC->GetInteractionComponent()->IsMenuBlocked())
+        {
             Rudder = 0.f;
+            SailTrimDirection = 0;
+        }
     SimulateSailing(DeltaSeconds);
     ShowSimulatedPose();
 }

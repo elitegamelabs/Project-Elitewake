@@ -203,19 +203,39 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
     TestEqual(TEXT("An anchored ship does not sail, even under full sail"), A->ComputeTargetSpeed(), 0.f);
+    // Trim: the sails swing with the helmsman's held direction, at a fixed rate, within their limits.
+    TestFalse(TEXT("Others cannot trim"), A->SetSailTrim(Other, 1));
+    TestFalse(TEXT("Trim direction must be one notch"), A->SetSailTrim(C, 2));
+    auto Swing = [&](AEWShip* Ship, int32 Direction, int32 Steps)
+    {
+        Ship->SetSailTrim(C, Direction);
+        for (int32 i = 0; i < Steps; ++i) Ship->SimulateSailing(AEWShip::SimulationStep);
+        Ship->SetSailTrim(C, 0);
+    };
+    // Wind: well trimmed, full speed running before it; never less than 30 percent, so a ship always makes headway.
+    Wind->SetWindYaw(0.f);   // Blowing toward +X, the way the ships face.
+    TestEqual(TEXT("Sails start along the centreline"), A->GetSailAngle(), 0.f);
+    TestTrue(TEXT("Running before the wind with the sails along the centreline gives the least"), FMath::IsNearlyEqual(A->GetWindFactor(), .3f, .01f));
+    Swing(A, 1, 40);
+    TestEqual(TEXT("The sails swing out to starboard and stop at their limit"), A->GetSailAngle(), AEWShip::MaxSailAngle);
+    TestTrue(TEXT("Squared away running before the wind, they draw fully"), FMath::IsNearlyEqual(A->GetWindFactor(), 1.f, .01f));
+    Swing(A, 0, 10);
+    TestEqual(TEXT("Released, the sails stay where they are"), A->GetSailAngle(), AEWShip::MaxSailAngle);
+    Wind->SetWindYaw(180.f);
+    TestEqual(TEXT("Into the wind the best angle is the centreline"), A->GetBestSailAngle(), 0.f);
+    TestTrue(TEXT("Upwind still makes headway (30 percent)"), FMath::IsNearlyEqual(A->GetWindFactor(), .3f, .01f));
+    Wind->SetWindYaw(90.f);  // Across the ship, toward starboard.
+    TestTrue(TEXT("On a beam reach the best angle is half way out to starboard"), FMath::IsNearlyEqual(A->GetBestSailAngle(), 45.f, .01f));
+    TestTrue(TEXT("Squared away on a beam reach, they draw only half"), FMath::IsNearlyEqual(A->GetTrimQuality(), .5f, .01f));
+    Swing(A, -1, 18);        // 85 down to 44.5 degrees.
+    TestTrue(TEXT("Trimmed in to about 45 degrees, a beam reach gives 65 percent"), FMath::IsNearlyEqual(A->GetWindFactor(), .65f, .01f));
+    Wind->SetWindYaw(0.f);
+    Swing(A, 1, 40);
+    TestEqual(TEXT("An anchored ship does not move while its sails are trimmed"), A->GetSpeed(), 0.f);
     TestTrue(TEXT("Raise anchor on A"), A->SetAnchored(C, false));
     TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
     TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
-
-    // Wind: never zero into the wind, full speed running before it.
-    Wind->SetWindYaw(0.f);   // Blowing toward +X, the way the ships face.
-    const float Downwind = A->ComputeTargetSpeed();
-    TestTrue(TEXT("Downwind target is top speed times fitted sail"), FMath::IsNearlyEqual(Downwind, 700.f * 2.f / 3.f, 1.f));
-    Wind->SetWindYaw(180.f);
-    TestTrue(TEXT("Upwind still makes headway (30 percent)"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Downwind * .3f, 1.f));
-    Wind->SetWindYaw(90.f);
-    TestTrue(TEXT("Beam reach is in between"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Downwind * .65f, 1.f));
-    Wind->SetWindYaw(0.f);
+    TestTrue(TEXT("Downwind target is top speed times fitted sail"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), 700.f * 2.f / 3.f, 1.f));
 
     // Leaving the helm keeps the sails set; the ship sails on.
     TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));
@@ -229,6 +249,10 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     Aim(PC, C, B, TEXT("Helm"));
     TestTrue(TEXT("Take the helm of ship B"), B->Interact_Implementation(C));
     B->StepSails(C, 1); B->StepSails(C, 1);
+    // Trimmed at anchor like A, so both start the comparison at rest.
+    B->SetAnchored(C, true);
+    Swing(B, 1, 40);
+    B->SetAnchored(C, false);
     TestTrue(TEXT("Leave the helm of ship B"), B->LeaveHelm(C));
     const FVector StartA = A->GetActorLocation(), StartB = B->GetActorLocation();
     for (int32 i = 0; i < 40; ++i) A->SimulateSailing(.05f);

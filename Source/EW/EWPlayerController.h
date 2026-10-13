@@ -19,6 +19,7 @@ class UEWSurvivalWidget;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
 class UEWShipMarkersWidget;
+class UEWCompassWidget;
 class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
@@ -150,6 +151,7 @@ protected:
     TObjectPtr<UEWInteractionComponent> InteractionComponent;
     UPROPERTY(Transient) TObjectPtr<UEWInteractionWidget> InteractionWidget;
     UPROPERTY(Transient) TObjectPtr<UEWShipMarkersWidget> ShipMarkersWidget;
+    UPROPERTY(Transient) TObjectPtr<UEWCompassWidget> CompassWidget;
     bool bControllerPrompts = false;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)

@@ -171,6 +171,11 @@ public:
     void ServerHelmRudder(float Rudder);
     UFUNCTION(Server, Reliable)
     void ServerSailStep(int8 Direction);
+    UFUNCTION(Server, Reliable)
+    void ServerSailTrim(int8 Direction);
+    /** True while the helmsman holds the sprint key: left and right then swing the sails instead of the rudder. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    bool IsTrimmingSails() const { return bHelmTrimHeld; }
 
     /** True while hanging on a ship's ladder. */
     UFUNCTION(BlueprintPure, Category="Ship")
@@ -210,6 +215,13 @@ private:
     float PendingHelmForward = 0.f;
     float SentHelmRudder = 0.f;
     int8 LastHelmForwardSign = 0;
+    bool bHelmTrimHeld = false;
+    int8 SentSailTrim = 0;
+    /** At the helm the camera stands back over the ship to show its sails and the water ahead; these restore it. */
+    void SetHelmCamera(bool bAtHelm);
+    float SavedArmLength = -1.f;
+    FVector SavedTargetOffset = FVector::ZeroVector;
+    bool bSavedCameraCollision = true;
 public:
 
 	/** Constructor */

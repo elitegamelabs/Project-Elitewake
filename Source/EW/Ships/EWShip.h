@@ -16,7 +16,7 @@ class UStaticMeshComponent;
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
 
-/** How much sail is set. The helmsman steps between these; trim is automatic. */
+/** How much sail is set. The helmsman steps between these, and trims the sails to the wind separately. */
 UENUM(BlueprintType)
 enum class EEWSailState : uint8 { Furled, Half, Full };
 
@@ -156,6 +156,22 @@ public:
     /** 0–1: how much of the hull's sail capacity is fitted, weighted by sail size. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetFittedSailFraction() const;
+    /** Where the sails are swung, in degrees from the centreline: positive with their booms out to starboard. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSailAngle() const { return SailAngle; }
+    /** The sail angle that would draw best on this heading: booms out to leeward, square across running before the
+     *  wind and sheeted in toward the centreline heading into it. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetBestSailAngle() const;
+    /** 0-1: how well the sails are trimmed to the wind; 1 at the best angle, 0 from 60 degrees away. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetTrimQuality() const;
+    /** The wind's share of top speed on this heading and trim: from MinUpwindFactor up to 1 (see UEWWindSubsystem). */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetWindFactor() const;
+    /** True when the ship is moved by sails (not paddled) and so has sails to trim. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    bool HasTrimmableSails() const;
     /** The speed the ship is accelerating toward, from its sails, fittings and heading to the wind. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float ComputeTargetSpeed() const;
@@ -170,6 +186,12 @@ public:
     bool SetRudder(AEWCharacter* Character, float NewRudder);
     /** Authority only, from the helmsman: +1 sets more sail, -1 takes it in. */
     bool StepSails(AEWCharacter* Character, int32 Direction);
+    /** Authority only, from the helmsman: +1 swings the sails toward starboard, -1 toward port, 0 holds them.
+     *  Held until changed. */
+    bool SetSailTrim(AEWCharacter* Character, int32 Direction);
+    /** How far the sails swing either side of the centreline, and how fast, in degrees and degrees per second (tuning). */
+    static constexpr float MaxSailAngle = 85.f;
+    static constexpr float SailTrimRate = 45.f;
     /** Authority only. Advances movement in fixed steps, carrying leftover time to the next call. */
     void SimulateSailing(float DeltaSeconds);
 
@@ -239,6 +261,14 @@ private:
     float Speed = 0.f;
     UPROPERTY(Replicated)
     float Rudder = 0.f;
+    UPROPERTY(Replicated)
+    float SailAngle = 0.f;
+    int8 SailTrimDirection = 0;
+    /** The angle the sails are drawn at, easing toward SailAngle so they swing smoothly between updates. */
+    float ShownSailAngle = 0.f;
+    /** Each fitted sail's look relative to its mount, before it is swung to its trim. */
+    TMap<FName, FTransform> SailLooks;
+    void ShowSailTrim();
     float SimulationRemainder = 0.f;
     /** Authority: the pose after the latest fixed step and the one before it. Each frame shows the ship between
      *  the two, so it moves smoothly at any frame rate while the simulation keeps its fixed steps. */

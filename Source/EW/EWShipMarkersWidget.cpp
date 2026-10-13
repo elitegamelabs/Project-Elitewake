@@ -64,9 +64,10 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
         if (!Def || FVector::Dist(Here, Ship->GetActorLocation()) > Range + Def->HullExtent.X) continue;
         const bool bHelmsman = Ship->GetHelmsman() == Survivor;
         // From outside, the deck's places would show through the hull: only the anchor and the near ladders.
-        const bool bOutside = !Ship->IsAboard(Survivor);
+        const bool bOutside = !Ship->IsAboard(Survivor) && !bHelmsman;
         const FName Aimed = Ship->FindAimedMount(Survivor);
-        if (!bOutside) for (const FEWShipMount& Mount : Def->Mounts)
+        // The helmsman needs only the anchor: their sails and wheel are already in hand.
+        if (!bOutside && !bHelmsman) for (const FEWShipMount& Mount : Def->Mounts)
         {
             const FVector Where = Ship->GetMountWorldTransform(Mount.MountId).GetLocation();
             const UEWItemDefinition* Installed = Ship->GetFitting(Mount.MountId);

@@ -21,6 +21,7 @@
 #include "EW.h"
 #include "EWInventoryWidget.h"
 #include "EWShipMarkersWidget.h"
+#include "EWCompassWidget.h"
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "InputKeyEventArgs.h"
@@ -64,6 +65,8 @@ void AEWPlayerController::BeginPlay()
         if (InteractionWidget) InteractionWidget->AddToPlayerScreen(3);
         ShipMarkersWidget = CreateWidget<UEWShipMarkersWidget>(this, UEWShipMarkersWidget::StaticClass());
         if (ShipMarkersWidget) ShipMarkersWidget->AddToPlayerScreen(1);
+        CompassWidget = CreateWidget<UEWCompassWidget>(this, UEWCompassWidget::StaticClass());
+        if (CompassWidget) CompassWidget->AddToPlayerScreen(1);
         if (auto* Instance=GetGameInstance<UEWGameInstance>()) Instance->LocalControllerReady(this);
     }
 

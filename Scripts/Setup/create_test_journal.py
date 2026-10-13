@@ -57,14 +57,21 @@ Its mount is labelled "Wheel mount" on your screen, and turns green ("Fit the wh
 The raft's paddles and the dinghy's tiller are part of those boats and are always there.'''),
     ('Ships', 'Sailing and steering', '''With the wheel fitted and the anchor up:
 
-1. Look at the wheel and hold E: "Take the helm".
+1. Look at the wheel and hold E: "Take the helm". The view pulls back so you can see the whole ship.
 2. W sets more sail: furled, then half, then full. S takes sail in again.
-3. A and D put the rudder over to port and to starboard. The rudder stays where you leave it, so bring it back to sail straight.
+3. Hold A or D to put the rudder over to port or starboard. Let go and it comes back to the middle.
 4. Hold E to leave the helm. The sails stay as they are: take them in or drop the anchor first.
+
+Trimming the sails to the wind:
+- The compass across the top of the screen shows where you are facing and marks the WIND where it blows from.
+- At the helm, the SAILS bar under the compass shows where your sails are swung, from port to starboard. The green band is where they would catch the wind best.
+- Hold Shift and press A or D to swing the sails toward port or starboard. Bring the marker into the green band; the readout says "Sails drawing well".
+- When you change course, the best angle changes too: trim again.
+- Badly trimmed sails still move you, but slowly.
 
 Good to know:
 - Fit at least one sail, or the ship will not move.
-- Sailing straight into the wind is slow; across it or with it is fastest.
+- With the wind behind you, swing the sails right out to one side. With it across the ship, about half way out. Heading into the wind, keep them close in. You are slowest heading into it.
 - The more sails you fit, the faster she goes. A heavy hold slows her down.
 - The rudder still turns a little when you are stopped, so you can always swing away from a shore.'''),
     ('Ships', 'Paddling the raft', '''The raft has no mast or sail: you paddle it.
