@@ -202,6 +202,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - At the helm the camera stands back over the ship so the helmsman sees the sails and the water ahead, and a trim bar under the compass shows the sails' angle, the best angle and how well they draw (DECIDED, delegated).
   - More and larger sails raise top speed; carried weight lowers it (*tuning*).
   - The rudder turns best with way on, but keeps 20% of its effect when stopped, so a ship pinned against a shore can always turn away (*tuning*).
+  - The rudder blade swings over rather than snapping: centre to hard over in 0.8 s, so a ship eases into and out of a turn (DECIDED, delegated, October 13; *tuning*).
   - Holding Interact at an installed helm takes it. The helm itself is removed through the Builder's Plan, not by Interact.
 - **Crew and boarding (DECIDED, delegated):**
   - Survivors stand and walk on deck while the ship sails, and ride with it.

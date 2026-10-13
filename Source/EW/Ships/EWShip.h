@@ -172,8 +172,14 @@ public:
     /** Forward speed in cm/s. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetSpeed() const { return Speed; }
+    /** Where the helmsman has put the rudder: -1 hard to port, +1 hard to starboard. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetRudder() const { return Rudder; }
+    /** Where the rudder blade actually is, swinging toward GetRudder() at RudderRate; it is what turns the ship. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetRudderAngle() const { return RudderAngle; }
+    /** How fast the rudder swings, in full deflections per second (tuning): from centre to hard over in 0.8 s. */
+    static constexpr float RudderRate = 1.25f;
     /** 0–1: how much of the hull's sail capacity is fitted, weighted by sail size. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetFittedSailFraction() const;
@@ -284,6 +290,8 @@ private:
     float Rudder = 0.f;
     UPROPERTY(Replicated)
     float SailAngle = 0.f;
+    UPROPERTY(Replicated)
+    float RudderAngle = 0.f;
     int8 SailTrimDirection = 0;
     /** The angle the sails are drawn at, easing toward SailAngle so they swing smoothly between updates. */
     float ShownSailAngle = 0.f;

@@ -275,6 +275,9 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Rudder is not dropped by slow frames"), A->GetRudder(), 1.f);
     TestTrue(TEXT("The ship turns to starboard"), A->GetActorRotation().Yaw > YawBefore + 5.f);
     TestTrue(TEXT("Centre the rudder"), A->SetRudder(C, 0.f));
+    // The blade swings back to the middle within 0.8 s; from then the ship holds its course.
+    for (int32 i = 0; i < 10; ++i) A->SimulateSailing(.1f);
+    TestEqual(TEXT("The rudder blade is back in the middle"), A->GetRudderAngle(), 0.f);
     const float YawSteady = A->GetActorRotation().Yaw;
     for (int32 i = 0; i < 10; ++i) A->SimulateSailing(.1f);
     TestTrue(TEXT("Centred rudder holds course"), FMath::IsNearlyEqual(A->GetActorRotation().Yaw, YawSteady, .01f));

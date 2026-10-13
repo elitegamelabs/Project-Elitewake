@@ -111,6 +111,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, SailState);
     DOREPLIFETIME(AEWShip, Speed);
     DOREPLIFETIME(AEWShip, Rudder);
+    DOREPLIFETIME(AEWShip, RudderAngle);
     DOREPLIFETIME(AEWShip, SailAngle);
     DOREPLIFETIME(AEWShip, bAnchored);
     DOREPLIFETIME(AEWShip, Load);
@@ -879,7 +880,7 @@ void AEWShip::ShowSimulatedPose()
 float AEWShip::CurrentTurnRate() const
 {
     if (!Definition) return 0.f;
-    return Rudder * Definition->TurnRate * FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
+    return RudderAngle * Definition->TurnRate * FMath::Clamp(Speed / FullSteerageSpeed, MinSteerage, 1.f);
 }
 
 void AEWShip::PostNetReceiveLocationAndRotation()
@@ -929,6 +930,8 @@ void AEWShip::StepSimulation(float Step)
 {
     if (SailTrimDirection != 0 && HasTrimmableSails())
         SailAngle = FMath::Clamp(SailAngle + SailTrimDirection * SailTrimRate * Step, -MaxSailAngle, MaxSailAngle);
+    // The rudder swings over rather than snapping, so a ship eases into and out of a turn.
+    RudderAngle = FMath::FInterpConstantTo(RudderAngle, Rudder, Step, RudderRate);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
     // The swell rocks every ship, moving or not; under sail it also leans to leeward, more with more wind in the
