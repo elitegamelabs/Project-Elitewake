@@ -146,12 +146,15 @@ The outcome is written to `Saved/PlayCheckRun.json`. An editor window opens and 
 The goal is for the owner to host and play while one approved tester joins from another Windows PC. Test locally first, then on LAN, then over the Internet.
 
 - **F10** opens the test session panel. Join accepts local or private IPv4 addresses only (default port 7777). Use Standalone Game, because ordinary in-editor Play shows the panel disabled. Host, Join and Leave reload the ThirdPerson map and reset session progress.
-- **`Scripts/Verification/build_private_windows.ps1`** builds, cooks and archives a Development package into `Saved/PrivateBuilds/`, with Microsoft VC++ redistributables and a `TEST_NOTES.md`. The editor must be closed.
+- **Local package:** `Scripts/Verification/build_private_windows.ps1` builds a Development package into `Saved/PrivateBuilds/` with Microsoft VC++ redistributables and test notes. Close Unreal Editor and EW test games before using it.
+- **Automatic private release:** `.github/workflows/private-playtest-release.yml` builds Windows Shipping on pushes to `main` and updates the private rolling GitHub prerelease `playtest-latest`. A single push containing several commits builds its final revision.
+- **One-time setup:** In repository **Settings → Actions → Runners**, register a Windows x64 self-hosted runner with the label `elitewake-ue58`; install Unreal Engine 5.8 and GitHub CLI there. In **Settings → Secrets and variables → Actions**, add `EW_PAK_AES_KEY` as a Base64-encoded random 32-byte key. Enable Actions and allow release writes. Keep the key in GitHub Secrets only.
+- **Current checkpoint:** the workflow is on a review branch. The runner and key are not configured, so no Shipping executable or release exists yet. GitHub releases do not silently update installed copies; friends download the new package. Friends need private-repository read access.
 - **Done:** separate-process connection, gameplay, late join, host loss and cancellation recovery, packaged loopback startup.
-- **Next:** test the packaged menus and controls, a clean PC install, and two PCs on LAN.
-- **Later, with owner approval:** Internet transport, a restricted itch.io page, Butler uploads, and tester invites.
+- **Next:** configure the runner and secret, publish and test the first Shipping package, then test a clean PC install and two PCs on LAN.
+- **Later, with owner approval:** Internet transport, a restricted itch.io page, Butler uploads and tester invitations.
 
-Never change firewall or router settings, create accounts, upload builds or invite testers without the owner's explicit go-ahead. Never commit credentials or download keys.
+Never change firewall or router settings, create accounts, invite testers or commit credentials. Unreal AES deters casual asset browsing but cannot prevent a determined recipient from extracting keys or assets from a client build.
 
 ## Art and placeholder assets
 
