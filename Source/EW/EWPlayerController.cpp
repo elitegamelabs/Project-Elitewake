@@ -20,6 +20,7 @@
 #include "Blueprint/UserWidget.h"
 #include "EW.h"
 #include "EWInventoryWidget.h"
+#include "EWShipMarkersWidget.h"
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "InputKeyEventArgs.h"
@@ -61,6 +62,8 @@ void AEWPlayerController::BeginPlay()
         if (SurvivalWidget) SurvivalWidget->AddToPlayerScreen(2);
         InteractionWidget = CreateWidget<UEWInteractionWidget>(this, UEWInteractionWidget::StaticClass());
         if (InteractionWidget) InteractionWidget->AddToPlayerScreen(3);
+        ShipMarkersWidget = CreateWidget<UEWShipMarkersWidget>(this, UEWShipMarkersWidget::StaticClass());
+        if (ShipMarkersWidget) ShipMarkersWidget->AddToPlayerScreen(1);
         if (auto* Instance=GetGameInstance<UEWGameInstance>()) Instance->LocalControllerReady(this);
     }
 
@@ -93,6 +96,14 @@ void AEWPlayerController::SetupInputComponent()
     RuntimeAttackMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Attack_Runtime"));
     RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::LeftMouseButton);
     RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::Gamepad_RightTrigger);
+    ClimbUpAction = NewObject<UInputAction>(this, TEXT("IA_ClimbUp_Runtime"));
+    ClimbUpAction->ValueType = EInputActionValueType::Boolean;
+    ClimbDownAction = NewObject<UInputAction>(this, TEXT("IA_ClimbDown_Runtime"));
+    ClimbDownAction->ValueType = EInputActionValueType::Boolean;
+    RuntimeAttackMappingContext->MapKey(ClimbUpAction, EKeys::Up);
+    RuntimeAttackMappingContext->MapKey(ClimbUpAction, EKeys::Gamepad_DPad_Up);
+    RuntimeAttackMappingContext->MapKey(ClimbDownAction, EKeys::Down);
+    RuntimeAttackMappingContext->MapKey(ClimbDownAction, EKeys::Gamepad_DPad_Down);
 
     if (!InteractAction)
     {
@@ -117,6 +128,10 @@ void AEWPlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 	{
         EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AEWPlayerController::Attack);
+        EnhancedInput->BindAction(ClimbUpAction, ETriggerEvent::Started, this, &AEWPlayerController::ClimbUp);
+        EnhancedInput->BindAction(ClimbUpAction, ETriggerEvent::Completed, this, &AEWPlayerController::ClimbStop);
+        EnhancedInput->BindAction(ClimbDownAction, ETriggerEvent::Started, this, &AEWPlayerController::ClimbDown);
+        EnhancedInput->BindAction(ClimbDownAction, ETriggerEvent::Completed, this, &AEWPlayerController::ClimbStop);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AEWPlayerController::Interact);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &AEWPlayerController::ReleaseInteraction);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AEWPlayerController::ReleaseInteraction);
@@ -156,6 +171,11 @@ void AEWPlayerController::SetupInputComponent()
 			}
 		}
 	}
+}
+
+void AEWPlayerController::SetClimbInput(float Direction)
+{
+    if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->SetLadderArrowInput(Direction);
 }
 
 void AEWPlayerController::Attack()

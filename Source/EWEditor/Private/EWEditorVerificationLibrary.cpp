@@ -287,6 +287,16 @@ bool UEWEditorVerificationLibrary::SendVerificationGameplayKey(AEWPlayerControll
     return Handled;
 }
 
+bool UEWEditorVerificationLibrary::SendVerificationGameplayKeyState(AEWPlayerController* Controller, FName KeyName, bool bPressed)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    const FKey Key(KeyName); if (!Key.IsValid()) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    FInputKeyEventArgs Args; Args.Key = Key; Args.Event = bPressed ? IE_Pressed : IE_Released; Args.AmountDepressed = bPressed ? 1.f : 0.f;
+    Controller->InputKey(Args);
+    return true;
+}
+
 bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers)
 {
     if (!GEditor || GEditor->PlayWorld || GEditor->IsPlaySessionInProgress()) return false;

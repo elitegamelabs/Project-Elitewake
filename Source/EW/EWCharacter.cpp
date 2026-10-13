@@ -140,6 +140,26 @@ void AEWCharacter::BeginPlay()
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+    if (IsOnLadder())
+    {
+        if (IsLocallyControlled())
+        {
+            // Forward and back, or the Up and Down arrows, climb; the server is told only when that changes.
+            const float Input = FMath::Abs(LadderArrowInput) > .5f ? LadderArrowInput : PendingLadderForward;
+            const int8 Direction = Input > .5f ? 1 : Input < -.5f ? -1 : 0;
+            if (Direction != SentLadderDirection) { ServerLadderClimb(Direction); SentLadderDirection = Direction; }
+            PendingLadderForward = 0.f;
+        }
+        if (HasAuthority())
+        {
+            float Bottom, Top;
+            Ladder.Ship->GetLadderSpan(Ladder.Index, Bottom, Top);
+            Ladder.Height = FMath::Clamp(Ladder.Height + LadderDirection * AEWShip::LadderClimbSpeed * DeltaSeconds, Bottom, Top);
+            if (LadderDirection > 0 && Ladder.Height >= Top) ReleaseLadder(true);
+            else if (LadderDirection < 0 && Ladder.Height <= Bottom) ReleaseLadder(false);
+        }
+        ApplyLadderPose();
+    }
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -209,6 +229,7 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AEWCharacter, bIsSprinting);
 	DOREPLIFETIME(AEWCharacter, bIsProne);
     DOREPLIFETIME(AEWCharacter, HelmShip);
+    DOREPLIFETIME(AEWCharacter, Ladder);
 }
 
 void AEWCharacter::SetHelmShip(AEWShip* Ship)
@@ -242,6 +263,79 @@ void AEWCharacter::OnRep_HelmShip()
         GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
         GetCharacterMovement()->SetMovementMode(MOVE_Falling);
     }
+}
+
+void AEWCharacter::SetLadder(AEWShip* Ship, int32 BoardingIndex, float Height)
+{
+    if (!HasAuthority()) return;
+    Ladder.Ship = Ship;
+    Ladder.Index = BoardingIndex;
+    Ladder.Height = Height;
+    LadderDirection = 0;
+    OnRep_Ladder();
+    ForceNetUpdate();
+}
+
+void AEWCharacter::OnRep_Ladder()
+{
+    if (IsOnLadder() && !bAttachedToLadder)
+    {
+        // The climber rides the ship on its ladder; climbing, not walking, moves them.
+        CancelRestrictedActions();
+        bSwimAscendInputHeld = false;
+        StopJumping();
+        GetCharacterMovement()->StopMovementImmediately();
+        GetCharacterMovement()->DisableMovement();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        AttachToActor(Ladder.Ship, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        bAttachedToLadder = true;
+        SentLadderDirection = 0;
+    }
+    else if (!IsOnLadder() && bAttachedToLadder)
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+        bAttachedToLadder = false;
+    }
+    ApplyLadderPose();
+}
+
+void AEWCharacter::ApplyLadderPose()
+{
+    if (!IsOnLadder() || !bAttachedToLadder) return;
+    const FTransform Pose = Ladder.Ship->GetLadderPoseLocal(Ladder.Index, Ladder.Height, GetCapsuleComponent()->GetScaledCapsuleRadius());
+    SetActorRelativeLocation(Pose.GetLocation());
+    SetActorRelativeRotation(Pose.Rotator());
+}
+
+void AEWCharacter::ServerLadderClimb_Implementation(int8 Direction)
+{
+    LadderDirection = FMath::Clamp<int8>(Direction, -1, 1);
+}
+
+void AEWCharacter::ServerLetGoOfLadder_Implementation()
+{
+    if (IsOnLadder()) ReleaseLadder(false);
+}
+
+void AEWCharacter::ReleaseLadder(bool bOntoDeck)
+{
+    if (!HasAuthority() || !IsOnLadder()) return;
+    AEWShip* Ship = Ladder.Ship;
+    const int32 Index = Ladder.Index;
+    Ladder = FEWLadderHold();
+    LadderDirection = 0;
+    OnRep_Ladder();
+    // At the head of the ladder, step inboard onto the deck; if that spot is taken, hang on at the top.
+    if (bOntoDeck && !Ship->ClimbAboard(this, Index))
+    {
+        float Bottom, Top;
+        Ship->GetLadderSpan(Index, Bottom, Top);
+        SetLadder(Ship, Index, Top);
+        return;
+    }
+    ForceNetUpdate();
 }
 
 void AEWCharacter::ServerHelmRudder_Implementation(float NewRudder)
@@ -490,6 +584,11 @@ EEWLocomotionState AEWCharacter::GetLocomotionState() const
 
 void AEWCharacter::DoMove(float Right, float Forward)
 {
+    if (IsOnLadder())
+    {
+        PendingLadderForward = Forward;
+        return;
+    }
     if (HelmShip)
     {
         PendingHelmRight = Right;
@@ -529,6 +628,8 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 void AEWCharacter::DoJumpStart()
 {
     if (HelmShip) return;
+    // Space lets go of a ladder.
+    if (IsOnLadder()) { ServerLetGoOfLadder(); return; }
 	bSwimAscendInputHeld = true;
 	if (GetCharacterMovement()->IsSwimming()) return;
 	if (bIsProne)
@@ -557,7 +658,7 @@ void AEWCharacter::DoJumpEnd()
 
 bool AEWCharacter::CanAttack() const
 {
-    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsSwimming();
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsOnLadder() && !IsSwimming();
 }
 
 void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const

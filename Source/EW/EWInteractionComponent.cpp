@@ -42,7 +42,7 @@ void UEWInteractionComponent::Request(AActor* Target)
     LastRequestTime = Now;
     AEWCharacter* Survivor = GetSurvivor();
     if (!IsEligible(Target, Survivor)) return;
-    if (IEWInteractable::Execute_GetInteractionMode(Target) == EEWInteractionMode::Press)
+    if (IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) == EEWInteractionMode::Press)
     {
         TGuardValue<bool> Guard(bDispatching, true);
         IEWInteractable::Execute_Interact(Target, Survivor);
@@ -81,7 +81,7 @@ void UEWInteractionComponent::ValidateHold()
     AEWCharacter* Survivor = GetSurvivor();
     AActor* Target = Hold.Target;
     if (Survivor != StartingPawn.Get() || !IsEligible(Target, Survivor)
-        || IEWInteractable::Execute_GetInteractionMode(Target) != EEWInteractionMode::Hold
+        || IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) != EEWInteractionMode::Hold
         || IEWInteractable::Execute_GetHoldDuration(Target) != Hold.Duration)
     {
         Cancel(); return;

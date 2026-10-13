@@ -9,7 +9,7 @@ rudder. The client, through its own movement input and owned requests:
   1. stands on deck and rides along without sliding off or falling through,
   2. walks forward along the deck while the ship sails,
   3. walks off the side into the sea and swims,
-  4. climbs back aboard at the starboard ladder once the host has furled the sails.
+  4. takes hold of the starboard ladder once the host has furled the sails and climbs it back aboard.
 Each step waits for its result on the server and the client, with a timeout. Background throttling is
 off while it runs. Writes Saved/ShipDeckPlayResult.json.
 """
@@ -201,7 +201,14 @@ def climbed():
         assert lib.send_verification_interaction_request(client, peer)
         m['climb_sent'] = True
         return False
-    return ship.is_aboard(crew) and peer.is_aboard(pawn) and local_of(crew).z > DECK_TOP
+    # The press takes hold of the ladder; holding Up climbs it and steps aboard at the top.
+    if pawn.is_on_ladder() and not m.get('climbing'):
+        assert lib.send_verification_gameplay_key_state(client, 'Up', True)
+        m['climbing'] = True
+    if not (ship.is_aboard(crew) and peer.is_aboard(pawn) and local_of(crew).z > DECK_TOP) or crew.is_on_ladder():
+        return False
+    lib.send_verification_gameplay_key_state(client, 'Up', False)
+    return True
 
 def host_leave():
     state['aim'] = None

@@ -35,6 +35,9 @@ public:
     static bool SendVerificationCompanyPolicy(AEWPlayerController* Controller, int32 AssetKind, EEWCompanyOwnership Policy);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationGameplayKey(AEWPlayerController* Controller, FName KeyName);
+    /** Press or release one gameplay key, so a check can hold it down across frames as a player does. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationGameplayKeyState(AEWPlayerController* Controller, FName KeyName, bool bPressed);
     /** Test clock offset in an authority PIE inventory; never changes saved food policy. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool AdvanceVerificationFoodClock(AActor* Owner, float RealSeconds);

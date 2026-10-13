@@ -476,6 +476,40 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
     return true;
 }
 
+EEWInteractionMode AEWShip::GetInteractionModeFor_Implementation(AEWCharacter* Character) const
+{
+    // A ladder is grabbed with a press; fittings, the anchor and the hold keep a deliberate hold.
+    return FindAimedBoardingPoint(Character) != INDEX_NONE ? EEWInteractionMode::Press : EEWInteractionMode::Hold;
+}
+
+void AEWShip::GetLadderSpan(int32 BoardingIndex, float& Bottom, float& Top) const
+{
+    const FVector Point = Definition && Definition->BoardingPoints.IsValidIndex(BoardingIndex)
+        ? Definition->BoardingPoints[BoardingIndex] : FVector::ZeroVector;
+    Bottom = Point.Z - 10.f;
+    Top = FMath::Max(Bottom + 20.f, GetDeckHeight() + 30.f);
+}
+
+FTransform AEWShip::GetLadderPoseLocal(int32 BoardingIndex, float Height, float Radius) const
+{
+    const FVector Point = Definition && Definition->BoardingPoints.IsValidIndex(BoardingIndex)
+        ? Definition->BoardingPoints[BoardingIndex] : FVector::ZeroVector;
+    const float Side = Point.Y >= 0.f ? 1.f : -1.f;
+    // Just outboard of the rungs, which run a little inside the boarding point, facing the hull.
+    return FTransform(FRotator(0, Side > 0.f ? -90.f : 90.f, 0), FVector(Point.X, Side * (FMath::Abs(Point.Y) - 18.f + Radius), Height));
+}
+
+bool AEWShip::StartClimb(AEWCharacter* Character, int32 BoardingIndex)
+{
+    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || Character->GetHelmShip() || Character->IsOnLadder()
+        || !Definition->BoardingPoints.IsValidIndex(BoardingIndex) || IsAboard(Character)) return false;
+    float Bottom, Top;
+    GetLadderSpan(BoardingIndex, Bottom, Top);
+    const float Here = GetActorTransform().InverseTransformPosition(Character->GetActorLocation()).Z;
+    Character->SetLadder(this, BoardingIndex, FMath::Clamp(Here, Bottom, Top));
+    return true;
+}
+
 bool AEWShip::CanModifyFittings(const AEWCharacter* Character) const
 {
     return Definition && IsValid(Character) && !Character->IsActorBeingDestroyed() && !IsActorBeingDestroyed()
@@ -533,7 +567,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (Helmsman == Character) return true;  // Leave the helm.
     if (IsAimingAtAnchor(Character)) return true;
     if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
-    if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip();
+    if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return false;
@@ -561,7 +595,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
-        return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ClimbAboard", "Climb aboard");
+        return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Mount) return FText::GetEmpty();
@@ -589,7 +623,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         PC->ClientOpenContainer(this);
         return true;
     }
-    if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return ClimbAboard(Character, Ladder);
+    if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return StartClimb(Character, Ladder);
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);
     if (Installed && Installed->FittingMountType == EEWShipMountType::Helm) return TakeHelm(Character);

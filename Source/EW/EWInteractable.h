@@ -29,6 +29,11 @@ public:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
     EEWInteractionMode GetInteractionMode() const;
     virtual EEWInteractionMode GetInteractionMode_Implementation() const;
+    /** Press or hold for what this survivor aims at; by default the actor's own mode. A ship's ladder takes a
+     *  press while its fittings take a hold. */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+    EEWInteractionMode GetInteractionModeFor(AEWCharacter* Character) const;
+    virtual EEWInteractionMode GetInteractionModeFor_Implementation(AEWCharacter* Character) const;
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
     float GetHoldDuration() const;
     virtual float GetHoldDuration_Implementation() const;

@@ -38,6 +38,19 @@ enum class EEWLocomotionState : uint8
  *  A simple player-controllable third person character
  *  Implements a controllable orbiting camera
  */
+/** A survivor's hold on a ship's ladder. */
+USTRUCT()
+struct FEWLadderHold
+{
+    GENERATED_BODY()
+    UPROPERTY()
+    TObjectPtr<AEWShip> Ship = nullptr;
+    UPROPERTY()
+    int32 Index = INDEX_NONE;
+    UPROPERTY()
+    float Height = 0.f;
+};
+
 UCLASS(abstract)
 class EW_API AEWCharacter : public ACharacter
 {
@@ -158,7 +171,36 @@ public:
     void ServerHelmRudder(float Rudder);
     UFUNCTION(Server, Reliable)
     void ServerSailStep(int8 Direction);
+
+    /** True while hanging on a ship's ladder. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    bool IsOnLadder() const { return Ladder.Ship != nullptr; }
+    UFUNCTION(BlueprintPure, Category="Ship")
+    AEWShip* GetLadderShip() const { return Ladder.Ship; }
+    /** Height on the ladder in the ship's space (the climber's middle). */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    float GetLadderHeight() const { return Ladder.Height; }
+    /** Authority only; called by the ship when a survivor takes hold of its ladder. */
+    void SetLadder(AEWShip* Ship, int32 BoardingIndex, float Height);
+    /** Local: the Up and Down arrows (or a pad's d-pad) climbing: +1 up, -1 down, 0 still. */
+    void SetLadderArrowInput(float Direction) { LadderArrowInput = Direction; }
+    UFUNCTION(Server, Reliable)
+    void ServerLadderClimb(int8 Direction);
+    UFUNCTION(Server, Reliable)
+    void ServerLetGoOfLadder();
 private:
+    /** Authority: leave the ladder, onto the deck at its head or into the water. */
+    void ReleaseLadder(bool bOntoDeck);
+    void ApplyLadderPose();
+    UPROPERTY(ReplicatedUsing=OnRep_Ladder)
+    FEWLadderHold Ladder;
+    UFUNCTION()
+    void OnRep_Ladder();
+    bool bAttachedToLadder = false;
+    float PendingLadderForward = 0.f;
+    float LadderArrowInput = 0.f;
+    int8 SentLadderDirection = 0;
+    int8 LadderDirection = 0;
     UPROPERTY(ReplicatedUsing=OnRep_HelmShip)
     TObjectPtr<AEWShip> HelmShip;
     UFUNCTION()

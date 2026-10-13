@@ -111,7 +111,7 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
         Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
         Panel->SetVisibility(ESlateVisibility::Collapsed); return;
     }
-    const bool bHold = IEWInteractable::Execute_GetInteractionMode(Target) == EEWInteractionMode::Hold;
+    const bool bHold = IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) == EEWInteractionMode::Hold;
     Prompt->SetText(FText::Format(bHold ? NSLOCTEXT("Elitewake","HoldPrompt","Hold {0}: {1}")
         : NSLOCTEXT("Elitewake","PressPrompt","{0}: {1}"),
         FText::FromString(PC->UsesControllerPrompts() ? TEXT("X") : TEXT("E")), Action));

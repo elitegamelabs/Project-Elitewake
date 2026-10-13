@@ -164,7 +164,7 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
   - A larger multi-deck ship: TBD.
 - **Upgrades:** ships earn sailing XP and upgrade only Crew Capacity, Weight/Storage, and Hull Health. Amounts: TBD.
 - **Overload:** too much weight can sink a ship (timing TBD). Crew overload has a separate five-minute grace period.
-- **Anchor and ladder:** hold Interact. An anchored ship cannot sail, and the HUD shows anchor state.
+- **Anchor and ladder:** hold Interact at the anchor. An anchored ship cannot sail, and the HUD shows anchor state. Ladders: see [Ship model v1](#ship-model), Crew and boarding.
 - **Shipyards:** Small (Raft, Dinghy, Sloop), Medium (Schooner), Large (Brigantine), each crafted at Smithy → Structures. The late-game Armored Shipyard gives specific offline protection.
 - **Ammo Bin:** storage only, cannon ammo only, 20 stacks of 50.
 - **Ownership cap:** 8 ships per player, 20 per Company.
@@ -203,7 +203,9 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Holding Interact at an installed helm takes it. The helm itself is removed through the Builder's Plan, not by Interact.
 - **Crew and boarding (DECIDED, delegated):**
   - Survivors stand and walk on deck while the ship sails, and ride with it.
-  - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, hold Interact to climb aboard.
+  - A built-in boarding ladder on each side lets a swimmer, or someone on a dock, climb aboard.
+  - **Climbing (owner, October 12):** press Interact once to take hold of the ladder, then Up and Down (arrow keys, W and S, or the D-pad) climb it. At the top the survivor steps onto the deck by themselves; at the foot, or with Jump, they let go into the water (DECIDED, delegated). Climbing speed 1.3 m/s (*tuning*).
+  - **Ship markers (DECIDED, delegated, October 12; the owner asked for indicators because mounts were hard to find):** within 14 m of a ship (*tuning*) the screen labels its places to act. Aboard: each mount with the size of sail it takes, or "Wheel mount" (amber while empty, green with "Fit ... here" while the survivor carries a fitting that fits, white once fitted), the anchor with what Interact will do, the hold, and nearby empty cannon ports. From outside: the anchor and the ladders on the near side only, so nothing shows through the hull. The place under the survivor's aim is drawn larger, and labels that would overlap are stacked.
   - Leaving is just walking or jumping off the side.
   - People never block a moving ship.
 - **Ship sizes (owner, October 12):** the dinghy is the smallest boat and the raft a little bigger; the sloop, schooner and larger ships are considerably larger again. Working lengths (*tuning*): dinghy about 3.5 m, raft about 5 m, sloop about 14 m, schooner about 22 m, brigantine about 30 m; the larger multi-deck ship steps up from there.

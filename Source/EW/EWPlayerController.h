@@ -18,6 +18,7 @@ class UEWHotbarWidget;
 class UEWSurvivalWidget;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
+class UEWShipMarkersWidget;
 class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
@@ -132,6 +133,12 @@ public:
 	
 protected:
     UPROPERTY(Transient) TObjectPtr<UInputAction> AttackAction;
+    UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbUpAction;
+    UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbDownAction;
+    void ClimbUp() { SetClimbInput(1.f); }
+    void ClimbDown() { SetClimbInput(-1.f); }
+    void ClimbStop() { SetClimbInput(0.f); }
+    void SetClimbInput(float Direction);
     UPROPERTY(Transient) TObjectPtr<UInputMappingContext> RuntimeAttackMappingContext;
     double LastHarvestAttackTime = -100;
     /** The owner's own swing pacing, so it never shows a swing the server would refuse. */
@@ -142,6 +149,7 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
     TObjectPtr<UEWInteractionComponent> InteractionComponent;
     UPROPERTY(Transient) TObjectPtr<UEWInteractionWidget> InteractionWidget;
+    UPROPERTY(Transient) TObjectPtr<UEWShipMarkersWidget> ShipMarkersWidget;
     bool bControllerPrompts = false;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)

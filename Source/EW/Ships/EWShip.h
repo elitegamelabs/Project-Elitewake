@@ -83,6 +83,15 @@ public:
     bool IsAboard(const AEWCharacter* Character) const;
     /** Authority only. Lifts a survivor from the water or a dock onto the deck beside the ladder. */
     bool ClimbAboard(AEWCharacter* Character, int32 BoardingIndex);
+    /** Authority only: the survivor takes hold of this ladder where they are, to climb it with forward and back. */
+    bool StartClimb(AEWCharacter* Character, int32 BoardingIndex);
+    /** A ladder's climbable span: heights (ship space) of a climber's middle at its foot, in the water, and at its
+     *  head, by the rail. */
+    void GetLadderSpan(int32 BoardingIndex, float& Bottom, float& Top) const;
+    /** Where a climber of the given radius hangs on a ladder at a height, facing the hull, in ship space. */
+    FTransform GetLadderPoseLocal(int32 BoardingIndex, float Height, float Radius) const;
+    /** Climbing speed on a ladder, cm/s (tuning). */
+    static constexpr float LadderClimbSpeed = 130.f;
 
     /** An anchored ship cannot sail. Ships start anchored so a moored ship never drifts. */
     UFUNCTION(BlueprintPure, Category="Ship|Anchor")
@@ -182,6 +191,7 @@ public:
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
     virtual EEWInteractionMode GetInteractionMode_Implementation() const override { return EEWInteractionMode::Hold; }
+    virtual EEWInteractionMode GetInteractionModeFor_Implementation(AEWCharacter* Character) const override;
     virtual float GetHoldDuration_Implementation() const override { return FittingHoldSeconds; }
     virtual bool Interact_Implementation(AEWCharacter* Character) override;
 

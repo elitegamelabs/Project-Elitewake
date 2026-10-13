@@ -408,7 +408,15 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("A blocked landing spot refuses the climb"), Ship->ClimbAboard(C, 1));
     Other->Destroy();
 
-    TestTrue(TEXT("Interact climbs aboard"), Ship->Interact_Implementation(C));
+    TestTrue(TEXT("Interact takes hold of the ladder"), Ship->Interact_Implementation(C) && C->GetLadderShip() == Ship);
+    TestFalse(TEXT("Hanging on the ladder is not aboard"), Ship->IsAboard(C));
+    TestFalse(TEXT("No second hold while on the ladder"), Ship->CanInteract_Implementation(C));
+    // Climbing up: at the head of the ladder the survivor steps onto the deck by themselves.
+    C->SetLadderArrowInput(1.f);
+    C->ServerLadderClimb_Implementation(1);
+    for (int32 Step = 0; Step < 50 && C->IsOnLadder(); ++Step) C->Tick(.1f);
+    C->SetLadderArrowInput(0.f);
+    TestFalse(TEXT("The climber has left the ladder at its head"), C->IsOnLadder());
     const FVector Local = Ship->GetActorTransform().InverseTransformPosition(C->GetActorLocation());
     TestTrue(TEXT("The survivor lands on the deck, starboard side"), Local.Z > Def->GetDeckHeight() && Local.Y > 0.f && Local.Y < Def->HullExtent.Y);
     TestTrue(TEXT("The survivor is aboard"), Ship->IsAboard(C));

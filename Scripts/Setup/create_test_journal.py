@@ -14,9 +14,14 @@ FOLDER = '/Game/Elitewake/Journal'
 NAME = 'DA_TestJournal'
 
 PAGES = [
-    ('Ships', 'Getting aboard', '''Swim up beside a ship and look at the ladder on its side. You can aim anywhere on the ladder, from the water up to the rail. When "Climb aboard" appears, hold E (X on a controller) and you climb onto the deck.
+    ('Ships', 'Getting aboard', '''Swim up beside a ship. Its ladders are labelled "Ladder" on your screen; the one you are looking at is drawn larger. When "Climb the ladder" appears, press E once (X on a controller) to take hold.
 
-The raft and the dinghy sit low in the water. Look at either side of them and hold E in the same way.
+On the ladder:
+- Up arrow or W climbs; Down arrow or S climbs down (up and down on a controller's D-pad).
+- At the top you step onto the deck by yourself.
+- At the foot of the ladder, or with Space, you let go into the water.
+
+The raft and the dinghy sit low in the water. Look at either side, press E, then Up to step aboard.
 
 To leave a ship, walk to the rail and jump over the side.
 
@@ -34,7 +39,7 @@ Dropping the anchor while under way brings the ship to a stop within a couple of
     ('Ships', 'Fitting sails', '''Ships start as bare hulls. Each mast has sail mounts at its foot, sized Small, Medium or Large, and a mount takes only a sail of its own size.
 
 1. Get the sails. On these test ships they are already in the ship's hold. Look at the cargo hatch, the opening in the middle of the deck, and hold E: the hold opens beside your inventory. Click a sail to move it into your inventory.
-2. Walk to the foot of a mast and look at it. The prompt names the mount, for example "Empty medium sail mount". Carrying a sail that fits, it reads "Install Medium Sail".
+2. On deck, every mount is labelled on your screen with the size of sail it takes, for example "Medium sail mount". While you carry a sail that fits, its mount turns green and reads "Fit Medium sail here". Walk to it and look at it: the prompt reads "Install Medium Sail".
 3. Hold E until the sail is fitted. It appears rolled up on its spars, ready to set.
 
 To take a sail off, look at it and hold E ("Remove ..."); it goes back into your inventory.
@@ -47,7 +52,7 @@ Which sail goes where:
 
 The wheel is in the hold with the sails. Its mount is on the sloop's deck near the stern.
 
-Carrying the wheel, look at the empty helm mount and hold E: "Install Ship's Wheel".
+Its mount is labelled "Wheel mount" on your screen, and turns green ("Fit the wheel here") while you carry the wheel. Look at it and hold E: "Install Ship's Wheel".
 
 The raft's paddles and the dinghy's tiller are part of those boats and are always there.'''),
     ('Ships', 'Sailing and steering', '''With the wheel fitted and the anchor up:
