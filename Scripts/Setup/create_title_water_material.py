@@ -45,7 +45,19 @@ def constant(value):
 
 def custom_vector2():
     expression = node(unreal.MaterialExpressionCustom,
-        code='float2 wave = float2(sin(UV.y * 70.0 + T * 1.2), cos(UV.x * 45.0 - T * 0.8)); return UV + wave * 0.0025;',
+        code='''
+float foreground = smoothstep(0.56, 0.95, UV.y);
+float shore = (1.0 - smoothstep(0.20, 0.57, UV.x)) * foreground;
+float surge = pow(0.5 + 0.5 * sin(T * 1.45 - UV.y * 13.0), 4.0);
+float2 swell = float2(sin(UV.y * 65.0 + T * 1.25), cos(UV.x * 42.0 - T * 0.9));
+float2 detail = float2(sin(UV.x * 135.0 + UV.y * 90.0 - T * 2.7), sin(UV.y * 115.0 + T * 2.2));
+float2 offset = swell * lerp(0.0005, 0.0020, foreground) + detail * foreground * 0.00045;
+offset += float2(-0.0020, -0.0035) * shore * surge;
+// The two waterfalls flow downward; the mask keeps their surrounding cliffs still.
+float falls = (1.0 - smoothstep(0.17, 0.19, UV.x)) * (1.0 - smoothstep(0.53, 0.58, UV.y));
+offset.y -= falls * (0.0020 + 0.0010 * sin(T * 3.0 + UV.y * 75.0));
+return clamp(UV + offset, 0.001, 0.999);
+''',
         output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT2)
     pins = []
     for name in ('UV', 'T'):
@@ -79,10 +91,33 @@ mask_pin.set_editor_property('input_name', 'M')
 threshold.set_editor_property('inputs', [mask_pin])
 connect(mask_sample, threshold, 'M', 'R')
 
+# Reject displaced samples that cross onto a rock, dock, boat or survivor.
+moving_mask = node(unreal.MaterialExpressionTextureSampleParameter2D, texture=mask, parameter_name='WaterMask')
+connect(displaced_uv, moving_mask, 'UVs')
+safe_mask = node(unreal.MaterialExpressionMultiply)
+connect(threshold, safe_mask, 'A')
+connect(moving_mask, safe_mask, 'B', 'R')
+
+foam = node(unreal.MaterialExpressionCustom, code='''
+float shore = (1.0 - smoothstep(0.20, 0.57, UV.x)) * smoothstep(0.56, 0.93, UV.y);
+float impact = pow(0.5 + 0.5 * sin(T * 1.45 - UV.y * 13.0), 4.0);
+float brightFoam = smoothstep(0.48, 0.85, min(C.r, min(C.g, C.b)));
+return saturate(C + brightFoam * shore * impact * float3(0.10, 0.115, 0.12));
+''', output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT3)
+foam_pins = []
+for name in ('C', 'UV', 'T'):
+    pin = unreal.CustomInput()
+    pin.set_editor_property('input_name', name)
+    foam_pins.append(pin)
+foam.set_editor_property('inputs', foam_pins)
+connect(moving, foam, 'C', 'RGB')
+connect(uv, foam, 'UV')
+connect(clock, foam, 'T')
+
 blend = node(unreal.MaterialExpressionLinearInterpolate)
 connect(original, blend, 'A', 'RGB')
-connect(moving, blend, 'B', 'RGB')
-connect(threshold, blend, 'Alpha')
+connect(foam, blend, 'B')
+connect(safe_mask, blend, 'Alpha')
 assert mel.connect_material_property(blend, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
 mel.recompile_material(material)
 assert unreal.EditorAssetLibrary.save_loaded_asset(material)

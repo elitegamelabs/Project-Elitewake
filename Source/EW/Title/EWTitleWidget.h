@@ -54,15 +54,19 @@ protected:
         FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const override;
     virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
     virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event) override;
+    virtual FReply NativeOnMouseWheel(const FGeometry& Geometry, const FPointerEvent& Event) override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
 
 private:
     FSlateRect CoverRect(const FVector2D& Size, const UTexture2D* Texture) const;
     FSlateRect SinglePlayerRect(const FVector2D& Size) const;
+    FSlateRect MultiplayerRect(const FVector2D& Size) const;
     FVector2D LastSize = FVector2D(1920, 1080);
     EEWTitleScreen Screen = EEWTitleScreen::Splash;
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> WaterMaterialInstance;
     bool bHovered = false;
+    bool bMultiplayerHovered = false;
     float Age = 0.f;
     float Glow = 0.f;
+    float MultiplayerGlow = 0.f;
 };
