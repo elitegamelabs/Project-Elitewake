@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -72,6 +73,33 @@ AEWShip::AEWShip()
     RiggingVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RiggingVisual"));
     RiggingVisual->SetupAttachment(HullCollision);
     RiggingVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    WakeVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WakeVisual"));
+    WakeVisual->SetupAttachment(HullCollision);
+    WakeVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    WakeVisual->SetCastShadow(false);
+    WakeVisual->SetVisibility(false);
+}
+
+void AEWShip::PlaceWake()
+{
+    if (!Definition || !WakeVisual) return;
+    if (!WakeVisual->GetStaticMesh())
+        WakeVisual->SetStaticMesh(Cast<UStaticMesh>(FSoftObjectPath(TEXT("/Game/Elitewake/World/Ships/SM_ShipWake_v1.SM_ShipWake_v1")).TryLoad()));
+    if (!WakeVisual->GetStaticMesh()) return;
+    // The wake mesh is made for the sloop (14 m by 5 m) with its point at the stern; other hulls scale it.
+    const FVector Extent = Definition->HullExtent;
+    WakeVisual->SetRelativeScale3D(FVector(Extent.X / 700.f, Extent.Y / 250.f, 1.f));
+    WakeVisual->SetRelativeLocation(FVector(-Extent.X * .92f, 0.f, SurfaceZ + 3.f - GetActorLocation().Z));
+    WakeMaterial = WakeVisual->CreateDynamicMaterialInstance(0);
+}
+
+void AEWShip::ShowWake(float DeltaSeconds)
+{
+    if (!Definition || !WakeMaterial) return;
+    const float Wanted = Definition->TopSpeed > 0.f ? FMath::Clamp(FMath::Abs(Speed) / Definition->TopSpeed, 0.f, 1.f) : 0.f;
+    WakeStrength = FMath::FInterpTo(WakeStrength, Wanted, DeltaSeconds, 1.5f);
+    WakeVisual->SetVisibility(WakeStrength > .02f);
+    WakeMaterial->SetScalarParameterValue(TEXT("Foam"), WakeStrength);
 }
 
 void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -108,6 +136,7 @@ void AEWShip::BeginPlay()
     }
     ApplyDefinition();
     RefreshFittingVisuals();
+    PlaceWake();
     // Water bodies answer swimming and wave queries; their collision boxes must never stop a hull.
     for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
@@ -909,6 +938,7 @@ void AEWShip::StepSimulation(float Step)
 void AEWShip::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    ShowWake(DeltaSeconds);
     if (ShownSailAngle != SailAngle)
     {
         // Swing at the trim rate, a little faster to catch up on a client, never overshooting.

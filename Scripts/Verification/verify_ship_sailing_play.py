@@ -104,7 +104,9 @@ def steered():
     assert turned > 5, f'turned only {turned:.1f} degrees'
     assert abs(ship.get_rudder() - 0.5) < 0.06, f'rudder {ship.get_rudder()}'
     assert gap < 400, f'client copy {gap:.0f} cm from server'
-    m.update(moved=moved, turned=turned, gap=gap)
+    wake = peer.get_wake_strength()
+    assert wake > .05, f'no wake behind the moving ship on the client ({wake:.2f})'
+    m.update(moved=moved, turned=turned, gap=gap, wake=wake)
     return True
 
 def release_rudder():
@@ -142,7 +144,7 @@ STEPS = [
      and client.get_controlled_pawn() == pawn, 6),
     ('Forward input twice sets full sail on the server and client', begin_sailing,
      lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
-    ('Client sails and steers for 4 s', begin_steering, steered, 8),
+    ('Client sails and steers for 4 s, a wake foaming behind its copy of the ship', begin_steering, steered, 8),
     ('Releasing the rudder centres it; the sails stay set', release_rudder, rudder_centred, 4),
     ('Client leaves the helm; movement and collision return', interact, left_helm, 6),
     ('Client drops the anchor and the ship comes to a stop', install('Anchor'),
@@ -155,7 +157,7 @@ def finish(error=None):
     m = state['memo']
     RESULT.write_text(json.dumps({
         'success': error is None, 'checks': checks, 'error': error,
-        'sailing': {k: round(m[k], 1) for k in ('moved', 'turned', 'gap') if k in m},
+        'sailing': {k: round(m[k], 2) for k in ('moved', 'turned', 'gap', 'wake') if k in m},
         'state': {'server_ship': str(ship.get_actor_location()), 'client_ship': str(peer.get_actor_location()),
                   'speed': ship.get_speed(), 'sail_state': str(ship.get_sail_state()), 'rudder': ship.get_rudder(),
                   'helmsman': str(ship.get_helmsman()), 'fittings': len(ship.get_installed_fittings())},

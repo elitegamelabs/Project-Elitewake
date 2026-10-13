@@ -12,6 +12,7 @@ class UEWInventoryComponent;
 class UEWItemDefinition;
 class UEWShipDefinition;
 class UStaticMeshComponent;
+class UMaterialInstanceDynamic;
 
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
@@ -51,6 +52,15 @@ public:
     TObjectPtr<UStaticMeshComponent> HullVisual;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UStaticMeshComponent> RiggingVisual;
+    /** Foam on the water behind the stern, stronger the faster the ship goes; drawn on every machine. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
+    TObjectPtr<UStaticMeshComponent> WakeVisual;
+    /** Height of the sea surface the ship floats in, in world cm. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
+    float SurfaceZ = -65.f;
+    /** 0-1: how strongly the wake shows now. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetWakeStrength() const { return WakeStrength; }
     /** The ship's hold. Separate from anything a survivor carries. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship|Cargo")
     TObjectPtr<UEWInventoryComponent> Cargo;
@@ -270,6 +280,11 @@ private:
     TMap<FName, FTransform> SailLooks;
     void ShowSailTrim();
     float SimulationRemainder = 0.f;
+    UPROPERTY(Transient)
+    TObjectPtr<UMaterialInstanceDynamic> WakeMaterial;
+    float WakeStrength = 0.f;
+    void PlaceWake();
+    void ShowWake(float DeltaSeconds);
     /** Authority: the pose after the latest fixed step and the one before it. Each frame shows the ship between
      *  the two, so it moves smoothly at any frame rate while the simulation keeps its fixed steps. */
     FTransform SimulatedPose;

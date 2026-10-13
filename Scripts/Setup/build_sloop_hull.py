@@ -46,6 +46,8 @@ BOOM_Z = 460.0                       # boom height, above the heads of crew on d
 STAY_TOP = (MAST_X + 8, 0.0, MAST_TOP - 30)
 STAY_BOW = (925.0, 0.0, 500.0)       # bowsprit end, where the forestay and the jib's tack meet
 FRAMES = range(-640, 660, 60)
+MOORING_YAW = 90.0     # bow toward open water
+MOORING_Y = 2350.0     # clear of the dock's end, lying along the heading
 SHROUD_XS = (MAST_X - 30, MAST_X + 30)
 
 
@@ -130,6 +132,20 @@ def update_definition(hull, rig):
     return {k: str(v) for k, v in values.items() if k != 'mounts'}
 
 
+def moor():
+    """Moor the sloop clear of the dock with its bow to open water (+Y here: 60 m of deep water ahead; facing +X it
+    met the islet's shallows within 10 m). It floats with its waterline (local Z 0) on the sea's surface."""
+    level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    assert level.load_level(MAP)
+    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    sloop = unreal.load_asset(DEFINITION)
+    for ship in [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == sloop]:
+        p = ship.get_actor_location()
+        ship.set_actor_location_and_rotation(unreal.Vector(p.x, MOORING_Y, -65), unreal.Rotator(roll=0, pitch=0, yaw=MOORING_YAW), False, False)
+        ship.set_actor_label('Sloop')
+    assert level.save_current_level()
+
+
 def main():
     lib = unreal.EWEditorVerificationLibrary
     assert not lib.get_play_worlds(), 'Stop Play first'
@@ -138,16 +154,7 @@ def main():
     hull = write_static_mesh(b, MESH, [timber], UV_TILE)
     rig = write_static_mesh(rigging(), RIGGING, [timber], UV_TILE, collision=False)
     report = {'vertices': len(b.verts), 'triangles': len(b.tris), 'definition': update_definition(hull, rig)}
-    # The sloop floats with its waterline (local Z 0) on the sea's surface.
-    level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    assert level.load_level(MAP)
-    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    sloop = unreal.load_asset(DEFINITION)
-    for ship in [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == sloop]:
-        p = ship.get_actor_location()
-        ship.set_actor_location(unreal.Vector(p.x, 1750, -65), False, False)  # moored clear of the dock
-        ship.set_actor_label('Sloop')
-    assert level.save_current_level()
+    moor()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'SloopHullResult.json').write_text(json.dumps(report, indent=2))
     unreal.log('Sloop hull built')
