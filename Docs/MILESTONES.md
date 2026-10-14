@@ -25,7 +25,7 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Small craft pass: ships rock on the swell and heel under sail | ✅ `6aaf8cb` |
 | Small craft pass: the rudder swings over instead of snapping | ✅ `ff74ff9` |
 | Small craft pass: the wheel and tiller visibly turn with the rudder | ✅ `15414cd` |
-| Small craft pass: a finish pass on the raft, dinghy and sloop | ⏳ |
+| Small craft pass: a finish pass on the raft, dinghy and sloop | ✅ `def0258` |
 | Paddling animation for the raft; holding the helm | ✅ `50e1c5f` |
 | First-person body: see your arms, hands and feet (owner, October 13) | ✅ `6fd9133` |
 | Capstan animation | ✅ `a764bc3` |
