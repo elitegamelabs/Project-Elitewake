@@ -42,7 +42,9 @@ def tick(delta):
             title = pc.get_title_widget()
             if title:
                 assert title.get_editor_property('main_menu_art')
-                checks.append('Any key advances the splash to the menu; Multiplayer reports disabled')
+                assert title.is_main_menu_screen()
+                assert not title.is_multiplayer_available()
+                checks.append('Explicit splash transition opens the menu; Multiplayer reports disabled (input routing tested separately)')
                 title.start_single_player()
                 checks.append('Single Player starts directly without the character creator')
                 state['step'] = 2

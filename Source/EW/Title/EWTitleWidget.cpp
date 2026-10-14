@@ -3,12 +3,27 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Rendering/DrawElements.h"
 #include "Styling/CoreStyle.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Border.h"
+
+TSharedRef<SWidget> UEWTitleWidget::RebuildWidget()
+{
+    // Focusability is captured when Slate constructs the widget, before NativeConstruct.
+    SetIsFocusable(true);
+    SetVisibility(ESlateVisibility::Visible);
+    if (WidgetTree && !WidgetTree->RootWidget)
+    {
+        UBorder* Root = WidgetTree->ConstructWidget<UBorder>();
+        Root->SetBrushColor(FLinearColor::Transparent);
+        Root->SetVisibility(ESlateVisibility::HitTestInvisible);
+        WidgetTree->RootWidget = Root;
+    }
+    return Super::RebuildWidget();
+}
 
 void UEWTitleWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-    SetIsFocusable(true);
-    SetKeyboardFocus();
     if (WaterMaterial && Art && WaterMaskArt)
     {
         WaterMaterialInstance = UMaterialInstanceDynamic::Create(WaterMaterial, this);

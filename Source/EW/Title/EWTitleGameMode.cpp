@@ -33,6 +33,8 @@ void AEWTitlePlayerController::ShowTitle()
     FInputModeUIOnly Mode;
     Mode.SetWidgetToFocus(Title->TakeWidget());
     SetInputMode(Mode);
+    // Establish focus after the full-screen widget has entered the viewport.
+    Title->SetUserFocus(this);
 }
 
 void AEWTitlePlayerController::StartSinglePlayer()

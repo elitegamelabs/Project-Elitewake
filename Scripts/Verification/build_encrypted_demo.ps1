@@ -1,10 +1,12 @@
 <# Build the current local demo once. No GitHub, runner or release setup required. #>
 param(
     [string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8',
+    [string]$SourceRoot='',
     [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$')][string]$BuildLabel=('demo-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 )
 $ErrorActionPreference='Stop'
 $projectRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+$snapshotSourceRoot=if ($SourceRoot) { (Resolve-Path -LiteralPath $SourceRoot).Path } else { $projectRoot }
 $archive=Join-Path $projectRoot ('Saved/PrivateBuilds/'+$BuildLabel)
 $buildRoot=Join-Path $projectRoot ('Saved/DemoBuildSource/'+$BuildLabel)
 $engineConfig=Join-Path $buildRoot 'Config/DefaultEngine.ini'
@@ -12,13 +14,13 @@ $cryptoConfig=Join-Path $buildRoot 'Config/DefaultCrypto.ini'
 $runUAT=Join-Path $EngineRoot 'Engine/Build/BatchFiles/RunUAT.bat'
 if (Test-Path -LiteralPath $archive) { throw 'Choose a new build label; existing packages are preserved.' }
 if (Test-Path -LiteralPath $buildRoot) { throw 'Choose a new label; existing source snapshots are preserved.' }
-if (Test-Path -LiteralPath (Join-Path $projectRoot 'Config/DefaultCrypto.ini')) { throw 'Existing crypto settings must be reviewed before creating a new build key.' }
+if (Test-Path -LiteralPath (Join-Path $snapshotSourceRoot 'Config/DefaultCrypto.ini')) { throw 'Existing crypto settings must be reviewed before creating a new build key.' }
 if (!(Test-Path -LiteralPath $runUAT)) { throw 'Unreal Automation Tool is missing.' }
 if ((Get-PSDrive C).Free -lt 20GB) { throw 'At least 20 GB free space is required.' }
 New-Item -ItemType Directory -Path $buildRoot | Out-Null
-Copy-Item -LiteralPath (Join-Path $projectRoot 'EW.uproject') -Destination $buildRoot
+Copy-Item -LiteralPath (Join-Path $snapshotSourceRoot 'EW.uproject') -Destination $buildRoot
 foreach ($folder in @('Source','Content','Config','Binaries','Plugins','Build')) {
-    $original=Join-Path $projectRoot $folder
+    $original=Join-Path $snapshotSourceRoot $folder
     if (!(Test-Path -LiteralPath $original)) { continue }
     & robocopy $original (Join-Path $buildRoot $folder) /E /R:1 /W:1 /NFL /NDL /NJH /NJS /NP /XD Intermediate Saved /XF *.pdb *.obj *.ilk *.exp *.lib | Out-Null
     if ($LASTEXITCODE -gt 7) { throw "Could not snapshot $folder." }
@@ -26,7 +28,7 @@ foreach ($folder in @('Source','Content','Config','Binaries','Plugins','Build'))
 $manifest=@()
 foreach ($file in (Get-ChildItem -LiteralPath $buildRoot -File -Recurse)) {
     $relative=$file.FullName.Substring($buildRoot.Length+1)
-    $original=Join-Path $projectRoot $relative
+    $original=Join-Path $snapshotSourceRoot $relative
     $snapshotHash=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
     if ((Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash -ne $snapshotHash) { throw "Source changed while copying $relative. Retry with a new label after the edit completes." }
     $manifest+=@{path=$relative;sha256=$snapshotHash;bytes=$file.Length}
@@ -74,9 +76,9 @@ try {
     $keyFiles=@(Get-ChildItem -LiteralPath $windows -Recurse -File | Where-Object {$_.Name -in @('Crypto.json','DefaultCrypto.ini')})
     if ($keyFiles.Count) { throw 'Plaintext crypto configuration was staged in the game folder.' }
     & (Join-Path $PSScriptRoot 'verify_private_windows_prerequisites.ps1') -ArchiveDirectory $archive -EngineRoot $EngineRoot
-    $revision=(& git -C $projectRoot rev-parse HEAD).Trim()
+    $revision=if ($SourceRoot) { $null } else { (& git -C $projectRoot rev-parse HEAD).Trim() }
     @{buildLabel=$BuildLabel;sourceRevision=$revision;configuration='Shipping';localWorkingCopy=$true;assetsEncrypted=$true;
-        pakIndexRequiresKey=$true;startupMap='/Game/Elitewake/Maps/Lvl_Title';playableMap='/Game/Elitewake/Maps/Lvl_CoastalPlayground';
+        pakIndexRequiresKey=$true;sourceSnapshot=(Split-Path $snapshotSourceRoot -Leaf);startupMap='/Game/Elitewake/Maps/Lvl_Title';playableMap='/Game/Elitewake/Maps/Lvl_CoastalPlayground';
         packagedAtUtc=(Get-Date).ToUniversalTime().ToString('o')} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $archive 'DemoBuildInfo.json') -Encoding utf8
     Write-Output "Encrypted demo built and container encryption verified: $windows"
 } finally {
