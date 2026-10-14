@@ -68,7 +68,8 @@ def check_prone_camera():
     capsule = pawn.get_editor_property('capsule_component')
     height = camera.get_world_location().z - pawn.get_actor_location().z + capsule.get_scaled_capsule_half_height()
     assert camera.is_active(), 'First-person camera inactive'
-    assert abs(height - 40) < 1, 'Prone eye height is incorrect'
+    # The eyes ride on the body: lying down they are low, near the ground (they no longer sit at a fixed height).
+    assert 15 < height < 70, f'Prone eye height is incorrect ({height:.0f} cm)'
     report['prone_eye_height_cm'] = height
 
 S = unreal.EWLocomotionState

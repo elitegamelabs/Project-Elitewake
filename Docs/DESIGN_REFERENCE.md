@@ -418,6 +418,8 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
 - **Map:** M shows the surrounding area. You can walk but not sprint, change stance, use the hotbar or open inventory, and the world keeps running. Fog-of-war discovery and ghost-ship markers are planned. The HUD compass is in (see HUD); a physical compass item is not.
 - **Pause:** in single player it freezes the world and hides the HUD. In multiplayer it does not.
 - **Camera:** third person by default; Z toggles first person.
+  - **First-person body (owner, October 13: see your arms and hands, look down at your feet when crouched, realistic movement):** in first person you see your own body, with only your head hidden. The eyes ride on the body: down with a crouch, low when prone, along with a climb. They lean out over the chest when you look down, so your legs and feet come into view. Your arms and hands show as they swing and work. The body turns with the view, so walking sideways or backward steps that way. On a ladder or at a helm the body keeps to the ladder or the helm. Everyone else sees you whole.
+  - DECIDED (delegated, *tuning*): the eyes keep up with the body up and down but follow it across slowly, so a stride or a swing reads as a sway, not a lurch; motion blur is light in first person; the swings' root is locked, so a swing no longer carries the body a metre out of place.
 
 ## Audio and animation
 

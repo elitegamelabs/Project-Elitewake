@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "AnimationRuntime.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWEquipmentComponent.h"
@@ -94,6 +95,9 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	FirstPersonCamera->SetRelativeLocation(FVector(10.0f, 0.0f, 64.0f));
 	FirstPersonCamera->bUsePawnControlRotation = true;
 	FirstPersonCamera->SetActive(false);
+	// Your own arms and the ground at your feet are close enough that full motion blur smears them (tuning).
+	FirstPersonCamera->PostProcessSettings.bOverride_MotionBlurAmount = true;
+	FirstPersonCamera->PostProcessSettings.MotionBlurAmount = .15f;
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -170,6 +174,8 @@ void AEWCharacter::OnRep_Appearance()
     // Survivors who never chose keep the body their blueprint was made with.
     if (Appearance == FEWAppearance()) return;
     Appearance.ApplyTo(GetMesh(), BodyRoster.LoadSynchronous());
+    // A new body brings its head back; hide it again from its own first-person camera.
+    if (bIsFirstPerson) ShowFirstPersonBody();
 }
 
 void AEWCharacter::RefreshHeldItem()
@@ -262,6 +268,8 @@ void AEWCharacter::Tick(float DeltaSeconds)
         ApplyLadderPose();
     }
     UpdateLoopAnimation(DeltaSeconds);
+    ApplyFacing();
+    if (bIsFirstPerson && IsLocallyControlled()) UpdateFirstPersonCamera(DeltaSeconds);
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -337,6 +345,7 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
     DOREPLIFETIME(AEWCharacter, HelmShip);
     DOREPLIFETIME(AEWCharacter, Ladder);
     DOREPLIFETIME(AEWCharacter, Appearance);
+    DOREPLIFETIME_CONDITION(AEWCharacter, bFacingView, COND_SkipOwner);
 }
 
 void AEWCharacter::SetHelmShip(AEWShip* Ship)
@@ -590,7 +599,82 @@ void AEWCharacter::SetFirstPerson(bool bNewFirstPerson)
 
 	FirstPersonCamera->SetActive(bIsFirstPerson);
 	FollowCamera->SetActive(!bIsFirstPerson);
-	GetMesh()->SetOwnerNoSee(bIsFirstPerson);
+	// The body stays in view: looking down shows the survivor's own arms, legs and feet. Only the head is hidden,
+	// and only here, since every other screen draws this survivor from its own copy.
+	ShowFirstPersonBody();
+	if (IsLocallyControlled() && bFacingView != bIsFirstPerson)
+	{
+		bFacingView = bIsFirstPerson;
+		if (!HasAuthority()) ServerSetFacingView(bFacingView);
+	}
+	ApplyFacing();
+}
+
+void AEWCharacter::ServerSetFacingView_Implementation(bool bFace)
+{
+	bFacingView = bFace;
+	ApplyFacing();
+}
+
+void AEWCharacter::ShowFirstPersonBody()
+{
+	// Hidden from the base of the neck, so the collar closes over it rather than leaving the inside of the neck to
+	// be seen when looking straight down.
+	static const FName Neck(TEXT("neck_01"));
+	USkeletalMeshComponent* Body = GetMesh();
+	if (!Body) return;
+	Body->SetOwnerNoSee(false);
+	const bool bHide = bIsFirstPerson && IsLocallyControlled();
+	if (Body->GetBoneIndex(Neck) == INDEX_NONE) return;
+	if (bHide && !Body->IsBoneHiddenByName(Neck)) Body->HideBoneByName(Neck, PBO_None);
+	else if (!bHide && Body->IsBoneHiddenByName(Neck)) Body->UnHideBoneByName(Neck);
+	if (bHide) UpdateFirstPersonCamera(0.f);
+}
+
+void AEWCharacter::UpdateFirstPersonCamera(float DeltaSeconds)
+{
+	// The head is hidden, and a hidden bone's place is no longer updated, so the eyes are carried by the torso: up
+	// the line from the hips to the upper chest as far as they sit along it in the rest pose, and ahead of it. That
+	// line leans when crouching and lies flat when prone, but hardly moves when a swing twists the chest, so the
+	// view stays steady.
+	static const FName Hips(TEXT("pelvis")), Chest(TEXT("spine_05")), Head(TEXT("head"));
+	USkeletalMeshComponent* Body = GetMesh();
+	const USkeletalMesh* Asset = Body ? Body->GetSkeletalMeshAsset() : nullptr;
+	const int32 HipsIndex = Body ? Body->GetBoneIndex(Hips) : INDEX_NONE;
+	const int32 ChestIndex = Body ? Body->GetBoneIndex(Chest) : INDEX_NONE;
+	const int32 HeadIndex = Body ? Body->GetBoneIndex(Head) : INDEX_NONE;
+	if (!Asset || HipsIndex == INDEX_NONE || ChestIndex == INDEX_NONE || HeadIndex == INDEX_NONE) return;
+	const FReferenceSkeleton& Skeleton = Asset->GetRefSkeleton();
+	const FVector HipsRest = FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, HipsIndex).GetLocation();
+	const FVector ChestRest = FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, ChestIndex).GetLocation();
+	const FVector HeadRest = FAnimationRuntime::GetComponentSpaceTransformRefPose(Skeleton, HeadIndex).GetLocation();
+	const float Along = ((HeadRest - ChestRest) | (ChestRest - HipsRest).GetSafeNormal()) * Body->GetComponentScale().Z;
+	const FVector HipsNow = Body->GetBoneLocation(Hips), ChestNow = Body->GetBoneLocation(Chest);
+	const FRotator View = GetControlRotation();
+	const FVector Ahead = FRotator(0, View.Yaw, 0).Vector();
+	// Looking down, the eyes lean out over the chest so the feet come into view.
+	const float LookingDown = FMath::Clamp(-FRotator::NormalizeAxis(View.Pitch) / 90.f, 0.f, 1.f);
+	const FVector Eyes = ChestNow + (ChestNow - HipsNow).GetSafeNormal() * (Along + FirstPersonEyeUp)
+		+ Ahead * (FirstPersonEyeForward + FirstPersonLookDownForward * LookingDown);
+	const FVector Wanted = GetCapsuleComponent()->GetComponentTransform().InverseTransformPosition(Eyes);
+	// Up and down the eyes keep up with the body; across they follow slowly, as a head steadies itself through a
+	// lunge or a stride, yet still settle where a crouch or lying prone puts them.
+	FVector Shown = Wanted;
+	if (DeltaSeconds > 0.f)
+	{
+		const FVector Was = FirstPersonCamera->GetRelativeLocation();
+		Shown.X = FMath::FInterpTo(Was.X, Wanted.X, DeltaSeconds, FirstPersonSwayRate);
+		Shown.Y = FMath::FInterpTo(Was.Y, Wanted.Y, DeltaSeconds, FirstPersonSwayRate);
+		Shown.Z = FMath::FInterpTo(Was.Z, Wanted.Z, DeltaSeconds, FirstPersonFollowRate);
+	}
+	FirstPersonCamera->SetRelativeLocation(Shown);
+}
+
+void AEWCharacter::ApplyFacing()
+{
+	const bool bFace = bFacingView && !IsOnLadder() && !IsValid(HelmShip);
+	bUseControllerRotationYaw = bFace;
+	GetCharacterMovement()->bOrientRotationToMovement = !bFace;
 }
 
 void AEWCharacter::HandleProneHold()
@@ -693,9 +777,6 @@ void AEWCharacter::ApplyMovementSpeed()
 
 	GetCharacterMovement()->MaxWalkSpeed = TargetSpeed;
 	GetCharacterMovement()->MaxWalkSpeedCrouched = bIsProne ? ProneSpeed : CrouchSpeed;
-	const float CapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
-	const float EyeHeight = bIsProne ? 40.f : (bIsCrouched ? 96.f : CapsuleHalfHeight + 64.f);
-	FirstPersonCamera->SetRelativeLocation(FVector(10.f, 0.f, EyeHeight - CapsuleHalfHeight));
 }
 
 EEWLocomotionState AEWCharacter::GetLocomotionState() const

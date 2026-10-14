@@ -4,7 +4,8 @@ Run in the editor, outside Play:
 
 Attack plays the three unarmed swings in turn; a survivor who is struck plays a light hit reaction. Both play
 through the locomotion blueprint's default slot, over whatever the legs are doing. The swings' root motion is
-turned off: a swing must never move the survivor, or it would shift their aim and their place on a deck.
+turned off and their root locked: a swing must never move the survivor, or it would shift their aim and their
+place on a deck.
 With a tool in hand the survivor chops instead (AS_ToolChop_v1, from Scripts/Setup/build_tool_swing.py, run that
 first). On a ladder it plays the animation library's ladder loops: climbing up, climbing down and holding on. At a
 helm it holds the wheel, or strokes with a paddle on the raft, and at a capstan it leans into the bars
@@ -36,6 +37,13 @@ def main():
     for animation in swings + [flinch, chop] + list(ladder.values()):
         if animation.get_editor_property('enable_root_motion'):
             animation.set_editor_property('enable_root_motion', False)
+            assert unreal.EditorAssetLibrary.save_loaded_asset(animation)
+    # The swings lunge a metre forward on their root; locked, the body stays over the survivor's feet (in first
+    # person the eyes would otherwise surge forward with every swing).
+    for animation in swings:
+        if not animation.get_editor_property('force_root_lock'):
+            animation.set_editor_property('force_root_lock', True)
+            animation.set_editor_property('root_motion_root_lock', unreal.RootMotionRootLock.REF_POSE)
             assert unreal.EditorAssetLibrary.save_loaded_asset(animation)
     blueprint = unreal.load_asset(CHARACTER)
     defaults = unreal.get_default_object(unreal.load_object(None, f'{CHARACTER}.BP_ThirdPersonCharacter_C'))

@@ -182,6 +182,8 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerHelmRudder(float Rudder);
     UFUNCTION(Server, Reliable)
+    void ServerSetFacingView(bool bFace);
+    UFUNCTION(Server, Reliable)
     void ServerSailStep(int8 Direction);
     UFUNCTION(Server, Reliable)
     void ServerSailTrim(int8 Direction);
@@ -290,6 +292,14 @@ protected:
 
 	/** Apply the requested local camera presentation. */
 	void SetFirstPerson(bool bNewFirstPerson);
+	/** Local: in first person, puts the eyes at the animated head and hides the head from its own camera. */
+	void ShowFirstPersonBody();
+	void UpdateFirstPersonCamera(float DeltaSeconds);
+	/** Every machine: the body turns with the view when facing it, and with its movement otherwise. */
+	void ApplyFacing();
+	/** Replicated so the server and every screen turn the body the way its owner sees it. */
+	UPROPERTY(Replicated)
+	bool bFacingView = false;
 
 	/** Enter prone after the stance input has been held long enough. */
 	void HandleProneHold();
@@ -351,6 +361,20 @@ public:
 	/** Returns whether the local player is using first person. */
 	UFUNCTION(BlueprintPure, Category="Camera")
 	bool IsFirstPerson() const { return bIsFirstPerson; }
+	/** True while the body turns with the view, as it does in first person (off on a ladder or at a helm). */
+	UFUNCTION(BlueprintPure, Category="Camera")
+	bool IsFacingView() const { return bFacingView; }
+	/** Local: switches between the third- and first-person cameras; in first person the survivor sees their own body. */
+	UFUNCTION(BlueprintCallable, Category="Camera")
+	void SetFirstPersonView(bool bNewFirstPerson) { SetFirstPerson(bNewFirstPerson); }
+	/** Tuning: in first person the eyes sit this far ahead of the torso and above where the head starts, and lean
+	 *  further forward as the survivor looks down, so the chest does not hide the feet; the camera follows this quickly. */
+	static constexpr float FirstPersonEyeForward = 10.f;
+	static constexpr float FirstPersonEyeUp = 6.f;
+	static constexpr float FirstPersonLookDownForward = 16.f;
+	static constexpr float FirstPersonFollowRate = 18.f;
+	/** Tuning: how quickly the first-person eyes follow the body across (a lunge, a stride), slower than up and down. */
+	static constexpr float FirstPersonSwayRate = 4.f;
 
 	/** Returns the high-level state used by animation and presentation systems. */
 	UFUNCTION(BlueprintPure, Category="Movement|Animation")
