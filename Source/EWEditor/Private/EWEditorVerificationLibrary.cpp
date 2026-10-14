@@ -312,6 +312,13 @@ bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers
     Settings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
     Settings->SetPlayNumberOfClients(FMath::Clamp(NumPlayers, 1, 4));
     Settings->SetRunUnderOneProcess(true);
+    // EW_PLAY_WINDOW=1280x720 opens the Play windows at that size, to check layouts on smaller screens.
+    FString Window = FPlatformMisc::GetEnvironmentVariable(TEXT("EW_PLAY_WINDOW")), Width, Height;
+    if (Window.Split(TEXT("x"), &Width, &Height) && FCString::Atoi(*Width) > 0 && FCString::Atoi(*Height) > 0)
+    {
+        Settings->NewWindowWidth = FCString::Atoi(*Width);
+        Settings->NewWindowHeight = FCString::Atoi(*Height);
+    }
     FRequestPlaySessionParams Params;
     Params.WorldType = EPlaySessionWorldType::PlayInEditor;
     Params.SessionDestination = EPlaySessionDestinationType::InProcess;

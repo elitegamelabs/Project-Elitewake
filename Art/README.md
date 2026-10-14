@@ -21,7 +21,7 @@ Growth stages remain incomplete. The first growth board has incorrect species im
 
 Forage sheet 3 version 2 replaces version 1. Insects sheet 1 needs Bloodwing anatomy review. Blueprint diagrams are illustrative and need a wooden-tool material correction. Atlas arrangements and cutout quality need visual approval before runtime binding. No game balance or distribution is inferred from art. Duplicate ZIP bundles are excluded from this publication; individual source images are supplied.
 
-Indexed images: **153**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
+Indexed images: **177**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
 
 ## Images
 
@@ -153,6 +153,30 @@ Indexed images: **153**. PNG sources are stored through Git LFS; use a normal Gi
 | [Items/Atlases/2026-10-14/trees2-Atlas-v1.png](Items/Atlases/2026-10-14/trees2-Atlas-v1.png) | 1448 × 1086 | 10 | Illustrative 2D plant model reference; no species-specific Wood inventory types |
 | [Items/Atlases/2026-10-14/weapons-Atlas-v1.png](Items/Atlases/2026-10-14/weapons-Atlas-v1.png) | 1774 × 887 | 8 | Confirmed families; period pistol name, weapon stats and glider engineering remain TBD |
 | [Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.png](Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.png) | 2172 × 724 | 3 | Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset |
+| [Items/Icons/AzrenBerry-v1.png](Items/Icons/AzrenBerry-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Cannon-v1.png](Items/Icons/Cannon-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/CannonAmmo-v1.png](Items/Icons/CannonAmmo-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/contact-sheet.png](Items/Icons/contact-sheet.png) | 1536 × 1024 | — | Review sheet of the cut inventory icons |
+| [Items/Icons/CopperOre-v1.png](Items/Icons/CopperOre-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Fiber-v1.png](Items/Icons/Fiber-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Hide-v1.png](Items/Icons/Hide-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/LargeSail-v1.png](Items/Icons/LargeSail-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/MediumSail-v1.png](Items/Icons/MediumSail-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/RepairKit-v1.png](Items/Icons/RepairKit-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/ShipWheel-v1.png](Items/Icons/ShipWheel-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/SmallSail-v1.png](Items/Icons/SmallSail-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/SpoiledBerries-v1.png](Items/Icons/SpoiledBerries-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Sticks-v1.png](Items/Icons/Sticks-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Stone-v1.png](Items/Icons/Stone-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/StoneAxe-v1.png](Items/Icons/StoneAxe-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/StonePickaxe-v1.png](Items/Icons/StonePickaxe-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Thatch-v1.png](Items/Icons/Thatch-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Torch-v1.png](Items/Icons/Torch-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/WaterSkin-v1.png](Items/Icons/WaterSkin-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/Wood-v1.png](Items/Icons/Wood-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/WoodenAxe-v1.png](Items/Icons/WoodenAxe-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/WoodenPickaxe-v1.png](Items/Icons/WoodenPickaxe-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
+| [Items/Icons/WoodenShovel-v1.png](Items/Icons/WoodenShovel-v1.png) | 256 × 256 | — | In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py) |
 | [Items/Raw-Fish-v1.png](Items/Raw-Fish-v1.png) | 512 × 512 | — | Existing source reference; consult adjacent README/selection/roster metadata |
 | [Items/Raw-Meat-v1.png](Items/Raw-Meat-v1.png) | 512 × 512 | — | Existing source reference; consult adjacent README/selection/roster metadata |
 | [Placeholders/ItemIcons/Axe-v1.png](Placeholders/ItemIcons/Axe-v1.png) | 1254 × 1254 | — | Existing source reference; consult adjacent README/selection/roster metadata |

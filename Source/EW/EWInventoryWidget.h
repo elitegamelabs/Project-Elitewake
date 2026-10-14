@@ -21,6 +21,7 @@ class UEWHotbarSlotButton;
 class UHorizontalBox;
 class UImage;
 class UTexture2D;
+class UProgressBar;
 class UEWCompanyWidget;
 class UEWJournalWidget;
 
@@ -95,7 +96,11 @@ protected:
 	void RefreshInventory();
 
 private:
-    UVerticalBox* MakeItemTile(UEWItemDefinition* Item, UWidget* Label, UImage*& Image);
+    /** One square slot of the grid: the item's picture filling it, its count in the corner, its name along the
+     *  bottom and, for food that ages, a thin freshness bar. With no item, an empty slot. */
+    UBorder* MakeSlotTile(UEWItemDefinition* Item, const FString& Corner, float Freshness, UImage*& Image, UProgressBar*& FreshBar);
+    void AddToGrid(UWrapBox* Grid, UBorder* Tile);
+    void BuildStatRows(UVerticalBox* Into);
     UFUNCTION() void ShowInventoryTab();
     UFUNCTION() void ShowCraftingTab();
     UPROPERTY(Transient) TObjectPtr<UButton> InventoryTab;
@@ -106,7 +111,6 @@ private:
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> BrowserPanel;
     UPROPERTY(Transient) TObjectPtr<UBorder> DetailsPanel;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> SectionMessage;
-    UPROPERTY(Transient) TObjectPtr<UTextBlock> SurvivorSummary;
     int32 SelectedSection = 0;
 
     UHorizontalBox* MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image);
@@ -183,6 +187,14 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UWrapBox> ItemsBox;
+    /** Equipped items, in their own row under the slots. */
+    UPROPERTY(Transient) TObjectPtr<UWrapBox> EquippedBox;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> EquippedHeading;
+    /** Each selectable tile's freshness bar, or null, parallel to Rows. */
+    UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> RowFreshness;
+    /** The survivor's needs, each with its icon, value and bar. */
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> StatValues;
+    UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> StatBars;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UEWInventoryComponent> BoundInventory;

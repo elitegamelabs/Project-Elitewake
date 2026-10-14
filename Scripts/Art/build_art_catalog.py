@@ -24,6 +24,9 @@ def main():
             warnings.append('First growth board does not faithfully match the requested species rows; remaining boards not generated.')
         if 'forage3-Atlas-v1' in relative or ('/Survival/' in relative and '/Matte-v2/' not in relative):
             status = 'Legacy art; newer version preferred'
+        if '/Items/Icons/' in relative:
+            status = ('Review sheet of the cut inventory icons' if relative.endswith('contact-sheet.png') else
+                      'In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)')
         if 'Brigantine-Exterior-Mast-Sockets-v2' in relative:
             status = 'Alternate reference only; owner-selected original hulls remain canonical'
         if 'insects1-Atlas' in relative:

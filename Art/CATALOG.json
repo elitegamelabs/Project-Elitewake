@@ -7389,6 +7389,462 @@
       "reviewNotes": []
     },
     {
+      "path": "Art/Items/Icons/AzrenBerry-v1.png",
+      "bytes": 97409,
+      "sha256": "6c699e79a69677f254ccaa1fa75ebbaf0932be0213203b568a20e577e91d3fb7",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Cannon-v1.png",
+      "bytes": 59297,
+      "sha256": "c19b85eba22f372698a206f9d0d02eee4815a5a50685871e5916402603dc716c",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/CannonAmmo-v1.png",
+      "bytes": 73857,
+      "sha256": "d3c762bd306ba52692e4efbfe6cece1a751c9a1ac1125807b34da520b1e07c2a",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/contact-sheet.png",
+      "bytes": 1501371,
+      "sha256": "3225444cf283d349d271fbff197b11aee8a50e1b157e702f38bc1b71d140cef5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "status": "Review sheet of the cut inventory icons",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/CopperOre-v1.png",
+      "bytes": 113471,
+      "sha256": "cdcf7acce5539ec0384375b51cd4cbfa0463ca1154620e0defa2d92b9287cdfa",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Fiber-v1.png",
+      "bytes": 93273,
+      "sha256": "fed4fbb683906fd7dc054c215499f15ed88536524b197d90909fa44c491cfa50",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Hide-v1.png",
+      "bytes": 67092,
+      "sha256": "a755437c0401c908029188d31e2fc6df91ef086c07bbef9be5b74ba4c9097041",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/LargeSail-v1.png",
+      "bytes": 69998,
+      "sha256": "5fcac8163c8cde34275c7dd869f559b43be5c5ddd8060fbd7471ab681f6ce0c2",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/MediumSail-v1.png",
+      "bytes": 66369,
+      "sha256": "2315accac15a1262ab10f8284a0a9e1d4ba9c8fc6b7cf141a1d6d668973a87b0",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/RepairKit-v1.png",
+      "bytes": 107355,
+      "sha256": "6166d1cb0ff276d254ccc88cc78a967999f85b7eb28fb0c57a22dc64059447d8",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/ShipWheel-v1.png",
+      "bytes": 60013,
+      "sha256": "15f6cfb817b31f9c15177c808001abd6b8ce490204fbc62f26fe82a8197be791",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/SmallSail-v1.png",
+      "bytes": 46818,
+      "sha256": "005d6d784ddc97b02a97bc9749b55221ae92739d1bcd0dfcc80d73709dd2d534",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/SpoiledBerries-v1.png",
+      "bytes": 80303,
+      "sha256": "95182e9e62bf60c23dd2f00d9cde20e5aa9741dda6d6141ab04b4dbf6bb34a5d",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Sticks-v1.png",
+      "bytes": 69177,
+      "sha256": "ecb0a0dba47d7a663a3c4f42755f5232a1a522c5be0594c39081cd389666cf9e",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Stone-v1.png",
+      "bytes": 93030,
+      "sha256": "c7620f81ea6774b1d0f586a53ace324a7aa2a0f49edf8a95c63e6a1ebad63982",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/StoneAxe-v1.png",
+      "bytes": 43504,
+      "sha256": "616dabe112692105ed9b21446d835606eac7c7ff600ba5a931bdef305b961d86",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/StonePickaxe-v1.png",
+      "bytes": 33625,
+      "sha256": "b7fe199ea9c3c5031b0f9be92ba07c3dd4bda9b6a5562c62c78299c94eb65364",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Thatch-v1.png",
+      "bytes": 109436,
+      "sha256": "9bf4fcf9b2066fcf5bf44cdc20a5c781a54935572ffe2e8acbd1a838de88cf70",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Torch-v1.png",
+      "bytes": 25062,
+      "sha256": "e5a4a983a6661de459f3bcdfd828368a68e0c538a0bf7b1386c1ce85e2d5c0cf",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/WaterSkin-v1.png",
+      "bytes": 69110,
+      "sha256": "4f914f29f1754e9d58cf16ce486155de6a017d968f1977c56b86deb9f2908c4b",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/Wood-v1.png",
+      "bytes": 83530,
+      "sha256": "690d50670712aad083a131be3cf782de213fee575e69ab782177cda025e21f59",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/WoodenAxe-v1.png",
+      "bytes": 37444,
+      "sha256": "4d3de64e3eaa20df3ad2d5e36331644a0e06223b0d5eeb6db938f5a1154eaa10",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/WoodenPickaxe-v1.png",
+      "bytes": 26642,
+      "sha256": "962b0ff516c67344878a025b7400387d468e857c2e6a1bd2fab127fab17ad7ce",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Icons/WoodenShovel-v1.png",
+      "bytes": 31184,
+      "sha256": "6ad5c2776f902f5eacb75082d4fbcbb121fb5fb01e861d54f7b973f2c7788e43",
+      "dimensions": [
+        256,
+        256
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
       "path": "Art/Items/Raw-Fish-v1.png",
       "bytes": 127741,
       "sha256": "2b8265b03748e184fb4387e7a06ec54d5dcab527d5d5e3b36401d9c182867452",

@@ -83,9 +83,13 @@ def advance():
         runpy.run_path(check)
         state.update(step='wait_result', at=now + timeout)
     elif step == 'wait_result':
-        if result.exists() and result.stat().st_mtime >= started:
-            ok = json.loads(result.read_text(encoding='utf-8')).get('success')
-            state.update(step='stop', outcome='passed' if ok else 'failed')
+        try:
+            final = json.loads(result.read_text(encoding='utf-8')) if result.exists() and result.stat().st_mtime >= started else None
+        except ValueError:
+            final = None   # caught mid-write; read it again next tick
+        # Some checks save progress after every checkpoint; only a success, a finish time or an error is final.
+        if final and (final.get('success') or final.get('finished_utc') or final.get('error') or final.get('errors')):
+            state.update(step='stop', outcome='passed' if final.get('success') else 'failed')
         elif now >= state['at']:
             state.update(step='stop', outcome='timed out')
     elif step == 'stop':

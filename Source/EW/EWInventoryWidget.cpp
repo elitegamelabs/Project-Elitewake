@@ -27,6 +27,8 @@
 #include "Components/ProgressBar.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
 #include "InputCoreTypes.h"
 #include "Styling/SlateColor.h"
 
@@ -140,8 +142,7 @@ void UEWInventoryWidget::BuildWidgetTree()
     SurvivorBody->AddChildToVerticalBox(SurvivorTitle)->SetPadding(FMargin(0,0,0,18));
     Content->RemoveChild(SummaryText); SurvivorBody->AddChildToVerticalBox(SummaryText);
     SummaryText->SetAutoWrapText(true); auto SummaryFont=SummaryText->GetFont(); SummaryFont.Size=16; SummaryText->SetFont(SummaryFont);
-    SurvivorSummary=WidgetTree->ConstructWidget<UTextBlock>(); SurvivorSummary->SetAutoWrapText(true);
-    SurvivorSummary->SetFont(SummaryFont); SurvivorBody->AddChildToVerticalBox(SurvivorSummary)->SetPadding(FMargin(0,20,0,0));
+    BuildStatRows(SurvivorBody);
     SectionMessage=WidgetTree->ConstructWidget<UTextBlock>(); SectionMessage->SetAutoWrapText(true); SectionMessage->SetFont(SummaryFont);
     SurvivorBody->AddChildToVerticalBox(SectionMessage)->SetPadding(FMargin(0,20,0,0));
     auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>();
@@ -161,7 +162,12 @@ void UEWInventoryWidget::BuildWidgetTree()
     auto* InventoryHeading=WidgetTree->ConstructWidget<UTextBlock>(); InventoryHeading->SetText(FText::FromString(TEXT("INVENTORY")));
     Browser->AddChildToVerticalBox(InventoryHeading)->SetPadding(FMargin(0,0,0,8));
     ItemsBox=WidgetTree->ConstructWidget<UWrapBox>(); ItemsBox->SetInnerSlotPadding(FVector2D(6,6));
-    ItemsScroll=WidgetTree->ConstructWidget<UScrollBox>(); ItemsScroll->AddChild(ItemsBox);
+    auto* Grids=WidgetTree->ConstructWidget<UVerticalBox>(); Grids->AddChildToVerticalBox(ItemsBox);
+    EquippedHeading=WidgetTree->ConstructWidget<UTextBlock>(); EquippedHeading->SetText(FText::FromString(TEXT("EQUIPPED")));
+    Grids->AddChildToVerticalBox(EquippedHeading)->SetPadding(FMargin(0,12,0,6));
+    EquippedBox=WidgetTree->ConstructWidget<UWrapBox>(); EquippedBox->SetInnerSlotPadding(FVector2D(6,6));
+    Grids->AddChildToVerticalBox(EquippedBox);
+    ItemsScroll=WidgetTree->ConstructWidget<UScrollBox>(); ItemsScroll->AddChild(Grids);
     Browser->AddChildToVerticalBox(ItemsScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     auto* CraftHeading=WidgetTree->ConstructWidget<UTextBlock>(); CraftHeading->SetText(FText::FromString(TEXT("CRAFTING")));
     Browser->AddChildToVerticalBox(CraftHeading)->SetPadding(FMargin(0,16,0,8));
@@ -218,7 +224,7 @@ void UEWInventoryWidget::RefreshInventory()
 	if (!Inventory)
 	{
 		SummaryText->SetText(FText::FromString(TEXT("Inventory unavailable")));
-        ItemsBox->ClearChildren(); Rows.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
+        ItemsBox->ClearChildren(); EquippedBox->ClearChildren(); Rows.Reset(); RowFreshness.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
         InventoryImages.Reset(); MaterialImages.Reset();
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
@@ -246,57 +252,39 @@ void UEWInventoryWidget::RefreshInventory()
     SelectedIndex = SelectionCount() == 0 ? INDEX_NONE : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, SelectionCount()-1));
     if (PreviousItem && SelectedItem() != PreviousItem) bShowingDetails = false;
     ItemsBox->ClearChildren();
+    EquippedBox->ClearChildren();
     InventoryImages.Reset();
     Rows.Reset();
-    if (SelectionCount() == 0)
-    {
-        UTextBlock* EmptyText = WidgetTree->ConstructWidget<UTextBlock>();
-        EmptyText->SetText(FText::FromString(TEXT("Inventory is empty.")));
-        ItemsBox->AddChildToWrapBox(EmptyText);
-        bShowingDetails = false;
-    }
+    RowFreshness.Reset();
     for (const FEWInventoryEntry& Entry : DisplayedEntries)
     {
-        UBorder* Row = WidgetTree->ConstructWidget<UBorder>();
-        Row->SetPadding(FMargin(8));
-        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
-        const FString Name = Entry.ItemDefinition->DisplayName.IsEmpty() ? Entry.ItemDefinition->ItemId.ToString() : Entry.ItemDefinition->DisplayName.ToString();
-        Text->SetText(FText::FromString(FString::Printf(TEXT("%s\nx%d"), *Name, Entry.Quantity)));
-        auto TileFont = Text->GetFont(); TileFont.Size=15; Text->SetFont(TileFont); Text->SetAutoWrapText(true);
-        auto* RowContent = WidgetTree->ConstructWidget<UVerticalBox>();
-        UImage* ItemImage = nullptr;
-        RowContent->AddChildToVerticalBox(MakeItemTile(Entry.ItemDefinition, Text, ItemImage));
-        if (ItemImage) InventoryImages.Add(Entry.ItemDefinition, ItemImage);
+        float Freshness = -1.f;
         if (Entry.ItemDefinition->FoodKind == EEWFoodKind::Berry && Entry.ItemDefinition->FreshLifetimeSeconds > 0.f)
-        {
-            const float Freshness = FMath::Clamp(1.f - Entry.FoodAgeSeconds / Entry.ItemDefinition->FreshLifetimeSeconds, 0.f, 1.f);
-            auto* FreshLabel = WidgetTree->ConstructWidget<UTextBlock>();
-            FreshLabel->SetText(FText::FromString(FString::Printf(TEXT("Freshness %.0f%%"), Freshness * 100.f)));
-            RowContent->AddChildToVerticalBox(FreshLabel);
-            auto* Bar = WidgetTree->ConstructWidget<UProgressBar>();
-            Bar->SetPercent(Freshness);
-            Bar->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
-            RowContent->AddChildToVerticalBox(Bar);
-        }
-        Row->SetContent(RowContent);
-        auto* TileSize = WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(116); TileSize->SetMinDesiredHeight(124); TileSize->SetContent(Row);
-        ItemsBox->AddChildToWrapBox(TileSize);
-        Rows.Add(Row);
+            Freshness = FMath::Clamp(1.f - Entry.FoodAgeSeconds / Entry.ItemDefinition->FreshLifetimeSeconds, 0.f, 1.f);
+        UImage* ItemImage = nullptr; UProgressBar* FreshBar = nullptr;
+        // Counts only for things that stack; a lone tool needs none.
+        const FString Count = Entry.ItemDefinition->MaxStackSize > 1 ? FString::Printf(TEXT("x%d"), Entry.Quantity) : FString();
+        UBorder* Tile = MakeSlotTile(Entry.ItemDefinition, Count, Freshness, ItemImage, FreshBar);
+        if (ItemImage) InventoryImages.Add(Entry.ItemDefinition, ItemImage);
+        AddToGrid(ItemsBox, Tile);
+        Rows.Add(Tile); RowFreshness.Add(FreshBar);
+    }
+    // The rest of the survivor's slots, empty, so the grid shows how much room is left.
+    for (int32 Empty = Inventory->GetMaxSlotCount() - DisplayedEntries.Num(); Empty > 0; --Empty)
+    {
+        UImage* None = nullptr; UProgressBar* NoBar = nullptr;
+        AddToGrid(ItemsBox, MakeSlotTile(nullptr, FString(), -1.f, None, NoBar));
     }
     for (const FEWEquipmentEntry& Entry : DisplayedEquipment)
     {
-        UBorder* Row = WidgetTree->ConstructWidget<UBorder>(); Row->SetPadding(FMargin(8));
-        UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
-        Text->SetText(FText::FromString(FString::Printf(TEXT("Equipped\n%s\n%.1f kg"),
-            *Entry.ItemDefinition->DisplayName.ToString(), Entry.ItemDefinition->UnitWeight)));
-        auto TileFont = Text->GetFont(); TileFont.Size = 15; Text->SetFont(TileFont);
-        UImage* ItemImage = nullptr;
-        Row->SetContent(MakeItemTile(Entry.ItemDefinition, Text, ItemImage));
+        UImage* ItemImage = nullptr; UProgressBar* NoBar = nullptr;
+        UBorder* Tile = MakeSlotTile(Entry.ItemDefinition, FString::Printf(TEXT("%.1f kg"), Entry.ItemDefinition->UnitWeight), -1.f, ItemImage, NoBar);
         if (ItemImage) InventoryImages.Add(Entry.ItemDefinition, ItemImage);
-        auto* TileSize = WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(116); TileSize->SetMinDesiredHeight(124); TileSize->SetContent(Row);
-        Text->SetAutoWrapText(true);
-        ItemsBox->AddChildToWrapBox(TileSize); Rows.Add(Row);
+        AddToGrid(EquippedBox, Tile);
+        Rows.Add(Tile); RowFreshness.Add(nullptr);
     }
+    EquippedHeading->SetVisibility(DisplayedEquipment.Num() ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    if (SelectionCount() == 0) bShowingDetails = false;
     UpdateSelection();
     RefreshCrafting();
 }
@@ -422,16 +410,84 @@ void UEWInventoryWidget::RefreshCrafting()
             : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory") : TEXT("Recipe unavailable"))));
     RecipeDetailsBox->AddChildToVerticalBox(CraftButton);
 }
-UVerticalBox* UEWInventoryWidget::MakeItemTile(UEWItemDefinition* Item, UWidget* Label, UImage*& Image)
+UBorder* UEWInventoryWidget::MakeSlotTile(UEWItemDefinition* Item, const FString& Corner, float Freshness, UImage*& Image, UProgressBar*& FreshBar)
 {
-    auto* Tile=WidgetTree->ConstructWidget<UVerticalBox>();
-    Image=WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(ResolveIcon(Item));
-    auto* Size=WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(64); Size->SetHeightOverride(64);
-    Size->SetContent(Image); Tile->AddChildToVerticalBox(Size)->SetHorizontalAlignment(HAlign_Center);
-    Tile->AddChildToVerticalBox(Label)->SetPadding(FMargin(0,8,0,0));
-    if (auto* Text=Cast<UTextBlock>(Label)) Text->SetJustification(ETextJustify::Center);
+    Image = nullptr; FreshBar = nullptr;
+    auto* Tile = WidgetTree->ConstructWidget<UBorder>();
+    Tile->SetPadding(FMargin(4));
+    Tile->SetBrushColor(Item ? FLinearColor(.04f,.055f,.07f,1) : FLinearColor(.025f,.032f,.042f,.55f));
+    if (!Item) return Tile;
+    auto* Layers = WidgetTree->ConstructWidget<UOverlay>();
+    Tile->SetContent(Layers);
+    Image = WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(ResolveIcon(Item));
+    auto* IconSize = WidgetTree->ConstructWidget<USizeBox>(); IconSize->SetWidthOverride(70); IconSize->SetHeightOverride(70);
+    IconSize->SetContent(Image);
+    auto* IconSlot = Layers->AddChildToOverlay(IconSize);
+    IconSlot->SetHorizontalAlignment(HAlign_Center); IconSlot->SetVerticalAlignment(VAlign_Top); IconSlot->SetPadding(FMargin(0,2,0,0));
+    auto* Count = WidgetTree->ConstructWidget<UTextBlock>(); Count->SetText(FText::FromString(Corner));
+    auto CountFont = Count->GetFont(); CountFont.Size = 13; Count->SetFont(CountFont);
+    Count->SetShadowOffset(FVector2D(1,1)); Count->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));
+    auto* CountSlot = Layers->AddChildToOverlay(Count);
+    CountSlot->SetHorizontalAlignment(HAlign_Right); CountSlot->SetVerticalAlignment(VAlign_Top);
+    auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
+    Name->SetText(Item->DisplayName.IsEmpty() ? FText::FromName(Item->ItemId) : Item->DisplayName);
+    auto NameFont = Name->GetFont(); NameFont.Size = 10; Name->SetFont(NameFont);
+    // Left-aligned: a centred name too long for the tile would lose both ends instead of trailing off.
+    Name->SetJustification(ETextJustify::Left); Name->SetClipping(EWidgetClipping::ClipToBounds);
+    Name->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis);
+    auto* NameSlot = Layers->AddChildToOverlay(Name);
+    NameSlot->SetHorizontalAlignment(HAlign_Fill); NameSlot->SetVerticalAlignment(VAlign_Bottom);
+    NameSlot->SetPadding(FMargin(0,0,0,Freshness >= 0.f ? 6 : 0));
+    if (Freshness >= 0.f)
+    {
+        FreshBar = WidgetTree->ConstructWidget<UProgressBar>();
+        FreshBar->SetPercent(Freshness); FreshBar->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
+        auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(4); BarSize->SetContent(FreshBar);
+        auto* BarSlot = Layers->AddChildToOverlay(BarSize);
+        BarSlot->SetHorizontalAlignment(HAlign_Fill); BarSlot->SetVerticalAlignment(VAlign_Bottom);
+    }
     return Tile;
 }
+
+void UEWInventoryWidget::AddToGrid(UWrapBox* Grid, UBorder* Tile)
+{
+    auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+    Size->SetWidthOverride(104); Size->SetHeightOverride(104); Size->SetContent(Tile);
+    Grid->AddChildToWrapBox(Size);
+}
+
+void UEWInventoryWidget::BuildStatRows(UVerticalBox* Into)
+{
+    static const TCHAR* Art[] = {
+        TEXT("/Game/Elitewake/UI/HUD/T_Health_Matte_v2.T_Health_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Stamina_Matte_v2.T_Stamina_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Hunger_Matte_v2.T_Hunger_Matte_v2"),
+        TEXT("/Game/Elitewake/UI/HUD/T_Hydration_Matte_v2.T_Hydration_Matte_v2")};
+    static const FLinearColor Fill[] = {FLinearColor(.72f,.12f,.1f), FLinearColor(.86f,.68f,.12f), FLinearColor(.78f,.42f,.14f), FLinearColor(.18f,.46f,.8f)};
+    for (int32 i = 0; i < UE_ARRAY_COUNT(Art); ++i)
+    {
+        auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+        if (UTexture2D* Icon = LoadObject<UTexture2D>(nullptr, Art[i]))
+        {
+            auto* Image = WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(Icon);
+            auto* IconSize = WidgetTree->ConstructWidget<USizeBox>(); IconSize->SetWidthOverride(44); IconSize->SetHeightOverride(44);
+            IconSize->SetContent(Image);
+            auto* IconSlot = Row->AddChildToHorizontalBox(IconSize); IconSlot->SetVerticalAlignment(VAlign_Center); IconSlot->SetPadding(FMargin(0,0,12,0));
+        }
+        auto* Column = WidgetTree->ConstructWidget<UVerticalBox>();
+        auto* Value = WidgetTree->ConstructWidget<UTextBlock>();
+        auto Font = Value->GetFont(); Font.Size = 15; Value->SetFont(Font);
+        Column->AddChildToVerticalBox(Value)->SetPadding(FMargin(0,0,0,4));
+        auto* Bar = WidgetTree->ConstructWidget<UProgressBar>(); Bar->SetFillColorAndOpacity(Fill[i]);
+        auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(8); BarSize->SetContent(Bar);
+        Column->AddChildToVerticalBox(BarSize);
+        auto* ColumnSlot = Row->AddChildToHorizontalBox(Column);
+        ColumnSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); ColumnSlot->SetVerticalAlignment(VAlign_Center);
+        Into->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,16,0,0));
+        StatValues.Add(Value); StatBars.Add(Bar);
+    }
+}
+
 void UEWInventoryWidget::PerformCraft()
 {
     if (!DisplayedRecipes.IsValidIndex(SelectedRecipeIndex) || !IsCraftActionEnabled()) return;
@@ -497,11 +553,19 @@ void UEWInventoryWidget::RefreshSummary()
 
 	SummaryText->SetText(FText::FromString(FString::Printf(TEXT("Slots %d / %d     Weight %.1f / %.1f kg"),
 		Inventory->GetUsedSlotCount(), Inventory->GetMaxSlotCount(), Inventory->GetTotalWeight() + (BoundEquipment ? BoundEquipment->GetTotalWeight() : 0.f), MaxWeight)));
-    if (const auto* Character=Cast<AEWCharacter>(GetOwningPlayerPawn()))
+    const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    const auto* Survival = Character ? Character->GetSurvivalComponent() : nullptr;
+    if (Survival && StatValues.Num() == 4)
     {
-        if (const auto* Survival=Character->GetSurvivalComponent())
-            SurvivorSummary->SetText(FText::FromString(FString::Printf(TEXT("Health  %.0f / %.0f\n\nStamina  %.0f / %.0f\n\nHunger  %.0f%%\n\nHydration  %.0f%%"),
-                Survival->GetHealth(),Survival->GetMaxHealth(),Survival->GetStamina(),Survival->GetMaxStamina(),Survival->GetHunger(),Survival->GetHydration())));
+        const float Max[] = {Survival->GetMaxHealth(), Survival->GetMaxStamina(), 100.f, 100.f};
+        const float Now[] = {Survival->GetHealth(), Survival->GetStamina(), Survival->GetHunger(), Survival->GetHydration()};
+        const TCHAR* Names[] = {TEXT("Health"), TEXT("Stamina"), TEXT("Hunger"), TEXT("Hydration")};
+        for (int32 i = 0; i < 4; ++i)
+        {
+            StatValues[i]->SetText(FText::FromString(i < 2 ? FString::Printf(TEXT("%s  %.0f / %.0f"), Names[i], Now[i], Max[i])
+                                                           : FString::Printf(TEXT("%s  %.0f%%"), Names[i], Now[i])));
+            StatBars[i]->SetPercent(Max[i] > 0.f ? FMath::Clamp(Now[i] / Max[i], 0.f, 1.f) : 0.f);
+        }
     }
 
 }
@@ -729,8 +793,7 @@ bool UEWInventoryWidget::IsFoodActionVisible() const
 }
 float UEWInventoryWidget::GetDisplayedFoodFreshness() const
 {
-    const auto* Content = Rows.IsValidIndex(SelectedIndex) ? Cast<UVerticalBox>(Rows[SelectedIndex]->GetContent()) : nullptr;
-    const auto* Bar = Content && Content->GetChildrenCount() > 2 ? Cast<UProgressBar>(Content->GetChildAt(2)) : nullptr;
+    const UProgressBar* Bar = RowFreshness.IsValidIndex(SelectedIndex) ? RowFreshness[SelectedIndex].Get() : nullptr;
     return Bar ? Bar->GetPercent() : -1.f;
 }
 void UEWInventoryWidget::PerformFoodAction()

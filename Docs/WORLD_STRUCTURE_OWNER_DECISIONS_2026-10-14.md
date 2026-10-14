@@ -19,10 +19,12 @@ These direct owner decisions take precedence over older geography statements. Th
 | Region | Owner direction |
 | --- | --- |
 | Desert | Sandy terrain, bushes, palms; humid climate. Humidity extends 100 meters offshore around its islands. |
-| Winter | Birch trees; rugged mountains and cliffs mixed with smooth slopes; snowy ground, bushes and berries; snowfall. Cold-region materials, ingredients and wildlife. |
+| Winter | Birch trees; rugged mountains and cliffs mixed with smooth slopes; snowy ground, bushes and berries; snowfall. Cold-region materials, ingredients and wildlife, including Snow Leopards (owner clarification). |
 | Jungle | Tall spruce trees per the owner's latest correction; dense, maze-like vegetation, navigable by the map; humid. |
-| Plains | Grassy flatland with many hills; comfortable baseline climate; horses mentioned as characteristic wildlife. |
-| Swamp | Humid wetland region; detailed terrain and vegetation choices remain open. |
+| Plains | Grassy flatland with many hills; comfortable baseline climate; Horses belong here (owner clarification). |
+| Swamp | Humid wetland region; insects, spiders (including giant spiders) and reptiles (owner clarification). Detailed terrain and vegetation choices remain open. |
+
+**Wildlife habitat directions (owner clarification, October 14):** Snow Leopards belong in Winter. Swamp features insects, spiders (including giant spiders) and reptiles. Horses belong in Plains. These are habitat directions only: no counts, spawn densities, exclusive distributions or combat values are set by them.
 
 Stone uses a consistent underlying visual style throughout the world; winter adds snow on top. Different shapes and formations remain possible. Older botanical naming remains reference material; its four-region distribution and specialty Wood outputs cannot silently override these decisions or the existing single generic Wood inventory resource.
 

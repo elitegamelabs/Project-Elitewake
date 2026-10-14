@@ -31,12 +31,22 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Capstan animation | ✅ `a764bc3` |
 | Freshwater pond on the island for bass, catfish and piranha | ✅ `24f1418` |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
-| Inventory and crafting screen redesign | ⏳ owner's layout references received; integrate the grids, tabs, details and actual item images |
+| Inventory and crafting screen redesign: a full slot grid with item pictures, counts and freshness, an equipped row, needs with their icons, item details and crafting | ✅ COMMIT |
+| Item art: the reviewed atlases cut into clean inventory icons and bound to every current item | ✅ COMMIT |
 | Integrated First Voyage Play check | ✅ `60e813f` |
 
 ## M2 — Cannon fight
 
 Goal: the design's "simple two-cannon fight before the deeper systems". Cannons fitted on the sloop's hardpoints, aimed and fired by a survivor, round shot that hits hulls, hull health, holes that let water in, bailing and repair, and a ship that sinks into floating wreck crates. Cannon art is a stand-in until the owner's. Ammo crafting, recipes and costs: ⛔ (open question 1); placeholders are test items only.
+
+| Item | Status |
+|---|---|
+| Cannon: fit it at a hardpoint, man it, aim within its arc, load round shot and fire | ⏳ |
+| Hull health; round shot that strikes a hull and damages it | ⏳ |
+| Holes below the waterline let water in (the ship settles and slows); bailing and repair | ⏳ |
+| Sinking: a ship that fills or is destroyed goes down, leaving wreck crates with its hold | ⏳ |
+| Integrated two-cannon fight Play check | ⏳ |
+| Cannon and shot recipes, costs and variant names | ⛔ open question 1 |
 
 ## M3 — Builder's Plan, Loom and Tanner ⛔
 
