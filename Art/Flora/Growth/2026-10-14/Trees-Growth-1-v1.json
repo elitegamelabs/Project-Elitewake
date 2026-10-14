@@ -1,0 +1,66 @@
+{
+  "key": "Trees-Growth-1",
+  "category": "Trees",
+  "species": [
+    "Veyrpine",
+    "Keldren Fir",
+    "Rimebark",
+    "Harrowpine"
+  ],
+  "columns": 3,
+  "rows": 4,
+  "items": [
+    {
+      "name": "Veyrpine",
+      "stage": "Young"
+    },
+    {
+      "name": "Veyrpine",
+      "stage": "Growing"
+    },
+    {
+      "name": "Veyrpine",
+      "stage": "Mature"
+    },
+    {
+      "name": "Keldren Fir",
+      "stage": "Young"
+    },
+    {
+      "name": "Keldren Fir",
+      "stage": "Growing"
+    },
+    {
+      "name": "Keldren Fir",
+      "stage": "Mature"
+    },
+    {
+      "name": "Rimebark",
+      "stage": "Young"
+    },
+    {
+      "name": "Rimebark",
+      "stage": "Growing"
+    },
+    {
+      "name": "Rimebark",
+      "stage": "Mature"
+    },
+    {
+      "name": "Harrowpine",
+      "stage": "Young"
+    },
+    {
+      "name": "Harrowpine",
+      "stage": "Growing"
+    },
+    {
+      "name": "Harrowpine",
+      "stage": "Mature"
+    }
+  ],
+  "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Veyrpine; Keldren Fir; Rimebark; Harrowpine. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries.",
+  "asset": "Art/Flora/Growth/2026-10-14/Trees-Growth-1-v1.png",
+  "mode": "built-in image_gen",
+  "status": "2D growth reference; species distributions and planted gameplay not implemented by this artwork"
+}

@@ -1,0 +1,20 @@
+{
+  "key": "medicine",
+  "name": "Medical and spoiled-resource families",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    "Bandage: rolled clean off-white cloth bandage",
+    "Antidote: sealed simple opaque ceramic medicine bottle",
+    "Sickness Serum: second distinct sealed plain clay medicine bottle",
+    "Medkit: period wooden medical supply box with cloth and basic tools, no red-cross logo",
+    "Gauze: folded loose clean gauze cloth",
+    "Splint: two smooth wooden slats and cloth ties",
+    "Stitches: plain needle and loop of thread on folded cloth, no wound or procedure",
+    "Spoiled Berries: small dark shriveled rotten berry cluster with subtle mold, not edible-looking"
+  ],
+  "status": "Existing medical families and toxic spoiled berries; balance not assigned",
+  "asset": "Art/Items/Atlases/2026-10-14/medicine-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One realistic original ELITEWAKE pirate-survival asset-reference atlas. Exactly 8 individual object images in a STRICT 4-column x 2-row grid. Row-major objects: Bandage: rolled clean off-white cloth bandage; Antidote: sealed simple opaque ceramic medicine bottle; Sickness Serum: second distinct sealed plain clay medicine bottle; Medkit: period wooden medical supply box with cloth and basic tools, no red-cross logo; Gauze: folded loose clean gauze cloth; Splint: two smooth wooden slats and cloth ties; Stitches: plain needle and loop of thread on folded cloth, no wound or procedure; Spoiled Berries: small dark shriveled rotten berry cluster with subtle mold, not edible-looking. Every item fully contained inside its own equal cell with wide empty transparent gutters. Premium photorealistic physically based weathered period materials, believable wood grain, cloth and forged metal, neutral soft studio lighting, readable shapes. True transparent alpha background, no backdrop, gradients, bokeh, labels, text, numerals, logos, frames, hands or characters. Never draw operational instructions, assembly diagrams, measurements, chemical mixtures or wounds. Firearms are static unloaded visual props only; medical items are clean closed supplies. These are game concept and inventory-reference images, not finished 3D models."
+}

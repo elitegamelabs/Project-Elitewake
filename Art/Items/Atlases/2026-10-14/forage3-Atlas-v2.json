@@ -1,0 +1,21 @@
+{
+  "key": "forage3",
+  "name": "Named berries and regional fruits 3",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    "Taluma",
+    "Veyran Fruit",
+    "Korali",
+    "Selvara",
+    "Maruva",
+    "Talandra Pod",
+    "Orrakai"
+  ],
+  "kind": "small natural cluster of fruit/berries appropriate to this fictional botanical name, distinctly shaped and colored per cell; Azren MUST be azure blue, Marad MUST be burgundy with subtle stripes",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v2.png",
+  "mode": "built-in image_gen",
+  "prompt": "Create a single true TRANSPARENT-ALPHA sprite sheet with exactly seven isolated fruit objects. Strict four equal columns and two equal rows, empty bottom-right eighth cell. NO BACKGROUND OF ANY KIND. No bokeh, no gradient, no environment, no contact shadows bridging cells. Photorealistic realistic studio product cutouts, each entirely visible with generous empty transparent margins. Top row left to right: one purple pear-shaped fruit; one green thick-shelled fruit partially opened to show cream flesh; one crimson star-shaped fruit; one golden yellow citrus fruit. Bottom row: one ripe large pale green water-rich fruit with subtle dew (NOT translucent blue or magical); one split sweet brown seeded pod; one cluster of violet fruits; eighth cell completely transparent. No leaves crossing cells, no text, frames or labels. Original realistic survival-game inventory references.",
+  "status": "Illustrative 2D botanical reference atlas; replaces bokeh-background v1 for inventory use"
+}

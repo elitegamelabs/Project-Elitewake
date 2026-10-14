@@ -1,0 +1,30 @@
+{
+  "key": "herbs1",
+  "name": "Named medicinal flowers and herbs 1",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    "Rimebell",
+    "Veyl Bloom",
+    "Silverwake",
+    "Hushpetal",
+    "Keldwort",
+    "Frostlace",
+    "Thalenleaf",
+    "Whitevein",
+    "Sunveil",
+    "Emberbell",
+    "Savar Bloom",
+    "Red Veyla",
+    "Dunestar",
+    "Caldris Leaf",
+    "Sereleaf",
+    "Vaskroot"
+  ],
+  "kind": "one small botanical cutting showing distinctive leaves, flowers or roots appropriate to the fictional name; plausible real plant anatomy, varied subtle natural colors",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/herbs1-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "A texture atlas of 16 separate realistic botanical ingredient cutouts for the original pirate survival game ELITEWAKE. STRICT equal 4-column x 4-row grid. Each item is one small botanical cutting showing distinctive leaves, flowers or roots appropriate to the fictional name; plausible real plant anatomy, varied subtle natural colors. Clear gaps, each specimen stays inside its own cell, no overlap, no ground. Row-major names (no printed labels): Rimebell; Veyl Bloom; Silverwake; Hushpetal; Keldwort; Frostlace; Thalenleaf; Whitevein; Sunveil; Emberbell; Savar Bloom; Red Veyla; Dunestar; Caldris Leaf; Sereleaf; Vaskroot. All remaining cells are empty transparent alpha. Premium photorealistic natural plant texture, distinct species silhouettes, soft neutral studio light, realistic muted leaves and natural flower pigments, no magic. Absolutely transparent background throughout gaps and around objects; no photographic bokeh, no gradient, no colored background, no text, no labels, no numbers, no frames or trademarks. Reference art only: do not depict medical processes or manufacturing instructions.",
+  "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined"
+}

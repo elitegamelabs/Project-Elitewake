@@ -1,0 +1,30 @@
+{
+  "key": "insects1",
+  "name": "Named insects 1",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    "Rimewing Moth",
+    "Glassback Beetle",
+    "Keld Midge",
+    "Snowburrow Grub",
+    "Veyr Beetle",
+    "Sunscarab",
+    "Dunehopper",
+    "Vask Scorpion",
+    "Emberwing Moth",
+    "Savar Ant",
+    "Glass Scorpion",
+    "Mirefly",
+    "Glowmidge",
+    "Dusk Beetle",
+    "Bloodwing",
+    "Reedhopper"
+  ],
+  "kind": "one complete tiny insect specimen with realistic arthropod anatomy, appropriate moth/beetle/grub/wasp/scorpion form indicated by the name",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/insects1-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "Original ELITEWAKE realistic game resource reference texture atlas. Exactly 16 separate complete specimens in a STRICT 4 by 4 equal-cell grid, row-major order. For every name show one complete tiny insect specimen with realistic arthropod anatomy, appropriate moth/beetle/grub/wasp/scorpion form indicated by the name. Distinct natural forms and colors, detailed real-world anatomy and surface texture, realistic neutral studio lighting. Each specimen fully inside its cell with generous empty alpha gutters; do not connect different cells. Insect legs, wings and antennae must be complete and anatomically plausible. Names in order, NOT printed: Rimewing Moth; Glassback Beetle; Keld Midge; Snowburrow Grub; Veyr Beetle; Sunscarab; Dunehopper; Vask Scorpion; Emberwing Moth; Savar Ant; Glass Scorpion; Mirefly; Glowmidge; Dusk Beetle; Bloodwing; Reedhopper. Unused cells stay empty. Fully transparent alpha background, no bokeh or gradients, no ground, no text or numbers, no logos, no frames, no magical aura, no cartoon eyes. These are illustrative original fantasy-species visual references, not real specimen identification or production-ready 3D models.",
+  "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects"
+}

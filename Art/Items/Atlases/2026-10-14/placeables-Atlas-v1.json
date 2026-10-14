@@ -1,0 +1,20 @@
+{
+  "key": "placeables",
+  "name": "Confirmed placeable families",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    "Campfire: small stone-ring wood campfire with natural modest flame",
+    "Storage Chest: simple weathered timber chest with iron bands",
+    "Food Cabinet: plain wooden cupboard with closed doors",
+    "Ammo Bin: simple iron-banded wooden storage bin",
+    "Rain Barrel: period wooden barrel with rain-catching opening",
+    "Planter: simple rectangular wooden crop planter",
+    "Platform Railing: short modular wooden railing section",
+    "Ship Decoration: simple nautical hanging lantern on a wood bracket"
+  ],
+  "status": "Placeable reference art only; inventory-first rules retained; no material cost or unlock invented",
+  "asset": "Art/Items/Atlases/2026-10-14/placeables-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One original realistic ELITEWAKE pirate-survival reference atlas, exact 4 columns by 2 rows with 8 complete distinct object cutouts. Row-major objects: Campfire: small stone-ring wood campfire with natural modest flame; Storage Chest: simple weathered timber chest with iron bands; Food Cabinet: plain wooden cupboard with closed doors; Ammo Bin: simple iron-banded wooden storage bin; Rain Barrel: period wooden barrel with rain-catching opening; Planter: simple rectangular wooden crop planter; Platform Railing: short modular wooden railing section; Ship Decoration: simple nautical hanging lantern on a wood bracket. Each centered inside its own equal cell with wide empty transparent gutters and no overlaps. Photorealistic natural rough wood, iron, linen, leather, stone and canvas appropriate to a preindustrial pirate game, consistent neutral soft studio light, clean readable silhouettes, original designs. Genuine transparent alpha background; no gradients, bokeh, scene, labels, printed lettering, numbers, frames, trademarks, characters, hands, blood or procedural diagrams. Parchment drawings are decorative loose silhouettes only, without dimensions or assembly instructions. Clothing shows garments without people. Climbing and weapon mechanisms are static concept props, no instructional depiction. These visual references do not define recipes, stats, or final 3D engineering."
+}

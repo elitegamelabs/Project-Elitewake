@@ -1,0 +1,8 @@
+{
+  "method": "ChatGPT built-in image generation",
+  "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-665c09ae-4bb4-4e24-90d3-05aef1546878.png",
+  "reference": "C:/UnrealProjects/EW/Art/Concepts/Boats/2026-10-11/Brigantine-Exterior-Original-v1.png",
+  "prompt": "Use case: precise-object-edit. Edit target: image 1, the owner's selected original Elitewake brigantine exterior.\nMake ONLY this correction: add EXACTLY TWO clearly visible EMPTY reinforced mast mounting sockets along the longitudinal centerline of the MAIN DECK. One foremast socket on the forward main deck, and one mainmast socket aft on the main deck near image coordinate x68.4%, y31.3%, immediately forward of the raised quarterdeck bulkhead. The sockets should be obvious short cylindrical hollow wooden mast partners with structural iron bands, on square reinforced timber bases, matching the visible socket style used on the other hull concepts. Dark open hollow centers, low height, sized plausibly for large masts. They are empty receivers for separately crafted masts and sails, NOT installed masts.\nPreserve ALL other features exactly: original hull shape, bow and bowsprit, forecastle, quarterdeck, stairs, all gunports, timber textures and colors, camera framing, lighting and background appearance. Do not redesign or remove any features. No masts, no sails, no rigging, no cannons, no text, no labels. Preserve transparent background.",
+  "saved_file": "Brigantine-Exterior-Mast-Sockets-v2.png",
+  "change": "Two empty mast sockets added to the original selected brigantine hull."
+}

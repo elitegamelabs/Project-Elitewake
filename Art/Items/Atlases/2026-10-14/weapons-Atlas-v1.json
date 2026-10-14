@@ -1,0 +1,20 @@
+{
+  "key": "weapons",
+  "name": "Confirmed weapon and traversal families",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    "Sailor Sword: original plain iron cutlass with worn wooden grip",
+    "Period Pistol: original wood-and-steel flintlock pistol, no modern handgun",
+    "Rifle: original long wood-and-steel preindustrial firearm",
+    "Longbow: simple tall wooden longbow with string",
+    "Crossbow: wood stock and steel bow original period crossbow",
+    "Harpoon: simple long wooden shaft with steel harpoon point",
+    "Climbing Axe: compact original mountaineering axe, aged metal head and wooden handle",
+    "Glider: folded simple cloth-and-wood hand glider reference"
+  ],
+  "status": "Confirmed families; period pistol name, weapon stats and glider engineering remain TBD",
+  "asset": "Art/Items/Atlases/2026-10-14/weapons-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One realistic original ELITEWAKE pirate-survival asset-reference atlas. Exactly 8 individual object images in a STRICT 4-column x 2-row grid. Row-major objects: Sailor Sword: original plain iron cutlass with worn wooden grip; Period Pistol: original wood-and-steel flintlock pistol, no modern handgun; Rifle: original long wood-and-steel preindustrial firearm; Longbow: simple tall wooden longbow with string; Crossbow: wood stock and steel bow original period crossbow; Harpoon: simple long wooden shaft with steel harpoon point; Climbing Axe: compact original mountaineering axe, aged metal head and wooden handle; Glider: folded simple cloth-and-wood hand glider reference. Every item fully contained inside its own equal cell with wide empty transparent gutters. Premium photorealistic physically based weathered period materials, believable wood grain, cloth and forged metal, neutral soft studio lighting, readable shapes. True transparent alpha background, no backdrop, gradients, bokeh, labels, text, numerals, logos, frames, hands or characters. Never draw operational instructions, assembly diagrams, measurements, chemical mixtures or wounds. Firearms are static unloaded visual props only; medical items are clean closed supplies. These are game concept and inventory-reference images, not finished 3D models."
+}

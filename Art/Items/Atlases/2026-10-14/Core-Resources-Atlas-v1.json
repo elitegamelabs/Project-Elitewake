@@ -1,0 +1,267 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Core-Resources-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    {
+      "name": "split firewood (Wood)",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "bundle of dried straw (Thatch)",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "bundle of raw plant strands (Fiber)",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "small rough grey stone (Stone)",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "bundle of fallen sticks (Sticks)",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.25
+        ],
+        "max": [
+          0.25,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "lump of black mineral coal (Coal)",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.25
+        ],
+        "max": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "one vivid green rough emerald crystal (Emerald)",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.25
+        ],
+        "max": [
+          0.75,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "chunk of translucent frozen water (Ice)",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.25
+        ],
+        "max": [
+          1,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "small mound of fresh snow (Snow)",
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.5
+        ],
+        "max": [
+          0.25,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "amber tree resin globules (Resin)",
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.5
+        ],
+        "max": [
+          0.5,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "small earthenware cup with golden tree sap (Sap)",
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.5
+        ],
+        "max": [
+          0.75,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "black pine pitch in small clay dish (Pitch)",
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.5
+        ],
+        "max": [
+          1,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "white mineral salt crystals (Salt)",
+      "index": 12,
+      "row": 3,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.75
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "lump of wet brown clay (Clay)",
+      "index": 13,
+      "row": 3,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.75
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "small mound of tan sand (Sand)",
+      "index": 14,
+      "row": 3,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.75
+        ],
+        "max": [
+          0.75,
+          1
+        ]
+      }
+    },
+    {
+      "name": "corked ceramic vial containing fish oil (Fish Oil)",
+      "index": 15,
+      "row": 3,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.75
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "Original realistic pirate survival game ELITEWAKE inventory texture atlas, one PNG asset. Exactly 16 distinct complete item images in a STRICT 4-column by 4-row equal-cell grid. Each object centered in its own cell, entirely contained within central 75% of the cell with transparent empty gutters. Equal lighting and scale, neutral studio light, photorealistic physically based materials, weathered period-appropriate objects, crisp readable silhouettes, high-detail textures. Transparent alpha background, no background scene, NO labels, NO text, NO numbers, NO decorative frames, no modern machinery, no logos, no characters. Read order left-to-right then top-to-bottom: 1: split firewood (Wood); 2: bundle of dried straw (Thatch); 3: bundle of raw plant strands (Fiber); 4: small rough grey stone (Stone); 5: bundle of fallen sticks (Sticks); 6: lump of black mineral coal (Coal); 7: one vivid green rough emerald crystal (Emerald); 8: chunk of translucent frozen water (Ice); 9: small mound of fresh snow (Snow); 10: amber tree resin globules (Resin); 11: small earthenware cup with golden tree sap (Sap); 12: black pine pitch in small clay dish (Pitch); 13: white mineral salt crystals (Salt); 14: lump of wet brown clay (Clay); 15: small mound of tan sand (Sand); 16: corked ceramic vial containing fish oil (Fish Oil). Keep all objects separate, do not combine cells or omit items. Purpose: an original reference and inventory atlas with separately addressable UV cells for each listed item."
+}

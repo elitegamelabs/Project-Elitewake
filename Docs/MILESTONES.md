@@ -31,7 +31,7 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Capstan animation | ✅ `a764bc3` |
 | Freshwater pond on the island for bass, catfish and piranha | ✅ `24f1418` |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
-| Inventory and crafting screen redesign | ⛔ owner's layout images did not arrive |
+| Inventory and crafting screen redesign | ⏳ owner's layout references received; integrate the grids, tabs, details and actual item images |
 | Integrated First Voyage Play check | ✅ `60e813f` |
 
 ## M2 — Cannon fight
@@ -48,15 +48,15 @@ Waking on the island with the Quartermaster's Journal, the Repair Kit and the di
 
 ## M5 — Living world
 
-Regional resources and vegetation beyond the coast (the four regions of the ecology guide), land wildlife with AI (wild animals, predators, the known roster), rivers and ponds, and taming's first steps (manatee passive taming).
+Regional resources and vegetation beyond the coast across five regions: Desert, Winter, Jungle, Plains and Swamp. Substantial varied islands, long voyages, one cave per island, solid terrain/seabed, and selected 500-meter ocean depths. Terrain mesh construction is assigned to Claude in [the world mesh handoff](MILESTONE_WORLD_MESH_HANDOFF_2026-10-14.md). Also pending: regional wildlife/AI and taming, hand gathering and ore tool gates, three-stage tree/crop planting, snow-covered static wild berries, and three-ship ghost encounters. See the [remaining-work checklist](REMAINING_WORK_2026-10-14.md) for evidence requirements and blockers.
 
 ## M6 — Survival depth
 
-Cooking (campfire, then grill), spoilage, raw-food sickness, weather and storms, day and night (90 + 90 minutes), clothing and temperature.
+Cooking (campfire, then grill), spoilage, raw-food sickness, weather and storms, day and night (90 + 90 minutes), clothing and temperature. Add Character humidity, desert/jungle/swamp heat, winter freezing and snow, the desert's 100-meter offshore humidity zone, stamina-limited climbing and solid-ground fall damage. Thresholds, clothing effects and damage curves remain TBD.
 
 ## M7 — Persistence
 
-Save and load for survivors, inventories, ships and the world; server restarts keep the game.
+Save and load for survivors, inventories, ships and the world; server restarts keep the game. Generated islands/caves remain fixed for that world. Single player has saving; multiplayer has server persistence without a player manual-save button. Include planted stages and Company claim state once implemented.
 
 ## M8 — Multiplayer menu and private release
 
@@ -66,6 +66,18 @@ Multiplayer from the main menu (now Coming Soon), the private release pipeline (
 
 Real survivor bodies: the owner's characters or MetaHumans on the mannequin skeleton, faces, hair and clothing; the character creator (in source, not in the menu path since October 13) returns where the owner wants it.
 
+## M10 — Constellations and Company islands
+
+Ten selectable night-sky constellations with ten skills each, including the upward Skills camera transition, progression and the confirmed respec cadence. Extend Company ranks, permissions and asset sharing, then multiplayer-only claim flags and the contest-to-new-claim sequence. Port islands are excluded; single player builds without claim gates. Skill effects/costs/connections and claim durations/proximity/defense remain TBD. This is pending work, not a change to the implemented Company foundation.
+
 ## How work proceeds
+
+### Complete remaining-work map
+
+The [October 14 checklist](REMAINING_WORK_2026-10-14.md) supplements every milestone with outstanding art integration, menus, prologue, ship fittings/combat, world/resources/animals, planting/climate/traversal, persistence, multiplayer, characters, progression and Company work. M10 adds the night-sky ten-by-ten constellation system and multiplayer-only Company claim/contest flags; NPC Port islands remain unclaimable. Earlier verified foundations are retained. No new feature is marked done by publishing source art or this list. The [art catalog](../Art/README.md) distinguishes reviewed references, drafts and pending models.
+
+### October 14 owner handoff: world terrain for Claude
+
+Terrain mesh construction is assigned to Claude. The five-region layout, substantial islands, long sailing distances, varied cliffs, one differently located cave system per island, regional terrain, solid island/seabed collision, selected 500-meter depths, and vegetation growth-stage mesh requirements are listed in [the world mesh milestone handoff](MILESTONE_WORLD_MESH_HANDOFF_2026-10-14.md). That checklist supplements M5 and supersedes its older four-region geography. It remains pending implementation and Play verification. Mode-specific rules are in [Single Player](SINGLE_PLAYER_RULES.md) and [Multiplayer](MULTIPLAYER_RULES.md).
 
 Work takes the first ⏳ item of the earliest unfinished milestone that is not blocked. Each item: build, run its Play check and the regression checks it touches, update the docs, commit and push. Owner requests jump the queue. Before starting, check `git log` and `git status` for work committed by other sessions, and leave files someone else has uncommitted alone.

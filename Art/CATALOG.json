@@ -1,0 +1,7890 @@
+{
+  "version": 1,
+  "purpose": "Original Elitewake 2D source art and modeling references",
+  "limitations": "Images are not 3D meshes, rigs, animations or proof of gameplay integration. Atlas UVs are equal-cell reference regions, not final sprite packing.",
+  "authority": "Docs/WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md",
+  "assets": [
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/american_alligator.png",
+      "bytes": 2212617,
+      "sha256": "6a2c14a8f45f70138ba436a65e3eb526de74666523ab63bb6d3d67f49364f009",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/arctic_fox.png",
+      "bytes": 2081951,
+      "sha256": "e818b1f4cee5127348e61e4f96adf5d3d217cc0aab6e0171201746f062626db4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/arctic_hare.png",
+      "bytes": 2038785,
+      "sha256": "b17c8827472f34edc98f4019512b96754952e3c22c4a5e083768e720e6a06de6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/bass.png",
+      "bytes": 2470291,
+      "sha256": "4fbae79c8907bccc5974c6d970d0190e52527000d5799c85c3968c795d6e089b",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/beaver.png",
+      "bytes": 2464064,
+      "sha256": "203cbe4a8b72df4cb2018ba13689d90cd431c74598126a7036e3f0282f379ec2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/black_bear.png",
+      "bytes": 2433459,
+      "sha256": "d75d3e6e4fd0481d95b1338d545bf4f59e3387f63ddb87829dffa1b1223caa58",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/bullfrog.png",
+      "bytes": 2415249,
+      "sha256": "afe03dbde715b3d3602d54dcabf20dbdb9dd430b15ae79dcc87845f86d075bd4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/camel.png",
+      "bytes": 2108326,
+      "sha256": "21c529b07c3a099af441357369df022375098a1c737cf55679f4181280024f24",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/capybara.png",
+      "bytes": 2957101,
+      "sha256": "fa33a34db1d6d8874ed72654222a4f1657c9258b2d8185374deb9ed7ee1c9550",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/catfish.png",
+      "bytes": 2262043,
+      "sha256": "75e12814c847c3446b523942343c5ac5acd38fb963ef35476f03a3985d6e9e68",
+      "dimensions": [
+        1983,
+        793
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/cottonmouth.png",
+      "bytes": 2284488,
+      "sha256": "2aa1109294317beea10fbc13accfd391b9606981dc2df626f0444b4ddf837087",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/crocodile.png",
+      "bytes": 2244090,
+      "sha256": "cbee12b3edf317123d29c150e944d6ae879e229067f51db9b8752050f8460688",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/desert_tortoise.png",
+      "bytes": 2564788,
+      "sha256": "79ca5b713f959421856545a3d6fb1668a8b58a002710d8b0cf27edf28325543c",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/eagle.png",
+      "bytes": 1999229,
+      "sha256": "ac1cb3cfacb87c6cd3c69e27afa4a26ebcb2e7d8a1a200f4dc3361df4f9977a4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/elephant.png",
+      "bytes": 2510956,
+      "sha256": "4a76a408688ae46ca024f2efb615ff3b2ba98ce80b1c31e831a27595951784b1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/elk.png",
+      "bytes": 2093182,
+      "sha256": "2c2ac1e101471b3e821c5ac8c235f4267e1b93bbc749ac6db046f6d70f532a43",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/gazelle.png",
+      "bytes": 1903889,
+      "sha256": "3745f1b41aa6ccda6284b5193cfa746dd01470ca14a69b277a13df15f3403c4f",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/giant_spider.png",
+      "bytes": 2464165,
+      "sha256": "5e0aae7c41cb55bc325c6094a660cb5bf056770e8f72ccf8f6d21d980259477a",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/giant_tortoise.png",
+      "bytes": 2631212,
+      "sha256": "ad05d1051323049c90079f39fb79847f8fe61d845bd0bfb96f5f5aea6b6ce68d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/gorilla.png",
+      "bytes": 2425089,
+      "sha256": "4312431903175da14c13c05c3c3d183c4c81516721ae3658b00977bdd0deadcf",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/great_white_shark.png",
+      "bytes": 1990642,
+      "sha256": "68cbba20bab1d70f958e0ea5a6486c96be6df4ab662eb42c229dc221d354e1e8",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/grizzly_bear.png",
+      "bytes": 2794436,
+      "sha256": "d04b591b6549ed9380046dcb31aff506999c8780e9503a9432873db1fccc7a37",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/hammerhead_shark.png",
+      "bytes": 2028484,
+      "sha256": "827f7ef9c219ae77fe698f49f2512f23b28834f9079b4536c99c9fcf42de6919",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/heron.png",
+      "bytes": 1903188,
+      "sha256": "7935b3310bb2e450342173ee830053d28abbda16e97c6e72644e27b719d1ded1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/horse.png",
+      "bytes": 2054406,
+      "sha256": "fde3eadfa9499c13e2581c38f100c55db2b6109f902c3cd3b0c103dc40e5174d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/house_cat.png",
+      "bytes": 2378273,
+      "sha256": "d590c42c82001059eb5e938a460c9be9c292e7fc155fbe721eb211cb7187adad",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/hyena.png",
+      "bytes": 2295883,
+      "sha256": "032a90b27998519ad2730c1d48b128eeb2ad8b524e68caa2a2efd4439e9773fe",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/iguana.png",
+      "bytes": 2336025,
+      "sha256": "aa0cf1127ce6ade5897cb7cd0eb0d23cd10f3502ea2e88d14391df72362121f7",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/jackal.png",
+      "bytes": 2226629,
+      "sha256": "7ffb4e8f9147aab34b671e7ad53f42aac778b4630d66c516535d7c612bd33013",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/jaguar.png",
+      "bytes": 2422765,
+      "sha256": "5ae6dd56ab77e634e40ab54325c07f4b9b6732ceed5f74bf34a3865459f7c2b2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/lion.png",
+      "bytes": 2302691,
+      "sha256": "0e20e3bffa5180d206e7ba600c7c840cac6ea249cdb7e5c5a7bf8766961ae794",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/manatee.png",
+      "bytes": 2423154,
+      "sha256": "57459d3ace5155464d9bbaa35e4d4fbe871afb89f8fb91207c7dc5cc80c2a9af",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/manta_ray.png",
+      "bytes": 1989262,
+      "sha256": "8440b5114cc0352a7e0c9c80e5f30556ca68279daae0af556378932e3307676b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/monkey.png",
+      "bytes": 2256154,
+      "sha256": "680dc67d6863ae0c649e59dd17fd926b2a5ca6319fb5e66a0f6c0e77a3657fe3",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/moose.png",
+      "bytes": 2205679,
+      "sha256": "741ab5e0e2c5352023690730bf7e6f59b340e3e62660a0741f9eeb059e0b5ed2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/mountain_goat.png",
+      "bytes": 2183026,
+      "sha256": "8930f5189cf6b2ab4889154336916bbe2c6f3fffbd770ed9ce907c9d5727ff81",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/ostrich.png",
+      "bytes": 2009922,
+      "sha256": "65409ead098a052c1df8d7c514f8fa8f709059d3a30e6611bdf9c5016babf843",
+      "dimensions": [
+        1312,
+        1199
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/otter.png",
+      "bytes": 2403051,
+      "sha256": "8c05d5eac2db3857e050577459609e603f80a420fff5fad61355045f7b107fac",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/parrot.png",
+      "bytes": 1781287,
+      "sha256": "5f7da41434fdc7e54dbc11e46c4281fb3b8f4bbb7c24abfc1cac4af5167dab0a",
+      "dimensions": [
+        1145,
+        1374
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/piranha.png",
+      "bytes": 2555221,
+      "sha256": "128d742c6290480fdc2b6ae96bef9019ebeb980241165b073a503c3a0c4751b2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/python.png",
+      "bytes": 2280858,
+      "sha256": "20f355f351c9784e8e87c470377b34b2a6c90ffa8a903f35b4cf5406743c85e6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/raccoon.png",
+      "bytes": 2754508,
+      "sha256": "03fc8e78450c840c5067db45e33d57378949de022155edc7ea8a520e97105a09",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/reindeer.png",
+      "bytes": 2096528,
+      "sha256": "e496d6341641aea85dd9f4a0021563a54926c056e2606b314bf5e1c11ce130bc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/rhino.png",
+      "bytes": 2547989,
+      "sha256": "b1009797b49cb77dceba4d64877fa090d2dc56e1c7e30ccbf83dd94056706cc9",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/siren.png",
+      "bytes": 2180702,
+      "sha256": "51fde9f02d2fc38dc79c45760333b8ced0635b3c7932f77ec209d17a28c1bf80",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/snow_leopard.png",
+      "bytes": 2435856,
+      "sha256": "dd74db66632893de4adca6d84232880903e003778cc4db5611c180476aac8cd3",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/squid.png",
+      "bytes": 2083651,
+      "sha256": "6210aeff0660fac0fc594b3350ccd46921352a65c642e4182c9cec1b50a07418",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/tapir.png",
+      "bytes": 2391201,
+      "sha256": "071119faf22fffe60df31b420964ed98e12aaf0df83b5d7ee534f67bafa434d0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/tiger.png",
+      "bytes": 2407856,
+      "sha256": "deba130fc3ff78b3553c3c98795dc0dbcb2730b9560fe6776d7ac0625279c876",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/toucan.png",
+      "bytes": 1938773,
+      "sha256": "af7d6f06f108465ee0ee48a675ed81e12148f8b1ce0e7b6bb607e4c390d79e96",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/warthog.png",
+      "bytes": 2529298,
+      "sha256": "01f3fe5fbdbcac34bbff3c15af39e596d4461622887cd0443e79ae4000f03d1e",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/water_buffalo.png",
+      "bytes": 2441874,
+      "sha256": "2e67f229e0e0d895e389fe7dab409d7db6a4dd8eb99331806a7f1b6b031c1065",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/wild_boar.png",
+      "bytes": 2828406,
+      "sha256": "42932adf7b3e9d0c00f697b92b99d70ebda4cf40f1806f70cbf773f73ba5d966",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Animals/2026-10-12/wolf.png",
+      "bytes": 2314053,
+      "sha256": "66bd5291b46799d605750cbdbc20d950a5387bfaf8730164bab7f929d7249174",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Brigantine-Exterior-Mast-Sockets-v2.png",
+      "bytes": 2463201,
+      "sha256": "cad4b3fe282419cac36dcfa31ba6c4b0655b7d781aff7235db238dde0b746b3b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Alternate reference only; owner-selected original hulls remain canonical",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Brigantine-Exterior-Original-v1.png",
+      "bytes": 2429320,
+      "sha256": "2512356666b01cfb06c6399f0ad7b1eca2d75e883c699b3b575be0a35531e89b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Brigantine-Interior-v1.png",
+      "bytes": 3658166,
+      "sha256": "9f6b6eadebe6d6a8323077a3d694814f1f50d7ede69fd8f10bcc42cd43c467f9",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Dinghy-Exterior-Original-v1.png",
+      "bytes": 2497031,
+      "sha256": "72ff9c612b078928a244597f71265858827c873e7c6820e3f90f2571ee73e219",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Dinghy-Interior-v1.png",
+      "bytes": 3175001,
+      "sha256": "8fd37dcec5677658aaf3fe05bcbd564652f474325d70718f1909dd9c51b69330",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Large-Multi-Deck-Exterior-Original-v1.png",
+      "bytes": 2657588,
+      "sha256": "e2e45dbd16b1d2193cc77822fb0ccae1364fb0b1e80200764a1247f57060a03d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Large-Multi-Deck-Interior-v1.png",
+      "bytes": 2672841,
+      "sha256": "ff5a18518d334a1a17d4f43235722bb516d966b3e2fc7153f8b4da31db457780",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Raft-Exterior-Original-v1.png",
+      "bytes": 2444201,
+      "sha256": "e272fec92110cc7d4749ec12427dcd360e8a63ff1589a0471dbbb48e4cd0a115",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Raft-Interior-v1.png",
+      "bytes": 3144145,
+      "sha256": "86a9d306504766ee220a08ed94e036468b82df2cba73429fb0dc85d1a009889c",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Schooner-Exterior-Original-v1.png",
+      "bytes": 2347868,
+      "sha256": "851aeacabe2d935a5bf3c83addd7286723a5a1474f4a972786b592d5d0776142",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Schooner-Interior-v1.png",
+      "bytes": 3607833,
+      "sha256": "b4156f12dfedc603886a52b8d9615b610db2ffea031a21d3915695b5bc6f1291",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Sloop-Exterior-Original-v1.png",
+      "bytes": 2660952,
+      "sha256": "e51a62b30ed7f59ba32294ee9d94472f2a71d8c65b721de3a57d21347fde40fc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Boats/2026-10-11/Sloop-Interior-v1.png",
+      "bytes": 3480746,
+      "sha256": "dbf6afcb329ed46dd5a48176019af8b6954fdf1b1207f523b01a7a4922be41fb",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/angryfish.png",
+      "bytes": 2555221,
+      "sha256": "128d742c6290480fdc2b6ae96bef9019ebeb980241165b073a503c3a0c4751b2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/bass.png",
+      "bytes": 2470291,
+      "sha256": "4fbae79c8907bccc5974c6d970d0190e52527000d5799c85c3968c795d6e089b",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/catfish.png",
+      "bytes": 2262043,
+      "sha256": "75e12814c847c3446b523942343c5ac5acd38fb963ef35476f03a3985d6e9e68",
+      "dimensions": [
+        1983,
+        793
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/mantaray.png",
+      "bytes": 1989262,
+      "sha256": "8440b5114cc0352a7e0c9c80e5f30556ca68279daae0af556378932e3307676b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/mantee.png",
+      "bytes": 2423154,
+      "sha256": "57459d3ace5155464d9bbaa35e4d4fbe871afb89f8fb91207c7dc5cc80c2a9af",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/shark.png",
+      "bytes": 1990642,
+      "sha256": "68cbba20bab1d70f958e0ea5a6486c96be6df4ab662eb42c229dc221d354e1e8",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/shark2.png",
+      "bytes": 2028484,
+      "sha256": "827f7ef9c219ae77fe698f49f2512f23b28834f9079b4536c99c9fcf42de6919",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Fish/2026-10-12/squid.png",
+      "bytes": 2083651,
+      "sha256": "6210aeff0660fac0fc594b3350ccd46921352a65c642e4182c9cec1b50a07418",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Sails/2026-10-11/Large-Dark-Red-Sail-v1.png",
+      "bytes": 2532627,
+      "sha256": "55c56c3e8d3cdfa8cb9e363a43db726ee34b80deb7cee6a459799d825b861cf7",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Sails/2026-10-11/Large-Sail-v1.png",
+      "bytes": 2751729,
+      "sha256": "0ab39fe9cc0c266d1e7eeaa44be01a9ef4ae55c8e8a117c6ff44c8f32b86fdc6",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Sails/2026-10-11/Medium-Sail-v1.png",
+      "bytes": 2675451,
+      "sha256": "5909f9efbfa874104e4c93612c463cc1e54ee4c265f88ce55cf683bb896732aa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Sails/2026-10-11/Small-Sail-v1.png",
+      "bytes": 2217127,
+      "sha256": "ac5690af365e22619b6d583614ac2f526c8579914691e90c76f58327c22736eb",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Brick-Oven-Concept-v1.png",
+      "bytes": 2864491,
+      "sha256": "4df361231171ed45f4562e4517f568f388aab2c627eeae03ea2dc6c420a952db",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Cooking-Hearth-Concept-v1.png",
+      "bytes": 2767030,
+      "sha256": "0d5786f1cecd00435a74b3153bf7ef83e74fbd39832a9c4d4a86620f7fdd8f51",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Forge-Concept-v1.png",
+      "bytes": 2754646,
+      "sha256": "5bb706129497c8aee27d1d8182874ed2fe1f7911f48ffbd91560f3b2a90659fb",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Loom-Concept-v1.png",
+      "bytes": 2811053,
+      "sha256": "e4ce8e9dcd968c009f0f9babd339d199e2e3e9e226a31dc754285319bcfb0541",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Smithy-Concept-v1.png",
+      "bytes": 2747642,
+      "sha256": "52b11b93b0093b0f7eb0e4abbb341298426b6429d172d9a9427a33edad0e0908",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Concepts/Workstations/2026-10-12/Tanner-Concept-v1.png",
+      "bytes": 2836371,
+      "sha256": "253f3309a6ff543be0f3008f206ed487017adbf59149d7317e0b59d2024fcffc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Environment/TropicalSand-v1.png",
+      "bytes": 4287688,
+      "sha256": "11f7c47214a4729bb25cd7ce8c9540cc738b778de44c65c258e91eb118bec39e",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Environment/WeatheredTimber-v1.png",
+      "bytes": 3807710,
+      "sha256": "ab8405db52cd6ce369ae5a557dbb5794c48357881f30fcfc56e240f4c945e5f9",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/Bass-v1.png",
+      "bytes": 631097,
+      "sha256": "4201953b9d3d134286a2fe91cf92ef504bc323866ad29d12d1ba1d4d2923f67f",
+      "dimensions": [
+        1024,
+        421
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/Catfish-v1.png",
+      "bytes": 414915,
+      "sha256": "31260637ca494668f0a04507d237e6b1b21ac899cd4df2f92d363a0d39d9bd69",
+      "dimensions": [
+        1024,
+        313
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/GreatWhiteShark-v1.png",
+      "bytes": 397960,
+      "sha256": "aa4e698dd24211941fdae881d132ab5f8c408405be7d9c23ca3bcf137e12b04b",
+      "dimensions": [
+        1024,
+        440
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/HammerheadShark-v1.png",
+      "bytes": 272410,
+      "sha256": "e5f4190035649190355856095e7c09504c4214bfd736d755b8f0699147755059",
+      "dimensions": [
+        1024,
+        330
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/Manatee-v1.png",
+      "bytes": 753316,
+      "sha256": "c31be2aad32283df50444fd48dbeb7478dde9bb2ba0ce63c91ba623db82d4f0d",
+      "dimensions": [
+        1024,
+        521
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/MantaRay-v1.png",
+      "bytes": 492460,
+      "sha256": "7a05a820f198281c9522261ba1c5371a59e2c887db7c48cb5a1744c3d76f3ae5",
+      "dimensions": [
+        1024,
+        621
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/Piranha-v1.png",
+      "bytes": 933076,
+      "sha256": "68b6c7c8745ffb25934c22ebff10dd636c4f5076a8a3c96a02adf7e530168896",
+      "dimensions": [
+        1024,
+        609
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Fauna/Fish/Squid-v1.png",
+      "bytes": 441503,
+      "sha256": "0e5a0c387c13161915eb429dc2550a703a02cff1f0ed8892ff96b92f13247429",
+      "dimensions": [
+        1024,
+        564
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Flora/Growth/2026-10-14/Trees-Growth-1-v1.png",
+      "bytes": 2605896,
+      "sha256": "58f4e1461bb1d6cfee528e529723f364fcf896537d6d631f59d749efc179bcb5",
+      "dimensions": [
+        1153,
+        1364
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "DRAFT: species identity needs correction before modeling or runtime use",
+      "metadata": "Art/Flora/Growth/2026-10-14/Trees-Growth-1-v1.json",
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Veyrpine",
+          "stage": "Young",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.3333333333333333,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Veyrpine",
+          "stage": "Growing",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.0
+            ],
+            "max": [
+              0.6666666666666666,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Veyrpine",
+          "stage": "Mature",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Young",
+          "index": 3,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.3333333333333333,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Growing",
+          "index": 4,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.25
+            ],
+            "max": [
+              0.6666666666666666,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Mature",
+          "index": 5,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Young",
+          "index": 6,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.3333333333333333,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Growing",
+          "index": 7,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.5
+            ],
+            "max": [
+              0.6666666666666666,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Mature",
+          "index": 8,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Young",
+          "index": 9,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.3333333333333333,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Growing",
+          "index": 10,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.75
+            ],
+            "max": [
+              0.6666666666666666,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Mature",
+          "index": 11,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": [
+        "First growth board does not faithfully match the requested species rows; remaining boards not generated."
+      ]
+    },
+    {
+      "path": "Art/Flora/Veyran-Palm-Frond-v1.png",
+      "bytes": 551140,
+      "sha256": "b5c960d243b6892fa33d15a3f3fa734984f4e3590ddbc4ebf28b8840b6659630",
+      "dimensions": [
+        2048,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/ammo-Atlas-v1.png",
+      "bytes": 2232650,
+      "sha256": "81f712c7fdd3135331abfaa4d1deb197231587fb3ae7f022731072d147ef59c8",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Family references only; specific ammunition variants not defined",
+      "metadata": "Art/Items/Atlases/2026-10-14/ammo-Atlas-v1.json",
+      "columns": 3,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Bullets: small handful of plain round lead musket balls",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.3333333333333333,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Tranquilizer Darts: small plain fictional wooden and metal darts, no chemical recipe or mechanical details",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.0
+            ],
+            "max": [
+              0.6666666666666666,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Regular Arrows: three wooden shafts with iron points and feather fletching",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Tranquilizer Arrows: three visually distinct banded wooden arrows, no formula or mechanism diagram",
+          "index": 3,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.3333333333333333,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Harpoon Ammo: compact detachable plain barbed iron harpoon bolt",
+          "index": 4,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.5
+            ],
+            "max": [
+              0.6666666666666666,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Cannon Ammo: two dark cast-iron round cannonballs",
+          "index": 5,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Animal-Marine-Materials-Atlas-v1.png",
+      "bytes": 1938920,
+      "sha256": "4c0c32234bff3fd11820b12bd229b04134b2a2978459a30a78202f3ec1ac3cd7",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Animal-Marine-Materials-Atlas-v1.json",
+      "columns": 4,
+      "rows": 3,
+      "items": [
+        {
+          "name": "Hide: rolled untreated brown animal hide",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Fur: folded soft thick winter animal pelt",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Bone: clean sun-bleached long bone",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Animal Fat: small pale fat pieces in rough clay dish",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Feathers: three natural grey brown feathers",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.25,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Scales: a small pile of reptile scales",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.3333333333333333
+            ],
+            "max": [
+              0.5,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Horn: one hollow curved horn",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.3333333333333333
+            ],
+            "max": [
+              0.75,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Tusk: one curved ivory animal tusk",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Fish Pieces: small cut fish flesh pieces",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Fish Bait: earthworms and insect larvae in small wooden bait cup",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.6666666666666666
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Chitin: dark brown insect shell fragments",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.6666666666666666
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Toxin Gland: small sealed opaque clay vial with a plain stopper, no labels",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.6666666666666666
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/blueprints-Atlas-v1.png",
+      "bytes": 2745125,
+      "sha256": "564545666911820e6d32d97d697faea6658a7732b1812eee6b34bd2c730afb69",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Visual presentation references, not new physical blueprint items, recipe unlocks or functional engineering plans",
+      "metadata": "Art/Items/Atlases/2026-10-14/blueprints-Atlas-v1.json",
+      "columns": 2,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Builder's Plan: open period parchment on wooden writing board with faint original building sketches",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Wooden Tool Recipe presentation: blank parchment with a small ink wooden axe silhouette sketch",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Campfire Recipe presentation: blank parchment with a small ink stone-ring campfire silhouette sketch",
+          "index": 2,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Storage Chest Recipe presentation: blank parchment with a small ink simple chest silhouette sketch",
+          "index": 3,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": [
+        "Decorative diagram references only; wooden-tool drawing needs material correction."
+      ]
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/climate-Atlas-v1.png",
+      "bytes": 2269645,
+      "sha256": "ed47e16169e8fb22296048bef83c2950bff2b64b348cc51d8e3f589e27fee457",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Clothing and indicator concepts; not approved equipment recipes or final HUD assets",
+      "metadata": "Art/Items/Atlases/2026-10-14/climate-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Warm Winter Coat concept: realistic fur-lined wool coat on invisible mannequin, full garment without body",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Light Clothing concept: plain linen sailor shirt, folded or suspended without person",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Leather Boots concept: worn period leather boots",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Wool Trousers concept: original thick wool trousers without body",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Humidity Indicator reference: simple realistic condensation droplets, original neutral graphic",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Overheating Indicator reference: original simple heat-wave motif without text",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Freezing Indicator reference: realistic ice crystal motif without text",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Winter Berry Bush reference: compact complete natural berry bush with patches of snow on branches and red berries",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Confirmed-Crops-Atlas-v1.png",
+      "bytes": 1933640,
+      "sha256": "07044000162365ad5e7d9c3387d01dadaeab8b88d51a159a45a286ffb0f10c6e",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Confirmed-Crops-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Corn: single ripe ear with partially peeled green husk",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Tomato: ripe red tomato",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Beans: small cluster of green bean pods",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Sugarcane: three cut sugarcane stalk sections",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Potato: two soil-dusted potatoes",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Carrot: orange carrot with green leaves",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Pumpkin: small orange pumpkin",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Rye: tied bundle of ripe rye grain stalks",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Core-Resources-Atlas-v1.png",
+      "bytes": 2556639,
+      "sha256": "053fd63f10a76ff67d5a003ead810bd88eeb90ba57cd57b33e6c4d4fe18fde5b",
+      "dimensions": [
+        1261,
+        1247
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Core-Resources-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "split firewood (Wood)",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "bundle of dried straw (Thatch)",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "bundle of raw plant strands (Fiber)",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "small rough grey stone (Stone)",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "bundle of fallen sticks (Sticks)",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "lump of black mineral coal (Coal)",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "one vivid green rough emerald crystal (Emerald)",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "chunk of translucent frozen water (Ice)",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "small mound of fresh snow (Snow)",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "amber tree resin globules (Resin)",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "small earthenware cup with golden tree sap (Sap)",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "black pine pitch in small clay dish (Pitch)",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "white mineral salt crystals (Salt)",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "lump of wet brown clay (Clay)",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "small mound of tan sand (Sand)",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "corked ceramic vial containing fish oil (Fish Oil)",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/fittings-Atlas-v1.png",
+      "bytes": 1880985,
+      "sha256": "b275ea7bcabf990320102c7799dc4a80870effd5097ec5772b7fc90dbb8c4fac",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Fitting concepts, original ship/sail references remain authoritative; anchor currently built-in, no crafted-anchor recipe implied",
+      "metadata": "Art/Items/Atlases/2026-10-14/fittings-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Helm: original spoked wooden ship wheel on a simple mount",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Cannon: original period iron ship cannon on wooden carriage, no caliber marking",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Diving Platform: realistic timber ship-side platform with wooden hoist and diving line attachment, no modern scuba equipment",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Docking Platform: realistic timber hoist platform for a dinghy, no dinghy already fitted",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Small Sail: compact bundled natural canvas sail",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Medium Sail: larger bundled natural canvas sail",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Large Sail: big bundled natural canvas sail",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Anchor: simple weathered iron ship anchor with short rope coil",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/forage1-Atlas-v1.png",
+      "bytes": 2537608,
+      "sha256": "866b00345126865daae5cdd8bd22b29ce4a9f663ac6dea2dbb014fe5795fac07",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Generated 2D reference atlas; no gameplay balance or biome distribution implied",
+      "metadata": "Art/Items/Atlases/2026-10-14/forage1-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Velra Berry",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Kivren Berry",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Orris Berry",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Tavra Berry",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Brindleberry",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Nivelle Fruit",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Keldapple",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Azren Berry",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Marad Berry",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Sava Berry",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Drel Berry",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Orakai Fruit",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Caldris Pod",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Veysa Melon",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Savar Fruit",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Mirel Berry",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/forage2-Atlas-v1.png",
+      "bytes": 2499982,
+      "sha256": "9bb5f16c5f0b9103a2d72652dbf69c760e6f74800e52ae6cb750275db4b23459",
+      "dimensions": [
+        1447,
+        1087
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Generated 2D reference atlas; no gameplay balance or biome distribution implied",
+      "metadata": "Art/Items/Atlases/2026-10-14/forage2-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Duskberry",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Venn Berry",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Morra Berry",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Siltberry",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Velm Fruit",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Brakka Pod",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Morrow Fruit",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Korri Berry",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Talva Berry",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Seyra Berry",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Orven Berry",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Veyri Berry",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Kaluma Berry",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Rava Berry",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Orvena",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Kalavai",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v1.png",
+      "bytes": 2717020,
+      "sha256": "65dfe458f0635f20635e9fe732ed3142a795c897c7478c17e819bec40138d7a1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Legacy art; newer version preferred",
+      "metadata": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Taluma",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Veyran Fruit",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Korali",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Selvara",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Maruva",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Talandra Pod",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Orrakai",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v2.png",
+      "bytes": 2070051,
+      "sha256": "30ecf0b487d48c1dd03d36ac97749afd29b70fdd035246693153e66f04255344",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D botanical reference atlas; replaces bokeh-background v1 for inventory use",
+      "metadata": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v2.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Taluma",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Veyran Fruit",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Korali",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Selvara",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Maruva",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Talandra Pod",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Orrakai",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/fungi1-Atlas-v1.png",
+      "bytes": 2262796,
+      "sha256": "facce8b367d8d61225490fd593bc7f0a1c4ed66874b8dd8537623c33b83c5231",
+      "dimensions": [
+        1374,
+        1145
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
+      "metadata": "Art/Items/Atlases/2026-10-14/fungi1-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Drowsecap",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Rimecap",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Bluegill Fungus",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Hollowcap",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Ashveil",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Dustcap",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Suncap",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Red Hollowcap",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Dreamspore",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Mirecap",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Hushcap",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Rotveil",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Venncap",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Glowspore",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Blackspore",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Morren Shelf",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/fungi2-Atlas-v1.png",
+      "bytes": 2261609,
+      "sha256": "5e19c414a008aee26a138ff04d7c1db37605c332f664cd0df160ce4194d1a64a",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
+      "metadata": "Art/Items/Atlases/2026-10-14/fungi2-Atlas-v1.json",
+      "columns": 3,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Silt Puff",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.3333333333333333,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Koracap",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.0
+            ],
+            "max": [
+              0.6666666666666666,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Goldveil",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Veyrspore",
+          "index": 3,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.3333333333333333,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Talora Shelf",
+          "index": 4,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.5
+            ],
+            "max": [
+              0.6666666666666666,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Dreamveil",
+          "index": 5,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/herbs1-Atlas-v1.png",
+      "bytes": 2600578,
+      "sha256": "2c253071b2298506d80ca0d1a2f8dc57662b8cea97372bb6685e7e62005f5cc6",
+      "dimensions": [
+        1402,
+        1122
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
+      "metadata": "Art/Items/Atlases/2026-10-14/herbs1-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Rimebell",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Veyl Bloom",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Silverwake",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Hushpetal",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Keldwort",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Frostlace",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Thalenleaf",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Whitevein",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Sunveil",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Emberbell",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Savar Bloom",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Red Veyla",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Dunestar",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Caldris Leaf",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Sereleaf",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Vaskroot",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/herbs2-Atlas-v1.png",
+      "bytes": 2490620,
+      "sha256": "9cddceb8bc3eec801794265100c23159ca1f0e016031be46ea275d3cf3a86f1a",
+      "dimensions": [
+        1287,
+        1222
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
+      "metadata": "Art/Items/Atlases/2026-10-14/herbs2-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Orakai Frond",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Mirebell",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Dusk Lily",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Vennflower",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Morren Bloom",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Siltrose",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Hushreed",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Velroot",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Brackleaf",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Miremint",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Blackvein",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Selkai Bloom",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Talora Orchid",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Korava Flower",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Veyran Lily",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Sunara",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/herbs3-Atlas-v1.png",
+      "bytes": 1432641,
+      "sha256": "ef3554313aabc76e593a7f9ff3cb0a56b11b3098348b1da939f12832f935df16",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
+      "metadata": "Art/Items/Atlases/2026-10-14/herbs3-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Kalavai Blossom",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Ravelle",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Maruva Leaf",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Talandra Leaf",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Seyrroot",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/insects1-Atlas-v1.png",
+      "bytes": 2182909,
+      "sha256": "a5907a3f9afd5a8c650aa47b86e78060cc1e546ee901ef4268f5737758dee907",
+      "dimensions": [
+        1263,
+        1246
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
+      "metadata": "Art/Items/Atlases/2026-10-14/insects1-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Rimewing Moth",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Glassback Beetle",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Keld Midge",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Snowburrow Grub",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Veyr Beetle",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Sunscarab",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Dunehopper",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Vask Scorpion",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Emberwing Moth",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Savar Ant",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Glass Scorpion",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Mirefly",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Glowmidge",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Dusk Beetle",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Bloodwing",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Reedhopper",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": [
+        "Bloodwing depiction needs anatomy review against the mosquito-like guide description."
+      ]
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/insects2-Atlas-v1.png",
+      "bytes": 1948427,
+      "sha256": "7a1b8bd2d254b9ef8112a2be7bf7cd87ef2419286e022ab704d2c1fb0d78f934",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
+      "metadata": "Art/Items/Atlases/2026-10-14/insects2-Atlas-v1.json",
+      "columns": 4,
+      "rows": 3,
+      "items": [
+        {
+          "name": "Mudgrub",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Venn Beetle",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Blacksting Wasp",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Jewelback Beetle",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Talora Cicada",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.25,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Veyran Butterfly",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.3333333333333333
+            ],
+            "max": [
+              0.5,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Korava Ant",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.3333333333333333
+            ],
+            "max": [
+              0.75,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Goldwing Butterfly",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Razorwing Wasp",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Lantern Beetle",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.6666666666666666
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Maruva Grub",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.6666666666666666
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/materials-Atlas-v1.png",
+      "bytes": 2993840,
+      "sha256": "a0d5b171ef162d3d27f9825396ad0e6832264ebeffd6e33b074a3d939677d842",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "status": "Material-family concept references; does not approve new recipes",
+      "metadata": "Art/Items/Atlases/2026-10-14/materials-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Rope: coiled natural hemp rope",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Cloth: folded rough woven linen",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Leather: rolled tanned brown leather",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Nails: handful of hand-forged iron nails",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Planks: three weathered timber planks",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Tar: small earthenware bowl of black tar",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Charcoal: irregular wood charcoal pieces",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Gunpowder reference: closed plain small powder horn, no open composition or labels",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Fertilizer: small tied coarse sack of compost",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Soil: small mound of dark fertile soil",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Ceramic: simple unfinished clay jug",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Paper: stack of rough handmade blank paper",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Dye: small clay pot with muted red pigment",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Antler: shed branching deer antler",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Teeth: small cluster of clean animal teeth",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Shell: one natural spiral seashell",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/medicine-Atlas-v1.png",
+      "bytes": 2355813,
+      "sha256": "78493f09c58654ef6dd4221f50b6aba2c42de000e498b3255bf5b3d9fda0e42e",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing medical families and toxic spoiled berries; balance not assigned",
+      "metadata": "Art/Items/Atlases/2026-10-14/medicine-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Bandage: rolled clean off-white cloth bandage",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Antidote: sealed simple opaque ceramic medicine bottle",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Sickness Serum: second distinct sealed plain clay medicine bottle",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Medkit: period wooden medical supply box with cloth and basic tools, no red-cross logo",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Gauze: folded loose clean gauze cloth",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Splint: two smooth wooden slats and cloth ties",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Stitches: plain needle and loop of thread on folded cloth, no wound or procedure",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Spoiled Berries: small dark shriveled rotten berry cluster with subtle mold, not edible-looking",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Metal-Ingots-Atlas-v1.png",
+      "bytes": 1812837,
+      "sha256": "1f1c515db668e8c812da6179be6451e875ba2a88814c452105722272a3337c9c",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Metal-Ingots-Atlas-v1.json",
+      "columns": 4,
+      "rows": 3,
+      "items": [
+        {
+          "name": "Copper Ingot: weathered reddish copper bar",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Tin Ingot: dull pale silver cast bar",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Iron Ingot: rough dark grey iron bar",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Silver Ingot: worn luminous silver bar",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Gold Ingot: warm yellow gold bar",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.25,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Lead Ingot: soft dull bluish grey lead bar",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.3333333333333333
+            ],
+            "max": [
+              0.5,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Zinc Ingot: light grey zinc bar",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.3333333333333333
+            ],
+            "max": [
+              0.75,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Nickel Ingot: muted pale metallic nickel bar",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Tungsten Ingot: dense dark graphite grey bar",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Bronze Ingot: reddish bronze alloy bar",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.6666666666666666
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Brass Ingot: muted yellow brass alloy bar",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.6666666666666666
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Steel Ingot: forged steel bar with hammer marks",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.6666666666666666
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Metal-Ores-Atlas-v1.png",
+      "bytes": 3171998,
+      "sha256": "3d83f48f3afc59f801f0d73f35d54d2f9676ec6022fba24ff6f22bb847acc7a6",
+      "dimensions": [
+        1278,
+        1230
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Metal-Ores-Atlas-v1.json",
+      "columns": 3,
+      "rows": 3,
+      "items": [
+        {
+          "name": "copper ore rock with green oxidation and copper inclusions",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "tin ore cassiterite in grey stone",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.0
+            ],
+            "max": [
+              0.6666666666666666,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "iron ore hematite reddish dark rough rock",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "silver ore with silvery metallic inclusions in stone",
+          "index": 3,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.3333333333333333,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "gold ore with small gold veins through quartz",
+          "index": 4,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.3333333333333333
+            ],
+            "max": [
+              0.6666666666666666,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "lead ore galena dark grey cubic crystalline rock",
+          "index": 5,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "zinc ore sphalerite dark brown sparkling rock",
+          "index": 6,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.3333333333333333,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "nickel ore grey-green metallic mineral rock",
+          "index": 7,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.6666666666666666
+            ],
+            "max": [
+              0.6666666666666666,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "tungsten ore wolframite dense dark grey black prismatic crystals",
+          "index": 8,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.6666666666666666
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Orchard-Fruits-Atlas-v1.png",
+      "bytes": 1980072,
+      "sha256": "10fe22621eea604e4163101114e4b94ff1bb476f28bd22aa62271592b32ecb19",
+      "dimensions": [
+        1286,
+        1223
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Orchard-Fruits-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Apple",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Pear",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Peach",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Plum",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Cherry",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Orange",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Lemon",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Lime",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Coconut half with white flesh",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "small bunch of Bananas",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Mango",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Pomegranate half showing seeds",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Dates",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Fig half with ripe flesh",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/placeables-Atlas-v1.png",
+      "bytes": 2178458,
+      "sha256": "491fff05a759e17d02f19d1c2a39cc0bec7e9af917b2acbe0e7359490f72ceaf",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Placeable reference art only; inventory-first rules retained; no material cost or unlock invented",
+      "metadata": "Art/Items/Atlases/2026-10-14/placeables-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Campfire: small stone-ring wood campfire with natural modest flame",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Storage Chest: simple weathered timber chest with iron bands",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Food Cabinet: plain wooden cupboard with closed doors",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Ammo Bin: simple iron-banded wooden storage bin",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Rain Barrel: period wooden barrel with rain-catching opening",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Planter: simple rectangular wooden crop planter",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Platform Railing: short modular wooden railing section",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Ship Decoration: simple nautical hanging lantern on a wood bracket",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/Portable-Tools-Atlas-v1.png",
+      "bytes": 1410324,
+      "sha256": "1ad984e7be8f7bb40b5df2fbbccc981f9cba82b2478cd24f50f74050d622c2f6",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Atlases/2026-10-14/Portable-Tools-Atlas-v1.json",
+      "columns": 4,
+      "rows": 3,
+      "items": [
+        {
+          "name": "wooden axe with carved wooden cutting head",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "wooden pickaxe with wooden pick head",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "wooden shovel with wooden blade",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "stitched hide water skin with stopper, no glass flask",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "stone axe with bound stone head",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.25,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "stone pickaxe with bound chipped stone head",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.3333333333333333
+            ],
+            "max": [
+              0.5,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "forged iron axe with wooden handle",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.3333333333333333
+            ],
+            "max": [
+              0.75,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "forged iron pickaxe with wooden handle",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "tungsten axe with dense dark grey metal head and reinforced wooden handle",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "tungsten pickaxe with dense dark grey metal head and reinforced wooden handle",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.6666666666666666
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "simple cloth-wrapped wooden torch with small natural flame",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.6666666666666666
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "repair kit with wood strips, stone pieces, rope and hand tools bound together",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.6666666666666666
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/trees1-Atlas-v1.png",
+      "bytes": 3161162,
+      "sha256": "6568590709ebfd1a00ad423d39c6668ae031b689633ef29b19cb5e007bdba0c7",
+      "dimensions": [
+        1312,
+        1199
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D plant model reference; no species-specific Wood inventory types",
+      "metadata": "Art/Items/Atlases/2026-10-14/trees1-Atlas-v1.json",
+      "columns": 4,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Veyrpine",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Keldren Fir",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Rimebark",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Harrowpine",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.25
+            ]
+          }
+        },
+        {
+          "name": "Thalenbrush",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.25
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Savar Palm",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.25
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Drevan Thorn",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.25
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Caldris Tree",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.25
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Orakai Palm",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Vask Thornbrush",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Serewood",
+          "index": 10,
+          "row": 2,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Mirewillow",
+          "index": 11,
+          "row": 2,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              0.75
+            ]
+          }
+        },
+        {
+          "name": "Duskroot",
+          "index": 12,
+          "row": 3,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.75
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Velmangrove",
+          "index": 13,
+          "row": 3,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.75
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Brackenspine",
+          "index": 14,
+          "row": 3,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.75
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Morren Cypress",
+          "index": 15,
+          "row": 3,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.75
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/trees2-Atlas-v1.png",
+      "bytes": 2530436,
+      "sha256": "3ea35a078461f4435c9509b27fec417b49566a6362c761544257dd5772c89258",
+      "dimensions": [
+        1448,
+        1086
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Illustrative 2D plant model reference; no species-specific Wood inventory types",
+      "metadata": "Art/Items/Atlases/2026-10-14/trees2-Atlas-v1.json",
+      "columns": 4,
+      "rows": 3,
+      "items": [
+        {
+          "name": "Siltwood",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Talora",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Veyran Palm",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Korava",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.3333333333333333
+            ]
+          }
+        },
+        {
+          "name": "Selkai",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.3333333333333333
+            ],
+            "max": [
+              0.25,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Orvena",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.3333333333333333
+            ],
+            "max": [
+              0.5,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Maravai",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.3333333333333333
+            ],
+            "max": [
+              0.75,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Talandra",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.3333333333333333
+            ],
+            "max": [
+              1.0,
+              0.6666666666666666
+            ]
+          }
+        },
+        {
+          "name": "Spruce (owner's jungle tree direction)",
+          "index": 8,
+          "row": 2,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.6666666666666666
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Birch (owner's winter tree direction)",
+          "index": 9,
+          "row": 2,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.6666666666666666
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Atlases/2026-10-14/weapons-Atlas-v1.png",
+      "bytes": 1133465,
+      "sha256": "800f3ff85eed03462684577cab052e533bb772d21a51474e18e26f43ad32f1dc",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Confirmed families; period pistol name, weapon stats and glider engineering remain TBD",
+      "metadata": "Art/Items/Atlases/2026-10-14/weapons-Atlas-v1.json",
+      "columns": 4,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Sailor Sword: original plain iron cutlass with worn wooden grip",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.25,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Period Pistol: original wood-and-steel flintlock pistol, no modern handgun",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.0
+            ],
+            "max": [
+              0.5,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Rifle: original long wood-and-steel preindustrial firearm",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.0
+            ],
+            "max": [
+              0.75,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Longbow: simple tall wooden longbow with string",
+          "index": 3,
+          "row": 0,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.0
+            ],
+            "max": [
+              1.0,
+              0.5
+            ]
+          }
+        },
+        {
+          "name": "Crossbow: wood stock and steel bow original period crossbow",
+          "index": 4,
+          "row": 1,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.5
+            ],
+            "max": [
+              0.25,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Harpoon: simple long wooden shaft with steel harpoon point",
+          "index": 5,
+          "row": 1,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.25,
+              0.5
+            ],
+            "max": [
+              0.5,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Climbing Axe: compact original mountaineering axe, aged metal head and wooden handle",
+          "index": 6,
+          "row": 1,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.5,
+              0.5
+            ],
+            "max": [
+              0.75,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Glider: folded simple cloth-and-wood hand glider reference",
+          "index": 7,
+          "row": 1,
+          "column": 3,
+          "uv": {
+            "min": [
+              0.75,
+              0.5
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.png",
+      "bytes": 2817360,
+      "sha256": "699de236613b3cb3bfbf3f969b34af83a512327fb0827571a6536e090524411f",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+      "metadata": "Art/Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.json",
+      "columns": 3,
+      "rows": 1,
+      "items": [
+        {
+          "name": "Copper currency",
+          "index": 0,
+          "row": 0,
+          "column": 0,
+          "uv": {
+            "min": [
+              0.0,
+              0.0
+            ],
+            "max": [
+              0.3333333333333333,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Silver currency",
+          "index": 1,
+          "row": 0,
+          "column": 1,
+          "uv": {
+            "min": [
+              0.3333333333333333,
+              0.0
+            ],
+            "max": [
+              0.6666666666666666,
+              1.0
+            ]
+          }
+        },
+        {
+          "name": "Gold currency",
+          "index": 2,
+          "row": 0,
+          "column": 2,
+          "uv": {
+            "min": [
+              0.6666666666666666,
+              0.0
+            ],
+            "max": [
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Raw-Fish-v1.png",
+      "bytes": 127741,
+      "sha256": "2b8265b03748e184fb4387e7a06ec54d5dcab527d5d5e3b36401d9c182867452",
+      "dimensions": [
+        512,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Items/Raw-Meat-v1.png",
+      "bytes": 148635,
+      "sha256": "79d7f22d4ca7546efb13b9221d2030984fc1bd12206427e571cd4e1ecea75337",
+      "dimensions": [
+        512,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/Axe-v1.png",
+      "bytes": 954329,
+      "sha256": "e6c59a287e0295cea4e063f81e8e2318989c9a6aea21b211ed57f16523f2de89",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/Flask-v1.png",
+      "bytes": 1747520,
+      "sha256": "3b2199e9a420cd32f0306af2ff146bcbcc8a6adc1f008ab3ca6e3e4e96e0a3d6",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/Pickaxe-v1.png",
+      "bytes": 869683,
+      "sha256": "a3e439e179175c4817116ec913ee3d3943bc83bc703f54c4dff000b35ce4a1b5",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/RepairKit-v1.png",
+      "bytes": 1980233,
+      "sha256": "23c94ae08db9e5ae1c90f3dc5ec3ce646aa1a903c756da0ed965d001294610cd",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/Shovel-v1.png",
+      "bytes": 956787,
+      "sha256": "2bdbc1ec75043fe821b06208ee3ca4c4d1342caa80c15f453f22a674c9a2f667",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Placeholders/ItemIcons/Torch-v1.png",
+      "bytes": 802673,
+      "sha256": "d6b99cba87487bc506cee8221c69a6da63c270a5c5bab610991ee56c2ad9409c",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Health-Full-v1.png",
+      "bytes": 1731690,
+      "sha256": "1297f5d1ecfd9c1322068a7ee4564e68b3940591516855f3274c27d53dfe035b",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Legacy art; newer version preferred",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Hunger-Full-v1.png",
+      "bytes": 2259080,
+      "sha256": "9dcf86802b79cb3b5ff09807089af5e9a317c635df03a7a1d8178e4e899b55d8",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Legacy art; newer version preferred",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Hydration-Full-v1.png",
+      "bytes": 1807813,
+      "sha256": "5bc7dad789d9be220f91396f2be2e79a7df61d74ba5106c58faf2b815bf3b4cb",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Legacy art; newer version preferred",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Matte-v2/Health-Matte-Full-v2.png",
+      "bytes": 1801735,
+      "sha256": "81e21188f6a9d458ce426a14678f72498b345dfe087bf1063fb8b8bd1f647dc5",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Matte-v2/Hunger-Matte-Full-v2.png",
+      "bytes": 2266267,
+      "sha256": "796d4061fe7090229cde1a9ce7d728032b8de343dbd5a69480b1b9a872ccec90",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Matte-v2/Hydration-Matte-Full-v2.png",
+      "bytes": 1612490,
+      "sha256": "52d6ef07ab62b3a3428045128d4ef8d95f68f3f22ea7892abbce3373187d24e9",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Matte-v2/Stamina-Matte-Full-v2.png",
+      "bytes": 855904,
+      "sha256": "c682972e66ba64bfe80e87e2ff3e8ac9389ac55e3c057e52af88eaf9abd3f184",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Matte-v2/Weight-Matte-Full-v2.png",
+      "bytes": 2099013,
+      "sha256": "d4b77fcb39d2ef69a3f3fdefc8a95034424b807abb66b42d6c2b1a21c3e2ec9a",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Survival/2026-10-11/Stamina-Full-v1.png",
+      "bytes": 1038374,
+      "sha256": "c7330d4b504e0ef688abf892ac2c74b346671346db4fedb92ac46efb5e02035a",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Legacy art; newer version preferred",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Elitewake-Logo-v1.png",
+      "bytes": 997769,
+      "sha256": "15a5ebce101a5cb3106e06dfa1bfa96029cb5dc5a5f96fe0e9167f156cf5ea20",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Elitewake-Starter-Screen-Owner-v1.png",
+      "bytes": 2540393,
+      "sha256": "b18004130c0343a2832cea372777c9a41da9e5c1c917f0488e161dc27bce0a26",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Elitewake-Starter-WaterMask-v1.png",
+      "bytes": 1507128,
+      "sha256": "5334b5ecac34af2d9bd6d61392a01f927b418ab940bf6782ef81aa157a9acec8",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Main-Menu-Concept-Blurred-Multiplayer-v1.png",
+      "bytes": 2315974,
+      "sha256": "d6c0d9e3081abdf5fa6bf26376da4e9933ce7c6a881002c9a640b69dfaca5d89",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Press-Any-Key-To-Start-v1.png",
+      "bytes": 581292,
+      "sha256": "217cbe64a5089d01cb249b074a449fe42d6d26ef595d5aab1f5e800ef1d36829",
+      "dimensions": [
+        2200,
+        715
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Press-Any-Key-To-Start-v2.png",
+      "bytes": 27388,
+      "sha256": "f701f62d6fe7aa003030fda5d0cdf607d24624380581a887aa960810b3972fc5",
+      "dimensions": [
+        2200,
+        360
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": "Art/UI/Title/2026-10-13/Press-Any-Key-To-Start-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Press-Any-Key-v1.png",
+      "bytes": 514158,
+      "sha256": "dc454bd7837c2fc1e5a69d43fbdbe18a4f3b08581f80bffaa243bd655af59f22",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Title-Dock-Background-v1.png",
+      "bytes": 2516180,
+      "sha256": "05cb525978358e95cd01f41675e64278814448edf96a5558e6c9773fd784c246",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/2026-10-13/Title-Waves-4Frame-v1.png",
+      "bytes": 2473080,
+      "sha256": "ae34c1d5b8e9c77ce0d72fc3f61f111b396d05f817ce756b38cde8baef912cc3",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/UI/Title/Elitewake-Title-v1.png",
+      "bytes": 2540393,
+      "sha256": "b18004130c0343a2832cea372777c9a41da9e5c1c917f0488e161dc27bce0a26",
+      "dimensions": [
+        1672,
+        941
+      ],
+      "alphaRange": null,
+      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    }
+  ]
+}

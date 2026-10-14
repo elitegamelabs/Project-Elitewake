@@ -1,0 +1,28 @@
+{
+  "key": "materials",
+  "name": "Processed crafting-material families",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    "Rope: coiled natural hemp rope",
+    "Cloth: folded rough woven linen",
+    "Leather: rolled tanned brown leather",
+    "Nails: handful of hand-forged iron nails",
+    "Planks: three weathered timber planks",
+    "Tar: small earthenware bowl of black tar",
+    "Charcoal: irregular wood charcoal pieces",
+    "Gunpowder reference: closed plain small powder horn, no open composition or labels",
+    "Fertilizer: small tied coarse sack of compost",
+    "Soil: small mound of dark fertile soil",
+    "Ceramic: simple unfinished clay jug",
+    "Paper: stack of rough handmade blank paper",
+    "Dye: small clay pot with muted red pigment",
+    "Antler: shed branching deer antler",
+    "Teeth: small cluster of clean animal teeth",
+    "Shell: one natural spiral seashell"
+  ],
+  "status": "Material-family concept references; does not approve new recipes",
+  "asset": "Art/Items/Atlases/2026-10-14/materials-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One realistic original ELITEWAKE pirate-survival asset-reference atlas. Exactly 16 individual object images in a STRICT 4-column x 4-row grid. Row-major objects: Rope: coiled natural hemp rope; Cloth: folded rough woven linen; Leather: rolled tanned brown leather; Nails: handful of hand-forged iron nails; Planks: three weathered timber planks; Tar: small earthenware bowl of black tar; Charcoal: irregular wood charcoal pieces; Gunpowder reference: closed plain small powder horn, no open composition or labels; Fertilizer: small tied coarse sack of compost; Soil: small mound of dark fertile soil; Ceramic: simple unfinished clay jug; Paper: stack of rough handmade blank paper; Dye: small clay pot with muted red pigment; Antler: shed branching deer antler; Teeth: small cluster of clean animal teeth; Shell: one natural spiral seashell. Every item fully contained inside its own equal cell with wide empty transparent gutters. Premium photorealistic physically based weathered period materials, believable wood grain, cloth and forged metal, neutral soft studio lighting, readable shapes. True transparent alpha background, no backdrop, gradients, bokeh, labels, text, numerals, logos, frames, hands or characters. Never draw operational instructions, assembly diagrams, measurements, chemical mixtures or wounds. Firearms are static unloaded visual props only; medical items are clean closed supplies. These are game concept and inventory-reference images, not finished 3D models."
+}

@@ -1,0 +1,18 @@
+{
+  "key": "ammo",
+  "name": "Ammunition-family visual references",
+  "columns": 3,
+  "rows": 2,
+  "items": [
+    "Bullets: small handful of plain round lead musket balls",
+    "Tranquilizer Darts: small plain fictional wooden and metal darts, no chemical recipe or mechanical details",
+    "Regular Arrows: three wooden shafts with iron points and feather fletching",
+    "Tranquilizer Arrows: three visually distinct banded wooden arrows, no formula or mechanism diagram",
+    "Harpoon Ammo: compact detachable plain barbed iron harpoon bolt",
+    "Cannon Ammo: two dark cast-iron round cannonballs"
+  ],
+  "status": "Family references only; specific ammunition variants not defined",
+  "asset": "Art/Items/Atlases/2026-10-14/ammo-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One realistic original ELITEWAKE pirate-survival asset-reference atlas. Exactly 6 individual object images in a STRICT 3-column x 2-row grid. Row-major objects: Bullets: small handful of plain round lead musket balls; Tranquilizer Darts: small plain fictional wooden and metal darts, no chemical recipe or mechanical details; Regular Arrows: three wooden shafts with iron points and feather fletching; Tranquilizer Arrows: three visually distinct banded wooden arrows, no formula or mechanism diagram; Harpoon Ammo: compact detachable plain barbed iron harpoon bolt; Cannon Ammo: two dark cast-iron round cannonballs. Every item fully contained inside its own equal cell with wide empty transparent gutters. Premium photorealistic physically based weathered period materials, believable wood grain, cloth and forged metal, neutral soft studio lighting, readable shapes. True transparent alpha background, no backdrop, gradients, bokeh, labels, text, numerals, logos, frames, hands or characters. Never draw operational instructions, assembly diagrams, measurements, chemical mixtures or wounds. Firearms are static unloaded visual props only; medical items are clean closed supplies. These are game concept and inventory-reference images, not finished 3D models."
+}

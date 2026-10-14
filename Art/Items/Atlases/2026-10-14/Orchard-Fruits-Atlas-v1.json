@@ -1,0 +1,235 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Orchard-Fruits-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    {
+      "name": "Apple",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "Pear",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "Peach",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "Plum",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.25
+        ]
+      }
+    },
+    {
+      "name": "Cherry",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.25
+        ],
+        "max": [
+          0.25,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Orange",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.25
+        ],
+        "max": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Lemon",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.25
+        ],
+        "max": [
+          0.75,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Lime",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.25
+        ],
+        "max": [
+          1,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Coconut half with white flesh",
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.5
+        ],
+        "max": [
+          0.25,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "small bunch of Bananas",
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.5
+        ],
+        "max": [
+          0.5,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "Mango",
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.5
+        ],
+        "max": [
+          0.75,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "Pomegranate half showing seeds",
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.5
+        ],
+        "max": [
+          1,
+          0.75
+        ]
+      }
+    },
+    {
+      "name": "Dates",
+      "index": 12,
+      "row": 3,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.75
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Fig half with ripe flesh",
+      "index": 13,
+      "row": 3,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.75
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "One realistic ELITEWAKE inventory/reference PNG texture atlas. Strict equal-cell 4 columns by 4 rows, reading left-to-right then top-to-bottom. Each listed object isolated, fully visible, centered in central 75% of its cell with empty transparent gutters. Photorealistic physically based natural materials, weathered preindustrial pirate-era props where applicable, consistent neutral soft studio lighting, high-quality original 2026 survival-game art, readable silhouettes. Transparent alpha background. No labels, lettering, numbers, game logos, frames, backdrop, modern objects or characters. Objects in exact order: Apple; Pear; Peach; Plum; Cherry; Orange; Lemon; Lime; Coconut half with white flesh; small bunch of Bananas; Mango; Pomegranate half showing seeds; Dates; Fig half with ripe flesh; empty cell transparent; empty cell transparent. Empty cells stay fully transparent. Anatomical resources are clean crafting materials without wounds or gore. All visual designs original."
+}

@@ -4,6 +4,8 @@ What Elitewake is meant to be, organized by topic. This file states the current 
 
 Last reconciled: October 11, 2026.
 
+**October 14 owner revision:** [World structure decisions](WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md) override older geography and the specified resource/traversal rules below. The current layout has five regions; unfinished mechanics and conflicting barrier behavior remain explicitly open. Mode separation is in [Single Player](SINGLE_PLAYER_RULES.md) and [Multiplayer](MULTIPLAYER_RULES.md), with [terrain mesh work assigned to Claude](MILESTONE_WORLD_MESH_HANDOFF_2026-10-14.md).
+
 <a id="authority"></a>
 
 ## Authority
@@ -38,12 +40,8 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
 
 ## World
 
-- **Regions:** four, each a multi-island archipelago with no fixed island count.
-  - Northern Snow (boreal, alpine): cold, shelter and warmth.
-  - Southern Desert (badlands, oasis): heat, hydration and exposure.
-  - Central Swamp (wetland, marsh): mud, disease, toxins and traversal.
-  - Western Tropical (jungle): heat, humidity and dense vegetation.
-- **Ports:** exactly one NPC trade Port per region, so four. Ports are PvP-safe, have specialized vendors, and connect to selected docks through Ferrymen. Functional shops are NPC-run only; players may build decorative shops. Each Port's island, identity and stock: TBD.
+- **Regions:** five multi-island regions: Desert, Winter, Jungle, Plains and Swamp. Islands vary in shape and size, with substantial exploration space and longer voyages. Single player keeps neighboring regions accessible; multiplayer uses regional grids. Generation stays fixed for the saved/server world. The [October 14 decisions](WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md) define current geography, trees, caves, collision and climate; older ecology-guide region labels are provenance only.
+- **Ports:** exactly one NPC trade Port per region, so five. Ports are PvP-safe, unclaimable and uncontestable, have specialized vendors, and connect to selected docks through Ferrymen. Functional shops are NPC-run only; players may build decorative shops. Each Port's island, identity and stock: TBD.
 - **Time:** 90 real minutes of day, 90 real minutes of night.
 - **Weather:** moving rain and snow clouds, darker ocean, foliage sway, rain fills crops and barrels. Other weather timings: TBD.
 - **Ocean:** maximum depth 500 m below the mean surface. Several basins, with slopes and shelves rising toward islands. Six major reefs glow day and night (locations TBD). Light fades gradually with depth to a muted blue or navy; wrecks and navigation stay readable. No pitch-black water, flashlights or night vision.
@@ -381,7 +379,7 @@ Room price, dialogue, the storm line, and whether the torch or the Rye counts as
   - Only the Company owner can rename it; server admins cannot.
 - **Asset policies:** leaders choose personal, personal with shared access, or Company-owned, separately for ships, structures and tames. Sharing access never transfers ownership.
 - **Nameplates:** friends green, allies light blue, enemies red; your own is hidden.
-- **Not adopted** from the reference: territory conquest, taxation, permanent land ownership and top-company bonuses.
+- **Owner revision, October 14:** Company island claim/contest flags are multiplayer-only; single player has no claim ownership gates. NPC Port islands are excluded. Claim flags rise during the claim timer; a nearby rival starts a contest, whose successful expiry removes the original flag before the challenger's claim timer starts. Durations, proximity and interruption/defense rules remain TBD. See [Multiplayer rules](MULTIPLAYER_RULES.md). Taxation and top-company bonuses remain unadopted; no additional permanent-ownership policy is inferred.
 - **Communication:** text and proximity voice. Mute, block and report must exist before any public launch.
 - **Private testing first:** the owner hosts a listen server and one approved tester joins. Test locally, then on LAN, then over the Internet. Distribution later goes through a restricted itch.io page with Butler. There is no Epic Games Store release.
 - **Undecided:** can other players see a survivor's inventory (it currently replicates to everyone)?
