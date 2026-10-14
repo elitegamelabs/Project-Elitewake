@@ -191,6 +191,18 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship")
     bool IsTrimmingSails() const { return bHelmTrimHeld; }
 
+    /** The ship and mount of the cannon this survivor mans, if any. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    AEWShip* GetGunShip() const { return GunShip; }
+    UFUNCTION(BlueprintPure, Category="Ship")
+    FName GetGunMount() const { return GunMount; }
+    /** Authority only; called by the ship when a cannon is manned or left. */
+    void SetGunPost(AEWShip* Ship, FName MountId);
+    UFUNCTION(Server, Unreliable)
+    void ServerCannonAim(float Yaw, float Pitch);
+    UFUNCTION(Server, Reliable)
+    void ServerFireCannon();
+
     /** True while hanging on a ship's ladder. */
     UFUNCTION(BlueprintPure, Category="Ship")
     bool IsOnLadder() const { return Ladder.Ship != nullptr; }
@@ -222,6 +234,15 @@ private:
     int8 LadderDirection = 0;
     UPROPERTY(ReplicatedUsing=OnRep_HelmShip)
     TObjectPtr<AEWShip> HelmShip;
+    UPROPERTY(ReplicatedUsing=OnRep_GunPost)
+    TObjectPtr<AEWShip> GunShip;
+    UPROPERTY(Replicated)
+    FName GunMount;
+    UFUNCTION()
+    void OnRep_GunPost();
+    /** Local: the aim last sent to the server, and when. */
+    FRotator SentCannonAim = FRotator(1000.f, 0.f, 0.f);
+    double SentCannonAimAt = 0.0;
     UFUNCTION()
     void OnRep_HelmShip();
     /** Local helm controls gathered from movement input, sent as state changes in Tick. */

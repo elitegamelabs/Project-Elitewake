@@ -227,6 +227,7 @@ void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
         if (!Wanted) Wanted = LadderIdleAnimation;
     }
     else if (CapstanShip.IsValid() && CapstanShip->GetCapstanWorker() == this) Wanted = CapstanAnimation;
+    else if (IsValid(GunShip)) Wanted = HelmHoldAnimation;   // hands on the cannon (stand-in until a gunner's pose)
     if (Wanted == PlayingLoopAnimation && Rate == PlayingLoopRate) return;
     if (PlayingLoopAnimation) Anim->StopSlotAnimation(.15f, TEXT("DefaultSlot"));
     PlayingLoopAnimation = Wanted;
@@ -289,6 +290,21 @@ void AEWCharacter::Tick(float DeltaSeconds)
         LastHelmForwardSign = ForwardSign;
         PendingHelmRight = PendingHelmForward = 0.f;
     }
+    if (IsLocallyControlled() && IsValid(GunShip))
+    {
+        // The view aims the cannon: its direction relative to the gun's rest, sent when it changes.
+        FTransform Frame = FTransform(GunShip->GetGunnerSeatLocal(GunMount, 0.f).GetRotation()) * GunShip->GetActorTransform();
+        const FRotator Local = Frame.InverseTransformRotation(GetControlRotation().Quaternion()).Rotator();
+        const FRotator Aim(FMath::Clamp(Local.Pitch, -AEWShip::CannonDepression, AEWShip::CannonElevation),
+                           FMath::Clamp(Local.Yaw, -AEWShip::CannonTraverse, AEWShip::CannonTraverse), 0.f);
+        const double Now = GetWorld()->GetTimeSeconds();
+        if (!Aim.Equals(SentCannonAim, .25f) && Now - SentCannonAimAt > .05)
+        {
+            ServerCannonAim(Aim.Yaw, Aim.Pitch);
+            SentCannonAim = Aim;
+            SentCannonAimAt = Now;
+        }
+    }
 	if (GetCharacterMovement()->IsSwimming())
 	{
 		CancelRestrictedActions();
@@ -343,6 +359,8 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AEWCharacter, bIsSprinting);
 	DOREPLIFETIME(AEWCharacter, bIsProne);
     DOREPLIFETIME(AEWCharacter, HelmShip);
+    DOREPLIFETIME(AEWCharacter, GunShip);
+    DOREPLIFETIME(AEWCharacter, GunMount);
     DOREPLIFETIME(AEWCharacter, Ladder);
     DOREPLIFETIME(AEWCharacter, Appearance);
     DOREPLIFETIME_CONDITION(AEWCharacter, bFacingView, COND_SkipOwner);
@@ -354,6 +372,52 @@ void AEWCharacter::SetHelmShip(AEWShip* Ship)
     HelmShip = Ship;
     OnRep_HelmShip();
     ForceNetUpdate();
+}
+
+void AEWCharacter::SetGunPost(AEWShip* Ship, FName MountId)
+{
+    if (!HasAuthority()) return;
+    GunMount = MountId;
+    GunShip = Ship;
+    OnRep_GunPost();
+    ForceNetUpdate();
+}
+
+void AEWCharacter::OnRep_GunPost()
+{
+    CancelRestrictedActions();
+    bSwimAscendInputHeld = false;
+    StopJumping();
+    SentCannonAim = FRotator(1000.f, 0.f, 0.f);
+    GetCharacterMovement()->StopMovementImmediately();
+    if (IsValid(GunShip))
+    {
+        // The gunner stands behind the carriage and rides the ship while they man the cannon.
+        GetCharacterMovement()->DisableMovement();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        AttachToActor(GunShip, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        const FTransform Seat = GunShip->GetGunnerSeatLocal(GunMount, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+        SetActorRelativeLocation(Seat.GetLocation());
+        SetActorRelativeRotation(Seat.GetRotation());
+        if (IsLocallyControlled() && GetController())
+            GetController()->SetControlRotation(FRotator(0.f, GetActorRotation().Yaw, 0.f));
+    }
+    else if (GetAttachParentActor() && !IsValid(HelmShip))
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+    }
+}
+
+void AEWCharacter::ServerCannonAim_Implementation(float Yaw, float Pitch)
+{
+    if (IsValid(GunShip)) GunShip->AimCannon(this, Yaw, Pitch);
+}
+
+void AEWCharacter::ServerFireCannon_Implementation()
+{
+    if (IsValid(GunShip)) GunShip->FireCannon(this);
 }
 
 void AEWCharacter::OnRep_HelmShip()
@@ -672,7 +736,7 @@ void AEWCharacter::UpdateFirstPersonCamera(float DeltaSeconds)
 
 void AEWCharacter::ApplyFacing()
 {
-	const bool bFace = bFacingView && !IsOnLadder() && !IsValid(HelmShip);
+	const bool bFace = bFacingView && !IsOnLadder() && !IsValid(HelmShip) && !IsValid(GunShip);
 	bUseControllerRotationYaw = bFace;
 	GetCharacterMovement()->bOrientRotationToMovement = !bFace;
 }
@@ -818,6 +882,7 @@ void AEWCharacter::DoMove(float Right, float Forward)
         PendingHelmForward = Forward;
         return;
     }
+    if (GunShip) return;
 	if (GetController() != nullptr)
 	{
 		// find out which way is forward
@@ -850,7 +915,7 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 
 void AEWCharacter::DoJumpStart()
 {
-    if (HelmShip) return;
+    if (HelmShip || GunShip) return;
     // Space lets go of a ladder.
     if (IsOnLadder()) { ServerLetGoOfLadder(); return; }
 	bSwimAscendInputHeld = true;
@@ -881,7 +946,7 @@ void AEWCharacter::DoJumpEnd()
 
 bool AEWCharacter::CanAttack() const
 {
-    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !IsOnLadder();
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !GunShip && !IsOnLadder();
 }
 
 void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const

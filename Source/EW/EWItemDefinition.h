@@ -133,6 +133,12 @@ public:
     FTransform FittingTurningPivot;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     FRotator FittingTurnAtFull = FRotator::ZeroRotator;
+    /** Cannons: the round shot they load, and how far the muzzle lies along the barrel from its pivot (the
+     *  barrel is the fitting's turning part, aimed rather than turned with the rudder). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    TSoftObjectPtr<UEWItemDefinition> CannonAmmo;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    float CannonMuzzleLength = 150.f;
 
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 };

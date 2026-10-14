@@ -185,6 +185,7 @@ void AEWPlayerController::Attack()
 {
     if (!IsLocalPlayerController() || IsInventoryOpen() || IsMapOpen() || IsSessionMenuOpen()) return;
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (Survivor && Survivor->GetGunShip()) { Survivor->ServerFireCannon(); return; }
     if (!Survivor || !Survivor->CanAttack()) return;
     // Swing at once on this screen, at the pace the server allows; the server decides what it hits.
     const double Now = GetWorld()->GetTimeSeconds();

@@ -41,7 +41,7 @@ Goal: the design's "simple two-cannon fight before the deeper systems". Cannons 
 
 | Item | Status |
 |---|---|
-| Cannon: fit it at a hardpoint, man it, aim within its arc, load round shot and fire | ⏳ |
+| Cannon: fit it at a hardpoint, man it, aim within its arc, load round shot and fire | ✅ COMMIT |
 | Hull health; round shot that strikes a hull and damages it | ⏳ |
 | Holes below the waterline let water in (the ship settles and slows); bailing and repair | ⏳ |
 | Sinking: a ship that fills or is destroyed goes down, leaving wreck crates with its hold | ⏳ |

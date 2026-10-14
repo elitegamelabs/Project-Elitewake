@@ -19,6 +19,7 @@
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
 #include "WaterBodyActor.h"
+#include "Ships/EWCannonBall.h"
 
 namespace
 {
@@ -115,6 +116,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, SailAngle);
     DOREPLIFETIME(AEWShip, bAnchored);
     DOREPLIFETIME(AEWShip, CapstanWorker);
+    DOREPLIFETIME(AEWShip, Cannons);
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
@@ -393,8 +395,10 @@ void AEWShip::ShowTurning(float DeltaSeconds)
     {
         const UEWItemDefinition* Item = GetFitting(Pair.Key);
         const FTransform* Rest = TurningRest.Find(Pair.Key);
-        if (Item && Rest && Pair.Value)
-            Pair.Value->SetRelativeTransform(FTransform(Item->FittingTurnAtFull * ShownRudderAngle) * *Rest);
+        if (!Item || !Rest || !Pair.Value) continue;
+        // A cannon's barrel is aimed; a helm's wheel or tiller turns with the rudder.
+        const FRotator Turn = Item->FittingMountType == EEWShipMountType::Cannon ? GetCannonAim(Pair.Key) : Item->FittingTurnAtFull * ShownRudderAngle;
+        Pair.Value->SetRelativeTransform(FTransform(Turn) * *Rest);
     }
 }
 
@@ -667,6 +671,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 {
     if (bChangingFittings || !CanModifyFittings(Character)) return false;
     if (Helmsman == Character) return true;  // Leave the helm.
+    if (IsGunnerHere(Character)) return true;  // Leave the cannon.
     if (IsAimingAtAnchor(Character)) return true;
     if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
@@ -674,9 +679,13 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return false;
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
-        // An installed helm is taken, not removed; removing it is a Builder's Plan action.
+    {
+        // An installed helm is taken and a cannon manned, not removed; removing them is a Builder's Plan action.
+        if (Installed->FittingMountType == EEWShipMountType::Cannon)
+            return !GetCannonGunner(MountId) && !Character->GetHelmShip() && !Character->GetGunShip() && !Character->bIsCrouched && !Character->IsProne();
         return Installed->FittingMountType != EEWShipMountType::Helm
             || (!Helmsman && !Character->GetHelmShip() && !Character->bIsCrouched && !Character->IsProne());
+    }
     return FindCarriedFitting(Character, *Mount) != nullptr;
 }
 
@@ -693,6 +702,14 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
             return FText::Format(NSLOCTEXT("Elitewake", "LeavePaddlesStatus", "Put down the paddles  (W/S stroke, A/D steer){0}"), Status);
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder, Shift + A/D trim){0}"), Status);
     }
+    if (IsGunnerHere(Character))
+    {
+        const FName Mount = Character->GetGunMount();
+        const FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
+            : IsCannonLoading(Mount) ? NSLOCTEXT("Elitewake", "CannonLoading", "Loading...")
+            : NSLOCTEXT("Elitewake", "CannonEmpty", "Empty: carry round shot to load it");
+        return FText::Format(NSLOCTEXT("Elitewake", "LeaveCannon", "Leave the cannon  (mouse aims, Left Mouse fires)  -  {0}"), State);
+    }
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
@@ -702,7 +719,9 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Mount) return FText::GetEmpty();
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
-        return Installed->FittingMountType == EEWShipMountType::Helm
+        return Installed->FittingMountType == EEWShipMountType::Cannon
+            ? (GetCannonGunner(MountId) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ManCannon", "Man the cannon"))
+            : Installed->FittingMountType == EEWShipMountType::Helm
             ? (Helmsman ? FText::GetEmpty() : Definition->bPaddled ? NSLOCTEXT("Elitewake", "TakePaddles", "Take up the paddles")
                 : NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm"))
             : FText::Format(NSLOCTEXT("Elitewake", "RemoveFitting", "Remove {0}"), Installed->DisplayName);
@@ -744,6 +763,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
     if (!HasAuthority() || !Character || !Character->HasAuthority() || !CanInteract_Implementation(Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
+    if (IsGunnerHere(Character)) return LeaveCannon(Character);
     if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
     if (IsAimingAtCargoHatch(Character))
     {
@@ -757,6 +777,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);
     if (Installed && Installed->FittingMountType == EEWShipMountType::Helm) return TakeHelm(Character);
+    if (Installed && Installed->FittingMountType == EEWShipMountType::Cannon) return ManCannon(Character, MountId);
     const EEWFittingResult Result = Installed ? RemoveFitting(Character, MountId) : InstallFitting(Character, MountId);
     return Result == EEWFittingResult::Installed || Result == EEWFittingResult::Removed;
 }
@@ -793,6 +814,162 @@ FVector AEWShip::GetHelmSeatLocal(float CapsuleHalfHeight) const
             Floor = FMath::Max(Floor, Ship.InverseTransformPosition(Hit.ImpactPoint).Z);
     }
     return FVector(Stand.X, Stand.Y, Floor + CapsuleHalfHeight + 2.f);
+}
+
+bool AEWShip::GetCannonFrame(FName MountId, FTransform& Frame) const
+{
+    const UEWItemDefinition* Item = GetFitting(MountId);
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!Item || !Mount || Item->FittingMountType != EEWShipMountType::Cannon) return false;
+    Frame = Item->FittingTurningPivot * Item->FittingMeshTransform * Mount->Transform;
+    return true;
+}
+
+AEWCharacter* AEWShip::GetCannonGunner(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    return Cannon ? Cannon->Gunner.Get() : nullptr;
+}
+
+bool AEWShip::IsCannonLoaded(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    return Cannon && Cannon->bLoaded;
+}
+
+bool AEWShip::IsCannonLoading(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    return Cannon && Cannon->bLoading;
+}
+
+FRotator AEWShip::GetCannonAim(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    return Cannon ? FRotator(Cannon->Pitch, Cannon->Yaw, 0.f) : FRotator::ZeroRotator;
+}
+
+FTransform AEWShip::GetCannonMuzzleWorld(FName MountId) const
+{
+    FTransform Frame;
+    if (!GetCannonFrame(MountId, Frame)) return GetActorTransform();
+    const float Length = GetFitting(MountId)->CannonMuzzleLength;
+    return FTransform(FVector(Length, 0, 0)) * FTransform(GetCannonAim(MountId)) * Frame * GetActorTransform();
+}
+
+FTransform AEWShip::GetGunnerSeatLocal(FName MountId, float HalfHeight) const
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!Mount) return FTransform::Identity;
+    // Behind the carriage, standing on the deck, facing out through the port.
+    const FVector At = Mount->Transform.TransformPosition(FVector(-130.f, 0.f, -CannonMountHeight + HalfHeight + 2.f));
+    return FTransform(FRotator(0.f, Mount->Transform.Rotator().Yaw, 0.f), At);
+}
+
+bool AEWShip::IsGunnerHere(const AEWCharacter* Character) const
+{
+    return Character && Character->GetGunShip() == this && GetCannonGunner(Character->GetGunMount()) == Character;
+}
+
+bool AEWShip::ManCannon(AEWCharacter* Character, FName MountId)
+{
+    FTransform Frame;
+    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || !GetCannonFrame(MountId, Frame)
+        || GetCannonGunner(MountId) || Character->GetHelmShip() || Character->GetGunShip() || Character->IsOnLadder()
+        || Character->bIsCrouched || Character->IsProne())
+        return false;
+    FEWCannonState* Cannon = FindCannon(MountId);
+    if (!Cannon)
+    {
+        Cannon = &Cannons.AddDefaulted_GetRef();
+        Cannon->MountId = MountId;
+    }
+    Cannon->Gunner = Character;
+    Character->SetGunPost(this, MountId);
+    ForceNetUpdate();
+    return true;
+}
+
+bool AEWShip::LeaveCannon(AEWCharacter* Character, bool bForce)
+{
+    if (!HasAuthority() || !Character || Character->GetGunShip() != this) return false;
+    const FName MountId = Character->GetGunMount();
+    if (FEWCannonState* Cannon = FindCannon(MountId))
+        if (Cannon->Gunner == Character) Cannon->Gunner = nullptr;
+    Character->SetGunPost(nullptr, NAME_None);
+    // Step back from the carriage onto the deck.
+    if (!Character->IsActorBeingDestroyed())
+    {
+        const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
+        const FTransform Seat = GetGunnerSeatLocal(MountId, Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f);
+        Character->SetActorLocation(GetActorTransform().TransformPosition(Seat.GetLocation() + FVector(0, 0, 10.f)), false, nullptr, ETeleportType::TeleportPhysics);
+    }
+    ForceNetUpdate();
+    return true;
+}
+
+bool AEWShip::AimCannon(AEWCharacter* Character, float Yaw, float Pitch)
+{
+    if (!HasAuthority() || !IsGunnerHere(Character) || !FMath::IsFinite(Yaw) || !FMath::IsFinite(Pitch)) return false;
+    FEWCannonState* Cannon = FindCannon(Character->GetGunMount());
+    Cannon->Yaw = FMath::Clamp(Yaw, -CannonTraverse, CannonTraverse);
+    Cannon->Pitch = FMath::Clamp(Pitch, -CannonDepression, CannonElevation);
+    return true;
+}
+
+bool AEWShip::FireCannon(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !IsGunnerHere(Character)) return false;
+    const FName MountId = Character->GetGunMount();
+    FEWCannonState* Cannon = FindCannon(MountId);
+    if (!Cannon->bLoaded) return false;
+    const FTransform Muzzle = GetCannonMuzzleWorld(MountId);
+    FActorSpawnParameters Params;
+    Params.Owner = this;
+    Params.Instigator = Character;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    AEWCannonBall* Shot = GetWorld()->SpawnActor<AEWCannonBall>(Muzzle.GetLocation(), Muzzle.Rotator(), Params);
+    if (!Shot) return false;
+    // The shot keeps the ship's own way through the water.
+    Shot->Launch(this, Character, Muzzle.GetRotation().GetForwardVector() * CannonMuzzleSpeed + GetActorForwardVector() * Speed);
+    Cannon->bLoaded = false;
+    ForceNetUpdate();
+    return true;
+}
+
+void AEWShip::UpdateCannons(float DeltaSeconds)
+{
+    bool bChanged = false;
+    for (FEWCannonState& Cannon : Cannons)
+    {
+        AEWCharacter* Gunner = Cannon.Gunner.Get();
+        FTransform Frame;
+        if (Cannon.Gunner && (!IsValid(Gunner) || Gunner->GetGunShip() != this || !CanModifyFittings(Gunner) || !GetCannonFrame(Cannon.MountId, Frame)))
+        {
+            if (IsValid(Gunner)) LeaveCannon(Gunner, true);
+            Cannon.Gunner = nullptr;
+            bChanged = true;
+            continue;
+        }
+        if (!Gunner || Cannon.bLoaded) continue;
+        if (Cannon.bLoading)
+        {
+            float& Left = CannonLoadLeft.FindOrAdd(Cannon.MountId);
+            Left -= DeltaSeconds;
+            if (Left <= 0.f) { Cannon.bLoading = false; Cannon.bLoaded = true; bChanged = true; }
+            continue;
+        }
+        // Loading takes one round shot from the gunner and a while to ram home.
+        UEWItemDefinition* Ammo = GetFitting(Cannon.MountId)->CannonAmmo.LoadSynchronous();
+        UEWInventoryComponent* Carried = Gunner->GetInventoryComponent();
+        if (Ammo && Carried && Carried->GetItemCount(Ammo) > 0 && Carried->RemoveItem(Ammo, 1) == 1)
+        {
+            Cannon.bLoading = true;
+            CannonLoadLeft.Add(Cannon.MountId, CannonLoadSeconds);
+            bChanged = true;
+        }
+    }
+    if (bChanged) ForceNetUpdate();
 }
 
 bool AEWShip::IsValidHelmsman(const AEWCharacter* Character) const
@@ -1087,6 +1264,7 @@ void AEWShip::Tick(float DeltaSeconds)
         SailTrimDirection = 0;
     }
     UpdateLoad(DeltaSeconds);
+    UpdateCannons(DeltaSeconds);
     // An open menu centres the rudder and stops the sails swinging; they keep their setting and trim.
     if (Helmsman)
         if (const auto* PC = Cast<AEWPlayerController>(Helmsman->GetController()); !PC || PC->GetInteractionComponent()->IsMenuBlocked())

@@ -167,6 +167,13 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
 - **Ammo Bin:** storage only, cannon ammo only, 20 stacks of 50.
 - **Ownership cap:** 8 ships per player, 20 per Company.
 - **Naval combat:** should be readable: ammo types, mast, sail and rudder damage, flooding, fire, boarding, grappling and repair. A simple two-cannon fight comes before the deeper systems.
+- **Cannons in play (DECIDED, delegated, October 14; the two-cannon fight's first step):**
+  - A cannon is a fitting for a cannon hardpoint, installed like a sail. Once installed it is manned, not removed (removing it is a Builder's Plan action), as the helm is taken.
+  - Hold Interact at an installed cannon to man it: the gunner stands behind the carriage and rides the ship. The view aims it, Left Mouse fires it, and Interact leaves it.
+  - A manned cannon loads itself from the round shot its gunner carries, one shot at a time, in 5 s (*tuning*). It must be loaded to fire.
+  - Its port limits its aim: 15 degrees either side, 5 down and 8 up on the sloop (*tuning*).
+  - Round shot leaves the muzzle at 60 m/s (*tuning*) plus the ship's own way, and falls under gravity into the sea or against whatever solid it meets first, never its own ship. It does not strike people yet.
+  - Cannon and round shot are test fixtures until their recipes, costs and variant names are decided (open question 1); round shot stacks to 50 (confirmed for cannon ammo).
 - **Ghost ships** are hostile NPC vessels haunting several areas. They fire on players and stay visible on the map through fog. Ordinary enemy pirates are other players.
 - **Technical rule:** each ship is its own authoritative actor. A player at the helm stays their own character; they do not become the ship.
 

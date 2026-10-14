@@ -14,6 +14,26 @@ class UEWShipDefinition;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 
+/** One cannon on its mount: who mans it, where it is aimed (degrees from its rest, up is positive pitch) and
+ *  whether it is loaded or being loaded. Replicated with the ship. */
+USTRUCT(BlueprintType)
+struct FEWCannonState
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    FName MountId;
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    TObjectPtr<AEWCharacter> Gunner;
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    float Yaw = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    float Pitch = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    bool bLoaded = false;
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    bool bLoading = false;
+};
+
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
 
@@ -259,6 +279,36 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Anchor")
     float GetCapstanTurn() const { return CapstanYaw; }
 
+    /** Tuning: how far a cannon swings either side of its port, dips below and lifts above level (the port's
+     *  opening limits it), how fast its shot leaves the muzzle in cm/s, and how long loading it takes. */
+    static constexpr float CannonTraverse = 15.f;
+    static constexpr float CannonDepression = 5.f;
+    static constexpr float CannonElevation = 8.f;
+    static constexpr float CannonMuzzleSpeed = 6000.f;
+    static constexpr float CannonLoadSeconds = 5.f;
+    /** Cannon mounts sit this far above the deck their carriage stands on. */
+    static constexpr float CannonMountHeight = 40.f;
+    /** Authority only. A survivor mans an installed cannon from behind it, aims it with the view and fires it;
+     *  while they man it, it loads itself from the round shot they carry. */
+    bool ManCannon(AEWCharacter* Character, FName MountId);
+    bool LeaveCannon(AEWCharacter* Character, bool bForce = false);
+    bool AimCannon(AEWCharacter* Character, float Yaw, float Pitch);
+    bool FireCannon(AEWCharacter* Character);
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    AEWCharacter* GetCannonGunner(FName MountId) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    bool IsCannonLoaded(FName MountId) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    bool IsCannonLoading(FName MountId) const;
+    /** Pitch and yaw from the cannon's rest, in degrees. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    FRotator GetCannonAim(FName MountId) const;
+    /** The muzzle in the world, facing where a shot would leave it. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    FTransform GetCannonMuzzleWorld(FName MountId) const;
+    /** Where a gunner stands, behind the cannon on the deck, in the ship's space. */
+    FTransform GetGunnerSeatLocal(FName MountId, float HalfHeight) const;
+
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
     TArray<FEWInstalledFitting> Fittings;
@@ -292,6 +342,17 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UStaticMeshComponent> CapstanVisual;
     float CapstanYaw = 0.f;
+    UPROPERTY(Replicated)
+    TArray<FEWCannonState> Cannons;
+    /** Server: seconds until each loading cannon is ready. */
+    TMap<FName, float> CannonLoadLeft;
+    FEWCannonState* FindCannon(FName MountId) { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
+    const FEWCannonState* FindCannon(FName MountId) const { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
+    /** The installed cannon's barrel pivot at rest, in the ship's space; false if no cannon is fitted there. */
+    bool GetCannonFrame(FName MountId, FTransform& Frame) const;
+    /** Server: drop gunners who can no longer man, and load and finish loading manned cannons. */
+    void UpdateCannons(float DeltaSeconds);
+    bool IsGunnerHere(const AEWCharacter* Character) const;
     UPROPERTY(Replicated)
     float Load = 0.f;
     UPROPERTY(Replicated)

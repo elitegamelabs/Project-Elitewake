@@ -22,6 +22,7 @@ AActor* FEWInteractionTargeting::FindTarget(const AEWCharacter* Character)
         || Character->GetController()->GetPawn() != Character) return nullptr;
     // Leaving the helm does not depend on where the helmsman looks.
     if (IsValid(Character->GetHelmShip())) return Character->GetHelmShip();
+    if (IsValid(Character->GetGunShip())) return Character->GetGunShip();
     FVector Eye; FRotator Rotation;
     Character->GetActorEyesViewPoint(Eye, Rotation);
     FCollisionQueryParams Query(SCENE_QUERY_STAT(EWInteraction), false, Character);
