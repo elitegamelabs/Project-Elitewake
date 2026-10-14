@@ -418,6 +418,11 @@ public:
     TObjectPtr<UAnimSequenceBase> HelmHoldAnimation;
     UPROPERTY(EditDefaultsOnly, Category="Ship")
     TObjectPtr<UAnimSequenceBase> PaddleAnimation;
+    /** Leaning into a capstan's bars while the anchor is worked. */
+    UPROPERTY(EditDefaultsOnly, Category="Ship")
+    TObjectPtr<UAnimSequenceBase> CapstanAnimation;
+    /** Every machine: the ship whose capstan this survivor is turning, told by the ship. */
+    void SetCapstanShip(AEWShip* Ship);
     /** The ladder or helm loop playing now, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
     UAnimSequenceBase* GetLoopAnimation() const { return PlayingLoopAnimation; }
@@ -443,8 +448,9 @@ private:
     FEWAppearance Appearance;
     UFUNCTION()
     void OnRep_Appearance();
-    /** Every machine: plays the loop for what the survivor is doing on a ladder or at a helm, or stops it. */
+    /** Every machine: plays the loop for what the survivor is doing on a ladder, at a helm or at a capstan, or stops it. */
     void UpdateLoopAnimation(float DeltaSeconds);
+    TWeakObjectPtr<AEWShip> CapstanShip;
     UPROPERTY(Transient)
     TObjectPtr<UAnimSequenceBase> PlayingLoopAnimation;
     float PlayingLoopRate = 1.f;

@@ -242,10 +242,22 @@ public:
     virtual EEWInteractionMode GetInteractionMode_Implementation() const override { return EEWInteractionMode::Hold; }
     virtual EEWInteractionMode GetInteractionModeFor_Implementation(AEWCharacter* Character) const override;
     virtual float GetHoldDuration_Implementation() const override { return FittingHoldSeconds; }
+    virtual float GetHoldDurationFor_Implementation(AEWCharacter* Character) const override;
+    virtual void HoldChanged_Implementation(AEWCharacter* Character, bool bHolding) override;
     virtual bool Interact_Implementation(AEWCharacter* Character) override;
 
     /** Tuning: how long Interact is held to install or remove a fitting. */
     static constexpr float FittingHoldSeconds = .75f;
+    /** Tuning: how long Interact is held at a capstan to raise or drop the anchor, and how fast the capstan turns
+     *  meanwhile, in degrees per second (it runs out half as fast again when the anchor is let go). */
+    static constexpr float AnchorHoldSeconds = 3.f;
+    static constexpr float CapstanTurnRate = 90.f;
+    /** The survivor turning the capstan now, if any: every machine shows them pushing its bars as it turns. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    AEWCharacter* GetCapstanWorker() const { return CapstanWorker; }
+    /** How far the capstan's head has turned, in degrees. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    float GetCapstanTurn() const { return CapstanYaw; }
 
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
@@ -270,6 +282,16 @@ private:
     TObjectPtr<UStaticMeshComponent> CargoHatchVisual;
     UPROPERTY(Replicated)
     bool bAnchored = true;
+    UPROPERTY(ReplicatedUsing=OnRep_CapstanWorker)
+    TObjectPtr<AEWCharacter> CapstanWorker;
+    /** The worker this machine last told it was at the capstan. */
+    TWeakObjectPtr<AEWCharacter> ShownCapstanWorker;
+    UFUNCTION()
+    void OnRep_CapstanWorker();
+    void SetCapstanWorker(AEWCharacter* Worker);
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> CapstanVisual;
+    float CapstanYaw = 0.f;
     UPROPERTY(Replicated)
     float Load = 0.f;
     UPROPERTY(Replicated)

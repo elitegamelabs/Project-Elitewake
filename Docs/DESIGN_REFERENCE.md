@@ -252,6 +252,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
 - **Working detail on every hull (DECIDED, delegated, October 12, owner asked for more realistic ships):** shrouds end in deadeyes on channels outboard of the rail, carried by iron chainplates, with ratlines between them; pin rails at each mast; a rudder hung on the stern by iron pintles; and an anchor catted at each bow. These are part of the hull and do nothing yet: the rudder's movement, anchors that drop and climbable ratlines are later work.
 - **Anchor (DECIDED, delegated, within the owner's hold-to-anchor rule):**
   - Each ship has a built-in anchor capstan on deck. Anyone aboard holds Interact there to raise or drop the anchor.
+  - Working the capstan takes a 3 s hold (*tuning*; fittings take 0.75 s). Meanwhile the survivor leans into its bars and its head turns, faster when the anchor is let go, and every player sees both. The raft's stone and the dinghy's grapnel have no capstan and keep the short hold.
   - Ships start anchored, so a moored ship never drifts.
   - An anchored ship cannot sail, whatever its sails are set to. Dropping anchor under way drags the ship to a stop within about 2 seconds (*tuning*), with no damage for now.
   - The helmsman's prompt shows "Anchored" while it is down. The trim bar shows the sails; a full ship HUD (speed, anchor, hull) comes with the HUD art pass.
@@ -430,7 +431,7 @@ All inputs use Enhanced Input and must be remappable. Prompts follow the last de
 - **Held tools (owner, October 12: hotbar items must show in the hand and work):** whatever is in the main hand is held in the right hand on every screen, built in-engine: the wooden axe, wooden pickaxe and wooden shovel of the starter kit, the iron hatchet and pickaxe, and the inn torch. The shovel and the torch are now main-hand items too, and the torch casts a warm light while held (DECIDED, delegated). With a tool in hand, Attack plays an overhead chop instead of a punch; the chop is made for Elitewake from the mannequin's idle (`Scripts/Setup/build_tool_swing.py`), as the project had none.
 - **Helm animations (DECIDED, delegated, October 13):** a helmsman holds the wheel or tiller with both hands; on the raft they take up a paddle and stroke with it, side to side, faster at a hard stroke than an easy one, and hold it still at rest. Both are made for Elitewake on the mannequin skeleton (`Scripts/Setup/build_crew_animations.py`).
 - **Ladder animations (DECIDED, delegated):** a survivor on a ladder plays the animation library's ladder loops, climbing up, climbing down or holding on, judged from how they move, so every screen shows the same climb.
-- **Animations needed:** swimming, digging, eating and drinking, aiming, firing and reloading, helm, anchor and cannons, station use, medical treatment, and first-person versions; the tool chop, ladder climbing, holding the helm and paddling are in.
+- **Animations needed:** swimming, digging, eating and drinking, aiming, firing and reloading, helm, anchor and cannons, station use, medical treatment, and first-person versions; the tool chop, ladder climbing, holding the helm, paddling and pushing a capstan are in.
 
 <a id="open-questions"></a>
 

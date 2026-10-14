@@ -61,6 +61,12 @@ public:
     /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector AnchorPoint = FVector(350, -90, 130);
+    /** The capstan's head, which turns while the anchor is worked; it stands with its base at CapstanLocation,
+     *  relative to the ship. None on a boat without a capstan. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    TSoftObjectPtr<UStaticMesh> CapstanMesh;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    FVector CapstanLocation = FVector::ZeroVector;
     /** Cargo hatch on deck, relative to the ship. Hold Interact there to open the ship's hold. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo")
     FVector CargoHatchPoint = FVector(-150, 60, 130);

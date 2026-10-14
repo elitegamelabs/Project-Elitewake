@@ -464,6 +464,16 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("The ship starts anchored"), Ship->IsAnchored());
     TestTrue(TEXT("Interact raises the anchor"), Ship->Interact_Implementation(C) && !Ship->IsAnchored());
     TestTrue(TEXT("Interact drops it again"), Ship->Interact_Implementation(C) && Ship->IsAnchored());
+    TestEqual(TEXT("A boat without a capstan takes the short hold"), Ship->GetHoldDurationFor_Implementation(C), AEWShip::FittingHoldSeconds);
+    Def->CapstanMesh = TSoftObjectPtr<UStaticMesh>(FSoftObjectPath(TEXT("/Engine/BasicShapes/Cylinder.Cylinder")));
+    TestEqual(TEXT("Working a capstan takes the longer hold"), Ship->GetHoldDurationFor_Implementation(C), AEWShip::AnchorHoldSeconds);
+    Ship->HoldChanged_Implementation(C, true);
+    TestTrue(TEXT("Holding at the capstan makes the survivor its worker"), Ship->GetCapstanWorker() == C);
+    Ship->HoldChanged_Implementation(nullptr, true);
+    TestTrue(TEXT("Only a survivor at the capstan can take it over"), Ship->GetCapstanWorker() == C);
+    Ship->HoldChanged_Implementation(C, false);
+    TestNull(TEXT("Letting go leaves the capstan"), Ship->GetCapstanWorker());
+    Def->CapstanMesh.Reset();
 
     // The cargo hold: sized by the definition, opened at the hatch, and reachable only aboard or nearby.
     TestEqual(TEXT("Hold size comes from the definition"), Ship->GetCargo()->GetMaxSlotCount(), Def->CargoSlots);

@@ -8,6 +8,8 @@ bool IEWInteractable::CanInteract_Implementation(AEWCharacter* Character) const 
 FText IEWInteractable::GetInteractionPrompt_Implementation(AEWCharacter* Character) const { return FText::GetEmpty(); }
 EEWInteractionMode IEWInteractable::GetInteractionMode_Implementation() const { return EEWInteractionMode::Press; }
 float IEWInteractable::GetHoldDuration_Implementation() const { return 1.f; }
+float IEWInteractable::GetHoldDurationFor_Implementation(AEWCharacter* Character) const { return Execute_GetHoldDuration(Cast<const UObject>(this)); }
+void IEWInteractable::HoldChanged_Implementation(AEWCharacter* Character, bool bHolding) {}
 EEWInteractionMode IEWInteractable::GetInteractionModeFor_Implementation(AEWCharacter* Character) const
 {
     return Execute_GetInteractionMode(Cast<UObject>(this));

@@ -23,6 +23,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_ship_fittings as fittings  # noqa: E402
 from build_schooner import data_asset, large_sail_item, mount  # noqa: E402
+from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
 
@@ -193,7 +194,7 @@ def sail_looks(timber, sails):
 
 # ---- Assets ------------------------------------------------------------------------------------------------
 
-def update_definition(hull, rig, looks):
+def update_definition(hull, rig, looks, capstan):
     d = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Brigantine', unreal.EWShipDefinition)
     mounts = [mount('Helm', T.HELM, (-1250.0, 0.0, QD_Z + 50))]
     mounts += [mount(mid, T.SAIL, at, sail=size, look=looks[mid]) for mid, (at, size) in SAIL_MOUNTS.items()]
@@ -207,6 +208,7 @@ def update_definition(hull, rig, looks):
         'hull_extent': unreal.Vector(HULL.bow_x - 10, HULL.beam + 5, -HULL.keel_z + 5),
         'hull_draft': -HULL.keel_z, 'deck_height': DECK_Z, 'hold_floor_height': FLOOR_Z,
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
+        'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         # Crew up to 25 (confirmed). Speed, turning and hold are tuning: bigger and slower to turn than the schooner.
@@ -241,7 +243,7 @@ def main():
     rig = write_static_mesh(rigging(), f'{FOLDER}/SM_BrigantineRigging_v1', [timber], UV_TILE, collision=False)
     looks = sail_looks(timber, sails)
     large_sail_item()
-    definition = update_definition(hull, rig, looks)
+    definition = update_definition(hull, rig, looks, capstan_head(timber))
     moor(definition)
     Path(unreal.Paths.project_saved_dir(), 'BrigantineResult.json').write_text(json.dumps(
         {'success': True, 'vertices': len(b.verts), 'triangles': len(b.tris), 'mounts': len(definition.get_editor_property('mounts'))}, indent=2))

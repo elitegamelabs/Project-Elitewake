@@ -220,11 +220,17 @@ void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
             : Moved > 0.f ? LadderUpAnimation.Get() : Moved < 0.f ? LadderDownAnimation.Get() : PlayingLoopAnimation.Get();
         if (!Wanted) Wanted = LadderIdleAnimation;
     }
+    else if (CapstanShip.IsValid() && CapstanShip->GetCapstanWorker() == this) Wanted = CapstanAnimation;
     if (Wanted == PlayingLoopAnimation && Rate == PlayingLoopRate) return;
     if (PlayingLoopAnimation) Anim->StopSlotAnimation(.15f, TEXT("DefaultSlot"));
     PlayingLoopAnimation = Wanted;
     PlayingLoopRate = Rate;
     if (Wanted) Anim->PlaySlotAnimationAsDynamicMontage(Wanted, TEXT("DefaultSlot"), .2f, .2f, Rate, 100000);
+}
+
+void AEWCharacter::SetCapstanShip(AEWShip* Ship)
+{
+    CapstanShip = Ship;
 }
 
 UStaticMesh* AEWCharacter::GetHeldMesh() const

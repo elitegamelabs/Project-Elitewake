@@ -48,7 +48,7 @@ void UEWInteractionComponent::Request(AActor* Target)
         IEWInteractable::Execute_Interact(Target, Survivor);
         return;
     }
-    const float Duration = IEWInteractable::Execute_GetHoldDuration(Target);
+    const float Duration = IEWInteractable::Execute_GetHoldDurationFor(Target, Survivor);
     if (!FMath::IsFinite(Duration) || Duration <= 0) return;
     Hold.Target = Target;
     Hold.Duration = Duration;
@@ -57,11 +57,14 @@ void UEWInteractionComponent::Request(AActor* Target)
     StartingPawn = Survivor;
     GetWorld()->GetTimerManager().SetTimer(ValidationTimer, this, &UEWInteractionComponent::ValidateHold, .05f, true);
     GetOwner()->ForceNetUpdate();
+    IEWInteractable::Execute_HoldChanged(Target, Survivor, true);
 }
 void UEWInteractionComponent::Cancel()
 {
     if (!GetOwner() || !GetOwner()->HasAuthority()) return;
     GetWorld()->GetTimerManager().ClearTimer(ValidationTimer);
+    AActor* Ended = Hold.Target;
+    AEWCharacter* Holder = StartingPawn.Get();
     StartingPawn.Reset();
     if (Hold.Target || Hold.Duration > 0)
     {
@@ -69,6 +72,7 @@ void UEWInteractionComponent::Cancel()
         Hold.Revision = Hold.Revision == MAX_int32 ? 0 : Hold.Revision + 1;
         GetOwner()->ForceNetUpdate();
     }
+    if (IsValid(Ended) && Ended->Implements<UEWInteractable>()) IEWInteractable::Execute_HoldChanged(Ended, Holder, false);
 }
 void UEWInteractionComponent::SetMenuBlocked(bool bBlocked)
 {
@@ -82,7 +86,7 @@ void UEWInteractionComponent::ValidateHold()
     AActor* Target = Hold.Target;
     if (Survivor != StartingPawn.Get() || !IsEligible(Target, Survivor)
         || IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) != EEWInteractionMode::Hold
-        || IEWInteractable::Execute_GetHoldDuration(Target) != Hold.Duration)
+        || IEWInteractable::Execute_GetHoldDurationFor(Target, Survivor) != Hold.Duration)
     {
         Cancel(); return;
     }
@@ -95,6 +99,7 @@ void UEWInteractionComponent::ValidateHold()
 }
 void UEWInteractionComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
+    if (Hold.Target) Cancel();
     if (GetWorld()) GetWorld()->GetTimerManager().ClearTimer(ValidationTimer);
     Super::EndPlay(Reason);
 }

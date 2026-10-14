@@ -411,13 +411,25 @@ class Hull:
                 y = out(ladder_x, z) + side * 1
                 b.sweep([(ladder_x - 24, y, z), (ladder_x + 24, y, z)], 4.0, 4.0, side=(0, 1, 0))
 
+    CAPSTAN_TOP = 80.0      # the barrel's top above the deck, where the drumhead sits
+
     def capstan(self, b, x, y, z):
+        """A capstan's fixed base and barrel; its head turns on top (capstan_head)."""
         b.cylinder((x, y, z), 26, 6)
-        b.cylinder((x, y, z + 6), 19, 52)
-        b.cylinder((x, y, z + 58), 27, 9)
+        b.cylinder((x, y, z + 6), 19, self.CAPSTAN_TOP - 6)
+
+    @classmethod
+    def capstan_head(cls, b):
+        """The part of a capstan that turns, about the middle of its base on the deck: iron whelps up the barrel,
+        the drumhead and four bars to push it round by."""
+        top = cls.CAPSTAN_TOP
         for k in range(4):
             a = math.pi / 4 + k * math.pi / 2
-            b.box((x + 19 * math.cos(a), y + 19 * math.sin(a), z + 32), (6, 6, 40), iron=1.0)
+            b.box((19 * math.cos(a), 19 * math.sin(a), (12 + top - 6) / 2), (6, 6, top - 18), iron=1.0)
+        b.cylinder((0, 0, top), 27, 10)
+        for k in range(4):
+            c, s = math.cos(k * math.pi / 2), math.sin(k * math.pi / 2)
+            b.tube([(20 * c, 20 * s, top + 5), (85 * c, 85 * s, top + 5)], 2.6, sides=8)
 
     def mast(self, b, x, top, radius=15.0, top_radius=10.0, coat_z=None):
         """A mast stepped on the floor, rising through the deck at coat_z to its cap."""

@@ -22,6 +22,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_ship_fittings as fittings  # noqa: E402
+from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
 
@@ -239,7 +240,7 @@ def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, look=N
     return m
 
 
-def update_definition(hull, rig, looks):
+def update_definition(hull, rig, looks, capstan):
     d = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Schooner', unreal.EWShipDefinition)
     sizes = {'ForeTopsail': unreal.EWSailSize.LARGE, 'Mainsail': unreal.EWSailSize.MEDIUM, 'MizzenSail': unreal.EWSailSize.MEDIUM,
              'FlyingJib': unreal.EWSailSize.SMALL, 'Jib': unreal.EWSailSize.SMALL, 'Staysail': unreal.EWSailSize.SMALL}
@@ -256,6 +257,7 @@ def update_definition(hull, rig, looks):
         'hull_extent': unreal.Vector(HULL.bow_x - 10, HULL.beam + 5, -HULL.keel_z + 5),
         'hull_draft': -HULL.keel_z, 'deck_height': DECK_Z, 'hold_floor_height': FLOOR_Z,
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
+        'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         # Crew: the twelve cannons' crews plus the player and the Surgeon. Speed, turning and hold are tuning.
@@ -299,7 +301,7 @@ def main():
     rig = write_static_mesh(rigging(), f'{FOLDER}/SM_SchoonerRigging_v1', [timber], UV_TILE, collision=False)
     looks = sail_looks(timber, sails)
     large_sail = large_sail_item()
-    definition = update_definition(hull, rig, looks)
+    definition = update_definition(hull, rig, looks, capstan_head(timber))
     moor(definition, large_sail)
     Path(unreal.Paths.project_saved_dir(), 'SchoonerResult.json').write_text(json.dumps(
         {'success': True, 'vertices': len(b.verts), 'triangles': len(b.tris), 'mounts': len(definition.get_editor_property('mounts'))}, indent=2))

@@ -26,6 +26,7 @@ from ship_hull import Hull, tar_rope  # noqa: E402
 MESH = '/Game/Elitewake/World/Ships/SM_SloopHull_v2'
 RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Sloop'
+CAPSTAN_HEAD = '/Game/Elitewake/World/Ships/SM_CapstanHead_v1'
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 
 GUNPORT = (-140.0, 48.0, 268.0, 306.0)  # centre x, width, bottom z, top z: in the bulwark
@@ -93,6 +94,13 @@ def rigging():
 
 # ---- Assets ------------------------------------------------------------------------------------------------
 
+def capstan_head(timber):
+    """The capstan's turning head, the same on every hull with a capstan."""
+    b = Builder()
+    Hull.capstan_head(b)
+    return write_static_mesh(b, CAPSTAN_HEAD, [timber], UV_TILE, collision=False)
+
+
 def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE):
     m = unreal.EWShipMount()
     m.set_editor_property('mount_id', mount_id)
@@ -102,7 +110,7 @@ def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE):
     return m
 
 
-def update_definition(hull, rig):
+def update_definition(hull, rig, capstan):
     definition = unreal.load_asset(DEFINITION)
     assert definition, DEFINITION
     deck_y = lambda x: HULL.inner_y(x, DECK_Z)
@@ -116,6 +124,7 @@ def update_definition(hull, rig):
         'deck_height': DECK_Z,
         'hold_floor_height': FLOOR_Z,
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
+        'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         'mounts': [
@@ -153,7 +162,7 @@ def main():
     timber = make_timber_material()
     hull = write_static_mesh(b, MESH, [timber], UV_TILE)
     rig = write_static_mesh(rigging(), RIGGING, [timber], UV_TILE, collision=False)
-    report = {'vertices': len(b.verts), 'triangles': len(b.tris), 'definition': update_definition(hull, rig)}
+    report = {'vertices': len(b.verts), 'triangles': len(b.tris), 'definition': update_definition(hull, rig, capstan_head(timber))}
     moor()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'SloopHullResult.json').write_text(json.dumps(report, indent=2))

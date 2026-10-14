@@ -6,7 +6,7 @@ from Scripts/Setup/build_brigantine.py. Run unattended with run_play_check.py.
 Through ordinary owned requests and its own movement input, the client:
   1. installs a Large sail as the fore course, a Large sail as the gaff mainsail and a ship's wheel on the
      quarterdeck (each granted in Play only, just before it is fitted),
-  2. raises the anchor, takes the helm, sets full sail and sails for 4 s, then leaves the helm and anchors.
+  2. raises the anchor, takes the helm, sets full sail, trims the sails to the wind and sails for 4 s, then leaves the helm and anchors.
      Every frame of the sail is measured: the ship on the server, its copy on the client and the client's own
      survivor at the helm must each move by what the ship's speed asks for that frame, with at most 5% of frames
      stalling or jumping (lag a player would see),
@@ -114,6 +114,21 @@ def full_sail():
     state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
 
 
+def trim_sails():
+    """Shift with A or D swings the sails toward the wind's best angle, as a helmsman trims them."""
+    side = 'D' if ship.get_best_sail_angle() > ship.get_sail_angle() else 'A'
+    for key in ('LeftShift', side):
+        assert lib.send_verification_gameplay_key_state(client, key, True)
+
+
+def trimmed():
+    if ship.get_trim_quality() < .9:
+        return False
+    for key in ('LeftShift', 'A', 'D'):
+        lib.send_verification_gameplay_key_state(client, key, False)
+    return True
+
+
 def begin_run():
     m = state['memo']
     m.update(start=ship.get_actor_location(), t=time.monotonic(), frames=[],
@@ -207,7 +222,14 @@ def climbed():
         assert lib.send_verification_interaction_request(client, peer)
         m['climb_sent'] = True
         return False
-    return ship.is_aboard(owner) and peer.is_aboard(pawn) and local_of(owner).z > DECK
+    # Holding on, the Up arrow climbs; at the top the survivor steps onto the deck.
+    if owner.is_on_ladder() and not m.get('climbing'):
+        assert lib.send_verification_gameplay_key_state(client, 'Up', True)
+        m['climbing'] = True
+    if owner.is_on_ladder() or not (ship.is_aboard(owner) and peer.is_aboard(pawn) and local_of(owner).z > DECK):
+        return False
+    lib.send_verification_gameplay_key_state(client, 'Up', False)
+    return True
 
 
 down = walk(40, 0, DECK, 0.0, lambda z: z < LOWER + STAND + 30, 'down')
@@ -256,6 +278,7 @@ STEPS = [
     ('Client takes the helm', go('Helm'), lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
     ('Forward input twice sets full sail', full_sail,
      lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
+    ('Shift with A or D trims the sails until they draw well', trim_sails, trimmed, 8),
     ('The brigantine sails for 4 s, smoothly every frame on server and client, and the client copy keeps up', begin_run, ran, 8),
     ('Client leaves the helm', leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),
     ('Client drops the anchor', go('Anchor'), lambda: ship.is_anchored() and peer.is_anchored(), 6),
@@ -267,7 +290,7 @@ STEPS = [
     ("Client walks through the doorway into the crew's quarters under the forecastle", *into_quarters(), 8),
     ('Client climbs the stairs to the quarterdeck', *raised, 8),
     ('Client climbs the stairs to the forecastle', *forecastle, 8),
-    ('Client, swimming beside the hull, looks up at the starboard ladder and climbs aboard', climb_ladder, climbed, 8),
+    ('Client, swimming beside the hull, looks up at the starboard ladder, takes hold and climbs aboard', climb_ladder, climbed, 14),
 ]
 
 

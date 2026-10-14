@@ -6,7 +6,7 @@ that Play session yourself and run this from the editor's Python console.
 
 Through ordinary owned requests and movement input, the client:
   1. installs the helm, mainsail and headsail at their mounts (test fittings granted in Play only),
-  2. raises the anchor at the capstan,
+  2. raises the anchor at the capstan, leaning into its bars as it turns for the length of the hold,
   3. takes the helm, sets full sail with forward input (W) and steers with right input (D),
   4. releases the rudder, leaves the helm, and drops the anchor to stop the ship.
 Each step waits for its result on the server and on the client's copy of the ship, with a timeout.
@@ -134,6 +134,29 @@ def left_helm():
     capsule = pawn.get_component_by_class(unreal.CapsuleComponent)
     return movement.movement_mode != unreal.MovementMode.MOVE_NONE and capsule.get_collision_enabled() != unreal.CollisionEnabled.NO_COLLISION
 
+def begin_capstan():
+    state['memo']['capstan_start'] = time.monotonic()
+    install('Anchor')()
+
+def capstan_worked():
+    """While the hold runs both machines see the survivor at the capstan, pushing its bars as it turns; when it
+    ends the anchor is up and the survivor lets go."""
+    m = state['memo']
+    if ship.get_capstan_worker() == owner and peer.get_capstan_worker() == pawn:
+        m['worker_seen'] = True
+        loops = [p.get_loop_animation() for p in (owner, pawn)]
+        if all(a and a.get_name() == 'AS_CapstanPush_v1' for a in loops):
+            m['push_seen'] = True
+    m['capstan_turn'] = max(m.get('capstan_turn', 0.0), abs(peer.get_capstan_turn()))
+    if ship.is_anchored() or peer.is_anchored() or peer.get_capstan_worker() is not None or pawn.get_loop_animation():
+        return False
+    m['capstan_seconds'] = time.monotonic() - m['capstan_start']
+    assert m.get('worker_seen'), 'neither machine saw the survivor at the capstan'
+    assert m.get('push_seen'), 'the survivor did not lean into the bars on both machines'
+    assert m['capstan_turn'] > 90, f"the client's capstan barely turned ({m['capstan_turn']:.0f} degrees)"
+    assert m['capstan_seconds'] > 2.5, f"the anchor came up after only {m['capstan_seconds']:.1f} s"
+    return True
+
 def grant():
     assert not ship.get_installed_fittings(), 'The sloop must start as a bare hull'
     assert ship.is_anchored() and peer.is_anchored(), 'The moored sloop must start anchored'
@@ -147,7 +170,7 @@ STEPS = [
     ('Client installs the Medium mainsail', install('Mainsail'), fitted('Mainsail', mainsail), 6),
     ('Client installs the Small headsail; all three fittings left the inventory', install('Headsail'),
      lambda: fitted('Headsail', headsail)() and owner.get_inventory_component().get_item_count(helm) == 0, 6),
-    ('Client raises the anchor at the capstan', install('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
+    ('Client raises the anchor at the capstan: over the 3 s hold both machines see them push its bars as it turns', begin_capstan, capstan_worked, 8),
     ('Client takes the helm; helmsman replicates and the survivor stays possessed', install('Helm'),
      lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn and pawn.get_helm_ship() == peer
      and client.get_controlled_pawn() == pawn, 6),
@@ -166,7 +189,7 @@ def finish(error=None):
     m = state['memo']
     RESULT.write_text(json.dumps({
         'success': error is None, 'checks': checks, 'error': error,
-        'sailing': {k: round(m[k], 2) for k in ('moved', 'turned', 'gap', 'wake', 'roll_seen', 'pitch_seen', 'heel', 'wheel_turn') if k in m},
+        'sailing': {k: round(m[k], 2) for k in ('capstan_turn', 'capstan_seconds', 'moved', 'turned', 'gap', 'wake', 'roll_seen', 'pitch_seen', 'heel', 'wheel_turn') if k in m},
         'state': {'server_ship': str(ship.get_actor_location()), 'client_ship': str(peer.get_actor_location()),
                   'speed': ship.get_speed(), 'sail_state': str(ship.get_sail_state()), 'rudder': ship.get_rudder(),
                   'helmsman': str(ship.get_helmsman()), 'fittings': len(ship.get_installed_fittings())},

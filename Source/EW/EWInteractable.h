@@ -37,6 +37,15 @@ public:
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
     float GetHoldDuration() const;
     virtual float GetHoldDuration_Implementation() const;
+    /** How long this survivor holds Interact for what they aim at; by default the actor's own duration. A ship's
+     *  capstan takes longer than its fittings. */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+    float GetHoldDurationFor(AEWCharacter* Character) const;
+    virtual float GetHoldDurationFor_Implementation(AEWCharacter* Character) const;
+    /** Authority only: a survivor's hold on this actor began, or ended (finished or not). */
+    UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly, Category="Interaction")
+    void HoldChanged(AEWCharacter* Character, bool bHolding);
+    virtual void HoldChanged_Implementation(AEWCharacter* Character, bool bHolding);
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category="Interaction")
     bool Interact(AEWCharacter* Character);
     virtual bool Interact_Implementation(AEWCharacter* Character);

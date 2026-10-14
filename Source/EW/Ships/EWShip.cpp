@@ -114,6 +114,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, RudderAngle);
     DOREPLIFETIME(AEWShip, SailAngle);
     DOREPLIFETIME(AEWShip, bAnchored);
+    DOREPLIFETIME(AEWShip, CapstanWorker);
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
@@ -168,7 +169,8 @@ void AEWShip::ApplyDefinition()
     LadderVisuals.Reset();
     if (AnchorTarget) AnchorTarget->DestroyComponent();
     if (AnchorVisual) AnchorVisual->DestroyComponent();
-    AnchorTarget = nullptr; AnchorVisual = nullptr;
+    if (CapstanVisual) CapstanVisual->DestroyComponent();
+    AnchorTarget = nullptr; AnchorVisual = nullptr; CapstanVisual = nullptr;
     if (CargoHatchTarget) CargoHatchTarget->DestroyComponent();
     if (CargoHatchVisual) CargoHatchVisual->DestroyComponent();
     CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
@@ -215,6 +217,15 @@ void AEWShip::ApplyDefinition()
     AnchorVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     AnchorVisual->SetVisibility(!bModelledHull);
     AnchorVisual->RegisterComponent();
+    if (UStaticMesh* Capstan = Definition->CapstanMesh.LoadSynchronous())
+    {
+        CapstanVisual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), TEXT("CapstanVisual")), RF_Transient);
+        CapstanVisual->SetupAttachment(HullCollision);
+        CapstanVisual->SetStaticMesh(Capstan);
+        CapstanVisual->SetRelativeLocationAndRotation(Definition->CapstanLocation, FRotator(0, CapstanYaw, 0));
+        CapstanVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        CapstanVisual->RegisterComponent();
+    }
 
     for (int32 i = 0; i < Definition->BoardingPoints.Num(); ++i)
     {
@@ -700,6 +711,34 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     return FText::Format(NSLOCTEXT("Elitewake", "EmptyMount", "Empty {0} mount"), MountTypeName(*Mount));
 }
 
+float AEWShip::GetHoldDurationFor_Implementation(AEWCharacter* Character) const
+{
+    return Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character) ? AnchorHoldSeconds : FittingHoldSeconds;
+}
+
+void AEWShip::HoldChanged_Implementation(AEWCharacter* Character, bool bHolding)
+{
+    if (!HasAuthority()) return;
+    if (bHolding && Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character)) SetCapstanWorker(Character);
+    else if (!bHolding && (!Character || CapstanWorker == Character)) SetCapstanWorker(nullptr);
+}
+
+void AEWShip::SetCapstanWorker(AEWCharacter* Worker)
+{
+    if (CapstanWorker == Worker) return;
+    CapstanWorker = Worker;
+    OnRep_CapstanWorker();
+    ForceNetUpdate();
+}
+
+void AEWShip::OnRep_CapstanWorker()
+{
+    if (ShownCapstanWorker.Get() == CapstanWorker) return;
+    if (AEWCharacter* Previous = ShownCapstanWorker.Get()) Previous->SetCapstanShip(nullptr);
+    if (CapstanWorker) CapstanWorker->SetCapstanShip(this);
+    ShownCapstanWorker = CapstanWorker;
+}
+
 bool AEWShip::Interact_Implementation(AEWCharacter* Character)
 {
     if (!HasAuthority() || !Character || !Character->HasAuthority() || !CanInteract_Implementation(Character)
@@ -1023,6 +1062,12 @@ void AEWShip::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     ShowWake(DeltaSeconds);
     if (TurningVisuals.Num()) ShowTurning(DeltaSeconds);
+    if (CapstanWorker && CapstanVisual)
+    {
+        // Heaving in turns it one way; letting the anchor go runs it the other, faster.
+        CapstanYaw = FMath::Fmod(CapstanYaw + (bAnchored ? CapstanTurnRate : -1.5f * CapstanTurnRate) * DeltaSeconds, 360.f);
+        CapstanVisual->SetRelativeRotation(FRotator(0, CapstanYaw, 0));
+    }
     if (ShownSailAngle != SailAngle)
     {
         // Swing at the trim rate, a little faster to catch up on a client, never overshooting.
