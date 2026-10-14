@@ -27,7 +27,7 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Small craft pass: the wheel and tiller visibly turn with the rudder | ✅ `15414cd` |
 | Small craft pass: a finish pass on the raft, dinghy and sloop | ⏳ |
 | Paddling animation for the raft; holding the helm | ✅ `50e1c5f` |
-| First-person body: see your arms, hands and feet (owner, October 13) | ✅ COMMIT |
+| First-person body: see your arms, hands and feet (owner, October 13) | ✅ `6fd9133` |
 | Capstan animation | ✅ `a764bc3` |
 | Freshwater pond on the island for bass, catfish and piranha | ✅ `24f1418` |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
