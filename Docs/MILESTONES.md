@@ -31,8 +31,8 @@ Goal: from the title, a tester lands on the coast, gathers, boards and sails a s
 | Capstan animation | ✅ `a764bc3` |
 | Freshwater pond on the island for bass, catfish and piranha | ✅ `24f1418` |
 | Campfire: cook Raw Fish and Raw Meat; eat raw (10% health, sickness) or cooked (20% / 25%) | ⛔ hunger restored by fish and meat, what sickness does and how long, campfire recipe and cooking time (open question 11) |
-| Inventory and crafting screen redesign: a full slot grid with item pictures, counts and freshness, an equipped row, needs with their icons, item details and crafting | ✅ COMMIT |
-| Item art: the reviewed atlases cut into clean inventory icons and bound to every current item | ✅ COMMIT |
+| Inventory and crafting screen redesign: a full slot grid with item pictures, counts and freshness, an equipped row, needs with their icons, item details and crafting | ✅ `3b3e942` |
+| Item art: the reviewed atlases cut into clean inventory icons and bound to every current item | ✅ `3b3e942` |
 | Integrated First Voyage Play check | ✅ `60e813f` |
 
 ## M2 — Cannon fight
