@@ -349,12 +349,17 @@ def mount(mount_id, kind, location, sail=unreal.EWSailSize.NONE, look=None):
 def definition(name, values, helm_item):
     d = data_asset(SHIPS, name, unreal.EWShipDefinition)
     for k, v in values.items():
-        d.set_editor_property(k, v)
+        if v is None:
+            # Clearing a mesh only sticks with a change notice (the raft once had rigging, from when it had a mast).
+            d.modify()
+            d.set_editor_property(k, None, unreal.PropertyAccessChangeNotifyMode.ALWAYS)
+        else:
+            d.set_editor_property(k, v)
     built = unreal.EWInstalledFitting()
     built.set_editor_property('mount_id', 'Helm')
     built.set_editor_property('item', helm_item)
     d.set_editor_property('built_in_fittings', [built])
-    assert unreal.EditorAssetLibrary.save_loaded_asset(d)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(d, False)
     return d
 
 
@@ -416,7 +421,8 @@ def moor(definitions):
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
-    for label, d, where in (('Raft', definitions[0], (5300, 230, -65)), ('Dinghy', definitions[1], (5300, 480, -65))):
+    # Side by side off the dock with room between them (the dinghy by the dock at Y 650, the raft 3 m deep out).
+    for label, d, where in (('Raft', definitions[0], (5300, 60, -65)), ('Dinghy', definitions[1], (5300, 480, -65))):
         ship = next((a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == d), None)
         if not ship:
             ship = actors.spawn_actor_from_class(unreal.EWShip, unreal.Vector(*where))
