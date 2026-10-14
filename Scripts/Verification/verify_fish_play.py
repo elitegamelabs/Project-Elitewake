@@ -166,10 +166,13 @@ def manta_killed():
     swing()
     manta = state['follow'][0]
     owner.get_survival_component().restore_health(100)   # its sting must not end the check
-    if manta.get_health() < state['memo']['health0']:
-        assert manta.get_quarry() == owner or manta.is_dead(), 'the struck manta did not turn on the swimmer'
+    # Once struck it should turn on the swimmer at some point in the fight (a frame with the swimmer moved up out
+    # of the water lets it lose them for that frame, so it is not asked of every frame).
+    if manta.get_quarry() == owner:
+        state['memo']['manta_turned'] = True
     if not (manta.is_dead() and copy_of(manta).is_dead()):
         return False
+    assert state['memo'].get('manta_turned'), 'the struck manta never turned on the swimmer'
     state['follow'] = None
     state['memo'].update(manta=manta, t=time.monotonic())
     return True
@@ -195,13 +198,6 @@ def harvest():
 
 def harvested():
     manta = state['memo']['manta']
-    # Look at the body as it bobs, and press E (again if a bob took the aim off it).
-    for controller, who in ((client, pawn), (owner.get_controller(), owner)):
-        eye = who.get_actor_location() + unreal.Vector(0, 0, who.get_editor_property('base_eye_height'))
-        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, manta.get_actor_location()))
-    if time.monotonic() - state['memo']['pressed'] > 1.0 and not manta.is_harvested():
-        state['memo']['pressed'] = time.monotonic()
-        assert lib.send_verification_gameplay_key(client, 'E')
     # Look at the body as it bobs, and press E (again if a bob took the aim off it).
     for controller, who in ((client, pawn), (owner.get_controller(), owner)):
         eye = who.get_actor_location() + unreal.Vector(0, 0, who.get_editor_property('base_eye_height'))
