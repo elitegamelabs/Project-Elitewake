@@ -1,5 +1,6 @@
 #include "Title/EWTitleGameMode.h"
 #include "Title/EWTitleWidget.h"
+#include "EWGameInstance.h"
 #include "Engine/Texture2D.h"
 #include "Materials/MaterialInterface.h"
 #include "Kismet/GameplayStatics.h"
@@ -42,6 +43,7 @@ void AEWTitlePlayerController::StartSinglePlayer()
     if (bSetSail || !Title || Title->GetScreen() != EEWTitleScreen::MainMenu) return;
     bSetSail = true;
     if (bStayOnSetSail) return;
+    if (auto* Instance = GetGameInstance<UEWGameInstance>()) Instance->ResumeSavedSurvivorOnArrival();
     Title->RemoveFromParent();
     Title = nullptr;
     SetInputMode(FInputModeGameOnly());

@@ -132,6 +132,7 @@ private:
     friend class FEWFoodTest;
     friend class FEWContainerTransferTest;
     friend class UEWEquipmentComponent;
+    friend class UEWSurvivorSave;
     double LastFoodClockSeconds = 0.;
     void RefreshFoodAge();
     void AdvanceFoodAge(float RealSeconds);

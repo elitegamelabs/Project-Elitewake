@@ -1,6 +1,8 @@
 #include "EWGameInstance.h"
 #include "EWPlayerController.h"
 #include "Characters/EWAppearanceSave.h"
+#include "EWCharacter.h"
+#include "EWSurvivorSave.h"
 #include "EW.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -145,6 +147,13 @@ void UEWGameInstance::CompleteArrival(AEWPlayerController* Controller)
     bPending=false;
     const ENetMode Mode=Controller->GetWorld()->GetNetMode();
     bJoinedHost=Mode==NM_Client;
+    if (bResumeSurvivor && Mode==NM_Standalone)
+    {
+        bResumeSurvivor=false;
+        if (const UEWSurvivorSave* Save=UEWSurvivorSave::LoadSave())
+            if (Save->ApplyTo(Cast<AEWCharacter>(Controller->GetPawn())))
+                UE_LOG(LogEW,Log,TEXT("Resumed the survivor saved %s"),*Save->SavedAt.ToString());
+    }
     if (Mode==NM_ListenServer) Status=NSLOCTEXT("Elitewake","SessionHostReady","Hosting a local/LAN game. Leaving disconnects all joined players.");
     else if (Mode==NM_Client) Status=NSLOCTEXT("Elitewake","SessionClientReady","Connected to the host. The world continues while this menu is open.");
     else if (!bHasConnectionError && (bWasPending || !bShowMenuOnArrival)) Status=NSLOCTEXT("Elitewake","SessionLocalReady","Local play. F10 opens the private-test connection panel.");

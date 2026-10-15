@@ -11,6 +11,8 @@ PowerShell or cmd: Git Bash rewrites values that start with "/" into Windows pat
   EW_PLAY_RESULT   result file name in Saved/, e.g. ShipSailingPlayResult.json
   EW_PLAY_PLAYERS  optional, default 2 (listen server plus one client)
   EW_PLAY_TIMEOUT  optional seconds, default 180
+  EW_PLAY_STANDALONE optional, 1 plays one survivor with no network (Single Player)
+  EW_PLAY_WINDOW   optional, e.g. 1280x720 for the Play window size
 
   UnrealEditor.exe EW.uproject <map> -unattended -ExecCmds="py <path>/run_play_check.py"
 

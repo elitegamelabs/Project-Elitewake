@@ -309,8 +309,10 @@ bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers
 {
     if (!GEditor || GEditor->PlayWorld || GEditor->IsPlaySessionInProgress()) return false;
     ULevelEditorPlaySettings* Settings = DuplicateObject(GetDefault<ULevelEditorPlaySettings>(), GetTransientPackage());
-    Settings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
-    Settings->SetPlayNumberOfClients(FMath::Clamp(NumPlayers, 1, 4));
+    // EW_PLAY_STANDALONE=1 plays one survivor with no network at all, as Single Player does.
+    const bool bStandalone = FPlatformMisc::GetEnvironmentVariable(TEXT("EW_PLAY_STANDALONE")) == TEXT("1");
+    Settings->SetPlayNetMode(bStandalone ? EPlayNetMode::PIE_Standalone : EPlayNetMode::PIE_ListenServer);
+    Settings->SetPlayNumberOfClients(bStandalone ? 1 : FMath::Clamp(NumPlayers, 1, 4));
     Settings->SetRunUnderOneProcess(true);
     // EW_PLAY_WINDOW=1280x720 opens the Play windows at that size, to check layouts on smaller screens.
     FString Window = FPlatformMisc::GetEnvironmentVariable(TEXT("EW_PLAY_WINDOW")), Width, Height;

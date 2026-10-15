@@ -26,6 +26,10 @@
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "InputKeyEventArgs.h"
+#include "EWOptionsWidget.h"
+#include "EWSurvivorSave.h"
+#include "Engine/Engine.h"
+#include "Kismet/GameplayStatics.h"
 #include "EWCharacter.h"
 #include "EWPickup.h"
 #include "EWInteractable.h"
@@ -274,15 +278,16 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         if (Params.Event==IE_Pressed) SetSessionMenuOpen(!IsSessionMenuOpen());
         return true;
     }
-    if (IsSessionMenuOpen()) return true;
+    if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
     if (Params.Key == EKeys::M)
     {
         if (Params.Event == IE_Pressed) SetMapOpen(!bMapOpen);
         return true;
     }
-    if (bMapOpen && Params.Key == EKeys::Escape)
+    if (Params.Key == EKeys::Escape || Params.Key == EKeys::Gamepad_Special_Right)
     {
-        if (Params.Event == IE_Pressed) SetMapOpen(false);
+        // Escape closes the map first; otherwise it brings up OPTIONS.
+        if (Params.Event == IE_Pressed) { if (bMapOpen) SetMapOpen(false); else SetOptionsMenuOpen(true); }
         return true;
     }
     if (bMapOpen && (Params.Key == EKeys::I || Params.Key == EKeys::C || Params.Key == EKeys::LeftShift
@@ -590,7 +595,7 @@ void AEWPlayerController::ServerSetMapOpen_Implementation(bool bOpen)
 void AEWPlayerController::SetSessionMenuOpen(bool bOpen)
 {
     if (!IsLocalPlayerController() || bSessionMenuOpen==bOpen) return;
-    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); }
+    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); SetOptionsMenuOpen(false); }
     FlushPressedKeys(); bSessionMenuOpen=bOpen;
     SetIgnoreMoveInput(bOpen); SetIgnoreLookInput(bOpen);
     if (auto* Survivor=Cast<AEWCharacter>(GetPawn())) Survivor->CancelRestrictedActions();
@@ -606,6 +611,47 @@ void AEWPlayerController::SetSessionMenuOpen(bool bOpen)
     }
     else { if (SessionWidget) SessionWidget->RemoveFromParent(); SessionWidget=nullptr; SetInputMode(FInputModeGameOnly()); }
     bShowMouseCursor=bOpen;
+}
+void AEWPlayerController::SetOptionsMenuOpen(bool bOpen)
+{
+    if (!IsLocalPlayerController() || bOptionsMenuOpen==bOpen) return;
+    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); SetSessionMenuOpen(false); }
+    FlushPressedKeys(); bOptionsMenuOpen=bOpen;
+    SetIgnoreMoveInput(bOpen); SetIgnoreLookInput(bOpen);
+    if (auto* Survivor=Cast<AEWCharacter>(GetPawn())) Survivor->CancelRestrictedActions();
+    ServerSetOptionsMenuOpen(bOpen);
+    // Single player pauses behind the menu; a shared world carries on (design: Pause).
+    if (GetWorld() && GetWorld()->GetNetMode()==NM_Standalone) SetPause(bOpen);
+    if (bOpen)
+    {
+        OptionsWidget=CreateWidget<UEWOptionsWidget>(this,UEWOptionsWidget::StaticClass());
+        if (OptionsWidget)
+        {
+            OptionsWidget->AddToPlayerScreen(110);
+            FInputModeUIOnly Mode; Mode.SetWidgetToFocus(OptionsWidget->TakeWidget()); SetInputMode(Mode);
+        }
+    }
+    else { if (OptionsWidget) OptionsWidget->RemoveFromParent(); OptionsWidget=nullptr; SetInputMode(FInputModeGameOnly()); }
+    bShowMouseCursor=bOpen;
+}
+void AEWPlayerController::ServerSetOptionsMenuOpen_Implementation(bool bOpen)
+{
+    bOptionsMenuOpen=bOpen;
+    InteractionComponent->SetMenuBlocked(bOpen || IsMapOpen() || IsInventoryOpen() || IsSessionMenuOpen());
+    if (bOpen) if (auto* Survivor=Cast<AEWCharacter>(GetPawn())) Survivor->CancelRestrictedActions();
+}
+bool AEWPlayerController::SaveSurvivorGame()
+{
+    if (!IsLocalPlayerController() || !GetWorld() || GetWorld()->GetNetMode()!=NM_Standalone) return false;
+    return UEWSurvivorSave::SaveSurvivor(Cast<AEWCharacter>(GetPawn()));
+}
+void AEWPlayerController::ReturnToMainMenu()
+{
+    if (!IsLocalPlayerController()) return;
+    SetOptionsMenuOpen(false);
+    SetPause(false);
+    if (GEngine && GetWorld()) GEngine->CancelPending(GetWorld());
+    UGameplayStatics::OpenLevel(this, FName(TEXT("/Game/Elitewake/Maps/Lvl_Title")));
 }
 void AEWPlayerController::ServerSetSessionMenuOpen_Implementation(bool bOpen)
 {

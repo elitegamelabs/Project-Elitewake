@@ -25,6 +25,7 @@ class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
+class UEWOptionsWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
 
@@ -52,6 +53,17 @@ public:
     UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);
     UPROPERTY(Transient) TObjectPtr<UEWSessionWidget> SessionWidget;
     bool bSessionMenuOpen = false;
+    /** Escape's OPTIONS menu. In single player it pauses the world. */
+    UFUNCTION(BlueprintCallable, Category="Options") void SetOptionsMenuOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Options") bool IsOptionsMenuOpen() const { return bOptionsMenuOpen; }
+    UFUNCTION(BlueprintPure, Category="Options") UEWOptionsWidget* GetOptionsWidget() const { return OptionsWidget; }
+    UFUNCTION(Server, Reliable) void ServerSetOptionsMenuOpen(bool bOpen);
+    /** SAVE GAME: single player only (multiplayer has no manual save); writes this survivor to the save slot. */
+    UFUNCTION(BlueprintCallable, Category="Options") bool SaveSurvivorGame();
+    /** MAIN MENU: leaves this world (and any session) for the ELITEWAKE title screen. */
+    UFUNCTION(BlueprintCallable, Category="Options") void ReturnToMainMenu();
+    UPROPERTY(Transient) TObjectPtr<UEWOptionsWidget> OptionsWidget;
+    bool bOptionsMenuOpen = false;
     UFUNCTION(BlueprintPure, Category="Objectives")
     UEWObjectiveComponent* GetObjectiveComponent() const { return ObjectiveComponent; }
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Objectives")

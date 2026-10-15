@@ -28,6 +28,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="Appearance") void SetChosenAppearance(const FEWAppearance& Appearance);
     UFUNCTION(BlueprintPure, Category="Appearance") FEWAppearance GetChosenAppearance() const { return ChosenAppearance; }
     UFUNCTION(BlueprintPure, Category="Appearance") bool HasChosenAppearance() const { return bHasChosenAppearance; }
+    /** Single Player from the title: the next survivor to arrive in local play picks up from the save, if any. */
+    UFUNCTION(BlueprintCallable, Category="Save") void ResumeSavedSurvivorOnArrival() { bResumeSurvivor = true; }
+    UFUNCTION(BlueprintPure, Category="Save") bool WillResumeSavedSurvivor() const { return bResumeSurvivor; }
     /** Accept only local/private IPv4 addresses, optional port, or localhost. Never arbitrary travel URLs. */
     static bool NormalizePrivateAddress(const FString& Input, FString& Output);
 private:
@@ -44,6 +47,7 @@ private:
     bool bJoinedHost = false;
     bool bHasConnectionError = false;
     bool bShowMenuOnArrival = false;
+    bool bResumeSurvivor = false;
     FDelegateHandle NetworkFailureHandle, TravelFailureHandle;
     FTSTicker::FDelegateHandle RecoveryHandle, ArrivalHandle;
 };
