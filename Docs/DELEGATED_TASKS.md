@@ -71,7 +71,8 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Scripts/Verification/verify_caves_play.py`, `/Game/Elitewake/World/Caves`, and the cave notches in
   `world_terrain.py`.
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
-  still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`.
+  still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`,
+  `Source/EW/Ships/EWShipSoundComponent.*` and `Scripts/Verification/verify_audio*_play.py`.
 
 ---
 
@@ -390,6 +391,15 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `GetPlayCount` for that asset's name, `GetTotalPlayCount` and `GetLastPlayed`; a null context or asset changes
   nothing. Do not change gameplay code; the audio session owns `EWSound*`, so ask here if something needs exposing.
 - **Done when:** the native run passes with the new tests (Elitewake filter) and the count is recorded in VERIFICATION.
+
+### T24. Move the hull damage check to the ships test map — OPEN
+- **Why:** `Scripts/Verification/verify_hull_damage_play.py` stops before its first step on
+  `/Game/Elitewake/Maps/Lvl_CoastalPlayground` (runner error StopIteration at load, October 15 night): it looks for
+  the schooner, which now lies only in `/Game/Elitewake/Maps/Test/Lvl_ShipsTest` with the large ships.
+- **Do:** point the check at the ships test map (its header, and how it finds the sloop, the schooner and the
+  survivors, as `verify_cannon_fight_play.py` does there), keeping its three checks and result file. Skip survivors
+  with no PlayerState when matching the client's survivor. Do not change gameplay code.
+- **Done when:** it passes on the ships test map with run_play_check.py and VERIFICATION's hull row says where.
 
 ### T21. A modelled bailing bucket — OPEN
 - **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
