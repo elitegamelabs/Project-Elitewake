@@ -78,7 +78,7 @@ Goal: the design's "simple two-cannon fight before the deeper systems". Cannons 
 | Holes below the waterline let water in (the ship settles and slows); bailing | ✅ `a0374fa` |
 | Repairing holes | ⛔ repair cost and tools (open question) |
 | Sinking: a ship that fills or is destroyed goes down, leaving wreck crates with its hold | ✅ `77a0452` |
-| Integrated two-cannon fight Play check | ⏳ |
+| Integrated two-cannon fight Play check | ✅ FIGHT_COMMIT (`verify_cannon_fight_play`) |
 | Cannon and shot recipes, costs and variant names | ⛔ open question 1 |
 
 ## M3 — Builder's Plan, Loom and Tanner ⛔
