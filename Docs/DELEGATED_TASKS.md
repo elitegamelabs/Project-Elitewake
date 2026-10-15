@@ -163,7 +163,7 @@ taking a task.
   passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
   `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
-### T6. A better tortoise shell — OPEN (needs the editor)
+### T6. A better tortoise shell — CLAIMED (ChatGPT, October 15)
 - **Why:** the tortoise's scutes read as stripes (`Saved/Screenshots/Animals`, `Docs/VERIFICATION.md` "Land
   animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
 - **Do:** in `Scripts/Setup/build_animals.py`, function `tortoise()`, replace the `shell()` colouring with a proper
