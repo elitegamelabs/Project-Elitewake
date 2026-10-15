@@ -104,13 +104,22 @@ taking a task.
   because it requires full-screen geometry. The climate test passes; the known title-input limitation is unchanged.
   Build succeeded. Results: `Saved/Logs/ClimateFullNative.log`.
 
-### T3. Native round-trip test for the single-player save — CLAIMED (ChatGPT, October 15)
+### T3. Native round-trip test for the single-player save — DONE `0a3e6ad`
 - **Why:** `UEWSurvivorSave` (`Source/EW/EWSurvivorSave.*`) is covered only by `verify_options_menu_play.py`.
 - **Do:** a native test that fills a survivor (location, health, hunger, hydration, inventory with a food age,
   an equipped tool, two hotbar bindings), saves to a test slot name (add an optional slot parameter if needed,
   defaulting to the real slot), loads, applies to a fresh survivor and compares everything, and confirms tools
   are not duplicated when the starter kit already gave them. Delete the test slot afterwards.
 - **Done when:** passes natively; `verify_options_menu_play.py` still passes; docs updated.
+- **Result:** added isolated slot-name parameters to the survivor save API and a native round-trip test covering
+  location/facing, health, hunger, hydration, an aged berry stack, an equipped axe and two hotbar bindings. The
+  test starts the fresh survivor with an axe in inventory and confirms applying the save leaves exactly one
+  owned axe, equipped rather than duplicated.
+- **Verified (October 15):** the native `SurvivorRoundTrip` test and the complete options-menu Play check both
+  pass. The test deletes and confirms removal of its temporary save slot. The full suite performed 31 tests:
+  30 passed and the known headless `Title.RoutedKeyboardMouseAndWheel` geometry test failed as before. Build
+  succeeded. Results: `Saved/Logs/SaveRoundTripNative.log`, `Saved/OptionsMenuPlayResult.json`, and
+  `Saved/Logs/SaveRoundTripFinalNative.log`.
 
 ### T4. Consolidate the owner's open questions — DONE `79ef146`
 - **Why:** open values are scattered through the docs; the owner needs one list to answer.
