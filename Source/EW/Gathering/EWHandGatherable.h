@@ -23,4 +23,5 @@ public:
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Survivor) const override;
     virtual int32 TryPickup(AEWCharacter* Survivor) override;
+    virtual bool UsesBushReach() const override { return GatheringKind == EEWHandGatheringKind::Berries; }
 };

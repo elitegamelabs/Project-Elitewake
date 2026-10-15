@@ -67,6 +67,13 @@ int32 AEWPickup::TryPickup(AEWCharacter* Character)
     TGuardValue<bool> TransferGuard(bTransferInProgress, true);
     const int32 Added = Inventory->AddItem(ItemDefinition, Quantity);
     Quantity -= Added;
+    if (Added > 0)
+    {
+        FEWGatherGain Gain;
+        Gain.Item = ItemDefinition;
+        Gain.Count = Added;
+        Character->PlayGatherMotion(UsesBushReach(), {Gain});
+    }
     if (Quantity <= 0) Destroy();
     else if (Added > 0) ForceNetUpdate();
     return Added;

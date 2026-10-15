@@ -8,6 +8,7 @@
 #include "EWHotbarComponent.h"
 #include "EWInventoryComponent.h"
 #include "Characters/EWAppearance.h"
+#include "EWWorkFeedback.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -26,6 +27,7 @@ class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
 class UEWOptionsWidget;
+class UEWHitMarkerWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
 
@@ -63,6 +65,11 @@ public:
     /** MAIN MENU: leaves this world (and any session) for the ELITEWAKE title screen. */
     UFUNCTION(BlueprintCallable, Category="Options") void ReturnToMainMenu();
     UPROPERTY(Transient) TObjectPtr<UEWOptionsWidget> OptionsWidget;
+    /** The striker's hit marker and what blows and gathers gave. */
+    void ShowWorkHit(bool bGave, const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal);
+    void ShowGains(const TArray<FEWGatherGain>& Gains);
+    UFUNCTION(BlueprintPure, Category="Gathering") UEWHitMarkerWidget* GetHitMarkerWidget() const { return HitMarkerWidget; }
+    UPROPERTY(Transient) TObjectPtr<UEWHitMarkerWidget> HitMarkerWidget;
     bool bOptionsMenuOpen = false;
     UFUNCTION(BlueprintPure, Category="Objectives")
     UEWObjectiveComponent* GetObjectiveComponent() const { return ObjectiveComponent; }

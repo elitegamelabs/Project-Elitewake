@@ -6,6 +6,12 @@
 #include "EWSurvivalComponent.h"
 #include "Net/UnrealNetwork.h"
 
+AEWMineable::AEWMineable()
+{
+    // It never moves, so every machine can shake its own copy when struck.
+    SetReplicateMovement(false);
+}
+
 void AEWMineable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

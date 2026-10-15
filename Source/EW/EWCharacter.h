@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "TimerManager.h"
 #include "Characters/EWAppearance.h"
+#include "EWWorkFeedback.h"
 #include "EWCharacter.generated.h"
 
 class USpringArmComponent;
@@ -442,8 +443,35 @@ public:
     /** Whether this survivor may swing now: alive, on their feet, crouched or swimming, and not at a helm or on a ladder. */
     UFUNCTION(BlueprintPure, Category="Combat")
     bool CanAttack() const;
-    /** Plays a swing on this machine. Variant picks among AttackAnimations. */
+    /** Plays a swing on this machine. Variant's lowest two bits are the kind of swing (0 a plain swing or punch,
+     *  1 a hatchet's chop at a tree, 2 a pickaxe's blow at a rock); the rest picks among the plain swings. */
     void PlayAttackAnimation(int32 Variant);
+    /** The kind of swing this survivor makes at Target with what is in hand (see PlayAttackAnimation). */
+    int32 SwingKindAt(const AActor* Target) const;
+    /** Authority: a work blow reached Target at Point: chips and a shake on every screen, after the swing's
+     *  contact moment, and for the striker the hit marker with what it gave or why it gave nothing. */
+    void ShowWorkImpact(AActor* Target, const FVector& Point, const FVector& Normal, EEWWorkSurface Surface,
+        const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal, int32 SwingKind);
+    /** Authority: the survivor stoops or reaches to take something by hand (bBush: from a bush), and is told what it gave. */
+    void PlayGatherMotion(bool bBush, const TArray<FEWGatherGain>& Gains);
+    UFUNCTION(Client, Unreliable)
+    void ClientGathered(const TArray<FEWGatherGain>& Gains);
+    /** For the checks: the swing last played on this machine, and how many blows it has shown landing. */
+    UFUNCTION(BlueprintPure, Category="Combat") UAnimSequenceBase* GetLastSwingAnimation() const { return LastSwingAnimation; }
+    UFUNCTION(BlueprintPure, Category="Combat") int32 GetWorkImpactCount() const { return WorkImpactCount; }
+    /** The hatchet's chop and the pickaxe's blow, the hand gathers, and when in each swing the blow lands. */
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> ChopAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> MineAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> GatherGroundAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> GatherBushAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    float ChopContactSeconds = .45f;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    float MineContactSeconds = .5f;
     /** Authority: plays the swing for everyone else and, unless the owner already did, for the owner. */
     void BroadcastAttack(int32 Variant);
     /** Authority: strikes the first survivor within reach where this one is looking. Returns who was hit. */
@@ -552,6 +580,12 @@ private:
     float LadderStillSeconds = 0.f;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastAttack(int32 Variant);
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastWorkImpact(AActor* Target, FVector_NetQuantize Point, FVector_NetQuantizeNormal Normal, EEWWorkSurface Surface,
+        const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal, uint8 SwingKind);
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
+    int32 WorkImpactCount = 0;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastHitReact();
     void PlayOneShot(UAnimSequenceBase* Animation) const;

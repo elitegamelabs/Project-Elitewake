@@ -29,6 +29,9 @@
 #include "Ships/EWShipDefinition.h"
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
+#include "EWStation.h"
+#include "Gathering/EWMineable.h"
+#include "Gathering/EWHarvestTree.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
 
@@ -1042,9 +1045,80 @@ void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const
 
 void AEWCharacter::PlayAttackAnimation(int32 Variant)
 {
-    // A tool or weapon in hand swings as one; bare hands punch.
-    const TArray<TObjectPtr<UAnimSequenceBase>>& Swings = GetHeldMesh() && ToolSwingAnimations.Num() ? ToolSwingAnimations : AttackAnimations;
-    if (Swings.Num()) PlayOneShot(Swings[FMath::Abs(Variant) % Swings.Num()]);
+    const int32 Kind = Variant & 3;
+    UAnimSequenceBase* Swing = Kind == 1 ? ChopAnimation.Get() : Kind == 2 ? MineAnimation.Get() : nullptr;
+    if (!Swing)
+    {
+        // A tool or weapon in hand swings as one; bare hands punch.
+        const TArray<TObjectPtr<UAnimSequenceBase>>& Swings = GetHeldMesh() && ToolSwingAnimations.Num() ? ToolSwingAnimations : AttackAnimations;
+        if (Swings.Num()) Swing = Swings[FMath::Abs(Variant >> 2) % Swings.Num()];
+    }
+    LastSwingAnimation = Swing;
+    PlayOneShot(Swing);
+}
+
+int32 AEWCharacter::SwingKindAt(const AActor* Target) const
+{
+    const UEWItemDefinition* Tool = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    if (!Tool || !Target) return 0;
+    if (Tool->GatheringTool == EEWGatheringTool::Hatchet && Target->IsA<AEWHarvestTree>()) return 1;
+    if (Tool->GatheringTool == EEWGatheringTool::Pickaxe && Target->IsA<AEWMineable>()) return 2;
+    return 0;
+}
+
+void AEWCharacter::ShowWorkImpact(AActor* Target, const FVector& Point, const FVector& Normal, EEWWorkSurface Surface,
+    const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal, int32 SwingKind)
+{
+    if (HasAuthority()) MulticastWorkImpact(Target, Point, Normal, Surface, Gains, Refusal, uint8(SwingKind));
+}
+
+void AEWCharacter::MulticastWorkImpact_Implementation(AActor* Target, FVector_NetQuantize Point, FVector_NetQuantizeNormal Normal,
+    EEWWorkSurface Surface, const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal, uint8 SwingKind)
+{
+    // Shown when the swing reaches the wood or stone, not when the button went down.
+    const float Delay = SwingKind == 1 ? ChopContactSeconds : SwingKind == 2 ? MineContactSeconds : .3f;
+    TWeakObjectPtr<AEWCharacter> WeakThis(this);
+    TWeakObjectPtr<AActor> WeakTarget(Target);
+    const FVector At = Point, Face = Normal;
+    const TArray<FEWGatherGain> Gave = Gains;
+    FTimerHandle Handle;
+    GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis, WeakTarget, At, Face, Surface, Gave, Refusal]()
+    {
+        AEWCharacter* Self = WeakThis.Get();
+        if (!Self) return;
+        ++Self->WorkImpactCount;
+        AEWImpactBurst::Spawn(Self->GetWorld(), At, Face, Surface);
+        if (auto* Station = Cast<AEWStation>(WeakTarget.Get()))
+            Station->PlayHitShake(At - Self->GetActorLocation(), Surface == EEWWorkSurface::Wood ? 2.2f : .5f);
+        if (Self->IsLocallyControlled())
+            if (auto* PC = Cast<AEWPlayerController>(Self->GetController()))
+                PC->ShowWorkHit(Gave.Num() > 0, Gave, Refusal);
+    }), Delay, false);
+}
+
+void AEWCharacter::PlayGatherMotion(bool bBush, const TArray<FEWGatherGain>& Gains)
+{
+    if (!HasAuthority()) return;
+    MulticastToolAnimation(bBush ? GatherBushAnimation : GatherGroundAnimation);
+    ClientGathered(Gains);
+}
+
+void AEWCharacter::ClientGathered_Implementation(const TArray<FEWGatherGain>& Gains)
+{
+    // Hold still while the hands work, so the survivor does not slide on through the reach.
+    if (auto* PC = Cast<AEWPlayerController>(GetController()))
+    {
+        PC->ShowGains(Gains);
+        UAnimSequenceBase* Motion = GatherGroundAnimation ? GatherGroundAnimation.Get() : GatherBushAnimation.Get();
+        if (Motion)
+        {
+            PC->SetIgnoreMoveInput(true);
+            TWeakObjectPtr<AEWPlayerController> WeakPC(PC);
+            FTimerHandle Handle;
+            GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakPC]()
+            { if (WeakPC.IsValid()) WeakPC->SetIgnoreMoveInput(false); }), Motion->GetPlayLength() * .8f, false);
+        }
+    }
 }
 
 void AEWCharacter::BroadcastAttack(int32 Variant)

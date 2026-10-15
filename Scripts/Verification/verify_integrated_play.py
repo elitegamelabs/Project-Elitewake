@@ -114,7 +114,7 @@ def hold_check():
 
 step(lambda:check('Fresh survivor, empty inventory and hotbar'))
 for kind,count,button in [('fiber',10,'E'),('sticks',6,'Gamepad_FaceButton_Left'),('hatchet',1,'E'),('pickaxe',1,'Gamepad_FaceButton_Left')]:
-    step(lambda k=kind:spawn(k));step(lambda b=button:key(b));step(lambda k=kind,n=count:check('Collect '+k,{k:n}))
+    step(lambda k=kind:spawn(k));step(lambda b=button:key(b),1.9);step(lambda k=kind,n=count:check('Collect '+k,{k:n}))
 step(lambda:key('I'));step(lambda:check('Inventory opens over populated HUD',opened=True))
 step(lambda:select('hatchet'));step(lambda:details('Inspect collected hatchet'))
 step(lambda:key('One'));step(lambda:bound(0,'hatchet'),.1);step(lambda:check('Assign hatchet to hotbar through inventory',opened=True))
@@ -129,7 +129,7 @@ step(close);step(lambda:key('LeftMouseButton'));step(lambda:check('Closing inven
 step(lambda:key('Two'));step(lambda:check('Hotbar swaps hatchet for pickaxe without loss',tool='pickaxe'))
 step(lambda:spawn('stone'));step(lambda:key('Gamepad_RightTrigger'));step(lambda:check('Pickaxe mines stone through RT',{'stone':3},hint='RT: Mine resource',stock=('remaining',9)))
 step(lambda:spawn('ore'));step(lambda:key('LeftMouseButton'));step(lambda:check('Same pickaxe mines authored ore',{'ore':3},stock=('remaining',9)))
-step(lambda:spawn('berry'));step(lambda:key('E'));step(lambda:check('Gather berries while pickaxe stays equipped',{'berry':10},hint=''))
+step(lambda:spawn('berry'));step(lambda:key('E'),1.9);step(lambda:check('Gather berries while pickaxe stays equipped',{'berry':10},hint=''))
 step(lambda:key('I'));step(lambda:select('berry'));step(lambda:details('Inspect berry food alongside gathered materials'))
 step(lambda:key('Three'));step(lambda:bound(2,'berry'),.1);step(lambda:check('Assign berry shortcut through inventory',opened=True))
 step(close);step(lambda:key('Three'));step(lambda:check('Unsupported eating preserves berries and gear'))

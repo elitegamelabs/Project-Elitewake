@@ -35,7 +35,15 @@ public:
     virtual EEWInteractionMode GetInteractionMode_Implementation() const override { return Mode; }
     virtual float GetHoldDuration_Implementation() const override { return HoldDuration; }
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override;
+    virtual void Tick(float DeltaSeconds) override;
+    /** Every machine, cosmetic: shakes from a blow coming from Direction, by Degrees at first, dying away. */
+    void PlayHitShake(const FVector& Direction, float Degrees);
+    UFUNCTION(BlueprintPure, Category="Fixture") bool IsShaking() const { return ShakeSeconds > 0.f; }
 private:
+    float ShakeSeconds = 0.f;
+    float ShakeDegrees = 0.f;
+    FVector ShakeAxis = FVector::RightVector;
+    FQuat RestRotation = FQuat::Identity;
     UPROPERTY(Replicated) int32 Acknowledgements = 0;
     bool bAcknowledging = false;
 };

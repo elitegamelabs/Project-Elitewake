@@ -13,6 +13,7 @@ class EW_API AEWHarvestTree : public AEWStation
 {
     GENERATED_BODY()
 public:
+    AEWHarvestTree();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Harvest") TObjectPtr<UEWItemDefinition> Wood;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Harvest") TObjectPtr<UEWItemDefinition> Thatch;

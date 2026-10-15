@@ -57,8 +57,9 @@ def tick(delta):
         elif phase==3: client.set_inventory_open(True)
         elif phase==4:
             menu=next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(local,unreal.EWInventoryWidget,False) if w.get_owning_player()==client and w.is_in_viewport())
-            for n,icon in icons.items(): assert menu.get_displayed_inventory_icon(items[n])==icon,n
-            checks.append('All five generated textures resolve in owning-client inventory')
+            # Each item shows its own icon (the item art replaced the generated placeholders, 3b3e942).
+            for n in icons: assert items[n].get_editor_property('icon') and menu.get_displayed_inventory_icon(items[n])==items[n].get_editor_property('icon'),n
+            checks.append('All five item icons resolve in owning-client inventory')
             for slot,n in enumerate(icons): assert lib.send_verification_hotbar_request(client,slot,items[n],False)
             client.set_inventory_open(False)
         elif phase==5: assert lib.send_verification_hotbar_request(client,0,None,True)

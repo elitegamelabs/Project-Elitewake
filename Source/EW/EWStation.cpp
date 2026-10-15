@@ -9,6 +9,8 @@
 AEWStation::AEWStation()
 {
     bReplicates = true; SetReplicateMovement(true);
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = false;
     Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FixtureMesh")); SetRootComponent(Mesh);
     Mesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
     Mesh->SetCollisionResponseToAllChannels(ECR_Ignore); Mesh->SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
@@ -20,6 +22,27 @@ AEWStation::AEWStation()
     Blocker->SetUsingAbsoluteScale(true);
     Blocker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Blocker->SetCapsuleSize(1.f, 1.f);
+}
+
+void AEWStation::PlayHitShake(const FVector& Direction, float Degrees)
+{
+    if (ShakeSeconds <= 0.f) RestRotation = GetActorQuat();
+    // It rocks about the level line across the blow, from its base.
+    const FVector Flat = Direction.GetSafeNormal2D();
+    ShakeAxis = Flat.IsNearlyZero() ? FVector::RightVector : FVector::CrossProduct(FVector::UpVector, Flat);
+    ShakeDegrees = Degrees;
+    ShakeSeconds = .6f;
+    SetActorTickEnabled(true);
+}
+
+void AEWStation::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    if (ShakeSeconds <= 0.f) { SetActorTickEnabled(false); return; }
+    ShakeSeconds = FMath::Max(0.f, ShakeSeconds - DeltaSeconds);
+    const float T = .6f - ShakeSeconds;
+    const float Angle = ShakeSeconds > 0.f ? ShakeDegrees * FMath::Exp(-T * 7.f) * FMath::Sin(T * 38.f) : 0.f;
+    SetActorRotation(FQuat(ShakeAxis, FMath::DegreesToRadians(Angle)) * RestRotation);
 }
 
 void AEWStation::OnConstruction(const FTransform& Transform)

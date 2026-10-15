@@ -73,6 +73,8 @@ void AEWPlayerController::BeginPlay()
         if (ShipMarkersWidget) ShipMarkersWidget->AddToPlayerScreen(1);
         CompassWidget = CreateWidget<UEWCompassWidget>(this, UEWCompassWidget::StaticClass());
         if (CompassWidget) CompassWidget->AddToPlayerScreen(1);
+        HitMarkerWidget = CreateWidget<UEWHitMarkerWidget>(this, UEWHitMarkerWidget::StaticClass());
+        if (HitMarkerWidget) HitMarkerWidget->AddToPlayerScreen(4);
         if (auto* Instance=GetGameInstance<UEWGameInstance>()) Instance->LocalControllerReady(this);
     }
 
@@ -201,8 +203,10 @@ void AEWPlayerController::Attack()
     const double Now = GetWorld()->GetTimeSeconds();
     if (Now - LastLocalAttackTime < AttackInterval) return;
     LastLocalAttackTime = Now;
-    Survivor->PlayAttackAnimation(++AttackVariant);
-    ServerAttack(FEWInteractionTargeting::FindTarget(Survivor), AttackVariant);
+    AActor* Target = FEWInteractionTargeting::FindTarget(Survivor);
+    const int32 Variant = ((++AttackVariant) << 2) | Survivor->SwingKindAt(Target);
+    Survivor->PlayAttackAnimation(Variant);
+    ServerAttack(Target, Variant);
 }
 
 void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Variant)
@@ -215,10 +219,51 @@ void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Vari
     if (!Survivor || !Survivor->CanAttack()) return;
     if (InteractionComponent->IsMenuBlocked() || InteractionComponent->GetHoldState().Target) return;
     LastHarvestAttackTime = Now;
-    Survivor->BroadcastAttack(Variant);
-    if (auto* Tree = Cast<AEWHarvestTree>(Target)) Tree->TryHarvest(Survivor);
-    else if (auto* Node = Cast<AEWMineable>(Target)) Node->TryMine(Survivor);
-    else Survivor->MeleeStrike();
+    // The swing the server shows is the one its tool and target call for, whatever the client sent.
+    const int32 Kind = Survivor->SwingKindAt(Target);
+    Survivor->BroadcastAttack((Variant & ~3) | Kind);
+    auto* Tree = Cast<AEWHarvestTree>(Target);
+    auto* Node = Cast<AEWMineable>(Target);
+    if (!Tree && !Node) { Survivor->MeleeStrike(); return; }
+    // Only what the survivor is aimed at and close enough to work takes the blow.
+    if (FEWInteractionTargeting::FindTarget(Survivor) != Target) return;
+    UEWInventoryComponent* Pack = Survivor->GetInventoryComponent();
+    TArray<UEWItemDefinition*> Watched;
+    if (Tree) { Watched = {Tree->Wood, Tree->Thatch}; }
+    else { Watched = {Node->Resource}; }
+    TArray<int32> Before;
+    for (UEWItemDefinition* Item : Watched) Before.Add(Item && Pack ? Pack->GetItemCount(Item) : 0);
+    EEWWorkRefusal Refusal = EEWWorkRefusal::None;
+    if (Tree && Tree->CanAccessSource(Survivor) && !Tree->CanHarvest(Survivor)) Refusal = EEWWorkRefusal::NeedsHatchet;
+    if (Node && Node->CanAccessSource(Survivor) && !Node->CanMine(Survivor)) Refusal = EEWWorkRefusal::NeedsPickaxe;
+    const int32 Got = Tree ? Tree->TryHarvest(Survivor) : Node->TryMine(Survivor);
+    TArray<FEWGatherGain> Gains;
+    for (int32 i = 0; i < Watched.Num(); ++i)
+    {
+        const int32 Delta = Watched[i] && Pack ? Pack->GetItemCount(Watched[i]) - Before[i] : 0;
+        if (Delta > 0) { FEWGatherGain Gain; Gain.Item = Watched[i]; Gain.Count = Delta; Gains.Add(Gain); }
+    }
+    if (Got <= 0 && Refusal == EEWWorkRefusal::None) Refusal = EEWWorkRefusal::PackFull;
+    // Where the blow lands: the face of the trunk or rock where the survivor is looking.
+    FVector Eye; FRotator View;
+    Survivor->GetActorEyesViewPoint(Eye, View);
+    FVector Point = Target->GetComponentsBoundingBox().GetClosestPointTo(Eye);
+    FHitResult Hit;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWWorkImpact), true, Survivor);
+    if (GetWorld()->LineTraceSingleByChannel(Hit, Eye, Eye + View.Vector() * 600.f, ECC_Visibility, Query) && Hit.GetActor() == Target)
+        Point = Hit.ImpactPoint;
+    const FVector Normal = (Survivor->GetActorLocation() - Point).GetSafeNormal2D();
+    Survivor->ShowWorkImpact(Target, Point, Normal, Tree ? EEWWorkSurface::Wood : EEWWorkSurface::Stone, Gains, Refusal, Kind);
+}
+
+void AEWPlayerController::ShowWorkHit(bool bGave, const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal)
+{
+    if (HitMarkerWidget) HitMarkerWidget->ShowHit(bGave, Gains, Refusal);
+}
+
+void AEWPlayerController::ShowGains(const TArray<FEWGatherGain>& Gains)
+{
+    if (HitMarkerWidget) HitMarkerWidget->ShowGains(Gains);
 }
 
 void AEWPlayerController::RequestAppearance(const FEWAppearance& Appearance)

@@ -6,6 +6,12 @@
 #include "EWSurvivalComponent.h"
 #include "Net/UnrealNetwork.h"
 
+AEWHarvestTree::AEWHarvestTree()
+{
+    // It never moves, so every machine can shake its own copy when struck.
+    SetReplicateMovement(false);
+}
+
 void AEWHarvestTree::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);

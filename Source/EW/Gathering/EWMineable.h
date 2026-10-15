@@ -11,6 +11,7 @@ class EW_API AEWMineable : public AEWStation
 {
     GENERATED_BODY()
 public:
+    AEWMineable();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Mining") TObjectPtr<UEWItemDefinition> Resource;
     // Draft defaults for opt-in fixtures; production yields remain designer-authored.

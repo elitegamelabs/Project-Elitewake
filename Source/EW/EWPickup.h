@@ -31,6 +31,8 @@ public:
     static AEWPickup* FindTarget(const AEWCharacter* Character);
 
     /** Authority only. Requires possession, range, aim/visibility and any assigned actor ownership. */
+    /** True if taking it is a reach into a bush rather than a stoop to the ground. */
+    virtual bool UsesBushReach() const { return false; }
     virtual int32 TryPickup(AEWCharacter* Character);
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
