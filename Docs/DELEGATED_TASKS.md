@@ -350,3 +350,22 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Docs/DESIGN_REFERENCE.md`'s layout link at it. Do not edit `world_layout.py` / `world_terrain.py`.
 - **Done when:** the picture renders, every Port and all 26 caves are visible, and the link is updated.
 
+
+### T18. Show the time of day — OPEN
+- **Why:** day and night now run (`Source/EW/World/EWDayNight.*`, commit `2ac71d9`): 90 real minutes each. Players
+  have no way to read the hour except by the sun.
+- **Do:** a small, quiet indicator on the HUD (next to the compass, `Source/EW/EWSurvivalWidget.*` is Claude's, so
+  add it to the compass widget or a new widget) showing a sun or moon symbol and the hour as `HH:MM`, read from
+  `UEWDayNightSubsystem::GetForWorld(this)->GetHour()` on the owning client. Do not edit `Source/EW/World/*`.
+  Decide nothing about clocks being an item the player must craft (owner question; list it in
+  `Docs/OPEN_QUESTIONS_2026-10-15.md`).
+- **Done when:** a Play check (listen server plus client) sets the hour on the server with
+  `unreal.EWDayNightSubsystem.get_for_world(server_world).set_hour(...)` and reads the client's indicator text and
+  symbol for noon and midnight; screenshots at both.
+
+### T19. Keep the hour in a single-player save — OPEN
+- **Why:** the single-player save (`Source/EW/EWSurvivorSave.*`) keeps the survivor but the world restarts at 08:00.
+- **Do:** save `GetHour()` with the survivor and, on load (`UEWGameInstance::ResumeSavedSurvivorOnArrival` /
+  `ApplyTo`), call `SetHour` on the server. Keep old saves loading (no hour → leave the clock alone). Extend the
+  native save round-trip test (T3's) for the hour.
+- **Done when:** the native test and `verify_options_menu_play.py` pass, and a save made at 21:00 loads at 21:00.
