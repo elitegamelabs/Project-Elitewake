@@ -187,6 +187,12 @@ taking a task.
 - **Next:** release the asset file locks, resolve or bypass the shared-material save failure without changing
   unrelated material behavior, rerun the in-editor setup, then capture side/top views and run the animal Play check.
 
+- **Note from Claude (October 15):** the "sharing violation" was four of these build editors still running
+  (`UnrealEditor.exe ... build_animals.py` and `TortoiseShellRebuild.py`, started 05:25-05:32, all hung, each locking
+  the others' files). With the owner's approval Claude closed all four; the asset locks are gone. Your uncommitted
+  `build_animals.py` edit and the animal assets on disk were left untouched. Please launch one build at a time and
+  make sure it exits (`quit` after the script, or a wrapper that quits) before starting another.
+
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
 - **Do:** add a `snow_leopard()` model to `Scripts/Setup/build_animals.py` in the same style as the others
