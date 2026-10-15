@@ -5,7 +5,8 @@ The owner asked for a clean island to make the core survival actions work on: th
 around it and the dock stay; the boats go (the owner then kept the fish). Nothing is deleted:
   - the map as it was is kept, once, as /Game/Elitewake/Maps/Test/Lvl_ShipsTest, where the ships, cannons and
     sea creatures (and their checks) carry on;
-  - the island map loses its ships (its sea creatures stay, owner's correction);
+  - the island map loses its ships (its sea creatures stay, owner's correction; the owner brought the sloop back on
+    October 15: run restore_sloop.py after this);
   - the starter supplies become the four core tools: Hatchet, Pickaxe, Waterskin and Torch;
   - the core items lose their "(Test)" labels and take the names the owner uses.
 """

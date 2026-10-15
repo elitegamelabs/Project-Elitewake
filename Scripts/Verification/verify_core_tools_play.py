@@ -5,7 +5,7 @@ Scripts/Setup/simplify_island.py and build_core_tools.py. Run unattended with ru
 onto this map is verify_title_to_coast_play.
 
 Through ordinary owned requests and keys, the client:
-  1. spawns on the island carrying exactly the Hatchet, Pickaxe, Waterskin and Torch; no boats;
+  1. spawns on the island carrying exactly the Hatchet, Pickaxe, Waterskin and Torch; the sloop (only) lies off the beach;
   2. equips the Hatchet (drawing it) and chops a palm with Left Mouse: Wood and Thatch arrive;
   3. equips the Pickaxe and mines a boulder with Left Mouse: Stone arrives;
   4. equips the Waterskin, presses E at the spring: the skin fills (a filling motion), thirst untouched;
@@ -115,7 +115,8 @@ def press_after_settle(key='LeftMouseButton', interact=None):
 # 1. Spawn ----------------------------------------------------------------------------------------------------
 
 def spawned():
-    assert not unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip), 'boats remain on the island'
+    ids = [str(s.get_editor_property('definition').get_editor_property('ship_id')) for s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)]
+    assert ids == ['Sloop'], f'the island should have only the sloop: {ids}'
     want = {hatchet: 1, pickaxe: 1, skin: 1, torch: 1}
     have = {e.get_editor_property('item_definition'): e.get_editor_property('quantity') for e in owner.get_inventory_component().get_inventory_entries()}
     seen = {e.get_editor_property('item_definition'): e.get_editor_property('quantity') for e in pawn.get_inventory_component().get_inventory_entries()}
@@ -243,7 +244,7 @@ def put_out():
 
 EQUIP_HATCHET, EQUIP_PICKAXE, EQUIP_SKIN, EQUIP_TORCH = equip(hatchet), equip(pickaxe), equip(skin), equip(torch)
 STEPS = [
-    ('The client spawns on the island carrying the Hatchet, Pickaxe, Waterskin and Torch; no boats', lambda: None, spawned, 8),
+    ('The client spawns on the island carrying the Hatchet, Pickaxe, Waterskin and Torch; only the sloop offshore', lambda: None, spawned, 8),
     ('It equips the Hatchet: drawn into the hand with the draw motion', *EQUIP_HATCHET, 5),
     ('Left Mouse chops a palm: Wood and Thatch arrive, on server and client', to_palm, chopped, 6),
     ('It equips the Pickaxe', *EQUIP_PICKAXE, 5),
