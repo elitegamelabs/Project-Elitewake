@@ -320,7 +320,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   non-empty player message. Do not change gameplay code; if something is untestable without a change, note it here.
 - **Done when:** the new tests pass in the native run (`Automation RunTests Elitewake`) with no new failures.
 
-### T15. Ship leaks and bailing (M2) — OPEN
+### T15. Ship leaks and bailing (M2) — CLAIMED (Claude, 2026-10-15 night: ChatGPT had not taken a task since the morning)
 - **Why:** `Docs/REMAINING_WORK_2026-10-14.md` M2: hull health and shot damage are done (`verify_hull_damage_play`);
   leaks, bailing and repairs are not. The prologue (DESIGN_REFERENCE, prologue step 2) has the player bail water.
 - **Do:** read the hull damage code (`Source/EW/Ships/*`, search `HullHealth`) and the M2 section of
