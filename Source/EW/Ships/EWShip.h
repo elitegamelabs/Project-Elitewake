@@ -333,7 +333,32 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Hull")
     FEWHullHole GetHole(int32 Index) const { return Holes.IsValidIndex(Index) ? Holes[Index] : FEWHullHole(); }
     /** Authority only: round shot struck the hull at Where (world), the planking facing Normal there. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Hull")
     void TakeRoundShot(const FVector& Where, const FVector& Normal, AEWCharacter* Gunner);
+
+    /** Tuning: water each hole below the waterline lets in, kg (litres) a second. */
+    static constexpr float LeakPerHole = 6.f;
+    /** Tuning: water one stroke of the bucket throws over the side, kg. */
+    static constexpr float BailPerStroke = 25.f;
+    /** Tuning: seconds of holding Interact at the bucket for one stroke. */
+    static constexpr float BailHoldSeconds = 1.f;
+    /** Tuning: how much deeper the ship sits with a full load of water in her (as much as her weight capacity), cm. */
+    static constexpr float MaxSettle = 60.f;
+    /** Holes counted as below the waterline lie lower than this above it (the sea washes over them), cm. */
+    static constexpr float WaterlineWash = 15.f;
+    /** Water in the hull, kg (litres). It weighs on the ship like cargo: she settles, slows and can be swamped. */
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    float GetWaterAboard() const { return WaterAboard; }
+    /** Holes below the waterline, letting water in now. */
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    int32 GetLeakCount() const;
+    /** How much deeper than empty the water aboard makes her sit, cm. */
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    float GetSettle() const;
+    bool IsAimingAtBucket(const AEWCharacter* Character) const;
+    /** The bailing bucket on deck, in the world. */
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    FVector GetBucketWorld() const;
 
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
@@ -375,6 +400,15 @@ private:
     float HullHealth = -1.f;
     UPROPERTY(ReplicatedUsing=OnRep_Holes)
     TArray<FEWHullHole> Holes;
+    UPROPERTY(Replicated)
+    float WaterAboard = 0.f;
+    /** Server: let water in through the holes below the waterline. */
+    void UpdateLeaks(float DeltaSeconds);
+    UPROPERTY(Transient)
+    TObjectPtr<UBoxComponent> BucketTarget;
+    UPROPERTY(Transient)
+    TObjectPtr<UStaticMeshComponent> BucketVisual;
+    FVector BucketPoint() const;
     UPROPERTY(Transient)
     TArray<TObjectPtr<UStaticMeshComponent>> HoleVisuals;
     UFUNCTION()

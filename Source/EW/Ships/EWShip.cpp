@@ -122,6 +122,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
+    DOREPLIFETIME(AEWShip, WaterAboard);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
 }
 
@@ -179,6 +180,9 @@ void AEWShip::ApplyDefinition()
     if (CargoHatchTarget) CargoHatchTarget->DestroyComponent();
     if (CargoHatchVisual) CargoHatchVisual->DestroyComponent();
     CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
+    if (BucketTarget) BucketTarget->DestroyComponent();
+    if (BucketVisual) BucketVisual->DestroyComponent();
+    BucketTarget = nullptr; BucketVisual = nullptr;
     if (!Definition) return;
     if (HasAuthority() && Cargo) Cargo->SetMaxSlots(Definition->CargoSlots);
     if (HasAuthority() && HullHealth < 0.f) HullHealth = Definition->HullHealth;
@@ -205,6 +209,32 @@ void AEWShip::ApplyDefinition()
     CargoHatchVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     CargoHatchVisual->SetVisibility(!bModelledHull);
     CargoHatchVisual->RegisterComponent();
+
+    // A bailing bucket stands on deck beside the hatch, on every ship.
+    BucketTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("BailBucket")), RF_Transient);
+    BucketTarget->SetupAttachment(HullCollision);
+    BucketTarget->SetRelativeLocation(BucketPoint() + FVector(0, 0, 20));
+    BucketTarget->SetBoxExtent(FVector(25, 25, 25));
+    BucketTarget->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    BucketTarget->SetCollisionResponseToAllChannels(ECR_Ignore);
+    BucketTarget->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    BucketTarget->SetGenerateOverlapEvents(false);
+    BucketTarget->RegisterComponent();
+    BucketVisual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), TEXT("BailBucketVisual")), RF_Transient);
+    BucketVisual->SetupAttachment(HullCollision);
+    // A modelled bucket (origin at its base) when there is one, else a stand-in: a small cylinder.
+    if (UStaticMesh* Bucket = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Elitewake/World/Ships/SM_BailBucket_v1.SM_BailBucket_v1"), nullptr, LOAD_Quiet | LOAD_NoWarn))
+    {
+        BucketVisual->SetStaticMesh(Bucket);
+        BucketVisual->SetRelativeLocation(BucketPoint());
+    }
+    else
+    {
+        BucketVisual->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder")));
+        BucketVisual->SetRelativeTransform(FTransform(FRotator::ZeroRotator, BucketPoint() + FVector(0, 0, 15), FVector(.3, .3, .3)));
+    }
+    BucketVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    BucketVisual->RegisterComponent();
 
     AnchorTarget = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(), TEXT("AnchorCapstan")), RF_Transient);
     AnchorTarget->SetupAttachment(HullCollision);
@@ -491,6 +521,48 @@ bool AEWShip::IsAboard(const AEWCharacter* Character) const
     return FMath::Abs(Local.X) <= E.X + 10.f && FMath::Abs(Local.Y) <= E.Y + 10.f && Local.Z >= Floor;
 }
 
+FVector AEWShip::BucketPoint() const
+{
+    if (!Definition) return FVector::ZeroVector;
+    return FVector(Definition->CargoHatchPoint.X - 110.f, Definition->CargoHatchPoint.Y, Definition->GetDeckHeight());
+}
+
+FVector AEWShip::GetBucketWorld() const
+{
+    return GetActorTransform().TransformPosition(BucketPoint());
+}
+
+bool AEWShip::IsAimingAtBucket(const AEWCharacter* Character) const
+{
+    return BucketTarget && TraceAimedComponent(Character) == BucketTarget;
+}
+
+int32 AEWShip::GetLeakCount() const
+{
+    // The sea's surface in the ship's own space (the swell and heel aside): holes under it, or just above where the
+    // sea washes over, let water in. The deeper she settles, the more holes go under.
+    const float Waterline = SurfaceZ - GetActorLocation().Z;
+    int32 Count = 0;
+    for (const FEWHullHole& Hole : Holes) if (Hole.Local.Z < Waterline + WaterlineWash) ++Count;
+    return Count;
+}
+
+float AEWShip::GetSettle() const
+{
+    return MaxSettle * FMath::Clamp(WaterAboard / FMath::Max(GetWeightCapacity(), 1.f), 0.f, 1.f);
+}
+
+void AEWShip::UpdateLeaks(float DeltaSeconds)
+{
+    if (!HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f) return;
+    const int32 Leaks = GetLeakCount();
+    if (!Leaks) return;
+    // Until sinking exists (M2), the water stops rising once she holds half again her capacity.
+    const float Before = WaterAboard;
+    WaterAboard = FMath::Min(WaterAboard + Leaks * LeakPerHole * DeltaSeconds, GetWeightCapacity() * 1.5f);
+    if (FMath::FloorToInt(Before / 10.f) != FMath::FloorToInt(WaterAboard / 10.f)) ForceNetUpdate();
+}
+
 bool AEWShip::IsAimingAtCargoHatch(const AEWCharacter* Character) const
 {
     return CargoHatchTarget && TraceAimedComponent(Character) == CargoHatchTarget;
@@ -510,7 +582,7 @@ bool AEWShip::CanAccessCargo(const AEWCharacter* Character) const
 float AEWShip::GetLoad() const
 {
     if (!HasAuthority()) return Load;
-    float Total = Cargo ? Cargo->GetTotalWeight() : 0.f;
+    float Total = (Cargo ? Cargo->GetTotalWeight() : 0.f) + WaterAboard;
     for (const FEWInstalledFitting& Fitting : Fittings) if (Fitting.Item) Total += Fitting.Item->UnitWeight;
     return Total;
 }
@@ -680,6 +752,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (Helmsman == Character) return true;  // Leave the helm.
     if (IsGunnerHere(Character)) return true;  // Leave the cannon.
     if (IsAimingAtAnchor(Character)) return true;
+    if (IsAimingAtBucket(Character)) return IsAboard(Character) && WaterAboard > 0.f;
     if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
     const FName MountId = FindAimedMount(Character);
@@ -705,6 +778,9 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         else if (bOverloaded) Status = FText::Format(NSLOCTEXT("Elitewake", "HelmOverloaded", "  -  Overloaded: lighten the hold within {0} s"),
             FText::AsNumber(FMath::CeilToInt(OverloadSecondsLeft)));
         else if (bAnchored) Status = NSLOCTEXT("Elitewake", "HelmAnchored", "  -  Anchored");
+        if (WaterAboard >= 1.f)
+            Status = FText::Format(NSLOCTEXT("Elitewake", "HelmWater", "{0}  -  Taking water: {1} kg aboard"), Status,
+                FText::AsNumber(FMath::RoundToInt(WaterAboard)));
         if (HullHealth >= 0.f && HullHealth < GetMaxHullHealth())
             Status = FText::Format(NSLOCTEXT("Elitewake", "HelmHull", "{0}  -  Hull {1}%"), Status,
                 FText::AsNumber(FMath::RoundToInt(100.f * HullHealth / GetMaxHullHealth())));
@@ -722,6 +798,9 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     }
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
+    if (IsAimingAtBucket(Character))
+        return WaterAboard > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "BailWater", "Bail water  ({0} kg aboard)"), FText::AsNumber(FMath::RoundToInt(WaterAboard)))
+            : NSLOCTEXT("Elitewake", "BucketDry", "Bucket  (no water aboard)");
     if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
         return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
@@ -742,6 +821,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
 
 float AEWShip::GetHoldDurationFor_Implementation(AEWCharacter* Character) const
 {
+    if (IsAimingAtBucket(Character)) return BailHoldSeconds;
     return Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character) ? AnchorHoldSeconds : FittingHoldSeconds;
 }
 
@@ -775,6 +855,13 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
     if (Helmsman == Character) return LeaveHelm(Character);
     if (IsGunnerHere(Character)) return LeaveCannon(Character);
     if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
+    if (IsAimingAtBucket(Character))
+    {
+        // One stroke of the bucket over the side.
+        WaterAboard = FMath::Max(0.f, WaterAboard - BailPerStroke);
+        ForceNetUpdate();
+        return true;
+    }
     if (IsAimingAtCargoHatch(Character))
     {
         // The server agrees the hold may be used; the owning client opens its screen.
@@ -1258,13 +1345,13 @@ void AEWShip::StepSimulation(float Step)
     {
         Speed = FMath::Max(Speed, 0.f);
         FVector Here = GetActorLocation();
-        Here.Z = RestZ + Rise;
+        Here.Z = RestZ + Rise - GetSettle();
         SetActorLocationAndRotation(Here, FRotator(Pitch, Yaw, Roll), false, nullptr, ETeleportType::None);
         return;
     }
     const FRotator Heading(0, Yaw + CurrentTurnRate() * Step, 0);
     FVector Next = GetActorLocation() + Heading.Vector() * Speed * Step;
-    Next.Z = RestZ + Rise;
+    Next.Z = RestZ + Rise - GetSettle();
     const FRotator Rotation(Pitch, Heading.Yaw, Roll);
     // People never stop a ship: survivors on deck ride with it and swimmers are pushed aside.
     // Hulls, land and other world geometry still block the sweep.
@@ -1312,6 +1399,7 @@ void AEWShip::Tick(float DeltaSeconds)
         Rudder = 0.f;
         SailTrimDirection = 0;
     }
+    UpdateLeaks(DeltaSeconds);
     UpdateLoad(DeltaSeconds);
     UpdateCannons(DeltaSeconds);
     // An open menu centres the rudder and stops the sails swinging; they keep their setting and trim.

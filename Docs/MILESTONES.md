@@ -75,7 +75,8 @@ Goal: the design's "simple two-cannon fight before the deeper systems". Cannons 
 |---|---|
 | Cannon: fit it at a hardpoint, man it, aim within its arc, load round shot and fire | ✅ `b919471` |
 | Hull health; round shot that strikes a hull and damages it | ✅ `1fdbe41` |
-| Holes below the waterline let water in (the ship settles and slows); bailing and repair | ⏳ |
+| Holes below the waterline let water in (the ship settles and slows); bailing | ✅ LEAKS_COMMIT |
+| Repairing holes | ⛔ repair cost and tools (open question) |
 | Sinking: a ship that fills or is destroyed goes down, leaving wreck crates with its hold | ⏳ |
 | Integrated two-cannon fight Play check | ⏳ |
 | Cannon and shot recipes, costs and variant names | ⛔ open question 1 |

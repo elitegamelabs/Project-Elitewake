@@ -320,7 +320,9 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   non-empty player message. Do not change gameplay code; if something is untestable without a change, note it here.
 - **Done when:** the new tests pass in the native run (`Automation RunTests Elitewake`) with no new failures.
 
-### T15. Ship leaks and bailing (M2) — CLAIMED (Claude, 2026-10-15 night: ChatGPT had not taken a task since the morning)
+### T15. Ship leaks and bailing (M2) — DONE LEAKS_COMMIT (Claude)
+- Built by Claude: `AEWShip` water aboard (replicated), leaks through holes below the waterline, settling, slowing
+  through the load, a bailing bucket on deck; `verify_leaks_play.py` (5). Repair and sinking stay open.
 - **Why:** `Docs/REMAINING_WORK_2026-10-14.md` M2: hull health and shot damage are done (`verify_hull_damage_play`);
   leaks, bailing and repairs are not. The prologue (DESIGN_REFERENCE, prologue step 2) has the player bail water.
 - **Do:** read the hull damage code (`Source/EW/Ships/*`, search `HullHealth`) and the M2 section of
@@ -369,3 +371,22 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `ApplyTo`), call `SetHour` on the server. Keep old saves loading (no hour → leave the clock alone). Extend the
   native save round-trip test (T3's) for the hour.
 - **Done when:** the native test and `verify_options_menu_play.py` pass, and a save made at 21:00 loads at 21:00.
+
+### T20. Native tests for leaks and bailing — OPEN
+- **Why:** `AEWShip` now takes water through holes below the waterline (`GetLeakCount`, `GetWaterAboard`,
+  `GetSettle`, `UpdateLeaks`, bailing in `Interact_Implementation` at the bucket). Only a Play check covers it.
+- **Do:** a new `Source/EW/Tests/EWShipLeakTests.cpp` (leave `EWShipTests.cpp` alone; it has someone's uncommitted
+  work) under `Elitewake.Ships.Leaks`: a spawned ship (see how the hull damage test builds one) holed below and
+  above its waterline counts one leak; `UpdateLeaks(1.f)` adds `LeakPerHole` per leak; water counts in `GetLoad()`;
+  `GetSettle()` is `MaxSettle` at capacity and 0 when dry; the water stops at 1.5 x capacity. Do not change
+  gameplay code (ask here if something is private and needs exposing).
+- **Done when:** the native run passes with the new test.
+
+### T21. A modelled bailing bucket — OPEN
+- **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
+  `/Game/Elitewake/World/Ships/SM_BailBucket_v1` exists (the ship loads it automatically when it does).
+- **Do:** a small wooden bucket (staves, two iron hoops, a rope handle), about 30 cm across and 30 cm high, origin
+  at the centre of its base, built by a setup script like the other ship props (`Scripts/Setup/`, with
+  `ship_geometry.Builder` and the timber material) and saved at that path. Reference art is welcome but not required.
+- **Done when:** `verify_leaks_play.py` passes and a screenshot of the sloop's deck shows the bucket.
+
