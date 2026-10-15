@@ -382,6 +382,15 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   gameplay code (ask here if something is private and needs exposing).
 - **Done when:** the native run passes with the new test.
 
+### T23. Native tests for the sound library — OPEN
+- **Why:** `UEWSoundLibrary` (`Source/EW/EWSound.*`) maps every `EEWSound` to its assets under `/Game/Elitewake/Audio`
+  and counts what each world starts; only a Play check (`verify_audio_play.py`) covers it.
+- **Do:** a new `Source/EW/Tests/EWSoundTests.cpp`: for every `EEWSound` value, `GetSound` returns a loaded asset (try
+  several times for the two-take sounds and check both takes appear); `PlaySoundAt` in a test world raises
+  `GetPlayCount` for that asset's name, `GetTotalPlayCount` and `GetLastPlayed`; a null context or asset changes
+  nothing. Do not change gameplay code; the audio session owns `EWSound*`, so ask here if something needs exposing.
+- **Done when:** the native run passes with the new tests (Elitewake filter) and the count is recorded in VERIFICATION.
+
 ### T21. A modelled bailing bucket — OPEN
 - **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
   `/Game/Elitewake/World/Ships/SM_BailBucket_v1` exists (the ship loads it automatically when it does).
