@@ -6,6 +6,8 @@ Drawn up October 13, 2026 at the owner's request, under the owner's delegation; 
 
 Status: ✅ done · 🔨 in progress · ⏳ next · ⛔ blocked on the owner
 
+Work reports: [Claude, October 15](REPORTS/2026-10-15_Claude.md). Tasks open for another agent: [DELEGATED_TASKS.md](DELEGATED_TASKS.md).
+
 ## Owner priority, October 14 — core survival on a clean island 🔨
 
 The owner set this ahead of the milestone order: a clean island to play the core survival actions on, then the environment and the world. Boats are out of the island map (they, the cannons and their checks carry on in `/Game/Elitewake/Maps/Test/Lvl_ShipsTest`); the sea creatures stay. The title screen, HUD, compass and the working systems are kept.
@@ -105,6 +107,8 @@ Ten selectable night-sky constellations with ten skills each, including the upwa
 ### Complete remaining-work map
 
 The [October 14 checklist](REMAINING_WORK_2026-10-14.md) supplements every milestone with outstanding art integration, menus, prologue, ship fittings/combat, world/resources/animals, planting/climate/traversal, persistence, multiplayer, characters, progression and Company work. M10 adds the night-sky ten-by-ten constellation system and multiplayer-only Company claim/contest flags; NPC Port islands remain unclaimable. Earlier verified foundations are retained. No new feature is marked done by publishing source art or this list. The [art catalog](../Art/README.md) distinguishes reviewed references, drafts and pending models.
+
+Unresolved owner decisions across those systems are consolidated in [Open Questions — October 15](OPEN_QUESTIONS_2026-10-15.md). The register includes source locations, current code values where verified, and dependent work; it does not choose answers.
 
 ### October 14 owner handoff: world terrain for Claude
 

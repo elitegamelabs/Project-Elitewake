@@ -1,145 +1,118 @@
-"""Acceptance for the title screen and the character creator.
-
-Needs Play in /Game/Elitewake/Maps/Lvl_Title with one player (Scripts/Setup/build_title.py). Run unattended with
-run_play_check.py and EW_PLAY_PLAYERS=1.
-
-  1. The title art fills the screen and "Start your journey" sits in the upper middle of it, as painted.
-  2. Enter starts the journey: after the fade, the character creator shows, with every body and colouring in the
-     roster on offer, and the survivor stands on the dock in front of the creator camera.
-  3. Choosing the woman, the fifth colouring and a taller height changes the survivor shown.
-  4. Back returns to the title; starting again comes back to the creator.
-  5. Set Sail keeps the chosen look in the game instance (the test stays on the title map instead of sailing).
-Writes Saved/TitlePlayResult.json, then removes the saved look the test made.
-"""
+"""Play acceptance for splash -> main menu -> normal single-player coast."""
 import json
+import os
+import shutil
 import time
 from pathlib import Path
 import unreal
 
 lib = unreal.EWEditorVerificationLibrary
-RESULT = Path(unreal.Paths.project_saved_dir(), 'TitlePlayResult.json')
-world = lib.get_play_worlds()[0]
-pc = unreal.GameplayStatics.get_player_controller(world, 0)
-assert isinstance(pc, unreal.EWTitlePlayerController), f'not the title controller: {pc}'
-roster = unreal.load_asset('/Game/Elitewake/Characters/DA_BodyRoster')
+saved = Path(unreal.Paths.project_saved_dir())
+result = saved / 'TitlePlayResult.json'
+save_file = saved / 'SaveGames' / 'Survivor.sav'
+save_backup = save_file.with_suffix('.sav.titlecheckbackup')
+save_generated = save_file.with_suffix('.sav.titlecheckgenerated')
+assert not save_backup.exists(), f'Previous title-check backup needs manual recovery: {save_backup}'
+assert not save_generated.exists(), f'Previous title-check save needs manual recovery: {save_generated}'
+if save_file.exists():
+    save_file.parent.mkdir(parents=True, exist_ok=True)
+    shutil.move(str(save_file), str(save_backup))
+
 checks = []
-state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'memo': {}}
+state = {'step': 'splash', 'deadline': time.monotonic() + 8.0, 'handle': None, 'memo': {}}
 
 
-def title_shown():
-    title = pc.get_title_widget()
-    if not title or not title.is_in_viewport():
-        return False
-    rect = title.get_start_button_rect()
-    left, top, width, height = rect.x, rect.y, rect.z, rect.w
-    size = unreal.WidgetLayoutLibrary.get_viewport_size(pc) / unreal.WidgetLayoutLibrary.get_viewport_scale(pc)
-    if width <= 0:
-        return False
-    centre_x, centre_y = (left + width / 2) / size.x, (top + height / 2) / size.y
-    assert .4 < centre_x < .6 and .25 < centre_y < .45, f'button centre at {centre_x:.2f}, {centre_y:.2f}'
-    assert title.get_editor_property('art'), 'no title art'
-    state['memo'].update(button_centre=[round(centre_x, 3), round(centre_y, 3)])
-    return True
+def worlds():
+    return lib.get_play_worlds()
 
 
-def press_enter():
-    assert lib.send_verification_ui_key(pc, 'Enter')
+def title_pc():
+    for world in worlds():
+        pc = unreal.GameplayStatics.get_player_controller(world, 0)
+        if isinstance(pc, unreal.EWTitlePlayerController):
+            return pc
+    return None
 
 
-def creator_shown():
-    creator, preview = pc.get_creator_widget(), pc.get_preview()
-    if not (creator and creator.is_in_viewport() and preview):
-        return False
-    assert creator.get_body_choice_count() == len(roster.get_editor_property('bodies'))
-    assert creator.get_tone_choice_count() == len(roster.get_editor_property('tones'))
-    view = pc.get_view_target()
-    assert view and 'CreatorCamera' in [str(t) for t in view.tags], f'viewing {view}'
-    assert preview.get_editor_property('body').get_editor_property('skeletal_mesh_asset'), 'the survivor has no body'
-    assert pc.get_title_widget() is None or not pc.get_title_widget().is_in_viewport()
-    return True
-
-
-def customise():
-    creator = pc.get_creator_widget()
-    creator.select_body(1)
-    creator.select_tone(4)
-    for _ in range(3):
-        creator.nudge_height(1)
-
-
-def customised():
-    creator, preview = pc.get_creator_widget(), pc.get_preview()
-    look = creator.get_appearance()
-    body = preview.get_editor_property('body')
-    woman = roster.get_editor_property('bodies')[1].get_editor_property('mesh')
-    assert look.body == 1 and look.tone == 4 and abs(look.height - 1.06) < .001, look
-    assert body.get_editor_property('skeletal_mesh_asset') == woman, body.get_editor_property('skeletal_mesh_asset')
-    assert abs(body.get_editor_property('relative_scale3d').z - 1.06) < .001
-    state['memo']['look'] = [look.body, look.tone, round(look.height, 2)]
-    return True
-
-
-def back():
-    pc.get_creator_widget().go_back()
-
-
-def title_again():
-    title = pc.get_title_widget()
-    return bool(title and title.is_in_viewport() and not pc.get_preview())
-
-
-def set_sail():
-    pc.set_editor_property('stay_on_set_sail', True)
-    creator = pc.get_creator_widget()
-    creator.select_body(1)
-    creator.select_tone(4)
-    creator.set_sail()
-
-
-def kept():
-    instance = unreal.GameplayStatics.get_game_instance(world)
-    if not (pc.has_set_sail() and instance.has_chosen_appearance()):
-        return False
-    look = instance.get_chosen_appearance()
-    assert look.body == 1 and look.tone == 4, look
-    return True
-
-
-STEPS = [
-    ('The title art fills the screen with "Start your journey" in the upper middle', lambda: None, title_shown, 6),
-    ('Enter starts the journey: the creator offers every body and colouring, the survivor on the dock in view', press_enter, creator_shown, 5),
-    ('Choosing the woman, the fifth colouring and +6% height changes the survivor shown', customise, customised, 3),
-    ('Back returns to the title', back, title_again, 3),
-    ('', press_enter, creator_shown, 5),
-    ('Set Sail keeps the chosen look in the game instance', set_sail, kept, 3),
-]
+def current_survivor():
+    for world in worlds():
+        pc = unreal.GameplayStatics.get_player_controller(world, 0)
+        if isinstance(pc, unreal.EWPlayerController):
+            pawn = pc.get_controlled_pawn()
+            if isinstance(pawn, unreal.EWCharacter):
+                return world, pc, pawn
+    return None
 
 
 def finish(error=None):
-    unreal.unregister_slate_post_tick_callback(state['handle'])
-    # Leave no saved look behind: it would dress every later Play session.
-    Path(unreal.Paths.project_saved_dir(), 'SaveGames', 'Appearance.sav').unlink(missing_ok=True)
-    RESULT.write_text(json.dumps({'success': error is None, 'checks': [c for c in checks if c], 'error': error,
+    if state['handle'] is not None:
+        unreal.unregister_slate_post_tick_callback(state['handle'])
+        state['handle'] = None
+    # Restore a real player's slot even when an assertion fails. Preserve any save created by the
+    # test rather than deleting it if the startup flow unexpectedly writes one.
+    if save_backup.exists():
+        if save_file.exists():
+            shutil.move(str(save_file), str(save_generated))
+            error = error or f'Title flow unexpectedly wrote a save; preserved it at {save_generated.name}'
+        shutil.move(str(save_backup), str(save_file))
+    result.write_text(json.dumps({'success': error is None, 'checks': checks, 'error': error,
                                   'measured': state['memo']}, indent=2), encoding='utf-8')
     unreal.log(f'EWPLAYCHECK Title success={error is None} error={error}')
 
 
 def tick(delta):
-    description, begin, done, timeout = STEPS[state['index']]
     try:
-        if not state['begun']:
-            begin()
-            state.update(begun=True, deadline=time.monotonic() + timeout)
-            return
-        if done():
-            checks.append(description)
-            state.update(index=state['index'] + 1, begun=False)
-            if state['index'] == len(STEPS):
-                finish()
-        elif time.monotonic() > state['deadline']:
-            raise TimeoutError(f'not done within {timeout} s')
+        step = state['step']
+        if step == 'splash':
+            pc = title_pc()
+            if not pc:
+                if time.monotonic() > state['deadline']:
+                    raise TimeoutError('title controller did not appear')
+                return
+            title = pc.get_title_widget()
+            if not (title and title.is_in_viewport() and title.is_splash_screen()):
+                raise AssertionError('splash art is not the visible title screen')
+            assert title.get_editor_property('art'), 'title art did not load'
+            assert title.get_editor_property('prompt_art'), 'bottom-center prompt art did not load'
+            state['title_pc'] = pc
+            checks.append('Title art and Press Any Key prompt load on the splash screen')
+            assert lib.send_verification_ui_key(pc, 'Enter'), 'could not send splash key input'
+            state.update(step='menu', deadline=time.monotonic() + 5.0)
+        elif step == 'menu':
+            pc = title_pc()
+            title = pc.get_title_widget() if pc else None
+            if not (title and title.is_in_viewport() and title.is_main_menu_screen()):
+                if time.monotonic() > state['deadline']:
+                    raise TimeoutError('splash input did not advance to the main menu')
+                return
+            assert not title.is_multiplayer_available(), 'Multiplayer must remain unavailable'
+            rect = title.get_single_player_button_rect()
+            size = unreal.WidgetLayoutLibrary.get_viewport_size(pc) / unreal.WidgetLayoutLibrary.get_viewport_scale(pc)
+            x, y, width, height = rect.x, rect.y, rect.z, rect.w
+            assert width > 0 and height > 0, f'Single Player panel has no visible bounds: {rect}'
+            centre = [(x + width / 2) / size.x, (y + height / 2) / size.y]
+            assert .2 < centre[0] < .36 and .40 < centre[1] < .72, f'Single Player panel moved unexpectedly: {centre}'
+            state['memo']['single_player_panel_centre'] = [round(v, 3) for v in centre]
+            checks.append('Splash input opens the two-panel menu with Single Player in its expected panel')
+            # Native EW.Title routed-input automation separately verifies a real pointer click inside this
+            # rectangle and rejects keyboard/wheel input on the menu and clicks on disabled Multiplayer.
+            title.start_single_player()
+            state.update(step='coast', deadline=time.monotonic() + 20.0)
+        elif step == 'coast':
+            found = current_survivor()
+            if not found:
+                if time.monotonic() > state['deadline']:
+                    raise TimeoutError('Single Player did not load a normal survivor on the coastal map')
+                return
+            world, _, pawn = found
+            path = world.get_outer().get_path_name()
+            assert 'Lvl_CoastalPlayground' in path, f'Single Player loaded an unexpected world: {path}'
+            state['memo']['world'] = path
+            state['memo']['survivor'] = pawn.get_name()
+            checks.append('Single Player opens the coastal map with a normal playable survivor')
+            finish()
     except Exception as error:
-        finish(f'step {state["index"]} ({description}): {error!r}')
+        finish(f'{state["step"]}: {error!r}')
 
 
 state['handle'] = unreal.register_slate_post_tick_callback(tick)
