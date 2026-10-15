@@ -165,7 +165,7 @@ taking a task.
   marked DECIDED (delegated) like the others. Extend `verify_animals_play.py`'s kind list.
 - **Done when:** it walks on the Winter island in Play, attacks a survivor who comes near, and the animals check passes.
 
-### T8. Asset catalog upkeep — OPEN
+### T8. Asset catalog upkeep — CLAIMED (ChatGPT, October 15)
 - **Why:** many new generated assets landed on October 15 (animal meshes and materials, Maravai and birch trees,
   four stone looks, work animations, leaf textures `Art/Flora/*-Leaves-v1.png`).
 - **Do:** run `Scripts/Art/build_art_catalog.py` and fix its status rules so the new folders are classified
