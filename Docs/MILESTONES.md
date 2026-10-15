@@ -6,6 +6,8 @@ Drawn up October 13, 2026 at the owner's request, under the owner's delegation; 
 
 Status: ✅ done · 🔨 in progress · ⏳ next · ⛔ blocked on the owner
 
+Work reports: [Claude, October 15](REPORTS/2026-10-15_Claude.md). Tasks open for another agent: [DELEGATED_TASKS.md](DELEGATED_TASKS.md).
+
 ## Owner priority, October 14 — core survival on a clean island 🔨
 
 The owner set this ahead of the milestone order: a clean island to play the core survival actions on, then the environment and the world. Boats are out of the island map (they, the cannons and their checks carry on in `/Game/Elitewake/Maps/Test/Lvl_ShipsTest`); the sea creatures stay. The title screen, HUD, compass and the working systems are kept.
