@@ -9,6 +9,7 @@
 #include "UObject/ConstructorHelpers.h"
 #include "Net/UnrealNetwork.h"
 #include "WaterBodyActor.h"
+#include "EWSound.h"
 
 TArray<TWeakObjectPtr<AEWCannonBall>> AEWCannonBall::RecentShots;
 
@@ -48,11 +49,14 @@ void AEWCannonBall::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AEWCannonBall, bLanded);
     DOREPLIFETIME(AEWCannonBall, LandedAt);
+    DOREPLIFETIME(AEWCannonBall, LandedOn);
 }
 
 void AEWCannonBall::BeginPlay()
 {
     Super::BeginPlay();
+    // The gun's report, where the shot leaves the muzzle, on every screen that sees it fly.
+    if (!bLanded) UEWSoundLibrary::PlaySoundAt(this, EEWSound::CannonFire, GetActorLocation(), 1.f, FMath::FRandRange(.95f, 1.05f));
     if (HasAuthority()) return;
     // Each screen flies its own copy from the server's velocity, smoothly between updates; only the server's
     // copy collides and decides where it lands.
@@ -72,6 +76,14 @@ void AEWCannonBall::OnRep_Landed()
     Movement->StopMovementImmediately();
     Movement->Deactivate();
     SetActorLocation(LandedAt);
+    PlayLanding();
+}
+
+void AEWCannonBall::PlayLanding() const
+{
+    // A splash in the sea, planks smashing on a hull, a dull knock on rock or ground.
+    const EEWSound Sound = LandedOn == 0 ? EEWSound::ShotSplash : LandedOn == 1 ? EEWSound::HullHit : EEWSound::PickaxeStone;
+    UEWSoundLibrary::PlaySoundAt(this, Sound, LandedAt, 1.f, LandedOn == 2 ? .7f : FMath::FRandRange(.95f, 1.05f));
 }
 
 void AEWCannonBall::Launch(AEWShip* From, AEWCharacter* ByGunner, const FVector& Velocity)
@@ -117,7 +129,9 @@ void AEWCannonBall::Land(const FVector& Where, const FVector& Normal, AActor* Hi
     if (auto* Ship = Cast<AEWShip>(Hit)) Ship->TakeRoundShot(Where, Normal, Gunner.Get());
     bLanded = true;
     LandedAt = Where;
+    LandedOn = !Hit ? 0 : Hit->IsA<AEWShip>() ? 1 : 2;
     Struck = Hit;
+    PlayLanding();
     Movement->StopMovementImmediately();
     Movement->Deactivate();
     SetActorLocation(Where);

@@ -21,6 +21,7 @@
 #include "WaterBodyActor.h"
 #include "Ships/EWCannonBall.h"
 #include "Ships/EWWreckCrate.h"
+#include "Ships/EWShipSoundComponent.h"
 
 namespace
 {
@@ -64,6 +65,7 @@ AEWShip::AEWShip()
     SetReplicateMovement(true);
     SetNetUpdateFrequency(30.f);
     HullCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HullCollision"));
+    Sounds = CreateDefaultSubobject<UEWShipSoundComponent>(TEXT("Sounds"));
     SetRootComponent(HullCollision);
     HullCollision->SetMobility(EComponentMobility::Movable);
     HullCollision->SetCollisionProfileName(TEXT("BlockAll"));

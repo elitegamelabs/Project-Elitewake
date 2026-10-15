@@ -281,22 +281,30 @@ void AEWCharacter::UpdateFootsteps(float DeltaSeconds)
 {
     const UCharacterMovementComponent* Move = GetCharacterMovement();
     const float Speed = GetVelocity().Size2D();
-    // Only walking the ground makes steps. Ship decks are wood, and have no step of their own yet: they stay quiet.
-    const UPrimitiveComponent* Base = GetMovementBase();
-    if (!Move || !Move->IsMovingOnGround() || IsOnLadder() || Speed < 40.f || (Base && Base->GetOwner() && Base->GetOwner()->IsA<AEWShip>()))
+    // Walking makes steps (wood on a ship's deck, sand ashore, snow in the Winter region); swimming makes strokes.
+    const bool bSwimming = Move && Move->IsSwimming();
+    if (!Move || (!Move->IsMovingOnGround() && !bSwimming) || IsOnLadder() || Speed < 40.f)
     {
         StrideTravel = 0.f;
         return;
     }
-    // A longer stride the faster the survivor goes (tuning), so steps keep pace from a crouch to a run.
-    const float Stride = FMath::GetMappedRangeValueClamped(FVector2D(150.f, 600.f), FVector2D(110.f, 210.f), Speed);
+    // A longer stride the faster the survivor goes (tuning), so steps keep pace from a crouch to a run; a stroke
+    // carries a swimmer 1.8 m.
+    const float Stride = bSwimming ? 180.f : FMath::GetMappedRangeValueClamped(FVector2D(150.f, 600.f), FVector2D(110.f, 210.f), Speed);
     StrideTravel += Speed * DeltaSeconds;
     if (StrideTravel < Stride) return;
     StrideTravel -= Stride;
-    const bool bSnow = AEWClimateRegion::SampleClimate(this, GetActorLocation()).Region == EEWRegion::Winter;
+    if (bSwimming)
+    {
+        UEWSoundLibrary::PlaySoundAt(this, EEWSound::SwimStroke, GetActorLocation(), 1.f, FMath::FRandRange(.92f, 1.08f));
+        return;
+    }
+    const UPrimitiveComponent* Base = GetMovementBase();
+    const bool bDeck = Base && Base->GetOwner() && Base->GetOwner()->IsA<AEWShip>();
+    const bool bSnow = !bDeck && AEWClimateRegion::SampleClimate(this, GetActorLocation()).Region == EEWRegion::Winter;
     const FVector Feet = GetActorLocation() - FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-    UEWSoundLibrary::PlaySoundAt(this, bSnow ? EEWSound::StepSnow : EEWSound::StepSand, Feet, bIsCrouched ? .55f : 1.f,
-        FMath::FRandRange(.9f, 1.1f));
+    UEWSoundLibrary::PlaySoundAt(this, bDeck ? EEWSound::StepDeck : bSnow ? EEWSound::StepSnow : EEWSound::StepSand, Feet,
+        bIsCrouched ? .55f : 1.f, FMath::FRandRange(.9f, 1.1f));
 }
 
 void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)

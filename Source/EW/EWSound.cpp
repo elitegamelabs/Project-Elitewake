@@ -19,8 +19,19 @@ namespace
         {TEXT("Ambience/S_AmbOceanSurf_v2"), nullptr},
         {TEXT("Ambience/S_AmbWinterWind_v2"), nullptr},
         {TEXT("Ambience/S_AmbSeabirds_v1"), nullptr},
+        {TEXT("Ships/S_CannonFire_v1"), nullptr},
+        {TEXT("Ships/S_HullHit_v1"), nullptr},
+        {TEXT("Ships/S_ShotSplash_v1"), nullptr},
+        {TEXT("Ships/S_Bail_v1"), nullptr},
+        {TEXT("Ships/S_ShipSinking_v1"), nullptr},
+        {TEXT("Footsteps/S_StepDeck_v1"), TEXT("Footsteps/S_StepDeck_v1b")},
+        {TEXT("Swimming/S_SwimStroke_v1"), nullptr},
+        {TEXT("Ships/S_AmbHullCreak_v2"), nullptr},
+        {TEXT("Ships/S_AmbRigging_v2"), nullptr},
+        {TEXT("Ambience/S_AmbNightInsects_v2"), nullptr},
+        {TEXT("Ambience/S_AmbCaveDrips_v2"), nullptr},
     };
-    static_assert(UE_ARRAY_COUNT(Takes) == int32(EEWSound::Seabirds) + 1, "a take for every sound");
+    static_assert(UE_ARRAY_COUNT(Takes) == int32(EEWSound::CaveDrips) + 1, "a take for every sound");
 
     struct FWorldSounds { TMap<FName, int32> Counts; FName Last; int32 Total = 0; };
     TMap<FObjectKey, FWorldSounds>& Played() { static TMap<FObjectKey, FWorldSounds> Map; return Map; }

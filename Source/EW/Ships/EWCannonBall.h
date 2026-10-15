@@ -62,6 +62,10 @@ private:
     bool bLanded = false;
     UPROPERTY(Replicated)
     FVector LandedAt = FVector::ZeroVector;
+    /** What it ended on, for the sound every screen plays: 0 the sea, 1 a ship's hull, 2 anything else. */
+    UPROPERTY(Replicated)
+    uint8 LandedOn = 0;
+    void PlayLanding() const;
     UFUNCTION()
     void OnRep_Landed();
 

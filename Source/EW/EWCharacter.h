@@ -589,7 +589,7 @@ private:
     TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
     int32 WorkImpactCount = 0;
     float ClimateClock = 0.f;
-    /** Every machine: a footstep each stride while the survivor walks the ground: sand, or snow on the Winter island. */
+    /** Every machine: a footstep each stride (wood on deck, sand, snow in the Winter region) or a stroke while swimming. */
     void UpdateFootsteps(float DeltaSeconds);
     float StrideTravel = 0.f;
     /** The rustle of hands in the plants, heard by everyone near. */

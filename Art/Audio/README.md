@@ -1,7 +1,8 @@
 # Audio sources
 
 **Drafts, not final audio.** Generated on 2026-10-15 through the owner's Scenario account (scenario.com, model
-Sonilo V1.1 Text to SFX, WAV, 44.1 kHz stereo; 31 credits in all). They give the game its first sounds so timing and
+Sonilo V1.1 Text to SFX, WAV, 44.1 kHz stereo): a first batch of 15 (31 credits) and, approved by the owner that
+night, a second of 12 for the ships, decks, swimming, night and caves (26 credits). They give the game its first sounds so timing and
 placement can be judged; replace them with recorded or properly licensed sounds, under the same names with a higher
 version, before release. Nobody has listened to them yet: the owner's ear is the review.
 
@@ -24,6 +25,17 @@ even them out live. Played from code (`UEWSoundLibrary`, `UEWSoundscapeComponent
 | Fauna/SFX_AlligatorHiss-v1, -v1b | an alligator's long low warning hiss (two takes) | 2 s | an alligator goes for a survivor, or is struck |
 | Fauna/SFX_FlamingoCall-v1 | a few nasal honks from one flamingo | 2 s | every 20 to 45 s, or when struck |
 | Fauna/SFX_PelicanCall-v1 | a brown pelican's hoarse grunting croak | 2 s | every 30 to 60 s, or when struck |
+| Ships/SFX_CannonFire-v1 | an 18th-century ship's cannon: deep boom, sharp crack, rolling echo | 3 s | a shot leaves the muzzle (heard to 400 m) |
+| Ships/SFX_HullHit-v1 | a cannonball smashing into a wooden hull, splintering planks | 2 s | a shot strikes a ship |
+| Ships/SFX_ShotSplash-v1 | a heavy ball plunging into the sea, tall splash | 2 s | a shot falls in the sea (on land: the pickaxe strike, pitched down) |
+| Ships/SFX_Bail-v1 | a bucket scooping bilge water and tossing it over the side | 2 s | each stroke of the bailing bucket |
+| Ships/SFX_ShipSinking-v1 | timbers groaning and cracking, water rushing in | 5 s | a ship starts to go down |
+| Ships/AMB_HullCreak-v1, -v2 | slow rhythmic timber creaks as a ship rolls (v2: looped) | 10 s / 8 s | loop on every ship, louder making way |
+| Ships/AMB_Rigging-v1, -v2 | sails fluttering, ropes and blocks creaking (v2: looped) | 10 s / 8 s | loop on every ship with sail set |
+| Footsteps/SFX_StepDeck-v1, -v1b | one boot step on a wooden deck (two takes) | 1 s | each stride on a ship |
+| Swimming/SFX_SwimStroke-v1 | an arm pulling through calm water | 1 s | each 1.8 m swum |
+| Ambience/AMB_NightInsects-v1, -v2 | crickets, cicadas, distant frogs (v2: looped) | 10 s / 8 s | loop at night ashore, not in the Winter region |
+| Ambience/AMB_CaveDrips-v1, -v2 | drips into pools with echo (v2: looped and raised 8x, the take was very quiet) | 10 s / 8 s | loop under a cave's roof |
 
 Known draft issues: the snow step may hold
 two crunches; the pickaxe strike has a second knock about 0.25 s in. Real pelicans are nearly silent.

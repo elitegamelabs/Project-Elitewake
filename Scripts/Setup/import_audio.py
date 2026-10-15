@@ -4,8 +4,9 @@ Safe to run again: sounds are re-imported over themselves, so a new take replace
 
 The sounds are drafts generated through the owner's Scenario account (Sonilo V1.1 Text to SFX, October 15), never
 final audio. Each lands at /Game/Elitewake/Audio/<folder>/S_<name>_v1. One-shots fall off with distance through
-SA_World_v1; the surf and wind loop and are heard everywhere (the soundscape fades them). Levels even out the takes,
-which came back at very different loudness, and are tuning.
+SA_World_v1, and the cannon's report and its shot's landing through SA_Far_v1; the soundscape's loops are heard
+everywhere (it fades them), a ship's loops fall off with distance from her. Levels even out the takes, which came
+back at very different loudness, and are tuning.
 """
 import json
 from pathlib import Path
@@ -16,7 +17,8 @@ SOURCE = ROOT / 'Art/Audio'
 FOLDER = '/Game/Elitewake/Audio'
 ANIMALS = '/Game/Elitewake/Wildlife/Animals'
 # Source file (Art/Audio/<folder>/<file>) -> asset name, volume, and how it plays: 'world' falls off with distance,
-# 'loop' loops everywhere, 'flat' plays once everywhere.
+# 'far' too but carries across the water, 'loop' loops everywhere, 'worldloop' loops falling off with distance,
+# 'flat' plays once everywhere.
 SOUNDS = {
     'Work/SFX_ChopWood-v1.wav': ('S_ChopWood_v1', .8, 'world'),
     'Work/SFX_PickaxeStone-v1.wav': ('S_PickaxeStone_v1', .8, 'world'),
@@ -34,6 +36,19 @@ SOUNDS = {
     'Fauna/SFX_AlligatorHiss-v1b.wav': ('S_AlligatorHiss_v1b', .7, 'world'),
     'Fauna/SFX_FlamingoCall-v1.wav': ('S_FlamingoCall_v1', .7, 'world'),
     'Fauna/SFX_PelicanCall-v1.wav': ('S_PelicanCall_v1', 1.0, 'world'),
+    # The second batch (October 15 night): ships, decks, swimming, night and caves.
+    'Ships/SFX_CannonFire-v1.wav': ('S_CannonFire_v1', .9, 'far'),
+    'Ships/SFX_HullHit-v1.wav': ('S_HullHit_v1', .8, 'far'),
+    'Ships/SFX_ShotSplash-v1.wav': ('S_ShotSplash_v1', .9, 'far'),
+    'Ships/SFX_Bail-v1.wav': ('S_Bail_v1', 1.0, 'world'),
+    'Ships/SFX_ShipSinking-v1.wav': ('S_ShipSinking_v1', .8, 'far'),
+    'Ships/AMB_HullCreak-v2.wav': ('S_AmbHullCreak_v2', .7, 'worldloop'),
+    'Ships/AMB_Rigging-v2.wav': ('S_AmbRigging_v2', .8, 'worldloop'),
+    'Footsteps/SFX_StepDeck-v1.wav': ('S_StepDeck_v1', .6, 'world'),
+    'Footsteps/SFX_StepDeck-v1b.wav': ('S_StepDeck_v1b', 1.2, 'world'),
+    'Swimming/SFX_SwimStroke-v1.wav': ('S_SwimStroke_v1', 1.0, 'world'),
+    'Ambience/AMB_NightInsects-v2.wav': ('S_AmbNightInsects_v2', .5, 'loop'),
+    'Ambience/AMB_CaveDrips-v2.wav': ('S_AmbCaveDrips_v2', 1.2, 'loop'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {
@@ -41,25 +56,25 @@ CALLS = {
     'Flamingo': (['S_FlamingoCall_v1'], (20, 45)),
     'Pelican': (['S_PelicanCall_v1'], (30, 60)),
 }
-# Heard at full strength within 4 m, fading out by 40 m (tuning).
-INNER, FALLOFF = 400.0, 3600.0
+# Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m.
+FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0)}
 
 
-def attenuation():
-    path = f'{FOLDER}/SA_World_v1'
-    asset = unreal.load_asset(path) or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
-        'SA_World_v1', FOLDER, unreal.SoundAttenuation, unreal.SoundAttenuationFactory())
+def attenuation(name):
+    inner, falloff = FALLOFFS[name]
+    asset = unreal.load_asset(f'{FOLDER}/{name}') or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        name, FOLDER, unreal.SoundAttenuation, unreal.SoundAttenuationFactory())
     settings = asset.get_editor_property('attenuation')
     settings.set_editor_property('attenuation_shape', unreal.AttenuationShape.SPHERE)
-    settings.set_editor_property('attenuation_shape_extents', unreal.Vector(INNER, 0, 0))
-    settings.set_editor_property('falloff_distance', FALLOFF)
+    settings.set_editor_property('attenuation_shape_extents', unreal.Vector(inner, 0, 0))
+    settings.set_editor_property('falloff_distance', falloff)
     settings.set_editor_property('distance_algorithm', unreal.AttenuationDistanceModel.NATURAL_SOUND)
     asset.set_editor_property('attenuation', settings)
     assert unreal.EditorAssetLibrary.save_loaded_asset(asset)
     return asset
 
 
-def import_sound(source, name, volume, mode, falloff):
+def import_sound(source, name, volume, mode, falloffs):
     filename = SOURCE / source
     assert filename.is_file(), filename
     folder = f'{FOLDER}/{source.split("/")[0]}'
@@ -71,9 +86,10 @@ def import_sound(source, name, volume, mode, falloff):
     wave = unreal.load_asset(f'{folder}/{name}')
     assert isinstance(wave, unreal.SoundWave), name
     wave.set_editor_property('volume', volume)
-    wave.set_editor_property('looping', mode == 'loop')
-    wave.set_editor_property('attenuation_settings', falloff if mode == 'world' else None)
-    if mode == 'loop':
+    wave.set_editor_property('looping', mode in ('loop', 'worldloop'))
+    wave.set_editor_property('attenuation_settings', falloffs['SA_Far_v1'] if mode == 'far' else
+                             falloffs['SA_World_v1'] if mode in ('world', 'worldloop') else None)
+    if mode in ('loop', 'worldloop'):
         # A loop faded right down keeps playing, so it comes back where it was instead of restarting.
         wave.set_editor_property('virtualization_mode', unreal.VirtualizationMode.PLAY_WHEN_SILENT)
     assert unreal.EditorAssetLibrary.save_loaded_asset(wave)
@@ -82,8 +98,8 @@ def import_sound(source, name, volume, mode, falloff):
 
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
-    falloff = attenuation()
-    waves = {name: import_sound(source, name, volume, mode, falloff) for source, (name, volume, mode) in SOUNDS.items()}
+    falloffs = {name: attenuation(name) for name in FALLOFFS}
+    waves = {name: import_sound(source, name, volume, mode, falloffs) for source, (name, volume, mode) in SOUNDS.items()}
     called = {}
     for animal, (calls, interval) in CALLS.items():
         definition = unreal.load_asset(f'{ANIMALS}/DA_Animal_{animal}')

@@ -9,8 +9,9 @@ class UAudioComponent;
 
 /**
  * The background a player hears, on their own machine only: the sea's surf everywhere, the cold wind on the Winter
- * island, and seabirds now and then away from it. It follows the climate region where the player's survivor stands
- * (AEWClimateRegion), fading between them. Levels are tuning.
+ * island, seabirds now and then away from it by day, insects at night away from it, and dripping water under a
+ * cave's roof, where the outside sounds fall away. It follows the climate region where the player's survivor stands
+ * (AEWClimateRegion) and the hour (UEWDayNightSubsystem), fading between them. Levels are tuning.
  */
 UCLASS(ClassGroup=(Sound))
 class EW_API UEWSoundscapeComponent : public UActorComponent
@@ -27,13 +28,24 @@ public:
     UFUNCTION(BlueprintPure, Category="Sound") float GetSurfLevel() const { return SurfLevel; }
     UFUNCTION(BlueprintPure, Category="Sound") float GetWindLevel() const { return WindLevel; }
     UFUNCTION(BlueprintPure, Category="Sound") bool IsAmbiencePlaying() const;
+    UFUNCTION(BlueprintPure, Category="Sound") float GetInsectLevel() const { return InsectLevel; }
+    UFUNCTION(BlueprintPure, Category="Sound") float GetCaveLevel() const { return CaveLevel; }
+    /** Whether the survivor stands under a cave's roof (looked for twice a second). */
+    UFUNCTION(BlueprintPure, Category="Sound") bool IsInCave() const { return bInCave; }
 
 private:
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Surf;
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Wind;
+    UPROPERTY(Transient) TObjectPtr<UAudioComponent> Insects;
+    UPROPERTY(Transient) TObjectPtr<UAudioComponent> Cave;
     EEWRegion HeardRegion = EEWRegion::OpenSea;
     float SurfLevel = 0.f;
     float WindLevel = 0.f;
+    float InsectLevel = 0.f;
+    float CaveLevel = 0.f;
+    bool bInCave = false;
+    bool bNight = false;
+    bool UnderCaveRoof(const FVector& At) const;
     float SampleSeconds = 0.f;
     float BirdSeconds = 0.f;
     bool bStarted = false;

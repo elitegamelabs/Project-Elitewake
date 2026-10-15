@@ -10,7 +10,8 @@ class USoundBase;
 UENUM(BlueprintType)
 enum class EEWSound : uint8
 {
-    ChopWood, PickaxeStone, GlanceClink, GatherRustle, Pickup, StepSand, StepSnow, OceanSurf, WinterWind, Seabirds
+    ChopWood, PickaxeStone, GlanceClink, GatherRustle, Pickup, StepSand, StepSnow, OceanSurf, WinterWind, Seabirds,
+    CannonFire, HullHit, ShotSplash, Bail, ShipSinking, StepDeck, SwimStroke, HullCreak, Rigging, NightInsects, CaveDrips
 };
 
 /**
@@ -23,7 +24,7 @@ class EW_API UEWSoundLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    /** One of the sound's takes, at random (footsteps and the alligator have two). */
+    /** One of the sound's takes, at random (some footsteps and the alligator have two). */
     UFUNCTION(BlueprintPure, Category="Sound")
     static USoundBase* GetSound(EEWSound Sound);
     /** Plays Sound at Location, falling off with distance; Pitch varies it a little for repeated steps. */
