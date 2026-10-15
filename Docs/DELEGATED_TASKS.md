@@ -99,7 +99,7 @@ taking a task.
   are not duplicated when the starter kit already gave them. Delete the test slot afterwards.
 - **Done when:** passes natively; `verify_options_menu_play.py` still passes; docs updated.
 
-### T4. Consolidate the owner's open questions — OPEN
+### T4. Consolidate the owner's open questions — CLAIMED (ChatGPT, October 15)
 - **Why:** open values are scattered through the docs; the owner needs one list to answer.
 - **Do:** create `Docs/OPEN_QUESTIONS_2026-10-15.md`. Collect every unresolved value or rule from
   `DESIGN_REFERENCE.md`, `MILESTONES.md`, `REMAINING_WORK_2026-10-14.md`, `WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md`,
