@@ -59,7 +59,7 @@ taking a task.
 
 ## Queue
 
-### T1. Repair the stale title-screen Play check — CLAIMED (ChatGPT, October 15)
+### T1. Repair the stale title-screen Play check — DONE `533380c`
 - **Why:** `Scripts/Verification/verify_title_play.py` has failed since the October 13 title rework (`1f7d505`):
   it calls `title.get_start_button_rect()`, which no longer exists. The current widget
   (`Source/EW/Title/EWTitleWidget.h`) exposes `GetSinglePlayerButtonRect()`, `IsSplashScreen()`,
@@ -72,6 +72,13 @@ taking a task.
   the check and restore it after, as `verify_options_menu_play.py` does.
 - **Done when:** the check passes with `EW_PLAY_MAP=/Game/Elitewake/Maps/Lvl_Title`, `EW_PLAY_PLAYERS=1`, and
   `Docs/VERIFICATION.md` records it.
+- **Result:** rewrote the check for the current splash, menu and Single Player flow. It protects an existing
+  survivor slot, checks the visible title/prompt, splash key transition, menu panel geometry and disabled
+  Multiplayer state, then confirms the coastal map and normal survivor pawn. Added result notes to
+  `Docs/VERIFICATION.md` and `Docs/TITLE_INPUT_VERIFICATION.md`.
+- **Verified:** Standalone Play, 1280×720, 3/3 passed; `git diff --check` and Python syntax check passed. The routed
+  mouse/key behavior is separately covered by the Slate native automation (its headless NullRHI limitation remains
+  as documented). No existing survivor save was present. Play result: `Saved/TitlePlayResult.json`.
 
 ### T2. Native tests for the climate model — OPEN
 - **Why:** `UEWSurvivalComponent::UpdateClimate` (`Source/EW/EWSurvivalComponent.cpp`) only has a Play check.
