@@ -41,6 +41,9 @@ void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UEWSurvivalComponent, Hunger);
 	DOREPLIFETIME(UEWSurvivalComponent, Hydration);
 	DOREPLIFETIME(UEWSurvivalComponent, BodyTemperatureCelsius);
+	DOREPLIFETIME(UEWSurvivalComponent, Climate);
+	DOREPLIFETIME(UEWSurvivalComponent, FeltTemperature);
+	DOREPLIFETIME(UEWSurvivalComponent, TargetBodyTemperature);
 	DOREPLIFETIME(UEWSurvivalComponent, CarriedWeight);
 	DOREPLIFETIME(UEWSurvivalComponent, MaxCarryWeight);
 }
@@ -104,6 +107,38 @@ void UEWSurvivalComponent::SetHydration(float NewHydration)
 		Hydration = FMath::Clamp(NewHydration, 0.0f, 100.0f);
 		NotifyStatsChanged();
 	}
+}
+
+void UEWSurvivalComponent::UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || DeltaSeconds <= 0.f) return;
+    const bool bRegionChanged = Climate.Region != Here.Region;
+    Climate = Here;
+    FeltTemperature = bInWater ? Here.WaterTemperature : Here.AirTemperature;
+    // Cold: the shortfall below comfort that clothing does not answer pulls the body down; water pulls harder.
+    const float Shortfall = FMath::Max(0.f, ComfortLow - FeltTemperature - Insulation * WarmthPerInsulation);
+    // Heat: in hot, humid air, clothing traps heat; bare skin keeps cool (owner: removing clothing relieves it).
+    const float Excess = FMath::Max(0.f, FeltTemperature - ComfortHigh);
+    TargetBodyTemperature = NormalBody - Shortfall * ColdPull * (bInWater ? WaterChill : 1.f)
+        + Excess * HeatPush * Insulation * Here.Humidity / 100.f;
+    BodyTemperatureCelsius = FMath::FInterpConstantTo(BodyTemperatureCelsius, TargetBodyTemperature, DeltaSeconds, BodyRate);
+    if (IsFreezing()) ApplyDamage(FreezeDamage * DeltaSeconds);
+    if (IsOverheating()) ApplyDamage(HeatDamage * DeltaSeconds);
+    // The condition notices, held while they last.
+    auto Notice = [this](FName Id, bool bOn, const FText& Label)
+    {
+        const bool bShown = DebuffNotices.ContainsByPredicate([Id](const FEWDebuffNotice& N) { return N.Id == Id; });
+        if (bOn && !bShown) SetDebuffNotice(Id, Label, -1.f);
+        else if (!bOn && bShown) ClearDebuffNotice(Id);
+    };
+    Notice(TEXT("Freezing"), IsFreezing(), NSLOCTEXT("Elitewake", "Freezing", "Freezing: find warmth or warm clothing"));
+    Notice(TEXT("Cold"), !IsFreezing() && TargetBodyTemperature < NormalBody - .5f,
+        NSLOCTEXT("Elitewake", "Cold", "Cold: your body is cooling"));
+    Notice(TEXT("Overheating"), IsOverheating(), NSLOCTEXT("Elitewake", "Overheating", "Overheating: remove clothing or find cooler air"));
+    Notice(TEXT("Warming"), !IsOverheating() && TargetBodyTemperature > NormalBody + .5f,
+        NSLOCTEXT("Elitewake", "Warming", "Hot and humid: your body is warming"));
+    NotifyStatsChanged();
+    (void)bRegionChanged;
 }
 
 void UEWSurvivalComponent::SetBodyTemperature(float NewBodyTemperatureCelsius)

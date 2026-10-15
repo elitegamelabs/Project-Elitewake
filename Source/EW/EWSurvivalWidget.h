@@ -48,4 +48,12 @@ private:
     float WarningRemaining[3] = {};
     float BlinkTime = 0.f;
     int32 LastExhaustionCount = 0;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ClimateLine;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> RegionBanner;
+    float BannerSeconds = 0.f;
+    int32 ShownRegion = -1;
+public:
+    /** The climate line and the region last announced, as shown, for the checks. */
+    UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedClimate() const;
+    UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedRegionBanner() const;
 };

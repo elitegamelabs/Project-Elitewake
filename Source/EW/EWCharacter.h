@@ -459,6 +459,8 @@ public:
     /** For the checks: the swing last played on this machine, and how many blows it has shown landing. */
     UFUNCTION(BlueprintPure, Category="Combat") UAnimSequenceBase* GetLastSwingAnimation() const { return LastSwingAnimation; }
     UFUNCTION(BlueprintPure, Category="Combat") int32 GetWorkImpactCount() const { return WorkImpactCount; }
+    /** The warmth of everything worn (clothing insulation; none is made yet). */
+    UFUNCTION(BlueprintPure, Category="Survival|Temperature") float GetClothingInsulation() const;
     /** The hatchet's chop and the pickaxe's blow, the hand gathers, and when in each swing the blow lands. */
     UPROPERTY(EditDefaultsOnly, Category="Tools")
     TObjectPtr<UAnimSequenceBase> ChopAnimation;
@@ -586,6 +588,7 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
     int32 WorkImpactCount = 0;
+    float ClimateClock = 0.f;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastHitReact();
     void PlayOneShot(UAnimSequenceBase* Animation) const;

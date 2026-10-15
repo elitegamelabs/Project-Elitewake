@@ -401,6 +401,14 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	if (HasAuthority() && SurvivalComponent)
 	{
 		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
+		// The climate where the survivor stands, twice a second.
+		ClimateClock += DeltaSeconds;
+		if (ClimateClock >= .5f)
+		{
+			SurvivalComponent->UpdateClimate(AEWClimateRegion::SampleClimate(this, GetActorLocation()),
+				GetCharacterMovement() && GetCharacterMovement()->IsSwimming(), GetClothingInsulation(), ClimateClock);
+			ClimateClock = 0.f;
+		}
 
 		if (bIsSprinting && !SurvivalComponent->CanSprint())
 		{
@@ -1055,6 +1063,15 @@ void AEWCharacter::PlayAttackAnimation(int32 Variant)
     }
     LastSwingAnimation = Swing;
     PlayOneShot(Swing);
+}
+
+float AEWCharacter::GetClothingInsulation() const
+{
+    float Total = 0.f;
+    if (EquipmentComponent)
+        for (const FEWEquipmentEntry& Worn : EquipmentComponent->GetEquipmentEntries())
+            if (Worn.ItemDefinition) Total += Worn.ItemDefinition->Insulation;
+    return Total;
 }
 
 int32 AEWCharacter::SwingKindAt(const AActor* Target) const

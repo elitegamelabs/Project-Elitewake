@@ -486,6 +486,15 @@ void UEWInventoryWidget::BuildStatRows(UVerticalBox* Into)
         Into->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,16,0,0));
         StatValues.Add(Value); StatBars.Add(Bar);
     }
+    // Climate (owner: humidity belongs in the Character interface): region, air, body, and humidity as a bar.
+    auto* Column = WidgetTree->ConstructWidget<UVerticalBox>();
+    ClimateValue = WidgetTree->ConstructWidget<UTextBlock>();
+    auto Font = ClimateValue->GetFont(); Font.Size = 15; ClimateValue->SetFont(Font); ClimateValue->SetAutoWrapText(true);
+    Column->AddChildToVerticalBox(ClimateValue)->SetPadding(FMargin(0,0,0,4));
+    HumidityBar = WidgetTree->ConstructWidget<UProgressBar>(); HumidityBar->SetFillColorAndOpacity(FLinearColor(.35f,.7f,.75f));
+    auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(8); BarSize->SetContent(HumidityBar);
+    Column->AddChildToVerticalBox(BarSize);
+    Into->AddChildToVerticalBox(Column)->SetPadding(FMargin(0,20,0,0));
 }
 
 void UEWInventoryWidget::PerformCraft()
@@ -565,6 +574,16 @@ void UEWInventoryWidget::RefreshSummary()
             StatValues[i]->SetText(FText::FromString(i < 2 ? FString::Printf(TEXT("%s  %.0f / %.0f"), Names[i], Now[i], Max[i])
                                                            : FString::Printf(TEXT("%s  %.0f%%"), Names[i], Now[i])));
             StatBars[i]->SetPercent(Max[i] > 0.f ? FMath::Clamp(Now[i] / Max[i], 0.f, 1.f) : 0.f);
+        }
+        if (ClimateValue && HumidityBar)
+        {
+            const FEWClimate C = Survival->GetClimate();
+            FString State = Survival->IsFreezing() ? TEXT("  Freezing") : Survival->IsOverheating() ? TEXT("  Overheating")
+                : Survival->GetTargetBodyTemperature() < Survival->GetBodyTemperature() - .2f ? TEXT("  Cooling")
+                : Survival->GetTargetBodyTemperature() > Survival->GetBodyTemperature() + .2f ? TEXT("  Warming") : TEXT("");
+            ClimateValue->SetText(FText::FromString(FString::Printf(TEXT("%s  %.0f\u00B0C   Humidity %.0f%%\nBody %.1f\u00B0C%s"),
+                *AEWClimateRegion::RegionName(C.Region).ToString(), Survival->GetFeltTemperature(), C.Humidity, Survival->GetBodyTemperature(), *State)));
+            HumidityBar->SetPercent(FMath::Clamp(C.Humidity / 100.f, 0.f, 1.f));
         }
     }
 

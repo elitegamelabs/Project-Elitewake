@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "World/EWClimateRegion.h"
 #include "EWSurvivalComponent.generated.h"
 
 class FLifetimeProperty;
@@ -95,6 +96,35 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
 	float GetBodyTemperature() const { return BodyTemperatureCelsius; }
+	/** The climate where the survivor is, and the temperature they feel (the water's when swimming). */
+	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
+	FEWClimate GetClimate() const { return Climate; }
+	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
+	float GetFeltTemperature() const { return FeltTemperature; }
+	/** Where body temperature is heading in this climate, with this clothing. */
+	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
+	float GetTargetBodyTemperature() const { return TargetBodyTemperature; }
+	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
+	bool IsFreezing() const { return BodyTemperatureCelsius <= FreezingBelow; }
+	UFUNCTION(BlueprintPure, Category="Survival|Temperature")
+	bool IsOverheating() const { return BodyTemperatureCelsius >= OverheatingAbove; }
+	/** Authority: a step of time in this climate. Cold below comfort pulls the body down, and clothing
+	 *  (Insulation) holds it up; heat in humid air with clothing on pushes it up. Freezing and overheating harm. */
+	void UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds);
+
+	/** Working climate rules (tuning; the owner's thresholds and damage rates are open). */
+	static constexpr float NormalBody = 37.f;
+	static constexpr float ComfortLow = 12.f;       // felt C below which the body cools
+	static constexpr float ComfortHigh = 27.f;      // felt C above which clothing traps heat
+	static constexpr float ColdPull = .14f;         // body C lost per felt C below comfort, unclothed
+	static constexpr float WaterChill = 1.6f;       // water draws heat away this much faster than air
+	static constexpr float WarmthPerInsulation = 22.f;  // felt C of cold that one unit of insulation answers
+	static constexpr float HeatPush = .09f;         // body C gained per felt C above comfort, per unit of insulation, at full humidity
+	static constexpr float BodyRate = .05f;         // body C per second toward where it is heading
+	static constexpr float FreezingBelow = 35.f;
+	static constexpr float OverheatingAbove = 39.f;
+	static constexpr float FreezeDamage = .6f;      // health per second while freezing
+	static constexpr float HeatDamage = .3f;        // health per second while overheating
 
 	UFUNCTION(BlueprintPure, Category="Survival|Weight")
 	float GetCarriedWeight() const { return CarriedWeight; }
@@ -125,6 +155,13 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing=OnRep_SurvivalStats, Category="Survival|Temperature", meta=(Units="Celsius"))
 	float BodyTemperatureCelsius = 37.0f;
+
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing=OnRep_SurvivalStats, Category="Survival|Temperature")
+	FEWClimate Climate;
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing=OnRep_SurvivalStats, Category="Survival|Temperature")
+	float FeltTemperature = 22.0f;
+	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing=OnRep_SurvivalStats, Category="Survival|Temperature")
+	float TargetBodyTemperature = 37.0f;
 
 	UPROPERTY(VisibleInstanceOnly, ReplicatedUsing=OnRep_SurvivalStats, Category="Survival|Weight", meta=(ClampMin="0.0", Units="kg"))
 	float CarriedWeight = 0.0f;

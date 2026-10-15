@@ -91,6 +91,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="0.0", Units="kg"))
 	float UnitWeight = 0.0f;
 
+	/** Worn clothing's warmth: 0 for none; 1 keeps a survivor warm in the Winter region's working cold. It also
+	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
+	float Insulation = 0.0f;
+
 	/** None means this item is not directly equippable. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Equipment")
 	EEWEquipmentSlot EquipmentSlot = EEWEquipmentSlot::None;

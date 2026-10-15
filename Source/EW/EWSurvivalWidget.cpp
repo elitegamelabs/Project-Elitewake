@@ -15,6 +15,7 @@
 #include "Components/VerticalBoxSlot.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "World/EWClimateRegion.h"
 
 namespace
 {
@@ -82,6 +83,25 @@ void UEWSurvivalWidget::BuildWidgetTree()
         Column->AddChildToVerticalBox(Label);
         Labels.Add(Label); Bars.Add(Bar);
     }
+    // Over the stats: the region, the air (or water) and its humidity, and the body's temperature.
+    ClimateLine = WidgetTree->ConstructWidget<UTextBlock>();
+    {
+        auto Font = ClimateLine->GetFont(); Font.Size = 14; ClimateLine->SetFont(Font);
+        ClimateLine->SetShadowOffset(FVector2D(1,1)); ClimateLine->SetShadowColorAndOpacity(FLinearColor::Black);
+        auto* LineSlot = Canvas->AddChildToCanvas(ClimateLine);
+        LineSlot->SetAnchors(FAnchors(0.f,1.f)); LineSlot->SetAutoSize(true);
+        LineSlot->SetOffsets(FMargin(22,-150,0,0));
+    }
+    // Entering a region: its name across the top, fading.
+    RegionBanner = WidgetTree->ConstructWidget<UTextBlock>();
+    {
+        auto Font = RegionBanner->GetFont(); Font.Size = 34; Font.LetterSpacing = 400; RegionBanner->SetFont(Font);
+        RegionBanner->SetJustification(ETextJustify::Center);
+        RegionBanner->SetShadowOffset(FVector2D(2,2)); RegionBanner->SetShadowColorAndOpacity(FLinearColor(0,0,0,.7f));
+        auto* BannerSlot = Canvas->AddChildToCanvas(RegionBanner);
+        BannerSlot->SetAnchors(FAnchors(.5f,0.f)); BannerSlot->SetAlignment(FVector2D(.5f,0.f)); BannerSlot->SetAutoSize(true);
+        BannerSlot->SetOffsets(FMargin(0,90,0,0));
+    }
     auto* Notices = WidgetTree->ConstructWidget<UVerticalBox>();
     NoticePanel=Notices;
     auto* NoticeSlot = Canvas->AddChildToCanvas(Notices);
@@ -110,6 +130,7 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     const bool Stack=Geometry.GetLocalSize().X*.5f-304.f*ReadableScale < 18.f+320.f*ReadableScale+12.f;
     const float Lift=Stack ? 92.f*ReadableScale+14.f : 0.f;
     CastChecked<UCanvasPanelSlot>(Panel->Slot)->SetOffsets(FMargin(18,-122-Lift,320,104));
+    if (ClimateLine) CastChecked<UCanvasPanelSlot>(ClimateLine->Slot)->SetOffsets(FMargin(22,-150*ReadableScale-Lift,0,0));
     CastChecked<UCanvasPanelSlot>(NoticePanel->Slot)->SetOffsets(FMargin(-18,-24-Lift,320,140));
 
     const auto* Pawn=Cast<AEWCharacter>(GetOwningPlayerPawn());
@@ -167,6 +188,29 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Labels[Stat]->SetColorAndOpacity(FSlateColor(bEmpty ? WarningColors[i] : FLinearColor::White));
 
     }
+    {
+        const FEWClimate C = Survival->GetClimate();
+        const float Body = Survival->GetBodyTemperature();
+        const bool bRegionIsHumid = C.Region == EEWRegion::Desert || C.Region == EEWRegion::Jungle || C.Region == EEWRegion::Swamp;
+        FString Line = FString::Printf(TEXT("%s   %.0f°C"), *AEWClimateRegion::RegionName(C.Region).ToString().ToUpper(), Survival->GetFeltTemperature());
+        if (bRegionIsHumid || C.Humidity >= 70.f) Line += FString::Printf(TEXT("   Humidity %.0f%%"), C.Humidity);
+        Line += FString::Printf(TEXT("   Body %.1f°C"), Body);
+        ClimateLine->SetText(FText::FromString(Line));
+        // Blue as the body cools, white when comfortable, orange as it heats.
+        const FLinearColor Cold(.45f,.75f,1.f), Hot(1.f,.55f,.2f);
+        const float Off = Body - UEWSurvivalComponent::NormalBody;
+        ClimateLine->SetColorAndOpacity(FSlateColor(Off < -.3f ? FMath::Lerp(FLinearColor::White, Cold, FMath::Clamp(-Off / 2.f, 0.f, 1.f))
+            : Off > .3f ? FMath::Lerp(FLinearColor::White, Hot, FMath::Clamp(Off / 2.f, 0.f, 1.f)) : FLinearColor::White));
+        if (ShownRegion != int32(C.Region))
+        {
+            // The first reading names where the survivor is, too.
+            ShownRegion = int32(C.Region);
+            BannerSeconds = 4.f;
+            RegionBanner->SetText(AEWClimateRegion::RegionName(C.Region));
+        }
+        BannerSeconds = FMath::Max(0.f, BannerSeconds - DeltaTime);
+        RegionBanner->SetRenderOpacity(FMath::Clamp(BannerSeconds / 1.2f, 0.f, 1.f));
+    }
     const bool Overweight=Survival->GetCarriedWeight()>Survival->GetMaxCarryWeight();
     Warnings[3]->SetText(Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
     Warnings[3]->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.65f,.2f)));
@@ -197,6 +241,14 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     { EffectWarnings[I]->SetText(FText::GetEmpty());EffectWarnings[I]->SetVisibility(ESlateVisibility::Collapsed); }
 }
 
+FText UEWSurvivalWidget::GetDisplayedClimate() const
+{
+    return ClimateLine ? ClimateLine->GetText() : FText::GetEmpty();
+}
+FText UEWSurvivalWidget::GetDisplayedRegionBanner() const
+{
+    return RegionBanner && BannerSeconds > 0.f ? RegionBanner->GetText() : FText::GetEmpty();
+}
 FText UEWSurvivalWidget::GetDisplayedSummary() const
 {
     return FText::FromString(DisplayedSummary);

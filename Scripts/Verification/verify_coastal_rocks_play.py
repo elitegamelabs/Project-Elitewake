@@ -57,9 +57,10 @@ def rooted():
     for t in rocks:
         base = t.get_actor_location()
         # Bedded: the ground under the rock's middle lies above its lowest point (tall outcrops stand high, but sit in it).
-        hit = unreal.SystemLibrary.line_trace_single(server_world, base + unreal.Vector(0, 0, 20), base - unreal.Vector(0, 0, 600),
-                                                     unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, True, [t], unreal.DrawDebugTrace.NONE, True)
         origin, extent = t.get_actor_bounds(True)
+        top = unreal.Vector(base.x, base.y, origin.z + extent.z + 50)
+        hit = unreal.SystemLibrary.line_trace_single(server_world, top, top - unreal.Vector(0, 0, 2 * extent.z + 700),
+                                                     unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, True, [t], unreal.DrawDebugTrace.NONE, True)
         gap = (origin.z - extent.z - hit.to_tuple()[4].z) if hit else None
         if gap is None or gap > 0 or t.get_editor_property('remaining') <= 0:
             bad.append((t.get_actor_label(), gap))

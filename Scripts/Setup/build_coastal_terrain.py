@@ -6,7 +6,8 @@ editor after the ground changes), outside Play with no unsaved maps:
 
 The island is generated from the shapes below, not painted: a sand island with a wet shoreline,
 low dunes and two hills to the west, a basin for the freshwater pond, the islet to the
-north-east, a second, smaller island out to the south-west (owner, October 15), and a sandy shelf that falls away to deep water. Animated surf washes up both beaches. The beach spawn, dock landing and
+north-east, a second, smaller island out to the south-west (owner, October 15), the first Winter island to the
+north (rugged and snow-covered: its ground carries snow in its vertex colour), and a sandy shelf that falls away to deep water. Animated surf washes up both beaches. The beach spawn, dock landing and
 sloop keep their places; the spawn is lifted onto the new ground and the dock posts reach the seabed.
 The deep floor stays at the owner's 500 m beyond the terrain's edge. All heights are tuning.
 """
@@ -34,6 +35,9 @@ ISLET_SHORE = (9500, 2600, 1800, 1450, 0.05)
 # The second island (owner, October 15): smaller, about 125 m out to the south-west across open water, with a
 # rocky crown and a wooded saddle.
 SECOND_SHORE = (-15000, -13000, 2800, 2200, 0.06)
+# The first Winter island (owner's five regions, October 14): about 110 m north of the main island across open
+# water; rugged, a snowy peak with steeper faces and smoother slopes, snow over its ground.
+WINTER_SHORE = (2000, 17500, 3000, 2400, 0.07)
 
 
 def edge_radius(angle, rx, ry, wobble):
@@ -92,7 +96,20 @@ def height(x, y):
     ds = radial_distance(x, y, *SECOND_SHORE[:4], wobble=SECOND_SHORE[4])
     second = seabed(ds) + ripple if ds > 0 else (land(-ds) + bump(x, y, -15800, -13600, 1100, 520)
                                                  + bump(x, y, -14000, -12300, 900, 220))
-    return max(main, islet, second)
+    dw = radial_distance(x, y, *WINTER_SHORE[:4], wobble=WINTER_SHORE[4])
+    if dw > 0:
+        winter = seabed(dw) + ripple
+    else:
+        rugged = 140 * abs(math.sin(x / 520 + .7) * math.sin(y / 430 + 1.9)) * min(1.0, -dw / 1500)
+        winter = (land(-dw) + rugged + bump(x, y, 2300, 17900, 1250, 1050) + bump(x, y, 1300, 17000, 800, 420)
+                  + bump(x, y, 3300, 18600, 700, 300))
+    return max(main, islet, second, winter)
+
+
+def snow_cover(x, y):
+    """How snowy the ground is: all over the Winter island and its shallows, fading out 10 m beyond."""
+    dw = radial_distance(x, y, *WINTER_SHORE[:4], wobble=WINTER_SHORE[4])
+    return min(1.0, max(0.0, 1.0 - (dw - 1500) / 1000))
 
 
 def make_material():
@@ -142,8 +159,28 @@ def make_material():
     link(dry, colour, 'A'); link(damp, colour, 'B'); link(wet, colour, 'Alpha')
     rough = node(unreal.MaterialExpressionLinearInterpolate)
     link(const(0.92), rough, 'A'); link(const(0.55), rough, 'B'); link(wet, rough, 'Alpha')
-    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
-    assert mel.connect_material_property(rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
+    # Snow where the ground's vertex colour says so (red = snow cover), above the tideline; fine sparkle in it.
+    def custom(code, kind, inputs):
+        n = node(unreal.MaterialExpressionCustom, code=code, output_type=kind)
+        pins = []
+        for name in inputs:
+            pin = unreal.CustomInput()
+            pin.set_editor_property('input_name', name)
+            pins.append(pin)
+        n.set_editor_property('inputs', pins)
+        return n
+    paint = node(unreal.MaterialExpressionVertexColor)
+    snowy = custom('float m = V.r * saturate((P.z + 45.0) / 60.0);'
+                   ' float n = frac(sin(dot(floor(P.xy / 2.5), float2(12.9898, 78.233))) * 43758.5453);'
+                   ' float drift = .5 + .5 * sin(P.x / 340.0 + 1.3) * sin(P.y / 270.0);'
+                   ' float3 snow = float3(.8, .84, .9) * lerp(.9, 1.05, n) * lerp(.94, 1.02, drift);'
+                   ' return lerp(C, snow, m);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'P'))
+    snow_rough = custom('return lerp(R, .62, V.r * saturate((P.z + 45.0) / 60.0));',
+                        unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('R', 'V', 'P'))
+    link(colour, snowy, 'C'); link(paint, snowy, 'V'); link(position, snowy, 'P')
+    link(rough, snow_rough, 'R'); link(paint, snow_rough, 'V'); link(position, snow_rough, 'P')
+    assert mel.connect_material_property(snowy, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(snow_rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -268,7 +305,7 @@ assert level.load_level(MAP)
 placed = actors.get_all_level_actors()
 
 # Old blockout ground and the previous terrain, if this ran before.
-SURF = ['Main island surf', 'Islet surf', 'Second island surf']
+SURF = ['Main island surf', 'Islet surf', 'Second island surf', 'Winter island surf']
 retired = ['Main beach', 'Distant islet beach', 'Island interior', 'Distant islet interior', 'Freshwater basin rim', LABEL] + SURF
 removed = []
 for actor in placed:
@@ -284,6 +321,8 @@ positions = unreal.GeometryScript_MeshQueries.get_all_vertex_positions(mesh, Fal
 flat = unreal.GeometryScript_List.convert_vector_list_to_array(positions)
 moved = unreal.GeometryScript_List.convert_array_to_vector_list([unreal.Vector(p.x, p.y, height(p.x, p.y)) for p in flat])
 unreal.GeometryScript_MeshEdits.set_all_mesh_vertex_positions(mesh, moved)
+unreal.GeometryScript_VertexColors.set_mesh_per_vertex_colors(mesh, unreal.GeometryScript_List.convert_array_to_color_list(
+    [unreal.LinearColor(snow_cover(p.x, p.y), 0, 0, 1) for p in flat]))
 unreal.GeometryScript_Normals.recompute_normals(mesh, unreal.GeometryScriptCalculateNormalsOptions())
 if unreal.EditorAssetLibrary.does_asset_exist(MESH):
     assert unreal.EditorAssetLibrary.delete_asset(MESH)
@@ -300,7 +339,7 @@ terrain.set_actor_label(LABEL)
 terrain.set_folder_path('Coast/Terrain')
 terrain.static_mesh_component.set_static_mesh(terrain_mesh)
 surf_material = make_swash_material()
-for label, shore in zip(SURF, (MAIN_SHORE, ISLET_SHORE, SECOND_SHORE)):
+for label, shore in zip(SURF, (MAIN_SHORE, ISLET_SHORE, SECOND_SHORE, WINTER_SHORE)):
     build_swash(label, shore, surf_material)
 
 # Keep the fixed places on the new ground.
@@ -318,7 +357,7 @@ for post in [a for a in actors.get_all_level_actors() if a.get_actor_label() == 
     post.set_actor_scale3d(unreal.Vector(s.x, s.y, (deck_bottom - bottom) / 100))
 report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
     'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
-    'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0), 'islet_top': (9400, 2700), 'second_island_top': (-15800, -13600)}.items()}
+    'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0), 'islet_top': (9400, 2700), 'second_island_top': (-15800, -13600), 'winter_peak': (2300, 17900)}.items()}
 
 # The ocean learns the ground's shape (shallows, shoreline foam, waves easing onto the beach), then a rendering
 # editor rebuilds it against the new ground; headless runs leave it hidden.

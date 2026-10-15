@@ -12,6 +12,11 @@ colours): three shapes of spreading broadleaf hardwood, a stout curving trunk fo
 clumps of glossy leaves (Art/Flora/Maravai-Leaves-v1.png, drawn by Scripts/Art/make_leaf_cluster.py). They grow
 inland and up the hills. Every tree's leaves take their own shade, from blue-green to yellow-green.
 
+Birch (owner, October 14: the Winter region has birch trees, and winter trees carry snow): three shapes of tall,
+slender white-barked birch, its bark marked with dark streaks and patches, light branches climbing the upper trunk
+under small clumps of yellowing leaves (Art/Flora/Birch-Leaves-v1.png) with snow lying on their upper sides. They
+stand over the Winter island, from the beach heads up its slopes.
+
 Each tree is harvestable: a hatchet gives Wood and Thatch (the existing test yields; Maravai Timber as its own
 item is not made yet), and its trunk is solid.
 
@@ -35,13 +40,14 @@ FLORA_FOLDER = 'Coast/Flora'
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 FROND_ART = ROOT / 'Art/Flora/Veyran-Palm-Frond-v1.png'
 LEAF_ART = ROOT / 'Art/Flora/Maravai-Leaves-v1.png'
+BIRCH_ART = ROOT / 'Art/Flora/Birch-Leaves-v1.png'
 TIMBER = '/Game/Elitewake/World/Materials/T_Timber_v1'
 ITEMS = '/Game/Elitewake/Items/Testing'
 WOOD, THATCH = f'{ITEMS}/DA_TestWood', f'{ITEMS}/DA_TestThatch'
 # Hand-gathered plants (tuning): item, amount, gathering kind, how many on the island and on the islet.
-PLANTS = {'Fiber Plant': ('DA_TestFiber', 10, 'PLANT_FIBER', (18, 5, 8)),
-          'Fallen Sticks': ('DA_TestSticks', 6, 'LOOSE_STICKS', (12, 4, 6)),
-          'Berry Bush': ('DA_TestAzulBerry', 10, 'BERRIES', (8, 3, 4))}
+PLANTS = {'Fiber Plant': ('DA_TestFiber', 10, 'PLANT_FIBER', (18, 5, 8, 4)),
+          'Fallen Sticks': ('DA_TestSticks', 6, 'LOOSE_STICKS', (12, 4, 6, 8)),
+          'Berry Bush': ('DA_TestAzulBerry', 10, 'BERRIES', (8, 3, 4, 3))}
 SEA = -65.0
 BARK, FROND = 0, 1
 # Palm shapes (tuning): height, lean at the crown, frond count and length.
@@ -55,7 +61,13 @@ MARAVAI = [dict(height=900.0, spread=380.0, limbs=6, seed=11), dict(height=1150.
 KEEP_CLEAR = [(150.0, 0.0, 700.0), (4000.0, 900.0, 700.0), (-1700.0, 1500.0, 1000.0)]
 # x range, y range, palms there, Maravai there (tuning): the island, the islet, the second island.
 AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 40, 18), ((7700.0, 11300.0), (1150.0, 4050.0), 12, 3),
-         ((-17800.0, -12200.0), (-15200.0, -10800.0), 16, 10)]
+         ((-17800.0, -12200.0), (-15200.0, -10800.0), 16, 10),
+         ((-1000.0, 5000.0), (15100.0, 19900.0), 0, 0)]       # the Winter island: birches, not palms
+# Birch shapes (tuning): height, how far the branches reach, how many branches; and how many on the Winter island.
+BIRCH = [dict(height=1150.0, reach=200.0, branches=9, seed=21), dict(height=1350.0, reach=240.0, branches=10, seed=22),
+         dict(height=950.0, reach=170.0, branches=8, seed=23)]
+BIRCH_COUNT = 26
+BIRCH_SCALE = (.75, 1.2)
 PALM_SCALE = (.7, 1.35)
 MARAVAI_SCALE = (.75, 1.25)
 
@@ -141,6 +153,72 @@ def maravai(height, spread, limbs, seed):
             b.quad(*ids, n)
     b.slot = 0
     return b
+
+
+def birch(height, reach, branches, seed):
+    """A birch in its own space: a tall, slender, slightly wandering trunk, light branches rising off its upper
+    two thirds, small leaf clumps along and at the ends of them, and a clump at the crown."""
+    rng = random.Random(seed)
+    b = Builder()
+    wander = [(rng.uniform(-14, 14), rng.uniform(-14, 14)) for _ in range(4)]
+    def at(t):
+        k = min(int(t * 3), 2)
+        u = t * 3 - k
+        x = wander[k][0] * (1 - u) + wander[k + 1][0] * u
+        y = wander[k][1] * (1 - u) + wander[k + 1][1] * u
+        return (x * t, y * t, height * t)
+    trunk = [at(k / 14) for k in range(15)]
+    b.tube(trunk, lambda k: 17.0 - 11.0 * k / 14 + (5.0 if k == 0 else 0.0), sides=12)
+    clumps = [(at(1.0), 150.0), (at(.9), 120.0)]
+    for n in range(branches):
+        t = .38 + .55 * n / max(branches - 1, 1)
+        start = at(t)
+        a = rng.uniform(0, 2 * math.pi)
+        long = reach * rng.uniform(.7, 1.1) * (1.15 - .5 * t)
+        rise = long * rng.uniform(.6, 1.1)
+        end = (start[0] + long * math.cos(a), start[1] + long * math.sin(a), start[2] + rise)
+        mid = tuple((start[i] + end[i]) / 2 + (0, 0, -12)[i] for i in range(3))
+        b.tube([start, mid, end], lambda k: 4.5 - 1.6 * k, sides=6)
+        clumps.append((end, rng.uniform(85.0, 125.0)))
+        clumps.append((mid, rng.uniform(60.0, 90.0)))
+    b.slot = 1
+    for (cx, cy, cz), size in clumps:
+        for _ in range(5):
+            h = size / 2 * rng.uniform(.6, 1.0)
+            a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
+            n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
+            ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
+            u = norm(cross(n, ref))
+            v = cross(n, u)
+            c = (cx + rng.uniform(-.2, .2) * size, cy + rng.uniform(-.2, .2) * size, cz + rng.uniform(-.12, .12) * size)
+            corners = [tuple(c[i] + (su * u[i] + sv * v[i]) * h for i in range(3)) for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
+            b.quad(*ids, n)
+    b.slot = 0
+    return b
+
+
+def birch_bark_material():
+    """White birch bark marked with dark horizontal streaks (lenticels) and black patches, in world space."""
+    mel = unreal.MaterialEditingLibrary
+    material, node, custom = material_builder(f'{FOLDER}/M_BirchBark_v1')
+    colour = custom(
+        'float3 q = P * float3(.32, .32, 2.6); float3 i = floor(q), f = frac(q);'
+        ' float h = frac(sin(dot(i, float3(12.9898, 78.233, 37.719))) * 43758.5453);'
+        ' float streak = step(.86, h) * smoothstep(.5, .2, abs(f.z - .5));'
+        ' float3 w = P / float3(9.0, 9.0, 16.0); float3 c0 = floor(w), t = frac(w); t = t * t * (3 - 2 * t); float g = 0;'
+        ' [unroll] for (int k = 0; k < 8; k++) { float3 o = float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);'
+        '  float3 wt = lerp(1 - t, t, o); g += frac(sin(dot(c0 + o, float3(39.3, 11.7, 83.1))) * 43758.5453) * wt.x * wt.y * wt.z; }'
+        ' float patch = smoothstep(.72, .8, g);'
+        ' float tone = .9 + .1 * frac(sin(dot(floor(P / 4.0), float3(7.1, 3.3, 5.9))) * 43758.5453);'
+        ' return lerp(float3(.74, .72, .67) * tone, float3(.04, .04, .04), max(streak * .9, patch * .85));',
+        unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P',))
+    assert mel.connect_material_expressions(node(unreal.MaterialExpressionWorldPosition), '', colour, 'P')
+    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.8), '', unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
 
 
 def frond_strip(b, base, heading, rise, length, droop, dry):
@@ -260,7 +338,7 @@ def berry_material():
     return material
 
 
-def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1'):
+def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
     """Leaves: the art, cut out by its alpha, lit through from behind; dry fronds turn straw brown. Each tree takes
     its own shade of green, from blue-green to yellow-green, picked by where it stands."""
     mel = unreal.MaterialEditingLibrary
@@ -280,6 +358,15 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1'):
     assert mel.connect_material_expressions(flags, '', colour, 'F')
     assert mel.connect_material_expressions(node(unreal.MaterialExpressionObjectPositionWS), '', colour, 'O')
     assert mel.connect_material_expressions(colour, '', through, 'C')
+    if snow:
+        # Snow lies on the leaves' upper sides (owner: snow on winter trees).
+        snowy = custom('float up = saturate((N.z - .15) * 2.2); float n = frac(sin(dot(floor(UV * 18.0), float2(12.9898, 78.233))) * 43758.5453);'
+                       ' return lerp(C, float3(.82, .85, .9), up * lerp(.55, .95, n));',
+                       unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'N', 'UV'))
+        assert mel.connect_material_expressions(colour, '', snowy, 'C')
+        assert mel.connect_material_expressions(node(unreal.MaterialExpressionVertexNormalWS), '', snowy, 'N')
+        assert mel.connect_material_expressions(node(unreal.MaterialExpressionTextureCoordinate), '', snowy, 'UV')
+        colour = snowy
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
     assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
@@ -369,6 +456,23 @@ def inland_spots(ground, palms):
     return chosen
 
 
+def winter_spots(ground):
+    """Birch positions over the Winter island, from the beach heads up its slopes, apart from each other."""
+    rng = random.Random(29)
+    (x0, x1), (y0, y1), _, _ = AREAS[3]
+    chosen, tries = [], 0
+    while len(chosen) < BIRCH_COUNT and tries < 8000:
+        tries += 1
+        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+        z = ground(x, y)
+        if z is None or not (SEA + 70 < z < 900):
+            continue
+        if any(math.hypot(x - px, y - py) < 380 for px, py, _ in chosen):
+            continue
+        chosen.append((x, y, z))
+    return chosen
+
+
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     frond_art = import_texture('T_PalmFrond_v1', FROND_ART)
@@ -382,7 +486,7 @@ def main():
     assert level.load_level(MAP)
     # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', *PLANTS)):
+        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
     placed = []
@@ -413,9 +517,24 @@ def main():
         for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 38.0, 'blocker_half_height': 220.0}.items():
             tree.set_editor_property(prop, value)
         hardwoods.append([round(x), round(y), round(z)])
-    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials)
+    birch_leaves = frond_material(import_texture('T_BirchLeaves_v1', BIRCH_ART), f'{FOLDER}/M_BirchLeaves_v1', snow=True)
+    birches = [write_static_mesh(birch(**shape), f'{FOLDER}/SM_Birch_{k + 1}', [birch_bark_material(), birch_leaves], 120.0)
+               for k, shape in enumerate(BIRCH)]
+    whites = []
+    for k, (x, y, z) in enumerate(winter_spots(ground)):
+        tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 10),
+                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+        tree.set_actor_label(f'Birch {k + 1:02d}')
+        tree.set_folder_path(FLORA_FOLDER)
+        mesh = tree.get_editor_property('mesh')
+        mesh.set_static_mesh(birches[k % len(birches)])
+        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*BIRCH_SCALE)] * 3))
+        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 20.0, 'blocker_half_height': 220.0}.items():
+            tree.set_editor_property(prop, value)
+        whites.append([round(x), round(y), round(z)])
+    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods + whites], materials)
     assert level.save_current_level()
-    report = {'success': True, 'palms': len(placed), 'maravai': len(hardwoods), 'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
+    report = {'success': True, 'palms': len(placed), 'maravai': len(hardwoods), 'birch': len(whites), 'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Coastal flora: {len(placed)} palms')
 

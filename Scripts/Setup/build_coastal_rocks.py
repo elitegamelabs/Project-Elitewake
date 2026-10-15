@@ -37,11 +37,15 @@ SHAPES = [dict(seed=1, size=(270.0, 220.0, 170.0), cuts=1), dict(seed=2, size=(2
 STONES = {'Granite': dict(dark=(.07, .068, .064), light=(.27, .26, .245), lichen=.6, strata=0.0, spacing=12.0, bump=5.0),
           'Sandstone': dict(dark=(.19, .12, .065), light=(.5, .36, .21), lichen=.25, strata=.55, spacing=9.0, bump=4.0),
           'Basalt': dict(dark=(.022, .022, .025), light=(.1, .095, .09), lichen=.35, strata=.12, spacing=20.0, bump=6.0),
-          'Limestone': dict(dark=(.28, .27, .23), light=(.64, .61, .53), lichen=.3, strata=.3, spacing=18.0, bump=4.5)}
+          'Limestone': dict(dark=(.28, .27, .23), light=(.64, .61, .53), lichen=.3, strata=.3, spacing=18.0, bump=4.5),
+          # Winter: the same stone, snow lying on top (owner: stone keeps one style; winter adds snow on top).
+          'GraniteSnow': dict(dark=(.07, .068, .064), light=(.27, .26, .245), lichen=.1, strata=0.0, spacing=12.0, bump=5.0, snow=1.0),
+          'BasaltSnow': dict(dark=(.022, .022, .025), light=(.1, .095, .09), lichen=.05, strata=.12, spacing=20.0, bump=6.0, snow=1.0)}
 # Where rocks go: x range, y range, how many, and the scale range there (tuning).
 AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 34, (.45, 1.6)),        # the island
          ((7700.0, 11300.0), (1150.0, 4050.0), 9, (.45, 1.3)),          # the islet
-         ((-17800.0, -12200.0), (-15200.0, -10800.0), 20, (.5, 1.8))]   # the second island
+         ((-17800.0, -12200.0), (-15200.0, -10800.0), 20, (.5, 1.8)),   # the second island
+         ((-1000.0, 5000.0), (15100.0, 19900.0), 22, (.5, 2.2))]        # the Winter island
 # Outcrops on the second island's rocky crown: (x, y, shape, scale, stone).
 CROWN = [(-15900.0, -13700.0, 5, 2.2, 'Basalt'), (-15300.0, -14300.0, 6, 1.7, 'Basalt'),
          (-16500.0, -13100.0, 2, 2.0, 'Granite'), (-15600.0, -12900.0, 4, 1.6, 'Basalt')]
@@ -170,7 +174,7 @@ def rock_material():
     vectors = {name: node(unreal.MaterialExpressionVectorParameter, parameter_name=name, default_value=unreal.LinearColor(*value, 1))
                for name, value in (('Dark', (.07, .068, .064)), ('Light', (.27, .26, .245)), ('LichenColour', (.28, .3, .15)))}
     scalars = {name: node(unreal.MaterialExpressionScalarParameter, parameter_name=name, default_value=value)
-               for name, value in (('Lichen', .5), ('Strata', 0.0), ('Spacing', 12.0), ('Bump', 5.0))}
+               for name, value in (('Lichen', .5), ('Strata', 0.0), ('Spacing', 12.0), ('Bump', 5.0), ('Snow', 0.0))}
     colour = custom(NOISE + """
 float big = r.fbm(P / 90.0), mid = r.fbm(P / 13.0), fine = r.n(P / 1.3);
 float3 c = lerp(Dark, Light, saturate(big * 1.5 - .25));
@@ -184,7 +188,9 @@ float up = saturate((N.z - .45) * 3);
 float lichen = up * saturate(r.fbm(P / 22.0) * 2.6 - 1.05) * Lichen;
 c = lerp(c, LichenColour * lerp(.7, 1.2, mid), lichen);
 c *= lerp(1.0, .55, saturate((-35.0 - P.z) / 70.0));
-return c;""", unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing'))
+float lying = saturate((N.z - .3) * 2.6) * saturate(r.fbm(P / 30.0) * 2.0 - .2) * Snow;
+c = lerp(c, float3(.8, .84, .9) * lerp(.92, 1.04, fine), lying);
+return c;""", unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing', 'Snow'))
     bumped = custom(NOISE + """
 float e = .5, h0 = r.height(P);
 float3 g = float3(r.height(P + float3(e, 0, 0)) - h0, r.height(P + float3(0, e, 0)) - h0, r.height(P + float3(0, 0, e)) - h0) / e;
@@ -192,7 +198,7 @@ g -= N * dot(g, N);
 return normalize(N - g * Bump);""", unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'Bump'))
     rough = custom(NOISE + 'return lerp(.95, .72, F.b) - r.cracks(P) * .1 - saturate((-35.0 - P.z) / 70.0) * .4;',
                    unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('P', 'F'))
-    for target, pins in ((colour, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing')),
+    for target, pins in ((colour, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing', 'Snow')),
                          (bumped, ('P', 'N', 'Bump')), (rough, ('P', 'F'))):
         for pin in pins:
             source = {'P': position, 'N': normal, 'F': flags}.get(pin) or vectors.get(pin) or scalars.get(pin)
@@ -210,8 +216,8 @@ return normalize(N - g * Bump);""", unreal.CustomMaterialOutputType.CMOT_FLOAT3,
         mel.set_material_instance_parent(mi, material)
         mel.set_material_instance_vector_parameter_value(mi, 'Dark', unreal.LinearColor(*stone['dark'], 1))
         mel.set_material_instance_vector_parameter_value(mi, 'Light', unreal.LinearColor(*stone['light'], 1))
-        for param, key in (('Lichen', 'lichen'), ('Strata', 'strata'), ('Spacing', 'spacing'), ('Bump', 'bump')):
-            mel.set_material_instance_scalar_parameter_value(mi, param, stone[key])
+        for param, key in (('Lichen', 'lichen'), ('Strata', 'strata'), ('Spacing', 'spacing'), ('Bump', 'bump'), ('Snow', 'snow')):
+            mel.set_material_instance_scalar_parameter_value(mi, param, stone.get(key, 0.0))
         mel.update_material_instance(mi)
         assert unreal.EditorAssetLibrary.save_loaded_asset(mi)
         looks[name] = mi
@@ -227,7 +233,7 @@ def spots(ground, avoid):
             tries += 1
             x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
             z = ground(x, y)
-            if z is None or not (SEA + 75 < z < 700):
+            if z is None or not (SEA + 75 < z < 1300):
                 continue
             if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
                 continue
@@ -261,11 +267,16 @@ def main():
     rng = random.Random(9)
     # Mostly grey granite, then sandstone, some dark basalt and pale limestone.
     mix = ['Granite'] * 4 + ['Sandstone'] * 3 + ['Basalt'] * 2 + ['Limestone'] * 2
-    wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
+    winter = ['GraniteSnow'] * 3 + ['BasaltSnow']
+    wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(winter if y > 14000 else mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
     wanted += [(x, y, ground(x, y), scale, shape, look) for x, y, shape, scale, look in CROWN]
     placed = []
     for k, (x, y, z, scale, shape_index, look) in enumerate(wanted):
         low, high = spans[shape_index]
+        # On a slope, bed it lower, halfway to the lowest ground under its footprint, so its downhill side is not left proud.
+        reach = .35 * max(SHAPES[shape_index]['size'][:2]) * scale
+        under = [ground(x + dx * reach, y + dy * reach) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+        z = (z + min([z] + [g for g in under if g is not None])) / 2
         tall = scale * rng.uniform(.85, 1.1)
         lift = tall * (-low - .12 * (high - low))  # the base sunk an eighth of the rock's height, bedded in on slopes too
         rock = actors.spawn_actor_from_class(unreal.EWMineable, unreal.Vector(x, y, z + lift),

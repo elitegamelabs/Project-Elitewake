@@ -195,6 +195,8 @@ private:
     /** The survivor's needs, each with its icon, value and bar. */
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> StatValues;
     UPROPERTY(Transient) TArray<TObjectPtr<UProgressBar>> StatBars;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ClimateValue;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> HumidityBar;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UEWInventoryComponent> BoundInventory;

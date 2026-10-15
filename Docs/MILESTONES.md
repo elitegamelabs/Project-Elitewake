@@ -22,6 +22,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Sea creatures made 3D: a round trunk lofted inside each creature's fins (owner: they were "hilariously 2D") | ✅ `e0443c4` |
 | Land animals on both islands from the owner's photos (October 15): American alligator, flamingo, brown pelican, cottonmouth (water moccasin), tortoise, squirrel monkey, as 3D models that move | ✅ `01fa50a` |
 | Gathering and harvesting motions (ground squat, bush pick, hatchet chop, pickaxe blow) and the hit feedback (chips, shake, hit marker, what it gave) | ✅ `c214316` |
+| Regions and climate: Desert islands (humidity 100 m offshore) and a first Winter island (snow, birches, snowy rocks); body temperature, Cold and Freezing, HUD and Character screen readouts | ✅ `PENDING` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
