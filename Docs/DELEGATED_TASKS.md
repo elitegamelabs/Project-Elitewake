@@ -320,7 +320,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   non-empty player message. Do not change gameplay code; if something is untestable without a change, note it here.
 - **Done when:** the new tests pass in the native run (`Automation RunTests Elitewake`) with no new failures.
 
-### T15. Ship leaks and bailing (M2) — DONE LEAKS_COMMIT (Claude)
+### T15. Ship leaks and bailing (M2) — DONE `a0374fa` (Claude)
 - Built by Claude: `AEWShip` water aboard (replicated), leaks through holes below the waterline, settling, slowing
   through the load, a bailing bucket on deck; `verify_leaks_play.py` (5). Repair and sinking stay open.
 - **Why:** `Docs/REMAINING_WORK_2026-10-14.md` M2: hull health and shot damage are done (`verify_hull_damage_play`);
