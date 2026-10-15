@@ -80,7 +80,7 @@ taking a task.
   mouse/key behavior is separately covered by the Slate native automation (its headless NullRHI limitation remains
   as documented). No existing survivor save was present. Play result: `Saved/TitlePlayResult.json`.
 
-### T2. Native tests for the climate model — CLAIMED (ChatGPT, October 15)
+### T2. Native tests for the climate model — OPEN
 - **Why:** `UEWSurvivalComponent::UpdateClimate` (`Source/EW/EWSurvivalComponent.cpp`) only has a Play check.
   The rules are pure arithmetic and deserve fast native coverage.
 - **Do:** add `Source/EW/Tests/EWClimateTests.cpp` (new file; do not edit `EWShipTests.cpp`, the other writer has
@@ -97,6 +97,12 @@ taking a task.
   Read the constants from the class (they are `static constexpr`), do not copy numbers.
 - **Done when:** the new tests pass with the native command above and the baseline is otherwise unchanged; record
   the count in `Docs/VERIFICATION.md`.
+- **Progress (October 15):** added `Source/EW/Tests/EWClimateTests.cpp` for the seven requested climate and region
+  cases. The first native run reached the automation worker and exposed a fixture mistake: the test water was warmer
+  than the air, so it did not isolate `WaterChill`. The fixture now uses equal air and water temperatures; its C++
+  object compiled successfully. The next incremental link failed because `Binaries/Win64/UnrealEditor-EW.dll` is
+  held open by another process (`LNK1104`); the current shell cannot identify that process. The corrected climate
+  test has not yet been run, so this task remains open and `Docs/VERIFICATION.md` is unchanged.
 
 ### T3. Native round-trip test for the single-player save — OPEN
 - **Why:** `UEWSurvivorSave` (`Source/EW/EWSurvivorSave.*`) is covered only by `verify_options_menu_play.py`.
