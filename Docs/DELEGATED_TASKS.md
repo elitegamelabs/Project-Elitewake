@@ -253,3 +253,24 @@ taking a task.
   (cm internally stays as Unreal's unit). Record findings and changes in `Docs/VERIFICATION.md`.
 - **Done when:** no imperial unit is shown to players; affected checks still pass.
 
+### T12. Tests for the world layout rules — OPEN
+- **Why:** `Scripts/Setup/world_layout.py` places the 26 islands; its `check()` enforces the owner's spacing and
+  region rules. It runs as a script but nothing stops a later change breaking it.
+- **Do:** add plain-Python tests (e.g. `Scripts/Tests/test_world_layout.py`, standard `unittest`, no Unreal) that
+  import `world_layout` and assert: at least five islands per region; at least five round the starter (Plains);
+  every pair at least 800 m apart along shorelines; every island's nearest within 2,000 m; each region's islands on
+  its side of the world (Winter +Y, Swamp -Y, Desert +X, Jungle -X); the starter island's centre, radii and wobble
+  unchanged (-800, -100, 5100, 4100, 0.03 in cm). Also test `world_terrain.height` at the fixed places listed in
+  `Saved/CoastalTerrainResult.json` `ground_cm` (spawn 67.2 cm at (150, 0), dock landing -27.2 at (4000, 900), spring
+  -265 at (-1700, 1500)). Document how to run them in `Docs/VERIFICATION.md`. Do not edit `world_layout.py` or
+  `world_terrain.py` (Claude's); report a failing rule here instead.
+- **Done when:** `python -m unittest` from the repo root runs them green.
+
+### T13. Remove the retired terrain assets — OPEN (needs the editor)
+- **Why:** the five-region world replaced the single coastal terrain. These assets are no longer placed:
+  `/Game/Elitewake/World/Meshes/SM_CoastalTerrain_v1`, `SM_MainIslandSurf_v1`, `SM_IsletSurf_v1`,
+  `SM_SecondIslandSurf_v1`, `SM_WinterIslandSurf_v1`, and `/Game/Elitewake/World/Rocks/M_CoastalRock_v1`.
+- **Do:** in the editor, confirm each has no referencers (Reference Viewer or
+  `unreal.EditorAssetLibrary.find_package_referencers_for_asset`), then delete those with none. Leave anything still
+  referenced and list it here. Run `verify_coastal_play.py` afterwards.
+- **Done when:** the unreferenced ones are gone, the coastal check passes, and the result is noted here.
