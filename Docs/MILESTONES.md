@@ -34,7 +34,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Island landmarks: one per island (sea stacks, shore arch, standing stones, spire, giant dead tree) | ✅ `fb35edc` |
 | Larger islands (open question for the owner) | ⏳ |
 | Day and night: 90 real minutes each (owner), server-owned clock, moving sun, moon, darker nights | ✅ `2ac71d9` (stars, saving the hour, night climate open) |
-| Winter snow: falling snow round the survivor in the Winter region, stopping under roofs; snow on Winter's plants and berry bushes | ✅ SNOW_COMMIT |
+| Winter snow: falling snow round the survivor in the Winter region, stopping under roofs; snow on Winter's plants and berry bushes | ✅ `d59f225` |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
 ## M0 — Foundations ✅
