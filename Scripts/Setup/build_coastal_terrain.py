@@ -99,7 +99,7 @@ def make_material():
              ' return lerp(lerp(h(i), h(i + float2(1, 0)), f.x), lerp(h(i + float2(0, 1)), h(i + float2(1, 1)), f.x), f.y); }')
     snowy = custom('struct G { ' + noise + ' }; G g;'
                    ' float up = saturate((P.z + 45.0) / 60.0);'
-                   ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.h(floor(P.xy / 2.5));'
+                   ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.n2(P.xy / 6.0);'
                    ' float flat = saturate((N.z - .72) * 5.0);'
                    ' float3 grass = lerp(float3(.035, .075, .015), float3(.1, .13, .03), big) * lerp(.7, 1.2, mid) * lerp(.88, 1.08, fine);'
                    ' float3 earth = float3(.16, .12, .08) * lerp(.8, 1.1, mid);'

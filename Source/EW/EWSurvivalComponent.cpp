@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
+#include "World/EWSnowfall.h"
 
 void UEWSurvivalComponent::SetDebuffNotice(FName Id, FText Label, float DurationSeconds)
 {
@@ -26,6 +27,17 @@ UEWSurvivalComponent::UEWSurvivalComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
+}
+
+void UEWSurvivalComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	AActor* Owner = GetOwner();
+	if (Owner && GetNetMode() != NM_DedicatedServer && !Owner->FindComponentByClass<UEWSnowfallComponent>())
+	{
+		UEWSnowfallComponent* Snow = NewObject<UEWSnowfallComponent>(Owner, TEXT("Snowfall"));
+		Snow->RegisterComponent();
+	}
 }
 
 void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

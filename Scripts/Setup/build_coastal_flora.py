@@ -673,6 +673,9 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
              'Fallen Sticks': [easy_to_aim_at(write_static_mesh(stick_pile(k), f'{FOLDER}/SM_FallenSticks_{k + 1}', [materials[BARK]], 120.0)) for k in range(3)],
              'Berry Bush': [write_static_mesh(berry_bush(k), f'{FOLDER}/SM_BerryBush_{k + 1}', [materials[BARK], materials[FROND], berry], 120.0)
                             for k in range(2)]}
+    # Winter's plants carry snow on their upper sides like its trees (owner: snow-covered static wild berries).
+    snowy = frond_material(import_texture('T_PalmFrond_v1', FROND_ART), f'{FOLDER}/M_PalmFrondSnow_v1', snow=True)
+    frond_slot = {'Fiber Plant': 0, 'Berry Bush': 1}
     rng = random.Random(31)
     taken = list(palms)
     counts = {}
@@ -745,6 +748,8 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                 mesh = plant.get_editor_property('mesh')
                 mesh.set_static_mesh(rng.choice(looks[label]))
                 mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(0.85, 1.15)] * 3))
+                if island.region == 'Winter' and label in frond_slot:
+                    mesh.set_material(frond_slot[label], snowy)
                 for prop, value in {'item_definition': item, 'quantity': amount,
                                     'gathering_kind': getattr(unreal.EWHandGatheringKind, kind)}.items():
                     plant.set_editor_property(prop, value)

@@ -35,6 +35,8 @@ public:
 	UEWSurvivalComponent();
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/** Adds the falling snow (World/EWSnowfall) wherever the game is drawn; it shows only for the player's own survivor. */
+	virtual void BeginPlay() override;
 
 	/** Raised whenever a replicated or authoritative survival value changes. */
 	UPROPERTY(BlueprintAssignable, Category="Survival")
