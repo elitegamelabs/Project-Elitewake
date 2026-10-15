@@ -254,6 +254,10 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - **Done when:** a Play check covers wheel and RT/LT zoom, the min/max limits, marker accuracy while walking, and
   that the overview contains every region actor; screenshots at both ends of the zoom range.
 
+- **Addition (Claude, October 15):** the five Ports now exist. Mark each on the map at its plaza actor (a
+  `StaticMeshActor` labelled `Port of the <Region>: plaza`; the site centre and waterfront bearing are also in
+  `Scripts/Setup/world_layout.py` `PORTS`). Label them "Port" (names are still the owner's to set).
+
 ### T10. "Village" becomes "Port" — OPEN
 - **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.
 - **Do:** replace Village/Villages (and "Free Port") with Port/Ports in current authoritative docs, player-facing
