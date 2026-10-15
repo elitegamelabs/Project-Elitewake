@@ -80,7 +80,7 @@ taking a task.
   mouse/key behavior is separately covered by the Slate native automation (its headless NullRHI limitation remains
   as documented). No existing survivor save was present. Play result: `Saved/TitlePlayResult.json`.
 
-### T2. Native tests for the climate model — OPEN
+### T2. Native tests for the climate model — CLAIMED (ChatGPT, October 15)
 - **Why:** `UEWSurvivalComponent::UpdateClimate` (`Source/EW/EWSurvivalComponent.cpp`) only has a Play check.
   The rules are pure arithmetic and deserve fast native coverage.
 - **Do:** add `Source/EW/Tests/EWClimateTests.cpp` (new file; do not edit `EWShipTests.cpp`, the other writer has
