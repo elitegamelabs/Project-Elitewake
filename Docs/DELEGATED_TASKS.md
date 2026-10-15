@@ -59,7 +59,7 @@ taking a task.
 
 ## Queue
 
-### T1. Repair the stale title-screen Play check — OPEN
+### T1. Repair the stale title-screen Play check — CLAIMED (ChatGPT, October 15)
 - **Why:** `Scripts/Verification/verify_title_play.py` has failed since the October 13 title rework (`1f7d505`):
   it calls `title.get_start_button_rect()`, which no longer exists. The current widget
   (`Source/EW/Title/EWTitleWidget.h`) exposes `GetSinglePlayerButtonRect()`, `IsSplashScreen()`,
