@@ -67,6 +67,9 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   placement, `build_animals.py` **placement** (ChatGPT may keep editing animal *models* for T6/T7),
   `Source/EW/World/*`, `Source/EW/EWSurvivalComponent.*`, `Source/EW/EWSurvivalWidget.*`, and the map
   `Lvl_CoastalPlayground` itself. Report: `Docs/REPORTS/`.
+- **Caves, then Plains grass and island landmarks** (October 15 night): new `Scripts/Setup/build_caves.py`,
+  `Scripts/Verification/verify_caves_play.py`, `/Game/Elitewake/World/Caves`, and the cave notches in
+  `world_terrain.py`.
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
   still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`.
 
@@ -302,3 +305,35 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `unreal.EditorAssetLibrary.find_package_referencers_for_asset`), then delete those with none. Leave anything still
   referenced and list it here. Run `verify_coastal_play.py` afterwards.
 - **Done when:** the unreferenced ones are gone, the coastal check passes, and the result is noted here.
+
+### T14. Native tests for swing kinds and gather gains — OPEN
+- **Why:** `Source/EW/EWWorkFeedback.*` and the character's attack variant (low 2 bits = swing kind: 0 plain,
+  1 chop, 2 mine; see `AEWCharacter::SwingKindAt`) have only Play checks. A refactor could silently break the
+  bit packing or the refusal reasons.
+- **Do:** add `Source/EW/Tests/EWWorkFeedbackTests.cpp` (a new file; leave `EWShipTests.cpp` to its current
+  owner) with automation tests under `Elitewake.WorkFeedback.*`: swing kind packing and unpacking for every kind and
+  several sequence numbers; `FEWGatherGain` equality/merging if it has any; each `EEWWorkRefusal` maps to a
+  non-empty player message. Do not change gameplay code; if something is untestable without a change, note it here.
+- **Done when:** the new tests pass in the native run (`Automation RunTests Elitewake`) with no new failures.
+
+### T15. Ship leaks and bailing (M2) — OPEN
+- **Why:** `Docs/REMAINING_WORK_2026-10-14.md` M2: hull health and shot damage are done (`verify_hull_damage_play`);
+  leaks, bailing and repairs are not. The prologue (DESIGN_REFERENCE, prologue step 2) has the player bail water.
+- **Do:** read the hull damage code (`Source/EW/Ships/*`, search `HullHealth`) and the M2 section of
+  `Docs/MILESTONES.md`. Add replicated water-in-hull that rises while hull health is below full (rate *tuning*),
+  lowers the ship's freeboard/top speed as it rises (*tuning*), and a Bail interaction at a deck spot that lowers it.
+  Leave sinking and repair costs unresolved (list them in `Docs/OPEN_QUESTIONS_2026-10-15.md`). Do not touch
+  `Source/EW/World/*` or the world scripts.
+- **Done when:** a Play check on `Lvl_ShipsTest` (server plus client) shows water rising after a hit, the client
+  seeing the same level, speed falling, and bailing lowering it; native tests still pass.
+
+### T16. Fall damage (M6) — OPEN
+- **Why:** owner rule (REMAINING_WORK M6): falls of more than 25 m onto solid ground are fatal, lower falls scaled,
+  deep water exempt. The safe height and the lower-height curve are **owner TBD**.
+- **Do:** server-side landing damage in the character (`Landed`), measured from the highest point of the fall:
+  fatal above 25 m onto solid ground; none when landing in swimmable water; between a safe height and 25 m a linear
+  curve, with the safe height and curve exposed as clearly labelled *tuning* properties and recorded as open in
+  `Docs/OPEN_QUESTIONS_2026-10-15.md`. Ship decks and ladders count as solid ground.
+- **Done when:** a Play check on `Lvl_CoastalPlayground` drops a survivor from 30 m onto land (dies), 30 m into deep
+  water (lives) and from a mid height (hurt, alive), checked on the client too; native tests pass.
+
