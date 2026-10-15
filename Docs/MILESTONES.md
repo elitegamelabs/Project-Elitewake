@@ -29,9 +29,9 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |
-| Caves: one per island, inland, cliff-face and coastal entrances, walkable passage and chamber | ✅ CAVES_COMMIT (contents wait for design values) |
-| Grass you can see as plants on the Plains and Jungle islands | ✅ CAVES_COMMIT |
-| Island landmarks: one per island (sea stacks, shore arch, standing stones, spire, giant dead tree) | ✅ CAVES_COMMIT |
+| Caves: one per island, inland, cliff-face and coastal entrances, walkable passage and chamber | ✅ `fb35edc` (contents wait for design values) |
+| Grass you can see as plants on the Plains and Jungle islands | ✅ `fb35edc` |
+| Island landmarks: one per island (sea stacks, shore arch, standing stones, spire, giant dead tree) | ✅ `fb35edc` |
 | Larger islands (open question for the owner) | ⏳ |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
