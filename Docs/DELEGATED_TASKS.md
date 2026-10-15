@@ -104,7 +104,7 @@ taking a task.
   because it requires full-screen geometry. The climate test passes; the known title-input limitation is unchanged.
   Build succeeded. Results: `Saved/Logs/ClimateFullNative.log`.
 
-### T3. Native round-trip test for the single-player save — OPEN
+### T3. Native round-trip test for the single-player save — CLAIMED (ChatGPT, October 15)
 - **Why:** `UEWSurvivorSave` (`Source/EW/EWSurvivorSave.*`) is covered only by `verify_options_menu_play.py`.
 - **Do:** a native test that fills a survivor (location, health, hunger, hydration, inventory with a food age,
   an equipped tool, two hotbar bindings), saves to a test slot name (add an optional slot parameter if needed,
