@@ -13,8 +13,9 @@ class UStaticMeshComponent;
 /**
  * A fish or sea creature living in the water about a home point. The server moves it: it roams; aggressive kinds
  * go for a swimmer who comes near and bite or sting; the rest dart away when struck. Survivors strike it with
- * melee. Killed, it floats belly-up at the surface, where Interact harvests it for its yield; it returns to its
- * home later. Clients glide to each replicated position.
+ * melee, with whatever they hold. Killed, it floats belly-up at the surface. Interact picks the body up to carry;
+ * Interact again sets it down. Set down on land, Interact harvests it for its yield. It returns home later.
+ * Clients glide to each replicated position; a carried body follows its carrier on every screen.
  */
 UCLASS()
 class EW_API AEWFish : public AActor, public IEWInteractable
@@ -49,6 +50,16 @@ public:
     AEWCharacter* GetQuarry() const { return Quarry.Get(); }
     UFUNCTION(BlueprintPure, Category="Fish")
     FVector GetHome() const { return Home; }
+    /** Who carries the body, if anyone; and whether it lies on land, where it can be harvested. */
+    UFUNCTION(BlueprintPure, Category="Fish")
+    AEWCharacter* GetCarrier() const { return Carrier; }
+    UFUNCTION(BlueprintPure, Category="Fish")
+    bool IsOnLand() const { return bOnLand; }
+    /** Server: how much the body still gives. */
+    UFUNCTION(BlueprintPure, Category="Fish")
+    int32 GetYieldLeft() const { return YieldLeft; }
+    /** Authority: the carrier lets go of the body in front of them, onto land or into the water. */
+    void SetDown();
 
     /** Authority only: a survivor's blow. Returns true if it landed. */
     bool TakeStrike(AEWCharacter* Striker, float Damage);
@@ -70,6 +81,12 @@ private:
     bool bDead = false;
     UPROPERTY(ReplicatedUsing=OnRep_State)
     bool bHarvested = false;
+    UPROPERTY(ReplicatedUsing=OnRep_State)
+    TObjectPtr<AEWCharacter> Carrier;
+    UPROPERTY(Replicated)
+    bool bOnLand = false;
+    /** Where a carried body rides: a small one over the shoulder, a big one dragged behind. */
+    FTransform CarryPose() const;
     UFUNCTION()
     void OnRep_State();
     UFUNCTION(NetMulticast, Unreliable)

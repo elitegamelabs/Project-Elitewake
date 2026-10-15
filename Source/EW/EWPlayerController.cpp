@@ -2,6 +2,7 @@
 
 
 #include "EWPlayerController.h"
+#include "Wildlife/EWFish.h"
 #include "EWObjectiveComponent.h"
 #include "EWCompanyComponent.h"
 #include "EWContainerWidget.h"
@@ -187,7 +188,8 @@ void AEWPlayerController::Attack()
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
     if (Survivor && Survivor->GetGunShip()) { Survivor->ServerFireCannon(); return; }
     // A torch is lit and a waterskin drunk with Left Mouse rather than swung.
-    if (Survivor && Survivor->HasUsableHeldItem()) { Survivor->ServerUseHeldItem(); return; }
+    // Anything in hand strikes a creature it is aimed at, a torch or a waterskin included.
+    if (Survivor && Survivor->HasUsableHeldItem() && !AEWFish::FindStruck(Survivor, AEWCharacter::MeleeReach)) { Survivor->ServerUseHeldItem(); return; }
     if (!Survivor || !Survivor->CanAttack()) return;
     // Swing at once on this screen, at the pace the server allows; the server decides what it hits.
     const double Now = GetWorld()->GetTimeSeconds();

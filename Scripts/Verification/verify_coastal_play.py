@@ -37,10 +37,10 @@ def tick(delta):
     try:
         if phase==0:
             assert len(inv.get_available_recipes()) == 0
-            assert inv.get_item_count(axe)==1 and inv.get_item_count(wood)==20
-            assert pawn.get_inventory_component().get_item_count(wood)==20
+            # The starter supplies are the four core tools (owner, October 14).
+            assert inv.get_item_count(axe)==1 and pawn.get_inventory_component().get_item_count(axe)==1
             assert not owner.get_component_by_class(unreal.CharacterMovementComponent).is_falling()
-            checks.append('Both worlds load coastal map; client possesses survivor; beach spawn grounded with the test starter kit replicated and recipes locked')
+            checks.append('Both worlds load coastal map; client possesses survivor; beach spawn grounded with the starter tools replicated and recipes locked')
             target=next(a for a in unreal.GameplayStatics.get_all_actors_of_class(server,unreal.EWWaterSource))
             owner.get_survival_component().set_hydration(40)
             at=target.get_actor_location(); out=unreal.Vector(at.x+1700,at.y-1500,0).normal()  # away from the pond's middle

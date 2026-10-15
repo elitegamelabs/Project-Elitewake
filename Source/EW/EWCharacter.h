@@ -23,6 +23,7 @@ struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
 class UEWItemDefinition;
+class AEWFish;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -195,6 +196,12 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship")
     bool IsTrimmingSails() const { return bHelmTrimHeld; }
 
+    /** The dead fish this survivor carries, if any. */
+    UFUNCTION(BlueprintPure, Category="Fish")
+    AEWFish* GetCarriedFish() const { return CarriedFish; }
+    /** Authority only; called by the fish when it is picked up or set down. */
+    void SetCarriedFish(AEWFish* Fish) { CarriedFish = Fish; ForceNetUpdate(); }
+
     /** The ship and mount of the cannon this survivor mans, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
     AEWShip* GetGunShip() const { return GunShip; }
@@ -240,6 +247,8 @@ private:
     TObjectPtr<AEWShip> HelmShip;
     UPROPERTY(ReplicatedUsing=OnRep_GunPost)
     TObjectPtr<AEWShip> GunShip;
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWFish> CarriedFish;
     UPROPERTY(Replicated)
     FName GunMount;
     UFUNCTION()

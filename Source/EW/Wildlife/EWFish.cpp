@@ -40,6 +40,8 @@ void AEWFish::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWFish, Health);
     DOREPLIFETIME(AEWFish, bDead);
     DOREPLIFETIME(AEWFish, bHarvested);
+    DOREPLIFETIME(AEWFish, Carrier);
+    DOREPLIFETIME(AEWFish, bOnLand);
 }
 
 void AEWFish::OnConstruction(const FTransform& Transform)
@@ -64,7 +66,6 @@ void AEWFish::BeginPlay()
     if (HasAuthority() && Definition)
     {
         Health = Definition->MaxHealth;
-        YieldLeft = Definition->YieldQuantity;
     }
     OnRep_State();
 }
@@ -72,7 +73,8 @@ void AEWFish::BeginPlay()
 void AEWFish::OnRep_State()
 {
     Visual->SetVisibility(!bHarvested);
-    Body->SetCollisionEnabled(bHarvested ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryOnly);
+    // A carried body is not in anyone's way, its carrier's included.
+    Body->SetCollisionEnabled(bHarvested || Carrier ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryOnly);
 }
 
 void AEWFish::PostNetReceiveLocationAndRotation()
@@ -92,7 +94,13 @@ void AEWFish::PostNetReceiveLocationAndRotation()
 void AEWFish::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (HasAuthority()) Think(DeltaSeconds);
+    if (IsValid(Carrier))
+    {
+        // Every screen keeps a carried body with its carrier, smoothly.
+        SetActorTransform(CarryPose());
+        if (HasAuthority()) Think(DeltaSeconds);
+    }
+    else if (HasAuthority()) Think(DeltaSeconds);
     else if (bHasNetPose)
     {
         FTransform Shown;
@@ -167,15 +175,24 @@ void AEWFish::Think(float DeltaSeconds)
     if (!Definition) return;
     if (bDead)
     {
-        // Belly-up, drifting to the surface, until it returns home.
+        if (Carrier)
+        {
+            // Let go if the carrier can no longer carry it.
+            const auto* Survival = IsValid(Carrier) ? Carrier->GetSurvivalComponent() : nullptr;
+            if (!Survival || Survival->GetHealth() <= 0.f || Carrier->GetCarriedFish() != this || Carrier->GetHelmShip() || Carrier->IsOnLadder())
+                SetDown();
+            return;   // the body keeps while it is carried
+        }
         DeadSeconds += DeltaSeconds;
+        if (DeadSeconds >= Definition->RespawnSeconds) { Respawn(); return; }
+        if (bOnLand) return;   // lying where it was set down
+        // Belly-up, drifting to the surface, until it returns home.
         FVector Here = GetActorLocation();
         Here.Z = FMath::FInterpConstantTo(Here.Z, SurfaceZ - Definition->Size.Y * .25f, DeltaSeconds, 60.f);
         FRotator Facing = GetActorRotation();
         Facing.Pitch = 0.f;
         Facing.Roll = FMath::FInterpConstantTo(Facing.Roll, 180.f, DeltaSeconds, 120.f);
         SetActorLocationAndRotation(Here, Facing);
-        if (DeadSeconds >= Definition->RespawnSeconds) Respawn();
         return;
     }
     AttackCooldown -= DeltaSeconds;
@@ -274,6 +291,7 @@ void AEWFish::Die()
 {
     bDead = true;
     Health = 0.f;
+    YieldLeft = FMath::RandRange(Definition->YieldMin, FMath::Max(Definition->YieldMin, Definition->YieldMax));
     Quarry = nullptr;
     DeadSeconds = 0.f;
     OnRep_State();
@@ -282,9 +300,11 @@ void AEWFish::Die()
 
 void AEWFish::Respawn()
 {
-    bDead = bHarvested = false;
+    if (Carrier) Carrier->SetCarriedFish(nullptr);
+    Carrier = nullptr;
+    bDead = bHarvested = bOnLand = false;
     Health = Definition->MaxHealth;
-    YieldLeft = Definition->YieldQuantity;
+    YieldLeft = 0;
     FleeSeconds = 0.f;
     RoamPoint = Home;
     SetActorLocationAndRotation(Home, FRotator(0, FMath::FRandRange(-180.f, 180.f), 0));
@@ -294,18 +314,33 @@ void AEWFish::Respawn()
 
 bool AEWFish::CanInteract_Implementation(AEWCharacter* Character) const
 {
-    return bDead && !bHarvested && Definition && Definition->Yield && IsValid(Character)
-        && FVector::Dist(Character->GetActorLocation(), GetActorLocation()) < HarvestReach + Definition->Size.X * .5f;
+    if (!IsValid(Character) || !bDead || bHarvested || !Definition || !Definition->Yield) return false;
+    if (Carrier) return Carrier == Character;   // set it down
+    const bool bNear = FVector::Dist(Character->GetActorLocation(), GetActorLocation()) < HarvestReach + Definition->Size.X * .5f;
+    // On land it is harvested; in the water it is picked up, by someone with nothing else in their arms.
+    return bNear && (bOnLand || (!Character->GetCarriedFish() && !Character->GetHelmShip() && !Character->IsOnLadder()));
 }
 
 FText AEWFish::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
-    return Definition ? FText::Format(NSLOCTEXT("Elitewake", "HarvestFish", "Harvest the {0}"), Definition->DisplayName) : FText::GetEmpty();
+    if (!Definition) return FText::GetEmpty();
+    if (Carrier) return FText::Format(NSLOCTEXT("Elitewake", "SetDownFish", "Set down the {0}"), Definition->DisplayName);
+    return bOnLand ? FText::Format(NSLOCTEXT("Elitewake", "HarvestFish", "Harvest the {0}"), Definition->DisplayName)
+                   : FText::Format(NSLOCTEXT("Elitewake", "PickUpFish", "Pick up the {0}  (harvest it on land)"), Definition->DisplayName);
 }
 
 bool AEWFish::Interact_Implementation(AEWCharacter* Character)
 {
     if (!HasAuthority() || !CanInteract_Implementation(Character) || !Character->GetInventoryComponent()) return false;
+    if (Carrier == Character) { SetDown(); return true; }
+    if (!bOnLand)
+    {
+        Carrier = Character;
+        Character->SetCarriedFish(this);
+        OnRep_State();
+        ForceNetUpdate();
+        return true;
+    }
     // Nothing is lost: whatever does not fit stays on the body for later.
     const int32 Taken = Character->GetInventoryComponent()->AddItem(Definition->Yield, YieldLeft);
     if (Taken <= 0) return false;
@@ -315,4 +350,37 @@ bool AEWFish::Interact_Implementation(AEWCharacter* Character)
     OnRep_State();
     ForceNetUpdate();
     return true;
+}
+
+FTransform AEWFish::CarryPose() const
+{
+    if (!IsValid(Carrier) || !Definition) return GetActorTransform();
+    const FTransform Holder(FRotator(0.f, Carrier->GetActorRotation().Yaw, 0.f), Carrier->GetActorLocation());
+    // A small catch rides across the shoulders; a big one is dragged behind, on its side.
+    if (Definition->Size.X < 150.f)
+        return FTransform(FRotator(0.f, 90.f, 0.f), FVector(-12.f, 0.f, 58.f)) * Holder;
+    return FTransform(FRotator(0.f, 0.f, 90.f), FVector(-(Definition->Size.X * .5f + 45.f), 0.f, -55.f)) * Holder;
+}
+
+void AEWFish::SetDown()
+{
+    if (!HasAuthority() || !Carrier) return;
+    AEWCharacter* Was = Carrier;
+    const FVector Front = IsValid(Was) ? Was->GetActorLocation() + FRotator(0.f, Was->GetActorRotation().Yaw, 0.f).Vector() * 110.f
+                                       : GetActorLocation();
+    if (IsValid(Was)) Was->SetCarriedFish(nullptr);
+    Carrier = nullptr;
+    // Onto the ground if there is ground above the sea there; otherwise back into the water to float.
+    FHitResult Hit;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWFishSetDown), false, this);
+    if (IsValid(Was)) Query.AddIgnoredActor(Was);
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
+    const bool bGround = GetWorld()->LineTraceSingleByChannel(Hit, Front + FVector(0, 0, 150.f), Front - FVector(0, 0, 3000.f), ECC_WorldStatic, Query);
+    bOnLand = bGround && Hit.ImpactPoint.Z > SurfaceZ + 5.f;
+    if (bOnLand)
+        SetActorLocationAndRotation(Hit.ImpactPoint + FVector(0, 0, Definition->Size.Y * .3f), FRotator(0.f, GetActorRotation().Yaw, 90.f));
+    else
+        SetActorLocation(FVector(Front.X, Front.Y, SurfaceZ - Definition->Size.Y * .25f));
+    OnRep_State();
+    ForceNetUpdate();
 }

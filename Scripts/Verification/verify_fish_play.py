@@ -7,9 +7,11 @@ from Scripts/Setup/build_fish.py. Run unattended with run_play_check.py.
      server's.
   2. A swimmer near a great white is noticed and bitten: health falls on server and client.
   3. Out of the water on the dock, the shark gives up.
-  4. Struck once with Left Mouse, a peaceful manatee darts away.
+  4. Struck once with Left Mouse with the torch in hand (anything strikes a creature), a peaceful manatee darts away.
   5. Struck, an aggressive manta ray turns on the swimmer; struck until dead, it floats belly-up on both machines.
-  6. Pressing E at the body harvests it: its Raw Fish arrive in the survivor's inventory and the body is gone.
+  6. E at the floating body picks it up; carried, it follows the swimmer on both machines.
+  7. Ashore, E sets it down on the land; E at it there harvests it: 6 to 10 Raw Fish for a manta ray (owner,
+     October 14), and the body is gone.
 Writes Saved/FishPlayResult.json.
 """
 import json
@@ -188,47 +190,100 @@ def floated():
     return True
 
 
-def harvest():
+def aim_at(target):
+    for controller, who in ((client, pawn), (owner.get_controller(), owner)):
+        eye = who.get_actor_location() + unreal.Vector(0, 0, who.get_editor_property('base_eye_height'))
+        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, target))
+
+
+def press_e_every(seconds):
+    if time.monotonic() - state['memo'].get('pressed', 0.0) > seconds:
+        state['memo']['pressed'] = time.monotonic()
+        assert lib.send_verification_gameplay_key(client, 'E')
+
+
+def to_body():
     manta = state['memo']['manta']
     at = manta.get_actor_location()
     place(unreal.Vector(at.x - 150, at.y, at.z - 20), at)
-    state['memo']['fish_before'] = owner.get_inventory_component().get_item_count(raw_fish)
+    state['memo'].update(fish_before=owner.get_inventory_component().get_item_count(raw_fish), pressed=0.0)
+
+
+def picked_up():
+    manta = state['memo']['manta']
+    aim_at(manta.get_actor_location())   # the body bobs; keep it in view and press E again if a bob took the aim off it
+    if manta.get_carrier() != owner:
+        press_e_every(1.0)
+        return False
+    if copy_of(manta).get_carrier() != pawn or owner.get_carried_fish() != manta:
+        return False
+    assert owner.get_inventory_component().get_item_count(raw_fish) == state['memo']['fish_before'], 'picking up harvested it'
+    return True
+
+
+def ashore():
+    """Swim it in: the survivor walks out onto the beach, carrying the body."""
+    for p in (owner, pawn):
+        assert p.teleport(unreal.Vector(150, 0, 120), unreal.Rotator())
+    state['memo'].update(t=time.monotonic(), pressed=0.0)
+
+
+def carried_ashore():
+    manta = state['memo']['manta']
+    if time.monotonic() - state['memo']['t'] < 1.0:
+        return False
+    apart = (copy_of(manta).get_actor_location() - pawn.get_actor_location()).length()
+    assert apart < 600, f"the client's body is {apart:.0f} cm from its carrier"
+    state['memo']['carried_apart'] = round(apart)
+    press_e_every(5.0)   # set it down
+    return True
+
+
+def set_down():
+    manta = state['memo']['manta']
+    if not (manta.is_on_land() and copy_of(manta).is_on_land() and manta.get_carrier() is None):
+        return False
+    assert owner.get_carried_fish() is None
     state['memo']['pressed'] = 0.0
+    return True
 
 
 def harvested():
     manta = state['memo']['manta']
-    # Look at the body as it bobs, and press E (again if a bob took the aim off it).
-    for controller, who in ((client, pawn), (owner.get_controller(), owner)):
-        eye = who.get_actor_location() + unreal.Vector(0, 0, who.get_editor_property('base_eye_height'))
-        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, manta.get_actor_location()))
-    if time.monotonic() - state['memo']['pressed'] > 1.0 and not manta.is_harvested():
-        state['memo']['pressed'] = time.monotonic()
-        assert lib.send_verification_gameplay_key(client, 'E')
-    eye = owner.get_actor_location() + unreal.Vector(0, 0, owner.get_editor_property('base_eye_height'))
-    hit = unreal.SystemLibrary.line_trace_single(server_world, eye, manta.get_actor_location(), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,
-                                                 False, [owner], unreal.DrawDebugTrace.NONE, True)
-    state['memo']['aim'] = f"hit {hit.to_tuple()[9] if hit else None}, eye z {eye.z:.0f}, body z {manta.get_actor_location().z:.0f}, "                            f"apart {(manta.get_actor_location() - owner.get_actor_location()).length():.0f}, can {manta.can_interact(owner)}"
-    gained = owner.get_inventory_component().get_item_count(raw_fish) - state['memo']['fish_before']
-    if not (manta.is_harvested() and copy_of(manta).is_harvested() and gained > 0):
+    aim_at(manta.get_actor_location())
+    if not manta.is_harvested():
+        press_e_every(1.0)
         return False
-    expected = manta.get_editor_property('definition').get_editor_property('yield_quantity')
-    assert gained == expected, f'gained {gained}, expected {expected}'
+    gained = owner.get_inventory_component().get_item_count(raw_fish) - state['memo']['fish_before']
+    if not copy_of(manta).is_harvested() or gained <= 0:
+        return False
+    assert 6 <= gained <= 10, f'a manta ray gave {gained} Raw Fish; it should give 6 to 10'
     assert not copy_of(manta).get_editor_property('visual').is_visible(), 'the harvested body still shows on the client'
     state['memo']['harvested'] = gained
     return True
+
+
+def equip_torch():
+    torch = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestInnTorch')
+    if not owner.get_inventory_component().get_item_count(torch):
+        owner.get_inventory_component().add_item(torch, 1)
+    assert lib.send_verification_equipment_request(client, torch, unreal.EWEquipmentSlot.MAIN_HAND)
+    strike(lambda: named('Manatee'), 140)()
 
 
 STEPS = [
     ('The client sees every creature the server has, all swimming, each copy close to the server', begin_count, all_swimming, 6),
     ('A swimmer near a great white is noticed and bitten: health falls on server and client', near_shark, bitten, 12),
     ('Out of the water on the dock, the shark gives up', to_dock, gave_up, 5),
-    ('Struck with Left Mouse, a peaceful manatee is hurt', strike(lambda: named('Manatee'), 140), manatee_fled, 8),
+    ('Struck with Left Mouse with the torch in hand, a peaceful manatee is hurt', equip_torch, manatee_fled, 8),
     ('The struck manatee darts away faster than it cruises', lambda: None, manatee_away, 4),
     ('Struck, a manta ray turns on the swimmer; struck until dead, it floats belly-up at the surface on the client',
      strike(lambda: named('Manta Ray'), 120), manta_killed, 25),
     ('', lambda: None, floated, 10),
-    ('Pressing E at the body harvests it: its Raw Fish arrive and the body is gone on the client', harvest, harvested, 4),
+    ('E at the floating body picks it up; it follows its carrier on both machines', to_body, picked_up, 6),
+    ('Ashore, the body comes too; E sets it down on the land, on both machines', ashore, carried_ashore, 4),
+    ('', lambda: None, set_down, 4),
+    ('E at it on land harvests it: 6 to 10 Raw Fish arrive and the body is gone on the client', lambda: None, harvested, 6),
 ]
 
 

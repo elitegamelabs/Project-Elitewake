@@ -443,6 +443,7 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
     DOREPLIFETIME(AEWCharacter, GunShip);
     DOREPLIFETIME(AEWCharacter, GunMount);
     DOREPLIFETIME(AEWCharacter, bHeldItemLit);
+    DOREPLIFETIME(AEWCharacter, CarriedFish);
     DOREPLIFETIME(AEWCharacter, Ladder);
     DOREPLIFETIME(AEWCharacter, Appearance);
     DOREPLIFETIME_CONDITION(AEWCharacter, bFacingView, COND_SkipOwner);
@@ -1028,7 +1029,7 @@ void AEWCharacter::DoJumpEnd()
 
 bool AEWCharacter::CanAttack() const
 {
-    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !GunShip && !IsOnLadder();
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !GunShip && !IsOnLadder() && !CarriedFish;
 }
 
 void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const

@@ -33,25 +33,26 @@ ART = ROOT / 'Art/Fauna/Fish'
 ICONS = ROOT / 'Art/Items'
 
 # Name, display name, water, aggressive, [swim, dash, turn], roam, shallowest and deepest it goes, notice, [damage, interval, reach],
-# attack name, health, yield (item, quantity), and how its body moves: (amplitude cm, beats per second, waves along
+# attack name, health, yield (item, (fewest, most): 2-5 fish meat for ordinary fish, 6-10 for sharks, the manatee and
+# bigger creatures, owner, October 14), and how its body moves: (amplitude cm, beats per second, waves along
 # the body, wing beat 0/1).
 CREATURES = {
     'Piranha': dict(display='Piranha', water='FRESH', aggressive=True, speeds=(150, 420, 220), roam=800, depth=40, deepest=200,
-                    notice=800, attack=(4, 1.0, 25), attack_name='bite', health=15, yield_=('RawFish', 1), swim=(2.5, 2.6, .8, 0)),
+                    notice=800, attack=(4, 1.0, 25), attack_name='bite', health=15, yield_=('RawFish', (2, 5)), swim=(2.5, 2.6, .8, 0)),
     'Bass': dict(display='Bass', water='FRESH', aggressive=False, speeds=(100, 360, 180), roam=900, depth=40, deepest=250,
-                 notice=0, attack=(0, 1, 0), attack_name='', health=15, yield_=('RawFish', 2), swim=(3, 2.0, .8, 0)),
+                 notice=0, attack=(0, 1, 0), attack_name='', health=15, yield_=('RawFish', (2, 5)), swim=(3, 2.0, .8, 0)),
     'Catfish': dict(display='Catfish', water='FRESH', aggressive=False, speeds=(80, 300, 140), roam=900, depth=60, deepest=300,
-                    notice=0, attack=(0, 1, 0), attack_name='', health=25, yield_=('RawFish', 3), swim=(5, 1.2, 1.0, 0)),
+                    notice=0, attack=(0, 1, 0), attack_name='', health=25, yield_=('RawFish', (2, 5)), swim=(5, 1.2, 1.0, 0)),
     'MantaRay': dict(display='Manta Ray', water='SALT', aggressive=True, speeds=(140, 380, 70), roam=2200, depth=150, deepest=450,
-                     notice=600, attack=(15, 2.0, 120), attack_name='sting', health=120, yield_=('RawFish', 6), swim=(45, .35, 0, 1)),
+                     notice=600, attack=(15, 2.0, 120), attack_name='sting', health=120, yield_=('RawFish', (6, 10)), swim=(45, .35, 0, 1)),
     'Manatee': dict(display='Manatee', water='SALT', aggressive=False, speeds=(60, 200, 40), roam=1500, depth=90, deepest=300,
-                    notice=0, attack=(0, 1, 0), attack_name='', health=200, yield_=('RawMeat', 12), swim=(7, .45, .6, 0)),
+                    notice=0, attack=(0, 1, 0), attack_name='', health=200, yield_=('RawFish', (6, 10)), swim=(7, .45, .6, 0)),
     'GreatWhiteShark': dict(display='Great White Shark', water='SALT', aggressive=True, speeds=(200, 560, 70), roam=3500, depth=200, deepest=600,
-                            notice=1500, attack=(25, 1.5, 90), attack_name='bite', health=400, yield_=('RawFish', 12), swim=(20, .8, .7, 0)),
+                            notice=1500, attack=(25, 1.5, 90), attack_name='bite', health=400, yield_=('RawFish', (6, 10)), swim=(20, .8, .7, 0)),
     'HammerheadShark': dict(display='Hammerhead Shark', water='SALT', aggressive=True, speeds=(220, 520, 80), roam=3500, depth=200, deepest=600,
-                            notice=1300, attack=(20, 1.5, 80), attack_name='bite', health=320, yield_=('RawFish', 10), swim=(18, .9, .7, 0)),
+                            notice=1300, attack=(20, 1.5, 80), attack_name='bite', health=320, yield_=('RawFish', (6, 10)), swim=(18, .9, .7, 0)),
     'Squid': dict(display='Squid', water='SALT', aggressive=True, speeds=(120, 450, 120), roam=2000, depth=300, deepest=800,
-                  notice=900, attack=(12, 1.2, 120), attack_name='grab', health=150, yield_=('RawFish', 6), swim=(7, 1.0, 1.2, 0)),
+                  notice=900, attack=(12, 1.2, 120), attack_name='grab', health=150, yield_=('RawFish', (6, 10)), swim=(7, 1.0, 1.2, 0)),
 }
 ITEMS = {'RawFish': ('Raw Fish', 'Raw-Fish-v1.png', 'Fresh from the sea or a pond. Cook it before eating: raw fish makes you sick.'),
          'RawMeat': ('Raw Meat', 'Raw-Meat-v1.png', 'Fresh meat. Cook it before eating: raw meat makes you sick.')}
@@ -183,7 +184,7 @@ def build_creatures(items):
                      'roam_radius': float(c['roam']), 'min_depth': float(c['depth']), 'max_depth': float(c['deepest']), 'notice_range': float(c['notice']),
                      'attack_damage': float(damage), 'attack_interval': float(interval), 'attack_reach': float(reach),
                      'attack_name': c['attack_name'], 'max_health': float(c['health']),
-                     'yield': items[item], 'yield_quantity': quantity, 'respawn_seconds': 300.0}.items():
+                     'yield': items[item], 'yield_min': quantity[0], 'yield_max': quantity[1], 'respawn_seconds': 300.0}.items():
             definition.set_editor_property(k, v)
         assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
         definitions[name] = definition

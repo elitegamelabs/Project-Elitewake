@@ -1,6 +1,7 @@
 #include "EWInteractable.h"
 #include "EWCharacter.h"
 #include "Ships/EWShip.h"
+#include "Wildlife/EWFish.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 
@@ -23,6 +24,8 @@ AActor* FEWInteractionTargeting::FindTarget(const AEWCharacter* Character)
     // Leaving the helm does not depend on where the helmsman looks.
     if (IsValid(Character->GetHelmShip())) return Character->GetHelmShip();
     if (IsValid(Character->GetGunShip())) return Character->GetGunShip();
+    // Setting down a carried fish does not depend on where the carrier looks.
+    if (IsValid(Character->GetCarriedFish())) return Character->GetCarriedFish();
     FVector Eye; FRotator Rotation;
     Character->GetActorEyesViewPoint(Eye, Rotation);
     FCollisionQueryParams Query(SCENE_QUERY_STAT(EWInteraction), false, Character);

@@ -1,6 +1,6 @@
 """Client acceptance for the First Voyage: one coastal session, end to end, as a tester plays it.
 
-Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the test starter
+Needs Play in /Game/Elitewake/Maps/Test/Lvl_ShipsTest (the island map has no boats since October 14) as a listen server plus one client, with the test starter
 kit. Run unattended with run_play_check.py. The title's way onto this map is verify_title_to_coast_play.
 
 Through ordinary owned requests and keys, the client:
@@ -10,7 +10,8 @@ Through ordinary owned requests and keys, the client:
   4. opens the hold at the hatch, takes out the helm, the mainsail and the headsail, and closes it with I;
   5. fits all three, raises the anchor at the capstan, takes the helm, sets full sail and trims to the wind;
   6. sails for 4 s, leaves the helm and drops the anchor;
-  7. goes over the side, fights a manta ray with the axe in hand until it dies, and harvests its Raw Fish.
+  7. goes over the side, fights a manta ray with the axe in hand until it dies, carries its body ashore and
+     harvests it there for 6 to 10 Raw Fish.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/FirstVoyagePlayResult.json.
 """
@@ -347,7 +348,13 @@ def manta_dead():
     return copy_of(target).is_dead()
 
 
-def harvest():
+def press_e_every(seconds):
+    if time.monotonic() - state['memo'].get('pressed', 0.0) > seconds:
+        state['memo']['pressed'] = time.monotonic()
+        assert lib.send_verification_gameplay_key(client, 'E')
+
+
+def to_body():
     target = state['memo']['manta']
     at = target.get_actor_location()
     for p in (owner, pawn):
@@ -355,15 +362,43 @@ def harvest():
     state['memo'].update(fish_before=count(owner, raw_fish), pressed=0.0)
 
 
+def picked_up():
+    target = state['memo']['manta']
+    if target.get_carrier() != owner:
+        press_e_every(1.0)
+        return False
+    return copy_of(target).get_carrier() == pawn
+
+
+def ashore():
+    state['aim'] = None
+    for p in (owner, pawn):
+        assert p.teleport(unreal.Vector(150, 0, 120), unreal.Rotator())
+    state['memo'].update(pressed=time.monotonic() - 4.0)
+
+
+def set_down():
+    target = state['memo']['manta']
+    if not target.is_on_land():
+        press_e_every(1.5)
+        return False
+    if not copy_of(target).is_on_land():
+        return False
+    state['aim'] = lambda: state['memo']['manta'].get_actor_location()
+    state['memo']['pressed'] = 0.0
+    return True
+
+
 def harvested():
     m = state['memo']
     target = m['manta']
-    if time.monotonic() - m['pressed'] > 1.0 and not target.is_harvested():
-        m['pressed'] = time.monotonic()
-        assert lib.send_verification_gameplay_key(client, 'E')
-    gained = count(owner, raw_fish) - m['fish_before']
-    if not (target.is_harvested() and copy_of(target).is_harvested() and gained > 0 and count(pawn, raw_fish) == count(owner, raw_fish)):
+    if not target.is_harvested():
+        press_e_every(1.0)
         return False
+    gained = count(owner, raw_fish) - m['fish_before']
+    if not (copy_of(target).is_harvested() and gained > 0 and count(pawn, raw_fish) == count(owner, raw_fish)):
+        return False
+    assert 6 <= gained <= 10, f'a manta ray gave {gained} Raw Fish; it should give 6 to 10'
     m['raw_fish'] = gained
     return True
 
@@ -387,7 +422,9 @@ STEPS = [
     ('It leaves the helm', leave_helm, left_helm, 6),
     ('It drops the anchor and the sloop stops', work('Anchor'), anchored_again, 10),
     ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 30),
-    ('E at the floating body harvests its Raw Fish', harvest, harvested, 6),
+    ('E at the floating body picks it up', to_body, picked_up, 6),
+    ('Carried ashore, E sets it down on the beach', ashore, set_down, 6),
+    ('E at it on land harvests 6 to 10 Raw Fish', lambda: None, harvested, 6),
 ]
 
 

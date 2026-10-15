@@ -62,11 +62,14 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     float MaxHealth = 20.f;
-    /** What harvesting the body gives, and how many. */
+    /** What harvesting the body on land gives, and how many: a number from YieldMin to YieldMax, drawn when it
+     *  dies (owner, October 14: 2 to 5 for ordinary fish, 6 to 10 for sharks, the manatee and bigger creatures). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     TObjectPtr<UEWItemDefinition> Yield;
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
-    int32 YieldQuantity = 1;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest", meta=(ClampMin="1"))
+    int32 YieldMin = 2;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest", meta=(ClampMin="1"))
+    int32 YieldMax = 5;
     /** Seconds before a killed creature returns to its home, harvested or not. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     float RespawnSeconds = 300.f;
