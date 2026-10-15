@@ -99,7 +99,7 @@ taking a task.
   are not duplicated when the starter kit already gave them. Delete the test slot afterwards.
 - **Done when:** passes natively; `verify_options_menu_play.py` still passes; docs updated.
 
-### T4. Consolidate the owner's open questions — CLAIMED (ChatGPT, October 15)
+### T4. Consolidate the owner's open questions — DONE `79ef146`
 - **Why:** open values are scattered through the docs; the owner needs one list to answer.
 - **Do:** create `Docs/OPEN_QUESTIONS_2026-10-15.md`. Collect every unresolved value or rule from
   `DESIGN_REFERENCE.md`, `MILESTONES.md`, `REMAINING_WORK_2026-10-14.md`, `WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md`,
@@ -112,6 +112,14 @@ taking a task.
   invisible barriers vs falls; claim/contest timers; ghost-ship values; Port islands (open question 7).
   Link it from `Docs/MILESTONES.md`. **Do not answer any question.**
 - **Done when:** the file exists, every entry cites its source document, and nothing in it invents a value.
+- **Result:** `Docs/OPEN_QUESTIONS_2026-10-15.md` groups open decisions by world/climate, traversal/gathering/wildlife,
+  crafting/ships/economy, and prologue/company/progression/multiplayer. It cites the governing docs and current C++ data
+  symbols/working values where available; explicitly distinguishes absent implementations from tunable values; and
+  reconciles decisions already made (five regions, Port exclusion, habitat directions, two sloop hardpoints, recipe
+  trigger, Journal location, berry rules, and squid size classification). Linked from `Docs/MILESTONES.md`.
+- **Verified:** `git diff --check` passed. Reviewed the listed climate, item, wildlife, ship and inventory declarations;
+  `git status` confirms editor, project-guide, private-release, ship-test and asset-bundle work stayed unstaged. No
+  gameplay check was run because this documentation-only task changes no behavior.
 
 ### T5. The pickaxe's first swing after equipping sometimes misses — OPEN
 - **Why:** known since October 14: right after equipping the Pickaxe, the first Left Mouse at a boulder sometimes
