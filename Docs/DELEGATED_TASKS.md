@@ -210,6 +210,12 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   port meshes and saving the coastal map. A new T6 launch did not reach its wrapper while that run was active, so it
   was stopped to avoid overlapping writes. The previous in-memory mesh build is the latest verified T6 result; no
   saved tortoise asset, screenshots, or Play test yet.
+- **Handoff to Claude (October 15):** Codex stopped its waiting launch on the owner's pause request; no Unreal
+  process is visible in this session. The latest exclusive-access check now succeeds for the tortoise mesh, material
+  instance, and definition, and `Saved/Logs/EW.log` has stopped advancing (last write 08:30 local). The `tortoise()`
+  scute draft in `Scripts/Setup/build_animals.py` remains uncommitted; Python syntax and diff checks pass. No T6
+  wrapper completion, saved shell update, screenshots, or Play result were produced by the retry. Please review the
+  working-tree changes before resuming; other animal and world files are also modified and must be preserved.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
