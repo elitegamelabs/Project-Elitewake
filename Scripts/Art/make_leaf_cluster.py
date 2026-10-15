@@ -1,4 +1,4 @@
-"""Draw the broadleaf foliage cards: the Maravai's and the birch's. Safe to run again.
+"""Draw the foliage cards: the Maravai's and the birch's leaves and the Jungle spruce's needle sprays. Safe to run again.
 Run with ordinary Python (Pillow), outside Unreal:
     python Scripts/Art/make_leaf_cluster.py
 
@@ -69,6 +69,42 @@ def main(out=OUT, greens=GREENS, count=420, sizes=(70, 120), seed=7, widths=(.26
     print(out, image.size)
 
 
+SPRUCE_OUT = ROOT / 'Art/Flora/Spruce-Needles-v1.png'
+
+
+def spruce_spray(out=SPRUCE_OUT, seed=13):
+    """A spruce branch spray seen from above: a twig from the left edge's middle to the right, side twigs off it, all
+    bristling with short dark needles, thinning toward the tip. Cards of it make the Jungle's spruce boughs."""
+    rng = random.Random(seed)
+    image = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    greens = [(22, 52, 30), (30, 64, 36), (18, 44, 26), (38, 74, 42), (26, 58, 34)]
+
+    def twig(x0, y0, angle, length, width, depth):
+        # The twig first, so its needles lie over it.
+        draw.line([(x0, y0), (x0 + math.cos(angle) * length, y0 + math.sin(angle) * length)], fill=(58, 40, 24, 255), width=max(2, int(width)))
+        steps = int(length / 5)
+        for k in range(steps):
+            t = k / max(steps - 1, 1)
+            x, y = x0 + math.cos(angle) * length * t, y0 + math.sin(angle) * length * t
+            reach = (1 - t * .5) * (46 if depth == 0 else 30)
+            for side in (-1, 1):
+                for _ in range(4):
+                    a = angle + side * rng.uniform(.45, 1.25)
+                    l = reach * rng.uniform(.55, 1.0)
+                    c = rng.choice(greens)
+                    draw.line([(x, y), (x + math.cos(a) * l, y + math.sin(a) * l)], fill=c + (255,), width=4)
+            if depth == 0 and k % 6 == 3 and t < .85:
+                twig(x, y, angle + rng.choice((-1, 1)) * rng.uniform(.45, .8), length * (1 - t) * rng.uniform(.4, .6), width * .6, 1)
+
+    twig(8, SIZE / 2, 0.0, SIZE * .95, 9, 0)
+    alpha = image.getchannel('A').filter(ImageFilter.GaussianBlur(.6))
+    image.putalpha(alpha)
+    image.save(out)
+    print(out, image.size)
+
+
 if __name__ == '__main__':
     main()
     main(BIRCH_OUT, BIRCH_GREENS, 380, (34, 56), 11, (.3, .4))
+    spruce_spray()

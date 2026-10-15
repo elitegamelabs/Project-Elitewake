@@ -3,19 +3,26 @@
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, after
 Scripts/Setup/build_coastal_terrain.py and build_regions.py. Run unattended with run_play_check.py.
 
-  1. On the beach the survivor is in the Desert: hot and humid on both machines, the HUD's climate line says so with
-     its humidity; bare-skinned, the body stays at 37 C and does not overheat (owner: clothing causes overheating).
-  2. The Desert's humidity reaches 100 m offshore and fades into the open sea's; past that is the Open Sea.
-  3. Walking onto the Winter island: the region's name crosses the screen, the line reads WINTER -12 C, a Cold
-     notice shows and the body cools, on the client.
+  1. On the starter island's beach the survivor is in the Central Plains (owner, October 15): comfortable on both
+     machines, the HUD's climate line says so; the body stays at 37 C.
+  2. On a Desert island it is hot and humid; bare-skinned the body still stays at 37 C (owner: clothing causes
+     overheating). Its humidity reaches 100 m offshore and fades into the open sea's; past that is the Open Sea.
+  3. On a Winter island: the region's name crosses the screen, the line reads WINTER -12 C, a Cold notice shows and
+     the body cools, on the client.
   4. Cooled past 35 C the survivor is Freezing: the notice shows and health falls, on server and client.
-  5. Back in the Desert the body warms again and the Freezing notice clears.
+  5. Back on the Plains the body warms again and the Freezing notice clears.
 Writes Saved/ClimatePlayResult.json.
 """
 import json
+import math
+import sys
 import time
 from pathlib import Path
 import unreal
+
+sys.path.insert(0, str(Path(unreal.Paths.project_dir(), 'Scripts', 'Setup')))
+import world_layout as W  # noqa: E402
+import world_terrain as T  # noqa: E402
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'ClimatePlayResult.json')
@@ -34,7 +41,24 @@ def player_id(p):
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 BEACH = unreal.Vector(150, 0, 150)
-WINTER = unreal.Vector(1800, 15800, 400)
+
+
+def inland(key, depth=1500.0):
+    """A standing spot `depth` cm in from island `key`'s shore, on its ground."""
+    i = W.island(key)
+    for k in range(24):
+        a = 2 * math.pi * k / 24
+        r = i.radius(a) - depth
+        x, y = i.cx + r * math.cos(a), i.cy + r * math.sin(a)
+        z = T.height(x, y)
+        if z > T.SEA + 100:
+            return unreal.Vector(x, y, z + 120)
+    return unreal.Vector(i.cx, i.cy, T.height(i.cx, i.cy) + 120)
+
+
+DESERT_ISLE = next(i for i in W.ISLANDS if i.region == 'Desert')
+WINTER = inland(next(i.key for i in W.ISLANDS if i.region == 'Winter'))
+DESERT = inland(DESERT_ISLE.key)
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -63,6 +87,21 @@ def go(spot):
     return begin
 
 
+def on_plains():
+    if time.monotonic() - state['memo']['t'] < 2.0:
+        return False
+    for who in (owner, pawn):
+        c = survival(who).get_climate()
+        if c.region != unreal.EWRegion.PLAINS:
+            return False
+        assert abs(survival(who).get_felt_temperature() - 20) < .5 and abs(c.humidity - 45) < .5, (survival(who).get_felt_temperature(), c.humidity)
+    line = str(hud().get_displayed_climate())
+    assert line.startswith('PLAINS') and 'Humidity' not in line, line
+    assert abs(survival(owner).get_body_temperature() - 37) < .05
+    state['memo']['plains_line'] = line
+    return True
+
+
 def in_desert():
     if time.monotonic() - state['memo']['t'] < 2.0:
         return False
@@ -81,8 +120,10 @@ def in_desert():
 
 def offshore():
     sample = lambda x, y: unreal.EWClimateRegion.sample_climate(server_world, unreal.Vector(x, y, 0))   # noqa: E731
-    # South of the island: its oval (with 15 m of shallows) ends near y = -5900; 50 m out, then 150 m out.
-    near, far = sample(-800, -11000), sample(-800, -26000)
+    # Out from the Desert island's farthest shore (its region circle has 15 m of shallows): 50 m out, then 150 m.
+    i = DESERT_ISLE
+    edge = i.reach() + 1500
+    near, far = sample(i.cx, i.cy - edge - 5000), sample(i.cx, i.cy - edge - 15000)
     assert near.region == unreal.EWRegion.DESERT and 60 < near.humidity < 75, (near.region, near.humidity)
     assert far.region == unreal.EWRegion.OPEN_SEA and abs(far.humidity - 60) < .5 and abs(far.air_temperature - 22) < .5, (far.region, far.humidity)
     state['memo'].update(humidity_50m_out=round(near.humidity, 1), open_sea=f'{far.air_temperature:.0f} C {far.humidity:.0f}%')
@@ -134,7 +175,7 @@ def warmed():
     m = state['memo']
     if time.monotonic() - m['t'] < 1.0:
         return False
-    if survival(pawn).get_climate().region != unreal.EWRegion.DESERT or 'Freezing' in notices(pawn):
+    if survival(pawn).get_climate().region != unreal.EWRegion.PLAINS or 'Freezing' in notices(pawn):
         return False
     if survival(owner).get_body_temperature() <= 35.2:
         return False
@@ -143,12 +184,13 @@ def warmed():
 
 
 STEPS = [
-    ('On the beach: Desert, 34 C and 75% humidity on both machines and the HUD; bare skin stays at 37 C', go(BEACH), in_desert, 6),
+    ('On the starter beach: Central Plains, 20 C and 45% on both machines and the HUD; the body at 37 C', go(BEACH), on_plains, 6),
+    ('On a Desert island: 34 C and 75% humidity on both machines and the HUD; bare skin stays at 37 C', go(DESERT), in_desert, 8),
     ("The Desert's humidity reaches out 100 m and fades; beyond is the Open Sea", lambda: None, offshore, 2),
-    ('On the Winter island: the banner, WINTER -12 C, a Cold notice, on the client', go(WINTER), in_winter, 6),
+    ('On a Winter island: the banner, WINTER -12 C, a Cold notice, on the client', go(WINTER), in_winter, 8),
     ('There the body cools', lambda: None, cooling, 8),
     ('Past 35 C: Freezing, and health falls on server and client', lambda: None, freezing, 8),
-    ('Back in the Desert the body warms and Freezing clears', go(BEACH), warmed, 10),
+    ('Back on the Plains the body warms and Freezing clears', go(BEACH), warmed, 10),
 ]
 
 

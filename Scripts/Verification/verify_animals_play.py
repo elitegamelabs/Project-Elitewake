@@ -1,4 +1,4 @@
-"""Client acceptance for the land animals on both islands (owner, October 15).
+"""Client acceptance for the land animals across the five-region world (owner, October 15).
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the animals from
 Scripts/Setup/build_animals.py. Run unattended with run_play_check.py.
@@ -116,15 +116,18 @@ def all_present():
     assert set(copies) == {a.get_name() for a in animals}, 'client and server animals differ'
     kinds = {kind(a) for a in animals}
     assert kinds == KINDS, f'kinds: {sorted(kinds)}'
-    second = [a for a in animals if a.get_actor_location().x < -10000]
-    assert len(second) >= 6 and len(animals) - len(second) >= 6, f'{len(second)} on the second island of {len(animals)}'
+    # Spread over the five-region world (owner, October 15): on many islands, in at least four regions.
+    labels = {a.get_actor_label().rsplit(' ', 2)[-2] for a in animals}
+    regions = {k.rstrip('0123456789') for k in labels}
+    assert len(labels) >= 15 and len(regions) >= 4, f'on {len(labels)} islands in {sorted(regions)}'
+    second = [a for a in animals if 'Starter' not in a.get_actor_label()]
     off = []
     for a in animals:
         g = ground(a.get_actor_location())
         if g is None or abs(feet(a) - g) > 25:
             off.append((a.get_actor_label(), None if g is None else round(feet(a) - g)))
     assert not off, f'not standing on the ground: {off[:5]}'
-    state['memo'].update(animals=len(animals), second_island=len(second))
+    state['memo'].update(animals=len(animals), off_the_starter=len(second), islands=len(labels))
     return True
 
 
@@ -261,7 +264,7 @@ def harvested():
 
 
 STEPS = [
-    ('The client has every animal the server has, all six kinds, on both islands, each standing on the ground',
+    ('The client has every animal the server has, all six kinds, across the islands of the world, each standing on the ground',
      begin_count, all_present, 4),
     ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', lambda: None, wandered, 20),
     ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),

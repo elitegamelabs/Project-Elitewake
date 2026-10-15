@@ -224,7 +224,8 @@ def picked_up():
 def ashore():
     """Swim it in: the survivor walks out onto the beach, carrying the body."""
     for p in (owner, pawn):
-        assert p.teleport(unreal.Vector(150, 0, 120), unreal.Rotator())
+        # Clear of the sand (ground 67 cm here), so the capsule is not refused for touching the beach.
+        assert p.teleport(unreal.Vector(150, 0, 190), unreal.Rotator()), f'teleport to the beach refused for {p.get_name()}'
     state['memo'].update(t=time.monotonic(), pressed=0.0)
 
 

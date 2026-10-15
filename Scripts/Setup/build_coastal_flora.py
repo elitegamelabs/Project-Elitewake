@@ -17,6 +17,16 @@ slender white-barked birch, its bark marked with dark streaks and patches, light
 under small clumps of yellowing leaves (Art/Flora/Birch-Leaves-v1.png) with snow lying on their upper sides. They
 stand over the Winter island, from the beach heads up its slopes.
 
+Spruce (owner, October 14: the Jungle has tall spruce, dense and maze-like): three shapes of tall, narrow spruce,
+a straight trunk under whorls of drooping boughs that shorten toward the spire, each bough two crossed cards of
+needle sprays (Art/Flora/Spruce-Needles-v1.png).
+
+The five-region world (owner, October 15; world_layout.py): the starter island keeps exactly the palms, Maravai
+and plants it had; every other island is dressed for its region (DECIDED, delegated, recipes and densities are
+tuning): Plains with groups of Maravai; Desert with palms near its shores; Winter with birches; Jungle with dense
+spruce and Maravai between them; Swamp with scattered Maravai (the owner's swamp vegetation is still open). Every
+island has fiber plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).
+
 Each tree is harvestable: a hatchet gives Wood and Thatch (the existing test yields; Maravai Timber as its own
 item is not made yet), and its trunk is solid.
 
@@ -33,6 +43,8 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, cross, material_builder, norm, write_static_mesh  # noqa: E402
+import world_layout as W  # noqa: E402
+import world_terrain as T  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Flora'
@@ -41,6 +53,7 @@ ROOT = Path(unreal.Paths.project_dir()).resolve()
 FROND_ART = ROOT / 'Art/Flora/Veyran-Palm-Frond-v1.png'
 LEAF_ART = ROOT / 'Art/Flora/Maravai-Leaves-v1.png'
 BIRCH_ART = ROOT / 'Art/Flora/Birch-Leaves-v1.png'
+SPRUCE_ART = ROOT / 'Art/Flora/Spruce-Needles-v1.png'
 TIMBER = '/Game/Elitewake/World/Materials/T_Timber_v1'
 ITEMS = '/Game/Elitewake/Items/Testing'
 WOOD, THATCH = f'{ITEMS}/DA_TestWood', f'{ITEMS}/DA_TestThatch'
@@ -60,14 +73,23 @@ MARAVAI = [dict(height=900.0, spread=380.0, limbs=6, seed=11), dict(height=1150.
            dict(height=700.0, spread=320.0, limbs=5, seed=13)]
 KEEP_CLEAR = [(150.0, 0.0, 700.0), (4000.0, 900.0, 700.0), (-1700.0, 1500.0, 1000.0)]
 # x range, y range, palms there, Maravai there (tuning): the island, the islet, the second island.
-AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 40, 18), ((7700.0, 11300.0), (1150.0, 4050.0), 12, 3),
-         ((-17800.0, -12200.0), (-15200.0, -10800.0), 16, 10),
-         ((-1000.0, 5000.0), (15100.0, 19900.0), 0, 0)]       # the Winter island: birches, not palms
+AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 40, 18)]   # the starter island, as it always was
 # Birch shapes (tuning): height, how far the branches reach, how many branches; and how many on the Winter island.
 BIRCH = [dict(height=1150.0, reach=200.0, branches=9, seed=21), dict(height=1350.0, reach=240.0, branches=10, seed=22),
          dict(height=950.0, reach=170.0, branches=8, seed=23)]
-BIRCH_COUNT = 26
 BIRCH_SCALE = (.75, 1.2)
+# Spruce shapes (tuning): height, the lowest boughs' reach, how many whorls.
+SPRUCE = [dict(height=1800.0, reach=360.0, whorls=16, seed=31), dict(height=2300.0, reach=420.0, whorls=19, seed=32),
+          dict(height=1500.0, reach=300.0, whorls=13, seed=33)]
+SPRUCE_SCALE = (.8, 1.25)
+# Each region's dressing (DECIDED, delegated; tuning): trees per 1,000 m2 of island by kind, whether trees grow in
+# groups, and fiber plants, stick piles and berry bushes per 1,000 m2.
+RECIPES = {'Plains': dict(trees={'Maravai': 1.0}, groups=True, plants=(0.45, 0.3, 0.22)),
+           'Desert': dict(trees={'Veyran Palm': 0.7}, groups=False, plants=(0.2, 0.15, 0.08)),
+           'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
+           'Jungle': dict(trees={'Spruce': 4.5, 'Maravai': 0.8}, groups=False, plants=(0.5, 0.4, 0.25)),
+           'Swamp': dict(trees={'Maravai': 0.6}, groups=True, plants=(0.7, 0.3, 0.15))}
+MAX_TREES = 380        # per island
 PALM_SCALE = (.7, 1.35)
 MARAVAI_SCALE = (.75, 1.25)
 
@@ -194,6 +216,45 @@ def birch(height, reach, branches, seed):
             corners = [tuple(c[i] + (su * u[i] + sv * v[i]) * h for i in range(3)) for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
             ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
             b.quad(*ids, n)
+    b.slot = 0
+    return b
+
+
+def spruce(height, reach, whorls, seed):
+    """A spruce in its own space: a straight tapering trunk to a spire, whorls of drooping boughs that shorten
+    toward the top, each bough two crossed cards of needle spray (the texture's twig runs left to right)."""
+    rng = random.Random(seed)
+    b = Builder()
+    b.tube([(0, 0, height * k / 12) for k in range(13)], lambda k: 32.0 - 28.0 * k / 12 + (10.0 if k == 0 else 0.0), sides=10)
+    b.slot = 1
+    for w in range(whorls):
+        t = .14 + .84 * w / max(whorls - 1, 1)
+        z = height * t
+        long = reach * (1 - t) ** 1.05 + 45
+        count = 5 if t < .7 else 4
+        turn = rng.uniform(0, 2 * math.pi)
+        for n in range(count):
+            a = turn + 2 * math.pi * n / count + rng.uniform(-.2, .2)
+            droop = rng.uniform(.18, .38)
+            d = (math.cos(a), math.sin(a), 0.0)
+            tip = (d[0] * long, d[1] * long, z - droop * long)
+            base = (d[0] * 8, d[1] * 8, z)
+            side = (-math.sin(a), math.cos(a), 0.0)
+            half = long * .5
+            # A flat card (needles seen from above) and one on edge, crossing along the bough.
+            for across, hint in ((side, (0.0, 0.0, 1.0)), ((0.0, 0.0, 1.0), side)):
+                corners = [tuple(base[i] - across[i] * half * .5 for i in range(3)), tuple(tip[i] - across[i] * half * .3 for i in range(3)),
+                           tuple(tip[i] + across[i] * half * .3 for i in range(3)), tuple(base[i] + across[i] * half * .5 for i in range(3))]
+                ids = [b.vertex(c, uv=uv) for c, uv in zip(corners, ((0, .82), (1, .62), (1, .38), (0, .18)))]
+                b.quad(*ids, hint)
+    # The spire.
+    for k in range(3):
+        a = math.pi * k / 3
+        u = (math.cos(a) * 40, math.sin(a) * 40, 0)
+        top, low = (0, 0, height * 1.04), (0, 0, height * .9)
+        corners = [tuple(low[i] - u[i] for i in range(3)), tuple(low[i] + u[i] for i in range(3)), tuple(top[i] + u[i] * .2 for i in range(3)), tuple(top[i] - u[i] * .2 for i in range(3))]
+        ids = [b.vertex(c, uv=uv) for c, uv in zip(corners, ((0, .7), (0, .3), (1, .45), (1, .55)))]
+        b.quad(*ids, (-math.sin(a), math.cos(a), 0))
     b.slot = 0
     return b
 
@@ -378,32 +439,47 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
 
 # ---- Placement ---------------------------------------------------------------------------------------------
 
-TERRAIN_MESH = '/Game/Elitewake/World/Meshes/SM_CoastalTerrain_v1'
 
 
 class Ground:
-    """Heights of the coastal terrain mesh (a regular grid, placed at the origin), looked up by position."""
+    """Ground height anywhere in the world, read from the island meshes as built (made by build_coastal_terrain.py):
+    each island's mesh is loaded once and ray-cast straight down, so nothing floats or sinks where the 2-4 m grid's
+    triangles cut across a cliff or a channel. Off the islands' meshes it falls back to world_terrain.py."""
 
     def __init__(self):
-        mesh = unreal.DynamicMesh()
-        _, outcome = unreal.GeometryScript_AssetUtils.copy_mesh_from_static_mesh(
-            unreal.load_asset(TERRAIN_MESH), mesh, unreal.GeometryScriptCopyMeshFromAssetOptions(), unreal.GeometryScriptMeshReadLOD())
-        assert outcome == unreal.GeometryScriptOutcomePins.SUCCESS, outcome
-        points = unreal.GeometryScript_List.convert_vector_list_to_array(
-            unreal.GeometryScript_MeshQueries.get_all_vertex_positions(mesh, False)[1])
-        xs = sorted({round(p.x) for p in points})
-        self.origin, self.step = xs[0], xs[1] - xs[0]
-        self.heights = {(round((p.x - self.origin) / self.step), round((p.y - self.origin) / self.step)): p.z for p in points}
+        self.meshes = {}
+
+    def mesh(self, key):
+        if key not in self.meshes:
+            asset = unreal.load_asset(f'/Game/Elitewake/World/Meshes/Islands/SM_Island_{key}_v1')
+            mesh = unreal.DynamicMesh()
+            if asset:
+                unreal.GeometryScript_AssetUtils.copy_mesh_from_static_mesh(
+                    asset, mesh, unreal.GeometryScriptCopyMeshFromAssetOptions(), unreal.GeometryScriptMeshReadLOD())
+                built = unreal.GeometryScript_MeshSpatial.build_bvh_for_mesh(mesh)
+                built = built if isinstance(built, tuple) else (built,)
+                self.meshes[key] = (mesh, next(v for v in built if isinstance(v, unreal.GeometryScriptDynamicMeshBVH)))
+            else:
+                self.meshes[key] = None
+        return self.meshes[key]
 
     def __call__(self, x, y):
-        """Bilinear height at (x, y), or None off the terrain."""
-        fx, fy = (x - self.origin) / self.step, (y - self.origin) / self.step
-        ix, iy = math.floor(fx), math.floor(fy)
-        corners = [self.heights.get((ix + dx, iy + dy)) for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1))]
-        if any(c is None for c in corners):
-            return None
-        tx, ty = fx - ix, fy - iy
-        return (corners[0] * (1 - tx) + corners[1] * tx) * (1 - ty) + (corners[2] * (1 - tx) + corners[3] * tx) * ty
+        best = None
+        for i in W.ISLANDS:
+            x0, y0, sx, sy, nx, ny = T.GRIDS[i.key]
+            if not (x0 <= x <= x0 + sx * nx and y0 <= y <= y0 + sy * ny):
+                continue
+            found = self.mesh(i.key)
+            if not found:
+                continue
+            mesh, bvh = found
+            out = unreal.GeometryScript_MeshSpatial.find_nearest_ray_intersection_with_mesh(
+                mesh, bvh, unreal.Vector(x, y, 30000), unreal.Vector(0, 0, -1), unreal.GeometryScriptSpatialQueryOptions())
+            hit = next((v for v in (out if isinstance(out, tuple) else (out,)) if isinstance(v, unreal.GeometryScriptRayHitResult)), None)
+            if hit and hit.get_editor_property('hit'):
+                z = hit.get_editor_property('hit_position').z
+                best = z if best is None else max(best, z)
+        return best if best is not None else T.built_height(x, y)
 
 
 def spots(ground):
@@ -456,21 +532,63 @@ def inland_spots(ground, palms):
     return chosen
 
 
-def winter_spots(ground):
-    """Birch positions over the Winter island, from the beach heads up its slopes, apart from each other."""
-    rng = random.Random(29)
-    (x0, x1), (y0, y1), _, _ = AREAS[3]
-    chosen, tries = [], 0
-    while len(chosen) < BIRCH_COUNT and tries < 8000:
-        tries += 1
-        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
-        z = ground(x, y)
-        if z is None or not (SEA + 70 < z < 900):
+def steep(ground, x, y):
+    """True on ground too steep for a tree to stand (more than about 40 degrees over 3 m)."""
+    gx = ground(x + 150, y) - ground(x - 150, y)
+    gy = ground(x, y + 150) - ground(x, y - 150)
+    return math.hypot(gx, gy) > 250
+
+
+def dress_islands(actors, ground, kinds, wood, thatch):
+    """Trees on every island but the starter, by its region's recipe. Returns the trees (x, y) and a summary."""
+    trees, summary = [], {}
+    for island in W.ISLANDS:
+        if island.key == 'Starter':
             continue
-        if any(math.hypot(x - px, y - py) < 380 for px, py, _ in chosen):
-            continue
-        chosen.append((x, y, z))
-    return chosen
+        recipe = RECIPES[island.region]
+        rng = random.Random(sum(map(ord, island.key)) * 104729)
+        area = math.pi * island.rx * island.ry / 1e4 / 1000.0      # thousands of m2
+        reach = island.reach()
+        here = []
+        for kind, density in recipe['trees'].items():
+            wanted = min(MAX_TREES, int(round(density * area)))
+            meshes, scales, radius, half, sink = kinds[kind]
+            spacing = 450.0 if kind == 'Spruce' else 650.0
+            centres = [(island.cx + rng.uniform(-reach, reach) * .7, island.cy + rng.uniform(-reach, reach) * .7) for _ in range(max(1, wanted // 5))]
+            made, tries = 0, 0
+            while made < wanted and tries < wanted * 60 + 200:
+                tries += 1
+                if recipe['groups']:
+                    gx, gy = rng.choice(centres)
+                    a, d = rng.uniform(0, 2 * math.pi), abs(rng.gauss(0, 1100))
+                    x, y = gx + d * math.cos(a), gy + d * math.sin(a)
+                else:
+                    x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
+                inland = -island.distance(x, y)
+                # Palms keep to the shore's sand; other trees stand back from the beach.
+                if kind == 'Veyran Palm' and not (300 < inland < 3500):
+                    continue
+                if kind != 'Veyran Palm' and inland < 700:
+                    continue
+                z = ground(x, y)
+                if z < SEA + 60 or steep(ground, x, y):
+                    continue
+                if any(math.hypot(x - px, y - py) < spacing for px, py in here):
+                    continue
+                tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - sink),
+                                                     unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+                made += 1
+                tree.set_actor_label(f'{kind} {island.key} {made:03d}')
+                tree.set_folder_path(FLORA_FOLDER)
+                mesh = tree.get_editor_property('mesh')
+                mesh.set_static_mesh(rng.choice(meshes))
+                mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*scales)] * 3))
+                for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': radius, 'blocker_half_height': half}.items():
+                    tree.set_editor_property(prop, value)
+                here.append((x, y))
+            summary.setdefault(island.key, {})[kind] = made
+        trees += here
+    return trees, summary
 
 
 def main():
@@ -486,7 +604,7 @@ def main():
     assert level.load_level(MAP)
     # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', *PLANTS)):
+        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', 'Spruce', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
     placed = []
@@ -520,27 +638,23 @@ def main():
     birch_leaves = frond_material(import_texture('T_BirchLeaves_v1', BIRCH_ART), f'{FOLDER}/M_BirchLeaves_v1', snow=True)
     birches = [write_static_mesh(birch(**shape), f'{FOLDER}/SM_Birch_{k + 1}', [birch_bark_material(), birch_leaves], 120.0)
                for k, shape in enumerate(BIRCH)]
-    whites = []
-    for k, (x, y, z) in enumerate(winter_spots(ground)):
-        tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 10),
-                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
-        tree.set_actor_label(f'Birch {k + 1:02d}')
-        tree.set_folder_path(FLORA_FOLDER)
-        mesh = tree.get_editor_property('mesh')
-        mesh.set_static_mesh(birches[k % len(birches)])
-        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*BIRCH_SCALE)] * 3))
-        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 20.0, 'blocker_half_height': 220.0}.items():
-            tree.set_editor_property(prop, value)
-        whites.append([round(x), round(y), round(z)])
-    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods + whites], materials)
+    needles = frond_material(import_texture('T_SpruceNeedles_v1', SPRUCE_ART), f'{FOLDER}/M_SpruceNeedles_v1')
+    spruces = [write_static_mesh(spruce(**shape), f'{FOLDER}/SM_Spruce_{k + 1}', [materials[BARK], needles], 120.0)
+               for k, shape in enumerate(SPRUCE)]
+    kinds = {'Veyran Palm': (meshes, PALM_SCALE, 26.0, 160.0, 8), 'Maravai': (broadleaf, MARAVAI_SCALE, 38.0, 220.0, 12),
+             'Birch': (birches, BIRCH_SCALE, 20.0, 220.0, 10), 'Spruce': (spruces, SPRUCE_SCALE, 30.0, 260.0, 12)}
+    whites, dressed = dress_islands(actors, ground, kinds, wood, thatch)
+    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials, whites)
     assert level.save_current_level()
-    report = {'success': True, 'palms': len(placed), 'maravai': len(hardwoods), 'birch': len(whites), 'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
+    report = {'success': True, 'starter_palms': len(placed), 'starter_maravai': len(hardwoods), 'islands': dressed,
+              'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Coastal flora: {len(placed)} palms')
 
 
-def place_plants(actors, ground, palms, materials):
-    """Fiber plants and berry bushes in the open sand behind the beach; stick piles under the palms."""
+def place_plants(actors, ground, palms, materials, island_trees=()):
+    """Fiber plants and berry bushes in the open sand behind the beach; stick piles under the palms. Then the same
+    on every other island, by its region's recipe, sticks under its trees."""
     berry = berry_material()
     looks = {'Fiber Plant': [write_static_mesh(fiber_plant(k), f'{FOLDER}/SM_FiberPlant_{k + 1}', [materials[FROND]], 120.0) for k in range(3)],
              'Fallen Sticks': [write_static_mesh(stick_pile(k), f'{FOLDER}/SM_FallenSticks_{k + 1}', [materials[BARK]], 120.0) for k in range(3)],
@@ -585,6 +699,42 @@ def place_plants(actors, ground, palms, materials):
                                     'gathering_kind': getattr(unreal.EWHandGatheringKind, kind)}.items():
                     plant.set_editor_property(prop, value)
                 taken.append((x, y))
+                placed += 1
+        # Every other island.
+        for island in W.ISLANDS:
+            if island.key == 'Starter':
+                continue
+            per = RECIPES[island.region]['plants'][list(PLANTS).index(label)]
+            wanted = int(round(per * math.pi * island.rx * island.ry / 1e7))
+            near = [(tx, ty) for tx, ty in island_trees if island.distance(tx, ty) < 0]
+            reach = island.reach()
+            placed, tries = 0, 0
+            while placed < wanted and tries < wanted * 50 + 100:
+                tries += 1
+                if label == 'Fallen Sticks' and near:
+                    px, py = rng.choice(near)
+                    a, d = rng.uniform(0, 2 * math.pi), rng.uniform(150, 400)
+                    x, y = px + d * math.cos(a), py + d * math.sin(a)
+                else:
+                    x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
+                if island.distance(x, y) > -400:
+                    continue
+                z = ground(x, y)
+                if z < SEA + 70 or steep(ground, x, y):
+                    continue
+                if any(math.hypot(x - tx, y - ty) < 140 for tx, ty in near):
+                    continue
+                plant = actors.spawn_actor_from_class(unreal.EWHandGatherable, unreal.Vector(x, y, z - 2),
+                                                      unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+                n += 1
+                plant.set_actor_label(f'{label} {n:03d}')
+                plant.set_folder_path(FLORA_FOLDER)
+                mesh = plant.get_editor_property('mesh')
+                mesh.set_static_mesh(rng.choice(looks[label]))
+                mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(0.85, 1.15)] * 3))
+                for prop, value in {'item_definition': item, 'quantity': amount,
+                                    'gathering_kind': getattr(unreal.EWHandGatheringKind, kind)}.items():
+                    plant.set_editor_property(prop, value)
                 placed += 1
         counts[label] = n
     return counts

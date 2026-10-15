@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_flora import Ground, SEA  # noqa: E402
 from coastal_layout import POND, POND_RADIUS, POND_SURFACE  # noqa: E402
+import world_layout as W  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'  # sea life stays on the island (owner, October 14)
 FOLDER = '/Game/Elitewake/Wildlife/Fish'
@@ -63,7 +64,15 @@ PLACEMENT = {'MantaRay': (3, 250, 3500), 'Manatee': (3, 180, 1500), 'GreatWhiteS
 # Freshwater kinds in the island's pond (build_freshwater_pond.py): how many of each.
 POND_FISH = {'Bass': 3, 'Catfish': 2, 'Piranha': 2}
 PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 2350.0)]   # spawn, dock landing, moorings
-SEARCH = ((-20000.0, 17000.0), (-18000.0, 13000.0))   # within reach of the islands, x and y ranges
+# Across the five-region world (owner, October 15): which islands' waters each kind lives in, and how many there
+# (DECIDED, delegated; tuning). 'Starter' is the starter island's own waters (kept as before, for the first sessions
+# and the checks); a region name means its other islands; 'any' means any island but the starter.
+WORLD = {'MantaRay': [('Starter', 3), ('Plains', 3), ('Desert', 3), ('Jungle', 2)],
+         'Manatee': [('Starter', 3), ('Plains', 3), ('Swamp', 3), ('Desert', 2)],
+         'GreatWhiteShark': [('Starter', 2), ('any', 6)],
+         'HammerheadShark': [('Starter', 2), ('any', 6)],
+         'Squid': [('Starter', 3), ('any', 6)]}
+OFFSHORE = (2000.0, 60000.0)   # how far out from a shore they start, cm
 
 
 def import_texture(name, source):
@@ -199,13 +208,16 @@ def build_creatures(items):
     return definitions
 
 
-def sea_spots(ground, name, count, depth, keep_away, taken):
-    """Open water at least `depth` deep, away from people and from the other creatures."""
-    rng = random.Random(sum(map(ord, name)))
+def sea_spots(ground, name, count, depth, keep_away, taken, islands):
+    """Open water at least `depth` deep off one of `islands`' shores, away from people and the other creatures."""
+    rng = random.Random(sum(map(ord, name)) + 31 * len(taken))
     found, tries = [], 0
-    while len(found) < count and tries < 20000:
+    while len(found) < count and tries < 40000:
         tries += 1
-        x, y = rng.uniform(*SEARCH[0]), rng.uniform(*SEARCH[1])
+        isle = rng.choice(islands)
+        a = rng.uniform(0, 2 * math.pi)
+        r = isle.radius(a) + rng.uniform(*OFFSHORE)
+        x, y = isle.cx + r * math.cos(a), isle.cy + r * math.sin(a)
         floor = ground(x, y)
         if floor is None or floor > SEA - depth:
             continue
@@ -232,8 +244,12 @@ def main():
             actors.destroy_actor(actor)
     ground = Ground()
     placed, report = [], {}
-    for name, (count, depth, keep_away) in PLACEMENT.items():
-        spots = sea_spots(ground, name, count, depth, keep_away, placed)
+    for name, (_, depth, keep_away) in PLACEMENT.items():
+        spots = []
+        for where, count in WORLD[name]:
+            islands = [i for i in W.ISLANDS if (i.key == 'Starter') == (where == 'Starter')
+                       and (where in ('Starter', 'any') or i.region == where)]
+            spots += sea_spots(ground, name, count, depth, keep_away, placed + spots, islands)
         for k, (x, y, z) in enumerate(spots):
             fish = actors.spawn_actor_from_class(unreal.EWFish, unreal.Vector(x, y, z), unreal.Rotator(0, 0, random.uniform(-180, 180)))
             fish.set_editor_property('definition', definitions[name])

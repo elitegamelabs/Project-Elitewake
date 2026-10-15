@@ -9,7 +9,7 @@ with four looks: grey granite, warm sandstone, dark basalt and pale coral limest
 the shader with grain at several scales, a network of cracks and fine bumps that catch the light, darker
 crevices, salt-darkened where the sea wets it, and lichen on the faces that look up.
 
-Rocks sit bedded in the ground on the island, the islet and the second island, from knee-high stones to outcrops
+Rocks sit bedded in the ground on every island of the five-region world (the starter island's as before), from knee-high stones to outcrops
 taller than a survivor, clear of the trees, the spawn, the dock and the spring. Each is a mining node (the
 existing test yield: 12 Stone, 3 a strike) and is solid enough to climb onto. Sizes, colours and counts are tuning.
 """
@@ -23,6 +23,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_flora import FLORA_FOLDER, KEEP_CLEAR, MAP, SEA, Ground  # noqa: E402
+import world_layout as W  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Rocks'
 STONE = '/Game/Elitewake/Items/Testing/DA_TestStone'
@@ -42,13 +43,16 @@ STONES = {'Granite': dict(dark=(.07, .068, .064), light=(.27, .26, .245), lichen
           'GraniteSnow': dict(dark=(.07, .068, .064), light=(.27, .26, .245), lichen=.1, strata=0.0, spacing=12.0, bump=5.0, snow=1.0),
           'BasaltSnow': dict(dark=(.022, .022, .025), light=(.1, .095, .09), lichen=.05, strata=.12, spacing=20.0, bump=6.0, snow=1.0)}
 # Where rocks go: x range, y range, how many, and the scale range there (tuning).
-AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 34, (.45, 1.6)),        # the island
-         ((7700.0, 11300.0), (1150.0, 4050.0), 9, (.45, 1.3)),          # the islet
-         ((-17800.0, -12200.0), (-15200.0, -10800.0), 20, (.5, 1.8)),   # the second island
-         ((-1000.0, 5000.0), (15100.0, 19900.0), 22, (.5, 2.2))]        # the Winter island
-# Outcrops on the second island's rocky crown: (x, y, shape, scale, stone).
-CROWN = [(-15900.0, -13700.0, 5, 2.2, 'Basalt'), (-15300.0, -14300.0, 6, 1.7, 'Basalt'),
-         (-16500.0, -13100.0, 2, 2.0, 'Granite'), (-15600.0, -12900.0, 4, 1.6, 'Basalt')]
+AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 34, (.45, 1.6))]        # the starter island, as it always was
+# The five-region world (owner, October 15; world_layout.py): every other island gets rocks by its region
+# (DECIDED, delegated; tuning): per 1,000 m2, the scale range, and the stones it shows. Stone keeps one style the world
+# over; winter adds snow on top (owner).
+ROCK_RECIPES = {'Plains': (0.45, (.5, 2.0), ['Granite'] * 3 + ['Limestone'] * 2),
+                'Desert': (0.45, (.5, 2.2), ['Sandstone'] * 4 + ['Limestone']),
+                'Winter': (0.7, (.6, 2.6), ['GraniteSnow'] * 3 + ['BasaltSnow']),
+                'Jungle': (0.35, (.5, 2.0), ['Basalt'] * 2 + ['Granite'] * 2),
+                'Swamp': (0.15, (.4, 1.2), ['Basalt', 'Granite'])}
+MAX_ROCKS = 140
 
 
 # ---- Shape -------------------------------------------------------------------------------------------------
@@ -267,17 +271,37 @@ def main():
     rng = random.Random(9)
     # Mostly grey granite, then sandstone, some dark basalt and pale limestone.
     mix = ['Granite'] * 4 + ['Sandstone'] * 3 + ['Basalt'] * 2 + ['Limestone'] * 2
-    winter = ['GraniteSnow'] * 3 + ['BasaltSnow']
-    wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(winter if y > 14000 else mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
-    wanted += [(x, y, ground(x, y), scale, shape, look) for x, y, shape, scale, look in CROWN]
+    wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
+    # Every other island, by its region.
+    for island in W.ISLANDS:
+        if island.key == 'Starter':
+            continue
+        density, scales, looks_here = ROCK_RECIPES[island.region]
+        want = min(MAX_ROCKS, int(round(density * math.pi * island.rx * island.ry / 1e7)))
+        irng = random.Random(sum(map(ord, island.key)) * 7907)
+        reach, here, tries = island.reach(), [], 0
+        close = [(px, py) for px, py in plants if abs(px - island.cx) < reach + 600 and abs(py - island.cy) < reach + 600]
+        while len(here) < want and tries < want * 60 + 100:
+            tries += 1
+            x, y = island.cx + irng.uniform(-reach, reach), island.cy + irng.uniform(-reach, reach)
+            if island.distance(x, y) > -300:
+                continue
+            z = ground(x, y)
+            if z < SEA + 60 or any(math.hypot(x - px, y - py) < 300 for px, py in close):
+                continue
+            if any(math.hypot(x - px, y - py) < 500 for px, py in here):
+                continue
+            here.append((x, y))
+            wanted.append((x, y, z, irng.uniform(*scales), irng.randrange(len(SHAPES)), irng.choice(looks_here)))
     placed = []
     for k, (x, y, z, scale, shape_index, look) in enumerate(wanted):
         low, high = spans[shape_index]
         # On a slope, bed it lower, halfway to the lowest ground under its footprint, so its downhill side is not left proud.
         reach = .35 * max(SHAPES[shape_index]['size'][:2]) * scale
         under = [ground(x + dx * reach, y + dy * reach) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
-        z = (z + min([z] + [g for g in under if g is not None])) / 2
         tall = scale * rng.uniform(.85, 1.1)
+        # ...but never more than 40% of its height, or on a mountainside the rock would sink out of sight.
+        z = max((z + min([z] + [g for g in under if g is not None])) / 2, z - .4 * tall * (high - low))
         lift = tall * (-low - .12 * (high - low))  # the base sunk an eighth of the rock's height, bedded in on slopes too
         rock = actors.spawn_actor_from_class(unreal.EWMineable, unreal.Vector(x, y, z + lift),
                                              unreal.Rotator(roll=rng.uniform(-6, 6), pitch=rng.uniform(-6, 6), yaw=rng.uniform(0, 360)))

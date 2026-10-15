@@ -27,6 +27,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Regions and climate: Desert islands (humidity 100 m offshore) and a first Winter island (snow, birches, snowy rocks); body temperature, Cold and Freezing, HUD and Character screen readouts | ✅ `811a3e8` |
 | First sounds, drafts from the owner's Scenario account (October 15): chop, pickaxe strike and glancing clink at the blow; gather rustle and pickup; footsteps on sand and snow; surf everywhere, wind on the Winter island, seabirds; alligator hiss, flamingo and pelican calls. Listening and final audio remain | ✅ `9a54ac7` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
+| The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `PENDING` |
+| Ports (one per region), caves (one per island), plains grass and landmarks, larger islands | ⏳ |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
 ## M0 — Foundations ✅
