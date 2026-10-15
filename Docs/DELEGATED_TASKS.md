@@ -143,7 +143,7 @@ taking a task.
   `git status` confirms editor, project-guide, private-release, ship-test and asset-bundle work stayed unstaged. No
   gameplay check was run because this documentation-only task changes no behavior.
 
-### T5. The pickaxe's first swing after equipping sometimes misses — OPEN
+### T5. The pickaxe's first swing after equipping sometimes misses — CLAIMED (ChatGPT, October 15)
 - **Why:** known since October 14: right after equipping the Pickaxe, the first Left Mouse at a boulder sometimes
   finds nothing (`verify_core_tools_play.py` and `verify_work_feedback_play.py` retry). The hatchet does not do this.
 - **Do:** find the cause. Start at `AEWPlayerController::Attack` → `FEWInteractionTargeting::FindTarget`
