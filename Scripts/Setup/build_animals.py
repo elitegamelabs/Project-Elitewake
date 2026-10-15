@@ -1,0 +1,584 @@
+"""Bring the owner's land animals onto the islands (owner, October 15, from the owner's photos). Safe to run again.
+Run in the editor after build_coastal_flora.py and build_fish.py (for Raw Meat), outside Play:
+    UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
+
+Six animals, each a 3D model built here from lofted bodies and limbs in the colours of the owner's photos:
+  - American alligator: long, low and armoured, dark olive-black with ridged scutes, a pale belly, sprawled legs and a
+    heavy tail. Aggressive: it goes for a survivor who comes near and bites. It wades into the shallows.
+  - Flamingo: salmon-pink, red at the wing, black flight feathers, a long S-necked head with a bent black-tipped bill
+    on stilt legs. Wades the shallows.
+  - Brown pelican: grey-brown body, cream neck and yellow crown, the long bill and pouch, short dark legs and
+    webbed feet.
+  - Cottonmouth (water moccasin): a thick dark-banded snake with a cream lip stripe. Aggressive: a bite.
+  - Tortoise: a high domed shell of tan scutes with dark seams, scaly grey column legs and a wrinkled neck.
+  - Squirrel monkey: olive-grey back, orange forearms and legs, the white face mask and black muzzle, a long
+    black-tipped tail.
+Each walks with its own gait, made in its material from the stride the game passes it (custom primitive data):
+four legs in a diagonal walk, two legs stepping in turn, the snake slithering in waves, tails swaying, birds'
+heads bobbing. The rest run off when struck. Killed, an animal drops on its side and Interact harvests it for Raw
+Meat. They live on both islands; the aggressive ones start well away from the beach spawn and the dock.
+
+DECIDED (delegated, *tuning*, the owner's fish rule carried over until the owner sets land yields): 6 to 10 Raw
+Meat for the alligator and tortoise, 2 to 5 for the smaller animals. Speeds, health, bites, counts, sizes and
+colours are tuning.
+"""
+import json
+import math
+import random
+import sys
+from pathlib import Path
+import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from ship_geometry import Builder, cross, material_builder, norm, sub, write_static_mesh  # noqa: E402
+from build_coastal_flora import FLORA_FOLDER, Ground, SEA  # noqa: E402
+
+MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+FOLDER = '/Game/Elitewake/Wildlife/Animals'
+LEVEL_FOLDER = 'Coast/Wildlife/Animals'
+RAW_MEAT = '/Game/Elitewake/Items/Food/DA_RawMeat'
+SPAWN, DOCK = (150.0, 0.0), (4000.0, 900.0)
+# The islands: x range, y range.
+ISLANDS = {'island': ((-5900.0, 4300.0), (-4200.0, 4000.0)), 'second': ((-17800.0, -12200.0), (-15200.0, -10800.0))}
+
+# Animation parts, carried in each vertex's first UV channel as (part, weight).
+BODY, FL, FR, BL, BR, TAIL, HEAD, SNAKE, LEFT, RIGHT = range(10)
+
+
+# ---- Geometry ----------------------------------------------------------------------------------------------
+
+def tube(b, path, radius, colour, part, weight, sides=16, cap=True, shape=None):
+    """A lofted tube along `path`. radius(k) gives a radius or (side, up) half-sizes; colour(q, n, k) an RGB; part
+    (number or function of q, k) and weight(q, k) the animation channel; shape(q, n, k) an optional extra push out."""
+    rings = []
+    count = len(path)
+    a = None
+    for k, p in enumerate(path):
+        t = norm(sub(path[min(k + 1, count - 1)], path[max(k - 1, 0)]))
+        if a is None:
+            ref = (0, 0, 1) if abs(t[2]) < .9 else (1, 0, 0)
+            a = norm(cross(t, ref))
+        else:
+            along = sum(a[i] * t[i] for i in range(3))
+            a = norm(tuple(a[i] - t[i] * along for i in range(3)))
+        up = cross(t, a)
+        r = radius(k)
+        rs, ru = r if isinstance(r, tuple) else (r, r)
+        ring = []
+        for s in range(sides):
+            ang = 2 * math.pi * s / sides
+            n = tuple(a[i] * math.cos(ang) + up[i] * math.sin(ang) for i in range(3))
+            q = tuple(p[i] + a[i] * math.cos(ang) * rs + up[i] * math.sin(ang) * ru for i in range(3))
+            if shape:
+                push = shape(q, n, k)
+                q = tuple(q[i] + n[i] * push for i in range(3))
+            pa = part(q, k) if callable(part) else part
+            ring.append(b.vertex(q, *colour(q, n, k), uv=(pa, weight(q, k))))
+        rings.append((ring, a, up, t))
+    for k in range(count - 1):
+        r0, a, up, _ = rings[k]
+        r1 = rings[k + 1][0]
+        for s in range(sides):
+            ang = 2 * math.pi * (s + .5) / sides
+            hint = tuple(a[i] * math.cos(ang) + up[i] * math.sin(ang) for i in range(3))
+            b.quad(r0[s], r1[s], r1[(s + 1) % sides], r0[(s + 1) % sides], hint)
+    if cap:
+        for (ring, _, _, t), end, sign in ((rings[0], path[0], -1), (rings[-1], path[-1], 1)):
+            first = b.verts[ring[0]]
+            c = b.vertex(end, *b.colours[ring[0]], uv=b.uvs[ring[0]])
+            for s in range(sides):
+                b.tri(c, ring[s], ring[(s + 1) % sides], tuple(t[i] * sign for i in range(3)))
+            del first
+
+
+def stations(points, steps=3):
+    """Smooth a list of (x, y, z, side, up) stations into a denser path with radii (Catmull-Rom)."""
+    out = []
+    for i in range(len(points) - 1):
+        p0, p1, p2, p3 = points[max(i - 1, 0)], points[i], points[i + 1], points[min(i + 2, len(points) - 1)]
+        for s in range(steps):
+            t = s / steps
+            out.append(tuple(.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t * t
+                                   + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t ** 3) for j in range(5)))
+    out.append(points[-1])
+    return [o[:3] for o in out], [(max(o[3], .3), max(o[4], .3)) for o in out]
+
+
+def body(b, points, colour, part=BODY, weight=None, sides=20, shape=None, steps=3):
+    path, radii = stations(points, steps)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: colour(q, n), part, weight or (lambda q, k: 0.0), sides, shape=shape)
+
+
+def ball(b, centre, radii, colour, part=BODY, weight=0.0, sides=14):
+    """An ellipsoid: (along x, side, up) half-sizes."""
+    cx, cy, cz = centre
+    rx, ry, rz = radii
+    pts = [(cx + rx * math.cos(math.pi * (1 - k / 8)), cy, cz, ry * math.sin(math.pi * k / 8), rz * math.sin(math.pi * k / 8)) for k in range(9)]
+    body(b, pts, colour, part, lambda q, k: weight, sides, steps=1)
+
+
+def limb(b, joints, r0, r1, colour, part, top_z, sides=10):
+    """A leg from the hip down through its joints; its weight grows from 0 at the hip to 1 at the foot. Radii may be
+    (side, up) pairs, for a flat foot."""
+    path, k = [], len(joints)
+    for i in range(k - 1):
+        for s in range(3):
+            t = s / 3
+            path.append(tuple(joints[i][j] * (1 - t) + joints[i + 1][j] * t for j in range(3)))
+    path.append(joints[-1])
+    n = len(path)
+    def radius(i):
+        t = i / (n - 1)
+        if isinstance(r0, tuple):
+            return tuple(r0[j] + (r1[j] - r0[j]) * t for j in range(2))
+        return r0 + (r1 - r0) * t
+    tube(b, path, radius, lambda q, nn, i: colour(q, nn), part,
+         lambda q, i: min(1.0, max(0.0, (top_z - q[2]) / max(top_z, 1.0))), sides)
+
+
+def mix(a, c, t):
+    t = min(1.0, max(0.0, t))
+    return tuple(a[i] * (1 - t) + c[i] * t for i in range(3))
+
+
+def shade(n, top, side, belly):
+    """Colour by which way the surface faces: back, flank, belly."""
+    return mix(mix(side, top, n[2] * 2.2), belly, -n[2] * 2.2 - .2)
+
+
+# ---- The animals --------------------------------------------------------------------------------------------
+
+def alligator():
+    b = Builder()
+    top, side, belly = (.012, .014, .01), (.04, .04, .028), (.4, .36, .24)
+
+    def skin(q, n):
+        c = shade(n, top, side, belly)
+        if q[0] < -60 and n[2] > -.3 and math.sin(q[0] * .22) > .55:   # pale bands across the tail
+            c = mix(c, (.16, .15, .1), .6)
+        if q[0] > 95 and abs(n[2]) < .35:                                # the jaw line, pale with teeth showing
+            c = mix(c, (.5, .47, .38), .5 if math.sin(q[0] * 1.3) > .3 else .15)
+        return c
+
+    def scutes(q, n, k):
+        # Rows of raised scutes down the back and two crests along the tail.
+        ridge = max(0.0, n[2] - .55) * 2.2
+        return ridge * 3.2 * max(0.0, math.sin(q[0] * .55)) * (1.0 if -150 < q[0] < 80 else .3)
+
+    tail = lambda q, k: min(1.0, max(0.0, (-40 - q[0]) / 135))   # noqa: E731
+    pts = [(176, 0, 18, 6, 4), (162, 0, 19, 11, 6), (135, 0, 21, 15, 9), (108, 0, 24, 19, 13), (90, 0, 26, 21, 15),
+           (70, 0, 28, 26, 18), (40, 0, 30, 36, 22), (0, 0, 31, 40, 24), (-35, 0, 30, 36, 22), (-60, 0, 28, 28, 19),
+           (-90, 0, 25, 20, 16), (-120, 0, 21, 13, 12), (-150, 0, 16, 7, 8), (-176, 0, 12, 1.5, 3)]
+    path, radii = stations(pts, 4)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: skin(q, n),
+         lambda q, k: TAIL if q[0] < -40 else BODY, tail, 22, shape=scutes)
+    for y in (1, -1):
+        ball(b, (112, 10 * y, 33), (5, 4, 4), lambda q, n: (.12, .08, .02) if n[0] > .2 else top)   # eyes on their bumps
+        ball(b, (174, 4 * y, 23), (2.2, 1.6, 1.6), lambda q, n: top)                                   # nostrils
+    leg = lambda q, n: shade(n, top, side, mix(side, belly, .4))   # noqa: E731
+    for x, y, part in ((70, 1, FL), (70, -1, FR), (-30, 1, BL), (-30, -1, BR)):
+        reach = 46 if x > 0 else 50
+        limb(b, [(x, 22 * y, 26), (x - 4, reach * y, 15), (x + 6, (reach + 2) * y, 3)], 9, 5.5, leg, part, 26)
+        limb(b, [(x + 4, (reach + 2) * y, 2.0), (x + 20, (reach + 5) * y, 1.2)], (7.0, 2.2), (4.5, 1.2), leg, part, 26)   # the splayed foot
+    return b
+
+
+def flamingo():
+    b = Builder()
+    pink, red, black, pale = (.87, .23, .17), (.85, .07, .03), (.015, .015, .015), (.95, .55, .48)
+
+    def plumage(q, n):
+        if q[0] < -31:
+            return black
+        c = mix(pale, pink, .5 + .5 * n[1] ** 2 - .3 * n[2])
+        if abs(n[1]) > .55 and -28 < q[0] < 12 and q[2] > 92:     # the folded wing: coverts flushed red
+            c = mix(c, red, .55)
+        return c
+
+    body(b, [(34, 0, 99, 3, 3), (28, 0, 99, 10, 11), (18, 0, 97, 15, 16), (0, 0, 95, 17, 18), (-18, 0, 95, 15, 15),
+             (-32, 0, 97, 9, 8), (-46, 0, 101, 2, 2)], plumage, BODY, sides=22)
+    neck = [(24, 0, 104), (31, 0, 116), (27, 0, 128), (20, 0, 139), (23, 0, 150), (31, 0, 155)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in neck], 4)
+    tube(b, path, lambda k: 3.6 - 1.0 * k / len(path), lambda q, n, k: mix(pink, pale, .3), HEAD,
+         lambda q, k: k / (len(path) - 1), 12)
+    ball(b, (35, 0, 156), (6.5, 4.2, 4.6), lambda q, n: mix(pink, pale, .4), HEAD, 1.0)
+    bill = [(40, 0, 156), (46, 0, 155), (50, 0, 151), (51, 0, 146)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in bill], 3)
+    tube(b, path, lambda k: (2.4 - 1.4 * k / len(path), 2.0 - 1.1 * k / len(path)),
+         lambda q, n, k: black if k > len(path) * .45 else (.85, .82, .75), HEAD, lambda q, k: 1.0, 10)
+    for y in (1, -1):
+        ball(b, (37, 3.6 * y, 158), (1.0, .6, 1.0), lambda q, n: (.7, .6, .1), HEAD, 1.0, 8)
+    leg = lambda q, n: (.62, .14, .12)   # noqa: E731
+    for y, part in ((1, LEFT), (-1, RIGHT)):
+        limb(b, [(2, 6 * y, 92), (2, 5 * y, 80)], 4, 2.2, lambda q, n: pink, part, 92)
+        limb(b, [(2, 5 * y, 80), (-3, 5 * y, 44), (2, 5 * y, 3)], 1.7, 1.4, leg, part, 92, 8)
+        limb(b, [(1, 5 * y, 1.2), (13, 5 * y, .9)], (3.4, .9), (2.6, .6), leg, part, 92, 8)   # webbed foot
+    return b
+
+
+def pelican():
+    b = Builder()
+    grey, dark, cream, crown, bill = (.14, .115, .09), (.06, .05, .04), (.78, .74, .62), (.85, .7, .32), (.6, .45, .26)
+
+    def feathers(q, n):
+        c = shade(n, mix(grey, (.22, .2, .17), .3), grey, dark)
+        if abs(n[1]) > .5 and q[2] > 52:   # silvery wing coverts
+            c = mix(c, (.3, .28, .25), .45)
+        return c
+
+    body(b, [(32, 0, 62, 4, 4), (25, 0, 62, 14, 14), (10, 0, 58, 20, 22), (-10, 0, 55, 21, 22), (-30, 0, 55, 17, 17),
+             (-45, 0, 58, 10, 9), (-60, 0, 61, 2, 3)], feathers, BODY, sides=22)
+    neck = [(24, 0, 70), (29, 0, 84), (26, 0, 96), (30, 0, 106)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in neck], 4)
+    tube(b, path, lambda k: 6.0 - 1.2 * k / len(path),
+         lambda q, n, k: (.16, .08, .05) if n[0] < -.55 else cream, HEAD, lambda q, k: k / (len(path) - 1), 14)
+    ball(b, (34, 0, 108), (8, 6, 7), lambda q, n: crown if n[2] > .4 else cream, HEAD, 1.0)
+    upper = [(40, 0, 109), (62, 0, 104), (86, 0, 97)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in upper], 4)
+    tube(b, path, lambda k: (3.6 - 1.2 * k / len(path), 1.7), lambda q, n, k: mix(bill, (.8, .35, .1), k / len(path) - .4),
+         HEAD, lambda q, k: 1.0, 10)
+    pouch = [(40, 0, 104), (60, 0, 99), (80, 0, 95)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in pouch], 4)
+    tube(b, path, lambda k: (3.2 - 1.4 * k / len(path), 3.8 - 2.6 * k / len(path)), lambda q, n, k: (.1, .12, .1), HEAD, lambda q, k: 1.0, 10)
+    for y in (1, -1):
+        ball(b, (38, 5.2 * y, 111), (1.4, .8, 1.4), lambda q, n: (.05, .03, .02), HEAD, 1.0, 8)
+    leg = lambda q, n: (.045, .045, .045)   # noqa: E731
+    for y, part in ((1, LEFT), (-1, RIGHT)):
+        limb(b, [(0, 9 * y, 40), (3, 9 * y, 20), (0, 9 * y, 3)], 3.4, 2.6, leg, part, 40)
+        limb(b, [(-1, 9 * y, 1.2), (14, 9 * y, .9)], (5.5, .9), (4.0, .6), leg, part, 40, 8)   # webbed foot
+    return b
+
+
+def cottonmouth():
+    b = Builder()
+    dark, olive, belly, lip = (.025, .02, .014), (.11, .085, .05), (.38, .33, .23), (.5, .45, .32)
+
+    def scales(q, n):
+        if n[2] < -.35:
+            return belly
+        band = .5 + .5 * math.sin(q[0] * .36 + .6 * math.sin(q[0] * .09))
+        c = mix(olive, dark, band ** 1.5)
+        if q[0] > 47 and -.25 < n[2] < .35 and abs(n[1]) > .5:   # the cream lip stripe
+            c = lip
+        if q[0] > 47 and n[2] >= .35:
+            c = mix(dark, olive, .3)
+        return c
+
+    pts = [(64, 0, 3.2, 2.0, 1.6), (60, 0, 3.6, 4.6, 2.6), (53, 0, 4.0, 6.2, 3.3), (47, 0, 4.0, 4.0, 3.4),
+           (38, 0, 4.2, 4.4, 4.0), (20, 0, 4.6, 5.0, 4.4), (0, 0, 4.8, 5.2, 4.6), (-20, 0, 4.6, 5.0, 4.4),
+           (-38, 0, 4.0, 3.8, 3.4), (-52, 0, 3.0, 2.0, 2.0), (-60, 0, 2.5, .6, .6)]
+    path, radii = stations(pts, 5)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: scales(q, n), SNAKE, lambda q, k: 1.0, 16)
+    for y in (1, -1):
+        ball(b, (57, 3.5 * y, 5.0), (1.0, .7, .9), lambda q, n: (.06, .04, .02), SNAKE, 1.0, 8)
+    return b
+
+
+def tortoise():
+    b = Builder()
+    tan, seam, plastron, skin = (.28, .2, .1), (.025, .02, .012), (.34, .29, .17), (.09, .08, .06)
+
+    def shell(q, n):
+        if n[2] < -.45:
+            return plastron
+        # Scutes: a band of plates down the spine, rows of plates on the flanks and a rim of marginals.
+        ang = math.atan2(q[1], max(q[2] - 12, .1))
+        across = ang / (math.pi / 2)
+        row = 0 if abs(across) < .3 else (1 if abs(across) < .75 else 2)
+        cells = 4 if row < 2 else 9
+        u = (q[0] + 38) / 76 * cells
+        edge = min(u - math.floor(u), math.ceil(u) - u)
+        bands = [.3, .75]
+        dist_row = min([abs(abs(across) - v) for v in bands])
+        rings = .5 + .5 * math.sin((min(edge, dist_row * 3) * 18))
+        c = mix(tan, mix(tan, seam, .5), rings * .35)
+        rnd = random.Random(int(math.floor(u)) * 7 + row * 31 + (1 if q[1] > 0 else 0))
+        c = mix(c, (.42, .34, .2), rnd.uniform(0, .35))
+        if edge < .07 or dist_row < .025:
+            c = seam
+        return c
+
+    def flatten(q, n, k):
+        return -max(0.0, 12.5 - (q[2])) if n[2] < 0 else 0.0
+
+    body(b, [(40, 0, 27, 8, 5), (34, 0, 27, 25, 16), (20, 0, 27, 33, 24), (0, 0, 27, 36, 27), (-20, 0, 27, 33, 24),
+             (-34, 0, 27, 25, 16), (-40, 0, 27, 8, 5)], shell, BODY, sides=28, shape=flatten)
+    neck = [(28, 0, 22), (40, 0, 24), (50, 0, 29), (55, 0, 31)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in neck], 3)
+    tube(b, path, lambda k: 6.0 - 1.5 * k / len(path), lambda q, n, k: mix(skin, (.2, .17, .12), max(0, n[2])), HEAD,
+         lambda q, k: k / (len(path) - 1), 12)
+    ball(b, (59, 0, 32), (8, 5.4, 5.6), lambda q, n: mix(skin, (.2, .17, .12), max(0, n[2])), HEAD, 1.0)
+    for y in (1, -1):
+        ball(b, (63, 3.8 * y, 34), (1.2, .7, 1.1), lambda q, n: (.02, .02, .02), HEAD, 1.0, 8)
+    leg = lambda q, n: mix(skin, (.17, .15, .11), .5 + .5 * math.sin(q[2] * 1.4 + q[0]))   # noqa: E731
+    for x, y, part in ((22, 1, FL), (22, -1, FR), (-22, 1, BL), (-22, -1, BR)):
+        limb(b, [(x, 22 * y, 21), (x + 3, 27 * y, 10), (x + 3, 28 * y, 0)], 8.5 if x > 0 else 9.5, 7.0, leg, part, 21)
+    body(b, [(-36, 0, 17, 3, 3), (-42, 0, 14, 1, 1)], lambda q, n: skin, TAIL, lambda q, k: .5, 8, steps=1)
+    return b
+
+
+def squirrel_monkey():
+    b = Builder()
+    olive, grey, orange, cream, white, black = (.16, .15, .07), (.2, .2, .17), (.6, .3, .04), (.55, .5, .4), (.75, .72, .66), (.03, .03, .03)
+
+    def fur(q, n):
+        c = shade(n, olive, mix(olive, grey, .5), cream)
+        if q[0] > 6 and n[2] > -.2:
+            c = mix(c, (.42, .26, .06), .35)   # an orange cast over the shoulders
+        return c
+
+    body(b, [(19, 0, 27, 4, 4), (13, 0, 27, 8, 8), (0, 0, 25, 9.5, 9), (-10, 0, 25, 9, 9), (-17, 0, 26, 6, 6),
+             (-20, 0, 27, 2, 2)], fur, BODY, sides=18)
+
+    def face(q, n):
+        if n[0] > .86 and n[2] < .25:
+            return black                      # the muzzle
+        if n[0] > .4 and n[2] < .6:
+            return white                      # the mask
+        return olive if n[2] > .2 else grey
+
+    ball(b, (25, 0, 34), (8, 7.5, 8), face, HEAD, .35)
+    for y in (1, -1):
+        ball(b, (31.4, 3.1 * y, 36), (1.1, 1.5, 1.7), lambda q, n: (.05, .03, .02), HEAD, .35, 8)   # eyes
+        ball(b, (21, 8.2 * y, 38), (1.8, 1.0, 2.6), lambda q, n: (.7, .55, .5), HEAD, .35, 8)       # ears
+    limbs = lambda q, n: black if q[2] < 4 else orange   # noqa: E731
+    for x, y, part in ((12, 1, FL), (12, -1, FR), (-12, 1, BL), (-12, -1, BR)):
+        foot = 14 if x > 0 else -12
+        limb(b, [(x, 6 * y, 22), (x + (2 if x > 0 else -4), 7 * y, 11), (foot, 7 * y, 1)], 3.2 if x > 0 else 3.6, 2.0, limbs, part, 22)
+    tail = [(-19, 0, 27), (-30, 0, 20), (-42, 0, 16), (-54, 0, 20), (-61, 0, 28), (-64, 0, 36)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 4)
+    tube(b, path, lambda k: 2.6 - .9 * k / len(path), lambda q, n, k: black if k > len(path) * .72 else mix(grey, olive, .4),
+         TAIL, lambda q, k: k / (len(path) - 1), 10)
+    return b
+
+
+# Name, display, builder, size (length, height), stride, gait (0 four legs, 1 two legs, 2 snake), animation
+# (swing, lift, bob, tail sway, nod, snake amplitude, wave), surface (scales, scale size, fur, mottle, roughness),
+# behaviour (aggressive, walk, run, turn, roam, wade, notice, damage, interval, reach, attack name, health), yield
+# (fewest, most), and where it lives (habitat, count on the island, count on the second island).
+ANIMALS = {
+    'Alligator': dict(display='American Alligator', build=alligator, size=(352, 50), stride=75, gait=0,
+                      anim=(15, 5, .6, 6, 0, 0, 1), surface=(.3, 3.2, 0, .25, .55),
+                      behave=(True, 70, 320, 70, 900, 45, 650, 20, 1.8, 70, 'bite', 250), yield_=(6, 10), live=('water', 1, 1)),
+    'Flamingo': dict(display='Flamingo', build=flamingo, size=(90, 160), stride=55, gait=1,
+                     anim=(13, 7, 1.2, 0, 3, 0, 1), surface=(0, 1, .25, .12, .8),
+                     behave=(False, 55, 380, 160, 700, 25, 0, 0, 1, 0, '', 40), yield_=(2, 5), live=('beach', 3, 2)),
+    'Pelican': dict(display='Brown Pelican', build=pelican, size=(146, 112), stride=40, gait=1,
+                    anim=(9, 5, 1.6, 0, 2, 0, 1), surface=(0, 1, .3, .12, .8),
+                    behave=(False, 45, 300, 160, 600, 10, 0, 0, 1, 0, '', 45), yield_=(2, 5), live=('beach', 2, 2)),
+    'Cottonmouth': dict(display='Cottonmouth', build=cottonmouth, size=(124, 10), stride=45, gait=2,
+                        anim=(0, 0, 0, 0, 0, 7, 45), surface=(.35, 1.3, 0, .15, .45),
+                        behave=(True, 35, 180, 90, 500, 0, 320, 12, 2.0, 45, 'bite', 30), yield_=(2, 5), live=('inland', 2, 1)),
+    'Tortoise': dict(display='Tortoise', build=tortoise, size=(118, 62), stride=26, gait=0,
+                     anim=(6, 3, .3, 0, 1.5, 0, 1), surface=(.3, 1.6, 0, .2, .7),
+                     behave=(False, 14, 32, 40, 400, 0, 0, 0, 1, 0, '', 150), yield_=(6, 10), live=('inland', 2, 1)),
+    'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
+                           anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
+                           behave=(False, 90, 480, 220, 900, 0, 0, 0, 1, 0, '', 35), yield_=(2, 5), live=('trees', 3, 3)),
+}
+
+
+# ---- Material -----------------------------------------------------------------------------------------------
+
+NOISE = """
+struct Fur {
+  float h(float3 c) { c = frac(c * 0.3183099 + 0.1) * 17.0; return frac(c.x * c.y * c.z * (c.x + c.y + c.z)); }
+  float n(float3 q) {
+    float3 i = floor(q), f = frac(q); f = f * f * (3 - 2 * f);
+    return lerp(lerp(lerp(h(i), h(i + float3(1, 0, 0)), f.x), lerp(h(i + float3(0, 1, 0)), h(i + float3(1, 1, 0)), f.x), f.y),
+                lerp(lerp(h(i + float3(0, 0, 1)), h(i + float3(1, 0, 1)), f.x), lerp(h(i + float3(0, 1, 1)), h(i + float3(1, 1, 1)), f.x), f.y), f.z);
+  }
+};
+Fur r;
+"""
+WALK = """
+float part = UV.x, w = UV.y;
+float alive = 1 - Dead, moving = Amount * alive;
+float3 o = 0;
+float lp = -1;
+if (Gait < .5) {
+  if (abs(part - 1) < .5 || abs(part - 4) < .5) lp = 0;
+  if (abs(part - 2) < .5 || abs(part - 3) < .5) lp = 3.14159;
+} else if (Gait < 1.5) {
+  if (abs(part - 8) < .5) lp = 0;
+  if (abs(part - 9) < .5) lp = 3.14159;
+}
+if (lp >= 0) { float s = Phase + lp; o.x += sin(s) * Swing * w * moving; o.z += max(0, cos(s)) * Lift * w * moving; }
+bool trunk = part < .5 || abs(part - 5) < .5 || abs(part - 6) < .5;
+if (trunk) o.z += (abs(sin(Phase)) - .5) * Bob * moving + sin(T * 2.1) * .35 * alive;
+if (abs(part - 5) < .5) o.y += sin(T * 1.7 + w * 2.0 + Phase) * TailSway * w * alive;
+if (abs(part - 6) < .5) o.x += sin(Phase * (Gait > .5 ? 2.0 : 1.0)) * Nod * w * moving + sin(T * .9) * Nod * .25 * w * alive;
+if (abs(part - 7) < .5) {
+  float env = saturate((HeadX - P.x) / 22.0);
+  o.y += sin(6.2832 * P.x / Wave + Phase + T * .7 * (1 - Amount)) * SnakeAmp * env * (.3 + .7 * Amount) * alive;
+}
+return o;
+"""
+SKIN = NOISE + """
+float3 c = V;
+float m = r.n(P / 5.0) * .6 + r.n(P / 1.4) * .4;
+c *= lerp(1 - Mottle, 1 + Mottle, m);
+float3 q = P / max(ScaleSize, .1); float3 f = frac(q) - .5;
+float edge = saturate((max(abs(f.x), max(abs(f.y), abs(f.z))) - .36) * 7);
+c *= lerp(1, lerp(.8, 1.12, r.h(floor(q))) * (1 - edge * .45), Scales);
+c *= lerp(1, lerp(.8, 1.14, r.n(P * float3(.12, 1.7, 1.7))), FurAmt);
+return c;
+"""
+
+
+def animal_material():
+    mel = unreal.MaterialEditingLibrary
+    material, node, custom = material_builder(f'{FOLDER}/M_Animal_v1')
+    world = node(unreal.MaterialExpressionWorldPosition)
+    local = node(unreal.MaterialExpressionTransformPosition,
+                 transform_source_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_WORLD,
+                 transform_type=unreal.MaterialPositionTransformSource.TRANSFORMPOSSOURCE_LOCAL)
+    assert mel.connect_material_expressions(world, '', local, '')
+    params = {}
+    for name, default in (('Gait', 0.0), ('Swing', 10.0), ('Lift', 5.0), ('Bob', 1.0), ('TailSway', 0.0), ('Nod', 0.0),
+                          ('SnakeAmp', 0.0), ('Wave', 40.0), ('HeadX', 60.0), ('Scales', 0.0), ('ScaleSize', 2.0),
+                          ('FurAmt', 0.0), ('Mottle', .15), ('Rough', .7)):
+        params[name] = node(unreal.MaterialExpressionScalarParameter, parameter_name=name, default_value=default)
+    for index, name in enumerate(('Phase', 'Amount', 'Dead')):
+        params[name] = node(unreal.MaterialExpressionScalarParameter, parameter_name=name, default_value=0.0,
+                            use_custom_primitive_data=True, primitive_data_index=index)
+    params['T'] = node(unreal.MaterialExpressionTime)
+    params['UV'] = node(unreal.MaterialExpressionTextureCoordinate)
+    params['P'] = local
+    params['V'] = node(unreal.MaterialExpressionVertexColor)
+    walk_pins = ('P', 'UV', 'T', 'Phase', 'Amount', 'Dead', 'Gait', 'Swing', 'Lift', 'Bob', 'TailSway', 'Nod', 'SnakeAmp', 'Wave', 'HeadX')
+    walk = custom(WALK, unreal.CustomMaterialOutputType.CMOT_FLOAT3, walk_pins)
+    skin_pins = ('P', 'V', 'Scales', 'ScaleSize', 'FurAmt', 'Mottle')
+    skin = custom(SKIN, unreal.CustomMaterialOutputType.CMOT_FLOAT3, skin_pins)
+    for target, pins in ((walk, walk_pins), (skin, skin_pins)):
+        for pin in pins:
+            assert mel.connect_material_expressions(params[pin], '', target, pin), pin
+    to_world = node(unreal.MaterialExpressionTransform,
+                    transform_source_type=unreal.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL,
+                    transform_type=unreal.MaterialVectorCoordTransform.TRANSFORM_WORLD)
+    assert mel.connect_material_expressions(walk, '', to_world, '')
+    assert mel.connect_material_property(to_world, '', unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
+    assert mel.connect_material_property(skin, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(params['Rough'], '', unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
+# ---- Assets -------------------------------------------------------------------------------------------------
+
+def data_asset(name, cls):
+    asset = unreal.load_asset(f'{FOLDER}/{name}')
+    if asset:
+        return asset
+    factory = unreal.DataAssetFactory()
+    factory.set_editor_property('data_asset_class', cls)
+    asset = unreal.AssetToolsHelpers.get_asset_tools().create_asset(name, FOLDER, cls, factory)
+    assert asset, name
+    return asset
+
+
+def build_definitions(meat):
+    mel = unreal.MaterialEditingLibrary
+    base = animal_material()
+    defs = {}
+    for name, a in ANIMALS.items():
+        mi = unreal.load_asset(f'{FOLDER}/MI_{name}_v1') or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            f'MI_{name}_v1', FOLDER, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        mel.set_material_instance_parent(mi, base)
+        swing, lift, bob, sway, nod, snake, wave = a['anim']
+        scales, scale_size, fur, mottle, rough = a['surface']
+        head = max(v[0] for v in a['build']().verts) if a['gait'] == 2 else 60.0
+        for param, value in (('Gait', a['gait']), ('Swing', swing), ('Lift', lift), ('Bob', bob), ('TailSway', sway), ('Nod', nod),
+                             ('SnakeAmp', snake), ('Wave', wave), ('HeadX', head), ('Scales', scales), ('ScaleSize', scale_size),
+                             ('FurAmt', fur), ('Mottle', mottle), ('Rough', rough)):
+            mel.set_material_instance_scalar_parameter_value(mi, param, float(value))
+        mel.update_material_instance(mi)
+        assert unreal.EditorAssetLibrary.save_loaded_asset(mi)
+        mesh = write_static_mesh(a['build'](), f'{FOLDER}/SM_{name}_v1', [mi], 100.0, collision=False, split_angle=70.0)
+        definition = data_asset(f'DA_Animal_{name}', unreal.EWAnimalDefinition)
+        aggressive, walk, run, turn, roam, wade, notice, damage, interval, reach, attack, health = a['behave']
+        for k, v in {'display_name': a['display'], 'mesh': mesh, 'size': unreal.Vector2D(*a['size']),
+                     'stride_length': float(a['stride']), 'aggressive': aggressive, 'walk_speed': float(walk),
+                     'run_speed': float(run), 'turn_rate': float(turn), 'roam_radius': float(roam), 'wade_depth': float(wade),
+                     'notice_range': float(notice), 'attack_damage': float(damage), 'attack_interval': float(interval),
+                     'attack_reach': float(reach), 'attack_name': attack, 'max_health': float(health), 'yield': meat,
+                     'yield_min': a['yield_'][0], 'yield_max': a['yield_'][1], 'respawn_seconds': 300.0}.items():
+            definition.set_editor_property(k, v)
+        assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
+        defs[name] = definition
+    return defs
+
+
+# ---- Placement ----------------------------------------------------------------------------------------------
+
+def habitat_ok(kind, x, y, z, ground, trees):
+    if z is None:
+        return False
+    if kind == 'beach':
+        return SEA + 15 < z < 55
+    if kind == 'water':   # the shore, near the sea or the pond
+        near_water = any((ground(x + dx, y + dy) or 0) < SEA + 5 for dx, dy in ((500, 0), (-500, 0), (0, 500), (0, -500)))
+        near_pond = 900 < math.hypot(x + 1700, y - 1500) < 1300
+        return SEA + 15 < z < 90 and (near_water or near_pond)
+    if kind == 'trees':
+        return 20 < z < 600 and any(math.hypot(x - tx, y - ty) < 350 for tx, ty in trees)
+    return 30 < z < 600   # inland
+
+
+def place(actors, defs, ground, trees):
+    rng = random.Random(41)
+    taken, placed = [], []
+    for name, a in ANIMALS.items():
+        kind, *counts = a['live']
+        aggressive = a['behave'][0]
+        radius = max(a['size'][1] * .5, a['size'][0] * .3, 15.0)
+        for island, count in zip(ISLANDS, counts):
+            (x0, x1), (y0, y1) = ISLANDS[island]
+            n, tries = 0, 0
+            while n < count and tries < 20000:
+                tries += 1
+                x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+                z = ground(x, y)
+                if not habitat_ok(kind, x, y, z, ground, trees):
+                    continue
+                if min(math.hypot(x - px, y - py) for px, py in (SPAWN, DOCK)) < (2600 if aggressive else 700):
+                    continue
+                if any(math.hypot(x - px, y - py) < 400 for px, py in taken):
+                    continue
+                animal = actors.spawn_actor_from_class(unreal.EWAnimal, unreal.Vector(x, y, z + radius),
+                                                       unreal.Rotator(0, 0, rng.uniform(-180, 180)))
+                n += 1
+                animal.set_actor_label(f'{a["display"]} {len([p for p in placed if p[0] == name]) + 1}')
+                animal.set_folder_path(LEVEL_FOLDER)
+                animal.set_editor_property('definition', defs[name])
+                animal.set_editor_property('surface_z', SEA)
+                taken.append((x, y))
+                placed.append((name, island, round(x), round(y), round(z)))
+    return placed
+
+
+def main():
+    assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
+    meat = unreal.load_asset(RAW_MEAT)
+    assert meat, 'Run build_fish.py first (it makes Raw Meat).'
+    defs = build_definitions(meat)
+    level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    assert level.load_level(MAP)
+    for actor in actors.get_all_level_actors():
+        if isinstance(actor, unreal.EWAnimal):
+            actors.destroy_actor(actor)
+    trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
+             if str(t.get_folder_path()) == FLORA_FOLDER and t.get_actor_label().startswith('Maravai')]
+    placed = place(actors, defs, Ground(), trees)
+    assert level.save_current_level()
+    Path(unreal.Paths.project_saved_dir(), 'AnimalsResult.json').write_text(json.dumps({
+        'success': True, 'animals': len(placed),
+        'by_kind': {n: sum(1 for p in placed if p[0] == n) for n in ANIMALS},
+        'by_island': {i: sum(1 for p in placed if p[1] == i) for i in ISLANDS}, 'placed': placed}, indent=2))
+    unreal.log(f'Animals: {len(placed)}')
+
+
+if __name__ == '__main__':
+    main()

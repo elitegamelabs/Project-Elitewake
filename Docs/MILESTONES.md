@@ -20,7 +20,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | A second, smaller island about 125 m south-west across open water (owner, October 15) | ✅ `e0443c4` |
 | More trees and rock in different sizes and colours; rock no longer low-poly: 68 palms (0.7 to 1.35 scale), 31 Maravai broadleaf hardwoods with per-tree leaf shades, 67 rocks in eight shapes and four stones (granite, sandstone, basalt, limestone) with shader-detailed surfaces, across all three islands | ✅ `e0443c4` |
 | Sea creatures made 3D: a round trunk lofted inside each creature's fins (owner: they were "hilariously 2D") | ✅ `e0443c4` |
-| Land animals on both islands from the owner's photos (October 15): American alligator, flamingo, brown pelican, cottonmouth (water moccasin), tortoise, squirrel monkey, as 3D models that move | ⏳ |
+| Land animals on both islands from the owner's photos (October 15): American alligator, flamingo, brown pelican, cottonmouth (water moccasin), tortoise, squirrel monkey, as 3D models that move | ✅ `PENDING` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 

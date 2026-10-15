@@ -28,6 +28,7 @@
 #include "Ships/EWShip.h"
 #include "Ships/EWShipDefinition.h"
 #include "Wildlife/EWFish.h"
+#include "Wildlife/EWAnimal.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
 
@@ -1074,11 +1075,12 @@ AEWCharacter* AEWCharacter::MeleeStrike()
     const bool bHit = GetWorld()->SweepSingleByChannel(Hit, From, From + View.Vector() * MeleeReach, FQuat::Identity, ECC_Pawn,
         FCollisionShape::MakeSphere(MeleeRadius), Query);
     auto* Victim = bHit ? Cast<AEWCharacter>(Hit.GetActor()) : nullptr;
-    // Fish and sea creatures take blows too, when no survivor is in the way first.
+    // Fish, sea creatures and land animals take blows too, when no survivor is in the way first.
     if (!Victim)
     {
-        if (AEWFish* Fish = AEWFish::FindStruck(this, bHit ? FMath::Min(MeleeReach, Hit.Distance + MeleeRadius) : MeleeReach))
-            Fish->TakeStrike(this, FistDamage);
+        const float Reach = bHit ? FMath::Min(MeleeReach, Hit.Distance + MeleeRadius) : MeleeReach;
+        if (AEWFish* Fish = AEWFish::FindStruck(this, Reach)) Fish->TakeStrike(this, FistDamage);
+        else if (AEWAnimal* Animal = AEWAnimal::FindStruck(this, Reach)) Animal->TakeStrike(this, FistDamage);
         return nullptr;
     }
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
