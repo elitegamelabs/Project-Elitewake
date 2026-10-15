@@ -4,9 +4,16 @@ Run in the editor after build_coastal_terrain.py, outside Play, with no unsaved 
 
 Veyran Palms: three shapes of feather palm built in the editor, each a ringed, leaning trunk under a crown of
 arching fronds (the frond is Art/Flora/Veyran-Palm-Frond-v1.png, drawn by Scripts/Art/make_palm_frond.py) with a
-few hanging dry fronds and a cluster of fruit. About thirty stand behind the beaches of the island and the islet,
-singly and in pairs, kept clear of the spawn, the dock and the spring. Each is a harvestable tree: a hatchet
-gives Wood and Thatch (the existing test yields), and its trunk is solid.
+few hanging dry fronds and a cluster of fruit. They stand behind the beaches of the island, the islet and the
+second island, singly and in pairs, short and tall, kept clear of the spawn, the dock and the spring.
+
+Maravai (the ecology guide's general tropical lumber tree; owner, October 15: more trees, different sizes and
+colours): three shapes of spreading broadleaf hardwood, a stout curving trunk forking into limbs under rounded
+clumps of glossy leaves (Art/Flora/Maravai-Leaves-v1.png, drawn by Scripts/Art/make_leaf_cluster.py). They grow
+inland and up the hills. Every tree's leaves take their own shade, from blue-green to yellow-green.
+
+Each tree is harvestable: a hatchet gives Wood and Thatch (the existing test yields; Maravai Timber as its own
+item is not made yet), and its trunk is solid.
 
 Under and between them, things to gather by hand with Interact, at the existing test amounts: low fern-like
 fiber plants (10 Fiber), piles of fallen sticks near the palms (6 Sticks) and berry bushes hung with berries
@@ -20,20 +27,21 @@ from pathlib import Path
 import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+from ship_geometry import Builder, cross, material_builder, norm, write_static_mesh  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Flora'
 FLORA_FOLDER = 'Coast/Flora'
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 FROND_ART = ROOT / 'Art/Flora/Veyran-Palm-Frond-v1.png'
+LEAF_ART = ROOT / 'Art/Flora/Maravai-Leaves-v1.png'
 TIMBER = '/Game/Elitewake/World/Materials/T_Timber_v1'
 ITEMS = '/Game/Elitewake/Items/Testing'
 WOOD, THATCH = f'{ITEMS}/DA_TestWood', f'{ITEMS}/DA_TestThatch'
 # Hand-gathered plants (tuning): item, amount, gathering kind, how many on the island and on the islet.
-PLANTS = {'Fiber Plant': ('DA_TestFiber', 10, 'PLANT_FIBER', (18, 5)),
-          'Fallen Sticks': ('DA_TestSticks', 6, 'LOOSE_STICKS', (12, 4)),
-          'Berry Bush': ('DA_TestAzulBerry', 10, 'BERRIES', (8, 3))}
+PLANTS = {'Fiber Plant': ('DA_TestFiber', 10, 'PLANT_FIBER', (18, 5, 8)),
+          'Fallen Sticks': ('DA_TestSticks', 6, 'LOOSE_STICKS', (12, 4, 6)),
+          'Berry Bush': ('DA_TestAzulBerry', 10, 'BERRIES', (8, 3, 4))}
 SEA = -65.0
 BARK, FROND = 0, 1
 # Palm shapes (tuning): height, lean at the crown, frond count and length.
@@ -41,8 +49,15 @@ PALMS = [dict(height=720.0, lean=170.0, fronds=13, frond=380.0, seed=1),
          dict(height=880.0, lean=260.0, fronds=12, frond=420.0, seed=2),
          dict(height=600.0, lean=90.0, fronds=14, frond=340.0, seed=3)]
 # Where palms may not stand: (x, y, radius), around the beach spawn, the dock's landing and the spring.
+# Maravai shapes (tuning): height, how far the limbs spread, how many limbs.
+MARAVAI = [dict(height=900.0, spread=380.0, limbs=6, seed=11), dict(height=1150.0, spread=460.0, limbs=7, seed=12),
+           dict(height=700.0, spread=320.0, limbs=5, seed=13)]
 KEEP_CLEAR = [(150.0, 0.0, 700.0), (4000.0, 900.0, 700.0), (-1700.0, 1500.0, 1000.0)]
-AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 24), ((7700.0, 11300.0), (1150.0, 4050.0), 7)]  # x range, y range, count
+# x range, y range, palms there, Maravai there (tuning): the island, the islet, the second island.
+AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 40, 18), ((7700.0, 11300.0), (1150.0, 4050.0), 12, 3),
+         ((-17800.0, -12200.0), (-15200.0, -10800.0), 16, 10)]
+PALM_SCALE = (.7, 1.35)
+MARAVAI_SCALE = (.75, 1.25)
 
 
 # ---- Meshes ------------------------------------------------------------------------------------------------
@@ -82,6 +97,49 @@ def palm(height, lean, fronds, frond, seed):
         length = frond * rng.uniform(0.85, 1.1) * (0.8 if dry else 1.0)
         droop = rng.uniform(0.7, 1.0) if not dry else 0.25
         frond_strip(b, crown, a, rise, length, droop, dry)
+    return b
+
+
+def maravai(height, spread, limbs, seed):
+    """A broadleaf tree in its own space: a stout, gently curving trunk forking into limbs that reach out and up,
+    each ending in clumps of leaves made of crossed cards, and a clump over the crown."""
+    rng = random.Random(seed)
+    b = Builder()
+    lean = rng.uniform(-.08, .08) * height
+    fork = height * .5
+    trunk = [(lean * (k / 10) ** 2, 0.0, fork * k / 10) for k in range(11)]
+    b.tube(trunk, lambda k: 34.0 - 14.0 * k / 10 + (10.0 if k == 0 else 0.0), sides=12)
+    top = trunk[-1]
+    clumps = [((top[0], 0.0, height * .9), spread * .8)]
+    for n in range(limbs):
+        a = 2 * math.pi * n / limbs + rng.uniform(-.3, .3)
+        reach, rise = spread * rng.uniform(.75, 1.05), height * rng.uniform(.18, .34)
+        start = (top[0], 0.0, fork - rng.uniform(0, height * .08))
+        end = (start[0] + reach * math.cos(a), start[1] + reach * math.sin(a), start[2] + rise)
+        bend = (start[0] + reach * .45 * math.cos(a), start[1] + reach * .45 * math.sin(a), start[2] + rise * .8)
+        path = [tuple(start[i] * (1 - t) ** 2 + 2 * bend[i] * t * (1 - t) + end[i] * t * t for i in range(3)) for t in (k / 6 for k in range(7))]
+        b.tube(path, lambda k: 15.0 - 10.0 * k / 6, sides=8)
+        clumps.append((end, spread * rng.uniform(.5, .65)))
+        clumps.append((path[4], spread * rng.uniform(.4, .55)))
+        clumps.append((path[2], spread * rng.uniform(.3, .42)))
+    b.slot = 1
+    for (cx, cy, cz), size in clumps:
+        # Seven cards of leaves at random slants, a little apart, so no clump shows a straight edge or a cross.
+        for _ in range(7):
+            h = size / 2 * rng.uniform(.6, 1.0)
+            a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
+            n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
+            ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
+            u = norm(cross(n, ref))
+            v = cross(n, u)
+            spin = rng.uniform(0, 2 * math.pi)
+            u, v = (tuple(u[i] * math.cos(spin) + v[i] * math.sin(spin) for i in range(3)),
+                    tuple(v[i] * math.cos(spin) - u[i] * math.sin(spin) for i in range(3)))
+            c = (cx + rng.uniform(-.2, .2) * size, cy + rng.uniform(-.2, .2) * size, cz + rng.uniform(-.12, .12) * size)
+            corners = [tuple(c[i] + (su * u[i] + sv * v[i]) * h for i in range(3)) for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
+            b.quad(*ids, n)
+    b.slot = 0
     return b
 
 
@@ -202,20 +260,25 @@ def berry_material():
     return material
 
 
-def frond_material(texture):
-    """Leaves: the frond art, cut out by its alpha, lit through from behind; dry fronds turn straw brown."""
+def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1'):
+    """Leaves: the art, cut out by its alpha, lit through from behind; dry fronds turn straw brown. Each tree takes
+    its own shade of green, from blue-green to yellow-green, picked by where it stands."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_PalmFrond_v1')
+    material, node, custom = material_builder(path)
     material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
     material.set_editor_property('two_sided', True)
     material.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE)
     art = node(unreal.MaterialExpressionTextureSample, texture=texture)
     flags = node(unreal.MaterialExpressionVertexColor)
-    colour = custom('return lerp(A, dot(A, float3(0.3, 0.59, 0.11)) * float3(1.25, 1.0, 0.62), F.r);',
-                    unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('A', 'F'))
+    colour = custom('float h = frac(sin(dot(floor(O.xy / 10.0), float2(12.9898, 78.233))) * 43758.5453);'
+                    ' float3 shade = lerp(float3(0.78, 0.98, 0.92), float3(1.2, 1.08, 0.66), h) * lerp(0.85, 1.1, frac(h * 7.31));'
+                    ' float3 leaf = A * shade;'
+                    ' return lerp(leaf, dot(A, float3(0.3, 0.59, 0.11)) * float3(1.25, 1.0, 0.62), F.r);',
+                    unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('A', 'F', 'O'))
     through = custom('return C * float3(0.55, 0.7, 0.3);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C',))
     assert mel.connect_material_expressions(art, 'RGB', colour, 'A')
     assert mel.connect_material_expressions(flags, '', colour, 'F')
+    assert mel.connect_material_expressions(node(unreal.MaterialExpressionObjectPositionWS), '', colour, 'O')
     assert mel.connect_material_expressions(colour, '', through, 'C')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
@@ -260,7 +323,7 @@ def spots(ground):
     """Palm positions behind the beaches: above the wet sand, below the hills, apart from each other."""
     rng = random.Random(11)
     chosen = []
-    for (x0, x1), (y0, y1), count in AREAS:
+    for (x0, x1), (y0, y1), count, _ in AREAS:
         placed, tries = 0, 0
         while placed < count and tries < 4000:
             tries += 1
@@ -285,6 +348,27 @@ def spots(ground):
     return chosen
 
 
+def inland_spots(ground, palms):
+    """Maravai positions inland and up the hills, apart from each other and from the palms."""
+    rng = random.Random(17)
+    chosen = []
+    for (x0, x1), (y0, y1), _, count in AREAS:
+        placed, tries = 0, 0
+        while placed < count and tries < 6000:
+            tries += 1
+            x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+            z = ground(x, y)
+            if z is None or not (40 < z < 650):
+                continue
+            if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR):
+                continue
+            if any(math.hypot(x - px, y - py) < 450 for px, py in palms) or any(math.hypot(x - px, y - py) < 750 for px, py, _ in chosen):
+                continue
+            chosen.append((x, y, z))
+            placed += 1
+    return chosen
+
+
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     frond_art = import_texture('T_PalmFrond_v1', FROND_ART)
@@ -298,7 +382,7 @@ def main():
     assert level.load_level(MAP)
     # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', *PLANTS)):
+        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
     placed = []
@@ -310,13 +394,28 @@ def main():
         tree.set_folder_path(FLORA_FOLDER)
         mesh = tree.get_editor_property('mesh')
         mesh.set_static_mesh(meshes[k % len(meshes)])
-        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(0.9, 1.12)] * 3))
+        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*PALM_SCALE)] * 3))
         for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 26.0, 'blocker_half_height': 160.0}.items():
             tree.set_editor_property(prop, value)
         placed.append([round(x), round(y), round(z)])
-    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed], materials)
+    leaf_material = frond_material(import_texture('T_MaravaiLeaves_v1', LEAF_ART), f'{FOLDER}/M_MaravaiLeaves_v1')
+    broadleaf = [write_static_mesh(maravai(**shape), f'{FOLDER}/SM_Maravai_{k + 1}', [materials[BARK], leaf_material], 120.0)
+                 for k, shape in enumerate(MARAVAI)]
+    hardwoods = []
+    for k, (x, y, z) in enumerate(inland_spots(ground, [(p[0], p[1]) for p in placed])):
+        tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 12),
+                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+        tree.set_actor_label(f'Maravai {k + 1:02d}')
+        tree.set_folder_path(FLORA_FOLDER)
+        mesh = tree.get_editor_property('mesh')
+        mesh.set_static_mesh(broadleaf[k % len(broadleaf)])
+        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*MARAVAI_SCALE)] * 3))
+        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 38.0, 'blocker_half_height': 220.0}.items():
+            tree.set_editor_property(prop, value)
+        hardwoods.append([round(x), round(y), round(z)])
+    plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials)
     assert level.save_current_level()
-    report = {'success': True, 'palms': len(placed), 'positions': placed, 'plants': plants}
+    report = {'success': True, 'palms': len(placed), 'maravai': len(hardwoods), 'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Coastal flora: {len(placed)} palms')
 
@@ -336,7 +435,7 @@ def place_plants(actors, ground, palms, materials):
         assert item, item_name
         n = 0
         for (area, count) in zip(AREAS, per_area):
-            (x0, x1), (y0, y1), _ = area
+            (x0, x1), (y0, y1), _, _ = area
             placed, tries = 0, 0
             while placed < count and tries < 5000:
                 tries += 1

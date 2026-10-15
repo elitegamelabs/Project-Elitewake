@@ -4,7 +4,7 @@ starter pickaxe through Left Mouse, and they are solid.
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the boulders from
 Scripts/Setup/build_coastal_rocks.py and the test starter kit. Run unattended with run_play_check.py.
 
-  1. At least 15 boulders sit on the island and islet, each bedded in the ground with Stone to give.
+  1. At least 15 rocks sit on the islands, each bedded in the ground (its lowest point below the ground) with Stone to give.
   2. The client equips the starter kit's wooden pickaxe and strikes the boulder nearest the spawn with Left Mouse:
      it gains 3 Stone, and the boulder has that much less, on server and client.
   3. The client walks straight into the boulder and is stopped at its face or climbs over it, never through it.
@@ -56,10 +56,12 @@ def rooted():
     bad = []
     for t in rocks:
         base = t.get_actor_location()
-        hit = unreal.SystemLibrary.line_trace_single(server_world, base + unreal.Vector(0, 0, 20), base - unreal.Vector(0, 0, 200),
+        # Bedded: the ground under the rock's middle lies above its lowest point (tall outcrops stand high, but sit in it).
+        hit = unreal.SystemLibrary.line_trace_single(server_world, base + unreal.Vector(0, 0, 20), base - unreal.Vector(0, 0, 600),
                                                      unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, True, [t], unreal.DrawDebugTrace.NONE, True)
-        gap = (base.z + 20 - hit.to_tuple()[4].z) if hit else None
-        if gap is None or gap > 60 or t.get_editor_property('remaining') <= 0:
+        origin, extent = t.get_actor_bounds(True)
+        gap = (origin.z - extent.z - hit.to_tuple()[4].z) if hit else None
+        if gap is None or gap > 0 or t.get_editor_property('remaining') <= 0:
             bad.append((t.get_actor_label(), gap))
     assert not bad, f'boulders floating or empty: {bad[:5]}'
     state['memo']['rocks'] = len(rocks)

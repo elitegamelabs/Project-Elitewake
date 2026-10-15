@@ -1,13 +1,17 @@
-"""Set boulders on the coastal map that give Stone to a pickaxe. Safe to run again.
+"""Set rocks on the coastal map that give Stone to a pickaxe. Safe to run again.
 Run in the editor after build_coastal_flora.py, outside Play, with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
-Four boulder shapes built in the editor: a rounded stone, lumpy and flattened, its crevices shaded darker, in a
-weathered grey stone material with lichen on its upper faces. Run after build_coastal_flora.py; rocks keep clear of its palms and plants. Rocks sit bedded in the sand, mostly on the
-higher ground inland and along the beach heads of the island and the islet, clear of the palms, the spawn, the
-dock and the spring. Each is a mining node (the existing test yield: 12 Stone, 3 a strike) and is solid enough to
-climb onto.
-Sizes and counts are tuning.
+Owner, October 15: more rock, in different sizes and colours, and no more low-poly look. Eight shapes built in
+the editor at a fine resolution and smooth-shaded: rounded boulders, flat slabs, broken angular blocks and tall
+outcrops, their lumps from layered noise and their broken faces from fracture planes. Four stones, one material
+with four looks: grey granite, warm sandstone, dark basalt and pale coral limestone. Every stone is finished in
+the shader with grain at several scales, a network of cracks and fine bumps that catch the light, darker
+crevices, salt-darkened where the sea wets it, and lichen on the faces that look up.
+
+Rocks sit bedded in the ground on the island, the islet and the second island, from knee-high stones to outcrops
+taller than a survivor, clear of the trees, the spawn, the dock and the spring. Each is a mining node (the
+existing test yield: 12 Stone, 3 a strike) and is solid enough to climb onto. Sizes, colours and counts are tuning.
 """
 import json
 import math
@@ -22,9 +26,25 @@ from build_coastal_flora import FLORA_FOLDER, KEEP_CLEAR, MAP, SEA, Ground  # no
 
 FOLDER = '/Game/Elitewake/World/Rocks'
 STONE = '/Game/Elitewake/Items/Testing/DA_TestStone'
-SHAPES = [dict(seed=1, size=(270.0, 220.0, 170.0)), dict(seed=2, size=(210.0, 180.0, 150.0)),
-          dict(seed=3, size=(340.0, 250.0, 190.0)), dict(seed=4, size=(160.0, 150.0, 125.0))]
-AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 16), ((7700.0, 11300.0), (1150.0, 4050.0), 5)]
+# Shapes (tuning): size in cm at scale 1, and how many fracture planes cut it (more reads more broken).
+SHAPES = [dict(seed=1, size=(270.0, 220.0, 170.0), cuts=1), dict(seed=2, size=(210.0, 180.0, 150.0), cuts=2),
+          dict(seed=3, size=(340.0, 250.0, 190.0), cuts=3), dict(seed=4, size=(160.0, 150.0, 125.0), cuts=0),
+          dict(seed=5, size=(380.0, 300.0, 110.0), cuts=2),     # a flat slab
+          dict(seed=6, size=(230.0, 200.0, 330.0), cuts=5),     # a tall outcrop
+          dict(seed=7, size=(300.0, 170.0, 200.0), cuts=4),     # a broken block
+          dict(seed=8, size=(120.0, 100.0, 80.0), cuts=1)]      # a stone
+# Stones (tuning): dark and light tones, lichen, banding and its spacing in cm, bump strength.
+STONES = {'Granite': dict(dark=(.07, .068, .064), light=(.27, .26, .245), lichen=.6, strata=0.0, spacing=12.0, bump=5.0),
+          'Sandstone': dict(dark=(.19, .12, .065), light=(.5, .36, .21), lichen=.25, strata=.55, spacing=9.0, bump=4.0),
+          'Basalt': dict(dark=(.022, .022, .025), light=(.1, .095, .09), lichen=.35, strata=.12, spacing=20.0, bump=6.0),
+          'Limestone': dict(dark=(.28, .27, .23), light=(.64, .61, .53), lichen=.3, strata=.3, spacing=18.0, bump=4.5)}
+# Where rocks go: x range, y range, how many, and the scale range there (tuning).
+AREAS = [((-5900.0, 4300.0), (-4200.0, 4000.0), 34, (.45, 1.6)),        # the island
+         ((7700.0, 11300.0), (1150.0, 4050.0), 9, (.45, 1.3)),          # the islet
+         ((-17800.0, -12200.0), (-15200.0, -10800.0), 20, (.5, 1.8))]   # the second island
+# Outcrops on the second island's rocky crown: (x, y, shape, scale, stone).
+CROWN = [(-15900.0, -13700.0, 5, 2.2, 'Basalt'), (-15300.0, -14300.0, 6, 1.7, 'Basalt'),
+         (-16500.0, -13100.0, 2, 2.0, 'Granite'), (-15600.0, -12900.0, 4, 1.6, 'Basalt')]
 
 
 # ---- Shape -------------------------------------------------------------------------------------------------
@@ -76,10 +96,17 @@ def icosphere(levels):
     return verts, faces
 
 
-def boulder(seed, size):
-    """A boulder in its own space, its widest part at the origin's height so half of it sinks into the ground."""
+def boulder(seed, size, cuts=0):
+    """A rock in its own space, its widest part at the origin's height so half of it sinks into the ground. Lumps
+    come from noise at three scales; each fracture plane shears off a side into a flat broken face."""
     noise = lattice(seed)
-    verts, faces = icosphere(4)
+    rng = random.Random(seed * 101)
+    planes = []
+    for _ in range(cuts):
+        a, up = rng.uniform(0, 2 * math.pi), rng.uniform(-.25, .75)
+        n = (math.cos(a) * math.sqrt(1 - up * up), math.sin(a) * math.sqrt(1 - up * up), up)
+        planes.append((n, rng.uniform(.55, .8)))
+    verts, faces = icosphere(5)
     sx, sy, sz = (s / 2 for s in size)
     b = Builder()
     shaped, depth = [], []
@@ -89,6 +116,14 @@ def boulder(seed, size):
                 + 0.12 * (0.5 - abs(noise(p[0] * 3.2, p[1] * 3.2 + seed, p[2] * 3.2)))
                 + 0.05 * noise(p[0] * 8.0 + seed, p[1] * 8.0, p[2] * 8.0))
         r = 1.0 + bump
+        q = [p[0] * r, p[1] * r, p[2] * r]
+        for n, d in planes:
+            over = q[0] * n[0] + q[1] * n[1] + q[2] * n[2] - d
+            if over > 0:
+                for i in range(3):
+                    q[i] -= n[i] * over * .92
+                bump -= over * .5     # broken faces read a shade darker toward their middles
+        p, r = q, 1.0
         z = p[2] * r
         if z < -0.35:  # flatten the buried underside
             z = -0.35 - (z + 0.35) * 0.2
@@ -103,64 +138,114 @@ def boulder(seed, size):
     return b
 
 
+NOISE = """
+struct Stone {
+  float h(float3 c) { c = frac(c * 0.3183099 + 0.1) * 17.0; return frac(c.x * c.y * c.z * (c.x + c.y + c.z)); }
+  float n(float3 q) {
+    float3 i = floor(q), f = frac(q); f = f * f * (3 - 2 * f);
+    return lerp(lerp(lerp(h(i), h(i + float3(1, 0, 0)), f.x), lerp(h(i + float3(0, 1, 0)), h(i + float3(1, 1, 0)), f.x), f.y),
+                lerp(lerp(h(i + float3(0, 0, 1)), h(i + float3(1, 0, 1)), f.x), lerp(h(i + float3(0, 1, 1)), h(i + float3(1, 1, 1)), f.x), f.y), f.z);
+  }
+  float fbm(float3 q) { float a = .5, s = 0; for (int k = 0; k < 5; k++) { s += a * n(q); q = q * 2.03 + 17.1; a *= .5; } return s; }
+  float crack(float3 q) {
+    float3 w = float3(n(q * .43 + 3.1), n(q * .43 + 8.7), n(q * .43 + 1.9)) * 1.6;
+    return pow(saturate(1 - abs(n(q + w) * 2 - 1)), 70) * saturate(n(q * .21 + 9.7) * 3.2 - 1.5);
+  }
+  float cracks(float3 p) { return crack(p / 34.0) * .9 + crack(p / 11.0 + 5.3) * .45; }
+  float height(float3 p) { return fbm(p / 16.0) + fbm(p / 3.5) * .3 - cracks(p) * .7; }
+};
+Stone r;
+"""
+
+
 def rock_material():
-    """Weathered dark grey stone: mottled at two scales by world-space noise, darkened in the shape's crevices,
-    with pale salt and lichen on top."""
+    """One stone material with parameters for each look (see STONES). Colour and surface detail are worked out in
+    world space, so they never stretch or tile across a rock, at any scale."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_CoastalRock_v1')
+    material, node, custom = material_builder(f'{FOLDER}/M_CoastalRock_v2')
+    material.set_editor_property('tangent_space_normal', False)
     position = node(unreal.MaterialExpressionWorldPosition)
     normal = node(unreal.MaterialExpressionVertexNormalWS)
     flags = node(unreal.MaterialExpressionVertexColor)
-    colour = custom(
-        'float n = 0, fine = 0;'
-        ' [unroll] for (int s = 0; s < 2; s++) {'
-        '  float3 q = P / (s == 0 ? 45.0 : 7.0); float3 i = floor(q); float3 f = frac(q); f = f * f * (3 - 2 * f); float v = 0;'
-        '  [unroll] for (int k = 0; k < 8; k++) { float3 o = float3(k & 1, (k >> 1) & 1, (k >> 2) & 1);'
-        '   float3 c = frac((i + o) * 0.3183099 + 0.1) * 17.0; float r = frac(c.x * c.y * c.z * (c.x + c.y + c.z));'
-        '   float3 w = lerp(1 - f, f, o); v += r * w.x * w.y * w.z; }'
-        '  if (s == 0) n = v; else fine = v; }'
-        ' float3 stone = lerp(float3(0.085, 0.082, 0.076), float3(0.23, 0.215, 0.195), n) * lerp(0.75, 1.2, fine);'
-        ' stone *= lerp(0.35, 1.2, F.b);'
-        ' float top = saturate((N.z - 0.5) * 3);'
-        ' float lichen = top * saturate(n * 2.2 - 1.0);'
-        ' stone = lerp(stone, float3(0.36, 0.34, 0.3), top * saturate(fine * 1.6 - 0.9) * 0.6);'
-        ' return lerp(stone, float3(0.3, 0.32, 0.17), lichen * 0.6);',
-        unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'F'))
-    rough = custom('return lerp(0.92, 0.75, F.b);', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('F',))
-    for source, pin in ((position, 'P'), (normal, 'N'), (flags, 'F')):
-        assert mel.connect_material_expressions(source, '', colour, pin)
-    assert mel.connect_material_expressions(flags, '', rough, 'F')
+    vectors = {name: node(unreal.MaterialExpressionVectorParameter, parameter_name=name, default_value=unreal.LinearColor(*value, 1))
+               for name, value in (('Dark', (.07, .068, .064)), ('Light', (.27, .26, .245)), ('LichenColour', (.28, .3, .15)))}
+    scalars = {name: node(unreal.MaterialExpressionScalarParameter, parameter_name=name, default_value=value)
+               for name, value in (('Lichen', .5), ('Strata', 0.0), ('Spacing', 12.0), ('Bump', 5.0))}
+    colour = custom(NOISE + """
+float big = r.fbm(P / 90.0), mid = r.fbm(P / 13.0), fine = r.n(P / 1.3);
+float3 c = lerp(Dark, Light, saturate(big * 1.5 - .25));
+c *= lerp(.78, 1.18, mid) * lerp(.9, 1.08, fine);
+float band = sin(P.z / Spacing + big * 7.0) * .5 + .5;
+c = lerp(c, c * lerp(.7, 1.15, r.n(float3(0, 0, P.z / Spacing))), band * Strata);
+c *= 1 - saturate(r.cracks(P)) * .55;
+c *= lerp(.94, 1.04, r.n(P / .45));
+c *= lerp(.4, 1.12, F.b);
+float up = saturate((N.z - .45) * 3);
+float lichen = up * saturate(r.fbm(P / 22.0) * 2.6 - 1.05) * Lichen;
+c = lerp(c, LichenColour * lerp(.7, 1.2, mid), lichen);
+c *= lerp(1.0, .55, saturate((-35.0 - P.z) / 70.0));
+return c;""", unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing'))
+    bumped = custom(NOISE + """
+float e = .5, h0 = r.height(P);
+float3 g = float3(r.height(P + float3(e, 0, 0)) - h0, r.height(P + float3(0, e, 0)) - h0, r.height(P + float3(0, 0, e)) - h0) / e;
+g -= N * dot(g, N);
+return normalize(N - g * Bump);""", unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('P', 'N', 'Bump'))
+    rough = custom(NOISE + 'return lerp(.95, .72, F.b) - r.cracks(P) * .1 - saturate((-35.0 - P.z) / 70.0) * .4;',
+                   unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('P', 'F'))
+    for target, pins in ((colour, ('P', 'N', 'F', 'Dark', 'Light', 'LichenColour', 'Lichen', 'Strata', 'Spacing')),
+                         (bumped, ('P', 'N', 'Bump')), (rough, ('P', 'F'))):
+        for pin in pins:
+            source = {'P': position, 'N': normal, 'F': flags}.get(pin) or vectors.get(pin) or scalars.get(pin)
+            assert mel.connect_material_expressions(source, '', target, pin), pin
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(bumped, '', unreal.MaterialProperty.MP_NORMAL)
     assert mel.connect_material_property(rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
-    return material
+    looks = {}
+    for name, stone in STONES.items():
+        path = f'{FOLDER}/MI_Rock_{name}_v1'
+        mi = unreal.load_asset(path) or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+            f'MI_Rock_{name}_v1', FOLDER, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+        mel.set_material_instance_parent(mi, material)
+        mel.set_material_instance_vector_parameter_value(mi, 'Dark', unreal.LinearColor(*stone['dark'], 1))
+        mel.set_material_instance_vector_parameter_value(mi, 'Light', unreal.LinearColor(*stone['light'], 1))
+        for param, key in (('Lichen', 'lichen'), ('Strata', 'strata'), ('Spacing', 'spacing'), ('Bump', 'bump')):
+            mel.set_material_instance_scalar_parameter_value(mi, param, stone[key])
+        mel.update_material_instance(mi)
+        assert unreal.EditorAssetLibrary.save_loaded_asset(mi)
+        looks[name] = mi
+    return material, looks
 
 
 def spots(ground, avoid):
     rng = random.Random(23)
     chosen = []
-    for (x0, x1), (y0, y1), count in AREAS:
+    for (x0, x1), (y0, y1), count, scales in AREAS:
         placed, tries = 0, 0
         while placed < count and tries < 6000:
             tries += 1
             x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
             z = ground(x, y)
-            if z is None or not (SEA + 75 < z < 320):
+            if z is None or not (SEA + 75 < z < 700):
                 continue
             if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
                 continue
-            if any(math.hypot(x - px, y - py) < 300 for px, py in avoid) or any(math.hypot(x - px, y - py) < 600 for px, py, _ in chosen):
+            if any(math.hypot(x - px, y - py) < 300 for px, py in avoid) or any(math.hypot(x - px, y - py) < 450 for px, py, _, _ in chosen):
                 continue
-            chosen.append((x, y, z))
+            chosen.append((x, y, z, rng.uniform(*scales)))
             placed += 1
     return chosen
 
 
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
-    material = rock_material()
-    meshes = [write_static_mesh(boulder(**shape), f'{FOLDER}/SM_CoastalBoulder_{k + 1}', [material], 120.0) for k, shape in enumerate(SHAPES)]
+    _, looks = rock_material()
+    bodies = [boulder(**shape) for shape in SHAPES]
+    meshes = [write_static_mesh(body, f'{FOLDER}/SM_CoastalBoulder_{k + 1}', [looks['Granite']], 120.0, split_angle=75.0)
+              for k, body in enumerate(bodies)]
+    # Each shape's lowest and highest point: fracture planes can shear the underside, so bed rocks by their real base.
+    spans = [(min(p[2] for p in body.verts), max(p[2] for p in body.verts)) for body in bodies]
     stone = unreal.load_asset(STONE)
     assert stone
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -169,30 +254,39 @@ def main():
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith('Boulder'):
             actors.destroy_actor(actor)
-    # Keep clear of the palms and plants already growing there.
+    # Keep clear of the trees and plants already growing there.
     plants = [(a.get_actor_location().x, a.get_actor_location().y) for a in actors.get_all_level_actors()
               if str(a.get_folder_path()) == FLORA_FOLDER and not a.get_actor_label().startswith('Boulder')]
+    ground = Ground()
     rng = random.Random(9)
+    # Mostly grey granite, then sandstone, some dark basalt and pale limestone.
+    mix = ['Granite'] * 4 + ['Sandstone'] * 3 + ['Basalt'] * 2 + ['Limestone'] * 2
+    wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
+    wanted += [(x, y, ground(x, y), scale, shape, look) for x, y, shape, scale, look in CROWN]
     placed = []
-    for k, (x, y, z) in enumerate(spots(Ground(), plants)):
-        shape = SHAPES[k % len(SHAPES)]
-        scale = rng.uniform(0.85, 1.2)
-        lift = 0.08 * shape['size'][2] * scale  # proud of the sand, yet bedded in on slopes too
+    for k, (x, y, z, scale, shape_index, look) in enumerate(wanted):
+        low, high = spans[shape_index]
+        tall = scale * rng.uniform(.85, 1.1)
+        lift = tall * (-low - .12 * (high - low))  # the base sunk an eighth of the rock's height, bedded in on slopes too
         rock = actors.spawn_actor_from_class(unreal.EWMineable, unreal.Vector(x, y, z + lift),
-                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+                                             unreal.Rotator(roll=rng.uniform(-6, 6), pitch=rng.uniform(-6, 6), yaw=rng.uniform(0, 360)))
         rock.set_actor_label(f'Boulder {k + 1:02d}')
         rock.set_folder_path(FLORA_FOLDER)
         mesh = rock.get_editor_property('mesh')
-        mesh.set_static_mesh(meshes[k % len(meshes)])
-        mesh.set_relative_scale3d(unreal.Vector(scale, scale, scale))
+        mesh.set_static_mesh(meshes[shape_index])
+        mesh.set_material(0, looks[look])
+        stretch = rng.uniform(.85, 1.15)
+        mesh.set_relative_scale3d(unreal.Vector(scale * stretch, scale / stretch, tall))
         rock.set_editor_property('resource', stone)
         # The rock itself is solid, so survivors can climb onto it as well as walk around it.
         mesh.set_collision_enabled(unreal.CollisionEnabled.QUERY_AND_PHYSICS)
         for channel in (unreal.CollisionChannel.ECC_PAWN, unreal.CollisionChannel.ECC_CAMERA, unreal.CollisionChannel.ECC_WORLD_DYNAMIC):
             mesh.set_collision_response_to_channel(channel, unreal.CollisionResponseType.ECR_BLOCK)
-        placed.append([round(x), round(y), round(z)])
+        placed.append([round(x), round(y), round(z), round(scale, 2), shape_index + 1, look])
     assert level.save_current_level()
-    Path(unreal.Paths.project_saved_dir(), 'CoastalRocksResult.json').write_text(json.dumps({'success': True, 'rocks': len(placed), 'positions': placed}, indent=2))
+    Path(unreal.Paths.project_saved_dir(), 'CoastalRocksResult.json').write_text(json.dumps(
+        {'success': True, 'rocks': len(placed), 'looks': {n: sum(1 for p in placed if p[5] == n) for n in STONES},
+         'positions': placed}, indent=2))
     unreal.log(f'Coastal rocks: {len(placed)}')
 
 

@@ -197,9 +197,10 @@ def make_timber_material():
     return material
 
 
-def write_static_mesh(b, path, materials, uv_tile, collision=True):
+def write_static_mesh(b, path, materials, uv_tile, collision=True, split_angle=40.0):
     """Write the builder into a static mesh asset, in place if it exists so references keep working.
-    `materials` lists one material per slot; fixed vertex UVs win over the triplanar fallback."""
+    `materials` lists one material per slot; fixed vertex UVs win over the triplanar fallback. Normals are split
+    (a hard edge) where faces meet at more than `split_angle` degrees."""
     geo = unreal.GeometryScript_MeshEdits
     lists = unreal.GeometryScript_List
     mesh = unreal.DynamicMesh()
@@ -222,7 +223,7 @@ def write_static_mesh(b, path, materials, uv_tile, collision=True):
         unreal.GeometryScript_Materials.set_all_triangle_material_i_ds(mesh, lists.convert_array_to_index_list(b.slots))
     split = unreal.GeometryScriptSplitNormalsOptions()
     split.set_editor_property('split_by_opening_angle', True)
-    split.set_editor_property('opening_angle_deg', 40.0)
+    split.set_editor_property('opening_angle_deg', split_angle)
     unreal.GeometryScript_Normals.compute_split_normals(mesh, split, unreal.GeometryScriptCalculateNormalsOptions())
     asset = unreal.load_asset(path)
     if asset:

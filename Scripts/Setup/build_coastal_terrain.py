@@ -6,7 +6,7 @@ editor after the ground changes), outside Play with no unsaved maps:
 
 The island is generated from the shapes below, not painted: a sand island with a wet shoreline,
 low dunes and two hills to the west, a basin for the freshwater pond, the islet to the
-north-east, and a sandy shelf that falls away to deep water. Animated surf washes up both beaches. The beach spawn, dock landing and
+north-east, a second, smaller island out to the south-west (owner, October 15), and a sandy shelf that falls away to deep water. Animated surf washes up both beaches. The beach spawn, dock landing and
 sloop keep their places; the spawn is lifted onto the new ground and the dock posts reach the seabed.
 The deep floor stays at the owner's 500 m beyond the terrain's edge. All heights are tuning.
 """
@@ -31,6 +31,9 @@ root = Path(unreal.Paths.project_dir()).resolve()
 # Shorelines: centre, radii and how wavy the coast is.
 MAIN_SHORE = (-800, -100, 5100, 4100, 0.03)
 ISLET_SHORE = (9500, 2600, 1800, 1450, 0.05)
+# The second island (owner, October 15): smaller, about 125 m out to the south-west across open water, with a
+# rocky crown and a wooded saddle.
+SECOND_SHORE = (-15000, -13000, 2800, 2200, 0.06)
 
 
 def edge_radius(angle, rx, ry, wobble):
@@ -86,7 +89,10 @@ def height(x, y):
     # North-east islet.
     di = radial_distance(x, y, *ISLET_SHORE[:4], wobble=ISLET_SHORE[4])
     islet = seabed(di) + ripple if di > 0 else land(-di) + bump(x, y, 9400, 2700, 900, 250)
-    return max(main, islet)
+    ds = radial_distance(x, y, *SECOND_SHORE[:4], wobble=SECOND_SHORE[4])
+    second = seabed(ds) + ripple if ds > 0 else (land(-ds) + bump(x, y, -15800, -13600, 1100, 520)
+                                                 + bump(x, y, -14000, -12300, 900, 220))
+    return max(main, islet, second)
 
 
 def make_material():
@@ -262,7 +268,7 @@ assert level.load_level(MAP)
 placed = actors.get_all_level_actors()
 
 # Old blockout ground and the previous terrain, if this ran before.
-SURF = ['Main island surf', 'Islet surf']
+SURF = ['Main island surf', 'Islet surf', 'Second island surf']
 retired = ['Main beach', 'Distant islet beach', 'Island interior', 'Distant islet interior', 'Freshwater basin rim', LABEL] + SURF
 removed = []
 for actor in placed:
@@ -294,7 +300,7 @@ terrain.set_actor_label(LABEL)
 terrain.set_folder_path('Coast/Terrain')
 terrain.static_mesh_component.set_static_mesh(terrain_mesh)
 surf_material = make_swash_material()
-for label, shore in zip(SURF, (MAIN_SHORE, ISLET_SHORE)):
+for label, shore in zip(SURF, (MAIN_SHORE, ISLET_SHORE, SECOND_SHORE)):
     build_swash(label, shore, surf_material)
 
 # Keep the fixed places on the new ground.
@@ -312,7 +318,7 @@ for post in [a for a in actors.get_all_level_actors() if a.get_actor_label() == 
     post.set_actor_scale3d(unreal.Vector(s.x, s.y, (deck_bottom - bottom) / 100))
 report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
     'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
-    'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0), 'islet_top': (9400, 2700)}.items()}
+    'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0), 'islet_top': (9400, 2700), 'second_island_top': (-15800, -13600)}.items()}
 
 # The ocean learns the ground's shape (shallows, shoreline foam, waves easing onto the beach), then a rendering
 # editor rebuilds it against the new ground; headless runs leave it hidden.

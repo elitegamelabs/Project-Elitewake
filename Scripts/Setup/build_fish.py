@@ -63,7 +63,7 @@ PLACEMENT = {'MantaRay': (3, 250, 3500), 'Manatee': (3, 180, 1500), 'GreatWhiteS
 # Freshwater kinds in the island's pond (build_freshwater_pond.py): how many of each.
 POND_FISH = {'Bass': 3, 'Catfish': 2, 'Piranha': 2}
 PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 2350.0)]   # spawn, dock landing, moorings
-SEARCH = ((-13000.0, 17000.0), (-12000.0, 13000.0))   # within reach of the island and the islet, x and y ranges
+SEARCH = ((-20000.0, 17000.0), (-18000.0, 13000.0))   # within reach of the islands, x and y ranges
 
 
 def import_texture(name, source):
@@ -117,13 +117,21 @@ def swim_material():
 
 
 def creature_mesh(name, flat, material):
-    """The inflated body from make_fish_models.py: nose toward +X, up +Z; a ray lies flat, wings along Y."""
+    """The body from make_fish_models.py, a round trunk inside the inflated fins: nose toward +X, up +Z; a ray lies
+    flat, wings along Y."""
     data = json.loads((ART / f'{name}-v1.mesh.json').read_text(encoding='utf-8'))
     b = Builder()
     for (x, y, z), uv in zip(data['verts'], data['uvs']):
         b.vertex((x, -z, y) if flat else (x, y, z), uv=uv)
     for a, c, d, side in data['tris']:
         b.tri(a, c, d, (0, 0, side) if flat else (0, side, 0))
+    # The round trunk (make_fish_models.py), each triangle facing its own way out.
+    trunk = data.get('trunk', {'verts': []})
+    base = len(b.verts)
+    for (x, y, z), uv in zip(trunk['verts'], trunk.get('uvs', [])):
+        b.vertex((x, y, z), uv=uv)
+    for a, c, d, out in trunk.get('tris', []):
+        b.tri(base + a, base + c, base + d, tuple(out))
     return write_static_mesh(b, f'{FOLDER}/SM_{name}_v1', [material], 100.0, collision=False), data
 
 

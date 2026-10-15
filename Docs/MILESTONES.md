@@ -17,7 +17,11 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Fish harvesting: strike with anything; carry the body ashore; harvest it on land for 2 to 5 fish meat (6 to 10 for sharks, the manatee and bigger creatures) | ✅ `a1143cf` |
 | Escape OPTIONS menu: SAVE GAME (single player) and MAIN MENU back to the ELITEWAKE title; Single Player resumes the saved survivor | ✅ `dfbdc22` |
 | The sloop back off the island beach (owner, October 15), helm, sails, cannon and shot in its hold | ✅ `b148160` |
-| Island rock formations rebuilt to look natural | ⏳ |
+| A second, smaller island about 125 m south-west across open water (owner, October 15) | ✅ `PENDING` |
+| More trees and rock in different sizes and colours; rock no longer low-poly: 68 palms (0.7 to 1.35 scale), 31 Maravai broadleaf hardwoods with per-tree leaf shades, 67 rocks in eight shapes and four stones (granite, sandstone, basalt, limestone) with shader-detailed surfaces, across all three islands | ✅ `PENDING` |
+| Sea creatures made 3D: a round trunk lofted inside each creature's fins (owner: they were "hilariously 2D") | ✅ `PENDING` |
+| Land animals on both islands from the owner's photos (October 15): American alligator, flamingo, brown pelican, cottonmouth (water moccasin), tortoise, squirrel monkey, as 3D models that move | ⏳ |
+| Island rock formations rebuilt to look natural | ✅ `PENDING` (with the rock rework above) |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
 ## M0 — Foundations ✅
