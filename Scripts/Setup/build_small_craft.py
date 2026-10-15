@@ -27,7 +27,7 @@ from ship_hull import plank_tone  # noqa: E402
 FOLDER = '/Game/Elitewake/World/Ships'
 SHIPS = '/Game/Elitewake/Ships'
 ITEMS = '/Game/Elitewake/Items/Ships'
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 UV_TILE = 100.0
 T = unreal.EWShipMountType
 

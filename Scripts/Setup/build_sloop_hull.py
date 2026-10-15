@@ -27,7 +27,7 @@ MESH = '/Game/Elitewake/World/Ships/SM_SloopHull_v2'
 RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Sloop'
 CAPSTAN_HEAD = '/Game/Elitewake/World/Ships/SM_CapstanHead_v1'
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 
 GUNPORT = (-140.0, 48.0, 268.0, 306.0)  # centre x, width, bottom z, top z: in the bulwark
 HULL = Hull(stern_x=-700.0, bow_x=700.0,     # about 14 m overall, ends alike

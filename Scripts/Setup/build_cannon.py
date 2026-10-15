@@ -24,7 +24,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 FOLDER = '/Game/Elitewake/World/Ships'
 ITEMS = '/Game/Elitewake/Items/Testing'
 ICONS = '/Game/Elitewake/UI/ItemIcons'
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 UV_TILE = 120.0
 DECK = -40.0          # the deck, below the mount
 MUZZLE = 150.0

@@ -39,6 +39,9 @@ public:
     EEWEquipmentResult UnequipItem(EEWEquipmentSlot Slot);
     UFUNCTION(BlueprintPure, Category="Equipment")
     UEWItemDefinition* GetEquippedItem(EEWEquipmentSlot Slot) const;
+    /** Authority only: the item in Slot changes state where it is held (a waterskin filled or emptied); nothing
+     *  moves in or out of the inventory. */
+    bool ChangeEquippedState(EEWEquipmentSlot Slot, UEWItemDefinition* NewState);
     UFUNCTION(BlueprintPure, Category="Equipment")
     TArray<FEWEquipmentEntry> GetEquipmentEntries() const { return Entries; }
     UFUNCTION(BlueprintPure, Category="Equipment")

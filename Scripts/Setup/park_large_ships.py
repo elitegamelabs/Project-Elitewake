@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import unreal
 
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 PARKED = ('Schooner', 'Brigantine')
 
 

@@ -6,6 +6,17 @@ Drawn up October 13, 2026 at the owner's request, under the owner's delegation; 
 
 Status: ✅ done · 🔨 in progress · ⏳ next · ⛔ blocked on the owner
 
+## Owner priority, October 14 — core survival on a clean island 🔨
+
+The owner set this ahead of the milestone order: a clean island to play the core survival actions on, then the environment and the world. Boats are out of the island map (they, the cannons and their checks carry on in `/Game/Elitewake/Maps/Test/Lvl_ShipsTest`); the sea creatures stay. The title screen, HUD, compass and the working systems are kept.
+
+| Item | Status |
+|---|---|
+| Island cleaned: boats removed from the island map (kept in the ships test map); the starter supplies are the four core tools | ✅ COMMIT |
+| Hatchet chops trees for Wood; Pickaxe mines rock for Stone; Waterskin fills at fresh water and is drunk; Torch is lit and put out with light and flame; each with its animation | ✅ COMMIT |
+| Island rock formations rebuilt to look natural | ⏳ |
+| Environment and world (M5 terrain and vegetation) | ⏳ |
+
 ## M0 — Foundations ✅
 
 Server-authoritative survivor (movement, stances, swimming, survival needs), inventory, equipment, hotbar, crafting, objectives, Company, private multiplayer with recovery; the coastal map with terrain, ocean, palms, boulders and plants; ships (sloop, raft, dinghy) with fittings, sailing, crew on deck, ladders, anchor, cargo and weight; melee; the Journal guides. See the VERIFICATION table for every check.

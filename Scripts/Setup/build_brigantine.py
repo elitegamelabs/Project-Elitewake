@@ -28,7 +28,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 from ship_hull import Hull, tar_rope  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 MOORING = (7500.0, -4500.0, -65.0)   # south-east of the island, in deep water clear of the other ships
 T = unreal.EWShipMountType
 L, M, S = unreal.EWSailSize.LARGE, unreal.EWSailSize.MEDIUM, unreal.EWSailSize.SMALL

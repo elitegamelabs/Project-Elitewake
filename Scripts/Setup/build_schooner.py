@@ -29,7 +29,7 @@ from ship_hull import Hull, tar_rope  # noqa: E402
 FOLDER = '/Game/Elitewake/World/Ships'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Schooner'
 ITEMS = '/Game/Elitewake/Items/Testing'
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 MOORING = (6400.0, -1500.0, -65.0)   # south of the dock, in deep water and clear of the swimming lane along Y 0
 T = unreal.EWShipMountType
 

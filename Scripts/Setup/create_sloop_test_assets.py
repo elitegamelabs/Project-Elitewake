@@ -92,7 +92,7 @@ assert sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMo
 assert len(sloop.get_editor_property('boarding_points')) == 2
 
 # Place one bare sloop off the coastal dock, floating with its hull bottom HullDraft below the waterline.
-map_path = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+map_path = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 world = unreal.EditorLoadingAndSavingUtils.load_map(map_path)
 existing = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
 placed = False

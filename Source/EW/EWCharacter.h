@@ -22,6 +22,7 @@ class UEWHotbarComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
+class UEWItemDefinition;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -78,6 +79,9 @@ class EW_API AEWCharacter : public ACharacter
 	/** The held item's own light, when it has one (a torch). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UPointLightComponent* HeldLight;
+	/** The held item's flame while it burns (a lit torch). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
+	UStaticMeshComponent* HeldFlame;
 
 	/** Dedicated local first-person camera. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -484,6 +488,32 @@ public:
     void SetAppearance(const FEWAppearance& NewAppearance);
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TObjectPtr<UAnimSequenceBase> HitReactAnimation;
+    /** One-shots for the core tools: drawing a newly equipped item, putting flame to a torch, drinking from a
+     *  waterskin and filling one at fresh water. */
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> EquipAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> IgniteAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> DrinkAnimation;
+    UPROPERTY(EditDefaultsOnly, Category="Tools")
+    TObjectPtr<UAnimSequenceBase> FillAnimation;
+    /** True while the held item burns. */
+    UFUNCTION(BlueprintPure, Category="Tools")
+    bool IsHeldItemLit() const { return bHeldItemLit; }
+    /** True if Left Mouse uses the held item (lights a torch, drinks a waterskin) rather than swinging it. */
+    UFUNCTION(BlueprintPure, Category="Tools")
+    bool HasUsableHeldItem() const;
+    /** Authority: Left Mouse with a usable item in hand. */
+    UFUNCTION(Server, Reliable)
+    void ServerUseHeldItem();
+    /** Authority: the survivor fills the empty waterskin in their hand at fresh water. */
+    bool FillHeldWaterskin();
+    /** The last tool one-shot played on this machine, for the checks. */
+    UFUNCTION(BlueprintPure, Category="Tools")
+    UAnimSequenceBase* GetLastToolAnimation() const { return LastToolAnimation; }
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastToolAnimation(UAnimSequenceBase* Animation);
 
 private:
     /** Shows the main-hand item in the right hand; runs whenever equipment changes, on every machine. */
@@ -493,6 +523,16 @@ private:
     FEWAppearance Appearance;
     UFUNCTION()
     void OnRep_Appearance();
+    UPROPERTY(ReplicatedUsing=OnRep_HeldItemLit)
+    bool bHeldItemLit = false;
+    UFUNCTION()
+    void OnRep_HeldItemLit() { RefreshHeldItem(); }
+    void PlayToolAnimation(UAnimSequenceBase* Animation);
+    UPROPERTY(Transient)
+    TObjectPtr<UAnimSequenceBase> LastToolAnimation;
+    /** The main-hand item last shown, to play the draw when it changes. */
+    TWeakObjectPtr<const UEWItemDefinition> ShownHeldItem;
+    float FlickerTime = 0.f;
     /** Every machine: plays the loop for what the survivor is doing on a ladder, at a helm or at a capstan, or stops it. */
     void UpdateLoopAnimation(float DeltaSeconds);
     TWeakObjectPtr<AEWShip> CapstanShip;

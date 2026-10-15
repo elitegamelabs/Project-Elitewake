@@ -108,6 +108,16 @@ public:
     float HeldLightIntensity = 0.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
     FVector HeldLightOffset = FVector::ZeroVector;
+    /** A held flame drawn at the light while the item burns (a torch's fire). An item with a held light must be
+     *  lit before it gives light. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Held")
+    TSoftObjectPtr<UStaticMesh> HeldFlameMesh;
+    /** Waterskins: the same skin full of fresh water (set on the empty one) and emptied again (set on the full
+     *  one). Filling or drinking swaps one for the other where the skin is held. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Water")
+    TSoftObjectPtr<UEWItemDefinition> FilledVersion;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Water")
+    TSoftObjectPtr<UEWItemDefinition> EmptiedVersion;
 
     /** None means this item is not a ship fitting. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")

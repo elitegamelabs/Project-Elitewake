@@ -20,6 +20,17 @@ bool UEWEquipmentComponent::IsValidSlot(EEWEquipmentSlot Slot)
     return Slot > EEWEquipmentSlot::None && Slot <= EEWEquipmentSlot::OffHand;
 }
 
+bool UEWEquipmentComponent::ChangeEquippedState(EEWEquipmentSlot Slot, UEWItemDefinition* NewState)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !IsValid(NewState) || bTransferInProgress) return false;
+    auto* Entry = Entries.FindByPredicate([Slot](const FEWEquipmentEntry& E) { return E.Slot == Slot; });
+    if (!Entry || !Entry->ItemDefinition || NewState->EquipmentSlot != Slot) return false;
+    Entry->ItemDefinition = NewState;
+    OnEquipmentChanged.Broadcast();
+    GetOwner()->ForceNetUpdate();
+    return true;
+}
+
 UEWItemDefinition* UEWEquipmentComponent::GetEquippedItem(EEWEquipmentSlot Slot) const
 {
     const auto* Entry = Entries.FindByPredicate([Slot](const FEWEquipmentEntry& E) { return E.Slot == Slot; });

@@ -50,6 +50,11 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     HeldLight->SetAttenuationRadius(1200.f);
     HeldLight->SetCastShadows(false);
     HeldLight->SetVisibility(false);
+	HeldFlame = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldFlame"));
+	HeldFlame->SetupAttachment(HeldItem);
+	HeldFlame->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	HeldFlame->SetCastShadow(false);
+	HeldFlame->SetVisibility(false);
 
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -189,14 +194,81 @@ void AEWCharacter::RefreshHeldItem()
     HeldItem->SetStaticMesh(Held);
     HeldItem->SetVisibility(Held != nullptr);
     if (Held) HeldItem->SetRelativeTransform(Item->HeldMeshTransform);
-    const bool bLit = Held && Item->HeldLightIntensity > 0.f;
+    // A torch gives light only while it burns; it is lit with Left Mouse once in hand.
+    const bool bLit = Held && Item->HeldLightIntensity > 0.f && bHeldItemLit;
     HeldLight->SetVisibility(bLit);
+    UStaticMesh* Flame = bLit ? Item->HeldFlameMesh.LoadSynchronous() : nullptr;
+    HeldFlame->SetStaticMesh(Flame);
+    HeldFlame->SetVisibility(Flame != nullptr);
     if (bLit)
     {
         HeldLight->SetIntensityUnits(ELightUnits::Candelas);
         HeldLight->SetIntensity(Item->HeldLightIntensity);
         HeldLight->SetRelativeLocation(Item->HeldLightOffset);
+        HeldFlame->SetRelativeLocation(Item->HeldLightOffset - FVector(0, 0, 6.f));
     }
+    // Drawing a newly equipped item; a different item in hand puts out the old one's flame.
+    if (Item != ShownHeldItem.Get())
+    {
+        // A skin filled or emptied in the hand is the same thing, not a new tool drawn.
+        const UEWItemDefinition* Was = ShownHeldItem.Get();
+        const bool bSameSkin = Was && Item && (Was->FilledVersion.Get() == Item || Was->EmptiedVersion.Get() == Item);
+        if (Item && HasActorBegunPlay() && !bSameSkin) PlayToolAnimation(EquipAnimation);
+        ShownHeldItem = Item;
+        if (HasAuthority() && bHeldItemLit && !(Item && Item->HeldLightIntensity > 0.f)) bHeldItemLit = false;
+    }
+}
+
+bool AEWCharacter::HasUsableHeldItem() const
+{
+    const UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    return Item && (Item->HeldLightIntensity > 0.f || !Item->EmptiedVersion.IsNull() || !Item->FilledVersion.IsNull());
+}
+
+void AEWCharacter::ServerUseHeldItem_Implementation()
+{
+    UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    if (!Item || !SurvivalComponent || SurvivalComponent->GetHealth() <= 0.f || IsValid(HelmShip) || IsValid(GunShip) || IsOnLadder()) return;
+    if (Item->HeldLightIntensity > 0.f)
+    {
+        // Light the torch, or put it out.
+        bHeldItemLit = !bHeldItemLit;
+        RefreshHeldItem();
+        ForceNetUpdate();
+        if (bHeldItemLit) MulticastToolAnimation(IgniteAnimation);
+        return;
+    }
+    if (UEWItemDefinition* Empty = Item->EmptiedVersion.LoadSynchronous())
+    {
+        // A full waterskin is drunk dry: it quenches as drinking at fresh water does (its capacity is open).
+        if (EquipmentComponent->ChangeEquippedState(EEWEquipmentSlot::MainHand, Empty))
+        {
+            SurvivalComponent->SetHydration(100.f);
+            ForceNetUpdate();
+            MulticastToolAnimation(DrinkAnimation);
+        }
+    }
+}
+
+bool AEWCharacter::FillHeldWaterskin()
+{
+    UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    UEWItemDefinition* Full = Item ? Item->FilledVersion.LoadSynchronous() : nullptr;
+    if (!HasAuthority() || !Full || !EquipmentComponent->ChangeEquippedState(EEWEquipmentSlot::MainHand, Full)) return false;
+    MulticastToolAnimation(FillAnimation);
+    return true;
+}
+
+void AEWCharacter::MulticastToolAnimation_Implementation(UAnimSequenceBase* Animation)
+{
+    PlayToolAnimation(Animation);
+}
+
+void AEWCharacter::PlayToolAnimation(UAnimSequenceBase* Animation)
+{
+    if (!Animation) return;
+    LastToolAnimation = Animation;
+    PlayOneShot(Animation);
 }
 
 void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
@@ -270,6 +342,15 @@ void AEWCharacter::Tick(float DeltaSeconds)
     }
     UpdateLoopAnimation(DeltaSeconds);
     ApplyFacing();
+    if (HeldLight->IsVisible())
+    {
+        // A flame's light wavers: two slow waves and a quicker one, never below most of its strength.
+        FlickerTime += DeltaSeconds;
+        const UEWItemDefinition* Lit = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+        const float Base = Lit ? Lit->HeldLightIntensity : HeldLight->Intensity;
+        const float Waver = .08f * FMath::Sin(FlickerTime * 7.3f) + .06f * FMath::Sin(FlickerTime * 13.1f + 1.7f) + .04f * FMath::Sin(FlickerTime * 23.f);
+        HeldLight->SetIntensity(Base * (.9f + Waver));
+    }
     if (bIsFirstPerson && IsLocallyControlled()) UpdateFirstPersonCamera(DeltaSeconds);
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
@@ -361,6 +442,7 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
     DOREPLIFETIME(AEWCharacter, HelmShip);
     DOREPLIFETIME(AEWCharacter, GunShip);
     DOREPLIFETIME(AEWCharacter, GunMount);
+    DOREPLIFETIME(AEWCharacter, bHeldItemLit);
     DOREPLIFETIME(AEWCharacter, Ladder);
     DOREPLIFETIME(AEWCharacter, Appearance);
     DOREPLIFETIME_CONDITION(AEWCharacter, bFacingView, COND_SkipOwner);

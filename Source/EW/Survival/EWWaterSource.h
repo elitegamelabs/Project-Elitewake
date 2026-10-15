@@ -29,6 +29,8 @@ public:
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Survivor) const override;
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override;
+    /** True if the survivor holds an empty waterskin, which this water fills. */
+    static bool HoldsEmptyWaterskin(const AEWCharacter* Survivor);
 private:
     bool bDrinking = false;
 };

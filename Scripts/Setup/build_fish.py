@@ -24,7 +24,7 @@ from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: 
 from build_coastal_flora import Ground, SEA  # noqa: E402
 from coastal_layout import POND, POND_RADIUS, POND_SURFACE  # noqa: E402
 
-MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'  # sea life stays on the island (owner, October 14)
 FOLDER = '/Game/Elitewake/Wildlife/Fish'
 ITEM_FOLDER = '/Game/Elitewake/Items/Food'
 LEVEL_FOLDER = 'Coast/Wildlife'

@@ -19,7 +19,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 
 FOLDER = '/Game/Elitewake/World/Tools'
 ITEMS = '/Game/Elitewake/Items/Testing'
-TORCH_LIGHT = 12.0   # candelas at the torch head (tuning)
+TORCH_LIGHT = 40.0   # candelas at the torch head (tuning; build_core_tools.py uses the same)
 # The grip in the right hand (hand_r, whose X runs up the forearm, Y to the survivor's left and Z forward with the
 # arm at rest): the haft leaves the fist up and forward at 45 degrees, the working edge facing forward (tuning, set
 # by looking at the survivor holding each tool).
