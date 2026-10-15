@@ -52,8 +52,8 @@ taking a task.
 - Snowfall and the next regions (Jungle, Plains, Swamp islands): `Scripts/Setup/build_coastal_terrain.py`,
   `build_coastal_flora.py`, `build_coastal_rocks.py`, `build_regions.py`, `Source/EW/World/*`,
   `Source/EW/EWSurvivalComponent.*`, `Source/EW/EWSurvivalWidget.*`.
-- Audio with the owner's Scenario account (a separate Claude session): `Art/Audio/`, `/Game/Elitewake/Audio`,
-  sound hooks in `Source/EW/EWCharacter.cpp`.
+- Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
+  still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`.
 
 ---
 
