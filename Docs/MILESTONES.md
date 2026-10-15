@@ -108,6 +108,8 @@ Ten selectable night-sky constellations with ten skills each, including the upwa
 
 The [October 14 checklist](REMAINING_WORK_2026-10-14.md) supplements every milestone with outstanding art integration, menus, prologue, ship fittings/combat, world/resources/animals, planting/climate/traversal, persistence, multiplayer, characters, progression and Company work. M10 adds the night-sky ten-by-ten constellation system and multiplayer-only Company claim/contest flags; NPC Port islands remain unclaimable. Earlier verified foundations are retained. No new feature is marked done by publishing source art or this list. The [art catalog](../Art/README.md) distinguishes reviewed references, drafts and pending models.
 
+Unresolved owner decisions across those systems are consolidated in [Open Questions — October 15](OPEN_QUESTIONS_2026-10-15.md). The register includes source locations, current code values where verified, and dependent work; it does not choose answers.
+
 ### October 14 owner handoff: world terrain for Claude
 
 Terrain mesh construction is assigned to Claude. The five-region layout, substantial islands, long sailing distances, varied cliffs, one differently located cave system per island, regional terrain, solid island/seabed collision, selected 500-meter depths, and vegetation growth-stage mesh requirements are listed in [the world mesh milestone handoff](MILESTONE_WORLD_MESH_HANDOFF_2026-10-14.md). That checklist supplements M5 and supersedes its older four-region geography. It remains pending implementation and Play verification. Mode-specific rules are in [Single Player](SINGLE_PLAYER_RULES.md) and [Multiplayer](MULTIPLAYER_RULES.md).
