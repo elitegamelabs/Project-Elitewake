@@ -49,9 +49,13 @@ taking a task.
 
 ## Claude is working on (do not edit these)
 
-- Snowfall and the next regions (Jungle, Plains, Swamp islands): `Scripts/Setup/build_coastal_terrain.py`,
-  `build_coastal_flora.py`, `build_coastal_rocks.py`, `build_regions.py`, `Source/EW/World/*`,
-  `Source/EW/EWSurvivalComponent.*`, `Source/EW/EWSurvivalWidget.*`.
+- **The five-region world rebuild** (owner direction of October 15: Plains centre with the starter island, Winter
+  north, Swamp south, Desert east, Jungle west, at least five islands each, 800–2,000 m sea gaps). Claude owns the
+  island layout, terrain, seabed, ocean extent, biome dressing and region actors: `Scripts/Setup/world_layout.py`,
+  `build_coastal_terrain.py`, `build_coastal_flora.py`, `build_coastal_rocks.py`, `build_regions.py`, `build_fish.py`
+  placement, `build_animals.py` **placement** (ChatGPT may keep editing animal *models* for T6/T7),
+  `Source/EW/World/*`, `Source/EW/EWSurvivalComponent.*`, `Source/EW/EWSurvivalWidget.*`, and the map
+  `Lvl_CoastalPlayground` itself. Report: `Docs/REPORTS/`.
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
   still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`.
 
@@ -209,3 +213,37 @@ taking a task.
   image status is labeled final. Python syntax compilation and JSON assertions passed. Git-wide checks hit the
   environment's Git LFS filter startup error on concurrent audio files; the files changed for this task were
   individually reviewed and checked.
+
+### T9. Map zoom and the whole-world overview — OPEN
+- **Why:** owner requirements in `Design/MAP_ZOOM_AND_PLAYER_LOCATION_REQUIREMENTS_2026-10-15.md` (read it fully).
+  The current map (`Source/EW/EWMapWidget.*`, opened with M in `AEWPlayerController::SetMapOpen`) shows a fixed
+  scene capture around the survivor.
+- **Do:** mouse wheel and controller RT/LT zoom while the map is open only (Enhanced Input, a map-only mapping
+  context added and removed with the map; RT/LT must not fire weapons while it is open); smooth zoom between a local
+  view and a world overview that fits every island in a square; a distinct player marker that tracks position and
+  facing; subtle animated water in the overview; island outlines and labels stay legible. **Data source for the
+  overview:** every island has an `AEWClimateRegion` actor (centre = actor location, half-sizes `Radii`, `Region`);
+  Claude is rebuilding the world into 25+ islands with these, so draw from them rather than from hard-coded
+  coordinates, and do not edit `Source/EW/World/*` (ask in this file if you need a field added). Do not reveal
+  undiscovered places beyond what the doc allows (no fog of war exists yet: record that as an open question rather
+  than inventing rules). The map must not pause the game.
+- **Done when:** a Play check covers wheel and RT/LT zoom, the min/max limits, marker accuracy while walking, and
+  that the overview contains every region actor; screenshots at both ends of the zoom range.
+
+### T10. "Village" becomes "Port" — OPEN
+- **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.
+- **Do:** replace Village/Villages (and "Free Port") with Port/Ports in current authoritative docs, player-facing
+  text (search `Source/` for NSLOCTEXT/FText strings and `Scripts/Setup/` for display names and descriptions),
+  journal and onboarding text. Leave `Docs/ARCHIVE/` as history. **Do not rename C++ symbols or Unreal assets**
+  without checking references and save compatibility; list any that would need renaming as a follow-up instead.
+- **Done when:** `git grep -i village` outside the archive only shows deliberate historical mentions, the build
+  passes, and the journal check (`verify_journal_play.py`) still passes if journal text changed.
+
+### T11. Metric units audit — OPEN
+- **Why:** owner direction in `Docs/METRIC_WORLD_SCALE_AND_ISLAND_SPACING_2026-10-15.md`: player-facing distances
+  in metres.
+- **Do:** search player-facing text and UI (`Source/EW/**/*Widget*.cpp`, journal text, item descriptions in
+  `Scripts/Setup/*.py`) for feet, yards, miles, knots or unitless distances shown to players; convert to metres
+  (cm internally stays as Unreal's unit). Record findings and changes in `Docs/VERIFICATION.md`.
+- **Done when:** no imperial unit is shown to players; affected checks still pass.
+
