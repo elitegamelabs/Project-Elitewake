@@ -410,6 +410,7 @@ def build_dinghy(timber, sail_mi):
         'anchor_point': unreal.Vector(135, 0, D_FLOOR + 25), 'cargo_hatch_point': unreal.Vector(-95, 0, D_FLOOR + 22),
         'boarding_points': [unreal.Vector(-20, s * (D_BEAM + 35), -10) for s in (-1, 1)],
         'hull_health': 300.0, 'cargo_slots': 6, 'weight_capacity': 250.0, 'top_speed': 450.0, 'turn_rate': 45.0, 'crew_capacity': 2,
+        'cannot_sink': True,   # design reference: ordinary damage cannot sink the dinghy
         'mounts': [mount('Helm', T.HELM, helm_at),
                    mount('Sail', T.SAIL, sail_at, unreal.EWSailSize.SMALL, (sail, furled, (0, 0, D_BOOM_Z - sail_at[2])))],
     }, helm)

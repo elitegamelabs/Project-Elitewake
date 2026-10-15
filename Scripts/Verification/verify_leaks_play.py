@@ -6,7 +6,7 @@ place holes above and below the waterline exactly.
   1. The moored sloop starts dry with no leaks, and it has a bailing bucket on deck.
   2. A hole below the waterline leaks: water rises at 6 kg a second (LeakPerHole) on server and client.
   3. A hole above the waterline does not leak.
-  4. With many holes below the waterline she fills: the water weighs on her like cargo, so she settles lower and
+  4. With seven more holes below the waterline (nine in all; ten would destroy her hull and sink her) she fills: the water weighs on her like cargo, so she settles lower and
      her load slows her (a lower speed factor), on the client too.
   5. The client's survivor, aboard, is offered "Bail water" at the bucket and holds Interact there: each stroke
      throws 25 kg over the side.
@@ -96,8 +96,9 @@ def not_leaking():
 
 
 def many():
-    for k in range(9):
-        hole(waterline() - 30, along=-300 + 70 * k)
+    # Seven more: nine holes in all cost 900 of her 1,000 hull health, so she stays afloat (ten would sink her).
+    for k in range(7):
+        hole(waterline() - 30, along=-300 + 80 * k)
     state['memo'].update(t=time.monotonic(), factor0=ship.get_load_speed_factor())
 
 
@@ -162,7 +163,7 @@ STEPS = [
     ('The sloop starts dry with no leaks, a bailing bucket on deck', lambda: None, dry, 4),
     ('A hole below the waterline lets water in at 6 kg/s, on server and client', below, leaking, 10),
     ('A hole above the waterline does not leak', above, not_leaking, 4),
-    ('Holed nine more times below the waterline she fills, settles and slows (client too)', many, filled, 40),
+    ('Holed seven more times below the waterline she fills, settles and slows (client too)', many, filled, 40),
     ('Aboard, holding Interact at the bucket throws 25 kg over the side a stroke, three strokes', board, bailed, 20),
 ]
 

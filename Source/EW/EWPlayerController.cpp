@@ -2,6 +2,7 @@
 
 
 #include "EWPlayerController.h"
+#include "Ships/EWWreckCrate.h"
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
 #include "EWObjectiveComponent.h"
@@ -558,10 +559,9 @@ void AEWPlayerController::ClientOpenContainer_Implementation(AActor* Container)
 void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity)
 {
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
-    auto* Ship = Cast<AEWShip>(Container);
-    if (!Survivor || !Ship || Ship->GetWorld() != GetWorld() || !Ship->CanAccessCargo(Survivor)) return;
+    if (!Survivor || !IsValid(Container) || Container->GetWorld() != GetWorld() || !FEWContainerAccess::CanAccess(Container, Survivor)) return;
     UEWInventoryComponent* Carried = Survivor->GetInventoryComponent();
-    UEWInventoryComponent* Hold = Ship->GetCargo();
+    UEWInventoryComponent* Hold = FEWContainerAccess::Inventory(Container);
     if (!Carried || !Hold) return;
     if (bToContainer) Carried->TransferEntryTo(Hold, EntryIndex, Quantity);
     else Hold->TransferEntryTo(Carried, EntryIndex, Quantity);

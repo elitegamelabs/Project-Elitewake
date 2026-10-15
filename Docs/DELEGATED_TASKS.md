@@ -390,3 +390,14 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `ship_geometry.Builder` and the timber material) and saved at that path. Reference art is welcome but not required.
 - **Done when:** `verify_leaks_play.py` passes and a screenshot of the sloop's deck shows the bucket.
 
+### T22. A modelled wreck crate, and a native test for fill-sinking — OPEN
+- **Why:** sinking ships leave `AEWWreckCrate`s (`Source/EW/Ships/EWWreckCrate.*`), drawn as stand-in cubes until
+  `/Game/Elitewake/World/Ships/SM_WreckCrate_v1` exists (loaded automatically, origin at its centre, about 70 x 70 x
+  55 cm). A ship also sinks when she holds 1.5 x her capacity in water; only the hull-destroyed case has a Play check.
+- **Do:** (a) model the crate: weathered planks, rope lashings, a little weed; a setup script like the other ship
+  props. (b) In your T20 test file (or a new `EWShipSinkingTests.cpp`), a native test that fills a spawned ship's
+  water to 1.5 x capacity (you may need `UpdateLeaks` with holes below the waterline over simulated time) and checks
+  `IsSinking()`, that a definition with `bCannotSink` never sinks, and that `StartSinking` moves the hold into crates
+  of six stacks. Do not change gameplay code; ask here if something needs exposing.
+- **Done when:** `verify_sinking_play.py` passes with the modelled crate (screenshot), and the native run passes.
+

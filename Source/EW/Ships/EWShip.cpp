@@ -20,6 +20,7 @@
 #include "Net/UnrealNetwork.h"
 #include "WaterBodyActor.h"
 #include "Ships/EWCannonBall.h"
+#include "Ships/EWWreckCrate.h"
 
 namespace
 {
@@ -123,6 +124,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
     DOREPLIFETIME(AEWShip, WaterAboard);
+    DOREPLIFETIME(AEWShip, bSinking);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
 }
 
@@ -552,9 +554,48 @@ float AEWShip::GetSettle() const
     return MaxSettle * FMath::Clamp(WaterAboard / FMath::Max(GetWeightCapacity(), 1.f), 0.f, 1.f);
 }
 
+void AEWShip::StartSinking()
+{
+    if (!HasAuthority() || bSinking) return;
+    bSinking = true;
+    SinkingFor = 0.f;
+    // Everyone at a station lets go; the crew are left standing on a deck that is going under.
+    if (IsValid(Helmsman)) LeaveHelm(Helmsman, true);
+    for (const FEWCannonState& Cannon : Cannons)
+        if (AEWCharacter* Gunner = GetCannonGunner(Cannon.MountId)) LeaveCannon(Gunner, true);
+    SetCapstanWorker(nullptr);
+    Rudder = 0.f;
+    SailTrimDirection = 0;
+    // Her hold and her fittings float up in crates round where she went down (DECIDED, delegated: fittings too).
+    TArray<FEWInventoryEntry> Goods = Cargo ? Cargo->GetInventoryEntries() : TArray<FEWInventoryEntry>();
+    for (const FEWInstalledFitting& Fitting : Fittings)
+        if (Fitting.Item) { FEWInventoryEntry Entry; Entry.ItemDefinition = Fitting.Item; Entry.Quantity = 1; Goods.Add(Entry); }
+    const FVector Middle = GetActorLocation();
+    for (int32 First = 0, Crate = 0; First < Goods.Num(); First += AEWWreckCrate::SlotsPerCrate, ++Crate)
+    {
+        const float Angle = Crate * 2.39996f;
+        const FVector Where(Middle.X + FMath::Cos(Angle) * (250.f + 120.f * Crate), Middle.Y + FMath::Sin(Angle) * (250.f + 120.f * Crate), SurfaceZ);
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Wreck = GetWorld()->SpawnActor<AEWWreckCrate>(Where, FRotator(0, FMath::RadiansToDegrees(Angle), 0), Params);
+        if (!Wreck) continue;
+        Wreck->SurfaceZ = SurfaceZ;
+        Wreck->GetContents()->SetMaxSlots(AEWWreckCrate::SlotsPerCrate);
+        for (int32 i = First; i < FMath::Min(First + AEWWreckCrate::SlotsPerCrate, Goods.Num()); ++i)
+            Wreck->GetContents()->AddItem(Goods[i].ItemDefinition, Goods[i].Quantity);
+    }
+    if (Cargo) for (const FEWInventoryEntry& Entry : Cargo->GetInventoryEntries()) Cargo->RemoveItem(Entry.ItemDefinition, Entry.Quantity);
+    ForceNetUpdate();
+}
+
 void AEWShip::UpdateLeaks(float DeltaSeconds)
 {
     if (!HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f) return;
+    // A destroyed hull, or one full of water, goes down (never a ship that cannot sink).
+    if (!bSinking && Definition && !Definition->bCannotSink
+        && ((HullHealth == 0.f) || WaterAboard >= GetWeightCapacity() * 1.5f - KINDA_SMALL_NUMBER))
+        StartSinking();
+    if (bSinking) return;
     const int32 Leaks = GetLeakCount();
     if (!Leaks) return;
     // Until sinking exists (M2), the water stops rising once she holds half again her capacity.
@@ -748,7 +789,7 @@ EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
 
 bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
 {
-    if (bChangingFittings || !CanModifyFittings(Character)) return false;
+    if (bSinking || bChangingFittings || !CanModifyFittings(Character)) return false;
     if (Helmsman == Character) return true;  // Leave the helm.
     if (IsGunnerHere(Character)) return true;  // Leave the cannon.
     if (IsAimingAtAnchor(Character)) return true;
@@ -1323,6 +1364,19 @@ void AEWShip::GetSwayAt(float Time, float& OutRoll, float& OutPitch, float& OutR
 
 void AEWShip::StepSimulation(float Step)
 {
+    if (bSinking)
+    {
+        // Going down by the bow, slowly at first, then faster; gone once she is well under.
+        SinkingFor += Step;
+        Speed = 0.f;
+        const float F = FMath::Clamp(SinkingFor / SinkSeconds, 0.f, 1.f);
+        if (!bHasRestZ) { RestZ = GetActorLocation().Z; bHasRestZ = true; }
+        FVector Here = GetActorLocation();
+        Here.Z = RestZ - GetSettle() - SinkDepth * F * F;
+        SetActorLocationAndRotation(Here, FRotator(-SinkPitch * FMath::Min(1.f, F * 2.f), GetActorRotation().Yaw, 6.f * F), false, nullptr, ETeleportType::None);
+        if (F >= 1.f && HasAuthority()) Destroy();
+        return;
+    }
     if (SailTrimDirection != 0 && HasTrimmableSails())
         SailAngle = FMath::Clamp(SailAngle + SailTrimDirection * SailTrimRate * Step, -MaxSailAngle, MaxSailAngle);
     // The rudder swings over rather than snapping, so a ship eases into and out of a turn.

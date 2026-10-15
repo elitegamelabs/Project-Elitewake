@@ -356,6 +356,13 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Hull")
     float GetSettle() const;
     bool IsAimingAtBucket(const AEWCharacter* Character) const;
+    /** Going down: her hull was destroyed or she filled with water. Nothing aboard can be used. */
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    bool IsSinking() const { return bSinking; }
+    /** Tuning: how long she takes to go under, s; how far down she goes before she is gone, cm; how far her bow dips. */
+    static constexpr float SinkSeconds = 30.f;
+    static constexpr float SinkDepth = 1800.f;
+    static constexpr float SinkPitch = 25.f;
     /** The bailing bucket on deck, in the world. */
     UFUNCTION(BlueprintPure, Category="Ship|Hull")
     FVector GetBucketWorld() const;
@@ -402,6 +409,11 @@ private:
     TArray<FEWHullHole> Holes;
     UPROPERTY(Replicated)
     float WaterAboard = 0.f;
+    UPROPERTY(Replicated)
+    bool bSinking = false;
+    float SinkingFor = 0.f;
+    /** Server: she goes down; her hold and fittings float up in wreck crates. */
+    void StartSinking();
     /** Server: let water in through the holes below the waterline. */
     void UpdateLeaks(float DeltaSeconds);
     UPROPERTY(Transient)

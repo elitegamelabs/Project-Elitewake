@@ -88,6 +88,9 @@ public:
      *  forward and back set the stroke (resting, easy, hard) instead of the sails. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing")
     bool bPaddled = false;
+    /** Design reference: ordinary damage cannot sink the dinghy. Holes and water still slow it; it never goes down. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Hull")
+    bool bCannotSink = false;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sailing", meta=(ClampMin="0", Units="deg/s"))
     float TurnRate = 30.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship", meta=(ClampMin="1"))

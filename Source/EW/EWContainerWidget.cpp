@@ -1,4 +1,5 @@
 #include "EWContainerWidget.h"
+#include "Ships/EWWreckCrate.h"
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
 #include "EWInventoryWidget.h"
@@ -104,17 +105,15 @@ UEWInventoryComponent* UEWContainerWidget::CarriedInventory() const
 
 UEWInventoryComponent* UEWContainerWidget::HoldInventory() const
 {
-    const auto* Ship = Cast<AEWShip>(Container.Get());
-    return Ship ? Ship->GetCargo() : nullptr;
+    return FEWContainerAccess::Inventory(Container.Get());
 }
 
 void UEWContainerWidget::NativeTick(const FGeometry& Geometry, float Delta)
 {
     Super::NativeTick(Geometry, Delta);
-    // Close if the hold is gone or out of reach for a moment (the ship sailed off, or the survivor left).
-    const auto* Ship = Cast<AEWShip>(Container.Get());
+    // Close if the hold or crate is gone or out of reach for a moment (the ship sailed off, or the survivor left).
     const auto* Survivor = GetOwningPlayer() ? Cast<AEWCharacter>(GetOwningPlayer()->GetPawn()) : nullptr;
-    OutOfReachSeconds = Ship && Survivor && Ship->CanAccessCargo(Survivor) ? 0.f : OutOfReachSeconds + Delta;
+    OutOfReachSeconds = Survivor && FEWContainerAccess::CanAccess(Container.Get(), Survivor) ? 0.f : OutOfReachSeconds + Delta;
     if (OutOfReachSeconds > 1.f) { Close(); return; }
     RefreshRemaining -= Delta;
     if (RefreshRemaining <= 0.f) { RefreshRemaining = .2f; Refresh(); }
