@@ -4,6 +4,8 @@
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
+#include "EWSound.h"
+#include "Sound/SoundBase.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -65,6 +67,7 @@ void AEWAnimal::BeginPlay()
     LastShown = GetActorLocation();
     if (HasAuthority() && Definition) Health = Definition->MaxHealth;
     RestSeconds = FMath::FRandRange(0.f, 4.f);
+    if (Definition) CallSeconds = FMath::FRandRange(0.f, Definition->CallInterval.Y);
     OnRep_State();
 }
 
@@ -181,6 +184,11 @@ void AEWAnimal::Think(float DeltaSeconds)
     }
     AttackCooldown -= DeltaSeconds;
     FleeSeconds -= DeltaSeconds;
+    if (Definition->CallInterval.Y > 0.f && (CallSeconds -= DeltaSeconds) <= 0.f)
+    {
+        CallSeconds = FMath::FRandRange(Definition->CallInterval.X, Definition->CallInterval.Y);
+        Call();
+    }
     if (Definition->bAggressive)
     {
         AEWCharacter* Target = Quarry.Get();
@@ -195,6 +203,8 @@ void AEWAnimal::Think(float DeltaSeconds)
                 if (Distance < Best && IsAshore(*It)) { Best = Distance; Target = *It; }
             }
         }
+        // Going for someone, it warns them first.
+        if (Target && !Quarry.IsValid()) Call();
         Quarry = Target;
         if (Target)
         {
@@ -261,6 +271,7 @@ bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
     if (!HasAuthority() || bDead || !Definition || Damage <= 0.f) return false;
     Health = FMath::Max(0.f, Health - Damage);
     MulticastFlinch();
+    Call();
     if (Health <= 0.f) Die();
     else if (Definition->bAggressive) Quarry = Striker;
     else
@@ -275,6 +286,21 @@ bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
 void AEWAnimal::MulticastFlinch_Implementation()
 {
     FlinchSeconds = .35f;
+}
+
+void AEWAnimal::Call()
+{
+    const double Now = GetWorld()->GetTimeSeconds();
+    if (!HasAuthority() || !Definition || Definition->Calls.IsEmpty() || Now - LastCallTime < 3.0) return;
+    LastCallTime = Now;
+    MulticastCall();
+}
+
+void AEWAnimal::MulticastCall_Implementation()
+{
+    if (!Definition || Definition->Calls.IsEmpty()) return;
+    USoundBase* Sound = Definition->Calls[FMath::RandRange(0, Definition->Calls.Num() - 1)].LoadSynchronous();
+    UEWSoundLibrary::PlayAssetAt(this, Sound, GetActorLocation() + FVector(0, 0, Definition->Size.Y * .5f), 1.f, FMath::FRandRange(.95f, 1.05f));
 }
 
 void AEWAnimal::Die()

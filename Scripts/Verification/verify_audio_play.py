@@ -1,0 +1,295 @@
+"""Client acceptance for the first sounds (draft audio from the owner's Scenario account, October 15).
+
+Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client. Run unattended with
+run_play_check.py. Sounds are counted where each machine starts them (UEWSoundLibrary), so this proves which sound
+starts on which machine and when, not how it sounds: listening is the owner's. Through ordinary keys, the client:
+  1. stands ashore: the soundscape plays the surf loop at the shore level and the wind loop silent;
+  2. presses E at a fiber plant: the rustle starts on both machines, the pickup only on the client;
+  3. with the Hatchet at a palm, Left Mouse: the chop starts at the blow's contact on both machines;
+  4. with the Pickaxe at a boulder: the pickaxe strike; 5. with the Hatchet at the boulder: the glancing clink;
+  6. holds W on the sand: sand footsteps on both machines;
+  7. walks up to the alligator: it hisses as it comes for the survivor, on both machines;
+  8. stands on the Winter island: the wind rises, the surf falls, and W gives snow footsteps;
+  9. stands near a pelican, then a flamingo: each calls on its own, heard on both machines.
+Writes Saved/AudioPlayResult.json.
+"""
+import json
+import time
+from pathlib import Path
+import unreal
+
+lib = unreal.EWEditorVerificationLibrary
+snd = unreal.EWSoundLibrary
+RESULT = Path(unreal.Paths.project_saved_dir(), 'AudioPlayResult.json')
+T = '/Game/Elitewake/Items/Testing'
+hatchet, pickaxe = (unreal.load_asset(f'{T}/DA_Test{n}') for n in ('WoodenAxe', 'WoodenPickaxe'))
+worlds = lib.get_play_worlds()
+assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
+pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
+client = next(c for c in pcs if not c.has_authority())
+server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
+client_world = worlds[pcs.index(client)]
+pawn = client.get_controlled_pawn()
+scape = client.get_soundscape_component()
+
+
+def player_id(p):
+    return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'), ['PlayerId']))['PlayerId']
+
+
+owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
+SPAWN = unreal.Vector(150, 0, 0)
+near = lambda actors: sorted(actors, key=lambda t: (t.get_actor_location() - SPAWN).length())   # noqa: E731
+palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Veyran Palm')])[0]
+rock = near(list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable)))[0]
+fiber_plant = near([p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHandGatherable) if p.get_actor_label().startswith('Fiber Plant')])[0]
+animals = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWAnimal))
+gator = next(a for a in animals if a.get_editor_property('definition').get_name() == 'DA_Animal_Alligator')
+winter = next(r for r in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWClimateRegion) if r.get_editor_property('region') == unreal.EWRegion.WINTER)
+settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
+old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
+settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
+checks = []
+measured = {}
+state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'memo': {}, 'aim': None}
+
+
+def heard(world, *names):
+    return sum(snd.get_play_count(world, n) for n in names)
+
+
+def both(*names):
+    return heard(client_world, *names), heard(server_world, *names)
+
+
+def keep_aim():
+    if not state['aim']:
+        return
+    for controller, who in ((client, pawn), (owner.get_controller(), owner)):
+        eye = who.get_actor_location() + unreal.Vector(0, 0, who.get_editor_property('base_eye_height'))
+        controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, state['aim']()))
+
+
+def place(spot, look_at=None):
+    for p in (owner, pawn):
+        assert p.teleport(spot, unreal.Rotator()), f'no room at {spot}'
+        p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
+    state['aim'] = (lambda: look_at) if look_at else None
+    keep_aim()
+
+
+def ground(x, y):
+    hit = unreal.SystemLibrary.line_trace_single(server_world, unreal.Vector(x, y, 20000), unreal.Vector(x, y, -5000),
+                                                 unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [owner, pawn],
+                                                 unreal.DrawDebugTrace.NONE, True)
+    hit = hit[0] if isinstance(hit, tuple) else hit
+    assert hit, f'no ground at {x}, {y}'
+    return hit.to_tuple()[4].z   # impact point
+
+
+def approach(target, distance, aim_height):
+    base = target.get_actor_location()
+    away = unreal.Vector(150 - base.x, -base.y, 0)
+    away = away * (1.0 / max(away.length(), 1.0))
+    place(base + away * distance + unreal.Vector(0, 0, 110), base + unreal.Vector(0, 0, aim_height))
+
+
+def hold(item):
+    if owner.get_equipment_component().get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND) != item:
+        assert lib.send_verification_equipment_request(client, item, unreal.EWEquipmentSlot.MAIN_HAND)
+
+
+def walk(on):
+    assert lib.send_verification_gameplay_key_state(client, 'W', on)
+
+
+# 1. The soundscape ashore.
+def begin_shore():
+    place(unreal.Vector(150, 0, ground(150, 0) + 110))
+    state['memo'].update(t=time.monotonic())
+
+
+def shore_heard():
+    if time.monotonic() - state['memo']['t'] < 3.5:
+        return False
+    assert scape.is_ambience_playing(), 'the surf and wind loops are not playing on the client'
+    assert scape.get_heard_region() != unreal.EWRegion.WINTER, scape.get_heard_region()
+    assert scape.get_surf_level() >= .69 and scape.get_wind_level() < .01, (scape.get_surf_level(), scape.get_wind_level())
+    measured.update(shore_region=str(scape.get_heard_region()), shore_surf=round(scape.get_surf_level(), 2))
+    return True
+
+
+# 2. Hands in the plants.
+def begin_gather():
+    approach(fiber_plant, 95, 10)
+    state['memo'].update(t=time.monotonic(), pressed=False, rustle=both('S_GatherRustle_v1'), pickup=both('S_Pickup_v1'))
+
+
+def gathered():
+    m = state['memo']
+    keep_aim()
+    if time.monotonic() - m['t'] < .8:
+        return False
+    if not m['pressed']:
+        m['pressed'] = True
+        assert lib.send_verification_interaction_request(client, next(a for a in unreal.GameplayStatics.get_all_actors_of_class(
+            client_world, unreal.EWHandGatherable) if a.get_name() == fiber_plant.get_name()))
+        return False
+    rustle, pickup = both('S_GatherRustle_v1'), both('S_Pickup_v1')
+    if not (rustle[0] > m['rustle'][0] and rustle[1] > m['rustle'][1] and pickup[0] > m['pickup'][0]):
+        return False
+    assert pickup[1] == m['pickup'][1], 'the server heard the client put plants in their pack'
+    return True
+
+
+# 3-5. Blows at the palm and the boulder.
+def begin_strike(target, item, distance, aim_height, sound):
+    def begin():
+        hold(item)
+        d = distance
+        if d is None:
+            _, extent = rock.get_actor_bounds(False)
+            d = max(extent.x, extent.y) + 55
+        approach(target, d, aim_height)
+        state['memo'].update(t=time.monotonic(), pressed=0.0, swings=0, sound=sound, before=both(sound),
+                             impacts=pawn.get_work_impact_count())
+    return begin
+
+
+def struck():
+    m = state['memo']
+    keep_aim()
+    if time.monotonic() - m['t'] < 1.0:
+        return False
+    after = both(m['sound'])
+    if after[0] > m['before'][0] and after[1] > m['before'][1]:
+        # The sound comes with the chips at the blow's contact moment, not when the button went down.
+        assert pawn.get_work_impact_count() > m['impacts'], 'a sound without the blow landing'
+        measured[f'{m["sound"]}_swings'] = m['swings']
+        return True
+    if m['swings'] == 0 or (time.monotonic() - m['pressed'] > 1.6 and m['swings'] < 4):
+        m['swings'] += 1
+        m['pressed'] = time.monotonic()
+        assert lib.send_verification_gameplay_key(client, 'LeftMouseButton')
+    return False
+
+
+# 6 and 8. Footsteps.
+def begin_walk(spot_fn, names):
+    def begin():
+        place(spot_fn())
+        state['memo'].update(t=time.monotonic(), walking=False, names=names, before=both(*names))
+    return begin
+
+
+def stepped(region):
+    def done():
+        m = state['memo']
+        if time.monotonic() - m['t'] < 3.0:
+            return False   # the wind and surf fade over 2.5 s
+        if not m['walking']:
+            if region is not None:
+                assert scape.get_heard_region() == region, scape.get_heard_region()
+                measured.update(winter_surf=round(scape.get_surf_level(), 2), winter_wind=round(scape.get_wind_level(), 2))
+                assert scape.get_wind_level() > .99 and scape.get_surf_level() < .31, (scape.get_wind_level(), scape.get_surf_level())
+            walk(True)
+            m.update(walking=True, start=time.monotonic(), from_=pawn.get_actor_location())
+            return False
+        after = both(*m['names'])
+        if time.monotonic() - m['start'] < 3.0:
+            return False
+        walk(False)
+        steps = (after[0] - m['before'][0], after[1] - m['before'][1])
+        moved = (pawn.get_actor_location() - m['from_']).length()
+        measured[f'{m["names"][0]}_walk'] = dict(steps=steps, cm=round(moved), speed=round(pawn.get_velocity().length()))
+        assert steps[0] >= 3 and steps[1] >= 3, f'steps heard (client, server): {steps} over {moved:.0f} cm'
+        return True
+    return done
+
+
+# 7. The alligator.
+def begin_gator():
+    base = gator.get_actor_location()
+    # Ashore beside it, on the side toward the island's middle.
+    away = unreal.Vector(-base.x, -base.y, 0)
+    away = away * (1.0 / max(away.length(), 1.0))
+    spot = base + away * 350
+    place(unreal.Vector(spot.x, spot.y, ground(spot.x, spot.y) + 110), base)
+    state['memo'].update(t=time.monotonic(), before=both('S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b'))
+
+
+def hissed():
+    after = both('S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b')
+    return after[0] > state['memo']['before'][0] and after[1] > state['memo']['before'][1]
+
+
+def winter_spot():
+    c = winter.get_actor_location()
+    return unreal.Vector(c.x, c.y, ground(c.x, c.y) + 110)
+
+
+# 9. The flamingos and pelicans, on their own time: heard by a client standing near one (a far animal's calls are
+# neither sent to that client nor audible there).
+def begin_bird(kind, sound):
+    def begin():
+        bird = near([a for a in animals if a.get_editor_property('definition').get_name() == f'DA_Animal_{kind}' and not a.is_dead()])[0]
+        base = bird.get_actor_location()
+        spot = base + unreal.Vector(250, 250, 0)
+        place(unreal.Vector(spot.x, spot.y, ground(spot.x, spot.y) + 110), base)
+        state['memo'].update(t=time.monotonic(), sound=sound, before=both(sound))
+    return begin
+
+
+def bird_called():
+    m = state['memo']
+    after = both(m['sound'])
+    measured[f'{m["sound"]}_calls'] = (after[0] - m['before'][0], after[1] - m['before'][1], round(time.monotonic() - m['t']))
+    return after[0] > m['before'][0] and after[1] > m['before'][1]
+
+
+STEPS = [
+    ('Ashore the client hears the surf loop at the shore level, the wind loop silent', begin_shore, shore_heard, 8),
+    ('E at a fiber plant: the rustle starts on both machines, the pickup only on the client', begin_gather, gathered, 8),
+    ('Hatchet at a palm: the chop starts at the blow on both machines', begin_strike(palm, hatchet, 110, 120, 'S_ChopWood_v1'), struck, 14),
+    ('Pickaxe at a boulder: the pickaxe strike on both machines', begin_strike(rock, pickaxe, None, 20, 'S_PickaxeStone_v1'), struck, 14),
+    ('Hatchet at the boulder: the glancing clink on both machines', begin_strike(rock, hatchet, None, 20, 'S_GlanceClink_v1'), struck, 14),
+    ('W on the sand: sand footsteps on both machines', begin_walk(lambda: unreal.Vector(150, 0, ground(150, 0) + 110), ('S_StepSand_v1', 'S_StepSand_v1b')), stepped(None), 12),
+    ('Beside the alligator: it hisses as it comes, on both machines', begin_gator, hissed, 10),
+    ('On the Winter island: the wind rises, the surf falls, W gives snow footsteps', begin_walk(winter_spot, ('S_StepSnow_v1',)), stepped(unreal.EWRegion.WINTER), 14),
+    ('Near a pelican: it calls on its own, heard on both machines', begin_bird('Pelican', 'S_PelicanCall_v1'), bird_called, 70),
+    ('Near a flamingo: it calls on its own, heard on both machines', begin_bird('Flamingo', 'S_FlamingoCall_v1'), bird_called, 55),
+]
+
+
+def finish(error=None):
+    unreal.unregister_slate_post_tick_callback(state['handle'])
+    settings.set_editor_property('bThrottleCPUWhenNotForeground', old_throttle)
+    try:
+        walk(False)
+    except Exception:
+        pass
+    measured.update(seabirds=both('S_AmbSeabirds_v1'), client_total=snd.get_total_play_count(client_world), server_total=snd.get_total_play_count(server_world))
+    RESULT.write_text(json.dumps({'success': error is None, 'checks': checks, 'error': error, 'measured': measured,
+                                  'finished_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}, indent=2, default=str), encoding='utf-8')
+    unreal.log(f'EWPLAYCHECK Audio success={error is None} error={error}')
+
+
+def tick(delta):
+    description, begin, done, timeout = STEPS[state['index']]
+    try:
+        if not state['begun']:
+            begin()
+            state.update(begun=True, deadline=time.monotonic() + timeout)
+            return
+        if done():
+            checks.append(description)
+            state.update(index=state['index'] + 1, begun=False)
+            if state['index'] == len(STEPS):
+                finish()
+        elif time.monotonic() > state['deadline']:
+            raise TimeoutError(f'not done within {timeout} s; memo {dict((k, v) for k, v in state["memo"].items() if isinstance(v, (int, float, str, bool, tuple)))}')
+    except Exception as error:
+        finish(f'step {state["index"]} ({description}): {error!r}')
+
+
+state['handle'] = unreal.register_slate_post_tick_callback(tick)

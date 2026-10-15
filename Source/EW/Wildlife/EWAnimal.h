@@ -73,6 +73,12 @@ private:
     void OnRep_State();
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastFlinch();
+    /** Authority: it calls out, heard on every screen near; never twice within a few seconds. */
+    void Call();
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastCall();
+    float CallSeconds = 0.f;
+    double LastCallTime = -100.0;
 
     void ApplyDefinition();
     void Think(float DeltaSeconds);

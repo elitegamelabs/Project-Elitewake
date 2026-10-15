@@ -6,6 +6,7 @@
 
 class UEWItemDefinition;
 class UStaticMesh;
+class USoundBase;
 
 /** One kind of land animal: how it looks and moves, how it behaves and what it yields. Numbers are tuning. */
 UCLASS(BlueprintType)
@@ -53,6 +54,14 @@ public:
     float AttackReach = 50.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     FText AttackName;
+
+    /** Its calls, one picked at random each time. Every animal calls when struck; an aggressive one also when it goes
+     *  for a survivor. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound")
+    TArray<TSoftObjectPtr<USoundBase>> Calls;
+    /** Seconds between its calls while it goes about its day, a number in this range (zero: it calls only when provoked). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound")
+    FVector2D CallInterval = FVector2D::ZeroVector;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     float MaxHealth = 50.f;
