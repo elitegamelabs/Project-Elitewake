@@ -165,9 +165,19 @@ taking a task.
   marked DECIDED (delegated) like the others. Extend `verify_animals_play.py`'s kind list.
 - **Done when:** it walks on the Winter island in Play, attacks a survivor who comes near, and the animals check passes.
 
-### T8. Asset catalog upkeep — CLAIMED (ChatGPT, October 15)
+### T8. Asset catalog upkeep — DONE `08c7e27`
 - **Why:** many new generated assets landed on October 15 (animal meshes and materials, Maravai and birch trees,
   four stone looks, work animations, leaf textures `Art/Flora/*-Leaves-v1.png`).
 - **Do:** run `Scripts/Art/build_art_catalog.py` and fix its status rules so the new folders are classified
   (generated in-editor draft vs reference vs pending model). Update `Art/README.md` accordingly.
 - **Done when:** the catalog lists every new asset with a sensible status; no asset is marked final.
+- **Result:** the catalog uses path-component rules, so growth references, current and legacy survival art,
+  inventory icons, generated fish cutouts, leaf-card textures and animal modeling references receive distinct
+  classifications. The machine-readable catalog also lists the files and draft status in six Unreal folders for
+  wildlife, flora, rocks, world materials and tool animations. The README explains each class and links the folders.
+- **Verified:** rebuilt with the script; it indexed 179 PNGs and 322 named atlas slots, with 82 references,
+  52 pending-model references, 11 generated intermediate drafts, 29 in-game UI art sources and 5 legacy images.
+  All indexed files exist, all classifications have definitions, all six Unreal folder records are present, and no
+  image status is labeled final. Python syntax compilation and JSON assertions passed. Git-wide checks hit the
+  environment's Git LFS filter startup error on concurrent audio files; the files changed for this task were
+  individually reviewed and checked.
