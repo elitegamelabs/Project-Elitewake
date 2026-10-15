@@ -26,8 +26,9 @@ SOUNDS = {
     'Footsteps/SFX_StepSand-v1.wav': ('S_StepSand_v1', .9, 'world'),
     'Footsteps/SFX_StepSand-v1b.wav': ('S_StepSand_v1b', .9, 'world'),
     'Footsteps/SFX_StepSnow-v1.wav': ('S_StepSnow_v1', .6, 'world'),
-    'Ambience/AMB_OceanSurf-v1.wav': ('S_AmbOceanSurf_v1', 1.0, 'loop'),
-    'Ambience/AMB_WinterWind-v1.wav': ('S_AmbWinterWind_v1', 1.4, 'loop'),
+    # The loops are the v1 takes cross-faded end into start (Scripts/Art/make_audio_loops.py), so no seam is heard.
+    'Ambience/AMB_OceanSurf-v2.wav': ('S_AmbOceanSurf_v2', 1.0, 'loop'),
+    'Ambience/AMB_WinterWind-v2.wav': ('S_AmbWinterWind_v2', 1.4, 'loop'),
     'Ambience/AMB_Seabirds-v1.wav': ('S_AmbSeabirds_v1', 3.0, 'flat'),
     'Fauna/SFX_AlligatorHiss-v1.wav': ('S_AlligatorHiss_v1', .7, 'world'),
     'Fauna/SFX_AlligatorHiss-v1b.wav': ('S_AlligatorHiss_v1b', .7, 'world'),

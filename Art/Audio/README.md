@@ -19,10 +19,11 @@ even them out live. Played from code (`UEWSoundLibrary`, `UEWSoundscapeComponent
 | Footsteps/SFX_StepSnow-v1 | one boot step crunching packed snow | 1 s | each stride in the Winter region |
 | Ambience/AMB_OceanSurf-v1 | calm surf washing a sandy beach, even for looping | 20 s | loop, everywhere |
 | Ambience/AMB_WinterWind-v1 | steady icy wind over snowfields, low howl | 20 s | loop, the Winter region |
+| Ambience/AMB_OceanSurf-v2, AMB_WinterWind-v2 | the v1 takes with their last 3 s cross-faded into the start (`Scripts/Art/make_audio_loops.py`) | 17 s | what the game loops |
 | Ambience/AMB_Seabirds-v1 | a few gulls calling at a middle distance | 10 s | now and then, away from the Winter region |
 | Fauna/SFX_AlligatorHiss-v1, -v1b | an alligator's long low warning hiss (two takes) | 2 s | an alligator goes for a survivor, or is struck |
 | Fauna/SFX_FlamingoCall-v1 | a few nasal honks from one flamingo | 2 s | every 20 to 45 s, or when struck |
 | Fauna/SFX_PelicanCall-v1 | a brown pelican's hoarse grunting croak | 2 s | every 30 to 60 s, or when struck |
 
-Known draft issues: the 20 s loops were not cut to loop seamlessly, so a seam may be heard; the snow step may hold
+Known draft issues: the snow step may hold
 two crunches; the pickaxe strike has a second knock about 0.25 s in. Real pelicans are nearly silent.

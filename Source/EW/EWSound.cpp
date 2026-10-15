@@ -16,8 +16,8 @@ namespace
         {TEXT("Gather/S_Pickup_v1"), nullptr},
         {TEXT("Footsteps/S_StepSand_v1"), TEXT("Footsteps/S_StepSand_v1b")},
         {TEXT("Footsteps/S_StepSnow_v1"), nullptr},
-        {TEXT("Ambience/S_AmbOceanSurf_v1"), nullptr},
-        {TEXT("Ambience/S_AmbWinterWind_v1"), nullptr},
+        {TEXT("Ambience/S_AmbOceanSurf_v2"), nullptr},
+        {TEXT("Ambience/S_AmbWinterWind_v2"), nullptr},
         {TEXT("Ambience/S_AmbSeabirds_v1"), nullptr},
     };
     static_assert(UE_ARRAY_COUNT(Takes) == int32(EEWSound::Seabirds) + 1, "a take for every sound");

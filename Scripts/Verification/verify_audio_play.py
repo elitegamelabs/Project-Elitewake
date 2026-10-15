@@ -23,11 +23,17 @@ snd = unreal.EWSoundLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'AudioPlayResult.json')
 T = '/Game/Elitewake/Items/Testing'
 hatchet, pickaxe = (unreal.load_asset(f'{T}/DA_Test{n}') for n in ('WoodenAxe', 'WoodenPickaxe'))
+def one(items, what):
+    found = next(iter(items), None)
+    assert found is not None, f'found no {what}'
+    return found
+
+
 worlds = lib.get_play_worlds()
 assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
 pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
-client = next(c for c in pcs if not c.has_authority())
-server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
+client = one((c for c in pcs if not c.has_authority()), 'client')
+server_world = one((w for w, c in zip(worlds, pcs) if c.has_authority()), 'server world')
 client_world = worlds[pcs.index(client)]
 pawn = client.get_controlled_pawn()
 scape = client.get_soundscape_component()
@@ -38,15 +44,15 @@ def player_id(p):
     return json.loads(unreal.ToolsetLibrary.get_object_properties(state_, ['PlayerId']))['PlayerId'] if state_ else None
 
 
-owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
+owner = one((p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) is not None and player_id(p) == player_id(pawn)), "the server's copy of the client's survivor")
 SPAWN = unreal.Vector(150, 0, 0)
 near = lambda actors: sorted(actors, key=lambda t: (t.get_actor_location() - SPAWN).length())   # noqa: E731
 palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Veyran Palm')])[0]
 rock = near(list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable)))[0]
 fiber_plant = near([p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHandGatherable) if p.get_actor_label().startswith('Fiber Plant')])[0]
 animals = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWAnimal))
-gator = next(a for a in animals if a.get_editor_property('definition').get_name() == 'DA_Animal_Alligator')
-winter = next(r for r in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWClimateRegion) if r.get_editor_property('region') == unreal.EWRegion.WINTER)
+gator = one((a for a in animals if a.get_editor_property('definition').get_name() == 'DA_Animal_Alligator'), 'alligator')
+winter = one((r for r in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWClimateRegion) if r.get_editor_property('region') == unreal.EWRegion.WINTER), 'Winter region')
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -178,7 +184,9 @@ def struck():
 # 6 and 8. Footsteps.
 def begin_walk(spot_fn, names):
     def begin():
-        place(spot_fn())
+        state['aim_point'] = None
+        spot = spot_fn()
+        place(spot, state['aim_point'])
         state['memo'].update(t=time.monotonic(), walking=False, names=names, before=both(*names))
     return begin
 
@@ -209,24 +217,53 @@ def stepped(region):
 
 
 # 7. The alligator.
+def gator_spot(distance):
+    at = gator.get_actor_location()
+    side = gator.get_actor_right_vector()
+    spot = unreal.Vector(at.x + side.x * distance, at.y + side.y * distance, at.z)
+    return unreal.Vector(spot.x, spot.y, ground(spot.x, spot.y) + 100)
+
+
 def begin_gator():
-    base = gator.get_actor_location()
-    # Ashore beside it, on the side toward the island's middle.
-    away = unreal.Vector(-base.x, -base.y, 0)
-    away = away * (1.0 / max(away.length(), 1.0))
-    spot = base + away * 350
-    place(unreal.Vector(spot.x, spot.y, ground(spot.x, spot.y) + 110), base)
-    state['memo'].update(t=time.monotonic(), before=both('S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b'))
+    # First out of its notice (12 m) long enough for the client to have the alligator, as a survivor walking up
+    # would; then ashore at its side (as verify_animals_play does): it only goes for a survivor on land.
+    for p in (owner, pawn):
+        p.set_actor_location(gator_spot(1200), False, True)
+    state['aim'] = lambda: gator.get_actor_location()
+    keep_aim()
+    owner.get_survival_component().restore_health(100)
+    state['memo'].update(t=time.monotonic(), closed=False, before=both('S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b'))
 
 
 def hissed():
+    m = state['memo']
+    keep_aim()
+    if not m['closed']:
+        if time.monotonic() - m['t'] < 2.0:
+            return False
+        for p in (owner, pawn):
+            p.set_actor_location(gator_spot(320), False, True)
+        m['closed'] = True
     after = both('S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b')
-    return after[0] > state['memo']['before'][0] and after[1] > state['memo']['before'][1]
+    quarry = gator.get_quarry()
+    m.update(hiss=(after[0] - m['before'][0], after[1] - m['before'][1]), quarry=quarry.get_name() if quarry else '')
+    return after[0] > m['before'][0] and after[1] > m['before'][1]
 
 
 def winter_spot():
-    c = winter.get_actor_location()
-    return unreal.Vector(c.x, c.y, ground(c.x, c.y) + 110)
+    # The Winter region is a group of islands with sea at its middle: stand by one of its trees and walk toward
+    # another 25 to 60 m off, on the same island.
+    region = lambda a: unreal.EWClimateRegion.sample_climate(server_world, a.get_actor_location()).region   # noqa: E731
+    trees = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if region(t) == unreal.EWRegion.WINTER]
+    for a in trees:
+        for b in trees:
+            gap = (b.get_actor_location() - a.get_actor_location()).length()
+            if 2500 < gap < 6000:
+                at, to = a.get_actor_location(), b.get_actor_location()
+                start = at + (to - at) * (250.0 / gap)
+                state['aim_point'] = unreal.Vector(to.x, to.y, start.z)
+                return unreal.Vector(start.x, start.y, ground(start.x, start.y) + 110)
+    raise AssertionError(f'no pair of Winter trees 25 to 60 m apart among {len(trees)}')
 
 
 # 9. The flamingos and pelicans, on their own time: heard by a client standing near one (a far animal's calls are
