@@ -33,6 +33,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Grass you can see as plants on the Plains and Jungle islands | ✅ `fb35edc` |
 | Island landmarks: one per island (sea stacks, shore arch, standing stones, spire, giant dead tree) | ✅ `fb35edc` |
 | Larger islands (open question for the owner) | ⏳ |
+| Day and night: 90 real minutes each (owner), server-owned clock, moving sun, moon, darker nights | ✅ DAYNIGHT_COMMIT (stars, saving the hour, night climate open) |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
 ## M0 — Foundations ✅
