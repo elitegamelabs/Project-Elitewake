@@ -34,7 +34,8 @@ scape = client.get_soundscape_component()
 
 
 def player_id(p):
-    return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'), ['PlayerId']))['PlayerId']
+    state_ = p.get_editor_property('PlayerState')   # survivors nobody plays have none
+    return json.loads(unreal.ToolsetLibrary.get_object_properties(state_, ['PlayerId']))['PlayerId'] if state_ else None
 
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
