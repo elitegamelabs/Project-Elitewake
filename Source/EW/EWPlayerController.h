@@ -30,6 +30,7 @@ class UEWOptionsWidget;
 class UEWHitMarkerWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
+class UEWSoundscapeComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -75,6 +76,10 @@ public:
     UEWObjectiveComponent* GetObjectiveComponent() const { return ObjectiveComponent; }
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Objectives")
     TObjectPtr<UEWObjectiveComponent> ObjectiveComponent;
+    /** The surf, wind and seabirds this player hears. */
+    UFUNCTION(BlueprintPure, Category="Sound") UEWSoundscapeComponent* GetSoundscapeComponent() const { return SoundscapeComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Sound")
+    TObjectPtr<UEWSoundscapeComponent> SoundscapeComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWObjectiveWidget> ObjectiveWidget;
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")

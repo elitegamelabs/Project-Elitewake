@@ -30,6 +30,8 @@
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
 #include "EWStation.h"
+#include "EWSound.h"
+#include "World/EWClimateRegion.h"
 #include "Gathering/EWMineable.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Animation/AnimInstance.h"
@@ -275,6 +277,28 @@ void AEWCharacter::PlayToolAnimation(UAnimSequenceBase* Animation)
     PlayOneShot(Animation);
 }
 
+void AEWCharacter::UpdateFootsteps(float DeltaSeconds)
+{
+    const UCharacterMovementComponent* Move = GetCharacterMovement();
+    const float Speed = GetVelocity().Size2D();
+    // Only walking the ground makes steps. Ship decks are wood, and have no step of their own yet: they stay quiet.
+    const UPrimitiveComponent* Base = GetMovementBase();
+    if (!Move || !Move->IsMovingOnGround() || IsOnLadder() || Speed < 40.f || (Base && Base->GetOwner() && Base->GetOwner()->IsA<AEWShip>()))
+    {
+        StrideTravel = 0.f;
+        return;
+    }
+    // A longer stride the faster the survivor goes (tuning), so steps keep pace from a crouch to a run.
+    const float Stride = FMath::GetMappedRangeValueClamped(FVector2D(150.f, 600.f), FVector2D(110.f, 210.f), Speed);
+    StrideTravel += Speed * DeltaSeconds;
+    if (StrideTravel < Stride) return;
+    StrideTravel -= Stride;
+    const bool bSnow = AEWClimateRegion::SampleClimate(this, GetActorLocation()).Region == EEWRegion::Winter;
+    const FVector Feet = GetActorLocation() - FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+    UEWSoundLibrary::PlaySoundAt(this, bSnow ? EEWSound::StepSnow : EEWSound::StepSand, Feet, bIsCrouched ? .55f : 1.f,
+        FMath::FRandRange(.9f, 1.1f));
+}
+
 void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
 {
     UAnimInstance* Anim = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
@@ -345,6 +369,7 @@ void AEWCharacter::Tick(float DeltaSeconds)
         ApplyLadderPose();
     }
     UpdateLoopAnimation(DeltaSeconds);
+    UpdateFootsteps(DeltaSeconds);
     ApplyFacing();
     if (HeldLight->IsVisible())
     {
@@ -1105,6 +1130,10 @@ void AEWCharacter::MulticastWorkImpact_Implementation(AActor* Target, FVector_Ne
         if (!Self) return;
         ++Self->WorkImpactCount;
         AEWImpactBurst::Spawn(Self->GetWorld(), At, Face, Surface);
+        // The wrong tool only glances off: a thin clink instead of the bite into wood or stone.
+        const bool bGlance = Refusal == EEWWorkRefusal::NeedsHatchet || Refusal == EEWWorkRefusal::NeedsPickaxe;
+        UEWSoundLibrary::PlaySoundAt(Self, bGlance ? EEWSound::GlanceClink : Surface == EEWWorkSurface::Wood ? EEWSound::ChopWood
+            : EEWSound::PickaxeStone, At, 1.f, FMath::FRandRange(.94f, 1.06f));
         if (auto* Station = Cast<AEWStation>(WeakTarget.Get()))
             Station->PlayHitShake(At - Self->GetActorLocation(), Surface == EEWWorkSurface::Wood ? 2.2f : .5f);
         if (Self->IsLocallyControlled())
@@ -1117,7 +1146,13 @@ void AEWCharacter::PlayGatherMotion(bool bBush, const TArray<FEWGatherGain>& Gai
 {
     if (!HasAuthority()) return;
     MulticastToolAnimation(bBush ? GatherBushAnimation : GatherGroundAnimation);
+    MulticastGatherSound();
     ClientGathered(Gains);
+}
+
+void AEWCharacter::MulticastGatherSound_Implementation()
+{
+    UEWSoundLibrary::PlaySoundAt(this, EEWSound::GatherRustle, GetActorLocation(), 1.f, FMath::FRandRange(.95f, 1.05f));
 }
 
 void AEWCharacter::ClientGathered_Implementation(const TArray<FEWGatherGain>& Gains)
@@ -1134,6 +1169,17 @@ void AEWCharacter::ClientGathered_Implementation(const TArray<FEWGatherGain>& Ga
             FTimerHandle Handle;
             GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakPC]()
             { if (WeakPC.IsValid()) WeakPC->SetIgnoreMoveInput(false); }), Motion->GetPlayLength() * .8f, false);
+        }
+        // What the hands took goes into the pack as they come back up; only the gatherer hears it.
+        if (Gains.Num() > 0)
+        {
+            TWeakObjectPtr<AEWCharacter> WeakThis(this);
+            FTimerHandle Handle;
+            GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateLambda([WeakThis]()
+            {
+                if (AEWCharacter* Self = WeakThis.Get())
+                    UEWSoundLibrary::PlayAsset2D(Self, UEWSoundLibrary::GetSound(EEWSound::Pickup));
+            }), Motion ? Motion->GetPlayLength() * .6f : .5f, false);
         }
     }
 }

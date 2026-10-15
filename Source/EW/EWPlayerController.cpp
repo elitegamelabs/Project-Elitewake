@@ -5,6 +5,7 @@
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
 #include "EWObjectiveComponent.h"
+#include "EWSoundscapeComponent.h"
 #include "EWCompanyComponent.h"
 #include "EWContainerWidget.h"
 #include "Ships/EWShip.h"
@@ -48,6 +49,7 @@ AEWPlayerController::AEWPlayerController()
     CompanyComponent = CreateDefaultSubobject<UEWCompanyComponent>(TEXT("Company"));
     ObjectiveComponent = CreateDefaultSubobject<UEWObjectiveComponent>(TEXT("Objectives"));
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
+    SoundscapeComponent = CreateDefaultSubobject<UEWSoundscapeComponent>(TEXT("Soundscape"));
 }
 
 void AEWPlayerController::OnPossess(APawn* InPawn)
