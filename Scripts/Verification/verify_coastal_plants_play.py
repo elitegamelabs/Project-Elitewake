@@ -8,6 +8,7 @@ presses E, as a player does: it gains the plant's whole amount (10 Fiber, 6 Stic
 gone, on server and client. Writes Saved/CoastalPlantsPlayResult.json.
 """
 import json
+import math
 import time
 from pathlib import Path
 import unreal
@@ -60,12 +61,20 @@ def go(label):
         plant = min(plants(server_world, label), key=lambda a: (a.get_actor_location() - spawn).length())
         item = plant.get_editor_property('item_definition')
         base = plant.get_actor_location()
-        away = unreal.Vector(150 - base.x, -base.y, 0)
-        away = away * (1.0 / max(away.length(), 1.0))
-        spot = base + away * 110 + unreal.Vector(0, 0, 100)
-        look = unreal.MathLibrary.find_look_at_rotation(spot + unreal.Vector(0, 0, 60), base + unreal.Vector(0, 0, 30))
+        toward = math.atan2(-base.y, 150 - base.x)
+        # Look at the middle of what is there (a flat pile of sticks is lower than a bush).
+        centre = plant.get_actor_bounds(False)[0]
+        # From the spawn's side if there is room, else from another side (a tree may stand close by).
+        for turn in (0, 45, -45, 90, -90, 135, -135, 180):
+            a = toward + math.radians(turn)
+            spot = base + unreal.Vector(math.cos(a) * 110, math.sin(a) * 110, 100)
+            look = unreal.MathLibrary.find_look_at_rotation(spot + unreal.Vector(0, 0, 60), centre)
+            if owner.teleport(spot, unreal.Rotator(roll=0, pitch=0, yaw=look.yaw)):
+                break
+        else:
+            raise AssertionError(f'no room beside {plant.get_actor_label()}')
+        assert pawn.teleport(spot, unreal.Rotator(roll=0, pitch=0, yaw=look.yaw)), f'no room beside {plant.get_actor_label()}'
         for p in (owner, pawn):
-            assert p.teleport(spot, unreal.Rotator(roll=0, pitch=0, yaw=look.yaw)), f'no room beside {plant.get_actor_label()}'
             p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
         client.set_control_rotation(look)
         owner.get_controller().set_control_rotation(look)

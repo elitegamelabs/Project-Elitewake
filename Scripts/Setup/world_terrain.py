@@ -134,8 +134,8 @@ def floor_at(x, y, nearest_gap):
     return FLOOR + (DEEP - FLOOR) * far
 
 
-def height(x, y):
-    """Ground (or sea floor) height in cm at (x, y)."""
+def height_raw(x, y):
+    """Ground (or sea floor) height in cm at (x, y), before the caves' notches."""
     best, nearest = None, 1e18
     for i in W.ISLANDS:
         dx, dy = x - i.cx, y - i.cy
@@ -154,6 +154,197 @@ def height(x, y):
         best = h if best is None else max(best, h)
     floor = floor_at(x, y, nearest)
     return floor if best is None else max(best, floor)
+
+
+# ---- Caves ----------------------------------------------------------------------------------------------------
+# Owner, October 14 (WORLD_STRUCTURE_OWNER_DECISIONS): one cave system per island, entrances varied between inland
+# hills, cliff faces and coastal rock formations; Winter's partway up the mountains (Art/REGIONAL_WORLD_..._10-15).
+# A cave is a rock formation (build_caves.py) with a winding passage and a chamber hollowed out of it and its own
+# flat rock floor. The ground under the formation is notched down below that floor so the island's own surface
+# never shows through it. DECIDED (delegated): which kind each island gets (cliff where the island has a cliff;
+# mountain-side in Winter and Jungle; coastal rock in the Swamp; Plains and Desert alternate); every size is tuning.
+TUNNEL = (260.0, 300.0, 150.0)   # passage half-width, half-height, and its centre above the floor (cm)
+CAVE_KINDS = ('inland', 'cliff', 'coastal')
+
+
+class Cave:
+    """One island's cave in its own frame: u runs in from the mouth (u = 0) along `heading`, v across it."""
+
+    def __init__(self, island, kind, mx, my, heading, floor, scale, bend):
+        self.island, self.kind = island, kind
+        self.mx, self.my, self.heading, self.floor, self.scale, self.bend = mx, my, heading, floor, scale, bend
+        self.cell = 200.0 if island.key == 'Starter' else 400.0       # the island mesh's grid
+        self.margin = 1.5 * self.cell                                  # notch past the hollow
+        self.length = 1400.0 * scale                                   # passage
+        self.chamber = (600.0 * scale, 500.0 * max(scale, .8), 450.0)  # chamber half-sizes (u, v, z)
+        self.chamber_u = self.length + 450.0 * scale
+        self.chamber_z = 200.0                                         # chamber centre above the floor
+        self.depth = self.chamber_u + self.chamber[0] + self.margin + self.cell + 200.0   # formation, mouth to back
+        self.half = max(abs(bend) + TUNNEL[0], self.chamber[1]) + self.margin + self.cell + 200.0
+
+    def local(self, x, y):
+        dx, dy = x - self.mx, y - self.my
+        c, s = math.cos(self.heading), math.sin(self.heading)
+        return dx * c + dy * s, -dx * s + dy * c
+
+    def world(self, u, v):
+        c, s = math.cos(self.heading), math.sin(self.heading)
+        return self.mx + u * c - v * s, self.my + u * s + v * c
+
+    def centre_v(self, u):
+        """The passage's centre line: it swings `bend` to one side and back before the chamber."""
+        return self.bend * math.sin(math.pi * min(1.0, max(0.0, u / self.length)))
+
+    def path(self, step=150.0):
+        """The walk in, world (x, y) from just outside the mouth to the chamber's middle."""
+        pts, u = [], -300.0
+        while u < self.chamber_u:
+            pts.append(self.world(u, self.centre_v(u)))
+            u += step
+        return pts + [self.world(self.chamber_u, 0.0)]
+
+    def hollow(self, u, v):
+        """Plan distance (cm) outside the hollow: negative inside the passage or the chamber."""
+        cu, cv, _ = self.chamber
+        q = math.hypot((u - self.chamber_u) / cu, v / cv)
+        best = (q - 1.0) * min(cu, cv)
+        if -400.0 <= u <= self.length + cu:
+            best = min(best, abs(v - self.centre_v(u)) - TUNNEL[0])
+        return best
+
+    def inside(self, x, y, margin=0.0):
+        """Within the rock formation's footprint (plus a margin; the mouth's approach is kept clear too)."""
+        u, v = self.local(x, y)
+        return -margin - 600.0 <= u <= self.depth + margin and abs(v) <= self.half + margin
+
+    def notch(self, x, y, h):
+        u, v = self.local(x, y)
+        if u < 0 or u > self.depth or abs(v) > self.half or self.hollow(u, v) > self.margin:
+            return h
+        # Just under the rock floor near the mouth (deeper further in), so the ground before the mouth, which the
+        # island mesh's grid joins to these points, stays level with the floor rather than dipping into a ledge.
+        return min(h, self.floor - 15.0 - 120.0 * min(1.0, max(0.0, u - 1.5 * self.cell) / 300.0))
+
+    def footprint(self):
+        return [self.world(u, v) for u in (0.0, self.depth * .5, self.depth) for v in (-self.half, 0.0, self.half)] + \
+               [self.world(u, v) for u in (self.depth * .25, self.depth * .75) for v in (-self.half, self.half)]
+
+
+def _cave_kind(island, index):
+    if island.key == 'Starter':
+        return 'inland'
+    if CLIFFS.get(island.key) and not W.port_on(island):
+        return 'cliff'
+    if island.region in ('Winter', 'Jungle'):
+        return 'inland'
+    if island.region == 'Swamp':
+        return 'coastal'
+    return ('coastal', 'inland')[index % 2]
+
+
+STARTER_CLEAR = [(150.0, 0.0, 2200.0), (4000.0, 900.0, 2200.0), (-1700.0, 1500.0, 2000.0)]   # spawn, dock, spring
+STARTER_HILLS = [(-3300.0, -1700.0, 1600.0), (-3500.0, 1300.0, 1200.0)]                     # starter_land's bumps
+
+
+def _fits(cave):
+    i = cave.island
+    for x, y in cave.footprint():
+        if i.distance(x, y) > -150 or W.near_port(x, y, 800):
+            return False
+    if i.key != 'Starter' and cave.inside(i.cx, i.cy, 300):
+        return False   # the island's middle stays open ground
+    if i.key == 'Starter':
+        for x, y in cave.footprint() + [(cave.mx, cave.my)]:
+            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in STARTER_CLEAR):
+                return False
+    # The approach climbs to the mouth no steeper than a survivor can walk (about 34 degrees, tuning).
+    for u, drop in ((-300.0, 200.0), (-600.0, 400.0)):
+        fx, fy = cave.world(u, 0.0)
+        if not cave.floor - drop <= height_raw(fx, fy) <= cave.floor + 40:
+            return False
+    return True
+
+
+def _floor(mx, my, a):
+    """A cave's floor: the ground at its mouth, but never more than 30 cm above the ground just in front, so the
+    way in has no ledge to climb; and clear of the sea."""
+    front = height_raw(mx + 50 * math.cos(a), my + 50 * math.sin(a))
+    return max(min(height_raw(mx, my), front + 30), SEA + 25)
+
+
+def _candidates(island, kind, rng, scale):
+    bend = rng.choice((-1, 1)) * rng.uniform(120, 220) * scale
+    out = []
+    if kind == 'coastal':
+        for k in range(48):
+            a = 2 * math.pi * k / 48
+            r = island.radius(a) - 700.0
+            mx, my = island.cx + r * math.cos(a), island.cy + r * math.sin(a)
+            floor = _floor(mx, my, a)
+            out.append((rng.random(), Cave(island, kind, mx, my, a + math.pi, floor, scale, bend)))
+    elif kind == 'cliff':
+        ca, half, _ = CLIFFS[island.key]
+        for k in range(-6, 7):
+            a = ca + half * .6 * k / 6
+            r = island.radius(a) - 260.0
+            mx, my = island.cx + r * math.cos(a), island.cy + r * math.sin(a)
+            floor = _floor(mx, my, a)
+            out.append((abs(k) + rng.random() * .5, Cave(island, kind, mx, my, a + math.pi, floor, scale, bend)))
+    else:
+        if island.key == 'Starter':
+            hills = STARTER_HILLS
+        else:
+            _, wide = RELIEF[island.region]
+            hills = [(island.cx + fx, island.cy + fy, radius * wide) for fx, fy, radius, _ in sorted(island.features, key=lambda f: -f[3])]
+        for hx, hy, reach in hills:
+            top = height_raw(hx, hy)
+            for k in range(24):
+                a = 2 * math.pi * k / 24
+                for f in (.7, .9, 1.1, 1.3):
+                    mx, my = hx + f * reach * math.cos(a), hy + f * reach * math.sin(a)
+                    if island.distance(mx, my) > -900:
+                        continue
+                    floor = _floor(mx, my, a)
+                    part = (floor - SEA) / max(1.0, top - SEA)       # how far up the hill the mouth is
+                    out.append((abs(part - .4) + rng.random() * .1, Cave(island, kind, mx, my, a + math.pi, floor, scale, bend)))
+    return [c for _, c in sorted(out, key=lambda t: t[0])]
+
+
+def _cave(island, index):
+    rng = random.Random(sum(map(ord, island.key)) * 104729)
+    first = _cave_kind(island, index)
+    others = tuple(k for k in CAVE_KINDS if k != first and (k != 'cliff' or CLIFFS.get(island.key)))
+    for scale in (1.0, .8, .65):
+        for kind in (first,) + others:
+            for cave in _candidates(island, kind, rng, scale):
+                if _fits(cave):
+                    return cave
+    return None
+
+
+def _caves():
+    found, count = {}, {}
+    for island in W.ISLANDS:
+        count[island.region] = count.get(island.region, -1) + 1
+        found[island.key] = _cave(island, count[island.region])
+    return found
+
+
+CAVES = _caves()
+
+
+def near_cave(x, y, margin=500.0):
+    """True on or near a cave's rock formation or in front of its mouth: keep trees, rocks and animals off it."""
+    return any(c and c.inside(x, y, margin) for c in CAVES.values())
+
+
+def height(x, y):
+    """Ground (or sea floor) height in cm at (x, y): the islands as shaped, notched under each cave's formation."""
+    h = height_raw(x, y)
+    for c in CAVES.values():
+        if c and abs(x - c.mx) < c.depth + c.half + 1000 and abs(y - c.my) < c.depth + c.half + 1000:
+            h = c.notch(x, y, h)
+    return h
 
 
 def cover(x, y, z):

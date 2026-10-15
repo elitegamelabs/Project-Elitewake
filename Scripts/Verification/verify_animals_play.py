@@ -69,9 +69,9 @@ def feet(a):
     return a.get_actor_location().z - a.get_editor_property('body').get_unscaled_sphere_radius()
 
 
-def ground(at):
+def ground(at, above=300):
     hit = unreal.SystemLibrary.line_trace_single_for_objects(
-        server_world, unreal.Vector(at.x, at.y, at.z + 300), unreal.Vector(at.x, at.y, at.z - 1500),
+        server_world, unreal.Vector(at.x, at.y, at.z + above), unreal.Vector(at.x, at.y, at.z - 1500),
         [unreal.ObjectTypeQuery.OBJECT_TYPE_QUERY1], False, [], unreal.DrawDebugTrace.NONE, True)
     return hit.to_tuple()[4].z if hit else None
 
@@ -123,7 +123,8 @@ def all_present():
     second = [a for a in animals if 'Starter' not in a.get_actor_label()]
     off = []
     for a in animals:
-        g = ground(a.get_actor_location())
+        # From just above the animal, so a branch overhead (monkeys keep under the trees) is not taken for the ground.
+        g = ground(a.get_actor_location(), 60)
         if g is None or abs(feet(a) - g) > 25:
             off.append((a.get_actor_label(), None if g is None else round(feet(a) - g)))
     assert not off, f'not standing on the ground: {off[:5]}'

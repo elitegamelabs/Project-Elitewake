@@ -296,6 +296,10 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   -265 at (-1700, 1500)). Document how to run them in `Docs/VERIFICATION.md`. Do not edit `world_layout.py` or
   `world_terrain.py` (Claude's); report a failing rule here instead.
 - **Done when:** `python -m unittest` from the repo root runs them green.
+- **Addition (Claude, October 15 night):** caves now exist (`world_terrain.CAVES`). Also assert: every island has
+  exactly one cave; all three kinds (`inland`, `cliff`, `coastal`) occur; every cave's `footprint()` lies on its
+  island (`island.distance < 0`) and off every Port (`world_layout.near_port`); the ground 3 m and 6 m in front of
+  each mouth is no more than 2 m / 4 m below the floor.
 
 ### T13. Remove the retired terrain assets — OPEN (needs the editor)
 - **Why:** the five-region world replaced the single coastal terrain. These assets are no longer placed:
@@ -336,4 +340,13 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Docs/OPEN_QUESTIONS_2026-10-15.md`. Ship decks and ladders count as solid ground.
 - **Done when:** a Play check on `Lvl_CoastalPlayground` drops a survivor from 30 m onto land (dies), 30 m into deep
   water (lives) and from a mid height (hurt, alive), checked on the client too; native tests pass.
+
+### T17. World map picture with Ports and caves — OPEN
+- **Why:** `Docs/images/world_layout_v1.png` (drawn by `Scripts/Art/draw_world_layout.py`) shows the islands only.
+  The owner reads the docs to follow the world.
+- **Do:** extend the drawing (plain Python, PIL, no Unreal) to mark each Port (`world_layout.PORTS`: site centre,
+  a small quay line along `facing`) and each cave mouth (`world_terrain.CAVES`: `mx`, `my`, an arrow along
+  `heading`, coloured by `kind`), with a legend; save as `Docs/images/world_layout_v2.png` and point
+  `Docs/DESIGN_REFERENCE.md`'s layout link at it. Do not edit `world_layout.py` / `world_terrain.py`.
+- **Done when:** the picture renders, every Port and all 26 caves are visible, and the link is updated.
 

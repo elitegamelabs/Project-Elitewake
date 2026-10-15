@@ -225,6 +225,11 @@ def write_static_mesh(b, path, materials, uv_tile, collision=True, split_angle=4
     split.set_editor_property('split_by_opening_angle', True)
     split.set_editor_property('opening_angle_deg', split_angle)
     unreal.GeometryScript_Normals.compute_split_normals(mesh, split, unreal.GeometryScriptCalculateNormalsOptions())
+    return save_dynamic_mesh(mesh, path, materials, collision)
+
+
+def save_dynamic_mesh(mesh, path, materials, collision=True):
+    """Write a finished dynamic mesh (normals already set) into a static mesh asset, in place if it exists."""
     asset = unreal.load_asset(path)
     if asset:
         options = unreal.GeometryScriptCopyMeshToAssetOptions()

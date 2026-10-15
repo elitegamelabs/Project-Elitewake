@@ -22,6 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
@@ -80,7 +81,7 @@ def main():
                 tries += 1
                 x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
                 z = ground(x, y)
-                if not fits(HABITAT[name], island, x, y, z, near_trees) or W.near_port(x, y):
+                if not fits(HABITAT[name], island, x, y, z, near_trees) or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
                 if min(math.hypot(x - px, y - py) for px, py in (SPAWN, DOCK)) < (2600 if aggressive else 700):
                     continue

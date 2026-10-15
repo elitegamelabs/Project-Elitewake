@@ -24,6 +24,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_flora import FLORA_FOLDER, KEEP_CLEAR, MAP, SEA, Ground  # noqa: E402
 import world_layout as W  # noqa: E402
+import world_terrain as T  # noqa: E402
+from world_landmarks import near_landmark  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Rocks'
 STONE = '/Game/Elitewake/Items/Testing/DA_TestStone'
@@ -239,7 +241,7 @@ def spots(ground, avoid):
             z = ground(x, y)
             if z is None or not (SEA + 75 < z < 1300):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
+            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 300 for px, py in avoid) or any(math.hypot(x - px, y - py) < 450 for px, py, _, _ in chosen):
                 continue
@@ -284,7 +286,7 @@ def main():
         while len(here) < want and tries < want * 60 + 100:
             tries += 1
             x, y = island.cx + irng.uniform(-reach, reach), island.cy + irng.uniform(-reach, reach)
-            if island.distance(x, y) > -300 or W.near_port(x, y):
+            if island.distance(x, y) > -300 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                 continue
             z = ground(x, y)
             if z < SEA + 60 or any(math.hypot(x - px, y - py) < 300 for px, py in close):

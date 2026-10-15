@@ -45,6 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, cross, material_builder, norm, write_static_mesh  # noqa: E402
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+from world_landmarks import near_landmark  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Flora'
@@ -494,7 +495,7 @@ def spots(ground):
             z = ground(x, y)
             if z is None or not (SEA + 60 < z < 70):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
+            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 450 for px, py, _ in chosen):
                 continue
@@ -523,7 +524,7 @@ def inland_spots(ground, palms):
             z = ground(x, y)
             if z is None or not (40 < z < 650):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR):
+            if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 450 for px, py in palms) or any(math.hypot(x - px, y - py) < 750 for px, py, _ in chosen):
                 continue
@@ -570,7 +571,7 @@ def dress_islands(actors, ground, kinds, wood, thatch):
                     continue
                 if kind != 'Veyran Palm' and inland < 700:
                     continue
-                if W.near_port(x, y):
+                if W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
                 z = ground(x, y)
                 if z < SEA + 60 or steep(ground, x, y):
@@ -654,12 +655,22 @@ def main():
     unreal.log(f'Coastal flora: {len(placed)} palms')
 
 
+def easy_to_aim_at(mesh):
+    """A pile of thin sticks is mostly gaps: give it one box round the whole pile for a look (Interact) to land on,
+    instead of its sticks' own triangles."""
+    unreal.EditorStaticMeshLibrary.remove_collisions(mesh)
+    unreal.EditorStaticMeshLibrary.add_simple_collisions(mesh, unreal.ScriptCollisionShapeType.BOX)
+    mesh.get_editor_property('body_setup').set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_DEFAULT)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(mesh)
+    return mesh
+
+
 def place_plants(actors, ground, palms, materials, island_trees=()):
     """Fiber plants and berry bushes in the open sand behind the beach; stick piles under the palms. Then the same
     on every other island, by its region's recipe, sticks under its trees."""
     berry = berry_material()
     looks = {'Fiber Plant': [write_static_mesh(fiber_plant(k), f'{FOLDER}/SM_FiberPlant_{k + 1}', [materials[FROND]], 120.0) for k in range(3)],
-             'Fallen Sticks': [write_static_mesh(stick_pile(k), f'{FOLDER}/SM_FallenSticks_{k + 1}', [materials[BARK]], 120.0) for k in range(3)],
+             'Fallen Sticks': [easy_to_aim_at(write_static_mesh(stick_pile(k), f'{FOLDER}/SM_FallenSticks_{k + 1}', [materials[BARK]], 120.0)) for k in range(3)],
              'Berry Bush': [write_static_mesh(berry_bush(k), f'{FOLDER}/SM_BerryBush_{k + 1}', [materials[BARK], materials[FROND], berry], 120.0)
                             for k in range(2)]}
     rng = random.Random(31)
@@ -685,7 +696,7 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                 z = ground(x, y)
                 if z is None or not (SEA + 70 < z < 160):
                     continue
-                if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR):
+                if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
                 if any(math.hypot(x - tx, y - ty) < 140 for tx, ty in taken):
                     continue
@@ -719,7 +730,7 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                     x, y = px + d * math.cos(a), py + d * math.sin(a)
                 else:
                     x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
-                if island.distance(x, y) > -400 or W.near_port(x, y):
+                if island.distance(x, y) > -400 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
                 z = ground(x, y)
                 if z < SEA + 70 or steep(ground, x, y):
