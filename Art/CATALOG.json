@@ -3,6 +3,176 @@
   "purpose": "Original Elitewake 2D source art and modeling references",
   "limitations": "Images are not 3D meshes, rigs, animations or proof of gameplay integration. Atlas UVs are equal-cell reference regions, not final sprite packing.",
   "authority": "Docs/WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md",
+  "classificationGuide": {
+    "reference": "2D source art or concept art; it is not a runtime 3D asset.",
+    "generated-in-editor-draft": "Generated or imported Unreal prototype content; it still needs in-game visual review.",
+    "pending-model": "A modeling reference or growth-stage brief whose corresponding model work remains tracked separately.",
+    "in-game-art-source": "A source image used by a current UI implementation; visual polish is still reviewable.",
+    "legacy": "Older source art retained for history; a newer version is preferred."
+  },
+  "generatedEditorFolders": [
+    {
+      "path": "Content/Elitewake/Wildlife/Animals",
+      "status": "generated-in-editor-draft",
+      "assetCount": 19,
+      "assets": [
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_Alligator.uasset",
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_Cottonmouth.uasset",
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_Flamingo.uasset",
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_Pelican.uasset",
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_SquirrelMonkey.uasset",
+        "Content/Elitewake/Wildlife/Animals/DA_Animal_Tortoise.uasset",
+        "Content/Elitewake/Wildlife/Animals/M_Animal_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_Alligator_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_Cottonmouth_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_Flamingo_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_Pelican_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_SquirrelMonkey_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/MI_Tortoise_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_Alligator_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_Cottonmouth_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_Flamingo_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_Pelican_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_SquirrelMonkey_v1.uasset",
+        "Content/Elitewake/Wildlife/Animals/SM_Tortoise_v1.uasset"
+      ],
+      "notes": "Six coastal land-animal prototypes; the owner roster contains additional species."
+    },
+    {
+      "path": "Content/Elitewake/Wildlife/Fish",
+      "status": "generated-in-editor-draft",
+      "assetCount": 35,
+      "assets": [
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_Bass.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_Catfish.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_GreatWhiteShark.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_HammerheadShark.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_Manatee.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_MantaRay.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_Piranha.uasset",
+        "Content/Elitewake/Wildlife/Fish/DA_Fish_Squid.uasset",
+        "Content/Elitewake/Wildlife/Fish/M_Fish_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_Bass_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_Catfish_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_GreatWhiteShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_HammerheadShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_Manatee_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_MantaRay_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_Piranha_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/MI_Squid_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_Bass_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_Catfish_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_GreatWhiteShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_HammerheadShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_Manatee_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_MantaRay_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_Piranha_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/SM_Squid_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_Bass_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_Catfish_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_GreatWhiteShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_HammerheadShark_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_Manatee_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_MantaRay_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_Piranha_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_RawFish_Icon_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_RawMeat_Icon_v1.uasset",
+        "Content/Elitewake/Wildlife/Fish/T_Squid_v1.uasset"
+      ],
+      "notes": "Procedural aquatic-creature prototypes sourced from Art/Fauna/Fish; visual review remains open."
+    },
+    {
+      "path": "Content/Elitewake/World/Flora",
+      "status": "generated-in-editor-draft",
+      "assetCount": 26,
+      "assets": [
+        "Content/Elitewake/World/Flora/M_Berry_v1.uasset",
+        "Content/Elitewake/World/Flora/M_BirchBark_v1.uasset",
+        "Content/Elitewake/World/Flora/M_BirchLeaves_v1.uasset",
+        "Content/Elitewake/World/Flora/M_MaravaiLeaves_v1.uasset",
+        "Content/Elitewake/World/Flora/M_PalmBark_v1.uasset",
+        "Content/Elitewake/World/Flora/M_PalmFrond_v1.uasset",
+        "Content/Elitewake/World/Flora/SM_BerryBush_1.uasset",
+        "Content/Elitewake/World/Flora/SM_BerryBush_2.uasset",
+        "Content/Elitewake/World/Flora/SM_Birch_1.uasset",
+        "Content/Elitewake/World/Flora/SM_Birch_2.uasset",
+        "Content/Elitewake/World/Flora/SM_Birch_3.uasset",
+        "Content/Elitewake/World/Flora/SM_FallenSticks_1.uasset",
+        "Content/Elitewake/World/Flora/SM_FallenSticks_2.uasset",
+        "Content/Elitewake/World/Flora/SM_FallenSticks_3.uasset",
+        "Content/Elitewake/World/Flora/SM_FiberPlant_1.uasset",
+        "Content/Elitewake/World/Flora/SM_FiberPlant_2.uasset",
+        "Content/Elitewake/World/Flora/SM_FiberPlant_3.uasset",
+        "Content/Elitewake/World/Flora/SM_Maravai_1.uasset",
+        "Content/Elitewake/World/Flora/SM_Maravai_2.uasset",
+        "Content/Elitewake/World/Flora/SM_Maravai_3.uasset",
+        "Content/Elitewake/World/Flora/SM_VeyranPalm_1.uasset",
+        "Content/Elitewake/World/Flora/SM_VeyranPalm_2.uasset",
+        "Content/Elitewake/World/Flora/SM_VeyranPalm_3.uasset",
+        "Content/Elitewake/World/Flora/T_BirchLeaves_v1.uasset",
+        "Content/Elitewake/World/Flora/T_MaravaiLeaves_v1.uasset",
+        "Content/Elitewake/World/Flora/T_PalmFrond_v1.uasset"
+      ],
+      "notes": "Editor-built vegetation prototypes using Art/Flora leaf textures; not a complete regional flora set."
+    },
+    {
+      "path": "Content/Elitewake/World/Rocks",
+      "status": "generated-in-editor-draft",
+      "assetCount": 16,
+      "assets": [
+        "Content/Elitewake/World/Rocks/M_CoastalRock_v1.uasset",
+        "Content/Elitewake/World/Rocks/M_CoastalRock_v2.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_Basalt_v1.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_BasaltSnow_v1.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_Granite_v1.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_GraniteSnow_v1.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_Limestone_v1.uasset",
+        "Content/Elitewake/World/Rocks/MI_Rock_Sandstone_v1.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_1.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_2.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_3.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_4.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_5.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_6.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_7.uasset",
+        "Content/Elitewake/World/Rocks/SM_CoastalBoulder_8.uasset"
+      ],
+      "notes": "Editor-built rock variants; art and placement remain prototype content."
+    },
+    {
+      "path": "Content/Elitewake/World/Materials",
+      "status": "generated-in-editor-draft",
+      "assetCount": 8,
+      "assets": [
+        "Content/Elitewake/World/Materials/M_CoastalTerrain_v1.uasset",
+        "Content/Elitewake/World/Materials/M_DockTimberWeathered_v1.uasset",
+        "Content/Elitewake/World/Materials/M_Ocean_v1.uasset",
+        "Content/Elitewake/World/Materials/M_Sand_v1.uasset",
+        "Content/Elitewake/World/Materials/M_ShoreSwash_v1.uasset",
+        "Content/Elitewake/World/Materials/M_Timber_v1.uasset",
+        "Content/Elitewake/World/Materials/T_Sand_v1.uasset",
+        "Content/Elitewake/World/Materials/T_Timber_v1.uasset"
+      ],
+      "notes": "World material and texture prototypes; not final art approval."
+    },
+    {
+      "path": "Content/Elitewake/Animations/Tools",
+      "status": "generated-in-editor-draft",
+      "assetCount": 9,
+      "assets": [
+        "Content/Elitewake/Animations/Tools/AS_Chop_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_Drink_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_Equip_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_FillWaterskin_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_GatherBush_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_GatherGround_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_Ignite_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_Mine_v1.uasset",
+        "Content/Elitewake/Animations/Tools/AS_ToolChop_v1.uasset"
+      ],
+      "notes": "Imported or configured animation assets; motion and retargeting need in-game review."
+    }
+  ],
   "assets": [
     {
       "path": "Art/Concepts/Animals/2026-10-12/american_alligator.png",
@@ -13,7 +183,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "reference",
+      "status": "Reference for an existing coastal prototype; compare the in-game model against this image",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -29,7 +200,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -45,7 +217,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -61,7 +234,8 @@
         887
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -77,7 +251,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -93,7 +268,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -109,7 +285,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -125,7 +302,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -141,7 +319,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -157,7 +336,8 @@
         793
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -173,7 +353,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "reference",
+      "status": "Reference for an existing coastal prototype; compare the in-game model against this image",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -189,7 +370,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -205,7 +387,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -221,7 +404,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -237,7 +421,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -253,7 +438,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -269,7 +455,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -285,7 +472,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -301,7 +489,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -317,7 +506,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -333,7 +523,8 @@
         887
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -349,7 +540,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -365,7 +557,8 @@
         724
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -381,7 +574,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -397,7 +591,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -413,7 +608,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -429,7 +625,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -445,7 +642,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -461,7 +659,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -477,7 +676,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -493,7 +693,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -509,7 +710,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -525,7 +727,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -541,7 +744,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "reference",
+      "status": "Reference for an existing coastal prototype; compare the in-game model against this image",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -557,7 +761,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -573,7 +778,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -589,7 +795,8 @@
         1199
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -605,7 +812,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -621,7 +829,8 @@
         1374
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -637,7 +846,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -653,7 +863,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -669,7 +880,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -685,7 +897,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -701,7 +914,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -717,7 +931,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -733,7 +948,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -749,7 +965,8 @@
         941
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -765,7 +982,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -781,7 +999,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -797,7 +1016,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -813,7 +1033,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -829,7 +1050,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -845,7 +1067,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -861,7 +1084,8 @@
         1024
       ],
       "alphaRange": null,
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "pending-model",
+      "status": "2D animal modeling reference; follow the roster and milestones for per-species model status",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -880,6 +1104,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Alternate reference only; owner-selected original hulls remain canonical",
       "metadata": null,
       "columns": null,
@@ -899,6 +1124,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -915,6 +1141,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -934,6 +1161,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -950,6 +1178,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -969,6 +1198,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -985,6 +1215,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1004,6 +1235,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1020,6 +1252,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1039,6 +1272,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1055,6 +1289,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1074,6 +1309,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1090,6 +1326,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1106,6 +1343,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1122,6 +1360,7 @@
         887
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1138,6 +1377,7 @@
         793
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1154,6 +1394,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1170,6 +1411,7 @@
         1024
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1186,6 +1428,7 @@
         887
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1202,6 +1445,7 @@
         724
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1218,6 +1462,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1237,6 +1482,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1256,6 +1502,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1275,6 +1522,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1294,6 +1542,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1313,6 +1562,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1332,6 +1582,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1351,6 +1602,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1370,6 +1622,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1389,6 +1642,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1408,6 +1662,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1424,6 +1679,7 @@
         1254
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1440,6 +1696,7 @@
         1254
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -1459,7 +1716,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1478,7 +1736,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1497,7 +1756,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1516,7 +1776,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1535,7 +1796,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1554,7 +1816,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1573,7 +1836,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1592,7 +1856,28 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated cutout and procedural mesh input; editor-built creature assets still need visual review",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
+    },
+    {
+      "path": "Art/Flora/Birch-Leaves-v1.png",
+      "bytes": 402651,
+      "sha256": "61b6e09b8781a9044e2765d532fd0353d4499d228642cc4904728c54f4c3fa54",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "classification": "generated-in-editor-draft",
+      "status": "Generated leaf-card texture used by editor-built vegetation drafts; this is not a tree mesh",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1611,7 +1896,8 @@
         0,
         255
       ],
-      "status": "DRAFT: species identity needs correction before modeling or runtime use",
+      "classification": "pending-model",
+      "status": "DRAFT reference: species identity needs correction before modeling or runtime use",
       "metadata": "Art/Flora/Growth/2026-10-14/Trees-Growth-1-v1.json",
       "columns": 3,
       "rows": 4,
@@ -1822,8 +2108,28 @@
         }
       ],
       "reviewNotes": [
-        "First growth board does not faithfully match the requested species rows; remaining boards not generated."
+        "The first growth board does not faithfully match the requested species rows; remaining boards are not generated."
       ]
+    },
+    {
+      "path": "Art/Flora/Maravai-Leaves-v1.png",
+      "bytes": 417769,
+      "sha256": "41d53555156300abe868bdfce70d840916f4e467e4e990499745a02d7473db23",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "classification": "generated-in-editor-draft",
+      "status": "Generated leaf-card texture used by editor-built vegetation drafts; this is not a tree mesh",
+      "metadata": null,
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": []
     },
     {
       "path": "Art/Flora/Veyran-Palm-Frond-v1.png",
@@ -1837,7 +2143,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "generated-in-editor-draft",
+      "status": "Generated leaf-card texture used by editor-built vegetation drafts; this is not a tree mesh",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -1856,6 +2163,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Family references only; specific ammunition variants not defined",
       "metadata": "Art/Items/Atlases/2026-10-14/ammo-Atlas-v1.json",
       "columns": 3,
@@ -1972,6 +2280,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Animal-Marine-Materials-Atlas-v1.json",
       "columns": 4,
@@ -2184,6 +2493,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Visual presentation references, not new physical blueprint items, recipe unlocks or functional engineering plans",
       "metadata": "Art/Items/Atlases/2026-10-14/blueprints-Atlas-v1.json",
       "columns": 2,
@@ -2270,6 +2580,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Clothing and indicator concepts; not approved equipment recipes or final HUD assets",
       "metadata": "Art/Items/Atlases/2026-10-14/climate-Atlas-v1.json",
       "columns": 4,
@@ -2418,6 +2729,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Confirmed-Crops-Atlas-v1.json",
       "columns": 4,
@@ -2566,6 +2878,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Core-Resources-Atlas-v1.json",
       "columns": 4,
@@ -2842,6 +3155,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Fitting concepts, original ship/sail references remain authoritative; anchor currently built-in, no crafted-anchor recipe implied",
       "metadata": "Art/Items/Atlases/2026-10-14/fittings-Atlas-v1.json",
       "columns": 4,
@@ -2990,6 +3304,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Generated 2D reference atlas; no gameplay balance or biome distribution implied",
       "metadata": "Art/Items/Atlases/2026-10-14/forage1-Atlas-v1.json",
       "columns": 4,
@@ -3266,6 +3581,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Generated 2D reference atlas; no gameplay balance or biome distribution implied",
       "metadata": "Art/Items/Atlases/2026-10-14/forage2-Atlas-v1.json",
       "columns": 4,
@@ -3542,7 +3858,8 @@
         0,
         254
       ],
-      "status": "Legacy art; newer version preferred",
+      "classification": "legacy",
+      "status": "Legacy art; version 2 is preferred",
       "metadata": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v1.json",
       "columns": 4,
       "rows": 2,
@@ -3674,6 +3991,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D botanical reference atlas; replaces bokeh-background v1 for inventory use",
       "metadata": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v2.json",
       "columns": 4,
@@ -3806,6 +4124,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
       "metadata": "Art/Items/Atlases/2026-10-14/fungi1-Atlas-v1.json",
       "columns": 4,
@@ -4082,6 +4401,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
       "metadata": "Art/Items/Atlases/2026-10-14/fungi2-Atlas-v1.json",
       "columns": 3,
@@ -4198,6 +4518,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
       "metadata": "Art/Items/Atlases/2026-10-14/herbs1-Atlas-v1.json",
       "columns": 4,
@@ -4474,6 +4795,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
       "metadata": "Art/Items/Atlases/2026-10-14/herbs2-Atlas-v1.json",
       "columns": 4,
@@ -4750,6 +5072,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D botanical reference atlas; gameplay values and distribution not defined",
       "metadata": "Art/Items/Atlases/2026-10-14/herbs3-Atlas-v1.json",
       "columns": 4,
@@ -4850,6 +5173,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
       "metadata": "Art/Items/Atlases/2026-10-14/insects1-Atlas-v1.json",
       "columns": 4,
@@ -5128,6 +5452,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
       "metadata": "Art/Items/Atlases/2026-10-14/insects2-Atlas-v1.json",
       "columns": 4,
@@ -5324,6 +5649,7 @@
         0,
         254
       ],
+      "classification": "reference",
       "status": "Material-family concept references; does not approve new recipes",
       "metadata": "Art/Items/Atlases/2026-10-14/materials-Atlas-v1.json",
       "columns": 4,
@@ -5600,6 +5926,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing medical families and toxic spoiled berries; balance not assigned",
       "metadata": "Art/Items/Atlases/2026-10-14/medicine-Atlas-v1.json",
       "columns": 4,
@@ -5748,6 +6075,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Metal-Ingots-Atlas-v1.json",
       "columns": 4,
@@ -5960,6 +6288,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Metal-Ores-Atlas-v1.json",
       "columns": 3,
@@ -6124,6 +6453,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Orchard-Fruits-Atlas-v1.json",
       "columns": 4,
@@ -6368,6 +6698,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Placeable reference art only; inventory-first rules retained; no material cost or unlock invented",
       "metadata": "Art/Items/Atlases/2026-10-14/placeables-Atlas-v1.json",
       "columns": 4,
@@ -6516,6 +6847,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Atlases/2026-10-14/Portable-Tools-Atlas-v1.json",
       "columns": 4,
@@ -6728,6 +7060,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D plant model reference; no species-specific Wood inventory types",
       "metadata": "Art/Items/Atlases/2026-10-14/trees1-Atlas-v1.json",
       "columns": 4,
@@ -7004,6 +7337,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Illustrative 2D plant model reference; no species-specific Wood inventory types",
       "metadata": "Art/Items/Atlases/2026-10-14/trees2-Atlas-v1.json",
       "columns": 4,
@@ -7184,6 +7518,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Confirmed families; period pistol name, weapon stats and glider engineering remain TBD",
       "metadata": "Art/Items/Atlases/2026-10-14/weapons-Atlas-v1.json",
       "columns": 4,
@@ -7332,6 +7667,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
       "metadata": "Art/Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.json",
       "columns": 3,
@@ -7400,7 +7736,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7419,7 +7756,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7438,7 +7776,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7457,6 +7796,7 @@
         255,
         255
       ],
+      "classification": "in-game-art-source",
       "status": "Review sheet of the cut inventory icons",
       "metadata": null,
       "columns": null,
@@ -7476,7 +7816,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7495,7 +7836,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7514,7 +7856,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7533,7 +7876,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7552,7 +7896,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7571,7 +7916,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7590,7 +7936,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7609,7 +7956,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7628,7 +7976,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7647,7 +7996,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7666,7 +8016,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7685,7 +8036,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7704,7 +8056,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7723,7 +8076,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7742,7 +8096,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7761,7 +8116,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7780,7 +8136,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7799,7 +8156,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7818,7 +8176,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7837,7 +8196,8 @@
         0,
         255
       ],
-      "status": "In-game inventory icon cut from a reviewed atlas cell, fringe and specks removed (Scripts/Art/cut_item_icons.py)",
+      "classification": "in-game-art-source",
+      "status": "In-game inventory icon source cut from a reviewed atlas cell; visual polish remains reviewable",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -7856,6 +8216,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7875,6 +8236,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7894,6 +8256,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7913,6 +8276,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7932,6 +8296,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7951,6 +8316,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7970,6 +8336,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -7989,6 +8356,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8008,6 +8376,7 @@
         0,
         255
       ],
+      "classification": "legacy",
       "status": "Legacy art; newer version preferred",
       "metadata": null,
       "columns": null,
@@ -8027,6 +8396,7 @@
         0,
         255
       ],
+      "classification": "legacy",
       "status": "Legacy art; newer version preferred",
       "metadata": null,
       "columns": null,
@@ -8046,6 +8416,7 @@
         0,
         255
       ],
+      "classification": "legacy",
       "status": "Legacy art; newer version preferred",
       "metadata": null,
       "columns": null,
@@ -8065,7 +8436,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "in-game-art-source",
+      "status": "Updated survival indicator art source; rendered appearance still needs visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -8084,7 +8456,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "in-game-art-source",
+      "status": "Updated survival indicator art source; rendered appearance still needs visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -8103,7 +8476,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "in-game-art-source",
+      "status": "Updated survival indicator art source; rendered appearance still needs visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -8122,7 +8496,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "in-game-art-source",
+      "status": "Updated survival indicator art source; rendered appearance still needs visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -8141,7 +8516,8 @@
         0,
         255
       ],
-      "status": "Existing source reference; consult adjacent README/selection/roster metadata",
+      "classification": "in-game-art-source",
+      "status": "Updated survival indicator art source; rendered appearance still needs visual review",
       "metadata": null,
       "columns": null,
       "rows": null,
@@ -8160,6 +8536,7 @@
         0,
         255
       ],
+      "classification": "legacy",
       "status": "Legacy art; newer version preferred",
       "metadata": null,
       "columns": null,
@@ -8179,6 +8556,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8195,6 +8573,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8211,6 +8590,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8227,6 +8607,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8246,6 +8627,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8265,6 +8647,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": "Art/UI/Title/2026-10-13/Press-Any-Key-To-Start-v2.json",
       "columns": null,
@@ -8284,6 +8667,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8300,6 +8684,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8319,6 +8704,7 @@
         0,
         255
       ],
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
@@ -8335,6 +8721,7 @@
         941
       ],
       "alphaRange": null,
+      "classification": "reference",
       "status": "Existing source reference; consult adjacent README/selection/roster metadata",
       "metadata": null,
       "columns": null,
