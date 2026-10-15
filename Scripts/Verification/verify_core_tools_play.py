@@ -74,15 +74,17 @@ def keep_aim():
 def approach(target, distance, aim_height):
     """Stand `distance` from the target on the side toward the beach spawn, facing it, and settle."""
     base = target.get_actor_location()
+    center, extent = target.get_actor_bounds(False)
     away = unreal.Vector(150 - base.x, -base.y, 0)
     away = away * (1.0 / max(away.length(), 1.0))
     spot = base + away * distance + unreal.Vector(0, 0, 110)
     for p in (owner, pawn):
         assert p.teleport(spot, unreal.Rotator()), f'no room beside {target.get_actor_label()}'
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
-    state['aim'] = lambda: base + unreal.Vector(0, 0, aim_height)
+    height = center.z - base.z if aim_height is None else aim_height
+    state['aim'] = lambda: base + unreal.Vector(0, 0, height)
     keep_aim()
-    state['memo'].update(t=time.monotonic(), pressed=False)
+    state['memo'].update(t=time.monotonic(), pressed=False, settle_seconds=.8)
 
 
 def equip(item):
@@ -102,7 +104,7 @@ def press_after_settle(key='LeftMouseButton', interact=None):
     m = state['memo']
     if m['pressed']:
         return True
-    if time.monotonic() - m['t'] < .8:
+    if time.monotonic() - m['t'] < m.get('settle_seconds', .8):
         return False
     if interact:
         assert lib.send_verification_interaction_request(client, interact)
@@ -151,22 +153,14 @@ def to_rock():
     rock = min(rocks, key=lambda t: (t.get_actor_location() - unreal.Vector(150, 0, 0)).length())
     _, extent = rock.get_actor_bounds(False)
     state['memo']['stone_from'] = count(owner, stone)
-    approach(rock, max(extent.x, extent.y) + 55, 20)
+    approach(rock, max(extent.x, extent.y) + 55, None)
+    state['memo']['settle_seconds'] = 1.5
 
 
 def mined():
     m = state['memo']
     if not press_after_settle():
         return False
-    # Strike again if the first swing found nothing, at the swing's own pace.
-    if count(owner, stone) == m['stone_from'] and time.monotonic() - m['t'] > 2.0 and m.get('retries', 0) < 3:
-        m['retries'] = m.get('retries', 0) + 1
-        m['t'] = time.monotonic() - .8
-        assert lib.send_verification_gameplay_key(client, 'LeftMouseButton')
-        eye = owner.get_actor_location() + unreal.Vector(0, 0, owner.get_editor_property('base_eye_height'))
-        hit = unreal.SystemLibrary.line_trace_single(server_world, eye, eye + owner.get_control_rotation().get_forward_vector() * 250,
-                                                     unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [owner], unreal.DrawDebugTrace.NONE, True)
-        m['aimed_at'] = str(hit.to_tuple()[9].get_actor_label()) if hit else None
     got = count(owner, stone) - state['memo']['stone_from']
     if got <= 0 or count(pawn, stone) - state['memo']['stone_from'] != got:
         return False
@@ -262,7 +256,7 @@ STEPS = [
 def finish(error=None):
     unreal.unregister_slate_post_tick_callback(state['handle'])
     settings.set_editor_property('bThrottleCPUWhenNotForeground', old_throttle)
-    keep = ('supplies', 'chopped', 'mined', 'retries', 'aimed_at', 'torch_candelas')
+    keep = ('supplies', 'chopped', 'mined', 'torch_candelas')
     RESULT.write_text(json.dumps({'success': error is None, 'checks': [c for c in checks if c], 'error': error,
                                   'measured': {k: state['memo'][k] for k in keep if k in state['memo']}}, indent=2), encoding='utf-8')
     unreal.log(f'EWPLAYCHECK CoreTools success={error is None} error={error}')

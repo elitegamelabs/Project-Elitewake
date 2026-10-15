@@ -71,13 +71,15 @@ def keep_aim():
 
 def approach(target, distance, aim_height):
     base = target.get_actor_location()
+    center, extent = target.get_actor_bounds(False)
     away = unreal.Vector(150 - base.x, -base.y, 0)
     away = away * (1.0 / max(away.length(), 1.0))
     spot = base + away * distance + unreal.Vector(0, 0, 110)
     for p in (owner, pawn):
         assert p.teleport(spot, unreal.Rotator()), f'no room beside {target.get_actor_label()}'
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
-    state['aim'] = lambda: base + unreal.Vector(0, 0, aim_height)
+    height = center.z - base.z if aim_height is None else aim_height
+    state['aim'] = lambda: base + unreal.Vector(0, 0, height)
     keep_aim()
 
 
@@ -109,8 +111,8 @@ def swing_until(anim_name, expect_gain, refusal_text=None):
         held_now = owner.get_equipment_component().get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND)
         if time.monotonic() - m['t'] < 1.0 or pawn.get_equipment_component().get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND) != held_now:
             return False
-        # Swing, and swing again at the swing's own pace if a blow found nothing (the first after drawing can miss).
-        if m['swings'] == 0 or (marker().get_marker_count() == m['markers'] and time.monotonic() - m['pressed'] > 1.6 and m['swings'] < 4):
+        # One press only: a missing impact fails this check instead of being concealed by another swing.
+        if m['swings'] == 0:
             m['swings'] += 1
             m['pressed'] = time.monotonic()
             assert lib.send_verification_gameplay_key(client, 'LeftMouseButton')
@@ -179,9 +181,9 @@ STEPS = [
     ('With the Hatchet at a palm, Left Mouse chops (AS_Chop_v1 on both machines): chips fly, the palm shakes and the '
      'hit marker pops with what the server gave', begin_strike(palm, hatchet, 110, 120, wood), swing_until('AS_Chop_v1', True), 14),
     ('With the Pickaxe at a boulder, the overhead blow (AS_Mine_v1): stone chips, the rock shakes, "+N Stone"',
-     begin_strike(rock, pickaxe, None, 20, stone), swing_until('AS_Mine_v1', True), 14),
+     begin_strike(rock, pickaxe, None, None, stone), swing_until('AS_Mine_v1', True), 14),
     ('With the Hatchet at the boulder the blow glances off: chips but no stone, the marker says "Needs a pickaxe"',
-     begin_strike(rock, hatchet, None, 20, stone), swing_until('AS_ToolChop_v1', False, 'Needs a pickaxe'), 14),
+     begin_strike(rock, hatchet, None, None, stone), swing_until('AS_ToolChop_v1', False, 'Needs a pickaxe'), 14),
     ('E at a fiber plant: the squat and reach to the ground (AS_GatherGround_v1) on both machines, held still, "+10 Fiber"',
      begin_gather(fiber_plant, 'AS_GatherGround_v1'), gathered, 8),
     ('E at a berry bush: the reach into the bush (AS_GatherBush_v1) and the berries\' popup',
