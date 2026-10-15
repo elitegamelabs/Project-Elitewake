@@ -143,7 +143,7 @@ taking a task.
   `git status` confirms editor, project-guide, private-release, ship-test and asset-bundle work stayed unstaged. No
   gameplay check was run because this documentation-only task changes no behavior.
 
-### T5. The pickaxe's first swing after equipping sometimes misses — CLAIMED (ChatGPT, October 15)
+### T5. The pickaxe's first swing after equipping sometimes misses — DONE `04735ca`
 - **Why:** known since October 14: right after equipping the Pickaxe, the first Left Mouse at a boulder sometimes
   finds nothing (`verify_core_tools_play.py` and `verify_work_feedback_play.py` retry). The hatchet does not do this.
 - **Do:** find the cause. Start at `AEWPlayerController::Attack` → `FEWInteractionTargeting::FindTarget`
@@ -152,6 +152,16 @@ taking a task.
   attached held mesh, or the client's equipment not yet replicated when the swing is sent. Write the reproduction
   as a Play check that fails before the fix and passes after, then remove the retries from the two checks.
 - **Done when:** first-swing success is 10 of 10 in the new check; both existing checks pass without retries.
+- **Result:** the checks were retrying a click sent inside the shared one-second attack interval immediately after
+  a preceding swing. With the single input sent after the equip and cadence interval, the local attack is admitted;
+  the held-mesh and equipment-replication suspicions were not reproduced. The mining checks now aim at the boulder's
+  bounds center and send exactly one Left Mouse input. No gameplay code change was warranted by the reproduction.
+- **Verified (October 15):** the dedicated `verify_pickaxe_first_swing_play.py` check passed 10 of 10 first swings
+  after alternating Hatchet → Pickaxe, with one click per trial and no retry. `verify_core_tools_play.py` passed all
+  11 steps with no mining retry, and `verify_work_feedback_play.py` passed all five steps with one pickaxe swing.
+  The first no-retry core run with its 0.8 s settle failed to animate/mine; after waiting 1.5 s, the 10-trial check
+  passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
+  `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
 ### T6. A better tortoise shell — OPEN (needs the editor)
 - **Why:** the tortoise's scutes read as stripes (`Saved/Screenshots/Animals`, `Docs/VERIFICATION.md` "Land
