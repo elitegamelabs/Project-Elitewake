@@ -7,11 +7,13 @@ Scripts/Setup/build_animals.py. Run unattended with run_play_check.py.
      standing on the ground.
   2. Left alone they wander: several walk off from where they stood; on the client their legs move with them (the
      stride advances while the copy walks) and each copy near the survivor stays close to the server's.
-  3. Struck once with Left Mouse, a flamingo is hurt and runs off faster than it walks.
-  4. A survivor who comes near an alligator on land is noticed and bitten: health falls on server and client.
-  5. Away down the beach the alligator gives up.
-  6. Struck until dead, a squirrel monkey drops on its side on both machines.
-  7. E at the body harvests it: 2 to 5 Raw Meat arrive and the body is gone on the client.
+  3. A survivor standing right beside a pelican is ignored: naturally docile, it carries on as it was, unhurried,
+     and does no harm (owner, October 15).
+  4. Struck once with Left Mouse, a flamingo is hurt and runs off faster than it walks.
+  5. A survivor who comes too near an alligator on land is noticed and bitten: health falls on server and client.
+  6. Away down the beach the alligator gives up.
+  7. Struck until dead, a squirrel monkey drops on its side on both machines.
+  8. E at the body harvests it: 2 to 5 Raw Meat arrive and the body is gone on the client.
 Writes Saved/AnimalsPlayResult.json.
 """
 import json
@@ -148,6 +150,27 @@ def wandered():
     return True
 
 
+def beside_pelican():
+    bird = first('Brown Pelican')
+    place(*beside(bird, 140))
+    owner.get_survival_component().restore_health(100)
+    state['memo'].update(bird=bird, bird_from=bird.get_actor_location(), t=time.monotonic(), bird_health=bird.get_health())
+
+
+def pelican_ignores():
+    m = state['memo']
+    bird = m['bird']
+    assert health(owner) >= 100 and health(pawn) >= 100, 'the pelican hurt the survivor'
+    if time.monotonic() - m['t'] < 5.0:
+        return False
+    moved = (bird.get_actor_location() - m['bird_from']).length()
+    walk = bird.get_editor_property('definition').get_editor_property('walk_speed') * 5.0
+    assert moved < walk * 1.25 + 30, f'the pelican moved {moved:.0f} cm in 5 s beside the survivor; walking it would cover {walk:.0f}'
+    assert bird.get_health() == m['bird_health']
+    m['pelican_moved'] = round(moved)
+    return True
+
+
 def strike(display, distance):
     def begin():
         target = first(display)
@@ -241,9 +264,10 @@ STEPS = [
     ('The client has every animal the server has, all six kinds, on both islands, each standing on the ground',
      begin_count, all_present, 4),
     ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', lambda: None, wandered, 20),
+    ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),
     ('Struck with Left Mouse, a flamingo is hurt', strike('Flamingo', 110), flamingo_hit, 8),
     ('The struck flamingo runs off faster than it walks', lambda: None, flamingo_ran, 4),
-    ('A survivor near an alligator on land is noticed and bitten: health falls on server and client', near_alligator, bitten, 12),
+    ('A survivor too near an alligator on land is noticed and bitten: health falls on server and client', near_alligator, bitten, 12),
     ('Away down the beach the alligator gives up', away, gave_up, 5),
     ('Struck until dead, a squirrel monkey drops on its side on both machines', strike('Squirrel Monkey', 95), monkey_killed, 20),
     ('E at the body harvests it: 2 to 5 Raw Meat arrive and the body is gone on the client', lambda: None, harvested, 6),
