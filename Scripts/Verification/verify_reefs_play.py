@@ -7,6 +7,7 @@ with run_play_check.py.
   2. Every coral stands on the sea floor and is wholly under water (at least 50 cm below the surface).
   3. Every coral glows (a glowing coral material), in at least four colours per reef.
   4. Corals are solid: a level trace into each reef's largest mounds and pillar clumps stops on them.
+  5. A reef shark (hammerhead) and a manta ray swim over each reef (they roam, so within 40 m), on the client too.
 Writes Saved/ReefsPlayResult.json.
 """
 import json
@@ -94,11 +95,22 @@ def solid():
     return True
 
 
+def patrolled():
+    for world in (server_world, client_world):
+        fish = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWFish)
+        for reef in REEFS:
+            near = {str(f.get_editor_property('definition').get_editor_property('display_name')) for f in fish
+                    if ((f.get_actor_location().x - reef.cx) ** 2 + (f.get_actor_location().y - reef.cy) ** 2) ** .5 < 4000}
+            assert {'Hammerhead Shark', 'Manta Ray'} <= near, f'{reef.key}: {sorted(near)}'
+    return True
+
+
 STEPS = [
     ('Six reefs, one per region and two in the Plains, off islands without a Port; 40+ corals of all four kinds each; the client has them', lambda: None, six, 4),
     ('Every coral stands on the sea floor, wholly under water', lambda: None, floor_and_water, 6),
     ('Every coral glows, in at least four colours per reef', lambda: None, glowing, 4),
     ("Each reef's largest mounds and pillars are solid", lambda: None, solid, 4),
+    ('A reef shark and a manta ray swim over each reef, on server and client', lambda: None, patrolled, 4),
 ]
 
 

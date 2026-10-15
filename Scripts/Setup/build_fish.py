@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_flora import Ground, SEA  # noqa: E402
 from coastal_layout import POND, POND_RADIUS, POND_SURFACE  # noqa: E402
+from world_reefs import REEFS  # noqa: E402
 import world_layout as W  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'  # sea life stays on the island (owner, October 14)
@@ -73,6 +74,8 @@ WORLD = {'MantaRay': [('Starter', 3), ('Plains', 3), ('Desert', 3), ('Jungle', 2
          'HammerheadShark': [('Starter', 2), ('any', 6)],
          'Squid': [('Starter', 3), ('any', 6)]}
 OFFSHORE = (2000.0, 60000.0)   # how far out from a shore they start, cm
+# Over each of the six reefs (world_reefs.py; design reference: reef sharks): a reef shark and a manta ray patrol it.
+REEF_LIFE = {'HammerheadShark': 1, 'MantaRay': 1}
 
 
 def import_texture(name, source):
@@ -231,6 +234,26 @@ def sea_spots(ground, name, count, depth, keep_away, taken, islands):
     return found
 
 
+def reef_spots(ground, name, count, depth, taken):
+    """Water at least `depth` deep over each reef, a little above the corals."""
+    rng = random.Random(sum(map(ord, name)) * 17)
+    found = []
+    for reef in REEFS:
+        made, tries = 0, 0
+        while made < count and tries < 4000:
+            tries += 1
+            x, y = reef.cx + rng.uniform(-1800, 1800), reef.cy + rng.uniform(-1800, 1800)
+            floor = ground(x, y)
+            if floor is None or floor > SEA - depth - 200:
+                continue
+            if any(math.hypot(x - fx, y - fy) < 800 for fx, fy, _ in taken + found):
+                continue
+            found.append((x, y, max(floor + 350.0, SEA - 250.0)))
+            made += 1
+        assert made == count, f'no room for a {name} over the {reef.key} reef'
+    return found
+
+
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     items = food_items()
@@ -250,6 +273,8 @@ def main():
             islands = [i for i in W.ISLANDS if (i.key == 'Starter') == (where == 'Starter')
                        and (where in ('Starter', 'any') or i.region == where)]
             spots += sea_spots(ground, name, count, depth, keep_away, placed + spots, islands)
+        if name in REEF_LIFE:
+            spots += reef_spots(ground, name, REEF_LIFE[name], depth, placed + spots)
         for k, (x, y, z) in enumerate(spots):
             fish = actors.spawn_actor_from_class(unreal.EWFish, unreal.Vector(x, y, z), unreal.Rotator(0, 0, random.uniform(-180, 180)))
             fish.set_editor_property('definition', definitions[name])
