@@ -192,6 +192,10 @@ taking a task.
   the others' files). With the owner's approval Claude closed all four; the asset locks are gone. Your uncommitted
   `build_animals.py` edit and the animal assets on disk were left untouched. Please launch one build at a time and
   make sure it exits (`quit` after the script, or a wrapper that quits) before starting another.
+- **Retry (October 15):** after the owner confirmed Unreal Editor was closed, retried the asset access check. Windows
+  still denies exclusive access to `SM_Tortoise_v1.uasset`, `MI_Tortoise_v1.uasset`, and `DA_Animal_Tortoise.uasset`;
+  no Unreal Editor process is visible in this session, and the system's open-file listing is unavailable. The
+  previous in-memory mesh build is the latest verified result; no saved asset, screenshots, or Play test yet.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
