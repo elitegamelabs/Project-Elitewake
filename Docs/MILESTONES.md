@@ -16,7 +16,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Hatchet chops trees for Wood; Pickaxe mines rock for Stone; Waterskin fills at fresh water and is drunk; Torch is lit and put out with light and flame; each with its animation | ✅ `04771cf` |
 | Fish harvesting: strike with anything; carry the body ashore; harvest it on land for 2 to 5 fish meat (6 to 10 for sharks, the manatee and bigger creatures) | ✅ `a1143cf` |
 | Escape OPTIONS menu: SAVE GAME (single player) and MAIN MENU back to the ELITEWAKE title; Single Player resumes the saved survivor | ✅ `dfbdc22` |
-| The sloop back off the island beach (owner, October 15), helm, sails, cannon and shot in its hold | ✅ `PENDING` |
+| The sloop back off the island beach (owner, October 15), helm, sails, cannon and shot in its hold | ✅ `b148160` |
 | Island rock formations rebuilt to look natural | ⏳ |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
