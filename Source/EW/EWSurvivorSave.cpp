@@ -18,7 +18,7 @@ namespace
     }
 }
 
-bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor)
+bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName)
 {
     if (!Survivor || !Survivor->HasAuthority()) return false;
     auto* Save = Cast<UEWSurvivorSave>(UGameplayStatics::CreateSaveGameObject(StaticClass()));
@@ -37,17 +37,17 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor)
     if (const auto* Worn = Survivor->GetEquipmentComponent()) Save->Equipment = Worn->GetEquipmentEntries();
     if (const auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Save->Hotbar.Add(Bar->GetBoundItem(i));
-    return UGameplayStatics::SaveGameToSlot(Save, Slot, 0);
+    return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
-bool UEWSurvivorSave::HasSave()
+bool UEWSurvivorSave::HasSave(const FString& SlotName)
 {
-    return UGameplayStatics::DoesSaveGameExist(Slot, 0);
+    return UGameplayStatics::DoesSaveGameExist(SlotName, 0);
 }
 
-UEWSurvivorSave* UEWSurvivorSave::LoadSave()
+UEWSurvivorSave* UEWSurvivorSave::LoadSave(const FString& SlotName)
 {
-    return Cast<UEWSurvivorSave>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+    return Cast<UEWSurvivorSave>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
 }
 
 bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const

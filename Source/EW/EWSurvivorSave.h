@@ -24,11 +24,11 @@ public:
 
     /** Authority only: writes Survivor to the save slot. */
     UFUNCTION(BlueprintCallable, Category="Save")
-    static bool SaveSurvivor(AEWCharacter* Survivor);
+    static bool SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName = TEXT("Survivor"));
     UFUNCTION(BlueprintPure, Category="Save")
-    static bool HasSave();
+    static bool HasSave(const FString& SlotName = TEXT("Survivor"));
     UFUNCTION(BlueprintCallable, Category="Save")
-    static UEWSurvivorSave* LoadSave();
+    static UEWSurvivorSave* LoadSave(const FString& SlotName = TEXT("Survivor"));
     /** Authority only: puts Survivor back as saved, if the save was made on Survivor's map. */
     UFUNCTION(BlueprintCallable, Category="Save")
     bool ApplyTo(AEWCharacter* Survivor) const;
