@@ -31,6 +31,17 @@ taking a task.
 - Commit messages describe the player-facing change; record the commit hash in the docs in a follow-up commit, as
   the history shows.
 
+## One Unreal Editor at a time (both agents)
+
+The project has one editor and one set of asset files, so only one agent may run Unreal (setup scripts, Play
+checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `UnrealEditor-Cmd.exe` or `Build.bat`:
+1. If `Saved/EditorLock.txt` exists and was written less than 90 minutes ago, wait and look again later (it names
+   who holds it and why).
+2. Otherwise write `Saved/EditorLock.txt` with one line: `<agent> <UTC time> <what is running>`.
+3. Delete it when your run has exited (and make sure the editor process has quit). A lock older than 90 minutes is
+   stale and may be removed.
+`Saved/` is not tracked by git; this file is only for coordination on this PC.
+
 ## Useful facts
 
 - Engine: Unreal 5.8 at `C:\Program Files\Epic Games\UE_5.8`. Project: `C:\UnrealProjects\EW\EW.uproject`.
