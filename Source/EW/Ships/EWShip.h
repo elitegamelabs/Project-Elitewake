@@ -34,6 +34,17 @@ struct FEWCannonState
     bool bLoading = false;
 };
 
+/** Where round shot holed the hull, in the ship's space, and which way the planking faced there. */
+USTRUCT(BlueprintType)
+struct FEWHullHole
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Hull")
+    FVector_NetQuantize10 Local;
+    UPROPERTY(BlueprintReadOnly, Category="Hull")
+    FVector_NetQuantizeNormal Normal;
+};
+
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
 
@@ -309,6 +320,21 @@ public:
     /** Where a gunner stands, behind the cannon on the deck, in the ship's space. */
     FTransform GetGunnerSeatLocal(FName MountId, float HalfHeight) const;
 
+    /** Tuning: how much hull health one round shot takes. */
+    static constexpr float RoundShotDamage = 100.f;
+    /** Holes beyond this many still cost health but are not drawn. */
+    static constexpr int32 MaxShownHoles = 40;
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    float GetHullHealth() const { return HullHealth; }
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    float GetMaxHullHealth() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    int32 GetHoleCount() const { return Holes.Num(); }
+    UFUNCTION(BlueprintPure, Category="Ship|Hull")
+    FEWHullHole GetHole(int32 Index) const { return Holes.IsValidIndex(Index) ? Holes[Index] : FEWHullHole(); }
+    /** Authority only: round shot struck the hull at Where (world), the planking facing Normal there. */
+    void TakeRoundShot(const FVector& Where, const FVector& Normal, AEWCharacter* Gunner);
+
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
     TArray<FEWInstalledFitting> Fittings;
@@ -344,6 +370,15 @@ private:
     float CapstanYaw = 0.f;
     UPROPERTY(Replicated)
     TArray<FEWCannonState> Cannons;
+    /** Set whole from the definition as play begins, on the server; never saved with the map. */
+    UPROPERTY(Replicated, Transient)
+    float HullHealth = -1.f;
+    UPROPERTY(ReplicatedUsing=OnRep_Holes)
+    TArray<FEWHullHole> Holes;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> HoleVisuals;
+    UFUNCTION()
+    void OnRep_Holes();
     /** Server: seconds until each loading cannon is ready. */
     TMap<FName, float> CannonLoadLeft;
     FEWCannonState* FindCannon(FName MountId) { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }

@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "WaterBodyActor.h"
 
 TArray<TWeakObjectPtr<AEWCannonBall>> AEWCannonBall::RecentShots;
 
@@ -18,9 +19,14 @@ AEWCannonBall::AEWCannonBall()
     SetReplicatingMovement(true);
     Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
     Collision->InitSphereRadius(Radius);
-    Collision->SetCollisionProfileName(TEXT("Projectile"));
-    // Shot flies past swimmers and crew for now; it is stopped by hulls, rock and ground.
+    // A physics body, which ships' hull boxes let through so it strikes the planking itself. It is stopped by
+    // hulls, rock and ground; it flies past swimmers and crew for now.
+    Collision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    Collision->SetCollisionObjectType(ECC_PhysicsBody);
+    Collision->SetCollisionResponseToAllChannels(ECR_Block);
     Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+    Collision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
+    Collision->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
     RootComponent = Collision;
     Visual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Visual"));
     Visual->SetupAttachment(Collision);
@@ -96,22 +102,26 @@ AEWCannonBall* AEWCannonBall::GetLastShot(const UObject* WorldContext)
 void AEWCannonBall::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (HasAuthority() && !bLanded && GetActorLocation().Z < WaterZ) Land(FVector(GetActorLocation().X, GetActorLocation().Y, WaterZ), nullptr);
+    if (HasAuthority() && !bLanded && GetActorLocation().Z < WaterZ) Land(FVector(GetActorLocation().X, GetActorLocation().Y, WaterZ), FVector::UpVector, nullptr);
 }
 
 void AEWCannonBall::OnStopped(const FHitResult& Hit)
 {
-    if (!bLanded) Land(Hit.ImpactPoint, Hit.GetActor());
+    if (!bLanded) Land(Hit.ImpactPoint, Hit.ImpactNormal, Hit.GetActor());
 }
 
-void AEWCannonBall::Land(const FVector& Where, AActor* Hit)
+void AEWCannonBall::Land(const FVector& Where, const FVector& Normal, AActor* Hit)
 {
+    if (!HasAuthority() || bLanded) return;
+    if (Cast<AWaterBody>(Hit)) Hit = nullptr;   // the sea's surface: a splash, not a strike
+    if (auto* Ship = Cast<AEWShip>(Hit)) Ship->TakeRoundShot(Where, Normal, Gunner.Get());
     bLanded = true;
     LandedAt = Where;
     Struck = Hit;
     Movement->StopMovementImmediately();
     Movement->Deactivate();
     SetActorLocation(Where);
+    ForceNetUpdate();
     // Gone a moment later, long enough for every screen to see where it fell.
     SetLifeSpan(1.f);
 }

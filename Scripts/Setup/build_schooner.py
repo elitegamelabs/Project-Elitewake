@@ -261,7 +261,7 @@ def update_definition(hull, rig, looks, capstan):
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         # Crew: the twelve cannons' crews plus the player and the Surgeon. Speed, turning and hold are tuning.
-        'crew_capacity': 14, 'top_speed': 800.0, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
+        'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 800.0, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
         'mounts': mounts,
     }
     for k, v in values.items():

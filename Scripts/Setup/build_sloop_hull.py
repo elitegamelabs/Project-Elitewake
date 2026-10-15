@@ -48,6 +48,7 @@ STAY_TOP = (MAST_X + 8, 0.0, MAST_TOP - 30)
 STAY_BOW = (925.0, 0.0, 500.0)       # bowsprit end, where the forestay and the jib's tack meet
 FRAMES = range(-640, 660, 60)
 MOORING_YAW = 90.0     # bow toward open water
+HULL_HEALTH = 1000.0   # tuning: ten round shot
 MOORING_Y = 2350.0     # clear of the dock's end, lying along the heading
 SHROUD_XS = (MAST_X - 30, MAST_X + 30)
 
@@ -122,6 +123,7 @@ def update_definition(hull, rig, capstan):
         'hull_extent': unreal.Vector(BOW_X - 10, BEAM + 5, -KEEL_Z + 5),
         'hull_draft': -KEEL_Z,
         'deck_height': DECK_Z,
+        'hull_health': HULL_HEALTH,
         'hold_floor_height': FLOOR_Z,
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
         'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),

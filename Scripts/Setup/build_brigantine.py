@@ -212,7 +212,7 @@ def update_definition(hull, rig, looks, capstan):
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
         'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
         # Crew up to 25 (confirmed). Speed, turning and hold are tuning: bigger and slower to turn than the schooner.
-        'crew_capacity': 25, 'top_speed': 750.0, 'turn_rate': 16.0, 'cargo_slots': 60, 'weight_capacity': 8000.0,
+        'hull_health': 4000.0, 'crew_capacity': 25, 'top_speed': 750.0, 'turn_rate': 16.0, 'cargo_slots': 60, 'weight_capacity': 8000.0,
         'mounts': mounts,
     }
     for k, v in values.items():

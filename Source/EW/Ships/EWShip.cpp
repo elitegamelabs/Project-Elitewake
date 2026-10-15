@@ -117,6 +117,8 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bAnchored);
     DOREPLIFETIME(AEWShip, CapstanWorker);
     DOREPLIFETIME(AEWShip, Cannons);
+    DOREPLIFETIME(AEWShip, HullHealth);
+    DOREPLIFETIME(AEWShip, Holes);
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
@@ -133,6 +135,7 @@ void AEWShip::OnConstruction(const FTransform& Transform)
 void AEWShip::BeginPlay()
 {
     Super::BeginPlay();
+    if (HasAuthority() && Definition) HullHealth = Definition->HullHealth;
     if (Definition)
     {
         const FString Problem = Definition->Validate();
@@ -178,6 +181,8 @@ void AEWShip::ApplyDefinition()
     CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
     if (!Definition) return;
     if (HasAuthority() && Cargo) Cargo->SetMaxSlots(Definition->CargoSlots);
+    if (HasAuthority() && HullHealth < 0.f) HullHealth = Definition->HullHealth;
+    if (HasAuthority() && HullHealth < 0.f) HullHealth = Definition->HullHealth;
     // A modelled hull carries its own hatch, capstan and ladders, and crew walk on the mesh itself.
     UStaticMesh* HullMesh = Definition->HullMesh.LoadSynchronous();
     bModelledHull = HullMesh != nullptr;
@@ -275,6 +280,8 @@ void AEWShip::ApplyDefinition()
         HullCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
         HullCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Ignore);
         HullCollision->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+        // Round shot (a physics body) strikes the planking itself, not the box around the hull.
+        HullCollision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Ignore);
     }
     else
     {
@@ -698,6 +705,9 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         else if (bOverloaded) Status = FText::Format(NSLOCTEXT("Elitewake", "HelmOverloaded", "  -  Overloaded: lighten the hold within {0} s"),
             FText::AsNumber(FMath::CeilToInt(OverloadSecondsLeft)));
         else if (bAnchored) Status = NSLOCTEXT("Elitewake", "HelmAnchored", "  -  Anchored");
+        if (HullHealth >= 0.f && HullHealth < GetMaxHullHealth())
+            Status = FText::Format(NSLOCTEXT("Elitewake", "HelmHull", "{0}  -  Hull {1}%"), Status,
+                FText::AsNumber(FMath::RoundToInt(100.f * HullHealth / GetMaxHullHealth())));
         if (Definition && Definition->bPaddled)
             return FText::Format(NSLOCTEXT("Elitewake", "LeavePaddlesStatus", "Put down the paddles  (W/S stroke, A/D steer){0}"), Status);
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder, Shift + A/D trim){0}"), Status);
@@ -970,6 +980,45 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
         }
     }
     if (bChanged) ForceNetUpdate();
+}
+
+float AEWShip::GetMaxHullHealth() const
+{
+    return Definition ? Definition->HullHealth : 1.f;
+}
+
+void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWCharacter* Gunner)
+{
+    if (!HasAuthority()) return;
+    if (HullHealth < 0.f && Definition) HullHealth = Definition->HullHealth;
+    if (HullHealth <= 0.f) return;
+    (void)Gunner;
+    HullHealth = FMath::Max(0.f, HullHealth - RoundShotDamage);
+    FEWHullHole Hole;
+    Hole.Local = GetActorTransform().InverseTransformPosition(Where);
+    Hole.Normal = GetActorTransform().InverseTransformVectorNoScale(Normal.GetSafeNormal());
+    Holes.Add(Hole);
+    OnRep_Holes();
+    ForceNetUpdate();
+}
+
+void AEWShip::OnRep_Holes()
+{
+    static UStaticMesh* HoleMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Elitewake/World/Ships/SM_ShotHole_v1.SM_ShotHole_v1"));
+    if (!HoleMesh) return;
+    // Each hole is drawn where it struck, flat on the planking and a hair proud of it.
+    for (int32 i = HoleVisuals.Num(); i < FMath::Min(Holes.Num(), MaxShownHoles); ++i)
+    {
+        auto* Visual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+            *FString::Printf(TEXT("ShotHole_%d"), i)), RF_Transient);
+        Visual->SetupAttachment(HullCollision);
+        Visual->SetStaticMesh(HoleMesh);
+        Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        const FVector Normal = FVector(Holes[i].Normal).GetSafeNormal();
+        Visual->SetRelativeLocationAndRotation(FVector(Holes[i].Local) + Normal * 1.5f, FRotationMatrix::MakeFromZ(Normal).Rotator());
+        Visual->RegisterComponent();
+        HoleVisuals.Add(Visual);
+    }
 }
 
 bool AEWShip::IsValidHelmsman(const AEWCharacter* Character) const

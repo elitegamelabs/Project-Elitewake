@@ -8,6 +8,7 @@ Safe to run again. Run in the editor, outside Play, after build_ship_fittings.py
   fitting's turning part: the ship aims it about the trunnions.
 - DA_TestCannon: a Cannon fitting for any cannon hardpoint, loading DA_TestRoundShot.
 - DA_TestRoundShot: round shot, stacking to 50 (confirmed for cannon ammo).
+- SM_ShotHole_v1: the hole round shot leaves in a hull, drawn where it struck.
 Both items are test placeholders: the cannon's recipe, cost, variants and art are open question 1, and their
 weights are test tuning. The cannon art follows the shape of the fittings atlas's cannon until the owner's.
 """
@@ -59,6 +60,22 @@ def barrel():
     return b
 
 
+def shot_hole():
+    """Where round shot broke through: a ragged dark hole about 35 cm across with torn planking around it standing
+    proud of the hull, lying in its own XY plane (the ship lays it flat on the hull, facing out)."""
+    b = Builder()
+    for w, h in ((26.0, 26.0), (18.0, 34.0), (34.0, 18.0), (30.0, 22.0)):   # overlapping dark squares: a ragged hole
+        b.box((0.0, 0.0, -.4), (w, h, 1.2), tar=1.0)
+    b.box((0.0, 0.0, .3), (16.0, 16.0, .6), tar=1.0, iron=1.0)              # the black throat of the hole
+    for k in range(11):
+        a = 2 * math.pi * k / 11 + (.25 if k % 2 else 0.0)
+        length = 10.0 + 7.0 * ((k * 37) % 5) / 4.0
+        r = 15.0 + length / 2
+        # Torn planks stand out from the hull, so they catch light and cast shadow.
+        b.box((r * math.cos(a), r * math.sin(a), 1.8), (length, 3.0, 3.6))
+    return b
+
+
 def data_asset(name):
     path = f'{ITEMS}/{name}'
     asset = unreal.load_asset(path)
@@ -101,6 +118,7 @@ def main():
     timber = make_timber_material()
     carriage_mesh = write_static_mesh(carriage(), f'{FOLDER}/SM_CannonCarriage_v1', [timber], UV_TILE, collision=False)
     barrel_mesh = write_static_mesh(barrel(), f'{FOLDER}/SM_CannonBarrel_v1', [timber], UV_TILE, collision=False)
+    write_static_mesh(shot_hole(), f'{FOLDER}/SM_ShotHole_v1', [timber], UV_TILE, collision=False)
     shot = configure(data_asset('DA_TestRoundShot'), {
         'item_id': 'Test.RoundShot', 'display_name': 'Round Shot', 'category': unreal.EWItemCategory.AMMUNITION,
         'max_stack_size': 50, 'unit_weight': 2.0, 'icon': unreal.load_asset(f'{ICONS}/T_Icon_CannonAmmo_v1'),

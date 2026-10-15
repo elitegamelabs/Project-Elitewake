@@ -67,6 +67,9 @@ public:
     TSoftObjectPtr<UStaticMesh> CapstanMesh;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector CapstanLocation = FVector::ZeroVector;
+    /** The hull's health when whole (tuning; Hull Health upgrades will raise it). Round shot takes it away. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull", meta=(ClampMin="1"))
+    float HullHealth = 1000.f;
     /** Cargo hatch on deck, relative to the ship. Hold Interact there to open the ship's hold. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Cargo")
     FVector CargoHatchPoint = FVector(-150, 60, 130);

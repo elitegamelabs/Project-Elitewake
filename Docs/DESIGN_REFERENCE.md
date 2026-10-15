@@ -174,6 +174,7 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
   - Its port limits its aim: 15 degrees either side, 5 down and 8 up on the sloop (*tuning*).
   - Round shot leaves the muzzle at 60 m/s (*tuning*) plus the ship's own way, and falls under gravity into the sea or against whatever solid it meets first, never its own ship. It does not strike people yet.
   - Cannon and round shot are test fixtures until their recipes, costs and variant names are decided (open question 1); round shot stacks to 50 (confirmed for cannon ammo).
+- **Hull health (DECIDED, delegated, October 14):** every ship has hull health from its definition (*tuning*: raft 200, dinghy 300, sloop 1,000, schooner 2,500, brigantine 4,000; Hull Health upgrades will raise it). Each round shot that strikes the planking takes 100 (*tuning*) and leaves a shot hole drawn where it struck, seen by everyone. Shot strikes the hull itself, not the box around it. The helmsman's status shows the hull's health once it is damaged. Hull health starts whole each session until saving arrives (M7).
 - **Ghost ships** are hostile NPC vessels haunting several areas. They fire on players and stay visible on the map through fog. Ordinary enemy pirates are other players.
 - **Technical rule:** each ship is its own authoritative actor. A player at the helm stays their own character; they do not become the ship.
 

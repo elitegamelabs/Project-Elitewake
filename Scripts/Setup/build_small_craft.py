@@ -385,7 +385,7 @@ def build_raft(timber):
         'deck_height': RAFT_DECK, 'hold_floor_height': RAFT_DECK,
         'anchor_point': unreal.Vector(205, -75, RAFT_DECK + 30), 'cargo_hatch_point': unreal.Vector(120, 60, RAFT_DECK + 30),
         'boarding_points': [unreal.Vector(0, s * (hy + 30), -10) for s in (-1, 1)],
-        'cargo_slots': 8, 'weight_capacity': 400.0, 'top_speed': RAFT_SPEED, 'turn_rate': 25.0, 'crew_capacity': 2,
+        'hull_health': 200.0, 'cargo_slots': 8, 'weight_capacity': 400.0, 'top_speed': RAFT_SPEED, 'turn_rate': 25.0, 'crew_capacity': 2,
         'mounts': [mount('Helm', T.HELM, helm_at)],
     }, helm)
 
@@ -409,7 +409,7 @@ def build_dinghy(timber, sail_mi):
         'deck_height': D_FLOOR, 'hold_floor_height': D_FLOOR,
         'anchor_point': unreal.Vector(135, 0, D_FLOOR + 25), 'cargo_hatch_point': unreal.Vector(-95, 0, D_FLOOR + 22),
         'boarding_points': [unreal.Vector(-20, s * (D_BEAM + 35), -10) for s in (-1, 1)],
-        'cargo_slots': 6, 'weight_capacity': 250.0, 'top_speed': 450.0, 'turn_rate': 45.0, 'crew_capacity': 2,
+        'hull_health': 300.0, 'cargo_slots': 6, 'weight_capacity': 250.0, 'top_speed': 450.0, 'turn_rate': 45.0, 'crew_capacity': 2,
         'mounts': [mount('Helm', T.HELM, helm_at),
                    mount('Sail', T.SAIL, sail_at, unreal.EWSailSize.SMALL, (sail, furled, (0, 0, D_BOOM_Z - sail_at[2])))],
     }, helm)

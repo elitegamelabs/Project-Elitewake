@@ -67,5 +67,5 @@ private:
 
     UFUNCTION()
     void OnStopped(const FHitResult& Hit);
-    void Land(const FVector& Where, AActor* Hit);
+    void Land(const FVector& Where, const FVector& Normal, AActor* Hit);
 };
