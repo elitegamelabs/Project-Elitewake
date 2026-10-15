@@ -12,8 +12,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 
 | Item | Status |
 |---|---|
-| Island cleaned: boats removed from the island map (kept in the ships test map); the starter supplies are the four core tools | ✅ COMMIT |
-| Hatchet chops trees for Wood; Pickaxe mines rock for Stone; Waterskin fills at fresh water and is drunk; Torch is lit and put out with light and flame; each with its animation | ✅ COMMIT |
+| Island cleaned: boats removed from the island map (kept in the ships test map); the starter supplies are the four core tools | ✅ `04771cf` |
+| Hatchet chops trees for Wood; Pickaxe mines rock for Stone; Waterskin fills at fresh water and is drunk; Torch is lit and put out with light and flame; each with its animation | ✅ `04771cf` |
 | Island rock formations rebuilt to look natural | ⏳ |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
