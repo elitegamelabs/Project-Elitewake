@@ -163,7 +163,7 @@ taking a task.
   passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
   `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
-### T6. A better tortoise shell — CLAIMED (ChatGPT, October 15)
+### T6. A better tortoise shell — OPEN
 - **Why:** the tortoise's scutes read as stripes (`Saved/Screenshots/Animals`, `Docs/VERIFICATION.md` "Land
   animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
 - **Do:** in `Scripts/Setup/build_animals.py`, function `tortoise()`, replace the `shell()` colouring with a proper
@@ -173,6 +173,15 @@ taking a task.
   (it replaces the animals in the coastal map), then `verify_animals_play.py` must still pass.
 - **Done when:** a side and top screenshot clearly show plates; the animals check passes; screenshots saved under
   `Saved/Screenshots/Animals`.
+- **Progress (October 15):** drafted raised polygonal vertebral, costal, and marginal scutes with dark seams and
+  nested ring tones in `tortoise()`; Python syntax and `git diff --check` pass. The editor built the updated static
+  mesh in memory, but saving existing animal assets fails with Windows sharing violation (error 32). The standard
+  setup script also stops while recompiling/saving the shared animal material, which reports a missing Transform
+  Position input. Existing material, tortoise mesh, material instance, and definition files are currently locked by
+  another process; no Unreal Editor process is running in this workspace. No regenerated asset, Play result, or
+  screenshot is committed. The local function edit remains uncommitted.
+- **Next:** release the asset file locks, resolve or bypass the shared-material save failure without changing
+  unrelated material behavior, rerun the in-editor setup, then capture side/top views and run the animal Play check.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
