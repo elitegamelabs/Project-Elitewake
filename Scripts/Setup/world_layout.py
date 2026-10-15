@@ -159,6 +159,62 @@ def check(islands):
 ISLANDS = generate()
 
 
+# ---- Ports ----------------------------------------------------------------------------------------------------
+# Owner, October 15 (Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md): one Port in each region, not on
+# every island. DECIDED (delegated): each region's Port is on its largest island (in the Plains, the largest
+# besides the starter island), its waterfront on the side facing the world's centre, so ships come in from the
+# Plains. The islands, names, vendors and safe zones the owner has not set stay open.
+PORT_PAD = 3800.0        # cm: radius of the level, paved Port site (tuning)
+PORT_INLAND = 2600.0     # cm: how far inland of the shore the site's middle lies
+
+
+class Port:
+    """A Port's site: its island, the bearing its waterfront faces (radians), the shore point there, and the site's
+    middle on land."""
+
+    def __init__(self, region, island):
+        self.region, self.island = region, island
+        self.facing = math.atan2(-island.cy, -island.cx) if (island.cx or island.cy) else 0.0
+        r = island.radius(self.facing)
+        self.shore = (island.cx + r * math.cos(self.facing), island.cy + r * math.sin(self.facing))
+        self.cx = island.cx + (r - PORT_INLAND) * math.cos(self.facing)
+        self.cy = island.cy + (r - PORT_INLAND) * math.sin(self.facing)
+
+    def local(self, x, y):
+        """(along, across) in cm in the Port's frame: along points out to sea through the waterfront."""
+        dx, dy = x - self.cx, y - self.cy
+        c, s = math.cos(self.facing), math.sin(self.facing)
+        return dx * c + dy * s, -dx * s + dy * c
+
+    def world(self, along, across):
+        c, s = math.cos(self.facing), math.sin(self.facing)
+        return self.cx + along * c - across * s, self.cy + along * s + across * c
+
+
+def _ports():
+    found = {}
+    for region in REGION_CENTRES:
+        options = [i for i in ISLANDS if i.region == region and i.key != 'Starter']
+        found[region] = Port(region, max(options, key=lambda i: i.rx * i.ry))
+    return found
+
+
+PORTS = _ports()
+
+
+def port_on(island):
+    return next((p for p in PORTS.values() if p.island is island), None)
+
+
+def near_port(x, y, margin=1500.0):
+    """True within a Port's site (plus a margin) or its waterfront: keep trees, rocks and animals off it."""
+    for p in PORTS.values():
+        along, across = p.local(x, y)
+        if math.hypot(along, across) < PORT_PAD + margin or (0 < along < PORT_INLAND + 6000 and abs(across) < 1800):
+            return True
+    return False
+
+
 def island(key):
     return next(i for i in ISLANDS if i.key == key)
 
@@ -182,5 +238,7 @@ if __name__ == '__main__':
               f'peak {i.peak / M:4.1f} m  cove {"yes" if i.cove else "no "}  nearest shore {nearest.get(i.key, 0) / M:5.0f} m')
     x0, x1, y0, y1 = bounds()
     print(f'{len(ISLANDS)} islands; world {(x1 - x0) / M / 1000:.1f} x {(y1 - y0) / M / 1000:.1f} km')
+    for region, port in PORTS.items():
+        print(f'Port of the {region}: {port.island.key}, waterfront facing {math.degrees(port.facing):.0f} degrees')
     print('PASS' if not problems else 'FAIL:\n  ' + '\n  '.join(problems))
     sys.exit(1 if problems else 0)

@@ -23,6 +23,7 @@ SEA = -65.0
 FLOOR = -6000.0          # the sea floor between islands
 DEEP = -50000.0          # the deepest basins (owner: 500 m)
 SHELF = 20000.0          # how far an island's own terrain reaches past its shore (cm)
+PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
 POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 260.0
 
@@ -101,6 +102,12 @@ def island_land(i, x, y, inland):
         h -= rise * 300 * max(0.0, 0.35 - channel) / 0.35
         h = min(h, SEA + 160 + i.peak * rise * 0.6)
     cliff = CLIFFS.get(i.key)
+    port = W.port_on(i)
+    if port and cliff:
+        # No cliff across a Port's waterfront.
+        along, across = port.local(x, y)
+        if along > -W.PORT_PAD and abs(across) < W.PORT_PAD * 1.6:
+            cliff = None
     if cliff:
         ca, half, height = cliff
         a = math.atan2(ly, lx)
@@ -110,6 +117,13 @@ def island_land(i, x, y, inland):
             # Past a 2-3 m strip of beach the ground climbs steeply to the cliff top.
             climb = min(1.0, max(0.0, (inland - 250) / 900))
             h = max(h, land(inland) + height * side ** .6 * climb ** .7)
+    if port:
+        # The Port's site: levelled 2.2 m above the sea, easing back into the island's ground.
+        d = math.hypot(x - port.cx, y - port.cy)
+        if d < W.PORT_PAD + 2500:
+            w = 1.0 if d < W.PORT_PAD else 1.0 - (d - W.PORT_PAD) / 2500.0
+            w = w * w * (3 - 2 * w)
+            h = h * (1 - w) + PORT_LEVEL * w
     return h
 
 

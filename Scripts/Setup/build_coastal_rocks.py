@@ -284,7 +284,7 @@ def main():
         while len(here) < want and tries < want * 60 + 100:
             tries += 1
             x, y = island.cx + irng.uniform(-reach, reach), island.cy + irng.uniform(-reach, reach)
-            if island.distance(x, y) > -300:
+            if island.distance(x, y) > -300 or W.near_port(x, y):
                 continue
             z = ground(x, y)
             if z < SEA + 60 or any(math.hypot(x - px, y - py) < 300 for px, py in close):

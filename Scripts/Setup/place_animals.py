@@ -80,7 +80,7 @@ def main():
                 tries += 1
                 x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
                 z = ground(x, y)
-                if not fits(HABITAT[name], island, x, y, z, near_trees):
+                if not fits(HABITAT[name], island, x, y, z, near_trees) or W.near_port(x, y):
                     continue
                 if min(math.hypot(x - px, y - py) for px, py in (SPAWN, DOCK)) < (2600 if aggressive else 700):
                     continue

@@ -570,6 +570,8 @@ def dress_islands(actors, ground, kinds, wood, thatch):
                     continue
                 if kind != 'Veyran Palm' and inland < 700:
                     continue
+                if W.near_port(x, y):
+                    continue
                 z = ground(x, y)
                 if z < SEA + 60 or steep(ground, x, y):
                     continue
@@ -717,7 +719,7 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                     x, y = px + d * math.cos(a), py + d * math.sin(a)
                 else:
                     x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
-                if island.distance(x, y) > -400:
+                if island.distance(x, y) > -400 or W.near_port(x, y):
                     continue
                 z = ground(x, y)
                 if z < SEA + 70 or steep(ground, x, y):
