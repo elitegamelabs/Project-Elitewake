@@ -194,8 +194,11 @@ taking a task.
   make sure it exits (`quit` after the script, or a wrapper that quits) before starting another.
 - **Retry (October 15):** after the owner confirmed Unreal Editor was closed, retried the asset access check. Windows
   still denies exclusive access to `SM_Tortoise_v1.uasset`, `MI_Tortoise_v1.uasset`, and `DA_Animal_Tortoise.uasset`;
-  no Unreal Editor process is visible in this session, and the system's open-file listing is unavailable. The
-  previous in-memory mesh build is the latest verified result; no saved asset, screenshots, or Play test yet.
+  no Unreal Editor process is visible in this session, and the system's open-file listing is unavailable. The live
+  `Saved/Logs/EW.log` identifies a separate Claude `run_then_quit.py` Unreal automation that is actively creating
+  port meshes and saving the coastal map. A new T6 launch did not reach its wrapper while that run was active, so it
+  was stopped to avoid overlapping writes. The previous in-memory mesh build is the latest verified T6 result; no
+  saved tortoise asset, screenshots, or Play test yet.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
