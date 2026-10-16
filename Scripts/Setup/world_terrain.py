@@ -83,10 +83,11 @@ def _plans():
                 a = rng.uniform(0, 2 * math.pi)
                 u, v = rng.uniform(-.35, .35) * isl.rx, rng.uniform(-.35, .35) * isl.ry
                 if kind == 'peak':
-                    shapes.append(('peak', u, v, rng.uniform(.25, .4) * isl.rx, isl.peak * rng.uniform(.9, 1.4)))
+                    shapes.append(('peak', u, v, rng.uniform(.25, .4) * isl.rx, isl.peak * rng.uniform(.9, 1.4),
+                                   rng.randint(4, 7), rng.uniform(0, 2 * math.pi)))
                 elif kind == 'ridge':
                     shapes.append(('ridge', u, v, a, rng.uniform(.45, .8) * isl.rx, rng.uniform(.12, .2) * isl.ry,
-                                   isl.peak * rng.uniform(.5, .9)))
+                                   isl.peak * rng.uniform(.5, .9), rng.uniform(0, 2 * math.pi)))
                 elif kind == 'plateau':
                     shapes.append(('plateau', u, v, rng.uniform(.25, .4) * isl.ry, isl.peak * rng.uniform(.45, .8)))
                 else:   # a valley runs right across, near the middle
@@ -110,15 +111,21 @@ def shapes_height(i, lx, ly):
     for shape in plan[1]:
         kind = shape[0]
         if kind == 'peak':
-            _, u, v, r, height = shape
+            # Not a cone: spurs run down its flanks between gullies, and crags break up the slopes near the top.
+            _, u, v, r, height, spurs, phase = shape
             d = math.hypot(x - u, y - v)
             if d < r:
-                h += height * (1 - d / r) ** 1.4
+                f = d / r
+                spur = 1 + .35 * f * math.sin(spurs * math.atan2(y - v, x - u) + phase + 2.5 * f)
+                crag = .1 * (1 - f) * abs(math.sin(x / 640 + phase) * math.sin(y / 560 - phase))
+                h += height * ((1 - f) ** 1.4 * spur + crag)
         elif kind == 'ridge':
-            _, u, v, a, half, width, height = shape
+            _, u, v, a, half, width, height, phase = shape
             dx, dy = x - u, y - v
             along = dx * math.cos(a) + dy * math.sin(a)
-            across = -dx * math.sin(a) + dy * math.cos(a)
+            # The spine wanders from side to side and rises and dips along its length.
+            across = -dx * math.sin(a) + dy * math.cos(a) - width * .8 * math.sin(along / half * 2.2 + phase)
+            height = height * (1 + .2 * math.sin(along / half * 3.7 + phase * 2))
             t = max(-1.0, min(1.0, along / half))
             off = math.hypot(across, along - t * half)
             h += height * math.exp(-(off / width) ** 2) * (1 - .5 * t * t)
