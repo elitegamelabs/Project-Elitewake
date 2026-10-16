@@ -95,6 +95,5 @@ others built. Codex's list is [CODEX.md](CODEX.md); Scenario's generation queue 
 | T10 | "Village" becomes "Port" | OPEN |
 | T11 | Metric units audit | OPEN |
 | T6 | A better tortoise shell | OPEN |
-| T17 | World map picture with Ports and caves | OPEN |
 
 Suggested order: G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.

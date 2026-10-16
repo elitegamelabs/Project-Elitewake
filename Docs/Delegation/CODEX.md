@@ -66,7 +66,6 @@ is **Codex's list**: code, native tests, Python tests and Play-check scripts. Ch
 | T23 | Native tests for the sound library | OPEN |
 | T20 | Native tests for leaks and bailing | OPEN |
 | T14 | Native tests for swing kinds and gather gains | OPEN |
-| T12 | Tests for the world layout rules | OPEN |
 | T24 | Move the hull damage check to the ships test map | OPEN |
 | T25 | A packaged game's frame rate on the bigger world | OPEN |
 | T26 | What fills video memory with two players' views | OPEN |
