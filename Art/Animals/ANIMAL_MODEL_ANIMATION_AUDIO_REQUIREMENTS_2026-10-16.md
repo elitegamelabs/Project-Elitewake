@@ -68,3 +68,32 @@ Claude must read this file before modifying animal assets or AI. It must also in
 5. Any dependencies or blockers.
 
 Do not claim that six-view images, 3D models, animations or sounds exist until the files are present and checked. Reference images, generated assets, imported Unreal assets, runtime behavior and in-game verification are separate milestones. Do not change inventory/crafting menu icons as part of this task.
+
+## Existing reference sources and appearance targets
+
+Before generating anything, inspect:
+- `Art/Concepts/Animals/2026-10-12/roster.json` — named species roster and reference filenames.
+- `Art/Concepts/Animals/2026-10-12/README.md` — scope and limits of the 54 existing full-body concept references.
+- `Art/Wildlife/Turnarounds/README.md` — six currently implemented prototype species and the intended six-view deliverables.
+- `Scripts/Setup/place_animals.py`, `Scripts/Setup/build_animals.py`, and the current Unreal animal definitions/catalog — runtime species and approved habitats.
+
+The 54 concept images are **not** substitutes for six clean views of each exact model. Existing six-species overview art is only a draft concept. Produce dedicated, high-resolution six-view sheets per animal and then separate front/back/left/right/top/underside image files in the agreed folder. Do not claim those individual files exist until committed and checked.
+
+### Current six implemented land-animal prototypes: appearance guidance
+
+Use each species' existing image in `Art/Concepts/Animals/2026-10-12/` as a starting reference, then correct it against real species anatomy. Keep the same individual, proportions, markings and materials across all six views.
+
+- **American alligator:** broad, low-slung armored reptile; long muscular tail, short powerful legs, wide elongated snout, raised eyes/nostrils, rugged dark olive/brown scales and pale underside. Avoid crocodile-like narrow snout unless the selected species/reference specifically requires it.
+- **Cottonmouth snake:** thick-bodied venomous pit viper; broad triangular head distinct from neck, keeled scales, dark mottled body, pale mouth interior only when the mouth is open. Keep a believable limbless body and continuous tapering tail; animation should slither rather than walk.
+- **Tortoise:** low, sturdy body, domed patterned shell, scaly legs with claws, short tail and head/neck that retract or extend plausibly. Use the approved species reference for shell shape and coloration; do not make it look like a soft-bodied turtle.
+- **Flamingo:** tall wading bird with long thin legs and neck, hooked/down-curved bill with dark tip, pink-to-coral plumage and webbed feet. Preserve the characteristic folded-leg/neck posture at idle and the correct leg/wing silhouette while running or taking off if flight is supported.
+- **Brown pelican:** large coastal bird with long bill and expandable throat pouch, long folded wings, webbed feet, brown/gray plumage and pale head/neck variation appropriate to the selected adult plumage. Avoid flamingo-like legs/neck proportions.
+- **Squirrel monkey:** small agile primate, compact body, long non-prehensile tail, golden/olive limbs, gray-olive coat, pale facial mask and dark muzzle/cap; use the existing concept as the exact color reference. Movement should use primate-appropriate quadrupedal gait, climbing/leaping if supported, not a human walk cycle.
+
+### Additional approved habitat directions and cave creature
+
+- **Horse:** use a realistic horse anatomy and proportions, with coherent mane, tail, hooves, muzzle and musculature; the owner placed horses in Plains. It needs walk, sprint/gallop, idle and relevant kick/bite reactions as supported by AI/combat.
+- **Snow leopard:** thick pale gray/cream coat with dark rosettes, long thick balancing tail, compact powerful limbs, broad paws and feline face; the owner placed Snow Leopards in Winter. Provide feline walk/run/sprint, stalk, leap/pounce, bite/swipe and associated sounds.
+- **Giant spider:** clearly arachnid anatomy with eight legs, segmented body, multiple eyes as appropriate, fangs/pedipalps and a distinct silhouette. Use the established cave-threat design; animate idle leg movement, skitter/walk, fast run, pounce/leap and bite/strike. Audio should be designed as stylized creature Foley (leg taps, body movement, hiss/click/strike), not falsely presented as literal natural spider vocalization.
+
+For all other animals in `roster.json`, match the named real-world species anatomy and use its same-named concept image as the starting visual guide. Do not infer that every roster concept is currently approved for spawning. The current habitat and implementation authority remains the latest owner decisions and live animal catalog; keep candidate species clearly marked as pending. Aquatic creatures need swim/glide animations and appropriate underwater movement audio rather than land-only gait requirements, plus the required idle, faster movement and attack/action coverage when their design supports it.
