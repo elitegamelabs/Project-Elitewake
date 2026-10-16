@@ -10,8 +10,9 @@ class AEWShip;
 /**
  * A ship's own sounds, on every screen that has her (nothing extra is replicated: it reads her replicated state).
  * Her timbers creak always, more as she makes way; her rigging sounds while sail is set, more with speed; she groans
- * as she goes down; and each stroke of the bucket that takes water out of her splashes over the side. Levels are
- * tuning.
+ * as she goes down; each stroke of the bucket that takes water out of her splashes over the side; and her anchor's
+ * chain rattles out when it is let go, clanks as it catches the bottom a moment later, and grinds in at the capstan
+ * when it is raised (owner, October 16). Levels are tuning.
  */
 UCLASS(ClassGroup=(Sound))
 class EW_API UEWShipSoundComponent : public UActorComponent
@@ -35,5 +36,8 @@ private:
     float RiggingLevel = 0.f;
     float LastWater = 0.f;
     bool bWasSinking = false;
+    bool bWasAnchored = true;
+    FTimerHandle AnchorCatchTimer;
+    void AnchorCaught();
     AEWShip* Ship() const;
 };

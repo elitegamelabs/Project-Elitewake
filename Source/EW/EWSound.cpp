@@ -35,8 +35,11 @@ namespace
         {TEXT("Ambience/S_AmbForestWind_v2"), nullptr},
         {TEXT("Ambience/S_AmbJungleDay_v2"), nullptr},
         {TEXT("Ambience/S_AmbSwampFrogs_v2"), nullptr},
+        {TEXT("Ships/S_AnchorDrop_v1"), nullptr},
+        {TEXT("Ships/S_AnchorCatch_v1"), nullptr},
+        {TEXT("Ships/S_AnchorRaise_v1"), nullptr},
     };
-    static_assert(UE_ARRAY_COUNT(Takes) == int32(EEWSound::SwampFrogs) + 1, "a take for every sound");
+    static_assert(UE_ARRAY_COUNT(Takes) == int32(EEWSound::AnchorRaise) + 1, "a take for every sound");
 
     struct FWorldSounds { TMap<FName, int32> Counts; FName Last; int32 Total = 0; };
     TMap<FObjectKey, FWorldSounds>& Played() { static TMap<FObjectKey, FWorldSounds> Map; return Map; }

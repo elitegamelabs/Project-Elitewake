@@ -11,7 +11,9 @@ class UAudioComponent;
  * The background a player hears, on their own machine only: the sea's surf everywhere, the cold wind on the Winter
  * island, seabirds now and then away from it by day, insects at night away from it, and dripping water under a
  * cave's roof, where the outside sounds fall away. It follows the climate region where the player's survivor stands
- * (AEWClimateRegion) and the hour (UEWDayNightSubsystem), fading between them. Levels are tuning.
+ * (AEWClimateRegion) and the hour (UEWDayNightSubsystem), fading between them. The surf is full at the water's edge
+ * and fades away inland, silent from SurfReach on (owner, October 16: gone 20 m inland), coming back on the way down
+ * to the shore. Levels are tuning.
  */
 UCLASS(ClassGroup=(Sound))
 class EW_API UEWSoundscapeComponent : public UActorComponent
@@ -35,6 +37,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Sound") float GetRegionLoopLevel() const { return RegionLevel; }
     /** Whether the survivor stands under a cave's roof (looked for twice a second). */
     UFUNCTION(BlueprintPure, Category="Sound") bool IsInCave() const { return bInCave; }
+    /** How far the survivor is from the sea (cm; 0 in it or out at sea, SurfReach or more when it is out of reach). */
+    UFUNCTION(BlueprintPure, Category="Sound") float GetShoreDistance() const { return ShoreDistance; }
+    static constexpr float SurfReach = 2000.f;
 
 private:
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Surf;
@@ -55,6 +60,8 @@ private:
     bool bInCave = false;
     bool bNight = false;
     bool UnderCaveRoof(const FVector& At) const;
+    float ShoreDistance = 0.f;
+    float DistanceToSea(const FVector& At) const;
     float SampleSeconds = 0.f;
     float BirdSeconds = 0.f;
     bool bStarted = false;

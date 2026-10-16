@@ -3,6 +3,7 @@
 #include "EWSound.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -10,6 +11,8 @@ namespace
     constexpr float CreakAtRest = .3f, CreakAtSpeed = 1.f, RiggingHalf = .55f, RiggingFull = 1.f, FullSpeed = 800.f;
     // Less water aboard than a moment ago by this much (kg) means a bucket went over the side.
     constexpr float BailDrop = 5.f;
+    // Seconds from letting the anchor go to it catching the bottom (the drop take's chain runs about this long).
+    constexpr float AnchorCatchSeconds = 2.2f;
 }
 
 UEWShipSoundComponent::UEWShipSoundComponent()
@@ -39,13 +42,21 @@ void UEWShipSoundComponent::BeginPlay()
         EAttachLocation::KeepRelativeOffset, false, 0.f, 1.f, FMath::FRandRange(0.f, 8.f), nullptr, nullptr, false);
     LastWater = Owner->GetWaterAboard();
     bWasSinking = Owner->IsSinking();
+    bWasAnchored = Owner->IsAnchored();
 }
 
 void UEWShipSoundComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
     for (UAudioComponent* Loop : {Creak.Get(), Rigging.Get()})
         if (Loop) Loop->Stop();
+    if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(AnchorCatchTimer);
     Super::EndPlay(Reason);
+}
+
+void UEWShipSoundComponent::AnchorCaught()
+{
+    if (const AEWShip* Owner = Ship(); Owner && Owner->IsAnchored())
+        UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorCatch, Owner->GetAnchorPointWorld());
 }
 
 bool UEWShipSoundComponent::AreLoopsPlaying() const
@@ -72,6 +83,19 @@ void UEWShipSoundComponent::TickComponent(float DeltaSeconds, ELevelTick TickTyp
     if (Owner->IsSinking() && !bWasSinking)
         UEWSoundLibrary::PlaySoundAt(this, EEWSound::ShipSinking, Owner->GetActorLocation());
     bWasSinking = Owner->IsSinking();
+
+    if (Owner->IsAnchored() != bWasAnchored)
+    {
+        bWasAnchored = Owner->IsAnchored();
+        FTimerManager& Timers = GetWorld()->GetTimerManager();
+        Timers.ClearTimer(AnchorCatchTimer);
+        if (bWasAnchored)
+        {
+            UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorDrop, Owner->GetAnchorPointWorld());
+            Timers.SetTimer(AnchorCatchTimer, this, &UEWShipSoundComponent::AnchorCaught, AnchorCatchSeconds, false);
+        }
+        else UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorRaise, Owner->GetAnchorPointWorld());
+    }
 
     const float Water = Owner->GetWaterAboard();
     if (Water < LastWater - BailDrop && !Owner->IsSinking())

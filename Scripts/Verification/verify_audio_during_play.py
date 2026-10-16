@@ -30,8 +30,10 @@ EXPECT = {
     'sinking': ('SinkingPlayResult.json', [('S_ShipSinking_v1',)], [], {}),
     'ship_deck': ('ShipDeckPlayResult.json', [('S_StepDeck_v1', 'S_StepDeck_v1b')], [('S_SwimStroke_v1',)],
                   {'creak': .4, 'rigging': .3}),
-    # The sloop sails and turns: her wake trail (UEWWakeTrailComponent) reaches back about 20 m and bends with her.
-    'ship_sailing': ('ShipSailingPlayResult.json', [], [], {'wake_patches': 10, 'wake_reach': 1500, 'wake_bend': 60}),
+    # The sloop's anchor comes up at the capstan and goes down again at the end (its chain catching a moment later); she
+    # sails and turns, and her wake trail (UEWWakeTrailComponent) reaches back about 20 m and bends with her.
+    'ship_sailing': ('ShipSailingPlayResult.json', [('S_AnchorRaise_v1',), ('S_AnchorDrop_v1',), ('S_AnchorCatch_v1',)], [],
+                     {'wake_patches': 10, 'wake_reach': 1500, 'wake_bend': 60}),
     'caves': ('CavesPlayResult.json', [], [('S_StepStone_v1',)], {'cave': .9}),
     'day_night': ('DayNightPlayResult.json', [], [], {'insects': .2}),
 }
@@ -49,7 +51,9 @@ if INNER.exists():
     INNER.unlink()
 seen = {'creak': 0.0, 'rigging': 0.0, 'cave': 0.0, 'insects': 0.0, 'in_cave': False, 'ship_loops': False,
         'wake_patches': 0, 'wake_reach': 0.0, 'wake_bend': 0.0}
-state = {'handle': None, 'shot': None}
+state = {'handle': None, 'shot': None, 'done_at': None}
+# Seconds to keep listening once the check is done, for sounds that follow its last step (an anchor catching the bottom).
+AFTER = 3.0
 SHOTS = SAVED / 'Screenshots' / 'Wake'
 
 
@@ -143,7 +147,9 @@ def tick(delta):
             except ValueError:
                 return
         if inner and (inner.get('success') or inner.get('finished_utc') or inner.get('error') or inner.get('errors')):
-            finish(inner)
+            state['done_at'] = state['done_at'] or time.monotonic()
+            if time.monotonic() - state['done_at'] >= AFTER:
+                finish(inner)
     except Exception as error:
         finish(None, repr(error))
 

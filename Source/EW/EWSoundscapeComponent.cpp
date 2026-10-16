@@ -7,6 +7,8 @@
 #include "World/EWDayNight.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "EngineUtils.h"
+#include "WaterBodyActor.h"
 
 namespace
 {
@@ -19,6 +21,13 @@ namespace
     constexpr float ForestAshore = .5f, JungleByDay = .55f, SwampAshore = .7f;
     // Seconds for a loop to fade to a new place's level, and between seabird cries away from the Winter island.
     constexpr float FadeSeconds = 2.5f, BirdsMin = 14.f, BirdsMax = 35.f;
+    // The sea's surface (Scripts/Setup/world_terrain.py SEA): ground lower than this is under the sea.
+    constexpr float SeaLevel = -65.f;
+    // Within this of the water's edge the surf stays full; between it and UEWSoundscapeComponent::SurfReach it fades.
+    constexpr float SurfFull = 200.f;
+    // The sea is looked for in rings this far apart, in this many directions.
+    constexpr float RingStep = 100.f;
+    constexpr int32 RingDirections = 12;
 }
 
 UEWSoundscapeComponent::UEWSoundscapeComponent()
@@ -77,6 +86,29 @@ bool UEWSoundscapeComponent::UnderCaveRoof(const FVector& At) const
     return Rock && Rock->GetStaticMesh() && Rock->GetStaticMesh()->GetName().StartsWith(TEXT("SM_Cave_"));
 }
 
+float UEWSoundscapeComponent::DistanceToSea(const FVector& At) const
+{
+    // The nearest ground lower than the sea, looked for outward ring by ring: the sea's edge. Ponds and pools ashore
+    // lie above the sea and don't count. The water's own surface is looked through.
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShoreDistance), false);
+    if (const APlayerController* PC = Cast<APlayerController>(GetOwner()); PC && PC->GetPawn()) Query.AddIgnoredActor(PC->GetPawn());
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
+    const auto UnderSea = [&](const FVector& Point)
+    {
+        FHitResult Hit;
+        const bool bGround = GetWorld()->LineTraceSingleByChannel(Hit, Point + FVector(0, 0, 3000), FVector(Point.X, Point.Y, SeaLevel - 3000.f), ECC_Visibility, Query);
+        return !bGround || Hit.ImpactPoint.Z < SeaLevel;
+    };
+    if (UnderSea(At)) return 0.f;
+    for (float Radius = RingStep; Radius <= SurfReach; Radius += RingStep)
+        for (int32 i = 0; i < RingDirections; ++i)
+        {
+            const float Angle = 2.f * PI * i / RingDirections;
+            if (UnderSea(At + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.f) * Radius)) return Radius;
+        }
+    return SurfReach;
+}
+
 void UEWSoundscapeComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaSeconds, TickType, ThisTickFunction);
@@ -90,12 +122,14 @@ void UEWSoundscapeComponent::TickComponent(float DeltaSeconds, ELevelTick TickTy
         SampleSeconds = .5f;
         HeardRegion = AEWClimateRegion::SampleClimate(this, Pawn->GetActorLocation()).Region;
         bInCave = UnderCaveRoof(Pawn->GetActorLocation() + FVector(0, 0, 60));
+        ShoreDistance = HeardRegion == EEWRegion::OpenSea ? 0.f : DistanceToSea(Pawn->GetActorLocation());
         const UEWDayNightSubsystem* Clock = UEWDayNightSubsystem::GetForWorld(this);
         bNight = Clock && !Clock->IsDay();
     }
     const bool bWinter = HeardRegion == EEWRegion::Winter;
     const float Outside = bInCave ? OutsideInCave : 1.f;
-    const float SurfTarget = Outside * (bWinter ? SurfInWinter : HeardRegion == EEWRegion::OpenSea ? SurfAtSea : SurfAshore);
+    const float Inland = 1.f - FMath::SmoothStep(SurfFull, SurfReach, ShoreDistance);
+    const float SurfTarget = Outside * Inland * (bWinter ? SurfInWinter : HeardRegion == EEWRegion::OpenSea ? SurfAtSea : SurfAshore);
     const float WindTarget = Outside * (bWinter ? WindInWinter : 0.f);
     // Insects on warm nights ashore, not in the snow and not out at sea.
     const float InsectTarget = Outside * (bNight && !bWinter && HeardRegion != EEWRegion::OpenSea ? InsectsAtNight : 0.f);

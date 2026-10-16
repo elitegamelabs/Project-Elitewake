@@ -55,6 +55,10 @@ SOUNDS = {
     'Ambience/AMB_ForestWind-v2.wav': ('S_AmbForestWind_v2', 1.0, 'loop'),
     'Ambience/AMB_JungleDay-v2.wav': ('S_AmbJungleDay_v2', .6, 'loop'),
     'Ambience/AMB_SwampFrogs-v2.wav': ('S_AmbSwampFrogs_v2', 1.2, 'loop'),
+    # The fourth batch (October 16): the anchor's chain running out, catching on the bottom, and hove in at the capstan.
+    'Ships/SFX_AnchorDrop-v1.wav': ('S_AnchorDrop_v1', .9, 'far'),
+    'Ships/SFX_AnchorCatch-v1.wav': ('S_AnchorCatch_v1', .9, 'far'),
+    'Ships/SFX_AnchorRaise-v1.wav': ('S_AnchorRaise_v1', .9, 'far'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {

@@ -3,7 +3,7 @@
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client. Run unattended with
 run_play_check.py. Sounds are counted where each machine starts them (UEWSoundLibrary), so this proves which sound
 starts on which machine and when, not how it sounds: listening is the owner's. Through ordinary keys, the client:
-  1. stands ashore: the soundscape plays the surf loop at the shore level and the wind loop silent;
+  1. stands on the beach: the soundscape plays the surf loop at the shore level and the wind loop silent;
   2. presses E at a fiber plant: the rustle starts on both machines, the pickup only on the client;
   3. with the Hatchet at a palm, Left Mouse: the chop starts at the blow's contact on both machines;
   4. with the Pickaxe at a boulder: the pickaxe strike; 5. with the Hatchet at the boulder: the glancing clink;
@@ -12,7 +12,9 @@ starts on which machine and when, not how it sounds: listening is the owner's. T
   8. stands on the Winter island: the wind rises, the surf falls, and W gives snow footsteps;
   9. stands near a pelican, then a flamingo: each calls on its own, heard on both machines;
  10. holds W inland on a Plains island: grass footsteps; in a Jungle island's middle by day the jungle's chorus plays,
-     in a Swamp island's the frogs.
+     in a Swamp island's the frogs;
+ 11. on two islands, stands at the water's edge, then 10 m and 22 m inland, then back at the edge (owner, October
+     16): the surf is full at the edge, softer 10 m in, silent past 20 m, and full again back at the edge.
 Writes Saved/AudioPlayResult.json.
 """
 import json
@@ -118,7 +120,8 @@ def walk(on):
 
 # 1. The soundscape ashore.
 def begin_shore():
-    place(unreal.Vector(150, 0, ground(150, 0) + 110))
+    # On the south-east beach (see beach_walk): the spawn point lies 40 m inland, past the surf's reach.
+    place(unreal.Vector(1716, -3693, ground(1716, -3693) + 110))
     state['memo'].update(t=time.monotonic())
 
 
@@ -304,6 +307,61 @@ def region_loop(name):
     return done
 
 
+# 11. The surf fading inland.
+SEA = -65
+shores = {}
+
+
+def shore_line(key):
+    """The island's edge, walking out from its middle (toward the south-east, then other ways) until the ground is at
+    the sea; and the way inland from there."""
+    if key not in shores:
+        isl = W.island(key)
+        for ux, uy in ((.7071, -.7071), (1, 0), (0, -1), (-.7071, .7071), (0, 1), (-1, 0)):
+            d = 0
+            while d < 80000 and ground(isl.cx + ux * d, isl.cy + uy * d) > SEA + 5:
+                d += 100
+            if d >= 80000:
+                continue
+            edge = (isl.cx + ux * (d - 50), isl.cy + uy * (d - 50))
+            # Straight inland for 25 m: no other water within reach of the line's far end.
+            if all(ground(edge[0] - ux * s, edge[1] - uy * s) > SEA + 5 for s in range(100, 4600, 100)):
+                shores[key] = (edge, (-ux, -uy))
+                break
+        else:
+            raise AssertionError(f'no shore with 45 m of land behind it on {key}')
+    return shores[key]
+
+
+def begin_surf(key, inland_cm):
+    def begin():
+        (x, y), (ix, iy) = shore_line(key)
+        x, y = x + ix * inland_cm, y + iy * inland_cm
+        place(unreal.Vector(x, y, ground(x, y) + 110))
+        state['memo'].update(t=time.monotonic())
+    return begin
+
+
+def surf_heard(key, inland_cm, low, high):
+    def done():
+        if time.monotonic() - state['memo']['t'] < 4.0:
+            return False   # sampled twice a second, faded over 2.5 s
+        level, reach = scape.get_surf_level(), scape.get_shore_distance()
+        measured[f'surf_{key}_{inland_cm}'] = dict(level=round(level, 2), shore_cm=round(reach), region=str(scape.get_heard_region()))
+        assert low <= level <= high, f'the surf at {inland_cm} cm in on {key} is {level:.2f} (shore {reach:.0f} cm), not {low}-{high}'
+        return True
+    return done
+
+
+def surf_steps(key):
+    return [
+        (f'On {key} at the water\'s edge the surf is full', begin_surf(key, 0), surf_heard(key, 0, .6, 1.0), 10),
+        (f'10 m inland on {key} the surf is softer', begin_surf(key, 1000), surf_heard(key, 1000, .1, .55), 10),
+        (f'22 m inland on {key} the surf is silent', begin_surf(key, 2200), surf_heard(key, 2200, 0.0, .01), 10),
+        (f'Back at the edge on {key} the surf is full again', begin_surf(key, 0), surf_heard(key, 0, .6, 1.0), 10),
+    ]
+
+
 # 9. The flamingos and pelicans, on their own time: heard by a client standing near one (a far animal's calls are
 # neither sent to that client nor audible there).
 def begin_bird(kind, sound):
@@ -335,6 +393,8 @@ STEPS = [
     ('W inland on a Plains island: grass footsteps on both machines', begin_walk(lambda: inland('Plains3'), ('S_StepGrass_v1',)), stepped(None), 12),
     ('In the middle of a Jungle island by day: the jungle\'s chorus plays', begin_region('Jungle1'), region_loop('JungleDay'), 8),
     ('In the middle of a Swamp island: the frogs play', begin_region('Swamp2'), region_loop('SwampFrogs'), 8),
+    *surf_steps('Plains3'),
+    *surf_steps('Jungle1'),
     ('Near a pelican: it calls on its own, heard on both machines', begin_bird('Pelican', 'S_PelicanCall_v1'), bird_called, 70),
     ('Near a flamingo: it calls on its own, heard on both machines', begin_bird('Flamingo', 'S_FlamingoCall_v1'), bird_called, 55),
 ]
