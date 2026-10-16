@@ -16,6 +16,9 @@ LOOPS = {
     'Art/Audio/Ambience/AMB_CaveDrips-v1.wav': (2.0, 8.0),
     'Art/Audio/Ships/AMB_HullCreak-v1.wav': (2.0, 1.0),
     'Art/Audio/Ships/AMB_Rigging-v1.wav': (2.0, 1.0),
+    'Art/Audio/Ambience/AMB_ForestWind-v1.wav': (2.5, 2.5),
+    'Art/Audio/Ambience/AMB_JungleDay-v1.wav': (2.0, 1.0),
+    'Art/Audio/Ambience/AMB_SwampFrogs-v1.wav': (2.0, 2.5),
 }
 
 

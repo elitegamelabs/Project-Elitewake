@@ -10,6 +10,8 @@
 #include "EWWorkFeedback.h"
 #include "EWCharacter.generated.h"
 
+enum class EEWSound : uint8;
+
 class USpringArmComponent;
 class UCameraComponent;
 class UStaticMesh;
@@ -591,6 +593,8 @@ private:
     float ClimateClock = 0.f;
     /** Every machine: a footstep each stride (wood on deck, sand, snow in the Winter region) or a stroke while swimming. */
     void UpdateFootsteps(float DeltaSeconds);
+    /** The step for the ground under the survivor's feet. */
+    EEWSound FootstepSurface() const;
     float StrideTravel = 0.f;
     /** The rustle of hands in the plants, heard by everyone near. */
     UFUNCTION(NetMulticast, Unreliable)

@@ -299,12 +299,27 @@ void AEWCharacter::UpdateFootsteps(float DeltaSeconds)
         UEWSoundLibrary::PlaySoundAt(this, EEWSound::SwimStroke, GetActorLocation(), 1.f, FMath::FRandRange(.92f, 1.08f));
         return;
     }
-    const UPrimitiveComponent* Base = GetMovementBase();
-    const bool bDeck = Base && Base->GetOwner() && Base->GetOwner()->IsA<AEWShip>();
-    const bool bSnow = !bDeck && AEWClimateRegion::SampleClimate(this, GetActorLocation()).Region == EEWRegion::Winter;
-    const FVector Feet = GetActorLocation() - FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
-    UEWSoundLibrary::PlaySoundAt(this, bDeck ? EEWSound::StepDeck : bSnow ? EEWSound::StepSnow : EEWSound::StepSand, Feet,
+    UEWSoundLibrary::PlaySoundAt(this, FootstepSurface(), GetActorLocation() - FVector(0, 0, GetCapsuleComponent()->GetScaledCapsuleHalfHeight()),
         bIsCrouched ? .55f : 1.f, FMath::FRandRange(.9f, 1.1f));
+}
+
+EEWSound AEWCharacter::FootstepSurface() const
+{
+    // What is underfoot (tuning): a ship's deck is wood; a cave's rock, a boulder or a mineable rock is stone; then
+    // by region: snow in the Winter, sand in the Desert and on every beach (below the beach's top, about 1.4 m above
+    // the sea), grass inland elsewhere.
+    const UPrimitiveComponent* Base = GetMovementBase();
+    const AActor* Under = Base ? Base->GetOwner() : nullptr;
+    if (Under && Under->IsA<AEWShip>()) return EEWSound::StepDeck;
+    const auto* Rock = Cast<UStaticMeshComponent>(Base);
+    if ((Under && Under->IsA<AEWMineable>()) || (Rock && Rock->GetStaticMesh() &&
+        (Rock->GetStaticMesh()->GetName().StartsWith(TEXT("SM_Cave_")) || Rock->GetStaticMesh()->GetName().StartsWith(TEXT("SM_Landmark")))))
+        return EEWSound::StepStone;
+    const EEWRegion Region = AEWClimateRegion::SampleClimate(this, GetActorLocation()).Region;
+    if (Region == EEWRegion::Winter) return EEWSound::StepSnow;
+    const float FeetZ = GetActorLocation().Z - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+    if (Region == EEWRegion::Desert || Region == EEWRegion::OpenSea || FeetZ < -65.f + 140.f) return EEWSound::StepSand;
+    return EEWSound::StepGrass;
 }
 
 void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)

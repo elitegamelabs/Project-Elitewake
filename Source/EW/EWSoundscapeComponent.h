@@ -30,6 +30,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Sound") bool IsAmbiencePlaying() const;
     UFUNCTION(BlueprintPure, Category="Sound") float GetInsectLevel() const { return InsectLevel; }
     UFUNCTION(BlueprintPure, Category="Sound") float GetCaveLevel() const { return CaveLevel; }
+    /** The region's own loop now playing (forest wind, the jungle by day, the swamp's frogs) and its level. */
+    UFUNCTION(BlueprintPure, Category="Sound") FName GetRegionLoop() const { return RegionLoopName; }
+    UFUNCTION(BlueprintPure, Category="Sound") float GetRegionLoopLevel() const { return RegionLevel; }
     /** Whether the survivor stands under a cave's roof (looked for twice a second). */
     UFUNCTION(BlueprintPure, Category="Sound") bool IsInCave() const { return bInCave; }
 
@@ -38,6 +41,12 @@ private:
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Wind;
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Insects;
     UPROPERTY(Transient) TObjectPtr<UAudioComponent> Cave;
+    UPROPERTY(Transient) TObjectPtr<UAudioComponent> Forest;
+    UPROPERTY(Transient) TObjectPtr<UAudioComponent> Jungle;
+    UPROPERTY(Transient) TObjectPtr<UAudioComponent> Swamp;
+    FName RegionLoopName;
+    float RegionLevel = 0.f;
+    float ForestLevel = 0.f, JungleLevel = 0.f, SwampLevel = 0.f;
     EEWRegion HeardRegion = EEWRegion::OpenSea;
     float SurfLevel = 0.f;
     float WindLevel = 0.f;

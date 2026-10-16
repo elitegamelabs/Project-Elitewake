@@ -14,6 +14,9 @@ namespace
     constexpr float SurfAshore = .7f, SurfAtSea = .85f, SurfInWinter = .3f, WindInWinter = 1.f, InsectsAtNight = .6f;
     // Under a cave's roof the drips come up and everything outside falls to this much of its level.
     constexpr float CaveDrips = 1.f, OutsideInCave = .3f;
+    // Each wooded region's own sound ashore (tuning): wind in the Plains' oaks, the jungle's chorus by day, the swamp's
+    // frogs day and night.
+    constexpr float ForestAshore = .5f, JungleByDay = .55f, SwampAshore = .7f;
     // Seconds for a loop to fade to a new place's level, and between seabird cries away from the Winter island.
     constexpr float FadeSeconds = 2.5f, BirdsMin = 14.f, BirdsMax = 35.f;
 }
@@ -35,7 +38,7 @@ void UEWSoundscapeComponent::BeginPlay()
 
 void UEWSoundscapeComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
-    for (UAudioComponent* Loop : {Surf.Get(), Wind.Get(), Insects.Get(), Cave.Get()})
+    for (UAudioComponent* Loop : {Surf.Get(), Wind.Get(), Insects.Get(), Cave.Get(), Forest.Get(), Jungle.Get(), Swamp.Get()})
         if (Loop) Loop->Stop();
     Super::EndPlay(Reason);
 }
@@ -47,7 +50,10 @@ void UEWSoundscapeComponent::Start()
     Wind = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::WinterWind), 1.f, 1.f, 0.f, nullptr, true, false);
     Insects = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::NightInsects), 1.f, 1.f, 0.f, nullptr, true, false);
     Cave = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::CaveDrips), 1.f, 1.f, 0.f, nullptr, true, false);
-    for (UAudioComponent* Loop : {Surf.Get(), Wind.Get(), Insects.Get(), Cave.Get()})
+    Forest = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::ForestWind), 1.f, 1.f, 0.f, nullptr, true, false);
+    Jungle = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::JungleDay), 1.f, 1.f, 0.f, nullptr, true, false);
+    Swamp = UGameplayStatics::CreateSound2D(this, UEWSoundLibrary::GetSound(EEWSound::SwampFrogs), 1.f, 1.f, 0.f, nullptr, true, false);
+    for (UAudioComponent* Loop : {Surf.Get(), Wind.Get(), Insects.Get(), Cave.Get(), Forest.Get(), Jungle.Get(), Swamp.Get()})
         if (Loop)
         {
             Loop->SetVolumeMultiplier(0.f);
@@ -103,6 +109,16 @@ void UEWSoundscapeComponent::TickComponent(float DeltaSeconds, ELevelTick TickTy
     if (Wind) Wind->SetVolumeMultiplier(FMath::Max(WindLevel, .001f));
     if (Insects) Insects->SetVolumeMultiplier(FMath::Max(InsectLevel, .001f));
     if (Cave) Cave->SetVolumeMultiplier(FMath::Max(CaveLevel, .001f));
+    const bool bAshore = HeardRegion != EEWRegion::OpenSea;
+    ForestLevel = FMath::FInterpConstantTo(ForestLevel, Outside * (bAshore && HeardRegion == EEWRegion::Plains ? ForestAshore : 0.f), DeltaSeconds, Rate);
+    JungleLevel = FMath::FInterpConstantTo(JungleLevel, Outside * (HeardRegion == EEWRegion::Jungle && !bNight ? JungleByDay : 0.f), DeltaSeconds, Rate);
+    SwampLevel = FMath::FInterpConstantTo(SwampLevel, Outside * (HeardRegion == EEWRegion::Swamp ? SwampAshore : 0.f), DeltaSeconds, Rate);
+    if (Forest) Forest->SetVolumeMultiplier(FMath::Max(ForestLevel, .001f));
+    if (Jungle) Jungle->SetVolumeMultiplier(FMath::Max(JungleLevel, .001f));
+    if (Swamp) Swamp->SetVolumeMultiplier(FMath::Max(SwampLevel, .001f));
+    RegionLevel = FMath::Max3(ForestLevel, JungleLevel, SwampLevel);
+    RegionLoopName = RegionLevel < .01f ? NAME_None : ForestLevel >= RegionLevel ? FName(TEXT("ForestWind"))
+        : JungleLevel >= RegionLevel ? FName(TEXT("JungleDay")) : FName(TEXT("SwampFrogs"));
     // Now and then a few gulls by day, wherever it isn't snowing, out of caves.
     BirdSeconds -= DeltaSeconds;
     if (BirdSeconds <= 0.f)

@@ -11,7 +11,8 @@ UENUM(BlueprintType)
 enum class EEWSound : uint8
 {
     ChopWood, PickaxeStone, GlanceClink, GatherRustle, Pickup, StepSand, StepSnow, OceanSurf, WinterWind, Seabirds,
-    CannonFire, HullHit, ShotSplash, Bail, ShipSinking, StepDeck, SwimStroke, HullCreak, Rigging, NightInsects, CaveDrips
+    CannonFire, HullHit, ShotSplash, Bail, ShipSinking, StepDeck, SwimStroke, HullCreak, Rigging, NightInsects, CaveDrips,
+    StepGrass, StepStone, ForestWind, JungleDay, SwampFrogs
 };
 
 /**

@@ -49,6 +49,12 @@ SOUNDS = {
     'Swimming/SFX_SwimStroke-v1.wav': ('S_SwimStroke_v1', 1.0, 'world'),
     'Ambience/AMB_NightInsects-v2.wav': ('S_AmbNightInsects_v2', .5, 'loop'),
     'Ambience/AMB_CaveDrips-v2.wav': ('S_AmbCaveDrips_v2', 1.2, 'loop'),
+    # The third batch (October 16): steps on grass and stone, and each wooded region's own sound.
+    'Footsteps/SFX_StepGrass-v1.wav': ('S_StepGrass_v1', 1.4, 'world'),
+    'Footsteps/SFX_StepStone-v1.wav': ('S_StepStone_v1', .9, 'world'),
+    'Ambience/AMB_ForestWind-v2.wav': ('S_AmbForestWind_v2', 1.0, 'loop'),
+    'Ambience/AMB_JungleDay-v2.wav': ('S_AmbJungleDay_v2', .6, 'loop'),
+    'Ambience/AMB_SwampFrogs-v2.wav': ('S_AmbSwampFrogs_v2', 1.2, 'loop'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {

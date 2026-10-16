@@ -10,13 +10,19 @@ starts on which machine and when, not how it sounds: listening is the owner's. T
   6. holds W on the sand: sand footsteps on both machines;
   7. walks up to the alligator: it hisses as it comes for the survivor, on both machines;
   8. stands on the Winter island: the wind rises, the surf falls, and W gives snow footsteps;
-  9. stands near a pelican, then a flamingo: each calls on its own, heard on both machines.
+  9. stands near a pelican, then a flamingo: each calls on its own, heard on both machines;
+ 10. holds W inland on a Plains island: grass footsteps; in a Jungle island's middle by day the jungle's chorus plays,
+     in a Swamp island's the frogs.
 Writes Saved/AudioPlayResult.json.
 """
 import json
 import time
 from pathlib import Path
+import sys
 import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Setup'))
+import world_layout as W  # noqa: E402
 
 lib = unreal.EWEditorVerificationLibrary
 snd = unreal.EWSoundLibrary
@@ -266,6 +272,38 @@ def winter_spot():
     raise AssertionError(f'no pair of Winter trees 25 to 60 m apart among {len(trees)}')
 
 
+def beach_walk():
+    """On the starter island's south-east beach, 2.5 m in from the water and facing along it (away from the dock), so
+    every step is on the sand."""
+    state['aim_point'] = unreal.Vector(3360, -2040, 0)
+    return unreal.Vector(1716, -3693, ground(1716, -3693) + 110)
+
+
+# 10. Grass underfoot inland, and each wooded region's own sound.
+def inland(key):
+    isl = W.island(key)
+    x, y = isl.cx, isl.cy
+    return unreal.Vector(x, y, ground(x, y) + 110)
+
+
+def begin_region(key):
+    def begin():
+        place(inland(key))
+        state['memo'].update(t=time.monotonic())
+    return begin
+
+
+def region_loop(name):
+    def done():
+        if time.monotonic() - state['memo']['t'] < 3.5:
+            return False
+        assert scape.get_region_loop() == name and scape.get_region_loop_level() > .45, \
+            (str(scape.get_region_loop()), round(scape.get_region_loop_level(), 2), str(scape.get_heard_region()))
+        measured[f'{name}_level'] = round(scape.get_region_loop_level(), 2)
+        return True
+    return done
+
+
 # 9. The flamingos and pelicans, on their own time: heard by a client standing near one (a far animal's calls are
 # neither sent to that client nor audible there).
 def begin_bird(kind, sound):
@@ -291,9 +329,12 @@ STEPS = [
     ('Hatchet at a palm: the chop starts at the blow on both machines', begin_strike(palm, hatchet, 110, 120, 'S_ChopWood_v1'), struck, 14),
     ('Pickaxe at a boulder: the pickaxe strike on both machines', begin_strike(rock, pickaxe, None, 20, 'S_PickaxeStone_v1'), struck, 14),
     ('Hatchet at the boulder: the glancing clink on both machines', begin_strike(rock, hatchet, None, 20, 'S_GlanceClink_v1'), struck, 14),
-    ('W on the sand: sand footsteps on both machines', begin_walk(lambda: unreal.Vector(150, 0, ground(150, 0) + 110), ('S_StepSand_v1', 'S_StepSand_v1b')), stepped(None), 12),
+    ('W along the beach: sand footsteps on both machines', begin_walk(beach_walk, ('S_StepSand_v1', 'S_StepSand_v1b')), stepped(None), 12),
     ('Beside the alligator: it hisses as it comes, on both machines', begin_gator, hissed, 10),
     ('On the Winter island: the wind rises, the surf falls, W gives snow footsteps', begin_walk(winter_spot, ('S_StepSnow_v1',)), stepped(unreal.EWRegion.WINTER), 14),
+    ('W inland on a Plains island: grass footsteps on both machines', begin_walk(lambda: inland('Plains3'), ('S_StepGrass_v1',)), stepped(None), 12),
+    ('In the middle of a Jungle island by day: the jungle\'s chorus plays', begin_region('Jungle1'), region_loop('JungleDay'), 8),
+    ('In the middle of a Swamp island: the frogs play', begin_region('Swamp2'), region_loop('SwampFrogs'), 8),
     ('Near a pelican: it calls on its own, heard on both machines', begin_bird('Pelican', 'S_PelicanCall_v1'), bird_called, 70),
     ('Near a flamingo: it calls on its own, heard on both machines', begin_bird('Flamingo', 'S_FlamingoCall_v1'), bird_called, 55),
 ]

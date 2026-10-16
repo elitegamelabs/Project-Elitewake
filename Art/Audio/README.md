@@ -2,7 +2,8 @@
 
 **Drafts, not final audio.** Generated on 2026-10-15 through the owner's Scenario account (scenario.com, model
 Sonilo V1.1 Text to SFX, WAV, 44.1 kHz stereo): a first batch of 15 (31 credits) and, approved by the owner that
-night, a second of 12 for the ships, decks, swimming, night and caves (26 credits). They give the game its first sounds so timing and
+night, a second of 12 for the ships, decks, swimming, night and caves (26 credits), and on October 16 a third of 5
+for grass and stone underfoot and the wooded regions' own sounds (14 credits). They give the game its first sounds so timing and
 placement can be judged; replace them with recorded or properly licensed sounds, under the same names with a higher
 version, before release. Nobody has listened to them yet: the owner's ear is the review.
 
@@ -35,6 +36,11 @@ even them out live. Played from code (`UEWSoundLibrary`, `UEWSoundscapeComponent
 | Footsteps/SFX_StepDeck-v1, -v1b | one boot step on a wooden deck (two takes) | 1 s | each stride on a ship |
 | Swimming/SFX_SwimStroke-v1 | an arm pulling through calm water | 1 s | each 1.8 m swum |
 | Ambience/AMB_NightInsects-v1, -v2 | crickets, cicadas, distant frogs (v2: looped) | 10 s / 8 s | loop at night ashore, not in the Winter region |
+| Footsteps/SFX_StepGrass-v1 | one boot step on soft grass and earth | 1 s | each stride on the green ground inland |
+| Footsteps/SFX_StepStone-v1 | one boot step on bare stone with a slight echo | 1 s | each stride in a cave, on a boulder or a landmark |
+| Ambience/AMB_ForestWind-v1, -v2 | wind through a forest's leaves (v2: looped, raised 2.5x) | 10 s / 7.5 s | loop ashore in the Plains |
+| Ambience/AMB_JungleDay-v1, -v2 | the jungle by day: insects, distant birds and whoops (v2: looped) | 10 s / 8 s | loop in the Jungle by day |
+| Ambience/AMB_SwampFrogs-v1, -v2 | bullfrogs and small frogs among reeds (v2: looped, raised 2.5x) | 10 s / 8 s | loop in the Swamp |
 | Ambience/AMB_CaveDrips-v1, -v2 | drips into pools with echo (v2: looped and raised 8x, the take was very quiet) | 10 s / 8 s | loop under a cave's roof |
 
 Known draft issues: the snow step may hold

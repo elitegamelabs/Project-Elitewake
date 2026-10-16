@@ -30,7 +30,7 @@ EXPECT = {
     'sinking': ('SinkingPlayResult.json', [('S_ShipSinking_v1',)], [], {}),
     'ship_deck': ('ShipDeckPlayResult.json', [('S_StepDeck_v1', 'S_StepDeck_v1b')], [('S_SwimStroke_v1',)],
                   {'creak': .4, 'rigging': .3}),
-    'caves': ('CavesPlayResult.json', [], [], {'cave': .9}),
+    'caves': ('CavesPlayResult.json', [], [('S_StepStone_v1',)], {'cave': .9}),
     'day_night': ('DayNightPlayResult.json', [], [], {'insects': .2}),
 }
 inner_result, both_need, client_need, levels_need = EXPECT[NAME]
