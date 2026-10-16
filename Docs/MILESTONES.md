@@ -33,6 +33,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Every island its own terrain (owner, October 15): peaks, ridges, plateaus and valleys in a different plan on each island | ✅ `0d0a685` |
 | Third sound batch: grass and stone footsteps, forest wind, the jungle by day, swamp frogs | ✅ `0d0a685` |
 | Swimming moves only forward and back, no sideways drift (owner, October 16) | ✅ `745f72f` |
+| Helm-only sail keys (arrows, LB/RB) and the 180-degree sail range (owner, October 16) | ✅ `HELM` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |

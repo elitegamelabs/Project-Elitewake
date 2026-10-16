@@ -118,6 +118,14 @@ void AEWPlayerController::SetupInputComponent()
     RuntimeAttackMappingContext->MapKey(ClimbUpAction, EKeys::Gamepad_DPad_Up);
     RuntimeAttackMappingContext->MapKey(ClimbDownAction, EKeys::Down);
     RuntimeAttackMappingContext->MapKey(ClimbDownAction, EKeys::Gamepad_DPad_Down);
+    SailLeftAction = NewObject<UInputAction>(this, TEXT("IA_SailLeft_Runtime"));
+    SailLeftAction->ValueType = EInputActionValueType::Boolean;
+    SailRightAction = NewObject<UInputAction>(this, TEXT("IA_SailRight_Runtime"));
+    SailRightAction->ValueType = EInputActionValueType::Boolean;
+    RuntimeAttackMappingContext->MapKey(SailLeftAction, EKeys::Left);
+    RuntimeAttackMappingContext->MapKey(SailLeftAction, EKeys::Gamepad_LeftShoulder);
+    RuntimeAttackMappingContext->MapKey(SailRightAction, EKeys::Right);
+    RuntimeAttackMappingContext->MapKey(SailRightAction, EKeys::Gamepad_RightShoulder);
 
     if (!InteractAction)
     {
@@ -146,6 +154,10 @@ void AEWPlayerController::SetupInputComponent()
         EnhancedInput->BindAction(ClimbUpAction, ETriggerEvent::Completed, this, &AEWPlayerController::ClimbStop);
         EnhancedInput->BindAction(ClimbDownAction, ETriggerEvent::Started, this, &AEWPlayerController::ClimbDown);
         EnhancedInput->BindAction(ClimbDownAction, ETriggerEvent::Completed, this, &AEWPlayerController::ClimbStop);
+        EnhancedInput->BindAction(SailLeftAction, ETriggerEvent::Started, this, &AEWPlayerController::SailLeft);
+        EnhancedInput->BindAction(SailLeftAction, ETriggerEvent::Completed, this, &AEWPlayerController::SailStop);
+        EnhancedInput->BindAction(SailRightAction, ETriggerEvent::Started, this, &AEWPlayerController::SailRight);
+        EnhancedInput->BindAction(SailRightAction, ETriggerEvent::Completed, this, &AEWPlayerController::SailStop);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &AEWPlayerController::Interact);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Completed, this, &AEWPlayerController::ReleaseInteraction);
         EnhancedInput->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AEWPlayerController::ReleaseInteraction);
@@ -190,6 +202,12 @@ void AEWPlayerController::SetupInputComponent()
 void AEWPlayerController::SetClimbInput(float Direction)
 {
     if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->SetLadderArrowInput(Direction);
+}
+
+void AEWPlayerController::SetSailInput(float Direction)
+{
+    // The survivor uses it only while at a helm; anywhere else these keys do nothing.
+    if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->SetSailArrowInput(IsMapOpen() || IsSessionMenuOpen() ? 0.f : Direction);
 }
 
 void AEWPlayerController::Attack()

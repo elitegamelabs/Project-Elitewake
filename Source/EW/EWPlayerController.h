@@ -168,6 +168,13 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UInputAction> AttackAction;
     UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbUpAction;
     UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbDownAction;
+    /** At the helm only: Left/Right Arrow or LB/RB swing the sails (owner, October 16). */
+    UPROPERTY(Transient) TObjectPtr<UInputAction> SailLeftAction;
+    UPROPERTY(Transient) TObjectPtr<UInputAction> SailRightAction;
+    void SailLeft() { SetSailInput(-1.f); }
+    void SailRight() { SetSailInput(1.f); }
+    void SailStop() { SetSailInput(0.f); }
+    void SetSailInput(float Direction);
     void ClimbUp() { SetClimbInput(1.f); }
     void ClimbDown() { SetClimbInput(-1.f); }
     void ClimbStop() { SetClimbInput(0.f); }

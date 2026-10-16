@@ -408,9 +408,11 @@ void AEWCharacter::Tick(float DeltaSeconds)
     {
         // Send helm controls only when they change. The ship holds them until the next change,
         // so slow frames or a lost frame of input never stop it.
-        // With the sprint key held, left and right swing the sails; otherwise they put the rudder over.
+        // Left/Right Arrow or LB/RB swing the sails (owner, October 16); so do left and right with the sprint key held,
+        // which otherwise put the rudder over.
         const bool bTrim = bHelmTrimHeld && HelmShip->HasTrimmableSails();
-        const int8 Trim = !bTrim ? 0 : PendingHelmRight > .5f ? 1 : PendingHelmRight < -.5f ? -1 : 0;
+        const int8 ArrowTrim = !HelmShip->HasTrimmableSails() ? 0 : SailArrowInput > .5f ? 1 : SailArrowInput < -.5f ? -1 : 0;
+        const int8 Trim = ArrowTrim != 0 ? ArrowTrim : !bTrim ? 0 : PendingHelmRight > .5f ? 1 : PendingHelmRight < -.5f ? -1 : 0;
         if (Trim != SentSailTrim) { ServerSailTrim(Trim); SentSailTrim = Trim; }
         const float NewRudder = bTrim ? 0.f : FMath::Clamp(PendingHelmRight, -1.f, 1.f);
         if (!FMath::IsNearlyEqual(NewRudder, SentHelmRudder, .05f) || (NewRudder == 0.f && SentHelmRudder != 0.f))

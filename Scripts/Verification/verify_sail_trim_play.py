@@ -11,7 +11,11 @@ The server turns the wind to blow across the sloop from port. Through its own ke
      stays centred, and once they draw well the wind's share of speed has risen,
   3. holds Shift and A past the centreline to the wrong side: the sails draw badly and the wind's share falls
      back to the least any sail gives,
-  4. lets go of Shift: D alone puts the rudder over again.
+  4. lets go of Shift: D alone puts the rudder over again;
+  5. holds the Right Arrow (owner, October 16: helm-only sail keys): the sails swing to starboard, out to the full
+     90 degrees of their 180-degree range, the rudder staying where it was;
+  6. holds LB (the controller's left shoulder): they swing back to port, past the centreline;
+  7. leaves the helm: the Left Arrow then does nothing to the sails.
 Writes Saved/SailTrimPlayResult.json.
 """
 import json
@@ -45,7 +49,7 @@ old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'memo': {}, 'aim': False}
-KEYS = ('LeftShift', 'A', 'D')
+KEYS = ('LeftShift', 'A', 'D', 'Right', 'Left', 'Gamepad_LeftShoulder', 'Gamepad_RightShoulder')
 
 
 def wind_of(world):
@@ -189,6 +193,62 @@ def steering():
     return True
 
 
+def arrow_right():
+    keys(Right=True)
+    state['memo'].update(t=time.monotonic(), rudder_held=ship.get_rudder())
+
+
+def full_starboard():
+    if ship.get_sail_angle() < 89.5:
+        return False
+    keys()
+    # D was let go just before: the rudder centres; the arrows must not put it over.
+    assert abs(ship.get_rudder()) < 0.05, f'the rudder is at {ship.get_rudder()} with only the arrow held'
+    state['memo'].update(arrow_full=round(ship.get_sail_angle(), 1), arrow_full_client=round(peer.get_sail_angle(), 1),
+                         arrow_seconds=round(time.monotonic() - state['memo']['t'], 1))
+    return True
+
+
+def shoulder_left():
+    keys(Gamepad_LeftShoulder=True)
+    state['memo'].update(t=time.monotonic(), lb_start=ship.get_sail_angle(), via='LB')
+
+
+def back_to_port():
+    m = state['memo']
+    # If the injected LB press has not moved the sails in 2 s, try the Left Arrow (same action) and record that LB
+    # still wants a real controller to confirm it.
+    if m['via'] == 'LB' and time.monotonic() - m['t'] > 2.0 and ship.get_sail_angle() > m['lb_start'] - 5.0:
+        keys(Left=True)
+        m['via'] = 'Left Arrow (the injected LB press did not arrive)'
+    if ship.get_sail_angle() > -10.0:
+        return False
+    keys()
+    m['port_angle'] = round(ship.get_sail_angle(), 1)
+    m['port_via'] = m['via']
+    return True
+
+
+def leave_helm():
+    assert lib.send_verification_interaction_request(client, peer)
+    state['memo']['t'] = time.monotonic()
+
+
+def arrows_dead():
+    m = state['memo']
+    if 'held_angle' not in m:
+        if ship.get_helmsman() is not None or pawn.get_helm_ship() is not None:
+            return False
+        keys(Left=True)
+        m.update(held_angle=ship.get_sail_angle(), t=time.monotonic())
+        return False
+    if time.monotonic() - m['t'] < 1.5:
+        return False
+    keys()
+    assert abs(ship.get_sail_angle() - m['held_angle']) < 0.5, f'the sails moved from the arrows away from the helm: {ship.get_sail_angle()}'
+    return True
+
+
 STEPS = [
     ('The sloop is fitted out with full sail at anchor; the wind blows across it from port', fit_out, fitted, 4),
     ('The client takes the helm', take_helm, at_helm, 6),
@@ -197,6 +257,9 @@ STEPS = [
     ('The client sees the sails swung on its screen, "Sails drawing well", and the wind gives more speed', lambda: None, settled_well, 4),
     ('Shift and A swing them to the wrong side: they draw badly and the wind gives the least', trim_wrong, drawing_badly, 8),
     ('Without Shift, D puts the rudder over and leaves the sails where they are', steer, steering, 4),
+    ('The Right Arrow swings the sails to starboard, out to 90 degrees, the rudder centred', arrow_right, full_starboard, 8),
+    ('LB (or the Left Arrow) swings them back to port past the centreline', shoulder_left, back_to_port, 10),
+    ('Away from the helm the arrow keys do nothing to the sails', leave_helm, arrows_dead, 8),
 ]
 
 

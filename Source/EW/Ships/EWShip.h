@@ -252,7 +252,8 @@ public:
      *  Held until changed. */
     bool SetSailTrim(AEWCharacter* Character, int32 Direction);
     /** How far the sails swing either side of the centreline, and how fast, in degrees and degrees per second (tuning). */
-    static constexpr float MaxSailAngle = 85.f;
+    /** The sails swing 90 degrees to either side of square across the hull: 180 in all (owner, October 16). */
+    static constexpr float MaxSailAngle = 90.f;
     static constexpr float SailTrimRate = 45.f;
     /** Authority only. Advances movement in fixed steps, carrying leftover time to the next call. */
     void SimulateSailing(float DeltaSeconds);

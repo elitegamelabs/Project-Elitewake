@@ -229,6 +229,8 @@ public:
     void SetLadder(AEWShip* Ship, int32 BoardingIndex, float Height);
     /** Local: the Up and Down arrows (or a pad's d-pad) climbing: +1 up, -1 down, 0 still. */
     void SetLadderArrowInput(float Direction) { LadderArrowInput = Direction; }
+    /** Left/Right Arrow or LB/RB held (-1 left, +1 right, 0 none): swings the sails while at a helm, nothing otherwise. */
+    void SetSailArrowInput(float Direction) { SailArrowInput = Direction; }
     UFUNCTION(Server, Reliable)
     void ServerLadderClimb(int8 Direction);
     UFUNCTION(Server, Reliable)
@@ -244,6 +246,7 @@ private:
     bool bAttachedToLadder = false;
     float PendingLadderForward = 0.f;
     float LadderArrowInput = 0.f;
+    float SailArrowInput = 0.f;
     int8 SentLadderDirection = 0;
     int8 LadderDirection = 0;
     UPROPERTY(ReplicatedUsing=OnRep_HelmShip)
