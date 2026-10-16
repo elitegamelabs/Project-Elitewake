@@ -4,7 +4,8 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground (EW_PLAY_PLAYERS=1 is e
 Run unattended with run_play_check.py.
   1. On every island but the starter, its region's tree is the primary one: most of its trees, and at least MIN_STAND
      of them; no Spruce outside the Swamp, no Maravai outside the Jungle.
-  2. The starter island (Central Plains) has oaks for its hardwoods, its beach palms kept.
+  2. The starter island (Central Plains) has only oaks (owner, October 16: no palms on it, palms in the Desert),
+     at least 40 of them; every Desert island has palms.
   3. Every tree stands on the ground, a hatchet's reach above it at most.
   4. Screenshots of an oak grove, an ash forest and a swamp spruce stand in Saved/Screenshots/RegionalTrees/ (a person
      still has to look at them).
@@ -70,9 +71,13 @@ def primary():
 
 def starter():
     c = by_island.get('Starter', Counter())
-    assert c['Oak'] >= 18 and c['Maravai'] == 0, dict(c)
-    assert c['Veyran Palm'] >= 40, dict(c)
+    assert c['Oak'] >= 40 and c['Maravai'] == 0, dict(c)
+    assert c['Veyran Palm'] == 0, f'palms on the starter island: {dict(c)}'
+    palms = {k: v['Veyran Palm'] for k, v in by_island.items() if v['Veyran Palm']}
+    desert = [i.key for i in W.ISLANDS if i.region == 'Desert']
+    assert set(palms) == set(desert), f'palms on {sorted(palms)}, Desert islands {sorted(desert)}'
     measured['starter'] = dict(c)
+    measured['palms_by_island'] = palms
     return True
 
 
@@ -104,7 +109,7 @@ def stand_of(region):
 VIEWS = [('oak_grove', 'Plains'), ('ash_forest', 'Jungle'), ('swamp_spruce', 'Swamp')]
 state = {'step': 0, 'view': 0, 'phase': 'place', 'at': 0.0, 'handle': None}
 STEPS = [('Every island but the starter has its region\'s tree as its primary one, in substantial stands', primary),
-         ('The starter island\'s hardwoods are oaks, its beach palms kept', starter),
+         ('The starter island has only oaks, no palms; the palms are on the Desert islands', starter),
          ('Every tree stands on the ground', grounded)]
 
 

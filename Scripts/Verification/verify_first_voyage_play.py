@@ -5,7 +5,7 @@ kit. Run unattended with run_play_check.py. The title's way onto this map is ver
 
 Through ordinary owned requests and keys, the client:
   1. arrives on the beach carrying the starter kit, with the sloop's fittings stowed in its hold;
-  2. equips the wooden axe and fells Wood and Thatch from a palm;
+  2. equips the wooden axe and fells Wood and Thatch from an oak;
   3. swims to the moored sloop, takes hold of its ladder and climbs aboard with Up;
   4. opens the hold at the hatch, takes out the helm, the mainsail and the headsail, and closes it with I;
   5. fits all three, raises the anchor at the capstan, takes the helm, sets full sail and trims to the wind;
@@ -47,7 +47,7 @@ raw_fish = unreal.load_asset('/Game/Elitewake/Items/Food/DA_RawFish')
 FITTINGS = (('Helm', helm), ('Mainsail', mainsail), ('Headsail', headsail))
 LADDER = 1   # starboard
 palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree)
-         if t.get_actor_label().startswith('Veyran Palm')]
+         if t.get_actor_label().startswith('Oak')]
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -97,7 +97,7 @@ def settled(seconds):
 # 1. Arrival -------------------------------------------------------------------------------------------------
 
 def to_beach():
-    put(unreal.Vector(150, 0, 120), unreal.Rotator())
+    put(unreal.Vector(150, 0, 190), unreal.Rotator())
     state['memo']['t'] = time.monotonic()
 
 
@@ -128,7 +128,7 @@ def to_palm():
     base = tree.get_actor_location()
     away = unreal.Vector(150 - base.x, -base.y, 0)
     away = away * (1.0 / max(away.length(), 1.0))
-    spot = base + away * 110 + unreal.Vector(0, 0, 110)
+    spot = base + away * 130 + unreal.Vector(0, 0, 110)
     look = unreal.MathLibrary.find_look_at_rotation(spot + unreal.Vector(0, 0, 60), base + unreal.Vector(0, 0, 120))
     put(spot, unreal.Rotator(yaw=look.yaw))
     client.set_control_rotation(look)
@@ -314,8 +314,10 @@ def anchored_again():
 # 7. Fish ------------------------------------------------------------------------------------------------------
 
 def manta():
-    return next(f for f in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWFish)
-                if str(f.get_editor_property('definition').get_editor_property('display_name')) == 'Manta Ray' and not f.is_dead())
+    # The one nearest the sloop: the bigger world has mantas off every region's islands, most far beyond the client's reach.
+    rays = [f for f in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWFish)
+            if str(f.get_editor_property('definition').get_editor_property('display_name')) == 'Manta Ray' and not f.is_dead()]
+    return min(rays, key=lambda f: (f.get_actor_location() - ship.get_actor_location()).length())
 
 
 def copy_of(fish):
@@ -340,6 +342,7 @@ def manta_dead():
     target = m['manta']
     if not target.is_dead():
         follow_manta()
+        keep_aim()   # from where the swimmer is now, not where it was before following the ray
         owner.get_survival_component().restore_health(100)   # its sting must not end the check
         if time.monotonic() >= m['swing_at']:
             m['swing_at'] = time.monotonic() + 1.1
@@ -373,7 +376,7 @@ def picked_up():
 def ashore():
     state['aim'] = None
     for p in (owner, pawn):
-        assert p.teleport(unreal.Vector(150, 0, 120), unreal.Rotator())
+        assert p.teleport(unreal.Vector(150, 0, 190), unreal.Rotator())
     state['memo'].update(pressed=time.monotonic() - 4.0)
 
 
@@ -406,7 +409,7 @@ def harvested():
 STEPS = [
     ('The client arrives on the beach carrying the starter kit; the bare, anchored sloop has its fittings in the hold', to_beach, arrived, 6),
     ('It equips the wooden axe', equip, equipped, 6),
-    ('It fells 3 Wood and 1 Thatch from a palm with Left Mouse, on server and client', to_palm, gathered, 6),
+    ('It fells 3 Wood and 1 Thatch from an oak with Left Mouse, on server and client', to_palm, gathered, 6),
     ("It swims to the sloop's ladder, takes hold with E and climbs aboard with Up", swim_to_ladder, climbed_aboard, 14),
     ('It opens the hold at the hatch', open_hold, hold_open, 6),
     ('It takes the helm, the mainsail and the headsail out of the hold', take_fittings, fittings_carried, 6),
@@ -421,7 +424,7 @@ STEPS = [
     ('The sloop sails for 4 s and the client keeps up', lambda: None, sailed, 8),
     ('It leaves the helm', leave_helm, left_helm, 6),
     ('It drops the anchor and the sloop stops', work('Anchor'), anchored_again, 10),
-    ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 30),
+    ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 75),
     ('E at the floating body picks it up', to_body, picked_up, 6),
     ('Carried ashore, E sets it down on the beach', ashore, set_down, 6),
     ('E at it on land harvests 6 to 10 Raw Fish', lambda: None, harvested, 6),
@@ -455,7 +458,11 @@ def tick(delta):
             if state['index'] == len(STEPS):
                 finish()
         elif time.monotonic() > state['deadline']:
-            raise TimeoutError(f'not done within {timeout} s')
+            m = state['memo']
+            seen = {k: (round(v.get_health(), 1), v.is_dead(), round((v.get_actor_location() - pawn.get_actor_location()).length()))
+                    if k == 'manta' else v for k, v in m.items() if k == 'manta' or isinstance(v, (int, float, str, bool, tuple))}
+            raise TimeoutError(f'not done within {timeout} s; memo {seen}; swimming {pawn.get_component_by_class(unreal.CharacterMovementComponent).is_swimming()}; '
+                               f'holding {owner.get_equipment_component().get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND)}')
     except Exception as error:
         finish(f'step {state["index"]} ({description}): {error!r}')
 

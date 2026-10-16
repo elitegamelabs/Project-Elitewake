@@ -25,8 +25,10 @@ The five-region world (owner, October 15; world_layout.py). Each region's primar
 Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): Central Plains Oak, Winter Birch, Jungle
 Ash, Desert Palm, Swamp Spruce, in substantial stands. DECIDED (delegated, densities are tuning): Plains and Swamp
 grow in groves with clearings between, Winter and Jungle as forest, Desert's palms near its shores; a few Maravai
-stay in the Jungle under the ash. The starter island keeps its beach palms and plants where they were; its old inland
-hardwoods are oaks now, and its new western land is dressed like the other Plains islands. Every island has fiber
+stay in the Jungle under the ash. The starter island has no palms (owner, October 16: palms belong to the Desert;
+Docs/STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md): its old inland hardwoods are oaks in their old places,
+oak groves stand back from its beaches where the palms were, and its new western land is dressed like the other
+Plains islands. Every island has fiber
 plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).
 
 Oak (built here): a short, massive trunk forking low into heavy limbs that reach out nearly level before rising,
@@ -618,6 +620,34 @@ def inland_spots(ground, palms):
     return chosen
 
 
+def starter_grove_spots(ground, taken, count=34):
+    """Oaks for the starter's old ground in place of its beach palms: in a few groves back from the sand (grassy
+    ground, not steep), clear of the spawn, dock and spring, apart from each other and from the old oaks."""
+    rng = random.Random(23)
+    (x0, x1), (y0, y1), _, _ = AREAS[0]
+    centres = []
+    while len(centres) < 7:
+        x, y = rng.uniform(x0, x1), rng.uniform(y0, y1)
+        z = ground(x, y)
+        if z is not None and 25 < z < 400 and not any(math.hypot(x - cx, y - cy) < r + 600 for cx, cy, r in KEEP_CLEAR):
+            centres.append((x, y))
+    chosen, tries = [], 0
+    while len(chosen) < count and tries < 8000:
+        tries += 1
+        gx, gy = rng.choice(centres)
+        a, d = rng.uniform(0, 2 * math.pi), abs(rng.gauss(0, 900))
+        x, y = gx + d * math.cos(a), gy + d * math.sin(a)
+        z = ground(x, y)
+        if z is None or not (25 < z < 650) or steep(ground, x, y):
+            continue
+        if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+            continue
+        if any(math.hypot(x - px, y - py) < 650 for px, py in taken) or any(math.hypot(x - px, y - py) < 650 for px, py, _ in chosen):
+            continue
+        chosen.append((x, y, z))
+    return chosen
+
+
 def steep(ground, x, y):
     """True on ground too steep for a tree to stand (more than about 40 degrees over 3 m)."""
     gx = ground(x + 150, y) - ground(x - 150, y)
@@ -695,19 +725,8 @@ def main():
         if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', 'Spruce', 'Oak', 'Ash', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
-    placed = []
+    placed = []   # the starter's palms: none now (owner, October 16)
     ground = Ground()
-    for k, (x, y, z) in enumerate(spots(ground)):
-        tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 8),
-                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
-        tree.set_actor_label(f'Veyran Palm {k + 1:02d}')
-        tree.set_folder_path(FLORA_FOLDER)
-        mesh = tree.get_editor_property('mesh')
-        mesh.set_static_mesh(meshes[k % len(meshes)])
-        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*PALM_SCALE)] * 3))
-        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 26.0, 'blocker_half_height': 160.0}.items():
-            tree.set_editor_property(prop, value)
-        placed.append([round(x), round(y), round(z)])
     leaf_material = frond_material(import_texture('T_MaravaiLeaves_v1', LEAF_ART), f'{FOLDER}/M_MaravaiLeaves_v1')
     broadleaf = [write_static_mesh(maravai(**shape), f'{FOLDER}/SM_Maravai_{k + 1}', [materials[BARK], leaf_material], 120.0)
                  for k, shape in enumerate(MARAVAI)]
@@ -720,6 +739,18 @@ def main():
     hardwoods = []
     # The starter island's old inland hardwoods, in their old places: oaks now (Central Plains Oak, owner).
     for k, (x, y, z) in enumerate(inland_spots(ground, [(p[0], p[1]) for p in placed])):
+        tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 12),
+                                             unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
+        tree.set_actor_label(f'Oak {k + 1:02d}')
+        tree.set_folder_path(FLORA_FOLDER)
+        mesh = tree.get_editor_property('mesh')
+        mesh.set_static_mesh(oaks[k % len(oaks)])
+        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*OAK_SCALE)] * 3))
+        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 52.0, 'blocker_half_height': 220.0}.items():
+            tree.set_editor_property(prop, value)
+        hardwoods.append([round(x), round(y), round(z)])
+    # Where its beach palms stood: oak groves back from the sand.
+    for k, (x, y, z) in enumerate(starter_grove_spots(ground, [(h[0], h[1]) for h in hardwoods]), start=len(hardwoods)):
         tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 12),
                                              unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
         tree.set_actor_label(f'Oak {k + 1:02d}')
@@ -745,7 +776,7 @@ def main():
     report = {'success': True, 'starter_palms': len(placed), 'starter_oaks': len(hardwoods), 'islands': dressed,
               'positions': placed, 'oak_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
-    unreal.log(f'Coastal flora: {len(placed)} palms')
+    unreal.log(f'Coastal flora: {len(hardwoods)} starter oaks')
 
 
 def easy_to_aim_at(mesh):

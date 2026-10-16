@@ -4,7 +4,7 @@ starter axe through Left Mouse, and their trunks are solid.
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the palms from
 Scripts/Setup/build_coastal_flora.py and the test starter kit. Run unattended with run_play_check.py.
 
-  1. At least 25 palms stand on the island and islet, each rooted in the ground with Wood and Thatch to give.
+  1. At least 25 oaks stand on the starter island (its palms became oaks, owner, October 16), each rooted in the ground with Wood and Thatch to give.
   2. The client equips the starter kit's wooden axe and strikes the palm nearest the spawn with Left Mouse:
      it gains 3 Wood and 1 Thatch, and the palm has that much less, on server and client.
   3. The client walks straight into the palm's trunk and is stopped by it.
@@ -33,7 +33,7 @@ def player_id(p):
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree)
-         if t.get_actor_label().startswith('Veyran Palm')]
+         if t.get_actor_label().startswith('Oak')]
 folder = '/Game/Elitewake/Items/Testing'
 axe, wood, thatch = (unreal.load_asset(f'{folder}/DA_Test{n}') for n in ('WoodenAxe', 'Wood', 'Thatch'))
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
@@ -146,7 +146,7 @@ def stopped():
 STEPS = [
     ('At least 25 palms stand rooted on the island and islet, with Wood and Thatch to give', lambda: None, lambda: rooted() or True, 3),
     ('Client equips the starter wooden axe', equip, equipped, 6),
-    ('', lambda: approach(110), settle_then(strike), 4),
+    ('', lambda: approach(130), settle_then(strike), 4),
     ('Client strikes the nearest palm with Left Mouse: +3 Wood, +1 Thatch, and the palm gives that up, on server and client', lambda: None, felled, 5),
     ('Client walks into the palm and its trunk stops it', walk_in, stopped, 5),
 ]

@@ -2,7 +2,7 @@
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client. Run unattended with
 run_play_check.py. Through ordinary keys, the client:
-  1. with the Hatchet at a palm, swings Left Mouse: the chop (AS_Chop_v1) plays on the client and on the server's
+  1. with the Hatchet at an oak, swings Left Mouse: the chop (AS_Chop_v1) plays on the client and on the server's
      copy; at the contact moment wood chips fly on the client, the palm shakes there, and the client's hit marker
      pops white with "+3 Wood" beside it, matching what the server put in the pack;
   2. with the Pickaxe at a boulder: the overhead blow (AS_Mine_v1), stone chips, the rock shakes, "+3 Stone";
@@ -37,7 +37,7 @@ def player_id(p):
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 SPAWN = unreal.Vector(150, 0, 0)
 near = lambda actors: sorted(actors, key=lambda t: (t.get_actor_location() - SPAWN).length())   # noqa: E731
-palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Veyran Palm')])[0]
+palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Oak')])[0]
 rock = near(list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable)))[0]
 plants = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHandGatherable))
 fiber_plant = near([p for p in plants if p.get_actor_label().startswith('Fiber Plant')])[0]
@@ -178,8 +178,8 @@ def gathered():
 
 
 STEPS = [
-    ('With the Hatchet at a palm, Left Mouse chops (AS_Chop_v1 on both machines): chips fly, the palm shakes and the '
-     'hit marker pops with what the server gave', begin_strike(palm, hatchet, 110, 120, wood), swing_until('AS_Chop_v1', True), 14),
+    ('With the Hatchet at an oak, Left Mouse chops (AS_Chop_v1 on both machines): chips fly, the palm shakes and the '
+     'hit marker pops with what the server gave', begin_strike(palm, hatchet, 130, 120, wood), swing_until('AS_Chop_v1', True), 14),
     ('With the Pickaxe at a boulder, the overhead blow (AS_Mine_v1): stone chips, the rock shakes, "+N Stone"',
      begin_strike(rock, pickaxe, None, None, stone), swing_until('AS_Mine_v1', True), 14),
     ('With the Hatchet at the boulder the blow glances off: chips but no stone, the marker says "Needs a pickaxe"',

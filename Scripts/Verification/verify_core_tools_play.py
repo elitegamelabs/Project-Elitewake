@@ -6,7 +6,7 @@ onto this map is verify_title_to_coast_play.
 
 Through ordinary owned requests and keys, the client:
   1. spawns on the island carrying exactly the Hatchet, Pickaxe, Waterskin and Torch; the sloop (only) lies off the beach;
-  2. equips the Hatchet (drawing it) and chops a palm with Left Mouse: Wood and Thatch arrive;
+  2. equips the Hatchet (drawing it) and chops an oak with Left Mouse: Wood and Thatch arrive;
   3. equips the Pickaxe and mines a boulder with Left Mouse: Stone arrives;
   4. equips the Waterskin, presses E at the spring: the skin fills (a filling motion), thirst untouched;
   5. thirsty, drinks the full skin with Left Mouse: thirst quenched, the skin empty again;
@@ -40,7 +40,7 @@ def player_id(p):
 
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
-palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Veyran Palm')]
+palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Oak')]
 rocks = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable))
 spring = next(iter(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWWaterSource)))
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
@@ -135,7 +135,7 @@ def spawned():
 def to_palm():
     tree = min(palms, key=lambda t: (t.get_actor_location() - unreal.Vector(150, 0, 0)).length())
     state['memo']['wood_from'] = (count(owner, wood), count(owner, thatch))
-    approach(tree, 110, 120)
+    approach(tree, 130, 120)
 
 
 def chopped():
@@ -240,7 +240,7 @@ EQUIP_HATCHET, EQUIP_PICKAXE, EQUIP_SKIN, EQUIP_TORCH = equip(hatchet), equip(pi
 STEPS = [
     ('The client spawns on the island carrying the Hatchet, Pickaxe, Waterskin and Torch; only the sloop offshore', lambda: None, spawned, 8),
     ('It equips the Hatchet: drawn into the hand with the draw motion', *EQUIP_HATCHET, 5),
-    ('Left Mouse chops a palm: Wood and Thatch arrive, on server and client', to_palm, chopped, 6),
+    ('Left Mouse chops an oak: Wood and Thatch arrive, on server and client', to_palm, chopped, 6),
     ('It equips the Pickaxe', *EQUIP_PICKAXE, 5),
     ('Left Mouse mines a boulder: Stone arrives, on server and client', to_rock, mined, 6),
     ('It equips the Waterskin', *EQUIP_SKIN, 5),

@@ -5,7 +5,7 @@ run_play_check.py. Sounds are counted where each machine starts them (UEWSoundLi
 starts on which machine and when, not how it sounds: listening is the owner's. Through ordinary keys, the client:
   1. stands on the beach: the soundscape plays the surf loop at the shore level and the wind loop silent;
   2. presses E at a fiber plant: the rustle starts on both machines, the pickup only on the client;
-  3. with the Hatchet at a palm, Left Mouse: the chop starts at the blow's contact on both machines;
+  3. with the Hatchet at an oak, Left Mouse: the chop starts at the blow's contact on both machines;
   4. with the Pickaxe at a boulder: the pickaxe strike; 5. with the Hatchet at the boulder: the glancing clink;
   6. holds W on the sand: sand footsteps on both machines;
   7. walks up to the alligator: it hisses as it comes for the survivor, on both machines;
@@ -55,7 +55,7 @@ def player_id(p):
 owner = one((p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) is not None and player_id(p) == player_id(pawn)), "the server's copy of the client's survivor")
 SPAWN = unreal.Vector(150, 0, 0)
 near = lambda actors: sorted(actors, key=lambda t: (t.get_actor_location() - SPAWN).length())   # noqa: E731
-palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Veyran Palm')])[0]
+palm = near([t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Oak')])[0]
 rock = near(list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable)))[0]
 fiber_plant = near([p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHandGatherable) if p.get_actor_label().startswith('Fiber Plant')])[0]
 animals = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWAnimal))
@@ -384,7 +384,7 @@ def bird_called():
 STEPS = [
     ('Ashore the client hears the surf loop at the shore level, the wind loop silent', begin_shore, shore_heard, 8),
     ('E at a fiber plant: the rustle starts on both machines, the pickup only on the client', begin_gather, gathered, 8),
-    ('Hatchet at a palm: the chop starts at the blow on both machines', begin_strike(palm, hatchet, 110, 120, 'S_ChopWood_v1'), struck, 14),
+    ('Hatchet at an oak: the chop starts at the blow on both machines', begin_strike(palm, hatchet, 130, 120, 'S_ChopWood_v1'), struck, 14),
     ('Pickaxe at a boulder: the pickaxe strike on both machines', begin_strike(rock, pickaxe, None, 20, 'S_PickaxeStone_v1'), struck, 14),
     ('Hatchet at the boulder: the glancing clink on both machines', begin_strike(rock, hatchet, None, 20, 'S_GlanceClink_v1'), struck, 14),
     ('W along the beach: sand footsteps on both machines', begin_walk(beach_walk, ('S_StepSand_v1', 'S_StepSand_v1b')), stepped(None), 12),
