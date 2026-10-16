@@ -30,6 +30,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Bigger islands to explore (owner, October 15 night): every island 500–900 m across, the starter about 620 m with its beach, dock, pond and sloop unchanged; the world rebuilt and rechecked; wildlife far from survivors rests so it stays fast | ✅ `7dfab58` |
 | Cobwebs in every cave that tear as you walk through (owner, October 15 night) | ✅ `7dfab58` |
 | Each region's own trees (owner, October 15): Plains oak groves, Winter birch, Jungle ash forest, Desert palms, Swamp spruce stands; new oak and ash models | ✅ `468ce0d` |
+| Every island its own terrain (owner, October 15): peaks, ridges, plateaus and valleys in a different plan on each island | ✅ `0d0a685` |
+| Third sound batch: grass and stone footsteps, forest wind, the jungle by day, swamp frogs | ✅ `0d0a685` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |

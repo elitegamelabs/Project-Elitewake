@@ -469,6 +469,16 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Docs/DESIGN_REFERENCE.md` for the wording; do not change it.
 - **Done when:** the items are in the open-questions file with links.
 
+### T31. Find why the sinking check sometimes cannot open a crate (for Codex) — OPEN
+- **Why:** on October 16 `Scripts/Verification/verify_sinking_play.py` step 4 timed out once: the survivor swam beside a
+  wreck crate and the interaction was sent (`opened: True`) but the client's open container stayed empty for 12 s; the
+  rerun passed. Intermittent failures hide real ones.
+- **Do:** run the check several times (`run_play_check.py`, coastal map); if it fails again, find whether the request
+  is lost (crate not yet relevant to the client after the survivor is set down, a reach check, or the container
+  screen's open RPC) and fix the check or, if it is a game bug, the code (`Source/EW/Ships/EWWreckCrate.*`,
+  `EWPlayerController` container opening), with a note here.
+- **Done when:** five runs in a row pass, and the cause is written here.
+
 ### T21. A modelled bailing bucket — OPEN
 - **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
   `/Game/Elitewake/World/Ships/SM_BailBucket_v1` exists (the ship loads it automatically when it does).
