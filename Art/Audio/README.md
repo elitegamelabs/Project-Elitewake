@@ -44,6 +44,10 @@ even them out live. Played from code (`UEWSoundLibrary`, `UEWSoundscapeComponent
 | Ships/SFX_AnchorDrop-v1 | a heavy iron anchor chain paying out fast through a hawse pipe, the anchor splashing | 3 s | the anchor is let go |
 | Ships/SFX_AnchorCatch-v1 | a deep iron clank as the chain snaps taut, a groan of timber | 2 s | 2.2 s later, the anchor catches the bottom |
 | Ships/SFX_AnchorRaise-v1 | a capstan's pawls clicking as chain is hove in, links grinding over wood | 3 s | the anchor comes up |
+| Work/SFX_TreeFall-v1 | a jungle tree cracking under a push, falling through branches, thudding down | 5 s | not wired yet: a tree pushed down (CODEX C1) |
+| Fauna/SFX_ElephantStep-v1 | one heavy elephant footfall on soft ground | 1 s | not wired yet: elephants |
+| Fauna/SFX_BiteContact-v1 | an animal's bite landing through cloth, a muffled crunch | 1 s | not wired yet: bite attacks |
+| Fauna/SFX_ClawSwipe-v1 | a large animal's claws swiping and tearing cloth | 1 s | not wired yet: swipe attacks |
 | Ambience/AMB_CaveDrips-v1, -v2 | drips into pools with echo (v2: looped and raised 8x, the take was very quiet) | 10 s / 8 s | loop under a cave's roof |
 
 Known draft issues: the snow step may hold

@@ -21,7 +21,7 @@ Codex's list is [CODEX.md](CODEX.md); ChatGPT's is [CHATGPT.md](CHATGPT.md).
   before release.
 - **Credit rule:** the owner approved working with Scenario on October 16. Batches like the ones below (about 10–25
   credits) go ahead. Anything much larger, and **any image set**, waits for the owner's go-ahead with a priced pilot.
-- **Spent so far:** 76 credits on sound (October 15–16, see `Docs/REPORTS/2026-10-15_Claude.md`).
+- **Spent so far:** 81 credits on sound (October 15–16, see `Docs/REPORTS/2026-10-15_Claude.md`).
 
 ## Queue
 
@@ -43,7 +43,7 @@ Status: `QUEUED` (ready to run) · `WAITING` (needs something first) · `DONE <c
 About 14 credits. Wiring them up needs the animals themselves (models, AI), which don't exist yet. The sounds can be
 made ahead.
 
-### S2. A tree pushed down — QUEUED
+### S2. A tree pushed down — DONE (generated October 16, 3 credits; saved, not imported until CODEX C1 lands)
 
 | Job | Prompt | Length | ~Credits | Destination |
 |---|---|---|---|---|
@@ -63,7 +63,7 @@ About 3 credits. They go with Codex's falling trees (CODEX.md C1); the tree-fall
 
 About 4 credits. Adjust the prompts to G3's description of the spiders before running.
 
-### S4. Bites and blows landing — QUEUED
+### S4. Bites and blows landing — DONE (generated October 16, 2 credits; saved, not imported until the attacks exist)
 
 | Job | Prompt | Length | ~Credits | Destination |
 |---|---|---|---|---|
@@ -94,3 +94,4 @@ only (`Art/Audio/README.md`). Once G1 lists what each needs, add a row per sound
 | Second batch (Oct 15) | cannons, hulls, splash, bailing, sinking, creak, rigging, deck, swimming, insects, cave | 26 | `b98c572` |
 | Third batch (Oct 16) | grass and stone steps, forest wind, jungle, swamp frogs | 14 | `0d0a685` |
 | Anchor (Oct 16) | chain drop, catch, raise | 5 | `8ae15b7` |
+| S2 + S4 (Oct 16) | tree fall, elephant step, bite contact, claw swipe | 5 | this commit |
