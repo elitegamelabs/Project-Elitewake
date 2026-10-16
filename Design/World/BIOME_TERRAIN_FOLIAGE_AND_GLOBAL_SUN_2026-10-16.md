@@ -9,7 +9,7 @@ Use sand and sandstone as dominant surfaces. Include irregular natural sand dune
 Dark brown to very dark brown saturated muddy terrain, peat, puddles, marsh sediment, uneven wet ground, moss, and appropriate muddy shoreline transitions. Wetness and ground roughness should read clearly.
 
 ## Jungle
-Dense bushes, grass of varying heights, abundant trees, understory plants, flowers, and layered foliage across the landscape, with navigable paths and performance-aware density. **Tree species conflict to resolve:** earlier confirmed assignment was **ash** for Jungle; latest spoken request says **birch** in Jungle. Do not silently overwrite this choice: request confirmation before changing Jungle's primary tree species. Winter remains birch unless revised.
+Dense bushes, grass of varying heights, abundant trees, understory plants, flowers, and layered foliage across the landscape, with navigable paths and performance-aware density. **Confirmed primary tree: Ash in Jungle.** The user clarified on October 16, 2026 that the mention of birch in Jungle was a mistake. **Birch remains the primary tree for Winter.** Do not substitute birch for ash in Jungle.
 
 ## Winter
 Snow-covered ground, trees, rocks, hills, and landscape surfaces with natural variation and believable exposure; preserve navigability and distinguish ice from snow.
