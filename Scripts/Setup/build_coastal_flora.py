@@ -90,7 +90,8 @@ RECIPES = {'Plains': dict(trees={'Maravai': 1.0}, groups=True, plants=(0.45, 0.3
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
            'Jungle': dict(trees={'Spruce': 4.5, 'Maravai': 0.8}, groups=False, plants=(0.5, 0.4, 0.25)),
            'Swamp': dict(trees={'Maravai': 0.6}, groups=True, plants=(0.7, 0.3, 0.15))}
-MAX_TREES = 380        # per island
+MAX_TREES = 500        # per island (the bigger islands of October 15 night; tuning)
+MAX_PLANTS = 220       # of each kind per island
 PALM_SCALE = (.7, 1.35)
 MARAVAI_SCALE = (.75, 1.25)
 
@@ -544,8 +545,6 @@ def dress_islands(actors, ground, kinds, wood, thatch):
     """Trees on every island but the starter, by its region's recipe. Returns the trees (x, y) and a summary."""
     trees, summary = [], {}
     for island in W.ISLANDS:
-        if island.key == 'Starter':
-            continue
         recipe = RECIPES[island.region]
         rng = random.Random(sum(map(ord, island.key)) * 104729)
         area = math.pi * island.rx * island.ry / 1e4 / 1000.0      # thousands of m2
@@ -566,6 +565,8 @@ def dress_islands(actors, ground, kinds, wood, thatch):
                 else:
                     x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
                 inland = -island.distance(x, y)
+                if island.key == 'Starter' and island.old.distance(x, y) < 1500:
+                    continue   # the starter's old ground keeps exactly the trees it always had
                 # Palms keep to the shore's sand; other trees stand back from the beach.
                 if kind == 'Veyran Palm' and not (300 < inland < 3500):
                     continue
@@ -718,10 +719,8 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                 placed += 1
         # Every other island.
         for island in W.ISLANDS:
-            if island.key == 'Starter':
-                continue
             per = RECIPES[island.region]['plants'][list(PLANTS).index(label)]
-            wanted = int(round(per * math.pi * island.rx * island.ry / 1e7))
+            wanted = min(MAX_PLANTS, int(round(per * math.pi * island.rx * island.ry / 1e7)))
             near = [(tx, ty) for tx, ty in island_trees if island.distance(tx, ty) < 0]
             reach = island.reach()
             placed, tries = 0, 0
@@ -735,6 +734,8 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                     x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
                 if island.distance(x, y) > -400 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
+                if island.key == 'Starter' and island.old.distance(x, y) < 1500:
+                    continue   # the starter's old ground keeps exactly the plants it always had
                 z = ground(x, y)
                 if z < SEA + 70 or steep(ground, x, y):
                     continue

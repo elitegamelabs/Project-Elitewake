@@ -11,9 +11,13 @@ DECIDED (delegated): "every pair of islands 800-2,000 m apart" cannot hold liter
 all lie within 2 km of one another and 800 m apart); the layout keeps every pair at least 800 m apart and every
 island's nearest neighbour within 2,000 m. Listed for the owner in Docs/OPEN_QUESTIONS_2026-10-15.md.
 
-Units are Unreal centimetres (1 m = 100). The starter island keeps its exact shape, place and features so its trees,
-pond, dock and the sloop's mooring stay where they are; every other island is generated from a seed and has its own
-silhouette (harmonics), size, orientation, height and, on some, a cove. Island sizes and heights are tuning.
+Owner, October 15 night: the islands should be big, immersive and able to be explored. DECIDED (delegated, tuning):
+every other island is 500 m to 900 m across the long way (it was 120 m to 340 m); the starter island grows west into
+a Plains island about 650 m by 520 m, its old shape kept as the eastern headland where the beach spawn, dock landing,
+pond and the sloop's mooring stay exactly where they were.
+
+Units are Unreal centimetres (1 m = 100). Every other island is generated from a seed and has its own silhouette
+(harmonics), size, orientation, height and, on some, a cove. Island sizes and heights are tuning.
 """
 import math
 import random
@@ -21,10 +25,10 @@ import sys
 
 M = 100.0                       # cm per metre
 MIN_GAP, MAX_GAP = 800 * M, 2000 * M
-REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 5600 * M), 'Swamp': (0.0, -5600 * M),
-                  'Desert': (5600 * M, 0.0), 'Jungle': (-5600 * M, 0.0)}
+REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
+                  'Desert': (7000 * M, 0.0), 'Jungle': (-7000 * M, 0.0)}
 ISLANDS_PER_REGION = {'Plains': 6, 'Winter': 5, 'Swamp': 5, 'Desert': 5, 'Jungle': 5}   # Plains: starter + 5
-REGION_SPREAD = 2300 * M        # how far a region's islands lie from its centre
+REGION_SPREAD = 3000 * M        # how far a region's islands lie from its centre
 SEED = 1015
 
 
@@ -66,10 +70,42 @@ class Island:
         return self._reach
 
 
+class StarterIsland(Island):
+    """The first island: its old shape (build_coastal_terrain.py MAIN_SHORE, the beach spawn, dock, pond and sloop
+    on its east end) joined to a larger island to its west. Its shore is whichever of the two reaches farther."""
+
+    def __init__(self, old, west):
+        super().__init__('Starter', 'Plains', old.cx, old.cy, west.rx, west.ry, features=old.features + west.features,
+                         peak=west.peak)
+        self.old, self.west = old, west
+
+    def radius(self, angle):
+        # Along this bearing from the old centre: the old shore, or where the ray leaves the western island.
+        c, s = math.cos(angle), math.sin(angle)
+        ox, oy = self.cx - self.west.cx, self.cy - self.west.cy
+        best, lo, hi = 0.0, 0.0, 2.0 * (self.west.reach() + math.hypot(ox, oy))
+        if self.west.distance(self.cx, self.cy) < 0:
+            for _ in range(40):
+                mid = (lo + hi) / 2
+                if self.west.distance(self.cx + mid * c, self.cy + mid * s) < 0:
+                    lo = mid
+                else:
+                    hi = mid
+            best = lo
+        return max(self.old.radius(angle), best)
+
+
 def starter():
-    """The existing island, unchanged (build_coastal_terrain.py MAIN_SHORE and its hills and pond)."""
-    return Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
-                  features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
+    old = Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
+                 features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
+    # The western island (tuning): its east shore runs just inside the old island's, so the old east end stays the
+    # headland with the dock; rolling hills inland.
+    west = Island('StarterWest', 'Plains', -29000.0, -400.0, 30000.0, 26000.0, wobble=0.02,
+                  harmonics=((3, .03, .7), (5, .02, 2.1)),
+                  features=[(-8000, 7000, 9000, 1600), (6000, -9000, 7000, 1100), (-14000, -6000, 8000, 1300)], peak=1600.0)
+    # Hill positions are relative to the island's centre; make them relative to the old centre the starter keeps.
+    west.features = [(x + west.cx - old.cx, y + west.cy - old.cy, r, h) for x, y, r, h in west.features]
+    return StarterIsland(old, west)
 
 
 def shore_gap(a, b, n=160):
@@ -91,12 +127,13 @@ def generate(seed=SEED):
         while made < count:
             tries += 1
             assert tries < 40000, f'could not place {region} islands'
-            # Sizes (tuning): 120 m to 340 m across the long way, a little smaller round the starter.
-            long_r = rng.uniform(60, 170) * M * (0.8 if region == 'Plains' else 1.0)
-            short_r = long_r * rng.uniform(0.55, 0.9)
+            # Sizes (tuning): 500 m to 900 m across the long way.
+            long_r = rng.uniform(250, 450) * M
+            short_r = long_r * rng.uniform(0.6, 0.9)
             if region == 'Plains':
-                # Round the starter: a ring 1.0-1.6 km out, so each is 0.8-2 km of sea from it.
-                ang, dist = rng.uniform(0, 2 * math.pi), rng.uniform(1050, 1650) * M
+                # Round the starter: 0.8-2 km of sea from its shore.
+                ang = rng.uniform(0, 2 * math.pi)
+                dist = islands[0].reach() * 0.75 + long_r + rng.uniform(850, 1700) * M
                 cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
             else:
                 ang, dist = rng.uniform(0, 2 * math.pi), REGION_SPREAD * math.sqrt(rng.random())

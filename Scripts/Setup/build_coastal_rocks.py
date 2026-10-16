@@ -54,7 +54,7 @@ ROCK_RECIPES = {'Plains': (0.45, (.5, 2.0), ['Granite'] * 3 + ['Limestone'] * 2)
                 'Winter': (0.7, (.6, 2.6), ['GraniteSnow'] * 3 + ['BasaltSnow']),
                 'Jungle': (0.35, (.5, 2.0), ['Basalt'] * 2 + ['Granite'] * 2),
                 'Swamp': (0.15, (.4, 1.2), ['Basalt', 'Granite'])}
-MAX_ROCKS = 140
+MAX_ROCKS = 220        # per island (the bigger islands of October 15 night; tuning)
 
 
 # ---- Shape -------------------------------------------------------------------------------------------------
@@ -276,8 +276,6 @@ def main():
     wanted = [(x, y, z, scale, k % len(SHAPES), rng.choice(mix)) for k, (x, y, z, scale) in enumerate(spots(ground, plants))]
     # Every other island, by its region.
     for island in W.ISLANDS:
-        if island.key == 'Starter':
-            continue
         density, scales, looks_here = ROCK_RECIPES[island.region]
         want = min(MAX_ROCKS, int(round(density * math.pi * island.rx * island.ry / 1e7)))
         irng = random.Random(sum(map(ord, island.key)) * 7907)
@@ -288,6 +286,8 @@ def main():
             x, y = island.cx + irng.uniform(-reach, reach), island.cy + irng.uniform(-reach, reach)
             if island.distance(x, y) > -300 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                 continue
+            if island.key == 'Starter' and island.old.distance(x, y) < 1500:
+                continue   # the starter's old ground keeps exactly the rocks it always had
             z = ground(x, y)
             if z < SEA + 60 or any(math.hypot(x - px, y - py) < 300 for px, py in close):
                 continue

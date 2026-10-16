@@ -77,6 +77,19 @@ def starter_land(x, y, inland, ripple):
     return h
 
 
+def starter_ground(i, x, y, d, ripple):
+    """The starter island (world_layout.StarterIsland): its old ground exactly as built on the old island, the
+    Plains' rolling land on the new ground to the west, blended over about 25 m; the old east end (the beach spawn,
+    dock and moorings) is never blended."""
+    d_old = i.old.distance(x, y)
+    old = starter_land(x, y, max(-d_old, 0.0), ripple)
+    w = min(1.0, max(0.0, (d_old + 2000.0) / 2500.0)) * (1.0 - min(1.0, max(0.0, (x - 1000.0) / 2500.0)))
+    if w <= 0.0:
+        return old
+    w = w * w * (3 - 2 * w)
+    return old * (1 - w) + island_land(i, x, y, -d) * w
+
+
 def island_land(i, x, y, inland):
     """Ground on island i at inland cm from its shore."""
     lx, ly = x - i.cx, y - i.cy
@@ -148,7 +161,7 @@ def height_raw(x, y):
         if d > 0:
             h = seabed(d) + ripple
         elif i.key == 'Starter':
-            h = starter_land(x, y, -d, ripple)
+            h = starter_ground(i, x, y, d, ripple)
         else:
             h = island_land(i, x, y, -d)
         best = h if best is None else max(best, h)
