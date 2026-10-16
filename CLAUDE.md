@@ -17,3 +17,7 @@ Canonical details: [Island Terrain and Regional Tree Assignments](Design/World/I
 - Distinguish status honestly: design requirements documented, code changed, assets generated, assets integrated, and in-game verification are separate milestones. Do not say terrain or tree placement is implemented merely because these instructions or a design document are committed.
 
 Claude-specific note: check `Docs/DELEGATED_TASKS.md` before choosing work and respect the files owned by other agents.
+
+## Disk-space cleanup: mandatory safe procedure
+
+The owner wants AI assistance identifying unnecessary local files to reclaim storage. Follow `Docs/SAFE_STORAGE_CLEANUP_POLICY.md` before recommending or performing cleanup. Audit first, list exact candidate paths and estimated savings, preserve user changes and unique assets, and never use broad recursive deletion. Do not permanently delete uncertain files, tracked content, saves/backups, or files outside the project root without explicit owner approval. Treat Unreal `Saved/` as mixed-use; never delete the whole directory. Distinguish local generated cache/build files from shared source content. If the owner has not approved specific deletions, provide a ranked proposal and wait rather than deleting anything.
