@@ -174,11 +174,12 @@ def maravai(height, spread, limbs, seed):
         clumps.append((end, spread * rng.uniform(.5, .65)))
         clumps.append((path[4], spread * rng.uniform(.4, .55)))
         clumps.append((path[2], spread * rng.uniform(.3, .42)))
+    clumps += crown_fill(rng, top, spread * .7, height * .55, height * .95, 6, spread * .45)
     b.slot = 1
     for (cx, cy, cz), size in clumps:
-        # Seven cards of leaves at random slants, a little apart, so no clump shows a straight edge or a cross.
-        for _ in range(7):
-            h = size / 2 * rng.uniform(.6, 1.0)
+        # Eleven cards of leaves at random slants, a little apart, so no clump shows a straight edge or a cross.
+        for _ in range(leaf_count(11)):
+            h = size / 2 * rng.uniform(.6, 1.0) * leaf_scale()
             a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
             n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
             ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
@@ -199,8 +200,8 @@ def leaf_cards(b, rng, clumps, cards):
     """Cards of a leaf texture round each (centre, size) clump, at random slants so no clump shows an edge."""
     b.slot = 1
     for (cx, cy, cz), size in clumps:
-        for _ in range(cards):
-            h = size / 2 * rng.uniform(.6, 1.0)
+        for _ in range(leaf_count(cards)):
+            h = size / 2 * rng.uniform(.6, 1.0) * leaf_scale()
             a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
             n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
             ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
@@ -214,6 +215,32 @@ def leaf_cards(b, rng, clumps, cards):
             ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
             b.quad(*ids, n)
     b.slot = 0
+
+
+# How much of a crown's foliage a mesh carries: 1 for the full crown seen close, less for its far LODs (fewer, slightly
+# larger leaf cards: the same tree from further off). Set by write_tree_mesh.
+LEAF_DETAIL = 1.0
+# The LODs: the share of foliage each keeps, and the screen size it starts at (tuning; owner: keep appropriate LODs).
+TREE_LODS = ((1.0, 1.0), (0.45, 0.3), (0.15, 0.1))
+
+
+def leaf_count(n):
+    return max(2, int(round(n * LEAF_DETAIL)))
+
+
+def leaf_scale():
+    return (1.0 / LEAF_DETAIL) ** 0.25
+
+
+def crown_fill(rng, centre, rx, z0, z1, count, size):
+    """Clumps scattered through a crown's volume (an upright ellipsoid round centre, from z0 to z1), so a crown reads
+    full from every side and from below rather than as a shell of clumps on the limb ends (owner, October 16: full,
+    dense foliage on every non-palm tree)."""
+    out = []
+    for _ in range(count if LEAF_DETAIL >= 1.0 else int(count * LEAF_DETAIL)):
+        a, r = rng.uniform(0, 2 * math.pi), rx * math.sqrt(rng.uniform(0, 1))
+        out.append(((centre[0] + r * math.cos(a), centre[1] + r * math.sin(a), rng.uniform(z0, z1)), size * rng.uniform(.8, 1.15)))
+    return out
 
 
 def oak(height, spread, limbs, seed):
@@ -235,8 +262,10 @@ def oak(height, spread, limbs, seed):
         end = (start[0] + reach * math.cos(a), start[1] + reach * math.sin(a), start[2] + rise)
         path = [tuple(start[i] * (1 - t) ** 2 + 2 * elbow[i] * t * (1 - t) + end[i] * t * t for i in range(3)) for t in (k / 7 for k in range(8))]
         b.tube(path, lambda k: 22.0 - 15.0 * k / 7, sides=8)
-        clumps += [(end, spread * rng.uniform(.55, .7)), (path[5], spread * rng.uniform(.45, .6)), (path[3], spread * rng.uniform(.35, .48))]
-    leaf_cards(b, rng, clumps, 8)
+        clumps += [(end, spread * rng.uniform(.55, .7)), (path[5], spread * rng.uniform(.45, .6)), (path[3], spread * rng.uniform(.35, .48)),
+                   (path[6], spread * rng.uniform(.45, .58))]
+    clumps += crown_fill(rng, top, spread * .8, height * .5, height * .95, 10, spread * .5)
+    leaf_cards(b, rng, clumps, 12)
     return b
 
 
@@ -261,7 +290,8 @@ def ash(height, reach, branches, seed):
         b.tube([start, mid, end], lambda k: 9.0 - 3.5 * k, sides=6)
         quarter = tuple(start[i] * .25 + end[i] * .75 for i in range(3))
         clumps += [(end, reach * rng.uniform(.85, 1.05)), (quarter, reach * rng.uniform(.7, .9)), (mid, reach * rng.uniform(.6, .75))]
-    leaf_cards(b, rng, clumps, 9)
+    clumps += crown_fill(rng, trunk[-1], reach * .7, height * .55, height * .98, 8, reach * .8)
+    leaf_cards(b, rng, clumps, 12)
     return b
 
 
@@ -291,10 +321,12 @@ def birch(height, reach, branches, seed):
         b.tube([start, mid, end], lambda k: 4.5 - 1.6 * k, sides=6)
         clumps.append((end, rng.uniform(85.0, 125.0)))
         clumps.append((mid, rng.uniform(60.0, 90.0)))
+        clumps.append((tuple(start[i] * .25 + end[i] * .75 for i in range(3)), rng.uniform(75.0, 105.0)))
+    clumps += crown_fill(rng, at(.75), reach * .55, height * .45, height * .98, 7, 100.0)
     b.slot = 1
     for (cx, cy, cz), size in clumps:
-        for _ in range(5):
-            h = size / 2 * rng.uniform(.6, 1.0)
+        for _ in range(leaf_count(9)):
+            h = size / 2 * rng.uniform(.6, 1.0) * leaf_scale()
             a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
             n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
             ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
@@ -319,7 +351,7 @@ def spruce(height, reach, whorls, seed):
         t = .14 + .84 * w / max(whorls - 1, 1)
         z = height * t
         long = reach * (1 - t) ** 1.05 + 45
-        count = 5 if t < .7 else 4
+        count = leaf_count(7 if t < .7 else 6)
         turn = rng.uniform(0, 2 * math.pi)
         for n in range(count):
             a = turn + 2 * math.pi * n / count + rng.uniform(-.2, .2)
@@ -330,7 +362,7 @@ def spruce(height, reach, whorls, seed):
             side = (-math.sin(a), math.cos(a), 0.0)
             half = long * .5
             # A flat card (needles seen from above) and one on edge, crossing along the bough.
-            for across, hint in ((side, (0.0, 0.0, 1.0)), ((0.0, 0.0, 1.0), side)):
+            for across, hint in ((side, (0.0, 0.0, 1.0)), ((0.0, 0.0, 1.0), side))[:1 if LEAF_DETAIL < .3 else 2]:
                 corners = [tuple(base[i] - across[i] * half * .5 for i in range(3)), tuple(tip[i] - across[i] * half * .3 for i in range(3)),
                            tuple(tip[i] + across[i] * half * .3 for i in range(3)), tuple(base[i] + across[i] * half * .5 for i in range(3))]
                 ids = [b.vertex(c, uv=uv) for c, uv in zip(corners, ((0, .82), (1, .62), (1, .38), (0, .18)))]
@@ -345,6 +377,28 @@ def spruce(height, reach, whorls, seed):
         b.quad(*ids, (-math.sin(a), math.cos(a), 0))
     b.slot = 0
     return b
+
+
+def write_tree_mesh(make, shape, path, materials):
+    """A tree's mesh with its LODs (TREE_LODS): LOD0 the full crown, then the same trunk and limbs with less
+    foliage. Each LOD is built into a scratch asset beside it (Flora/LOD) and copied in."""
+    global LEAF_DETAIL
+    meshes = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+    folder, name = path.rsplit('/', 1)
+    asset = None
+    try:
+        for k, (detail, _) in enumerate(TREE_LODS):
+            LEAF_DETAIL = detail
+            if k == 0:
+                asset = write_static_mesh(make(**shape), path, materials, 120.0)
+                continue
+            lod = write_static_mesh(make(**shape), f'{folder}/LOD/{name}_LOD{k}', materials, 120.0, collision=False)
+            assert meshes.set_lod_from_static_mesh(asset, k, lod, 0, True) == k, f'{name} LOD{k}'
+    finally:
+        LEAF_DETAIL = 1.0
+    assert meshes.set_lod_screen_sizes(asset, [size for _, size in TREE_LODS])
+    assert unreal.EditorAssetLibrary.save_loaded_asset(asset)
+    return asset
 
 
 def birch_bark_material():
@@ -508,14 +562,33 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
     assert mel.connect_material_expressions(node(unreal.MaterialExpressionObjectPositionWS), '', colour, 'O')
     assert mel.connect_material_expressions(colour, '', through, 'C')
     if snow:
-        # Snow lies on the leaves' upper sides (owner: snow on winter trees).
-        snowy = custom('float up = saturate((N.z - .15) * 2.2); float n = frac(sin(dot(floor(UV * 18.0), float2(12.9898, 78.233))) * 43758.5453);'
-                       ' return lerp(C, float3(.82, .85, .9), up * lerp(.55, .95, n));',
-                       unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'N', 'UV'))
-        assert mel.connect_material_expressions(colour, '', snowy, 'C')
-        assert mel.connect_material_expressions(node(unreal.MaterialExpressionVertexNormalWS), '', snowy, 'N')
-        assert mel.connect_material_expressions(node(unreal.MaterialExpressionTextureCoordinate), '', snowy, 'UV')
-        colour = snowy
+        # Partial snow (owner, October 16: snow on the upper and outward-facing foliage, leaves showing beneath and
+        # between the patches, varied by tree and exposure; never a white crown). Snow needs a leaf facing up; it lies
+        # in patches (two layers of world-space noise), more near the top of a tree and on its outer side, and each
+        # tree (by where it stands) holds its own amount. All amounts are tuning.
+        # A leaf card shows both faces: one lying flat holds snow whichever face is up.
+        cover = ('float up = saturate((abs(N.z) - 0.1) * 1.8);'
+                 ' float h = frac(sin(dot(floor(O.xy / 10.0), float2(12.9898, 78.233))) * 43758.5453);'
+                 ' float tree = lerp(0.35, 0.85, h);'
+                 ' float high = saturate((P.z - O.z) / 900.0);'
+                 ' float2 d = P.xy - O.xy; float outer = saturate(dot(d / max(length(d), 1.0), N.xy));'
+                 ' float blob = sin(P.x * 0.011 + sin(P.y * 0.007) * 2.0) * sin(P.y * 0.013 + sin(P.z * 0.009) * 2.0) * 0.5 + 0.5;'
+                 ' float fine = frac(sin(dot(floor(P / 12.0), float3(12.9898, 78.233, 37.719))) * 43758.5453);'
+                 ' float patch = smoothstep(0.12, 0.38, blob * 0.7 + fine * 0.3 + (tree - 0.6) * 0.6 + (high - 0.5) * 0.35 + outer * 0.15);'
+                 ' float cover = min(up * patch, 0.92);')
+        snowy = custom(cover + ' return lerp(C, float3(.9, .92, .95), cover);',
+                       unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'N', 'P', 'O'))
+        # Light through a snowy leaf is the snow's faint grey-white, not the leaf's green.
+        lit = custom(cover + ' return lerp(C * float3(0.55, 0.7, 0.3), float3(.2, .21, .23), cover);',
+                     unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'N', 'P', 'O'))
+        normal, world, pivot = (node(unreal.MaterialExpressionVertexNormalWS), node(unreal.MaterialExpressionWorldPosition),
+                                node(unreal.MaterialExpressionObjectPositionWS))
+        for target in (snowy, lit):
+            assert mel.connect_material_expressions(colour, '', target, 'C')
+            assert mel.connect_material_expressions(normal, '', target, 'N')
+            assert mel.connect_material_expressions(world, '', target, 'P')
+            assert mel.connect_material_expressions(pivot, '', target, 'O')
+        colour, through = snowy, lit
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
     assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
@@ -728,13 +801,13 @@ def main():
     placed = []   # the starter's palms: none now (owner, October 16)
     ground = Ground()
     leaf_material = frond_material(import_texture('T_MaravaiLeaves_v1', LEAF_ART), f'{FOLDER}/M_MaravaiLeaves_v1')
-    broadleaf = [write_static_mesh(maravai(**shape), f'{FOLDER}/SM_Maravai_{k + 1}', [materials[BARK], leaf_material], 120.0)
+    broadleaf = [write_tree_mesh(maravai, shape, f'{FOLDER}/SM_Maravai_{k + 1}', [materials[BARK], leaf_material])
                  for k, shape in enumerate(MARAVAI)]
     oak_leaves = frond_material(import_texture('T_OakLeaves_v1', OAK_ART), f'{FOLDER}/M_OakLeaves_v1')
-    oaks = [write_static_mesh(oak(**shape), f'{FOLDER}/SM_Oak_{k + 1}', [materials[BARK], oak_leaves], 120.0)
+    oaks = [write_tree_mesh(oak, shape, f'{FOLDER}/SM_Oak_{k + 1}', [materials[BARK], oak_leaves])
             for k, shape in enumerate(OAK)]
     ash_leaves = frond_material(import_texture('T_AshLeaves_v1', ASH_ART), f'{FOLDER}/M_AshLeaves_v1')
-    ashes = [write_static_mesh(ash(**shape), f'{FOLDER}/SM_Ash_{k + 1}', [materials[BARK], ash_leaves], 120.0)
+    ashes = [write_tree_mesh(ash, shape, f'{FOLDER}/SM_Ash_{k + 1}', [materials[BARK], ash_leaves])
              for k, shape in enumerate(ASH)]
     hardwoods = []
     # The starter island's old inland hardwoods, in their old places: oaks now (Central Plains Oak, owner).
@@ -762,10 +835,10 @@ def main():
             tree.set_editor_property(prop, value)
         hardwoods.append([round(x), round(y), round(z)])
     birch_leaves = frond_material(import_texture('T_BirchLeaves_v1', BIRCH_ART), f'{FOLDER}/M_BirchLeaves_v1', snow=True)
-    birches = [write_static_mesh(birch(**shape), f'{FOLDER}/SM_Birch_{k + 1}', [birch_bark_material(), birch_leaves], 120.0)
+    birches = [write_tree_mesh(birch, shape, f'{FOLDER}/SM_Birch_{k + 1}', [birch_bark_material(), birch_leaves])
                for k, shape in enumerate(BIRCH)]
     needles = frond_material(import_texture('T_SpruceNeedles_v1', SPRUCE_ART), f'{FOLDER}/M_SpruceNeedles_v1')
-    spruces = [write_static_mesh(spruce(**shape), f'{FOLDER}/SM_Spruce_{k + 1}', [materials[BARK], needles], 120.0)
+    spruces = [write_tree_mesh(spruce, shape, f'{FOLDER}/SM_Spruce_{k + 1}', [materials[BARK], needles])
                for k, shape in enumerate(SPRUCE)]
     kinds = {'Veyran Palm': (meshes, PALM_SCALE, 26.0, 160.0, 8), 'Maravai': (broadleaf, MARAVAI_SCALE, 38.0, 220.0, 12),
              'Birch': (birches, BIRCH_SCALE, 20.0, 220.0, 10), 'Spruce': (spruces, SPRUCE_SCALE, 30.0, 260.0, 12),
