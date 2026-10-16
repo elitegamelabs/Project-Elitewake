@@ -29,3 +29,7 @@ Do not interpret “ships without sails” as removing masts/poles and flags fro
 3. Sail cloth belongs to the removable/attachable sail module, not the base hull.
 4. Attachments fit the intended ship classes and can be installed/removed without visual misalignment.
 5. The implementation is tested in Unreal Engine 5.8 and existing ship controls and sailing systems remain functional.
+
+
+## Cavalier class compatibility (owner decision, October 15, 2026)
+The Cavalier is a distinct ship class and must be the largest ship in ELITEWAKE, larger than the Brigantine. It requires its own high-definition hull and class-specific sail assemblies; do not simply scale up the Brigantine. Preserve the modular rule above: Cavalier hull has no permanently integrated sails, and compatible removable sail assemblies include supporting masts/poles, flags already mounted on poles, sail cloth, rigging, and attachment details. Exact dimensions and gameplay statistics remain TBD until approved. See [Cavalier Legendary Capital Ship](CAVALIER_LEGENDARY_CAPITAL_SHIP_2026-10-15.md).
