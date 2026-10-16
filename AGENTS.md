@@ -2,6 +2,14 @@
 
 These instructions apply to every AI coding, design, art, and implementation assistant working in this repository. Read `Docs/DESIGN_REFERENCE.md` and the latest owner decisions before changing project behavior. The owner's latest explicit direction takes precedence over older documentation. Do not claim a design requirement is implemented unless code/assets and verification confirm it.
 
+## Your task list (owner, October 16, 2026)
+
+Claude coordinates the AIs on this project and keeps a task list for each: **Codex** works from
+[Docs/Delegation/CODEX.md](Docs/Delegation/CODEX.md), **ChatGPT** from [Docs/Delegation/CHATGPT.md](Docs/Delegation/CHATGPT.md),
+and Scenario generation jobs are queued in [Docs/Delegation/SCENARIO.md](Docs/Delegation/SCENARIO.md) (Claude runs them;
+do not spend Scenario credits yourself). Shared rules, the editor lock and the files Claude is working on are in the header
+of [Docs/DELEGATED_TASKS.md](Docs/DELEGATED_TASKS.md). Claim a task before starting it and record what you verified.
+
 ## Confirmed island and regional foliage requirements (owner, October 15, 2026)
 
 Canonical details: [Island Terrain and Regional Tree Assignments](Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md).

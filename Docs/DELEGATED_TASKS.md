@@ -8,6 +8,11 @@ Owner, October 16: Claude coordinates Scenario (it calls it directly), ChatGPT a
 suit code, native or Python tests and scripts; **for ChatGPT** suit docs, the art catalogue, research and review;
 unmarked tasks suit either. Take what fits you.
 
+**Per-agent lists (October 16):** each agent now has its own file with new tasks and the earlier ones that suit it:
+[Delegation/CODEX.md](Delegation/CODEX.md), [Delegation/CHATGPT.md](Delegation/CHATGPT.md), and the Scenario job queue
+[Delegation/SCENARIO.md](Delegation/SCENARIO.md). New tasks (C1.., G1.., S1..) are claimed in those files; the T-tasks
+below are still claimed here.
+
 ## How to work this queue
 
 1. `git fetch && git pull --ff-only` first. Two agents (and the owner) commit to `main`.
@@ -81,6 +86,10 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Scripts/Art/make_leaf_cluster.py`, `Source/EW/EWCobweb.*`, `Source/EW/Wildlife/EWWildlifeRest.*`, and the checks
   `verify_island_terrain_play.py`, `verify_regional_trees_play.py`, `verify_cave_webs_play.py`,
   `verify_world_performance_play.py`.
+- **Owner milestones of October 16 for trees and ships** (the same Claude session): fuller leaves and needles on every
+  non-palm tree, partial snow on the Winter trees, and boarding ladders centred on every stern. Besides the world
+  scripts above: `Scripts/Art/make_leaf_cluster.py`, the ship definitions' ladder places, `Scripts/Setup/ship_hull.py` and `ship_geometry.py`.
+  The starter island's oaks are done (`2e7404d`).
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
   still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`,
   `Source/EW/Ships/EWShipSoundComponent.*` and `Scripts/Verification/verify_audio*_play.py`.
