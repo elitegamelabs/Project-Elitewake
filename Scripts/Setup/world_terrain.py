@@ -57,6 +57,81 @@ def cliff_of(island):
 
 
 CLIFFS = {i.key: cliff_of(i) for i in W.ISLANDS}
+
+# Owner, October 15 (Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): every island
+# individually designed, with different combinations of mountains, hills, ridges, valleys and plateaus, so none is a
+# resized copy of another. DECIDED (delegated, tuning): each island but the starter and the Swamp's draws a terrain plan
+# from its region's list, no two islands of a region the same plan; its own seed sets each shape's size, place and
+# heading. Peaks are sharp mountains, ridges long spines, plateaus flat-topped mesas with steep sides, valleys cut
+# across the island (never down to the sea). The Swamp stays low wetland, varied by its pools and channels.
+PLANS = {'Winter': [('peak', 'ridge'), ('peak', 'valley'), ('ridge', 'valley', 'peak'), ('peak', 'peak'), ('ridge', 'plateau')],
+         'Jungle': [('ridge', 'valley'), ('peak', 'valley'), ('plateau', 'valley'), ('ridge', 'ridge'), ('peak', 'ridge', 'valley')],
+         'Desert': [('plateau',), ('plateau', 'valley'), ('ridge', 'plateau'), ('plateau', 'plateau'), ('ridge', 'valley')],
+         'Plains': [('valley',), ('plateau', 'valley'), ('ridge',), ('peak', 'valley'), ('plateau', 'ridge')]}
+
+
+def _plans():
+    plans = {}
+    for region, options in PLANS.items():
+        order = list(options)
+        random.Random(sum(map(ord, region)) * 31).shuffle(order)
+        islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
+        for isl, plan in zip(islands, order):
+            rng = random.Random(sum(map(ord, isl.key)) * 104723)
+            shapes = []
+            for kind in plan:
+                a = rng.uniform(0, 2 * math.pi)
+                u, v = rng.uniform(-.35, .35) * isl.rx, rng.uniform(-.35, .35) * isl.ry
+                if kind == 'peak':
+                    shapes.append(('peak', u, v, rng.uniform(.25, .4) * isl.rx, isl.peak * rng.uniform(.9, 1.4)))
+                elif kind == 'ridge':
+                    shapes.append(('ridge', u, v, a, rng.uniform(.45, .8) * isl.rx, rng.uniform(.12, .2) * isl.ry,
+                                   isl.peak * rng.uniform(.5, .9)))
+                elif kind == 'plateau':
+                    shapes.append(('plateau', u, v, rng.uniform(.25, .4) * isl.ry, isl.peak * rng.uniform(.45, .8)))
+                else:   # a valley runs right across, near the middle
+                    shapes.append(('valley', u * .4, v * .4, a, rng.uniform(.08, .14) * isl.ry, isl.peak * rng.uniform(.4, .7)))
+            plans[isl.key] = (plan, shapes)
+    return plans
+
+
+TERRAIN_PLANS = _plans()
+
+
+def shapes_height(i, lx, ly):
+    """The island's own terrain plan at (lx, ly) from its centre, in its turned frame: what its peaks, ridges and
+    plateaus add and its valleys take away."""
+    plan = TERRAIN_PLANS.get(i.key)
+    if not plan:
+        return 0.0
+    c, s = math.cos(-i.turn), math.sin(-i.turn)
+    x, y = lx * c - ly * s, lx * s + ly * c
+    h = 0.0
+    for shape in plan[1]:
+        kind = shape[0]
+        if kind == 'peak':
+            _, u, v, r, height = shape
+            d = math.hypot(x - u, y - v)
+            if d < r:
+                h += height * (1 - d / r) ** 1.4
+        elif kind == 'ridge':
+            _, u, v, a, half, width, height = shape
+            dx, dy = x - u, y - v
+            along = dx * math.cos(a) + dy * math.sin(a)
+            across = -dx * math.sin(a) + dy * math.cos(a)
+            t = max(-1.0, min(1.0, along / half))
+            off = math.hypot(across, along - t * half)
+            h += height * math.exp(-(off / width) ** 2) * (1 - .5 * t * t)
+        elif kind == 'plateau':
+            _, u, v, r, height = shape
+            d = math.hypot(x - u, y - v)
+            edge = min(1.0, max(0.0, (r - d) / (r * .18)))
+            h += height * edge * edge * (3 - 2 * edge)
+        else:
+            _, u, v, a, width, depth = shape
+            across = -(x - u) * math.sin(a) + (y - v) * math.cos(a)
+            h -= depth * math.exp(-(across / width) ** 2)
+    return h
 # How much higher and steeper each region's hills are than world_layout's base features (tuning): Winter mountains,
 # Jungle's broken hills, Desert's rises among the dunes, Plains' rolling ground.
 RELIEF = {'Winter': (3.6, 0.7), 'Jungle': (2.2, 0.8), 'Desert': (1.3, 1.0), 'Plains': (1.2, 1.2), 'Swamp': (1.0, 1.0)}
@@ -107,7 +182,10 @@ def island_land(i, x, y, inland):
         h += rise * (420 * abs(math.sin(lx / 520 + .7) * math.sin(ly / 430 + 1.9)) + 180 * abs(math.sin((lx - ly) / 300)))
     elif i.region == 'Jungle':
         h += rise * (200 * abs(math.sin(lx / 640) * math.cos(ly / 560 + .3)) + 80 * math.sin(lx / 260) * math.sin(ly / 310))
-    elif i.region == 'Swamp':
+    if i.region != 'Swamp' and i.key in TERRAIN_PLANS:
+        # The island's own plan; a valley floor stays above the sea (a little over the beach's top).
+        h = max(h + rise * shapes_height(i, lx, ly), min(h, SEA + 120.0))
+    if i.region == 'Swamp':
         # Low ground with pools and winding channels that fall below the waterline.
         channel = abs(math.sin(lx / 900 + 2 * math.sin(ly / 1300)) * math.sin(ly / 1100 + 1.3 * math.sin(lx / 1700)))
         # About a metre above the sea (lower and the ocean's surface reads over it), the pools well below it.
