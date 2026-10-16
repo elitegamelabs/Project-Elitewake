@@ -48,6 +48,20 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Six glowing reefs (design reference; places decided provisionally): one per region and a second in the Plains | ✅ `d86efa3` |
 | Environment and world (M5 terrain and vegetation) | ⏳ |
 
+## Owner-requested follow-up milestones — October 16, 2026 ⏳
+
+These are **pending implementation and Unreal Play verification**, not completed by recording them here. Existing completed milestones remain historical records; the owner requests below supersede conflicting earlier tree-placement expectations.
+
+| Milestone | Status | Completion evidence |
+|---|---|---|
+| **M5: Starter island oak replacement** — remove all palms from the Central Plains starter island; replace with realistic oak trees, preserving terrain, dock, water, harvesting, collisions and gameplay. | ⏳ | No palm actors, foliage instances or procedural spawns on the starter island; oak trees visibly present and harvestable in Unreal Play. |
+| **M5: Desert palm relocation** — ensure palms are placed on Desert-region islands in natural, terrain-aware distributions, rather than on the starter island. | ⏳ | Inspect Desert islands in Play; update procedural placements and tests, including any existing test that expects starter-island palms. |
+| **M5: Dense non-palm foliage** — full, natural-looking, species-appropriate leaves or needles on oak, birch, ash, spruce and all other non-palm trees throughout the world; preserve wind response and performance. | ⏳ | Inspect each regional tree type close-up and at gameplay distance; verify LOD and frame-rate impact. |
+| **M5: Winter tree partial snow coverage** — snow accumulates on portions of winter-tree branches and foliage while some leaves/needles remain exposed; vary coverage naturally by tree and exposure. | ⏳ | Unreal Play visual checks confirm both snow-covered and exposed foliage; no uniformly white canopies. |
+| **M1 / Ships: Centered stern boarding ladders** — on every applicable boat/ship, place the boarding ladder **directly at the horizontal center of the rear (stern)**, aligned with the vessel's longitudinal centerline; preserve boarding interaction and climb animations. | ⏳ | Check stern ladder alignment from behind on each ship type and board/disembark in Unreal Play, including multiplayer where supported. |
+
+Related specifications: [starter island](STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md) and [foliage/winter snow](TREE_FOLIAGE_AND_WINTER_SNOW_DIRECTION_2026-10-16.md).
+
 ## M0 — Foundations ✅
 
 Server-authoritative survivor (movement, stances, swimming, survival needs), inventory, equipment, hotbar, crafting, objectives, Company, private multiplayer with recovery; the coastal map with terrain, ocean, palms, boulders and plants; ships (sloop, raft, dinghy) with fittings, sailing, crew on deck, ladders, anchor, cargo and weight; melee; the Journal guides. See the VERIFICATION table for every check.
