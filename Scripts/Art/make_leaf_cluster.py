@@ -8,6 +8,10 @@ Writes Art/Flora/Maravai-Leaves-v1.png: a 1024 px square of overlapping glossy t
 thickest in the middle and thinning to single leaves at the edge, so crossed cards of it read as a leafy clump.
 Each leaf is a pointed oval with a pale midrib, lit from above (lighter tips, darker bases), in several greens.
 Scripts/Setup/build_coastal_flora.py imports it.
+
+Also writes, for the regional trees (owner, October 15: Central Plains Oak, Jungle Ash): Art/Flora/Oak-Leaves-v1.png,
+a card of deep-green lobed oak leaves, and Art/Flora/Ash-Leaves-v1.png, a card of ash's compound leaves, each a stalk
+with pairs of narrow pointed leaflets and one at its tip.
 """
 import math
 import random
@@ -43,6 +47,71 @@ def leaf(draw, x, y, angle, length, width, colour, rng):
         draw.polygon([(x + px * ca - py * sa, y + px * sa + py * ca) for px, py in pts], fill=fill)
     rib = tuple(min(255, int(c * 1.45)) for c in colour) + (255,)
     draw.line([(x, y), (x + length * .92 * ca, y + length * .92 * sa)], fill=rib, width=2)
+
+
+def oak_leaf(draw, x, y, angle, length, width, colour, rng):
+    """A lobed oak leaf: the outline swells and pinches in rounded lobes along both sides, shaded like the others."""
+    ca, sa = math.cos(angle), math.sin(angle)
+    lobes = rng.choice((4, 5))
+    for band in range(10, 0, -1):
+        f = band / 10
+        shade = .7 + .38 * (1 - f) + rng.uniform(-.04, .04)
+        fill = tuple(max(0, min(255, int(c * shade))) for c in colour) + (255,)
+        side = []
+        for k in range(41):
+            t = k / 40
+            lobe = .62 + .38 * abs(math.sin(math.pi * lobes * t))
+            side.append((t * length, width * f * math.sin(math.pi * t) ** .6 * lobe * (1 - .2 * t)))
+        pts = side + [(px, -py) for px, py in reversed(side)]
+        draw.polygon([(x + px * ca - py * sa, y + px * sa + py * ca) for px, py in pts], fill=fill)
+    rib = tuple(min(255, int(c * 1.4)) for c in colour) + (255,)
+    draw.line([(x, y), (x + length * .9 * ca, y + length * .9 * sa)], fill=rib, width=2)
+
+
+OAK_OUT = ROOT / 'Art/Flora/Oak-Leaves-v1.png'
+OAK_GREENS = [(40, 78, 28), (52, 92, 32), (34, 68, 24), (62, 100, 36), (46, 84, 40)]
+
+
+def oak_card(out=OAK_OUT, seed=17):
+    rng = random.Random(seed)
+    image = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    leaves = sorted(((rng.random() ** .7) * SIZE * .42, rng.uniform(0, 2 * math.pi)) for _ in range(300))
+    for r, a in reversed(leaves):
+        length = rng.uniform(80, 120)
+        oak_leaf(draw, SIZE / 2 + r * math.cos(a), SIZE / 2 + r * math.sin(a), a + rng.uniform(-.7, .7), length,
+                 length * rng.uniform(.3, .38), rng.choice(OAK_GREENS), rng)
+    image.putalpha(image.getchannel('A').filter(ImageFilter.GaussianBlur(.7)))
+    image.save(out)
+    print(out, image.size)
+
+
+ASH_OUT = ROOT / 'Art/Flora/Ash-Leaves-v1.png'
+ASH_GREENS = [(64, 110, 42), (76, 124, 48), (56, 98, 38), (88, 132, 54)]
+
+
+def ash_card(out=ASH_OUT, seed=19):
+    rng = random.Random(seed)
+    image = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(image)
+    stalks = sorted(((rng.random() ** .8) * SIZE * .3, rng.uniform(0, 2 * math.pi)) for _ in range(46))
+    for r, a in reversed(stalks):
+        x0, y0 = SIZE / 2 + r * math.cos(a), SIZE / 2 + r * math.sin(a)
+        heading = a + rng.uniform(-.5, .5)
+        length = rng.uniform(150, 230)
+        colour = rng.choice(ASH_GREENS)
+        ca, sa = math.cos(heading), math.sin(heading)
+        draw.line([(x0, y0), (x0 + length * ca, y0 + length * sa)], fill=(70, 86, 40, 255), width=3)
+        pairs = rng.choice((3, 4, 5))
+        for k in range(pairs):
+            t = .25 + .7 * k / pairs
+            px, py = x0 + length * t * ca, y0 + length * t * sa
+            for side in (-1, 1):
+                leaf(draw, px, py, heading + side * rng.uniform(.9, 1.2), rng.uniform(46, 62), 7.5, colour, rng)
+        leaf(draw, x0 + length * ca, y0 + length * sa, heading, rng.uniform(50, 64), 8.0, colour, rng)
+    image.putalpha(image.getchannel('A').filter(ImageFilter.GaussianBlur(.6)))
+    image.save(out)
+    print(out, image.size)
 
 
 def main(out=OUT, greens=GREENS, count=420, sizes=(70, 120), seed=7, widths=(.26, .34)):
@@ -108,3 +177,5 @@ if __name__ == '__main__':
     main()
     main(BIRCH_OUT, BIRCH_GREENS, 380, (34, 56), 11, (.3, .4))
     spruce_spray()
+    oak_card()
+    ash_card()

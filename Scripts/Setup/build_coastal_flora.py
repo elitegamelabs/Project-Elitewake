@@ -21,11 +21,17 @@ Spruce (owner, October 14: the Jungle has tall spruce, dense and maze-like): thr
 a straight trunk under whorls of drooping boughs that shorten toward the spire, each bough two crossed cards of
 needle sprays (Art/Flora/Spruce-Needles-v1.png).
 
-The five-region world (owner, October 15; world_layout.py): the starter island keeps exactly the palms, Maravai
-and plants it had; every other island is dressed for its region (DECIDED, delegated, recipes and densities are
-tuning): Plains with groups of Maravai; Desert with palms near its shores; Winter with birches; Jungle with dense
-spruce and Maravai between them; Swamp with scattered Maravai (the owner's swamp vegetation is still open). Every
-island has fiber plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).
+The five-region world (owner, October 15; world_layout.py). Each region's primary tree (owner, October 15,
+Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): Central Plains Oak, Winter Birch, Jungle
+Ash, Desert Palm, Swamp Spruce, in substantial stands. DECIDED (delegated, densities are tuning): Plains and Swamp
+grow in groves with clearings between, Winter and Jungle as forest, Desert's palms near its shores; a few Maravai
+stay in the Jungle under the ash. The starter island keeps its beach palms and plants where they were; its old inland
+hardwoods are oaks now, and its new western land is dressed like the other Plains islands. Every island has fiber
+plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).
+
+Oak (built here): a short, massive trunk forking low into heavy limbs that reach out nearly level before rising,
+under a broad dome of lobed leaves (Art/Flora/Oak-Leaves-v1.png). Ash: a tall straight trunk with branches rising
+steeply from its upper half into a narrow oval crown of compound leaves (Art/Flora/Ash-Leaves-v1.png).
 
 Each tree is harvestable: a hatchet gives Wood and Thatch (the existing test yields; Maravai Timber as its own
 item is not made yet), and its trunk is solid.
@@ -55,6 +61,8 @@ FROND_ART = ROOT / 'Art/Flora/Veyran-Palm-Frond-v1.png'
 LEAF_ART = ROOT / 'Art/Flora/Maravai-Leaves-v1.png'
 BIRCH_ART = ROOT / 'Art/Flora/Birch-Leaves-v1.png'
 SPRUCE_ART = ROOT / 'Art/Flora/Spruce-Needles-v1.png'
+OAK_ART = ROOT / 'Art/Flora/Oak-Leaves-v1.png'
+ASH_ART = ROOT / 'Art/Flora/Ash-Leaves-v1.png'
 TIMBER = '/Game/Elitewake/World/Materials/T_Timber_v1'
 ITEMS = '/Game/Elitewake/Items/Testing'
 WOOD, THATCH = f'{ITEMS}/DA_TestWood', f'{ITEMS}/DA_TestThatch'
@@ -85,11 +93,17 @@ SPRUCE = [dict(height=1800.0, reach=360.0, whorls=16, seed=31), dict(height=2300
 SPRUCE_SCALE = (.8, 1.25)
 # Each region's dressing (DECIDED, delegated; tuning): trees per 1,000 m2 of island by kind, whether trees grow in
 # groups, and fiber plants, stick piles and berry bushes per 1,000 m2.
-RECIPES = {'Plains': dict(trees={'Maravai': 1.0}, groups=True, plants=(0.45, 0.3, 0.22)),
+OAK = [dict(height=1050.0, spread=620.0, limbs=7, seed=41), dict(height=1250.0, spread=720.0, limbs=8, seed=42),
+       dict(height=1450.0, spread=820.0, limbs=9, seed=43)]
+OAK_SCALE = (.8, 1.25)
+ASH = [dict(height=1700.0, reach=330.0, branches=9, seed=51), dict(height=2000.0, reach=380.0, branches=10, seed=52),
+       dict(height=2300.0, reach=420.0, branches=11, seed=53)]
+ASH_SCALE = (.8, 1.2)
+RECIPES = {'Plains': dict(trees={'Oak': 1.6}, groups=True, plants=(0.45, 0.3, 0.22)),
            'Desert': dict(trees={'Veyran Palm': 0.7}, groups=False, plants=(0.2, 0.15, 0.08)),
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
-           'Jungle': dict(trees={'Spruce': 4.5, 'Maravai': 0.8}, groups=False, plants=(0.5, 0.4, 0.25)),
-           'Swamp': dict(trees={'Maravai': 0.6}, groups=True, plants=(0.7, 0.3, 0.15))}
+           'Jungle': dict(trees={'Ash': 4.0, 'Maravai': 0.5}, groups=False, plants=(0.5, 0.4, 0.25)),
+           'Swamp': dict(trees={'Spruce': 2.2}, groups=True, plants=(0.7, 0.3, 0.15))}
 MAX_TREES = 500        # per island (the bigger islands of October 15 night; tuning)
 MAX_PLANTS = 220       # of each kind per island
 PALM_SCALE = (.7, 1.35)
@@ -176,6 +190,76 @@ def maravai(height, spread, limbs, seed):
             ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
             b.quad(*ids, n)
     b.slot = 0
+    return b
+
+
+def leaf_cards(b, rng, clumps, cards):
+    """Cards of a leaf texture round each (centre, size) clump, at random slants so no clump shows an edge."""
+    b.slot = 1
+    for (cx, cy, cz), size in clumps:
+        for _ in range(cards):
+            h = size / 2 * rng.uniform(.6, 1.0)
+            a, tilt = rng.uniform(0, 2 * math.pi), rng.uniform(-1.1, 1.1)
+            n = (math.cos(a) * math.cos(tilt), math.sin(a) * math.cos(tilt), math.sin(tilt))
+            ref = (0, 0, 1) if abs(n[2]) < .9 else (1, 0, 0)
+            u = norm(cross(n, ref))
+            v = cross(n, u)
+            spin = rng.uniform(0, 2 * math.pi)
+            u, v = (tuple(u[i] * math.cos(spin) + v[i] * math.sin(spin) for i in range(3)),
+                    tuple(v[i] * math.cos(spin) - u[i] * math.sin(spin) for i in range(3)))
+            c = (cx + rng.uniform(-.2, .2) * size, cy + rng.uniform(-.2, .2) * size, cz + rng.uniform(-.12, .12) * size)
+            corners = [tuple(c[i] + (su * u[i] + sv * v[i]) * h for i in range(3)) for su, sv in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
+            ids = [b.vertex(p, uv=uv) for p, uv in zip(corners, ((0, 1), (1, 1), (1, 0), (0, 0)))]
+            b.quad(*ids, n)
+    b.slot = 0
+
+
+def oak(height, spread, limbs, seed):
+    """An oak in its own space: a short, massive trunk forking low into heavy limbs that run out nearly level and
+    then rise, each carrying clumps of leaves, under a broad dome of clumps over the crown."""
+    rng = random.Random(seed)
+    b = Builder()
+    fork = height * .34
+    trunk = [(rng.uniform(-6, 6) * k / 8, rng.uniform(-6, 6) * k / 8, fork * k / 8) for k in range(9)]
+    b.tube(trunk, lambda k: 52.0 - 16.0 * k / 8 + (16.0 if k == 0 else 0.0), sides=14)
+    top = trunk[-1]
+    clumps = [((top[0], top[1], height * .92), spread * .75), ((top[0], top[1], height * .78), spread * .7)]
+    for n in range(limbs):
+        a = 2 * math.pi * n / limbs + rng.uniform(-.25, .25)
+        reach, rise = spread * rng.uniform(.8, 1.05), height * rng.uniform(.3, .5)
+        start = (top[0], top[1], fork - rng.uniform(0, height * .06))
+        # Out nearly level first, then up: the limb's elbow sits two thirds of the way out, barely above its start.
+        elbow = (start[0] + reach * .65 * math.cos(a), start[1] + reach * .65 * math.sin(a), start[2] + rise * .2)
+        end = (start[0] + reach * math.cos(a), start[1] + reach * math.sin(a), start[2] + rise)
+        path = [tuple(start[i] * (1 - t) ** 2 + 2 * elbow[i] * t * (1 - t) + end[i] * t * t for i in range(3)) for t in (k / 7 for k in range(8))]
+        b.tube(path, lambda k: 22.0 - 15.0 * k / 7, sides=8)
+        clumps += [(end, spread * rng.uniform(.55, .7)), (path[5], spread * rng.uniform(.45, .6)), (path[3], spread * rng.uniform(.35, .48))]
+    leaf_cards(b, rng, clumps, 8)
+    return b
+
+
+def ash(height, reach, branches, seed):
+    """An ash in its own space: a tall, straight trunk, branches rising steeply from its upper half, and a narrow,
+    oval crown of compound-leaf clumps along and at the ends of them."""
+    rng = random.Random(seed)
+    b = Builder()
+    trunk = [(rng.uniform(-4, 4) * k / 12, rng.uniform(-4, 4) * k / 12, height * .88 * k / 12) for k in range(13)]
+    b.tube(trunk, lambda k: 30.0 - 20.0 * k / 12 + (9.0 if k == 0 else 0.0), sides=12)
+    clumps = [((trunk[-1][0], trunk[-1][1], height), reach * 1.1), ((trunk[-1][0], trunk[-1][1], height * .86), reach * 1.05),
+              ((trunk[-1][0], trunk[-1][1], height * .72), reach * .9)]
+    for n in range(branches):
+        t = .45 + .45 * n / max(branches - 1, 1)
+        k = int(t * 12)
+        start = trunk[min(k, 12)]
+        a = 2.4 * n + rng.uniform(-.3, .3)          # the golden-angle spiral round the trunk
+        long = reach * rng.uniform(.75, 1.05) * (1.1 - .45 * t)
+        rise = long * rng.uniform(1.1, 1.6)
+        end = (start[0] + long * math.cos(a), start[1] + long * math.sin(a), start[2] + rise)
+        mid = tuple((start[i] + end[i]) / 2 + (0, 0, -18)[i] for i in range(3))
+        b.tube([start, mid, end], lambda k: 9.0 - 3.5 * k, sides=6)
+        quarter = tuple(start[i] * .25 + end[i] * .75 for i in range(3))
+        clumps += [(end, reach * rng.uniform(.85, 1.05)), (quarter, reach * rng.uniform(.7, .9)), (mid, reach * rng.uniform(.6, .75))]
+    leaf_cards(b, rng, clumps, 9)
     return b
 
 
@@ -553,7 +637,7 @@ def dress_islands(actors, ground, kinds, wood, thatch):
         for kind, density in recipe['trees'].items():
             wanted = min(MAX_TREES, int(round(density * area)))
             meshes, scales, radius, half, sink = kinds[kind]
-            spacing = 450.0 if kind == 'Spruce' else 650.0
+            spacing = {'Spruce': 450.0, 'Ash': 500.0, 'Oak': 800.0}.get(kind, 650.0)
             centres = [(island.cx + rng.uniform(-reach, reach) * .7, island.cy + rng.uniform(-reach, reach) * .7) for _ in range(max(1, wanted // 5))]
             made, tries = 0, 0
             while made < wanted and tries < wanted * 60 + 200:
@@ -608,7 +692,7 @@ def main():
     assert level.load_level(MAP)
     # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', 'Spruce', *PLANTS)):
+        if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', 'Spruce', 'Oak', 'Ash', *PLANTS)):
             actors.destroy_actor(actor)
     rng = random.Random(5)
     placed = []
@@ -627,16 +711,23 @@ def main():
     leaf_material = frond_material(import_texture('T_MaravaiLeaves_v1', LEAF_ART), f'{FOLDER}/M_MaravaiLeaves_v1')
     broadleaf = [write_static_mesh(maravai(**shape), f'{FOLDER}/SM_Maravai_{k + 1}', [materials[BARK], leaf_material], 120.0)
                  for k, shape in enumerate(MARAVAI)]
+    oak_leaves = frond_material(import_texture('T_OakLeaves_v1', OAK_ART), f'{FOLDER}/M_OakLeaves_v1')
+    oaks = [write_static_mesh(oak(**shape), f'{FOLDER}/SM_Oak_{k + 1}', [materials[BARK], oak_leaves], 120.0)
+            for k, shape in enumerate(OAK)]
+    ash_leaves = frond_material(import_texture('T_AshLeaves_v1', ASH_ART), f'{FOLDER}/M_AshLeaves_v1')
+    ashes = [write_static_mesh(ash(**shape), f'{FOLDER}/SM_Ash_{k + 1}', [materials[BARK], ash_leaves], 120.0)
+             for k, shape in enumerate(ASH)]
     hardwoods = []
+    # The starter island's old inland hardwoods, in their old places: oaks now (Central Plains Oak, owner).
     for k, (x, y, z) in enumerate(inland_spots(ground, [(p[0], p[1]) for p in placed])):
         tree = actors.spawn_actor_from_class(unreal.EWHarvestTree, unreal.Vector(x, y, z - 12),
                                              unreal.Rotator(roll=0, pitch=0, yaw=rng.uniform(0, 360)))
-        tree.set_actor_label(f'Maravai {k + 1:02d}')
+        tree.set_actor_label(f'Oak {k + 1:02d}')
         tree.set_folder_path(FLORA_FOLDER)
         mesh = tree.get_editor_property('mesh')
-        mesh.set_static_mesh(broadleaf[k % len(broadleaf)])
-        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*MARAVAI_SCALE)] * 3))
-        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 38.0, 'blocker_half_height': 220.0}.items():
+        mesh.set_static_mesh(oaks[k % len(oaks)])
+        mesh.set_relative_scale3d(unreal.Vector(*[rng.uniform(*OAK_SCALE)] * 3))
+        for prop, value in {'wood': wood, 'thatch': thatch, 'blocker_radius': 52.0, 'blocker_half_height': 220.0}.items():
             tree.set_editor_property(prop, value)
         hardwoods.append([round(x), round(y), round(z)])
     birch_leaves = frond_material(import_texture('T_BirchLeaves_v1', BIRCH_ART), f'{FOLDER}/M_BirchLeaves_v1', snow=True)
@@ -646,12 +737,13 @@ def main():
     spruces = [write_static_mesh(spruce(**shape), f'{FOLDER}/SM_Spruce_{k + 1}', [materials[BARK], needles], 120.0)
                for k, shape in enumerate(SPRUCE)]
     kinds = {'Veyran Palm': (meshes, PALM_SCALE, 26.0, 160.0, 8), 'Maravai': (broadleaf, MARAVAI_SCALE, 38.0, 220.0, 12),
-             'Birch': (birches, BIRCH_SCALE, 20.0, 220.0, 10), 'Spruce': (spruces, SPRUCE_SCALE, 30.0, 260.0, 12)}
+             'Birch': (birches, BIRCH_SCALE, 20.0, 220.0, 10), 'Spruce': (spruces, SPRUCE_SCALE, 30.0, 260.0, 12),
+             'Oak': (oaks, OAK_SCALE, 52.0, 220.0, 12), 'Ash': (ashes, ASH_SCALE, 30.0, 260.0, 12)}
     whites, dressed = dress_islands(actors, ground, kinds, wood, thatch)
     plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials, whites)
     assert level.save_current_level()
-    report = {'success': True, 'starter_palms': len(placed), 'starter_maravai': len(hardwoods), 'islands': dressed,
-              'positions': placed, 'maravai_positions': hardwoods, 'plants': plants}
+    report = {'success': True, 'starter_palms': len(placed), 'starter_oaks': len(hardwoods), 'islands': dressed,
+              'positions': placed, 'oak_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Coastal flora: {len(placed)} palms')
 
