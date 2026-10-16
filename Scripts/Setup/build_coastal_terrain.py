@@ -232,7 +232,17 @@ def build_swash(island, material):
     return actor
 
 
-def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True):
+def sea_floor_height(x, y):
+    """The sea floor mesh's height: the sea floor everywhere, but held 15 m under the sea wherever an island's land
+    is, so its coarse 200 m grid never pokes up through the land (or into a cave) of the bigger islands; each
+    island's own mesh carries the ground there."""
+    h = height(x, y)
+    if any(i.distance(x, y) < 0 for i in W.ISLANDS if abs(x - i.cx) < i.reach() + 1 and abs(y - i.cy) < i.reach() + 1):
+        h = min(h, SEA - 1500.0)
+    return h
+
+
+def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True, height=height):
     """A height-field mesh over a rectangle (world cm) from world_terrain, written to `path`."""
     nx, ny = max(2, int(round((x1 - x0) / spacing))), max(2, int(round((y1 - y0) / spacing)))
     mesh = unreal.DynamicMesh()
@@ -293,7 +303,8 @@ for island in W.ISLANDS:
 
 # The sea floor between the islands, over the whole world and a margin.
 x0, x1, y0, y1 = W.bounds(3000 * 100)
-floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, 20000.0, material, colour=False)
+floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, 20000.0, material, colour=False,
+                                      height=sea_floor_height)
 floor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
 floor.set_actor_label('Sea floor')
 floor.set_folder_path('World/Islands')
