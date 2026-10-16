@@ -32,6 +32,8 @@ Canonical details: [Cavalier Legendary Capital Ship](Art/Ships/CAVALIER_LEGENDAR
 
 ## Regional resources, six-view reference sets, and sulfur ore (owner-confirmed, October 16, 2026)
 
+**Reference index and target paths:** `Art/Reference/README.md`. The index distinguishes required destinations from files that have actually been committed.
+
 Canonical resource plan: `Design/World/RESOURCE_DISTRIBUTION_AND_SIX_VIEW_ASSET_PLAN_2026-10-16.md`.
 
 - Apply the approved regional resource distributions and tiers in that document. Regional primary trees remain Winter = Birch, Jungle = Ash, Desert = Palm, Swamp = Spruce, Central Plains = Oak.
