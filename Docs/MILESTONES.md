@@ -62,6 +62,23 @@ These are **pending implementation and Unreal Play verification**, not completed
 
 Related specifications: [starter island](STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md) and [foliage/winter snow](TREE_FOLIAGE_AND_WINTER_SNOW_DIRECTION_2026-10-16.md).
 
+
+## Owner-approved wildlife and interaction follow-ups — October 16, 2026 ⏳
+
+All entries below are **pending implementation and Unreal Play verification**; documentation does not mean finished. Preserve existing approved wildlife, animations, audio and ecology.
+
+| Milestone | Status | Completion evidence |
+|---|---|---|
+| **M5: Regional animal roster** — retain prior animals; add bears (Winter), lions (Central Plains), giant crocodiles (Swamp), and elephants (**tropical Western Jungle**, not Desert or Central Plains). Review earlier proposed foxes, deer, boars, birds, snakes and other species before treating proposals as canon. | ⏳ | Region-specific spawn validation, meshes, AI, animations and sounds in Unreal Play. |
+| **M5: Species-appropriate attacks and vocalizations** — bite/head/jaw and growl/threat animations with synchronized bite/contact and vocal audio for applicable animals; alternate behaviors for species that do not bite/growl. | ⏳ | Per-species coverage matrix, synced audio/animation notifies, authoritative combat and multiplayer checks. |
+| **M5: Natural wildlife roaming** — all animals wander and behave naturally on their assigned islands, with species-specific locomotion, idle, foraging, threat, rest, avoidance and audio; retain distance-based performance optimizations. | ⏳ | Roaming and navigation Play checks, island boundaries, replication and performance. |
+| **M5: Spiders in every cave and Southern Swamp** — place spiders in each cave across all regions and in suitable swamp habitats, with full crawling, leg, turning, bite, hit, death and web animations and synchronized sound effects. | ⏳ | Every cave populated, swamp placement, animation/audio, multiplayer and performance Play checks. |
+| **M5: Tropical elephant obstacle destruction** — elephants physically push down destructible trees and appropriate obstacles with credible animations, impact/cracking sounds and collision; protect critical structures. | ⏳ | Obstacle/tree falling, navigation and authoritative physics verified in Unreal Play. |
+| **M5: Elephant-felled trees persist and yield wood** — fallen trees stay on the ground for players to chop with hatchets and harvest wood; prevent duplicate yields, maintain collision and multiplayer state. | ⏳ | Tree remains, chop animation/audio and inventory yield validated; persistence and cleanup tests. |
+| **Owner decision deferred: fallen-tree cleanup after harvesting** — duration and disappearance/regrowth rules to be chosen later; do not invent a timer. | ⛔ | Owner specifies policy before finalizing cleanup logic. |
+
+Supporting requirements: [animal attacks and regional suggestions](ANIMAL_ATTACK_AUDIO_AND_REGIONAL_WILDLIFE_PROPOSAL_2026-10-16.md), [four approved additions](APPROVED_BEAR_ELEPHANT_GIANT_CROCODILE_LION_WILDLIFE_2026-10-16.md), [tropical elephant correction](ELEPHANT_TROPICAL_ISLAND_HABITAT_CORRECTION_2026-10-16.md), [roaming and spiders](ELEPHANT_DESTRUCTION_WILDLIFE_ROAMING_AND_SPIDER_MILESTONES_2026-10-16.md), [harvestable fallen trees](ELEPHANT_FELLED_TREES_HARVESTABLE_2026-10-16.md).
+
 ## M0 — Foundations ✅
 
 Server-authoritative survivor (movement, stances, swimming, survival needs), inventory, equipment, hotbar, crafting, objectives, Company, private multiplayer with recovery; the coastal map with terrain, ocean, palms, boulders and plants; ships (sloop, raft, dinghy) with fittings, sailing, crew on deck, ladders, anchor, cargo and weight; melee; the Journal guides. See the VERIFICATION table for every check.
