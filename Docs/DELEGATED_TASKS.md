@@ -479,6 +479,17 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `EWPlayerController` container opening), with a note here.
 - **Done when:** five runs in a row pass, and the cause is written here.
 
+### T32. Directional swimming animations (for Codex) — OPEN
+- **Why:** owner, October 16 (`Design/Gameplay/SWIMMING_DIRECTIONAL_ANIMATION_REQUIREMENTS_2026-10-16.md`): stationary
+  in water plays the existing water idle; forward (and forward diagonals) plays a forward-swimming cycle; backward keeps
+  the existing default swim (the owner's "spinning animation": find which asset that is, do not guess or delete it).
+  The movement half is done (`AEWCharacter::DoMove`, verified by `verify_swim_directions_play.py`); the animations are not.
+- **Do:** inspect how the survivor's swim animations are chosen today (`EEWLocomotionState::Swimming`, the anim
+  blueprint and `UpdateLoopAnimation` in `Source/EW/EWCharacter.cpp`), add the forward/backward/idle choice from the
+  survivor's velocity relative to its facing, smoothly blended, in first and third person. If no forward-swim animation
+  exists, list what is needed here rather than inventing one. Do not change movement.
+- **Done when:** a Play check shows each state's animation on the client and the server's copy, and VERIFICATION has it.
+
 ### T21. A modelled bailing bucket — OPEN
 - **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
   `/Game/Elitewake/World/Ships/SM_BailBucket_v1` exists (the ship loads it automatically when it does).

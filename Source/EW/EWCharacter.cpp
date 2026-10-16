@@ -1040,9 +1040,10 @@ void AEWCharacter::DoMove(float Right, float Forward)
 		// get right vector 
 		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-		// add movement 
+		// add movement. In the water only forward and backward propel the survivor (owner, October 16): left and right,
+		// alone or with forward or back, add no sideways drift; the view still turns them.
 		AddMovementInput(ForwardDirection, Forward);
-		AddMovementInput(RightDirection, Right);
+		if (!GetCharacterMovement()->IsSwimming()) AddMovementInput(RightDirection, Right);
 	}
 }
 

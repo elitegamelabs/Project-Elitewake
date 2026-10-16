@@ -32,6 +32,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Each region's own trees (owner, October 15): Plains oak groves, Winter birch, Jungle ash forest, Desert palms, Swamp spruce stands; new oak and ash models | ✅ `468ce0d` |
 | Every island its own terrain (owner, October 15): peaks, ridges, plateaus and valleys in a different plan on each island | ✅ `0d0a685` |
 | Third sound batch: grass and stone footsteps, forest wind, the jungle by day, swamp frogs | ✅ `0d0a685` |
+| Swimming moves only forward and back, no sideways drift (owner, October 16) | ✅ `SWIM` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |
