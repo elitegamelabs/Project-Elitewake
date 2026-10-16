@@ -305,7 +305,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   (cm internally stays as Unreal's unit). Record findings and changes in `Docs/VERIFICATION.md`.
 - **Done when:** no imperial unit is shown to players; affected checks still pass.
 
-### T12. Tests for the world layout rules — CLAIMED (Claude, 2026-10-16)
+### T12. Tests for the world layout rules — DONE `414bfff` (Claude)
 - **Why:** `Scripts/Setup/world_layout.py` places the 26 islands; its `check()` enforces the owner's spacing and
   region rules. It runs as a script but nothing stops a later change breaking it.
 - **Do:** add plain-Python tests (e.g. `Scripts/Tests/test_world_layout.py`, standard `unittest`, no Unreal) that
@@ -317,6 +317,12 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   -265 at (-1700, 1500)). Document how to run them in `Docs/VERIFICATION.md`. Do not edit `world_layout.py` or
   `world_terrain.py` (Claude's); report a failing rule here instead.
 - **Done when:** `python -m unittest` from the repo root runs them green.
+- **Verified (Claude, October 16):** `Scripts/Tests/test_world_layout.py` added (import-only, `world_layout.py`
+  and `world_terrain.py` untouched). `python -m unittest` from the repo root: 14 of 14 pass, covering every rule
+  above plus the cave addition below. Added empty `Scripts/__init__.py` / `Scripts/Tests/__init__.py` — Python
+  3.13's `unittest` discovery otherwise finds nothing from the repo root without them. Not covered: this only
+  checks the Python generator's own output, not what lands in the editor (that's `verify_caves_play` and the
+  world/coastal Play checks).
 - **Addition (Claude, October 15 night):** caves now exist (`world_terrain.CAVES`). Also assert: every island has
   exactly one cave; all three kinds (`inland`, `cliff`, `coastal`) occur; every cave's `footprint()` lies on its
   island (`island.distance < 0`) and off every Port (`world_layout.near_port`); the ground 3 m and 6 m in front of
@@ -364,7 +370,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - **Done when:** a Play check on `Lvl_CoastalPlayground` drops a survivor from 30 m onto land (dies), 30 m into deep
   water (lives) and from a mid height (hurt, alive), checked on the client too; native tests pass.
 
-### T17. World map picture with Ports and caves — CLAIMED (Claude, 2026-10-16)
+### T17. World map picture with Ports and caves — DONE `f264397` (Claude)
 - **Why:** `Docs/images/world_layout_v1.png` (drawn by `Scripts/Art/draw_world_layout.py`) shows the islands only.
   The owner reads the docs to follow the world.
 - **Do:** extend the drawing (plain Python, PIL, no Unreal) to mark each Port (`world_layout.PORTS`: site centre,
@@ -372,6 +378,11 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `heading`, coloured by `kind`), with a legend; save as `Docs/images/world_layout_v2.png` and point
   `Docs/DESIGN_REFERENCE.md`'s layout link at it. Do not edit `world_layout.py` / `world_terrain.py`.
 - **Done when:** the picture renders, every Port and all 26 caves are visible, and the link is updated.
+- **Verified (Claude, October 16):** `Docs/images/world_layout_v2.png` renders: 26 islands, 5 Ports (square plus
+  quay line) and all 26 caves (arrow along heading, coloured by kind) visible, with a legend. Image ran through
+  `python Scripts/Art/draw_world_layout.py` from a clean checkout. `Docs/DESIGN_REFERENCE.md`'s layout link updated
+  to v2. `world_layout.py` / `world_terrain.py` untouched. Not covered: a person judging the look; `world_layout_v1.png`
+  stays in `Docs/images/` as a static file but the script no longer regenerates it under that name.
 
 
 ### T18. Show the time of day — OPEN

@@ -12,12 +12,19 @@ Last updated: October 15, 2026. The full dated log of every run, including earli
 
 `Saved/` is not in Git, so result files and logs exist only on the machine that produced them.
 
+- **Plain-Python checks:** `unittest`-based tests under `Scripts/Tests/` that import a setup script (e.g.
+  `Scripts/Setup/world_layout.py`, `world_terrain.py`) directly, with no Unreal dependency. Run them from the repo
+  root with `python -m unittest` (or `python -m unittest Scripts.Tests.test_world_layout` for just one file). They
+  prove the Python-side rule holds in isolation, not that the generated world matches in the editor — that is still
+  the Play checks' job (`verify_caves_play`, world/coastal checks in the table below).
+
 **Not covered anywhere yet:** a physical gamepad, a dedicated server, two separate PCs, Internet play, a Shipping build, performance, and persistence of world changes such as felled trees, mined rocks, dropped items, fish, ships and structures.
 
 ## Results by system
 
 | System | Commit | Native test | Play check (passing checkpoints) | Not covered |
 | --- | --- | --- | --- | --- |
+| World layout and cave rules (plain-Python) | `414bfff` | — | `python -m unittest` from the repo root: 14 of 14 pass — region/starter island counts, 800–2,000 m shore spacing, region sides, starter geometry unchanged, `world_terrain.height` at the spawn/dock/spring reference points, one cave per island with all three kinds, every cave footprint on its own island and off every Port, and the ground 3 m/6 m in front of each mouth no more than 2 m/4 m below the floor | Proves the Python generator's own rules, not the in-game result — see `verify_caves_play` and the coastal/world Play checks for that |
 | Stance animation and collision | `19c573c`, `a8996d4` | `Animation.StanceBlendSpaces`, `Movement.StanceCollision` | `verify_stance_play`, `verify_stance_clearance_play`, `verify_stance_network_play` (client to host with 100 ms lag and 1% loss) | Moving decks, final transitions |
 | Survival HUD | `ad0d82b`, redesign in `52678ec` | `Survival.ExhaustionNotification` | `verify_survival_hud_play` (20 standalone, 20 client; rerun with the painted icons October 11) | Needs drain and damage |
 | Survival invalid-number guard | `3d054fd` | `Survival.InvalidNumericInput` | — | — |
