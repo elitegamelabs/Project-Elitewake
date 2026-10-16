@@ -10,7 +10,7 @@ Through ordinary owned requests and its own movement input, the client:
   3. walks down the hatch stairs to the lower deck, aims at a cannon port there, and walks back up,
   4. walks through the doorway into the captain's cabin under the raised aft deck, then climbs the stairs to
      that deck,
-  5. swims beside the hull, looks up at the starboard ladder's rungs and climbs aboard.
+  5. swims beside the hull, looks up at the stern ladder's rungs and climbs aboard.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/SchoonerPlayResult.json.
 """
@@ -175,14 +175,14 @@ def aim_cannon():
 def climb_ladder():
     state['aim'] = None
     state['input'] = None
-    ladder = ship.get_boarding_point_world(1)
-    outward = ship.get_actor_right_vector()
+    ladder = ship.get_boarding_point_world(0)
+    outward = ship.get_actor_forward_vector() * -1.0   # the ladder is centred on the stern, facing aft
     spot = unreal.Vector(ladder.x + outward.x * 150, ladder.y + outward.y * 150, ship.get_actor_location().z - 80)
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
     # Look up at the rungs, about 2 m above the water, as a swimmer beside the hull sees them.
-    state['aim'] = lambda: ship.get_boarding_point_world(1) + unreal.Vector(0, 0, 180)
+    state['aim'] = lambda: ship.get_boarding_point_world(0) + unreal.Vector(0, 0, 180)
     state['memo'].update(climb_at=time.monotonic() + 0.5, climb_sent=False)
 
 
@@ -244,7 +244,7 @@ STEPS = [
     ('Client walks back up the stairs to the main deck', *up, 8),
     ("Client walks through the doorway into the captain's cabin under the raised aft deck", *into_cabin(), 8),
     ('Client climbs the stairs to the raised aft deck', *raised, 8),
-    ('Client, swimming beside the hull, looks up at the starboard ladder, takes hold and climbs aboard', climb_ladder, climbed, 12),
+    ('Client, swimming beside the hull, looks up at the stern ladder, takes hold and climbs aboard', climb_ladder, climbed, 12),
 ]
 
 

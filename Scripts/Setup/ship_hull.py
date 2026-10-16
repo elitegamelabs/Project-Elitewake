@@ -411,6 +411,37 @@ class Hull:
                 y = out(ladder_x, z) + side * 1
                 b.sweep([(ladder_x - 24, y, z), (ladder_x + 24, y, z)], 4.0, 4.0, side=(0, 1, 0))
 
+    def stern_ladder_line(self, z_foot, stand_off=16.0):
+        """The boarding ladder centred on the stern (owner, October 16): a straight ladder on the centreline from just
+        above the rudder's head (z_foot) to the top of the stern post, standing off the raked post on brackets so no
+        rung meets it. Returns the rung line's foot and head, (x, 0, z) each, in the ship's space."""
+        z_head = next(z for z in range(int(z_foot), 2000, 5) if z >= self.sheer(self.stern_post_x(z)) - 5)
+        foot, head = self.stern_post_x(z_foot) - stand_off, self.stern_post_x(z_head) - stand_off
+        # The post bulges aft of a straight line between its ends: move the whole line aft until it clears it.
+        bulge = max(foot + (head - foot) * (z - z_foot) / (z_head - z_foot) - (self.stern_post_x(z) - stand_off)
+                    for z in range(int(z_foot), z_head + 1, 5))
+        foot, head = foot - max(0.0, bulge), head - max(0.0, bulge)
+        return (foot, 0.0, float(z_foot)), (head, 0.0, float(z_head))
+
+    def stern_ladder(self, b, line):
+        """Draw a stern ladder along line (from stern_ladder_line): two rails, rungs every 30 cm and iron-strapped
+        brackets back to the post."""
+        (xf, _, zf), (xh, _, zh) = line
+        at = lambda z: xf + (xh - xf) * (z - zf) / (zh - zf)
+        for y in (-22.0, 22.0):
+            b.sweep([(at(z), y, z) for z in (zf - 10, (zf + zh) / 2, zh + 25)], 5.0, 6.0, side=(0, 1, 0))
+        z = zf + 10
+        while z < zh:
+            b.sweep([(at(z), -24.0, z), (at(z), 24.0, z)], 4.0, 4.0, side=(1, 0, 0))
+            z += 30
+        for k in range(1, 4):
+            z = zf + (zh - zf) * k / 4
+            post = self.stern_post_x(z)
+            length = post - at(z)
+            if length > 4:
+                for y in (-22.0, 22.0):
+                    b.box((at(z) + length / 2, y, z), (length + 4, 6, 6), iron=1.0)
+
     CAPSTAN_TOP = 80.0      # the barrel's top above the deck, where the drumhead sits
 
     def capstan(self, b, x, y, z):

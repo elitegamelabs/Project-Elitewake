@@ -55,9 +55,15 @@ public:
 
     UFUNCTION(BlueprintPure, Category="Mounts")
     bool IsBuiltIn(FName MountId) const;
-    /** Built-in boarding ladders on the hull sides, relative to the ship. Hold Interact there to climb aboard. */
+    /** Built-in boarding ladders, relative to the ship: each one's foot, just outside its rungs. A ladder off the
+     *  centreline faces out of that side; one on it (Y 0) is a stern (or bow) ladder facing aft (or forward). Hold
+     *  Interact there to climb aboard. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     TArray<FVector> BoardingPoints;
+    /** Each ladder's head, for a ladder that leans (up a raked stern): the climb runs straight from its boarding point
+     *  to here. Missing or zero: the ladder runs straight up. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
+    TArray<FVector> LadderTops;
     /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector AnchorPoint = FVector(350, -90, 130);

@@ -54,7 +54,9 @@ HATCH = (100.0, 400.0, 60.0)         # stairs down to the gun deck: aft x, forwa
 GRATING = (-200.0, 140.0, 110.0)     # centre x, length, width
 SKYLIGHT = (-1080.0, -1010.0, 35.0)
 LOWER_BULKHEADS = (-1080.0, 1080.0)  # the gun deck's ends, with doorways into small holds fore and aft
-LADDER_X = 0.0                       # midway between two gunports
+# The boarding ladder, centred on the stern above the rudder's head (owner, October 16: one ladder at the middle of
+# the stern, on the centreline); it replaces the ladders on both sides.
+STERN_LADDER = HULL.stern_ladder_line(80.0)
 CAPSTAN = (520.0, -170.0)
 FRAMES = range(-1440, 1460, 60)
 
@@ -132,7 +134,7 @@ def hull_mesh():
     h.bulwark_posts(b, range(-1450, 1460, 100))
     h.gunport_frames(b)
     h.studs(b, FRAMES)
-    h.ladders(b, LADDER_X)
+    h.stern_ladder(b, STERN_LADDER)
     h.capstan(b, *CAPSTAN, DECK_Z)
     h.mast(b, FORE_X, FORE_TOP, radius=24.0, top_radius=14.0)
     h.mast(b, MAIN_X, MAIN_TOP, radius=26.0, top_radius=15.0)
@@ -210,7 +212,9 @@ def update_definition(hull, rig, looks, capstan):
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
         'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
-        'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
+        # The climber hangs just aft of the rungs: each point lies 18 cm out from the rung line.
+        'boarding_points': [unreal.Vector(STERN_LADDER[0][0] - 18, 0, STERN_LADDER[0][2])],
+        'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         # Crew up to 25 (confirmed). Speed, turning and hold are tuning: bigger and slower to turn than the schooner.
         'hull_health': 4000.0, 'crew_capacity': 25, 'top_speed': 750.0, 'turn_rate': 16.0, 'cargo_slots': 60, 'weight_capacity': 8000.0,
         'mounts': mounts,

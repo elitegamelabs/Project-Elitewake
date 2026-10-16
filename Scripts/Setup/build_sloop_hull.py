@@ -5,7 +5,7 @@ Safe to run again. Run in the editor, outside Play, with no unsaved maps:
 A bare double-ended hull in weathered oak: the stern mirrors the bow, both sweeping up in a deep curve to a post.
 Planked sides with seams and two wales, a tarred bottom, low bulwarks with a rail and posts, one gunport each side. A flat deck
 has a cargo hatch with a coaming and stairs down into a cramped hold of ribs, floorboards, deck beams and a post.
-Boarding ladders on both sides, a capstan near the bow, the mast and bowsprit are part of the hull, as are the
+A boarding ladder centred on the stern, a capstan near the bow, the mast and bowsprit are part of the hull, as are the
 working details of a real vessel: channels with deadeyes and chainplates for the shrouds, a pin rail at the mast,
 a rudder hung on the stern and an anchor catted at each bow. The standing rigging (shrouds with ratlines, and the
 forestay) is a separate mesh drawn without collision. Sails, the helm and cannons
@@ -39,7 +39,9 @@ HULL = Hull(stern_x=-700.0, bow_x=700.0,     # about 14 m overall, ends alike
 STERN_X, BOW_X, BEAM, KEEL_Z, DECK_Z, FLOOR_Z = HULL.stern_x, HULL.bow_x, HULL.beam, HULL.keel_z, HULL.deck_z, HULL.floor_z
 UV_TILE = HULL.uv_tile
 HATCH = (-280.0, -40.0, 50.0)  # hatch opening: aft x, forward x, half-width
-LADDER_X = -360.0       # aft of the gunports
+# The boarding ladder, centred on the stern above the rudder's head (owner, October 16: one ladder at the middle of
+# the stern, on the centreline); it replaces the ladders on both sides.
+STERN_LADDER = HULL.stern_ladder_line(60.0)
 CAPSTAN = (480.0, -70.0)
 # Rig: one mast with a gaff mainsail and a jib on the forestay out to the bowsprit.
 MAST_X, MAST_TOP = 120.0, 1420.0
@@ -68,7 +70,7 @@ def hull_mesh():
     h.stairs(b, HATCH[0] + 5, HATCH[1] - 5, DECK_Z, FLOOR_Z, 10)  # down from the hatch; the mast stands forward of them
     h.gunport_frames(b)
     h.studs(b, FRAMES)
-    h.ladders(b, LADDER_X)
+    h.stern_ladder(b, STERN_LADDER)
     h.capstan(b, *CAPSTAN, DECK_Z)
     # The mast steps on the hold floor and rises through the deck; the bowsprit reaches out over the bow,
     # starting clear of heads on the foredeck.
@@ -128,7 +130,9 @@ def update_definition(hull, rig, capstan):
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
         'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
-        'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
+        # The climber hangs just aft of the rungs: each point lies 18 cm out from the rung line.
+        'boarding_points': [unreal.Vector(STERN_LADDER[0][0] - 18, 0, STERN_LADDER[0][2])],
+        'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         'mounts': [
             mount('Helm', t.HELM, (-520, 0, DECK_Z + 50)),
             mount('Mainsail', t.SAIL, (MAST_X, 0, DECK_Z + 50), sail=unreal.EWSailSize.MEDIUM),

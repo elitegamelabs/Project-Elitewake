@@ -4,7 +4,7 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 Run unattended with run_play_check.py.
 
 Through its own keys, as a player presses them, the client:
-  1. swims beside the sloop's starboard ladder: its markers label the ladder (larger when aimed at) and the anchor,
+  1. swims beside the sloop's stern ladder: its markers label the ladder (larger when aimed at) and the anchor,
   2. presses E once and takes hold of the ladder (no hold needed), on server and client,
   3. holds the Up arrow and climbs; at the top it steps onto the deck, aboard on both machines,
   4. on deck, its markers label the wheel mount, the sail mounts with their sizes, the hold and the anchor; given
@@ -42,7 +42,7 @@ old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'memo': {}, 'aim': None}
-LADDER = 1  # starboard
+LADDER = 0   # the stern ladder (owner, October 16: one ladder, centred on the stern)
 
 
 def markers():
@@ -69,7 +69,7 @@ def swim_beside_ladder():
     for key in ('Up', 'Down'):
         lib.send_verification_gameplay_key_state(client, key, False)
     ladder = ship.get_boarding_point_world(LADDER)
-    out = ship.get_actor_right_vector()
+    out = ship.get_actor_forward_vector() * -1.0   # the ladder is centred on the stern, facing aft
     spot = unreal.Vector(ladder.x + out.x * 120, ladder.y + out.y * 120, ship.get_actor_location().z - 60)
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())

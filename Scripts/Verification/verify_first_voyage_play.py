@@ -45,7 +45,7 @@ axe, wood, thatch, helm, mainsail, headsail = (unreal.load_asset(f'{T}/DA_Test{n
                                                ('WoodenAxe', 'Wood', 'Thatch', 'ShipHelm', 'SailMedium', 'SailSmall'))
 raw_fish = unreal.load_asset('/Game/Elitewake/Items/Food/DA_RawFish')
 FITTINGS = (('Helm', helm), ('Mainsail', mainsail), ('Headsail', headsail))
-LADDER = 1   # starboard
+LADDER = 0   # the stern ladder (owner, October 16: one ladder, centred on the stern)
 palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree)
          if t.get_actor_label().startswith('Oak')]
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
@@ -158,7 +158,7 @@ def gathered():
 def swim_to_ladder():
     state['aim'] = None
     ladder = ship.get_boarding_point_world(LADDER)
-    out = ship.get_actor_right_vector()
+    out = ship.get_actor_forward_vector() * -1.0   # the ladder is centred on the stern, facing aft
     put(unreal.Vector(ladder.x + out.x * 120, ladder.y + out.y * 120, ship.get_actor_location().z - 60))
     state['aim'] = lambda: ship.get_boarding_point_world(LADDER) + unreal.Vector(0, 0, 150)
     state['memo'].update(t=time.monotonic(), pressed=False, climbing=False)

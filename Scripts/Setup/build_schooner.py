@@ -56,7 +56,9 @@ UV_TILE = HULL.uv_tile
 HATCH = (100.0, 360.0, 55.0)         # stairs down to the lower deck: aft x, forward x, half-width
 GRATING = (-330.0, 130.0, 100.0)     # centre x, length, width
 LOWER_BULKHEAD_X = -600.0
-LADDER_X = -180.0                    # between two gunports, clear of the stairs to the aft deck
+# The boarding ladder, centred on the stern above the rudder's head (owner, October 16: one ladder at the middle of
+# the stern, on the centreline); it replaces the ladders on both sides.
+STERN_LADDER = HULL.stern_ladder_line(80.0)
 CAPSTAN = (780.0, -110.0)
 FRAMES = range(-1040, 1060, 60)
 # Shrouds for each mast, (x where each meets its channel); the foremast's are led aft, behind its topsail.
@@ -138,7 +140,7 @@ def hull_mesh():
     h.bulwark_posts(b, range(-1050, 1060, 100))
     h.gunport_frames(b)
     h.studs(b, FRAMES)
-    h.ladders(b, LADDER_X)
+    h.stern_ladder(b, STERN_LADDER)
     h.capstan(b, *CAPSTAN, DECK_Z)
     h.mast(b, FORE_X, FORE_TOP, radius=19.0, top_radius=12.0)
     h.mast(b, MAIN_X, MAIN_TOP, radius=20.0, top_radius=12.0)
@@ -259,7 +261,9 @@ def update_definition(hull, rig, looks, capstan):
         'anchor_point': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z + 40),
         'capstan_mesh': capstan, 'capstan_location': unreal.Vector(CAPSTAN[0], CAPSTAN[1], DECK_Z),
         'cargo_hatch_point': unreal.Vector((HATCH[0] + HATCH[1]) / 2, 0, DECK_Z + 5),
-        'boarding_points': [unreal.Vector(LADDER_X, side * (HULL.half_beam(LADDER_X) + 30), 60) for side in (-1, 1)],
+        # The climber hangs just aft of the rungs: each point lies 18 cm out from the rung line.
+        'boarding_points': [unreal.Vector(STERN_LADDER[0][0] - 18, 0, STERN_LADDER[0][2])],
+        'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         # Crew: the twelve cannons' crews plus the player and the Surgeon. Speed, turning and hold are tuning.
         'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 800.0, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
         'mounts': mounts,

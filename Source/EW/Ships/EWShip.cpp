@@ -279,11 +279,17 @@ void AEWShip::ApplyDefinition()
             *FString::Printf(TEXT("Ladder_%d"), i)), RF_Transient);
         Target->SetupAttachment(HullCollision);
         // Aim anywhere on it, from just below the water up to the rail: on a tall hull the rungs a swimmer sees are
-        // well above the boarding point.
+        // well above the boarding point. A leaning ladder's box leans with it.
         const float Bottom = Point.Z - 90.f;
-        const float Top = FMath::Max(Point.Z + 90.f, Definition->GetDeckHeight() + 60.f);
-        Target->SetRelativeLocation(FVector(Point.X, Point.Y, (Bottom + Top) / 2.f));
-        Target->SetBoxExtent(FVector(40, 25, (Top - Bottom) / 2.f));
+        float Top = FMath::Max(Point.Z + 90.f, Definition->GetDeckHeight() + 60.f);
+        if (Definition->LadderTops.IsValidIndex(i) && !Definition->LadderTops[i].IsNearlyZero()) Top = FMath::Max(Top, Definition->LadderTops[i].Z);
+        const FVector Foot = GetLadderLineLocal(i, Bottom), Head = GetLadderLineLocal(i, Top);
+        const FVector Outward = GetLadderOutward(i);
+        const FVector Along = (Head - Foot).GetSafeNormal();
+        Target->SetRelativeLocation((Foot + Head) / 2.f);
+        // Box X across the ladder's face (out from the hull), Y along its rungs, Z up the ladder.
+        Target->SetRelativeRotation(FRotationMatrix::MakeFromZX(Along, Outward).Rotator());
+        Target->SetBoxExtent(FVector(25, 40, FVector::Dist(Foot, Head) / 2.f));
         Target->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
         Target->SetCollisionResponseToAllChannels(ECR_Ignore);
         Target->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
@@ -294,7 +300,8 @@ void AEWShip::ApplyDefinition()
             *FString::Printf(TEXT("LadderVisual_%d"), i)), RF_Transient);
         Ladder->SetupAttachment(HullCollision);
         Ladder->SetStaticMesh(StandInCube());
-        Ladder->SetRelativeTransform(FTransform(FRotator::ZeroRotator, Point, FVector(.6, .08, 1.8)));
+        Ladder->SetRelativeTransform(FTransform(FRotationMatrix::MakeFromXZ(FVector::CrossProduct(FVector::UpVector, GetLadderOutward(i)), FVector::UpVector).Rotator(),
+            Point, FVector(.6, .08, 1.8)));
         Ladder->SetCollisionEnabled(ECollisionEnabled::NoCollision);
         Ladder->SetVisibility(!bModelledHull);
         Ladder->RegisterComponent();
@@ -690,17 +697,41 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
         || !Definition->BoardingPoints.IsValidIndex(BoardingIndex) || IsAboard(Character)) return false;
     const UCapsuleComponent* Capsule = Character->GetCapsuleComponent();
     const float HalfHeight = Capsule ? Capsule->GetScaledCapsuleHalfHeight() : 90.f;
-    const FVector Point = Definition->BoardingPoints[BoardingIndex];
-    // Step onto the deck about a metre inboard of the ladder, clear of the bulwark.
-    const float Side = Point.Y >= 0.f ? 1.f : -1.f;
-    const FVector Deck(Point.X, Side * FMath::Max(FMath::Abs(Point.Y) - 110.f, 0.f), Definition->GetDeckHeight() + HalfHeight + 2.f);
-    const FVector Destination = GetActorTransform().TransformPosition(Deck);
-    if (Capsule)
+    // Step onto the deck about a metre inboard of the ladder's head, clear of the bulwark; if something stands there
+    // (a stern ladder comes up behind the helm), a little further in or to either side.
+    float Bottom, Top;
+    GetLadderSpan(BoardingIndex, Bottom, Top);
+    const FVector Head = GetLadderLineLocal(BoardingIndex, Top);
+    const FVector Outward = GetLadderOutward(BoardingIndex);
+    const FVector Across = FVector::CrossProduct(FVector::UpVector, Outward);
+    FVector Destination = FVector::ZeroVector;
+    bool bFound = false;
+    for (const float In : {110.f, 180.f, 250.f})
     {
-        FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipBoarding), false, Character);
-        if (GetWorld()->OverlapBlockingTestByChannel(Destination, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
-            return false;
+        for (const float Aside : {0.f, 90.f, -90.f})
+        {
+            FVector Deck = Head - Outward * In + Across * Aside;
+            if (FMath::Abs(Outward.Y) > .5f && Deck.Y * Outward.Y < 0.f) Deck.Y = 0.f;   // never past the centreline
+            // On whichever deck is there: the main deck, or a raised quarterdeck at the stern.
+            float Floor = Definition->GetDeckHeight();
+            FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipBoarding), false, Character);
+            FHitResult Hit;
+            const FTransform& Frame = GetActorTransform();
+            if (GetWorld()->LineTraceSingleByChannel(Hit, Frame.TransformPosition(FVector(Deck.X, Deck.Y, Top + 400.f)),
+                    Frame.TransformPosition(FVector(Deck.X, Deck.Y, Floor - 40.f)), ECC_Visibility, Query) && Hit.GetActor() == this)
+                Floor = Frame.InverseTransformPosition(Hit.ImpactPoint).Z;
+            Deck.Z = Floor + HalfHeight + 2.f;
+            const FVector Candidate = GetActorTransform().TransformPosition(Deck);
+            if (!Capsule || !GetWorld()->OverlapBlockingTestByChannel(Candidate, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
+            {
+                Destination = Candidate;
+                bFound = true;
+                break;
+            }
+        }
+        if (bFound) break;
     }
+    if (!bFound) return false;
     Character->SetActorLocation(Destination, false, nullptr, ETeleportType::TeleportPhysics);
     if (UCharacterMovementComponent* Movement = Character->GetCharacterMovement()) Movement->SetMovementMode(MOVE_Falling);
     Character->ForceNetUpdate();
@@ -719,15 +750,35 @@ void AEWShip::GetLadderSpan(int32 BoardingIndex, float& Bottom, float& Top) cons
         ? Definition->BoardingPoints[BoardingIndex] : FVector::ZeroVector;
     Bottom = Point.Z - 10.f;
     Top = FMath::Max(Bottom + 20.f, GetDeckHeight() + 30.f);
+    // A ladder with a head given (up a stern to a quarterdeck) is climbed until the hands are at its head.
+    if (Definition && Definition->LadderTops.IsValidIndex(BoardingIndex) && !Definition->LadderTops[BoardingIndex].IsNearlyZero())
+        Top = FMath::Max(Top, Definition->LadderTops[BoardingIndex].Z - 90.f);
+}
+
+FVector AEWShip::GetLadderOutward(int32 BoardingIndex) const
+{
+    const FVector Point = Definition && Definition->BoardingPoints.IsValidIndex(BoardingIndex)
+        ? Definition->BoardingPoints[BoardingIndex] : FVector::ZeroVector;
+    if (FMath::Abs(Point.Y) >= 1.f) return FVector(0, FMath::Sign(Point.Y), 0);
+    return FVector(Point.X >= 0.f ? 1.f : -1.f, 0, 0);
+}
+
+FVector AEWShip::GetLadderLineLocal(int32 BoardingIndex, float Height) const
+{
+    if (!Definition || !Definition->BoardingPoints.IsValidIndex(BoardingIndex)) return FVector(0, 0, Height);
+    const FVector Point = Definition->BoardingPoints[BoardingIndex];
+    const FVector Head = Definition->LadderTops.IsValidIndex(BoardingIndex) ? Definition->LadderTops[BoardingIndex] : FVector::ZeroVector;
+    if (Head.IsNearlyZero() || FMath::IsNearlyEqual(Head.Z, Point.Z)) return FVector(Point.X, Point.Y, Height);
+    // Along the straight line from the foot to the head (and on past either end, at the same lean).
+    const float Alpha = (Height - Point.Z) / (Head.Z - Point.Z);
+    return FVector(FMath::Lerp(Point.X, Head.X, Alpha), FMath::Lerp(Point.Y, Head.Y, Alpha), Height);
 }
 
 FTransform AEWShip::GetLadderPoseLocal(int32 BoardingIndex, float Height, float Radius) const
 {
-    const FVector Point = Definition && Definition->BoardingPoints.IsValidIndex(BoardingIndex)
-        ? Definition->BoardingPoints[BoardingIndex] : FVector::ZeroVector;
-    const float Side = Point.Y >= 0.f ? 1.f : -1.f;
+    const FVector Outward = GetLadderOutward(BoardingIndex);
     // Just outboard of the rungs, which run a little inside the boarding point, facing the hull.
-    return FTransform(FRotator(0, Side > 0.f ? -90.f : 90.f, 0), FVector(Point.X, Side * (FMath::Abs(Point.Y) - 18.f + Radius), Height));
+    return FTransform((-Outward).Rotation(), GetLadderLineLocal(BoardingIndex, Height) + Outward * (Radius - 18.f));
 }
 
 bool AEWShip::StartClimb(AEWCharacter* Character, int32 BoardingIndex)

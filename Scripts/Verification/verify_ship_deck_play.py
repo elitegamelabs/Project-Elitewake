@@ -9,7 +9,7 @@ rudder. The client, through its own movement input and owned requests:
   1. stands on deck and rides along without sliding off or falling through,
   2. walks forward along the deck while the ship sails,
   3. walks off the side into the sea and swims,
-  4. takes hold of the starboard ladder once the host has furled the sails and climbs it back aboard.
+  4. takes hold of the stern ladder once the host has furled the sails and climbs it back aboard.
 Each step waits for its result on the server and the client, with a timeout. Background throttling is
 off while it runs. Writes Saved/ShipDeckPlayResult.json.
 """
@@ -184,13 +184,13 @@ def stopped():
 
 def climb_ladder():
     state['input'] = None
-    ladder = ship.get_boarding_point_world(1)
-    outward = ship.get_actor_right_vector()
+    ladder = ship.get_boarding_point_world(0)
+    outward = ship.get_actor_forward_vector() * -1.0   # the ladder is centred on the stern, facing aft
     # Tread water beside the ladder: place the swimmer and drop the momentum from going overboard.
     teleport_crew(unreal.Vector(ladder.x + outward.x * 150, ladder.y + outward.y * 150, ship.get_actor_location().z - 80))
     for p in (crew, pawn):
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
-    state['aim'] = ('crew', lambda: ship.get_boarding_point_world(1))
+    state['aim'] = ('crew', lambda: ship.get_boarding_point_world(0))
     state['memo'].update(climb_at=time.monotonic() + 0.5, climb_sent=False)
 
 def climbed():
@@ -227,7 +227,7 @@ STEPS = [
     ('Crew walks forward along the deck while the ship is under way', walk_forward, walked, 5),
     ('Crew walks off the side into the sea and swims', walk_overboard, overboard, 8),
     ('Host furls the sails and the ship slows', host_furl, stopped, 12),
-    ('Crew climbs back aboard at the starboard ladder', climb_ladder, climbed, 8),
+    ('Crew climbs back aboard at the stern ladder', climb_ladder, climbed, 8),
     ('Host leaves the helm', host_leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),
 ]
 

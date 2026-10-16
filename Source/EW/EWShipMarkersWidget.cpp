@@ -104,12 +104,15 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
         if (bOutside && !Survivor->IsOnLadder())
         {
             const int32 AimedLadder = Ship->FindAimedBoardingPoint(Survivor);
-            const float Side = Ship->GetActorTransform().InverseTransformPosition(Here).Y;
+            const FVector Local = Ship->GetActorTransform().InverseTransformPosition(Here);
             for (int32 Index = 0; Index < Def->BoardingPoints.Num(); ++Index)
             {
                 const FVector Point = Ship->GetBoardingPointWorld(Index);
-                const float LadderSide = Ship->GetActorTransform().InverseTransformPosition(Point).Y;
-                if (Side * LadderSide < 0.f && FMath::Abs(Side) > 100.f) continue;   // on the far side of the hull
+                // On the far side of the hull from the survivor (for a stern ladder: well forward of it).
+                const FVector Outward = Ship->GetLadderOutward(Index);
+                const FVector LadderLocal = Def->BoardingPoints[Index];
+                const float Toward = FVector::DotProduct(Local - (Outward.Y != 0.f ? FVector::ZeroVector : FVector(LadderLocal.X, 0, 0)), Outward);
+                if (Toward < -100.f) continue;
                 Add(Point + FVector(0, 0, 140), TEXT("Ladder"), MarkerWorking, AimedLadder == Index, false);
             }
         }

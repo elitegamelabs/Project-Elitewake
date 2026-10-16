@@ -150,6 +150,11 @@ public:
     void GetLadderSpan(int32 BoardingIndex, float& Bottom, float& Top) const;
     /** Where a climber of the given radius hangs on a ladder at a height, facing the hull, in ship space. */
     FTransform GetLadderPoseLocal(int32 BoardingIndex, float Height, float Radius) const;
+    /** Which way a ladder faces out from the hull, in ship space (level, unit): out of its side, or aft or forward for
+     *  one on the centreline. */
+    FVector GetLadderOutward(int32 BoardingIndex) const;
+    /** The point on a ladder's rung line (its boarding point's offset) at a height, in ship space. */
+    FVector GetLadderLineLocal(int32 BoardingIndex, float Height) const;
     /** Climbing speed on a ladder, cm/s (tuning). */
     static constexpr float LadderClimbSpeed = 130.f;
 
