@@ -38,3 +38,12 @@ Inspect the repository's current ship assets, class data, shipyard recipes, and 
 - Base hull and removable sail assemblies follow the modular sail requirements.
 - Any class statistics or economy changes are explicitly approved and documented rather than guessed.
 - Integration is verified in Unreal Engine 5.8; report design, asset creation, integration, and in-game testing as separate statuses.
+
+
+## Confirmed three-level deck layout (owner clarification, October 15, 2026)
+The Cavalier must have **three traversable levels**:
+1. **Upper deck** — the topmost open/main deck.
+2. **Second deck** — a distinct deck level directly below the upper deck.
+3. **Lower interior deck/floor** — a third level reached by descending a ladder from the level above.
+
+The three levels must be physically legible and connected by usable ladders/access openings, with sufficient headroom, believable structural supports, lighting, collision, and navigation for characters. Do not interpret this as only two levels. Show the three-level arrangement in reference drawings and ensure the 3D layout supports actual in-game traversal. Exact room functions and weapon placements remain TBD unless separately approved; preserve established ship-system and combat requirements.
