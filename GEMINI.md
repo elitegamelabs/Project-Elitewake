@@ -32,3 +32,24 @@ Canonical details: [Cavalier Legendary Capital Ship](Art/Ships/CAVALIER_LEGENDAR
 
 ## Cavalier three-level deck requirement (owner-confirmed, October 15, 2026)
 The Cavalier must have **three traversable levels**, not two: (1) upper deck, (2) a separate deck directly below it, and (3) a lower interior deck/floor reached by ladder from the level above. The levels must be distinct in the reference design and actual 3D layout, with usable ladder openings, headroom, collision, structural supports, lighting, and character navigation. Exact room uses and weapon placements remain TBD unless approved. Canonical spec: `Art/Ships/CAVALIER_LEGENDARY_CAPITAL_SHIP_2026-10-15.md`.
+
+## Regional resources, six-view reference sets, and sulfur ore (owner-confirmed, October 16, 2026)
+
+**Reference index and target paths:** `Art/Reference/README.md`. The index distinguishes required destinations from files that have actually been committed.
+
+Canonical resource plan: `Design/World/RESOURCE_DISTRIBUTION_AND_SIX_VIEW_ASSET_PLAN_2026-10-16.md`.
+
+- Apply the approved regional resource distributions and tiers in that document. Regional primary trees remain Winter = Birch, Jungle = Ash, Desert = Palm, Swamp = Spruce, Central Plains = Oak.
+- Critical correction: the desert resource is **sulfur ore**, not a generic sulfur deposit. It must be mineable with the existing **Metal Pick or a higher-tier pick**, not gated specifically behind an Iron Pick. Inspect the canonical tool/item catalog and reuse its exact item ID/tier logic; if no Metal Pick exists, report the gap rather than silently substituting another tool or inventing a duplicate.
+- Produce six reference views of the same exact resource asset (front, back, left, right, top, underside) for all resources/materials/harvestables in the approved plan and other resources explicitly discussed in the project conversation. Follow existing repository conventions; intended reference location is `Art/Reference/Resources/<ResourceAssetName>/`.
+- Preserve current inventory/crafting menu icons. Reference images do not by themselves implement meshes, textures, harvesting, recipes, or runtime behavior.
+
+## Animal asset, animation, and audio requirements (owner-confirmed, October 16, 2026)
+
+Canonical requirements: `Art/Animals/ANIMAL_MODEL_ANIMATION_AUDIO_REQUIREMENTS_2026-10-16.md`.
+
+- Claude must inspect the current animal catalog and follow the canonical animal document before changing or creating animal assets. Use the actual existing/approved species; do not invent an animal list or omit current species.
+- Create six consistent views per animal (front, back, left, right, top, underside). Intended reference location: `Art/Reference/Animals/<AnimalName>/`. Keep species anatomy, coloration, markings, proportions and silhouette consistent across all views and the production model.
+- Every animal needs a species-appropriate idle/standing animation, walk animation, sprint/run animation, and relevant attack/action animations such as pawing/swiping, biting, jumping/pouncing, charging, kicking or pecking as appropriate to that species. Include usable transitions and follow existing movement/rig conventions.
+- Every animal needs species-appropriate audio for idle/standing, walking, running/sprinting, and attacks/actions, with variation, sensible cooldowns, appropriate spatialization/attenuation, and licensing provenance for sourced sounds. Intended audio location: `Audio/Animals/<AnimalName>/`, unless the repository already has a canonical location.
+- Audit first and report existing versus missing references, models, animations, and audio. Do not claim files or integration exist until verified. Keep image references, production assets, Unreal import/integration, and in-game verification as separate milestones.
