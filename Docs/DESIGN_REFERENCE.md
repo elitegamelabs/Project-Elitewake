@@ -185,7 +185,7 @@ Elitewake is an original open-world PvP and PvE pirate survival sandbox with rea
   - A larger multi-deck ship: TBD.
 - **Upgrades:** ships earn sailing XP and upgrade only Crew Capacity, Weight/Storage, and Hull Health. Amounts: TBD.
 - **Overload:** too much weight can sink a ship (timing TBD). Crew overload has a separate five-minute grace period.
-- **Anchor and ladder:** hold Interact at the anchor. An anchored ship cannot sail, and the HUD shows anchor state. Ladders: see [Ship model v1](#ship-model), Crew and boarding.
+- **Anchor and ladder:** hold Interact at the anchor. An anchored ship cannot sail, and the HUD shows anchor state. The boarding ladder is at the centre of the stern, on the centreline (owner, October 16). DECIDED (delegated): on the sloop, schooner and brigantine it is a straight ladder from just above the rudder's head (0.6–0.8 m above the water, so the rudder swings clear) up the raked stern to the rail, standing off the post on iron brackets and leaning with it (23–35°); the climb follows the lean, and at the top the survivor steps onto whatever deck is there (the quarterdeck on the larger ships), beside the helm. The raft and dinghy have no ladder: they are boarded over their low sides. Ladders: see [Ship model v1](#ship-model), Crew and boarding.
 - **Shipyards:** Small (Raft, Dinghy, Sloop), Medium (Schooner), Large (Brigantine), each crafted at Smithy → Structures. The late-game Armored Shipyard gives specific offline protection.
 - **Ammo Bin:** storage only, cannon ammo only, 20 stacks of 50.
 - **Ownership cap:** 8 ships per player, 20 per Company.
@@ -253,7 +253,7 @@ The owner delegated these gap-filling decisions. Each is marked **DECIDED (deleg
   - Their holds are a lashed crate on the raft (8 slots, 400 kg) and a sea chest under the dinghy's aft thwart (6 slots, 250 kg); both have an anchor at the bow and boarding points on each side (*tuning*).
   - Raft top speed 2.5 m/s paddled, dinghy 4.5 m/s, sloop 7 m/s (*tuning*).
 - **The sloop's hull (DECIDED, delegated, October 12, from the owner's sloop art):**
-  - About 14 m long and 5 m in beam, double-ended: the stern mirrors the deep curved bow, each rising to a post, with no square transom (owner, October 12). Low bulwarks with a rail and posts, one gunport each side, side ladders clear of the gunports, and a planked, tarred hull (*tuning*).
+  - About 14 m long and 5 m in beam, double-ended: the stern mirrors the deep curved bow, each rising to a post, with no square transom (owner, October 12). Low bulwarks with a rail and posts, one gunport each side, a boarding ladder centred on the stern (owner, October 16; before that, side ladders), and a planked, tarred hull (*tuning*).
   - The deck stands 2.5 m above the waterline. Beneath it a cramped hold has 2 m of headroom, reached by stairs through the cargo hatch. The hold floor sits above the swell, so the sea neither shows nor counts as swimmable inside a ship; every ship with a hold follows this rule.
   - Hulls are built by script in the editor (`Scripts/Setup/build_sloop_hull.py`), not bought or generated, so they can be reshaped and re-run.
   - The mast, bowsprit and standing rigging come with the hull. The mainsail fitting brings its boom and gaff; the jib hangs on the forestay. Sails show the helmsman's setting: rolled on their spars when furled, shortened at half, fully set at full. The owner's sail art is the cloth itself. Crew walk on the hull itself; the bulwarks keep them aboard, and a jump clears the rail.

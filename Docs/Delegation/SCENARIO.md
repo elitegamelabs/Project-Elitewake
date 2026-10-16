@@ -94,4 +94,4 @@ only (`Art/Audio/README.md`). Once G1 lists what each needs, add a row per sound
 | Second batch (Oct 15) | cannons, hulls, splash, bailing, sinking, creak, rigging, deck, swimming, insects, cave | 26 | `b98c572` |
 | Third batch (Oct 16) | grass and stone steps, forest wind, jungle, swamp frogs | 14 | `0d0a685` |
 | Anchor (Oct 16) | chain drop, catch, raise | 5 | `8ae15b7` |
-| S2 + S4 (Oct 16) | tree fall, elephant step, bite contact, claw swipe | 5 | this commit |
+| S2 + S4 (Oct 16) | tree fall, elephant step, bite contact, claw swipe | 5 | `e0c3f04` |
