@@ -1,7 +1,8 @@
 """Rebuild the coastal map's world from the scripts, in order, in one editor, then close it.
 Run in a rendering editor (the terrain script rebuilds the ocean), outside Play, with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
-Optionally set EW_REBUILD_FROM to a step's name to start part-way. Writes Saved/WorldRebuildResult.json after each
+Optionally set EW_REBUILD_FROM to a step's name to start part-way, or EW_REBUILD_ONLY to a comma-separated list of
+steps to run just those. Writes Saved/WorldRebuildResult.json after each
 step, so a failure shows where it stopped; the editor closes either way.
 
 The order (Docs/REPORTS/2026-10-15_Claude.md, "Rebuild order for the coastal map"): ground first, then what is cut
@@ -22,8 +23,10 @@ STEPS = ['build_coastal_terrain', 'build_caves', 'build_landmarks', 'build_grass
 
 
 def main():
-    start = os.environ.get('EW_REBUILD_FROM')
+    start, only = os.environ.get('EW_REBUILD_FROM'), os.environ.get('EW_REBUILD_ONLY')
     steps = STEPS[STEPS.index(start):] if start else STEPS
+    if only:
+        steps = [s for s in STEPS if s in only.split(',')]
     done, error = [], None
     for step in steps:
         began = time.time()
