@@ -68,7 +68,11 @@ def cloth(b, corners, art, belly, steps=18, sheet=0.0, axis=1, art_size=ART_SIZE
         rows.append(row)
         uvs.append(uv_row)
     b.slot = CLOTH
-    b.grid(rows, lambda i, j: tuple(1 if k == axis else 0 for k in range(3)), uv_of=lambda i, j, p: uvs[i][j])
+    # The cloth's vertex colours tell its material where each point lies on the sail (red along the foot, green up
+    # it), which way it bellies (blue: 1 toward Y, 0 toward X) and how deep the belly was built (alpha, in metres),
+    # so the wind can fill it or let it go slack (cloth_materials).
+    b.grid(rows, lambda i, j: tuple(1 if k == axis else 0 for k in range(3)), uv_of=lambda i, j, p: uvs[i][j],
+           colour_of=lambda i, j: (i / steps, j / steps, 1.0 if axis == 1 else 0.0, min(belly / 100.0, 1.0)))
     b.slot = TIMBER
 
 
@@ -193,11 +197,37 @@ def cloth_materials():
     textures = {'Medium': import_art('T_SailMedium_v1', ART / 'Medium-Sail-v1.png'),
                 'Small': import_art('T_SailSmall_v1', ART / 'Small-Sail-v1.png'),
                 'Large': import_art('T_SailLarge_v1', ART / 'Large-Sail-v1.png')}
-    base, node, _ = material_builder(f'{FOLDER}/M_SailCloth_v1')
+    base, node, custom = material_builder(f'{FOLDER}/M_SailCloth_v1')
     base.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
     base.set_editor_property('two_sided', True)
     art = node(unreal.MaterialExpressionTextureSampleParameter2D, parameter_name='Cloth', texture=textures['Medium'])
     assert mel.connect_material_property(art, 'RGB', unreal.MaterialProperty.MP_BASE_COLOR)
+    # Wind in the cloth (owner, October 16: sails catching the wind billow out; sails not catching it go slack but keep
+    # moving). Fill comes from the ship per sail (AEWShip::ShowSailFill, custom primitive data 0): +1 full with the
+    # belly the way it was built, -1 full the other way, 0 slack. The belly is shaped as it was built, deepest in the
+    # middle and held at the spars; slack cloth lies flat and flaps more loosely. Amounts are tuning.
+    fill = node(unreal.MaterialExpressionScalarParameter, parameter_name='Fill', default_value=1.0,
+                use_custom_primitive_data=True, primitive_data_index=0)
+    wind = custom('float s = V.r, t = V.g;'
+                  ' float w = sin(3.14159 * s) * (0.55 + 0.45 * sin(3.14159 * t));'
+                  ' float belly = A * 100.0;'
+                  ' float slack = 1.0 - saturate(abs(F));'
+                  ' float flap = w * (2.0 + 16.0 * slack) * sin(T * (5.0 + 4.0 * slack) + s * 7.0 + t * 5.0)'
+                  '            * (0.6 + 0.4 * sin(T * 1.3 + s * 3.0));'
+                  ' float push = belly * w * (clamp(F, -1.0, 1.0) - 1.0) + flap;'
+                  ' float3 n = V.b > 0.75 ? float3(0, 1, 0) : float3(1, 0, 0);'
+                  ' return n * push;',
+                  unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('V', 'A', 'F', 'T'))
+    colours = node(unreal.MaterialExpressionVertexColor)
+    assert mel.connect_material_expressions(colours, '', wind, 'V')
+    assert mel.connect_material_expressions(colours, 'A', wind, 'A')
+    assert mel.connect_material_expressions(fill, '', wind, 'F')
+    assert mel.connect_material_expressions(node(unreal.MaterialExpressionTime), '', wind, 'T')
+    to_world = node(unreal.MaterialExpressionTransform,
+                    transform_source_type=unreal.MaterialVectorCoordTransformSource.TRANSFORMSOURCE_LOCAL,
+                    transform_type=unreal.MaterialVectorCoordTransform.TRANSFORM_WORLD)
+    assert mel.connect_material_expressions(wind, '', to_world, '')
+    assert mel.connect_material_property(to_world, '', unreal.MaterialProperty.MP_WORLD_POSITION_OFFSET)
     assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.9), '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(base)

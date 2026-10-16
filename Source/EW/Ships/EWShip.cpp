@@ -467,6 +467,33 @@ void AEWShip::ShowSailTrim()
     }
 }
 
+void AEWShip::ShowSailFill(float DeltaSeconds)
+{
+    const UEWWindSubsystem* Wind = UEWWindSubsystem::GetForWorld(this);
+    if (!Wind) return;
+    const FVector Blow = Wind->GetWindDirection();
+    for (auto It = SailFill.CreateIterator(); It; ++It) if (!SailLooks.Contains(It.Key())) It.RemoveCurrent();
+    for (const TPair<FName, FTransform>& Look : SailLooks)
+    {
+        const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Look.Key);
+        if (!Visual || !*Visual || !(*Visual)->GetStaticMesh()) continue;
+        UStaticMeshComponent* Sail = *Visual;
+        // The cloth bellies across its thinnest side (built so: Y for gaff sails and jibs, X for square sails).
+        const FVector Extent = Sail->GetStaticMesh()->GetBounds().BoxExtent;
+        const FVector Across = Sail->GetComponentTransform().TransformVectorNoScale(Extent.X < Extent.Y ? FVector::ForwardVector : FVector::RightVector);
+        // Square on to the wind it fills; with the wind along it, it hangs slack (tuning: slack below 7 degrees of
+        // incidence, full from about 33).
+        const float Strike = FVector::DotProduct(Blow, Across.GetSafeNormal2D());
+        const float Target = SailState == EEWSailState::Furled ? 0.f : FMath::Sign(Strike) * FMath::SmoothStep(.12f, .55f, FMath::Abs(Strike));
+        float& Shown = SailFill.FindOrAdd(Look.Key);
+        // Fills and empties over about a second: no pop when the sail swings through the wind.
+        Shown = DeltaSeconds > 0.f ? FMath::FInterpTo(Shown, Target, DeltaSeconds, SailFillRate) : Target;
+        Sail->SetCustomPrimitiveDataFloat(0, Shown);
+        // The cloth moves beyond the mesh's bounds when it bellies the other way.
+        if (Sail->BoundsScale < 2.f) Sail->SetBoundsScale(2.f);
+    }
+}
+
 UEWItemDefinition* AEWShip::GetFitting(FName MountId) const
 {
     const FEWInstalledFitting* Found = Fittings.FindByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
@@ -1497,6 +1524,7 @@ void AEWShip::Tick(float DeltaSeconds)
         ShownSailAngle = FMath::FInterpConstantTo(ShownSailAngle, SailAngle, DeltaSeconds, SailTrimRate * 1.5f);
         ShowSailTrim();
     }
+    if (GetNetMode() != NM_DedicatedServer && SailLooks.Num()) ShowSailFill(DeltaSeconds);
     if (!HasAuthority())
     {
         SmoothClientMotion(DeltaSeconds);

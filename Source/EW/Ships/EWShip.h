@@ -240,6 +240,11 @@ public:
     /** The wind's share of top speed on this heading and trim: from MinUpwindFactor up to 1 (see UEWWindSubsystem). */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetWindFactor() const;
+    /** How a fitted sail is drawn in the wind, -1 to 1 (owner, October 16: sails fill and billow when they catch the
+     *  wind, go slack and flap when they don't): its size is how squarely the world's wind strikes the cloth, its
+     *  sign which side the belly is blown to. 0 for a furled sail or none. Every machine works it out for itself. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSailFill(FName MountId) const { return SailFill.FindRef(MountId); }
     /** True when the ship is moved by sails (not paddled) and so has sails to trim. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     bool HasTrimmableSails() const;
@@ -264,6 +269,8 @@ public:
     /** The sails swing 90 degrees to either side of square across the hull: 180 in all (owner, October 16). */
     static constexpr float MaxSailAngle = 90.f;
     static constexpr float SailTrimRate = 45.f;
+    /** How fast a sail's drawn fill follows the wind (FInterpTo speed, tuning): most of the way in about a second. */
+    static constexpr float SailFillRate = 2.f;
     /** Authority only. Advances movement in fixed steps, carrying leftover time to the next call. */
     void SimulateSailing(float DeltaSeconds);
 
@@ -475,6 +482,9 @@ private:
     float ShownSailAngle = 0.f;
     /** Each fitted sail's look relative to its mount, before it is swung to its trim. */
     TMap<FName, FTransform> SailLooks;
+    /** Each fitted sail's fill as drawn (GetSailFill), easing toward the wind's. */
+    TMap<FName, float> SailFill;
+    void ShowSailFill(float DeltaSeconds);
     /** Helm parts that turn with the rudder, where they rest centred, and the rudder angle they show. */
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> TurningVisuals;

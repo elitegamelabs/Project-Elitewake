@@ -25,11 +25,13 @@ class Builder:
 
     def __init__(self):
         self.verts, self.colours, self.uvs, self.tris, self.slots = [], [], [], [], []
+        self.alphas = []   # each vertex colour's alpha (1 unless set), apart so colours stay (r, g, b)
         self.slot = 0
 
-    def vertex(self, p, tar=0.0, iron=0.0, tone=0.5, uv=None):
+    def vertex(self, p, tar=0.0, iron=0.0, tone=0.5, uv=None, alpha=1.0):
         self.verts.append(p)
         self.colours.append((tar, iron, tone))
+        self.alphas.append(alpha)
         self.uvs.append(uv)
         return len(self.verts) - 1
 
@@ -44,11 +46,16 @@ class Builder:
         self.tri(a, b, c, hint)
         self.tri(a, c, d, hint)
 
-    def grid(self, rows, hint_of, skip=None, tar_of=None, tone_of=None, uv_of=None):
-        """rows[i][j] points; quads between neighbours face hint_of(i, j)."""
-        ids = [[self.vertex(p, tar_of(p) if tar_of else 0.0, 0.0, tone_of(i, j) if tone_of else 0.5,
-                            uv_of(i, j, p) if uv_of else None)
-                for j, p in enumerate(row)] for i, row in enumerate(rows)]
+    def grid(self, rows, hint_of, skip=None, tar_of=None, tone_of=None, uv_of=None, colour_of=None):
+        """rows[i][j] points; quads between neighbours face hint_of(i, j). colour_of(i, j), if given, sets each
+        vertex's whole colour (r, g, b, a) instead of tar and tone."""
+        def make(i, j, p):
+            if colour_of:
+                r, g, b_, a = colour_of(i, j)
+                return self.vertex(p, r, g, b_, uv_of(i, j, p) if uv_of else None, alpha=a)
+            return self.vertex(p, tar_of(p) if tar_of else 0.0, 0.0, tone_of(i, j) if tone_of else 0.5,
+                               uv_of(i, j, p) if uv_of else None)
+        ids = [[make(i, j, p) for j, p in enumerate(row)] for i, row in enumerate(rows)]
         for i in range(len(rows) - 1):
             for j in range(len(rows[i]) - 1):
                 if skip and skip(i, j):
@@ -217,7 +224,8 @@ def write_static_mesh(b, path, materials, uv_tile, collision=True, split_angle=4
             corner.set_editor_property(name, unreal.Vector2D(*(b.uvs[v] if fixed else triplanar_uv(b.verts[v], n, uv_tile))))
         uvs.set_mesh_triangle_u_vs(mesh, 0, tid, corner)
     unreal.GeometryScript_VertexColors.set_mesh_per_vertex_colors(
-        mesh, lists.convert_array_to_color_list([unreal.LinearColor(r, g, t, 1) for r, g, t in b.colours]))
+        mesh, lists.convert_array_to_color_list([unreal.LinearColor(r, g, t, a) for (r, g, t), a in
+                                                 zip(b.colours, b.alphas + [1.0] * (len(b.colours) - len(b.alphas)))]))
     if len(materials) > 1:
         unreal.GeometryScript_Materials.enable_material_i_ds(mesh)
         unreal.GeometryScript_Materials.set_all_triangle_material_i_ds(mesh, lists.convert_array_to_index_list(b.slots))

@@ -16,6 +16,9 @@ The server turns the wind to blow across the sloop from port. Through its own ke
      90 degrees of their 180-degree range, the rudder staying where it was;
   6. holds LB (the controller's left shoulder): they swing back to port, past the centreline;
   7. leaves the helm: the Left Arrow then does nothing to the sails.
+Along the way (owner, October 16: sails fill when they catch the wind, go slack when they don't), the client's own
+sails are drawn filled while they draw well (fill over 0.8, AEWShip::GetSailFill), and slack (under 0.2) once swung
+out to 90 degrees, edge-on to the wind.
 Writes Saved/SailTrimPlayResult.json.
 """
 import json
@@ -158,6 +161,10 @@ def settled_well():
         return False
     c = compass()
     assert c.get_trim_advice() == 'Sails drawing well', c.get_trim_advice()
+    fills = {m: round(peer.get_sail_fill(m), 2) for m in ('Mainsail', 'Headsail')}
+    if min(abs(v) for v in fills.values()) < 0.8:
+        return False   # the cloth fills over about a second
+    state['memo']['fill_well'] = fills
     factor = ship.get_wind_factor()
     assert factor > state['memo']['factor_before'] * 1.3, f'wind factor {factor} not above {state["memo"]["factor_before"]}'
     state['memo'].update(angle_well=round(angle, 1), drawn_yaw=round(drawn, 1), factor_well=round(factor, 3))
@@ -209,6 +216,16 @@ def full_starboard():
     return True
 
 
+def watch_slack():
+    state['memo']['t'] = time.monotonic()
+
+
+def slack_at_90():
+    fill = peer.get_sail_fill('Mainsail')
+    state['memo']['fill_at_90'] = round(fill, 2)
+    return abs(fill) < 0.2
+
+
 def shoulder_left():
     keys(Gamepad_LeftShoulder=True)
     state['memo'].update(t=time.monotonic(), lb_start=ship.get_sail_angle(), via='LB')
@@ -258,6 +275,7 @@ STEPS = [
     ('Shift and A swing them to the wrong side: they draw badly and the wind gives the least', trim_wrong, drawing_badly, 8),
     ('Without Shift, D puts the rudder over and leaves the sails where they are', steer, steering, 4),
     ('The Right Arrow swings the sails to starboard, out to 90 degrees, the rudder centred', arrow_right, full_starboard, 8),
+    ("Swung out to 90 degrees, edge-on to the wind, the client's mainsail goes slack", watch_slack, slack_at_90, 5),
     ('LB (or the Left Arrow) swings them back to port past the centreline', shoulder_left, back_to_port, 10),
     ('Away from the helm the arrow keys do nothing to the sails', leave_helm, arrows_dead, 8),
 ]
