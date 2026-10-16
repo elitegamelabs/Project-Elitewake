@@ -492,3 +492,9 @@ Decisions that block or shape upcoming work. Ask the owner; do not assume.
 9. **Ships:** crew caps as starting values or absolute limits; schooner crew when fewer cannons are fitted or a utility attachment replaces one; starter raft recipe versus Small Shipyard.
 10. **Combat and death:** pistol name and stats; level and skill effects of death; bed cooldown.
 11. **Content values:** flask capacity, tortoise drops, horse and bear taming foods, and all yields, weights and prices not listed above.
+
+## Owner update — October 16, 2026: resource and animal asset references
+
+- The accepted proposed resource distribution, common/regional/rare tiers, six-view resource-reference requirements, and the sulfur-ore tool requirement are recorded in [Regional Resource Distribution and Six-View Asset Plan](../Design/World/RESOURCE_DISTRIBUTION_AND_SIX_VIEW_ASSET_PLAN_2026-10-16.md). **Sulfur is mineable sulfur ore requiring the existing Metal Pick or a higher-tier pick; it is not an Iron Pick-specific requirement.**
+- Six-view animal references, species appearance consistency, production model requirements, idle/walk/sprint/action animation coverage, and idle/walk/run/attack audio requirements are recorded in [Animal Models, Six-View References, Animations, and Audio](../Art/Animals/ANIMAL_MODEL_ANIMATION_AUDIO_REQUIREMENTS_2026-10-16.md).
+- These are design and production requirements. Do not imply that the actual image files, production models, animations, audio, or Unreal integration exist until each deliverable is present and verified. Preserve existing inventory/crafting menu icons.
