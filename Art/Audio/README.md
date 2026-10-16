@@ -41,6 +41,9 @@ even them out live. Played from code (`UEWSoundLibrary`, `UEWSoundscapeComponent
 | Ambience/AMB_ForestWind-v1, -v2 | wind through a forest's leaves (v2: looped, raised 2.5x) | 10 s / 7.5 s | loop ashore in the Plains |
 | Ambience/AMB_JungleDay-v1, -v2 | the jungle by day: insects, distant birds and whoops (v2: looped) | 10 s / 8 s | loop in the Jungle by day |
 | Ambience/AMB_SwampFrogs-v1, -v2 | bullfrogs and small frogs among reeds (v2: looped, raised 2.5x) | 10 s / 8 s | loop in the Swamp |
+| Ships/SFX_AnchorDrop-v1 | a heavy iron anchor chain paying out fast through a hawse pipe, the anchor splashing | 3 s | the anchor is let go |
+| Ships/SFX_AnchorCatch-v1 | a deep iron clank as the chain snaps taut, a groan of timber | 2 s | 2.2 s later, the anchor catches the bottom |
+| Ships/SFX_AnchorRaise-v1 | a capstan's pawls clicking as chain is hove in, links grinding over wood | 3 s | the anchor comes up |
 | Ambience/AMB_CaveDrips-v1, -v2 | drips into pools with echo (v2: looped and raised 8x, the take was very quiet) | 10 s / 8 s | loop under a cave's roof |
 
 Known draft issues: the snow step may hold
