@@ -305,7 +305,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   (cm internally stays as Unreal's unit). Record findings and changes in `Docs/VERIFICATION.md`.
 - **Done when:** no imperial unit is shown to players; affected checks still pass.
 
-### T12. Tests for the world layout rules — OPEN
+### T12. Tests for the world layout rules — CLAIMED (Claude, 2026-10-16)
 - **Why:** `Scripts/Setup/world_layout.py` places the 26 islands; its `check()` enforces the owner's spacing and
   region rules. It runs as a script but nothing stops a later change breaking it.
 - **Do:** add plain-Python tests (e.g. `Scripts/Tests/test_world_layout.py`, standard `unittest`, no Unreal) that
@@ -364,7 +364,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - **Done when:** a Play check on `Lvl_CoastalPlayground` drops a survivor from 30 m onto land (dies), 30 m into deep
   water (lives) and from a mid height (hurt, alive), checked on the client too; native tests pass.
 
-### T17. World map picture with Ports and caves — OPEN
+### T17. World map picture with Ports and caves — CLAIMED (Claude, 2026-10-16)
 - **Why:** `Docs/images/world_layout_v1.png` (drawn by `Scripts/Art/draw_world_layout.py`) shows the islands only.
   The owner reads the docs to follow the world.
 - **Do:** extend the drawing (plain Python, PIL, no Unreal) to mark each Port (`world_layout.PORTS`: site centre,
