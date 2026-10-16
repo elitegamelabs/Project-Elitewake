@@ -30,6 +30,8 @@ EXPECT = {
     'sinking': ('SinkingPlayResult.json', [('S_ShipSinking_v1',)], [], {}),
     'ship_deck': ('ShipDeckPlayResult.json', [('S_StepDeck_v1', 'S_StepDeck_v1b')], [('S_SwimStroke_v1',)],
                   {'creak': .4, 'rigging': .3}),
+    # The sloop sails and turns: her wake trail (UEWWakeTrailComponent) reaches back about 20 m and bends with her.
+    'ship_sailing': ('ShipSailingPlayResult.json', [], [], {'wake_patches': 10, 'wake_reach': 1500, 'wake_bend': 60}),
     'caves': ('CavesPlayResult.json', [], [('S_StepStone_v1',)], {'cave': .9}),
     'day_night': ('DayNightPlayResult.json', [], [], {'insects': .2}),
 }
@@ -45,8 +47,27 @@ scape = client.get_soundscape_component()
 started = time.time()
 if INNER.exists():
     INNER.unlink()
-seen = {'creak': 0.0, 'rigging': 0.0, 'cave': 0.0, 'insects': 0.0, 'in_cave': False, 'ship_loops': False}
-state = {'handle': None}
+seen = {'creak': 0.0, 'rigging': 0.0, 'cave': 0.0, 'insects': 0.0, 'in_cave': False, 'ship_loops': False,
+        'wake_patches': 0, 'wake_reach': 0.0, 'wake_bend': 0.0}
+state = {'handle': None, 'shot': None}
+SHOTS = SAVED / 'Screenshots' / 'Wake'
+
+
+def wake_shot(ship, trail):
+    """While the sloop sails with her trail laid, the server's own survivor looks down on it from behind and above (its
+    window is the one screenshots capture); taken a moment after it is put there, before it falls."""
+    host_pc = next(c for c in pcs if c.has_authority())
+    host = host_pc.get_controlled_pawn()
+    if state['shot'] is None and trail.get_patch_count() >= 14:
+        f = ship.get_actor_forward_vector()
+        eye = ship.get_actor_location() - f * 3200 + unreal.Vector(0, 0, 1400)
+        host.set_actor_location(eye, False, True)
+        host_pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, ship.get_actor_location() - f * 900))
+        state['shot'] = time.monotonic()
+    elif state['shot'] and state['shot'] > 0 and time.monotonic() - state['shot'] > .35:
+        SHOTS.mkdir(parents=True, exist_ok=True)
+        unreal.SystemLibrary.execute_console_command(server_world, f'Shot showui filename="{SHOTS / "sloop_wake.png"}"')
+        state['shot'] = -1
 
 
 def watch():
@@ -54,6 +75,22 @@ def watch():
     seen['insects'] = max(seen['insects'], scape.get_insect_level())
     seen['in_cave'] = seen['in_cave'] or scape.is_in_cave()
     for ship in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWShip):
+        trail = ship.get_editor_property('wake_trail')
+        if trail and trail.get_patch_count() > 2:
+            n = trail.get_patch_count()
+            seen['wake_patches'] = max(seen['wake_patches'], n)
+            seen['wake_reach'] = max(seen['wake_reach'], trail.get_trail_reach())
+            # How far the trail's middle lies off the line from its oldest to its newest patch: it bends with a turn.
+            a, b, m = trail.get_patch_location(0), trail.get_patch_location(n - 1), trail.get_patch_location(n // 2)
+            ab = b - a
+            if ab.length() > 1:
+                cross = abs((m.x - a.x) * ab.y - (m.y - a.y) * ab.x) / ab.length()
+                seen['wake_bend'] = max(seen['wake_bend'], cross)
+            if NAME == 'ship_sailing':
+                server_ship = next((s for s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)
+                                    if s.get_name() == ship.get_name()), None)
+                if server_ship:
+                    wake_shot(server_ship, server_ship.get_editor_property('wake_trail'))
         sounds = ship.get_editor_property('sounds')
         if sounds:
             seen['creak'] = max(seen['creak'], sounds.get_creak_level())

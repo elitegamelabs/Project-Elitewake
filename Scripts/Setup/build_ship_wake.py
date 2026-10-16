@@ -20,6 +20,33 @@ LENGTH, STERN_WIDTH, TAIL_WIDTH = 2800.0, 220.0, 760.0   # cm, for the sloop
 ROWS, COLUMNS = 24, 8
 
 
+def trail_material():
+    mel = unreal.MaterialEditingLibrary
+    material, node, custom = material_builder(f'{FOLDER}/M_WakeTrail_v1')
+    material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_TRANSLUCENT)
+    material.set_editor_property('two_sided', True)
+    uv = node(unreal.MaterialExpressionTextureCoordinate)
+    wp = node(unreal.MaterialExpressionWorldPosition)
+    time = node(unreal.MaterialExpressionTime)
+    fade = node(unreal.MaterialExpressionPerInstanceCustomData, data_index=0)
+    foam = custom("""float2 p = WP.xy / 85.0; float n = 0; float a = .55;
+for (int i = 0; i < 4; i++) { n += a * (sin(p.x * 1.7 + sin(p.y * 1.3 + T * .35)) * cos(p.y * 1.9 + sin(p.x * 1.1 - T * .25)) * .5 + .5); p = p * 2.03 + 1.7; a *= .5; }
+float across = 1.0 - abs(UV.y * 2.0 - 1.0);
+float edge = smoothstep(0.0, .45, across) * smoothstep(0.0, .25, UV.x) * smoothstep(1.0, .75, UV.x);
+return saturate((n - .42) * 2.4) * edge * saturate(F) * .85;""", unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('UV', 'WP', 'T', 'F'))
+    for src, pin in ((uv, 'UV'), (wp, 'WP'), (time, 'T'), (fade, 'F')):
+        assert mel.connect_material_expressions(src, '', foam, pin)
+    colour = node(unreal.MaterialExpressionConstant3Vector, constant=unreal.LinearColor(.86, .92, .95, 1))
+    rough = node(unreal.MaterialExpressionConstant, r=.7)
+    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
+    assert mel.connect_material_property(foam, '', unreal.MaterialProperty.MP_OPACITY)
+    material.set_editor_property('used_with_instanced_static_meshes', True)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
 def wake_mesh():
     b = Builder()
     rows = []
@@ -66,7 +93,9 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     material = wake_material()
     mesh = write_static_mesh(wake_mesh(), f'{FOLDER}/SM_ShipWake_v1', [material], 100.0, collision=False)
-    Path(unreal.Paths.project_saved_dir(), 'ShipWakeResult.json').write_text(json.dumps({'success': True, 'mesh': mesh.get_path_name()}))
+    trail = trail_material()
+    Path(unreal.Paths.project_saved_dir(), 'ShipWakeResult.json').write_text(json.dumps(
+        {'success': True, 'mesh': mesh.get_path_name(), 'trail_material': trail.get_path_name()}))
     unreal.log('Ship wake built')
 
 

@@ -22,6 +22,7 @@
 #include "Ships/EWCannonBall.h"
 #include "Ships/EWWreckCrate.h"
 #include "Ships/EWShipSoundComponent.h"
+#include "Ships/EWWakeTrailComponent.h"
 
 namespace
 {
@@ -66,6 +67,7 @@ AEWShip::AEWShip()
     SetNetUpdateFrequency(30.f);
     HullCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HullCollision"));
     Sounds = CreateDefaultSubobject<UEWShipSoundComponent>(TEXT("Sounds"));
+    WakeTrail = CreateDefaultSubobject<UEWWakeTrailComponent>(TEXT("WakeTrail"));
     SetRootComponent(HullCollision);
     HullCollision->SetMobility(EComponentMobility::Movable);
     HullCollision->SetCollisionProfileName(TEXT("BlockAll"));
@@ -90,9 +92,10 @@ void AEWShip::PlaceWake()
     if (!WakeVisual->GetStaticMesh())
         WakeVisual->SetStaticMesh(Cast<UStaticMesh>(FSoftObjectPath(TEXT("/Game/Elitewake/World/Ships/SM_ShipWake_v1.SM_ShipWake_v1")).TryLoad()));
     if (!WakeVisual->GetStaticMesh()) return;
-    // The wake mesh is made for the sloop (14 m by 5 m) with its point at the stern; other hulls scale it.
+    // The wake mesh is made for the sloop (14 m by 5 m) with its point at the stern; other hulls scale its width. It is
+    // the churn just behind the stern, 8 m of it; the foam trail behind her is UEWWakeTrailComponent's.
     const FVector Extent = Definition->HullExtent;
-    WakeVisual->SetRelativeScale3D(FVector(Extent.X / 700.f, Extent.Y / 250.f, 1.f));
+    WakeVisual->SetRelativeScale3D(FVector(800.f / 2800.f, Extent.Y / 250.f, 1.f));
     WakeVisual->SetRelativeLocation(FVector(-Extent.X * .92f, 0.f, SurfaceZ + 3.f - GetActorLocation().Z));
     WakeMaterial = WakeVisual->CreateDynamicMaterialInstance(0);
 }

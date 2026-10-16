@@ -14,6 +14,7 @@ class UEWShipDefinition;
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UEWShipSoundComponent;
+class UEWWakeTrailComponent;
 
 /** One cannon on its mount: who mans it, where it is aimed (degrees from its rest, up is positive pitch) and
  *  whether it is loaded or being loaded. Replicated with the ship. */
@@ -83,6 +84,9 @@ public:
     /** Her creaks and rigging, her going down and the bucket's splash, on every screen near (Source/EW/Ships/EWShipSoundComponent). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWShipSoundComponent> Sounds;
+    /** The foam she leaves on the water, about 20 m of it along her track (Source/EW/Ships/EWWakeTrailComponent). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
+    TObjectPtr<UEWWakeTrailComponent> WakeTrail;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UStaticMeshComponent> HullVisual;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
