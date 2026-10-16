@@ -143,10 +143,16 @@ def wandered():
         m['phase'][a.get_name()] = c.get_stride_phase()
     if time.monotonic() - m['t'] < 14.0:
         return False
-    peaceful = [a for a in animals if not a.get_editor_property('definition').get_editor_property('aggressive')]
+    # Wildlife rests more than 200 m from every survivor (FEWWildlifeRest, October 15 night): those within it wander.
+    peaceful = [a for a in animals if not a.get_editor_property('definition').get_editor_property('aggressive')
+                and (a.get_actor_location() - owner.get_actor_location()).length() < 19000]
     moved = [a for a in peaceful if (a.get_actor_location() - m['start'][a.get_name()]).length() > 100]
-    assert len(moved) >= 5, f'only {len(moved)} of {len(peaceful)} peaceful animals wandered'
-    assert len(m['strode']) >= 3, f'legs seen striding on the client for {sorted(m["strode"])}'
+    assert peaceful and len(moved) >= min(5, len(peaceful) - 1), f'only {len(moved)} of the {len(peaceful)} peaceful animals near the survivor wandered'
+    # Only animals near enough to be sent to the client move there (about 150 m; the starter island is about 620 m
+    # across since October 15 night), so ask for striding from the kinds that near, up to three of them.
+    close = {kind(a) for a in animals if (a.get_actor_location() - owner.get_actor_location()).length() < 14000}
+    need = min(3, len(close))
+    assert need and len(m['strode'] & close) >= need, f'legs seen striding on the client for {sorted(m["strode"])}; near: {sorted(close)}'
     near = [a for a in animals if (a.get_actor_location() - owner.get_actor_location()).length() < 9000]
     gaps = [(a.get_actor_location() - copy_of(a).get_actor_location()).length() for a in near]
     assert near and max(gaps) < 250, f'worst client copy {max(gaps or [0]):.0f} cm from the server'

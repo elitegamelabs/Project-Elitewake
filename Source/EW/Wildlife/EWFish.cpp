@@ -94,6 +94,8 @@ void AEWFish::PostNetReceiveLocationAndRotation()
 void AEWFish::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    // Resting far from everyone (a carried body always has its carrier near).
+    if (!IsValid(Carrier) && !Rest.IsAwake(this, DeltaSeconds)) return;
     if (IsValid(Carrier))
     {
         // Every screen keeps a carried body with its carrier, smoothly.
@@ -270,6 +272,7 @@ AEWFish* AEWFish::FindStruck(const AEWCharacter* Striker, float Reach)
 bool AEWFish::TakeStrike(AEWCharacter* Striker, float Damage)
 {
     if (!HasAuthority() || bDead || !Definition || Damage <= 0.f) return false;
+    Rest.Wake();
     Health = FMath::Max(0.f, Health - Damage);
     MulticastFlinch();
     if (Health <= 0.f) Die();

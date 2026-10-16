@@ -39,6 +39,8 @@ def player_id(p):
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter)
              if player_id(p) is not None and player_id(p) == player_id(pawn))
+host_pc = next(c for c in pcs if c.has_authority())
+host = host_pc.get_controlled_pawn()   # the server's own survivor: screenshots come from its window
 cave = T.CAVES['Starter']
 checks = []
 measured = {}
@@ -55,7 +57,17 @@ def in_starter(web, part):
     return (0 < u < cave.length) if part == 'passage' else (u >= cave.length and cave.inside(p.x, p.y, 200))
 
 
+def mirror():
+    """Put the server's own survivor just behind the client's, looking where the client looks, so the server's
+    window (the one screenshots capture) shows the client's view."""
+    rot = client.get_control_rotation()
+    back = rot.get_forward_vector() * -60
+    host.set_actor_location(pawn.get_actor_location() + unreal.Vector(back.x, back.y, 0), False, True)
+    host_pc.set_control_rotation(rot)
+
+
 def shot(name):
+    mirror()
     path = SHOTS / f'{name}.png'
     unreal.SystemLibrary.execute_console_command(client_world, f'Shot showui filename="{path}"')
     measured.setdefault('screenshots', []).append(str(path))
@@ -87,6 +99,7 @@ def look_in():
 
 def looked():
     m = state['memo']
+    mirror()
     if time.monotonic() - m['t'] < 3.0:
         return False
     if not m['shot']:
@@ -114,6 +127,7 @@ def walked():
     m['falling'] = max(m['falling'], max((w.get_falling_strands() for w in mine), default=0))
     if torn and m['first_torn'] is None:
         m['first_torn'] = time.monotonic()
+    mirror()
     if m['first_torn'] and not m['falling_shot'] and time.monotonic() - m['first_torn'] > .5:
         client.set_control_rotation(unreal.Rotator(roll=0, pitch=-15, yaw=client.get_control_rotation().yaw))
         shot('02_web_torn_strands_falling')
@@ -142,6 +156,7 @@ def chamber():
         target = corner[1].get_actor_location()
         eye = pawn.get_actor_location() + unreal.Vector(0, 0, 60)
         client.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, target))
+        mirror()
         if time.monotonic() - m['t'] < 1.5:
             return False
         shot('03_chamber_corner_webs')

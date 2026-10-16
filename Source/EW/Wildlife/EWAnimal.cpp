@@ -96,6 +96,12 @@ void AEWAnimal::PostNetReceiveLocationAndRotation()
 void AEWAnimal::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    if (!Rest.IsAwake(this, DeltaSeconds))
+    {
+        // Resting far from everyone; a body still returns home in its time.
+        if (HasAuthority() && bDead && Definition && (DeadSeconds += DeltaSeconds) >= Definition->RespawnSeconds) Respawn();
+        return;
+    }
     if (HasAuthority()) Think(DeltaSeconds);
     else if (bHasNetPose)
     {
@@ -269,6 +275,7 @@ AEWAnimal* AEWAnimal::FindStruck(const AEWCharacter* Striker, float Reach)
 bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
 {
     if (!HasAuthority() || bDead || !Definition || Damage <= 0.f) return false;
+    Rest.Wake();
     Health = FMath::Max(0.f, Health - Damage);
     MulticastFlinch();
     Call();

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
+#include "Wildlife/EWWildlifeRest.h"
 #include "EWAnimal.generated.h"
 
 class AEWCharacter;
@@ -78,6 +79,7 @@ private:
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastCall();
     float CallSeconds = 0.f;
+    FEWWildlifeRest Rest;
     double LastCallTime = -100.0;
 
     void ApplyDefinition();

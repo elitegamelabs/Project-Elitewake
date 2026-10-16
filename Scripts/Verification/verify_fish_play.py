@@ -88,8 +88,11 @@ def all_swimming():
         return False
     assert len(fish) >= 10, f'only {len(fish)} creatures on the server'
     assert set(copies) == {f.get_name() for f in fish}, 'client and server creatures differ'
-    moved = [f for f in fish if (f.get_actor_location() - state['memo']['start'][f.get_name()]).length() > 30]
-    assert len(moved) >= len(fish) - 1, f'only {len(moved)} of {len(fish)} moved'
+    # Wildlife rests more than 200 m from every survivor (FEWWildlifeRest, October 15 night): those within it swim.
+    survivors = unreal.GameplayStatics.get_all_actors_of_class(fish[0].get_world(), unreal.EWCharacter)
+    awake = [f for f in fish if any((f.get_actor_location() - s.get_actor_location()).length() < 19000 for s in survivors)]
+    moved = [f for f in awake if (f.get_actor_location() - state['memo']['start'][f.get_name()]).length() > 30]
+    assert awake and len(moved) >= len(awake) - 1, f'only {len(moved)} of the {len(awake)} creatures near a survivor moved'
     # Creatures far from a client stop updating for it, as any distant actor does; those near must stay close.
     near = [f for f in fish if (f.get_actor_location() - DOCK).length() < RELEVANT]
     gaps = [(f.get_actor_location() - copy_of(f).get_actor_location()).length() for f in near]

@@ -401,6 +401,24 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   with no PlayerState when matching the client's survivor. Do not change gameplay code.
 - **Done when:** it passes on the ships test map with run_play_check.py and VERIFICATION's hull row says where.
 
+### T25. Measure a packaged game's frame rate on the bigger world — OPEN
+- **Why:** since the bigger islands (October 15 night) the only frame-rate numbers are from the editor's Play window
+  (`Scripts/Verification/verify_world_performance_play.py`: 45–53 fps on an RTX 4070), which carries the editor's own
+  cost. A standalone `-game` run with the CSV profiler did not start in our attempts.
+- **Do:** build a Development package with the existing private build scripts (no upload), run it on
+  `Lvl_CoastalPlayground`, and record frame, game, draw and GPU times at the same four places the check uses (the
+  starter beach, the biggest Jungle and Winter islands, the Plains Port), e.g. with `stat unit` screenshots.
+- **Done when:** the numbers are in VERIFICATION's "World performance" row.
+
+### T26. Find what fills video memory with two players' views — OPEN
+- **Why:** with a listen server and a client in one editor the engine reports video memory about 0.9 GB over budget
+  on the bigger world (RTX 4070, 12 GB); with one view it does not. Ray tracing geometry also exceeds its resident
+  budget (235 of 400 MB).
+- **Do:** with `stat memory`, `stat rhi` and `r.Streaming.Dump` (or memreport), find the largest users (grass instances,
+  the island meshes' distance fields and ray tracing geometry, textures) and propose cuts with their visual cost. Do
+  not change the world scripts (`Scripts/Setup/world_*`, `build_*`): write the findings here for Claude.
+- **Done when:** a short findings note with numbers is in this file or `Docs/REPORTS/`.
+
 ### T21. A modelled bailing bucket — OPEN
 - **Why:** every ship now has a bailing bucket on deck, drawn as an engine cylinder until
   `/Game/Elitewake/World/Ships/SM_BailBucket_v1` exists (the ship loads it automatically when it does).

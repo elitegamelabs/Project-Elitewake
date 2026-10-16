@@ -143,7 +143,8 @@ def start_walk():
     mark = LANDMARKS[ARCH]
     (ax, ay, az, _), (bx, by, bz, _) = mark.parts
     # On the shore under the arch: the point between the feet where the ground meets the sea, then along the shore.
-    f = min((i / 20 for i in range(21)), key=lambda f: abs(T.height(ax + (bx - ax) * f, ay + (by - ay) * f) - (T.SEA + 40)))
+    # Only through the middle of the span, clear of the feet (the bigger islands put some feet at the waterline).
+    f = min((i / 20 for i in range(6, 15)), key=lambda f: abs(T.height(ax + (bx - ax) * f, ay + (by - ay) * f) - (T.SEA + 40)))
     mx, my = ax + (bx - ax) * f, ay + (by - ay) * f
     span = math.hypot(bx - ax, by - ay)
     tx, ty = -(by - ay) / span, (bx - ax) / span

@@ -232,10 +232,22 @@ class Cave:
 
     def notch(self, x, y, h):
         u, v = self.local(x, y)
+        if -2 * self.cell < u < 0:
+            # A doorstep: the ground before the mouth rises gently (about 12 cm a metre, tuning) to just under the rock
+            # floor, so a survivor walking in meets the floor with a small step even where the island's coarse grid
+            # would sag below it (the bigger islands of October 15 night put some mouths at beach level).
+            across = abs(v - self.centre_v(0.0))
+            side = 1.0 - min(1.0, max(0.0, (across - TUNNEL[0]) / self.cell))
+            if side > 0:
+                return max(h, h + (self.floor - 15.0 + 0.12 * u - h) * side) if self.floor - 15.0 + 0.12 * u > h else h
+            return h
         if u < 0 or u > self.depth or abs(v) > self.half or self.hollow(u, v) > self.margin:
             return h
         # Just under the rock floor near the mouth (deeper further in), so the ground before the mouth, which the
-        # island mesh's grid joins to these points, stays level with the floor rather than dipping into a ledge.
+        # island mesh's grid joins to these points, stays level with the floor rather than dipping into a ledge; at
+        # the mouth itself it is set there even where the hillside lies lower, so the doorstep meets it.
+        if u < 1.5 * self.cell and abs(v - self.centre_v(u)) < TUNNEL[0] + self.cell:
+            return self.floor - 15.0
         return min(h, self.floor - 15.0 - 120.0 * min(1.0, max(0.0, u - 1.5 * self.cell) / 300.0))
 
     def footprint(self):

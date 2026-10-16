@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
+#include "Wildlife/EWWildlifeRest.h"
 #include "EWFish.generated.h"
 
 class AEWCharacter;
@@ -110,6 +111,7 @@ private:
     float AttackCooldown = 0.f;
     float DeadSeconds = 0.f;
     float FlinchSeconds = 0.f;
+    FEWWildlifeRest Rest;
     /** Server: how much of the yield is still on the body. */
     int32 YieldLeft = 0;
     /** Clients: the latest replicated pose, glided to. */
