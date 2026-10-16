@@ -87,7 +87,8 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `verify_island_terrain_play.py`, `verify_regional_trees_play.py`, `verify_cave_webs_play.py`,
   `verify_world_performance_play.py`.
 - **Owner milestones of October 16 for trees and ships** (the same Claude session): fuller leaves and needles on every
-  non-palm tree, partial snow on the Winter trees, and boarding ladders centred on every stern. Besides the world
+  non-palm tree, partial snow on the Winter trees, and boarding ladders centred on every stern (all three done:
+  `97c3cf4`, `01dfca1`). Besides the world
   scripts above: `Scripts/Art/make_leaf_cluster.py`, the ship definitions' ladder places, `Scripts/Setup/ship_hull.py` and `ship_geometry.py`.
   The starter island's oaks are done (`2e7404d`).
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
