@@ -14,3 +14,7 @@ Owner request: October 16, 2026.
 - Keep the prior forward/reverse/turn water displacement and 20-meter wake compatible.
 - Implement visual chain deployment/tension/retraction, realistic hull response and synchronized chain rattling, catching and retrieval sound cues in Unreal Engine 5.8.
 - Validate in a playable test, including anchor down + throttle forward, catch and stop, raise and sail, and first/third person views. Distinguish documentation from completed code/assets and in-engine testing.
+
+## Additional owner requirement: chain rattling while dropping anchor
+- Trigger the same recognizable chain-rattling sound family during anchor deployment, synchronized with visible chain paying out. Vary pitch/intensity with chain speed and stop or transition naturally when the anchor lands and catches; avoid a continuous sound after movement ends.
+- Keep deployment, tension/catch and retrieval cues consistent but distinguishable. Verify start, stop, repeated deployment and interrupted drop without duplicate overlapping sounds.
