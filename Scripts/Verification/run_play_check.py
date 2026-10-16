@@ -72,12 +72,15 @@ def advance():
             return
         if not lib.start_verification_play_session(players):
             raise RuntimeError('Could not start Play')
-        state.update(step='wait_play', at=now + 60.0)
+        state.update(step='wait_play', at=now + 120.0)
     elif step == 'wait_play':
         worlds = lib.get_play_worlds()
         pawns = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
         # A survivor for each player, or the title screen's controller, which has none.
-        if len(worlds) == players and all(pc and (pc.get_controlled_pawn() or isinstance(pc, unreal.EWTitlePlayerController)) for pc in pawns):
+        # ...and every survivor's PlayerState has reached every machine (a big map can hold it back a second or two).
+        known = all(c.get_editor_property('PlayerState') for w in worlds
+                    for c in unreal.GameplayStatics.get_all_actors_of_class(w, unreal.EWCharacter))
+        if len(worlds) == players and known and all(pc and (pc.get_controlled_pawn() or isinstance(pc, unreal.EWTitlePlayerController)) for pc in pawns):
             state.update(step='settle', at=now + 3.0)
         elif now >= state['at']:
             state.update(step='stop', outcome='Play session did not start')
