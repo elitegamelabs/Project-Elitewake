@@ -27,8 +27,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Regions and climate: Desert islands (humidity 100 m offshore) and a first Winter island (snow, birches, snowy rocks); body temperature, Cold and Freezing, HUD and Character screen readouts | ✅ `811a3e8` |
 | First sounds, drafts from the owner's Scenario account (October 15): chop, pickaxe strike and glancing clink at the blow; gather rustle and pickup; footsteps on sand and snow; surf everywhere, wind on the Winter island, seabirds; alligator hiss, flamingo and pelican calls. Listening and final audio remain | ✅ `9a54ac7` |
 | Second sound batch (owner-approved, October 15 night): cannon fire, hull hits, splashes, bailing, sinking, ship creak and rigging loops, deck steps, swimming, night insects, cave drips; all loops seamless | ✅ `b98c572` |
-| Bigger islands to explore (owner, October 15 night): every island 500–900 m across, the starter about 620 m with its beach, dock, pond and sloop unchanged; the world rebuilt and rechecked; wildlife far from survivors rests so it stays fast | ✅ `BIG_ISLANDS` |
-| Cobwebs in every cave that tear as you walk through (owner, October 15 night) | ✅ `BIG_ISLANDS` |
+| Bigger islands to explore (owner, October 15 night): every island 500–900 m across, the starter about 620 m with its beach, dock, pond and sloop unchanged; the world rebuilt and rechecked; wildlife far from survivors rests so it stays fast | ✅ `7dfab58` |
+| Cobwebs in every cave that tear as you walk through (owner, October 15 night) | ✅ `7dfab58` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |
