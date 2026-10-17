@@ -39,7 +39,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Anchor chain: slack paid out, then taut with a clank and a smooth stop; the chain drawn paying out, sagging, taut and coming in (owner, October 16) | ✅ `030df8c` |
 | Faster crossings between islands (owner, October 16) | ✅ `030df8c` |
 | Fewer trees on the Plains (owner, October 17) | ✅ `dae6240` |
-| Each region's own soils on the ground (owner, October 16) | ✅ `7765e57` (dunes, pillars and Jungle understory still to do) |
+| Each region's own soils on the ground (owner, October 16) | ✅ `7765e57` |
+| Desert dunes, sandstone pillars and the Jungle's understory (owner, October 16) | ✅ `b6ab72e` |
 | Water pushed aside at the bow and along the sides, heavier outside a turn (owner, October 16; reverse waits for ships that can go astern) | ✅ `f1a1e08` |
 | Surf fades out 20 m inland; anchor chain sounds on drop, catch and raise (owner, October 16) | ✅ `8ae15b7` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
