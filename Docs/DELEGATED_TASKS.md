@@ -94,6 +94,10 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `97c3cf4`, `01dfca1`). Besides the world
   scripts above: `Scripts/Art/make_leaf_cluster.py`, the ship definitions' ladder places, `Scripts/Setup/ship_hull.py` and `ship_geometry.py`.
   The starter island's oaks are done (`2e7404d`).
+- **Owner ship systems expansion of October 17** (this Claude session): hulls, hull gunports, cannon mounts and the
+  modular railing hardpoints on the sloop, schooner and brigantine (`Scripts/Setup/build_sloop_hull.py`,
+  `build_schooner.py`, `build_brigantine.py`, `ship_hull.py`, `Source/EW/Ships/EWShip*`, `EWShipTypes.h`). Codex has
+  C4 (sail positions) and C5 (flags), ChatGPT G6 (surgeon) and G7 (module prompt sheets).
 - Audio with the owner's Scenario account (a separate Claude session): first drafts landed in `9a54ac7`; that session
   still owns `Art/Audio/`, `/Game/Elitewake/Audio`, `Source/EW/EWSound*`, `Source/EW/EWSoundscapeComponent.*`,
   `Source/EW/Ships/EWShipSoundComponent.*` and `Scripts/Verification/verify_audio*_play.py`.

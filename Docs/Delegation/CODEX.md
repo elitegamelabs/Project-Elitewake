@@ -60,6 +60,32 @@ Claude and the owner.
   used for footstep surfaces (deck when the base is a ship).
 - **Done when:** the build has no C4996 warning there and `verify_ship_deck_play.py` and `verify_audio_play.py` pass.
 
+### C4. Sails set in five positions, raised and lowered from the helm — OPEN
+- **Why:** owner, October 17 (`Docs/MILESTONES.md`, "Owner ship systems expansion"): sail positions 0/25/50/75/100%,
+  raised and lowered progressively by holding keyboard Up/Down or the Xbox D-pad Up/Down at the helm; no wind
+  propulsion at 0%. Today `EEWSailState` has Furled, Half and Full, stepped by forward/back input
+  (`Source/EW/Ships/EWShip.*`, `AEWCharacter` helm input).
+- **Do:** replace the three states with a replicated sail setting (0, 25, 50, 75, 100%) that holding Up/Down moves one
+  step at a time (tuning: a step every 0.6 s), feeding `ComputeTargetSpeed` (speed share = setting) and the sails'
+  drawn height (as Half scales them now; Claude's `ShowSailFill` reads the sail state, keep it working). Keep W/S
+  helm forward/back working the same way if they are used for this today; check `Docs/DESIGN_REFERENCE.md` (Helm).
+  The crew-dependency rule (only sails with assigned NPC operators answer the helm) needs NPCs that do not exist yet:
+  leave it out and note it.
+- **Test:** update `verify_ship_sailing_play.py`, `verify_sail_trim_play.py` and any check that sets full sail;
+  add native tests for the setting's steps.
+- **Done when:** checks pass, VERIFICATION records it, and you report in INBOX.md. Claude owns `EWShip.cpp` too:
+  say in INBOX.md when you start so edits do not collide.
+
+### C5. Craftable plain white flags on flag mounts — OPEN
+- **Why:** owner, October 17: sloop 2 flag positions, brigantine 3, Cavalier 4, all empty at first; a crafted flag is
+  plain clean white; flags install, remove and swap, flutter in the wind, and weather only from combat damage.
+- **Do:** a Flag item (recipe values TBD: ask in OPEN_QUESTIONS, use a placeholder recipe marked *tuning*), a
+  `Flag` mount type, flag mounts on the sloop and brigantine definitions (positions: masthead and stern ensign staff;
+  ask Claude in INBOX.md for exact points, Claude owns the ship build scripts), install/remove through the existing
+  fitting flow, and a cloth flag mesh that flutters with the world wind (UEWWindSubsystem). Combat damage and tearing
+  come later.
+- **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.
+
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
 | Task | What | Status |

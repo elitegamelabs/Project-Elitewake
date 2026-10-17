@@ -88,6 +88,9 @@ only (`Art/Audio/README.md`). Once G1 lists what each needs, add a row per sound
   `Art/Reference/Animals/Bear/` as `front.png` … `underside.png`.
 - **Then:** show the owner the pilot and the price of the full set; the rest waits for their answer.
 
+### S7. Ship module references — WAITING (on ChatGPT G6/G7 prompt sheets)
+Railing modules, sail assemblies, surgeon's table and tools: six views each, priced first as S6 is.
+
 ## Done
 
 | Batch | Jobs | Credits | Commit |

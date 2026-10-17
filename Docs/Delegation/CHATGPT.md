@@ -91,6 +91,25 @@ Claude and the owner.
   Every item is phrased as a question or a labelled suggestion.
 - **Done when:** the questions are in the file.
 
+### G6. The ship surgeon: a design brief — OPEN
+- **Why:** owner, October 17: every ship with a walkable deck below the top has an always-present surgeon in the rear
+  left corner of the first deck below the top: an operating table, scissors and tools, shelving; 15 copper per
+  treatment, restoring 25% of maximum health gradually, with an animation, safe in multiplayer.
+- **Do:** `Design/Ships/SHIP_SURGEON_BRIEF_2026-10-17.md`: which ships qualify today (sloop, schooner, brigantine: check
+  their decks in `Scripts/Setup/build_*.py`), the room's layout and props list, the interaction flow (approach, pay,
+  lie on the table, healing over time, interruptions), what happens with no copper or full health, and the open
+  questions (is copper an item yet? check `Content/Elitewake/Items`). Add the six-view prompt lines for the table
+  and tools to SCENARIO.md as QUEUED.
+- **Done when:** the brief exists and is reported in INBOX.md.
+
+### G7. Prompt sheets for the railing modules and sail assemblies — OPEN
+- **Why:** owner, October 17: orthographic references (front, back, left, right, top, underside, attachment details)
+  for each railing module (plain wooden, dinghy attachment, two-cannon) and the six sail assemblies (small/medium/large
+  rectangular draped, small/medium/large triangular weighted).
+- **Do:** `Art/Reference/Ships/<Module>/PROMPTS.md` per module, as G4 did for animals, matching the hull timber
+  (`Art/Concepts/Boats/2026-10-11`). Queue them in SCENARIO.md (S7); no images.
+- **Done when:** sheets exist and are reported in INBOX.md.
+
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
 | Task | What | Status |
