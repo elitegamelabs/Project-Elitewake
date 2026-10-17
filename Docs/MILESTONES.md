@@ -38,6 +38,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Sails fill and billow with the wind, and go slack but keep flapping when it runs along them (owner, October 16) | ✅ `037df4f` |
 | Anchor chain: slack paid out, then taut with a clank and a smooth stop; the chain drawn paying out, sagging, taut and coming in (owner, October 16) | ✅ `030df8c` |
 | Faster crossings between islands (owner, October 16) | ✅ `030df8c` |
+| Fewer trees on the Plains (owner, October 17) | ✅ `dae6240` |
 | Surf fades out 20 m inland; anchor chain sounds on drop, catch and raise (owner, October 16) | ✅ `8ae15b7` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
