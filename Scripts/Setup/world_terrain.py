@@ -468,6 +468,16 @@ def cover(x, y, z):
             'Swamp': (0.0, inside * 0.4, inside), 'Desert': (0.0, 0.0, 0.0)}[i.region]
 
 
+# Each region's code in the terrain's vertex alpha, for its own soils (owner, October 16:
+# Design/World/REGIONAL_SOIL_TEXTURE_REQUIREMENTS_2026-10-16.md); M_CoastalTerrain_v1 reads it.
+REGION_CODES = {'Winter': .1, 'Plains': .3, 'Jungle': .5, 'Swamp': .7, 'Desert': .9}
+
+
+def region_code(x, y):
+    """The nearest island's region code (REGION_CODES), for the terrain's vertex alpha."""
+    return REGION_CODES[min(W.ISLANDS, key=lambda k: k.distance(x, y)).region]
+
+
 # ---- The ground as built --------------------------------------------------------------------------------------
 
 def grid_of(island):

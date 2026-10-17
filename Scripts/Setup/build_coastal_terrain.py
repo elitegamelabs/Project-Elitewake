@@ -97,22 +97,57 @@ def make_material():
     noise = ('float h(float2 c) { return frac(sin(dot(c, float2(12.9898, 78.233))) * 43758.5453); }'
              ' float n2(float2 q) { float2 i = floor(q), f = frac(q); f = f * f * (3 - 2 * f);'
              ' return lerp(lerp(h(i), h(i + float2(1, 0)), f.x), lerp(h(i + float2(0, 1)), h(i + float2(1, 1)), f.x), f.y); }')
+    # Each region's own soils (owner, October 16: REGIONAL_SOIL_TEXTURE_REQUIREMENTS): the vertex alpha names the
+    # region (world_terrain.REGION_CODES); bare earth, grass and mud take its colours, and the Desert's sand gets
+    # wind ripples, gravel, cracked hardpan on its flats and sandstone on its slopes. All colours are tuning.
+    regions = (' float w = saturate(1 - abs(A - .1) * 8), pl = saturate(1 - abs(A - .3) * 8), j = saturate(1 - abs(A - .5) * 8),'
+               ' sw = saturate(1 - abs(A - .7) * 8), d = saturate(1 - abs(A - .9) * 8);')
     snowy = custom('struct G { ' + noise + ' }; G g;'
                    ' float up = saturate((P.z + 45.0) / 60.0);'
-                   ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.n2(P.xy / 6.0);'
-                   ' float flat = saturate((N.z - .72) * 5.0);'
+                   ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.n2(P.xy / 6.0), speck = g.n2(P.xy / 1.7);'
+                   ' float flat = saturate((N.z - .72) * 5.0);' + regions +
+                   # Grass: lush on the Plains, deep and saturated in the Jungle, olive moss in the Swamp.
                    ' float3 grass = lerp(float3(.035, .075, .015), float3(.1, .13, .03), big) * lerp(.7, 1.2, mid) * lerp(.88, 1.08, fine);'
+                   ' grass = grass * (1 + pl * .15) * (1 - j * .35) + j * float3(-.006, .012, -.003) + sw * float3(.012, -.01, -.004);'
+                   # Bare earth: pale frozen soil (Winter), rich brown loam (Plains), dark wet loam with leaf litter and
+                   # moss (Jungle), black saturated peat (Swamp), sandstone (Desert slopes).
                    ' float3 earth = float3(.16, .12, .08) * lerp(.8, 1.1, mid);'
-                   ' float3 c = lerp(C, lerp(earth, grass, flat), V.g * up * saturate(mid * 2.5 + .45));'
+                   ' float3 frozen = lerp(float3(.30, .29, .28), float3(.42, .43, .45), saturate(fine * 1.5 - .4)) * lerp(.85, 1.05, mid);'
+                   ' float3 loam = float3(.19, .12, .065) * lerp(.8, 1.15, mid);'
+                   ' float3 litter = lerp(float3(.06, .045, .028), float3(.16, .085, .03), step(.72, speck)) ;'
+                   ' litter = lerp(litter, float3(.05, .08, .025), saturate((big - .55) * 4));'
+                   ' float3 peat = lerp(float3(.03, .024, .017), float3(.05, .04, .026), mid);'
+                   ' float3 stone = lerp(float3(.55, .37, .21), float3(.68, .5, .32), mid) * lerp(.85, 1.05, fine);'
+                   ' earth = earth * (1 - w - pl - j - sw - d) + frozen * w + loam * pl + litter * j + peat * sw + stone * d;'
+                   # Inland the region's soil lies under everything (bare patches show it, not beach sand), and
+                   # grass covers it in patches.
+                   ' float3 c = lerp(C, earth, V.g * up * (w + pl + j + sw));'
+                   ' c = lerp(c, lerp(earth, grass, flat), V.g * up * saturate(mid * 2.5 + .45));'
+                   # Steep ground everywhere shows its region's bare earth, not only where grass grows.
+                   ' c = lerp(c, earth, (1 - flat) * up * (w + pl + j + sw + d) * .85);'
                    ' float3 mud = lerp(float3(.035, .03, .02), float3(.05, .06, .025), mid) * lerp(.8, 1.2, big);'
+                   ' mud = lerp(mud, float3(.022, .017, .012), sw * saturate(.4 + (1 - big)));'
                    ' c = lerp(c, mud, V.b * saturate(up + .3));'
+                   # Desert flats away from the tide: wind ripples, dusty gravel and patches of cracked hardpan.
+                   ' float ripple = sin(dot(P.xy, float2(.031, .017)) + g.n2(P.xy / 300.0) * 6.0) * .5 + .5;'
+                   ' float crack = smoothstep(.06, .0, abs(frac(g.n2(P.xy / 55.0) * 7.0) - .5) - .44);'
+                   ' float pan = saturate((g.n2(P.xy / 700.0) - .55) * 5) * flat;'
+                   ' float3 hardpan = lerp(float3(.62, .5, .37), float3(.36, .28, .2), crack);'
+                   ' float3 dune = C * lerp(.9, 1.06, ripple) * lerp(1, .82, step(.86, speck));'
+                   ' c = lerp(c, lerp(dune, hardpan, pan), d * up);'
                    ' float3 snow = float3(.8, .84, .9) * lerp(.9, 1.05, fine) * lerp(.94, 1.02, big);'
-                   ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'P', 'N'))
-    snow_rough = custom('float up = saturate((P.z + 45.0) / 60.0);'
-                        ' return lerp(lerp(lerp(R, .95, V.g * up), .45, V.b), .62, V.r * up);',
-                        unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('R', 'V', 'P'))
+                   ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'A', 'P', 'N'))
+    # Roughness: the Swamp's mud glistens, with glossy puddles in its hollows; the Desert is bone dry.
+    snow_rough = custom('struct G { ' + noise + ' }; G g;'
+                        ' float up = saturate((P.z + 45.0) / 60.0);' + regions +
+                        ' float r = lerp(lerp(lerp(R, .95, V.g * up), .45, V.b), .62, V.r * up);'
+                        ' float puddle = smoothstep(.62, .7, g.n2(P.xy / 260.0)) * sw * up;'
+                        ' r = lerp(r, .35, sw * up * .7); r = lerp(r, .08, puddle);'
+                        ' return lerp(r, .97, d * up);',
+                        unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('R', 'V', 'A', 'P'))
     link(colour, snowy, 'C'); link(paint, snowy, 'V'); link(position, snowy, 'P'); link(normal, snowy, 'N')
     link(rough, snow_rough, 'R'); link(paint, snow_rough, 'V'); link(position, snow_rough, 'P')
+    link(paint, snowy, 'A', 'A'); link(paint, snow_rough, 'A', 'A')   # the vertex colour's alpha: the region
     assert mel.connect_material_property(snowy, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(snow_rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
@@ -255,7 +290,7 @@ def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True, height=hei
         [unreal.Vector(p.x, p.y, z) for p, z in zip(flat, heights)]))
     if colour:
         unreal.GeometryScript_VertexColors.set_mesh_per_vertex_colors(mesh, unreal.GeometryScript_List.convert_array_to_color_list(
-            [unreal.LinearColor(*T.cover(p.x, p.y, z), 1) for p, z in zip(flat, heights)]))
+            [unreal.LinearColor(*T.cover(p.x, p.y, z), T.region_code(p.x, p.y)) for p, z in zip(flat, heights)]))
     unreal.GeometryScript_Normals.recompute_normals(mesh, unreal.GeometryScriptCalculateNormalsOptions())
     if unreal.EditorAssetLibrary.does_asset_exist(path):
         assert unreal.EditorAssetLibrary.delete_asset(path)
