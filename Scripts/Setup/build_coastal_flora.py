@@ -101,7 +101,8 @@ OAK_SCALE = (.8, 1.25)
 ASH = [dict(height=1700.0, reach=330.0, branches=9, seed=51), dict(height=2000.0, reach=380.0, branches=10, seed=52),
        dict(height=2300.0, reach=420.0, branches=11, seed=53)]
 ASH_SCALE = (.8, 1.2)
-RECIPES = {'Plains': dict(trees={'Oak': 1.6}, groups=True, plants=(0.45, 0.3, 0.22)),
+# Plains oaks halved (owner, October 17: fewer trees on the Plains; was 1.6).
+RECIPES = {'Plains': dict(trees={'Oak': 0.8}, groups=True, plants=(0.45, 0.3, 0.22)),
            'Desert': dict(trees={'Veyran Palm': 0.7}, groups=False, plants=(0.2, 0.15, 0.08)),
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
            'Jungle': dict(trees={'Ash': 4.0, 'Maravai': 0.5}, groups=False, plants=(0.5, 0.4, 0.25)),
@@ -693,7 +694,7 @@ def inland_spots(ground, palms):
     return chosen
 
 
-def starter_grove_spots(ground, taken, count=34):
+def starter_grove_spots(ground, taken, count=18):
     """Oaks for the starter's old ground in place of its beach palms: in a few groves back from the sand (grassy
     ground, not steep), clear of the spawn, dock and spring, apart from each other and from the old oaks."""
     rng = random.Random(23)
