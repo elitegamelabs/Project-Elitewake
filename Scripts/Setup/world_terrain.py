@@ -144,6 +144,25 @@ def shapes_height(i, lx, ly):
 RELIEF = {'Winter': (3.6, 0.7), 'Jungle': (2.2, 0.8), 'Desert': (1.3, 1.0), 'Plains': (1.2, 1.2), 'Swamp': (1.0, 1.0)}
 
 
+# The Desert's dunes (owner, October 16, BIOME_TERRAIN_FOLIAGE_AND_GLOBAL_SUN: irregular natural sand dunes):
+# transverse dunes across the prevailing wind, each a long gentle windward slope up to a crest and a short steep
+# slip face down its lee side, crests 3-7 m high and about 45 m apart, wandering and rising and falling along their
+# length. Tuning.
+DUNE_WIND = 0.6            # radians: the direction the dunes march
+DUNE_SPACING = 4500.0      # cm between crests
+DUNE_CREST = 0.78          # where along each dune its crest stands (the rest is the slip face)
+
+
+def dunes(lx, ly):
+    along = lx * math.cos(DUNE_WIND) + ly * math.sin(DUNE_WIND)
+    across = -lx * math.sin(DUNE_WIND) + ly * math.cos(DUNE_WIND)
+    p = along / DUNE_SPACING + .35 * math.sin(across / 2600) + .15 * math.sin(across / 900 + 1.3)
+    f = p - math.floor(p)
+    profile = (f / DUNE_CREST) ** 1.6 if f < DUNE_CREST else ((1 - f) / (1 - DUNE_CREST)) ** 1.2
+    crest = 300 + 400 * (.5 + .5 * math.sin(across / 3100 + math.floor(p) * 1.3))
+    return crest * profile
+
+
 def starter_land(x, y, inland, ripple):
     """The starter island exactly as it was built before the five-region world (dunes, two hills, the pond)."""
     dunes = min(1.0, max(0.0, (inland - 1500) / 1500)) * (45 * math.sin(x / 650 + 1) * math.sin(y / 1100))
@@ -183,8 +202,7 @@ def island_land(i, x, y, inland):
     if i.region == 'Plains':
         h += rise * (220 * math.sin(lx / 2300 + 1.1) * math.sin(ly / 1900 + .4) + 60 * math.sin((lx + ly) / 900))
     elif i.region == 'Desert':
-        ridge = math.sin((lx * .8 + ly * .6) / 700 + math.sin(ly / 1900) * 2)
-        h += rise * (260 * ridge * ridge + 80 * math.sin(lx / 430))
+        h += rise * dunes(lx, ly)
     elif i.region == 'Winter':
         h += rise * (420 * abs(math.sin(lx / 520 + .7) * math.sin(ly / 430 + 1.9)) + 180 * abs(math.sin((lx - ly) / 300)))
     elif i.region == 'Jungle':

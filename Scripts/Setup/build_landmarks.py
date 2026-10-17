@@ -18,7 +18,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_terrain as T  # noqa: E402
-from world_landmarks import LANDMARKS  # noqa: E402
+from world_landmarks import LANDMARKS, PILLARS  # noqa: E402
 from ship_geometry import save_dynamic_mesh, write_static_mesh  # noqa: E402
 from build_coastal_rocks import boulder, lattice  # noqa: E402
 from build_caves import STONE, Piece, dynamic  # noqa: E402
@@ -214,8 +214,23 @@ def main():
             tops.append(round((z + size) / 100, 1))
         report[key] = {'kind': mark.kind, 'parts': len(mark.parts), 'tops_m': tops,
                        'at_m': [round(mark.parts[0][0] / 100), round(mark.parts[0][1] / 100)]}
+    # The sand and sandstone pillars (world_landmarks.PILLARS): columns in the region's stone, some hoodoos.
+    pillars = {}
+    for key, mark in PILLARS.items():
+        if not mark:
+            continue
+        region, seed = mark.island.region, sum(map(ord, key)) * 29
+        rng = random.Random(seed)
+        tops = []
+        for n, (x, y, z, size) in enumerate(mark.parts):
+            below = max(400.0, z - min(T.height(x + 500 * math.cos(b), y + 500 * math.sin(b)) for b in (0, 1.57, 3.14, 4.71)) + 300)
+            mesh = stone_mesh(column(seed + n, size, size * rng.uniform(.12, .18), below, hoodoo=rng.random() < .4),
+                              f'{FOLDER}/SM_{key}_pillar_{n + 1}_v1', region)
+            place(actors, mesh, x, y, z, rng.uniform(0, 360), f'Pillar of {key} {n + 1}')
+            tops.append(round(size / 100, 1))
+        pillars[key] = tops
     assert level.save_current_level()
-    Path(unreal.Paths.project_saved_dir(), 'LandmarksResult.json').write_text(json.dumps({'success': True, 'landmarks': report}, indent=2))
+    Path(unreal.Paths.project_saved_dir(), 'LandmarksResult.json').write_text(json.dumps({'success': True, 'landmarks': report, 'pillars_m': pillars}, indent=2))
     unreal.log(f'Landmarks built: {len(report)}')
 
 

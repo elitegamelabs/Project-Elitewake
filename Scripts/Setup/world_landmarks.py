@@ -152,9 +152,47 @@ def _landmarks():
 LANDMARKS = _landmarks()
 
 
+# Sand and sandstone pillars (owner, October 16, BIOME_TERRAIN_FOLIAGE_AND_GLOBAL_SUN: occasional tall sandstone or
+# sand pillars, permitted on any island where they fit, not on every island). DECIDED (delegated, tuning): three to
+# five on each Desert island, standing 9-20 m out of the dunes at least 40 m apart; one each on two Plains islands
+# with open ground. Some are hoodoos under a cap rock.
+PILLAR_ISLANDS = {'Plains2': 1, 'Plains5': 1}
+
+
+def _pillars(island, rng, count):
+    parts = []
+    for _ in range(600):
+        if len(parts) >= count:
+            break
+        rr, t = math.sqrt(rng.random()) * island.reach(), rng.uniform(0, 2 * math.pi)
+        x, y = island.cx + rr * math.cos(t), island.cy + rr * math.sin(t)
+        if not island.distance(x, y) < -1800 or not _clear(island, x, y, 1500) or near_landmark(x, y, 1500):
+            continue
+        if any(math.hypot(x - px, y - py) < 4000 for px, py, _, _ in parts):
+            continue
+        z = T.height(x, y)
+        if z < T.SEA + 100 or max(abs(T.height(x + 400 * math.cos(b), y + 400 * math.sin(b)) - z) for b in (0, 1.57, 3.14, 4.71)) > 350:
+            continue
+        parts.append((x, y, z, rng.uniform(900, 2000)))
+    return Landmark(island, 'pillars', parts, 0.0, 450) if parts else None
+
+
+def _all_pillars():
+    found = {}
+    for island in W.ISLANDS:
+        count = PILLAR_ISLANDS.get(island.key) or (random.Random(sum(map(ord, island.key)) * 389).randint(3, 5) if island.region == 'Desert' else 0)
+        if count:
+            found[island.key] = _pillars(island, random.Random(sum(map(ord, island.key)) * 9151), count)
+    return found
+
+
 def near_landmark(x, y, margin=300.0):
-    """True on or beside a landmark: keep trees, rocks, plants and animals off it."""
-    return any(m and m.near(x, y, margin) for m in LANDMARKS.values())
+    """True on or beside a landmark or a pillar: keep trees, rocks, plants and animals off it."""
+    return any(m and m.near(x, y, margin) for m in LANDMARKS.values()) or any(m and m.near(x, y, margin) for m in PILLARS.values())
+
+
+PILLARS = {}
+PILLARS = _all_pillars()
 
 
 if __name__ == '__main__':
