@@ -15,6 +15,7 @@ class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UEWShipSoundComponent;
 class UEWWakeTrailComponent;
+class UEWBowWaveComponent;
 
 /** One cannon on its mount: who mans it, where it is aimed (degrees from its rest, up is positive pitch) and
  *  whether it is loaded or being loaded. Replicated with the ship. */
@@ -87,6 +88,9 @@ public:
     /** The foam she leaves on the water, about 20 m of it along her track (Source/EW/Ships/EWWakeTrailComponent). */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWWakeTrailComponent> WakeTrail;
+    /** The water her hull pushes aside: bow waves and the wash along her sides (Source/EW/Ships/EWBowWaveComponent). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
+    TObjectPtr<UEWBowWaveComponent> BowWave;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UStaticMeshComponent> HullVisual;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Ship")

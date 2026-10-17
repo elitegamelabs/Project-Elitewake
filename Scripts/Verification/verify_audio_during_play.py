@@ -32,8 +32,9 @@ EXPECT = {
                   {'creak': .4, 'rigging': .3}),
     # The sloop's anchor comes up at the capstan and goes down again at the end (its chain catching a moment later); she
     # sails and turns, and her wake trail (UEWWakeTrailComponent) reaches back about 20 m and bends with her.
-    'ship_sailing': ('ShipSailingPlayResult.json', [('S_AnchorRaise_v1',), ('S_AnchorDrop_v1',), ('S_AnchorCatch_v1',)], [],
-                     {'wake_patches': 10, 'wake_reach': 1500, 'wake_bend': 60}),
+    # The catch clank is not asked for here: she stops before her chain comes taut (verify_anchor_chain_play has it).
+    'ship_sailing': ('ShipSailingPlayResult.json', [('S_AnchorRaise_v1',), ('S_AnchorDrop_v1',)], [],
+                     {'wake_patches': 10, 'wake_reach': 1500, 'wake_bend': 60, 'bow': .4, 'turn_lean': .05}),
     'caves': ('CavesPlayResult.json', [], [('S_StepStone_v1',)], {'cave': .9}),
     'day_night': ('DayNightPlayResult.json', [], [], {'insects': .2}),
 }
@@ -50,7 +51,7 @@ started = time.time()
 if INNER.exists():
     INNER.unlink()
 seen = {'creak': 0.0, 'rigging': 0.0, 'cave': 0.0, 'insects': 0.0, 'in_cave': False, 'ship_loops': False,
-        'wake_patches': 0, 'wake_reach': 0.0, 'wake_bend': 0.0}
+        'wake_patches': 0, 'wake_reach': 0.0, 'wake_bend': 0.0, 'bow': 0.0, 'bow_at_rest': None, 'turn_lean': 0.0, 'turn_seen': 0.0}
 state = {'handle': None, 'shot': None, 'done_at': None}
 # Seconds to keep listening once the check is done, for sounds that follow its last step (an anchor catching the bottom).
 AFTER = 3.0
@@ -72,6 +73,19 @@ def wake_shot(ship, trail):
         SHOTS.mkdir(parents=True, exist_ok=True)
         unreal.SystemLibrary.execute_console_command(server_world, f'Shot showui filename="{SHOTS / "sloop_wake.png"}"')
         state['shot'] = -1
+        state['bow_shot'] = time.monotonic() + 0.1
+    elif state.get('bow_shot') and time.monotonic() > state['bow_shot'] and ship.get_speed() > 200:
+        f, r = ship.get_actor_forward_vector(), ship.get_actor_right_vector()
+        eye = ship.get_actor_location() + f * 2200 + r * 900 + unreal.Vector(0, 0, 700)
+        host.set_actor_location(eye, False, True)
+        host.set_actor_hidden_in_game(True)   # the third-person camera looks past the survivor
+        host_pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, ship.get_actor_location() + f * 500))
+        if state.get('bow_placed') is None:
+            state['bow_placed'] = time.monotonic()
+        elif time.monotonic() - state['bow_placed'] > .35:
+            unreal.SystemLibrary.execute_console_command(server_world, f'Shot showui filename="{SHOTS / "sloop_bow_wave.png"}"')
+            state['bow_shot'] = None
+            host.set_actor_hidden_in_game(False)
 
 
 def watch():
@@ -95,6 +109,18 @@ def watch():
                                     if s.get_name() == ship.get_name()), None)
                 if server_ship:
                     wake_shot(server_ship, server_ship.get_editor_property('wake_trail'))
+        # The water her hull pushes aside (UEWBowWaveComponent): none at rest, bow waves under way, and in a turn more
+        # wash on the outside of it than the inside.
+        bow = ship.get_editor_property('bow_wave')
+        if bow:
+            if seen['bow_at_rest'] is None and ship.get_speed() < 1:
+                seen['bow_at_rest'] = round(bow.get_bow_strength(), 3)
+            seen['bow'] = max(seen['bow'], bow.get_bow_strength())
+            turn = bow.get_turn_rate()
+            if abs(turn) > 4:
+                outside, inside = (bow.get_port_wash(), bow.get_starboard_wash()) if turn > 0 else (bow.get_starboard_wash(), bow.get_port_wash())
+                seen['turn_lean'] = max(seen['turn_lean'], outside - inside)
+                seen['turn_seen'] = max(seen['turn_seen'], abs(turn))
         sounds = ship.get_editor_property('sounds')
         if sounds:
             seen['creak'] = max(seen['creak'], sounds.get_creak_level())
@@ -127,6 +153,8 @@ def finish(inner, error=None):
             problems.append(f'the client\'s {key} level reached only {seen[key]:.2f} (needs {least})')
     if 'creak' in levels_need and not seen['ship_loops']:
         problems.append('a ship\'s loops never played on the client')
+    if 'bow' in levels_need and (seen['bow_at_rest'] is None or seen['bow_at_rest'] > .05):
+        problems.append(f'bow waves at rest: {seen["bow_at_rest"]}')
     if 'cave' in levels_need and not seen['in_cave']:
         problems.append('the client was never under a cave roof')
     RESULT.write_text(json.dumps({

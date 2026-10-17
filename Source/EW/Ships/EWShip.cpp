@@ -24,6 +24,7 @@
 #include "Ships/EWWreckCrate.h"
 #include "Ships/EWShipSoundComponent.h"
 #include "Ships/EWWakeTrailComponent.h"
+#include "Ships/EWBowWaveComponent.h"
 
 namespace
 {
@@ -69,6 +70,7 @@ AEWShip::AEWShip()
     HullCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("HullCollision"));
     Sounds = CreateDefaultSubobject<UEWShipSoundComponent>(TEXT("Sounds"));
     WakeTrail = CreateDefaultSubobject<UEWWakeTrailComponent>(TEXT("WakeTrail"));
+    BowWave = CreateDefaultSubobject<UEWBowWaveComponent>(TEXT("BowWave"));
     SetRootComponent(HullCollision);
     HullCollision->SetMobility(EComponentMobility::Movable);
     HullCollision->SetCollisionProfileName(TEXT("BlockAll"));
