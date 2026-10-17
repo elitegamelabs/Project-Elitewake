@@ -36,6 +36,8 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Helm-only sail keys (arrows, LB/RB) and the 180-degree sail range (owner, October 16) | ✅ `ffebdd7` |
 | A foam wake trail about 20 m long that follows the ship's turns (owner, October 16) | ✅ `27afdaa` |
 | Sails fill and billow with the wind, and go slack but keep flapping when it runs along them (owner, October 16) | ✅ `037df4f` |
+| Anchor chain: slack paid out, then taut with a clank and a smooth stop; the chain drawn paying out, sagging, taut and coming in (owner, October 16) | ✅ `030df8c` |
+| Faster crossings between islands (owner, October 16) | ✅ `030df8c` |
 | Surf fades out 20 m inland; anchor chain sounds on drop, catch and raise (owner, October 16) | ✅ `8ae15b7` |
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
