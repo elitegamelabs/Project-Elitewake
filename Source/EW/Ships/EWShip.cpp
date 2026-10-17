@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/World.h"
@@ -121,6 +122,10 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, RudderAngle);
     DOREPLIFETIME(AEWShip, SailAngle);
     DOREPLIFETIME(AEWShip, bAnchored);
+    DOREPLIFETIME(AEWShip, AnchorBed);
+    DOREPLIFETIME(AEWShip, ChainReach);
+    DOREPLIFETIME(AEWShip, ChainCatches);
+    DOREPLIFETIME(AEWShip, bChainTaut);
     DOREPLIFETIME(AEWShip, CapstanWorker);
     DOREPLIFETIME(AEWShip, Cannons);
     DOREPLIFETIME(AEWShip, HullHealth);
@@ -152,6 +157,8 @@ void AEWShip::BeginPlay()
     ApplyDefinition();
     RefreshFittingVisuals();
     PlaceWake();
+    // A ship that starts at anchor has her anchor down already, chain out below her bow.
+    if (HasAuthority() && bAnchored && ChainReach <= 0.f) LayAnchor();
     // Water bodies answer swimming and wave queries; their collision boxes must never stop a hull.
     for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
@@ -714,8 +721,109 @@ bool AEWShip::SetAnchored(AEWCharacter* Character, bool bNewAnchored)
 {
     if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || bAnchored == bNewAnchored) return false;
     bAnchored = bNewAnchored;
+    if (bAnchored) LayAnchor();
+    bChainTaut = false;
     ForceNetUpdate();
     return true;
+}
+
+FVector AEWShip::HawseLocal() const
+{
+    // At the stem, half way up the bow: where the chain runs out of the hull.
+    if (!Definition) return FVector::ZeroVector;
+    return FVector(Definition->HullExtent.X * .88f, 0.f, Definition->GetDeckHeight() * .5f);
+}
+
+FVector AEWShip::GetHawseWorld() const
+{
+    return GetActorTransform().TransformPosition(HawseLocal());
+}
+
+void AEWShip::LayAnchor()
+{
+    // The anchor goes straight down from the hawse to the bottom (the sea floor or whatever lies there).
+    const FVector Hawse = GetHawseWorld();
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWAnchorBed), false, this);
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
+    FHitResult Hit;
+    const FVector Deepest = Hawse - FVector(0, 0, 6000.f);
+    AnchorBed = GetWorld()->LineTraceSingleByChannel(Hit, Hawse, Deepest, ECC_Visibility, Query) ? Hit.ImpactPoint : Deepest;
+    const float Depth = FMath::Max(GetActorLocation().Z - AnchorBed.Z, 100.f);
+    ChainReach = FMath::Clamp(Depth * ChainSlackPerDepth, MinChainSlack, MaxChainSlack);
+}
+
+float AEWShip::ChainLength() const
+{
+    const float Depth = FMath::Max(GetHawseWorld().Z - AnchorBed.Z, 0.f);
+    return FMath::Sqrt(FMath::Square(ChainReach) + FMath::Square(Depth));
+}
+
+int32 AEWShip::GetChainLinkCount() const
+{
+    return ChainLinks ? ChainLinks->GetInstanceCount() : 0;
+}
+
+void AEWShip::ShowChain(float DeltaSeconds)
+{
+    if (GetNetMode() == NM_DedicatedServer || !Definition) return;
+    if (!ChainLinks)
+    {
+        ChainLinks = NewObject<UInstancedStaticMeshComponent>(this, NAME_None, RF_Transient);
+        ChainLinks->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder")));
+        if (UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial")))
+        {
+            UMaterialInstanceDynamic* Iron = UMaterialInstanceDynamic::Create(Base, this);
+            Iron->SetVectorParameterValue(TEXT("Color"), FLinearColor(.035f, .033f, .03f));
+            ChainLinks->SetMaterial(0, Iron);
+        }
+        ChainLinks->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        ChainLinks->SetCastShadow(false);
+        ChainLinks->SetUsingAbsoluteLocation(true);
+        ChainLinks->SetUsingAbsoluteRotation(true);
+        ChainLinks->SetUsingAbsoluteScale(true);
+        ChainLinks->RegisterComponent();
+        ChainLinks->SetWorldTransform(FTransform::Identity);
+        bShownAnchored = bAnchored;
+        ChainOut = bAnchored ? 1.f : 0.f;   // a ship found at anchor has her chain out already
+    }
+    if (bAnchored && !bShownAnchored) ChainOut = 0.f;   // just dropped: it pays out from the hawse
+    bShownAnchored = bAnchored;
+    // Paying out over the drop's rattle; coming in at the capstan over the heave; out again if the heave stops.
+    const float Wanted = !bAnchored ? 0.f : (CapstanWorker ? 0.f : 1.f);
+    const float Rate = CapstanWorker ? 1.f / AnchorHoldSeconds : 1.f / 2.2f;
+    ChainOut = FMath::FInterpConstantTo(ChainOut, Wanted, DeltaSeconds, Rate);
+    // The bow dips when the chain snubs her up.
+    if (ChainCatches != ShownChainCatches)
+    {
+        ShownChainCatches = ChainCatches;
+        ChainJerk = 1.f;
+    }
+    ChainJerk = FMath::FInterpConstantTo(ChainJerk, 0.f, DeltaSeconds, .8f);
+    ChainLinks->ClearInstances();
+    if (ChainOut <= .01f || ChainReach <= 0.f) return;
+    const FVector Hawse = GetHawseWorld();
+    // Where the anchor is: on the bottom once out, on its way down (or up) before.
+    const FVector Bed = AnchorBed;
+    const FVector Below(Hawse.X, Hawse.Y, Bed.Z);
+    const FVector End = ChainOut >= 1.f ? Bed : FMath::Lerp(Hawse, FMath::Lerp(Below, Bed, ChainOut), ChainOut);
+    const float Length = ChainLength() * ChainOut;
+    const float Span = FVector::Dist(Hawse, End);
+    // Slack chain sags into a curve (and lies along the bottom); taut, it runs nearly straight.
+    const float Sag = .5f * FMath::Sqrt(FMath::Max(FMath::Square(Length) - FMath::Square(Span), 0.f)) + 10.f;
+    const int32 Links = FMath::Clamp(int32(Span / 28.f), 2, 400);
+    FVector Last = Hawse;
+    for (int32 k = 1; k <= Links; ++k)
+    {
+        const float T = float(k) / Links;
+        FVector P = FMath::Lerp(Hawse, End, T) - FVector(0, 0, Sag * 4.f * T * (1.f - T));
+        P.Z = FMath::Max(P.Z, Bed.Z + 4.f);
+        const FVector Mid = (Last + P) / 2.f;
+        const FVector Along = P - Last;
+        // Each link a short iron bar, alternate ones turned a quarter, about 4 cm thick.
+        const FRotator Turn = FRotationMatrix::MakeFromZ(Along.GetSafeNormal()).Rotator() + FRotator(0, 0, k % 2 ? 90.f : 0.f);
+        ChainLinks->AddInstance(FTransform(Turn, Mid, FVector(.05f, .03f, FMath::Max(Along.Size(), 1.f) / 100.f)), true);
+        Last = P;
+    }
 }
 
 bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
@@ -1362,11 +1470,12 @@ float AEWShip::GetFittedSailFraction() const
 
 float AEWShip::ComputeTargetSpeed() const
 {
-    if (!Definition || bAnchored || bSwamped || SailState == EEWSailState::Furled) return 0.f;
+    // At anchor the sails still drive her: the chain, not the anchor, stops her (StepSimulation).
+    if (!Definition || bSwamped || SailState == EEWSailState::Furled) return 0.f;
     const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
     // Paddlers set their own pace whatever the wind, with no sails to fill.
     if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
-    return Definition->TopSpeed * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
+    return Definition->TopSpeed * SailingPace * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
 }
 
 void AEWShip::SimulateSailing(float DeltaSeconds)
@@ -1466,6 +1575,27 @@ void AEWShip::StepSimulation(float Step)
     RudderAngle = FMath::FInterpConstantTo(RudderAngle, Rudder, Step, RudderRate);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
+    if (bAnchored && ChainReach > 0.f)
+    {
+        // The chain's pull: free while there is slack, slowing her over the last of it, holding her once taut.
+        const FVector Away = (GetHawseWorld() - AnchorBed).GetSafeNormal2D();
+        const float Range = FVector::Dist2D(GetHawseWorld(), AnchorBed);
+        const bool bOpening = FVector::DotProduct(GetActorForwardVector(), Away) > 0.f;
+        const float Free = ChainReach * (1.f - ChainTensionShare);
+        if (bOpening && Range > Free)
+        {
+            const float Tension = FMath::Clamp((Range - Free) / (ChainReach - Free), 0.f, 1.f);
+            // Her speed allowed falls with the tension, down to a slow creep that takes up the last of the slack (tuning).
+            Speed = FMath::Min(Speed, FMath::Max((Definition->TopSpeed > 0.f ? Definition->TopSpeed : 600.f) * .5f * (1.f - Tension), 30.f));
+            if (Tension >= 1.f) Speed = 0.f;
+        }
+        if (!bChainTaut && Range >= ChainReach * .97f)
+        {
+            bChainTaut = true;
+            ++ChainCatches;   // snubbed up: the clank, and her bow dips
+        }
+        else if (bChainTaut && Range < ChainReach * .9f) bChainTaut = false;
+    }
     // The swell rocks every ship, moving or not; under sail it also leans to leeward, more with more wind in the
     // sails. Movement follows the heading alone, never the roll or pitch.
     if (!bHasRestZ) { RestZ = GetActorLocation().Z; bHasRestZ = true; }
@@ -1476,6 +1606,7 @@ void AEWShip::StepSimulation(float Step)
     Heel = FMath::FInterpConstantTo(Heel, WantedHeel, Step, 2.f);
     float Roll, Pitch, Rise;
     GetSwayAt(SwayTime, Roll, Pitch, Rise);
+    Pitch -= 1.5f * ChainJerk * FMath::Sin(ChainJerk * PI);   // the bow dips as the chain snubs her up
     const float Yaw = GetActorRotation().Yaw;
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
     if (Speed <= 1.f && (bAnchored || FMath::IsNearlyZero(Rudder)))
@@ -1525,6 +1656,7 @@ void AEWShip::Tick(float DeltaSeconds)
         ShowSailTrim();
     }
     if (GetNetMode() != NM_DedicatedServer && SailLooks.Num()) ShowSailFill(DeltaSeconds);
+    ShowChain(DeltaSeconds);
     if (!HasAuthority())
     {
         SmoothClientMotion(DeltaSeconds);

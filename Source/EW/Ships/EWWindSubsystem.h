@@ -46,7 +46,8 @@ public:
      * running straight downwind, falling smoothly to MinUpwindFactor heading straight into the wind (tuning).
      */
     float GetHeadingFactor(const FVector& ShipForward) const;
-    static constexpr float MinUpwindFactor = .3f;
+    /** Owner, October 16: crossings were too slow, so the worst point of sail keeps 45% of top speed (was 30%). */
+    static constexpr float MinUpwindFactor = .45f;
 
     /** Called by the replicated wind state as it arrives on a client. */
     void SetState(AEWWindState* InState) { State = InState; }

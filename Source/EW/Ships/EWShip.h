@@ -170,6 +170,32 @@ public:
     bool SetAnchored(AEWCharacter* Character, bool bNewAnchored);
     /** Tuning: how hard a dropped anchor slows the ship, in cm/s per second. */
     static constexpr float AnchorDrag = 500.f;
+    /** The anchor's chain (owner, October 16: a ship at anchor that is pushed on moves at first, takes up the chain's
+     *  slack, then the chain goes taut with a clank and slows her to a stop). Where the anchor lies on the bottom,
+     *  how far the bow may range from it before the chain is taut, how many times it has come taut, and whether it
+     *  is taut now. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    FVector GetAnchorBed() const { return AnchorBed; }
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    float GetChainReach() const { return ChainReach; }
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    int32 GetChainCatches() const { return ChainCatches; }
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    bool IsChainTaut() const { return bChainTaut; }
+    /** Where the chain leaves the bow (the hawse), in the world. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    FVector GetHawseWorld() const;
+    /** For the checks: how much of the chain is drawn out (0 stowed, 1 all out), and how many links are drawn. */
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    float GetChainShownOut() const { return ChainOut; }
+    UFUNCTION(BlueprintPure, Category="Ship|Anchor")
+    int32 GetChainLinkCount() const;
+    /** Tuning: the chain's slack is twice the depth under the bow, from 10 m to 40 m; tension starts slowing the ship
+     *  over the last fifth of it. */
+    static constexpr float ChainSlackPerDepth = 2.f;
+    static constexpr float MinChainSlack = 1000.f;
+    static constexpr float MaxChainSlack = 4000.f;
+    static constexpr float ChainTensionShare = .2f;
 
     UFUNCTION(BlueprintPure, Category="Ship|Cargo")
     UEWInventoryComponent* GetCargo() const { return Cargo; }
@@ -276,8 +302,11 @@ public:
 
     /** Simulation and handling tuning. */
     static constexpr float SimulationStep = .05f;
+    /** Owner, October 16: sailing from island to island took too long, so every sailing ship goes this much faster
+     *  than its definition's top speed (the paddled raft keeps its pace). Tuning. */
+    static constexpr float SailingPace = 1.6f;
     static constexpr float MaxCatchUpSeconds = .5f;
-    static constexpr float Acceleration = 150.f;
+    static constexpr float Acceleration = 240.f;   // was 150 before the faster crossings (owner, October 16)
     static constexpr float Deceleration = 250.f;
     /** The rudder bites fully from this speed (cm/s). */
     static constexpr float FullSteerageSpeed = 200.f;
@@ -411,6 +440,26 @@ private:
     TObjectPtr<UStaticMeshComponent> CargoHatchVisual;
     UPROPERTY(Replicated)
     bool bAnchored = true;
+    UPROPERTY(Replicated)
+    FVector AnchorBed = FVector::ZeroVector;
+    UPROPERTY(Replicated)
+    float ChainReach = 0.f;
+    UPROPERTY(Replicated)
+    uint8 ChainCatches = 0;
+    UPROPERTY(Replicated)
+    bool bChainTaut = false;
+    /** The bow's dip when the chain snubs her up (degrees, easing back to 0). */
+    float ChainJerk = 0.f;
+    uint8 ShownChainCatches = 0;
+    /** The chain as drawn: how much is out (paying out after a drop, coming in at the capstan), and its links. */
+    float ChainOut = 0.f;
+    bool bShownAnchored = false;
+    UPROPERTY(Transient)
+    TObjectPtr<class UInstancedStaticMeshComponent> ChainLinks;
+    FVector HawseLocal() const;
+    void LayAnchor();
+    void ShowChain(float DeltaSeconds);
+    float ChainLength() const;
     UPROPERTY(ReplicatedUsing=OnRep_CapstanWorker)
     TObjectPtr<AEWCharacter> CapstanWorker;
     /** The worker this machine last told it was at the capstan. */

@@ -179,8 +179,9 @@ STEPS = [
     ('Client sails and steers for 4 s; its copy of the ship rocks on the swell, heels under sail, trails a wake and its wheel turns', begin_steering, steered, 8),
     ('Releasing the rudder centres it; the sails stay set', release_rudder, rudder_centred, 4),
     ('Client leaves the helm; movement and collision return', interact, left_helm, 6),
-    ('Client drops the anchor and the ship comes to a stop', install('Anchor'),
-     lambda: ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1, 8),
+    # Under sail she runs out her chain's slack (up to 40 m) before it snubs her up (owner, October 16).
+    ('Client drops the anchor and the ship comes to a stop, held by her chain', install('Anchor'),
+     lambda: ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1, 45),
 ]
 
 def finish(error=None):

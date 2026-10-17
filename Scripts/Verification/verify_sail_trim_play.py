@@ -166,7 +166,8 @@ def settled_well():
         return False   # the cloth fills over about a second
     state['memo']['fill_well'] = fills
     factor = ship.get_wind_factor()
-    assert factor > state['memo']['factor_before'] * 1.3, f'wind factor {factor} not above {state["memo"]["factor_before"]}'
+    # Trimmed well beats untrimmed by a fifth or more (less than before the higher floor of the faster crossings).
+    assert factor > state['memo']['factor_before'] * 1.2, f'wind factor {factor} not above {state["memo"]["factor_before"]}'
     state['memo'].update(angle_well=round(angle, 1), drawn_yaw=round(drawn, 1), factor_well=round(factor, 3))
     return True
 
@@ -181,7 +182,7 @@ def drawing_badly():
     keys()
     factor = ship.get_wind_factor()
     assert ship.get_trim_quality() < 0.1, f'quality {ship.get_trim_quality()}'
-    assert factor < 0.32, f'wind factor {factor}'
+    assert factor < 0.47, f'wind factor {factor}'   # the floor, 0.45 since the faster crossings
     assert compass().get_trim_advice().startswith('Trim to starboard'), compass().get_trim_advice()
     state['memo'].update(angle_wrong=round(ship.get_sail_angle(), 1), factor_wrong=round(factor, 3))
     return True

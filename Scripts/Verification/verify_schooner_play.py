@@ -238,6 +238,8 @@ STEPS = [
     ('The schooner sails for 4 s and the client copy keeps up', begin_run, ran, 8),
     ('Client leaves the helm', leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),
     ('Client drops the anchor', go('Anchor'), lambda: ship.is_anchored() and peer.is_anchored(), 6),
+    # Under sail she runs out her chain's slack before it holds her (owner, October 16: the anchor's chain).
+    ('She runs out her chain and stops, held by it', lambda: None, lambda: ship.get_speed() < 1, 45),
     ('Client walks down the hatch stairs to the lower deck', *down, 8),
     ('Client aims at a starboard cannon port from the lower deck', aim_cannon,
      lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon4', 4),

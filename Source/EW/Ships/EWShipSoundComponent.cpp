@@ -11,8 +11,6 @@ namespace
     constexpr float CreakAtRest = .3f, CreakAtSpeed = 1.f, RiggingHalf = .55f, RiggingFull = 1.f, FullSpeed = 800.f;
     // Less water aboard than a moment ago by this much (kg) means a bucket went over the side.
     constexpr float BailDrop = 5.f;
-    // Seconds from letting the anchor go to it catching the bottom (the drop take's chain runs about this long).
-    constexpr float AnchorCatchSeconds = 2.2f;
 }
 
 UEWShipSoundComponent::UEWShipSoundComponent()
@@ -43,20 +41,14 @@ void UEWShipSoundComponent::BeginPlay()
     LastWater = Owner->GetWaterAboard();
     bWasSinking = Owner->IsSinking();
     bWasAnchored = Owner->IsAnchored();
+    LastChainCatches = Owner->GetChainCatches();
 }
 
 void UEWShipSoundComponent::EndPlay(const EEndPlayReason::Type Reason)
 {
     for (UAudioComponent* Loop : {Creak.Get(), Rigging.Get()})
         if (Loop) Loop->Stop();
-    if (UWorld* World = GetWorld()) World->GetTimerManager().ClearTimer(AnchorCatchTimer);
     Super::EndPlay(Reason);
-}
-
-void UEWShipSoundComponent::AnchorCaught()
-{
-    if (const AEWShip* Owner = Ship(); Owner && Owner->IsAnchored())
-        UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorCatch, Owner->GetAnchorPointWorld());
 }
 
 bool UEWShipSoundComponent::AreLoopsPlaying() const
@@ -87,14 +79,13 @@ void UEWShipSoundComponent::TickComponent(float DeltaSeconds, ELevelTick TickTyp
     if (Owner->IsAnchored() != bWasAnchored)
     {
         bWasAnchored = Owner->IsAnchored();
-        FTimerManager& Timers = GetWorld()->GetTimerManager();
-        Timers.ClearTimer(AnchorCatchTimer);
-        if (bWasAnchored)
-        {
-            UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorDrop, Owner->GetAnchorPointWorld());
-            Timers.SetTimer(AnchorCatchTimer, this, &UEWShipSoundComponent::AnchorCaught, AnchorCatchSeconds, false);
-        }
-        else UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorRaise, Owner->GetAnchorPointWorld());
+        UEWSoundLibrary::PlaySoundAt(this, bWasAnchored ? EEWSound::AnchorDrop : EEWSound::AnchorRaise, Owner->GetHawseWorld());
+    }
+    // The chain comes taut and snubs her up (owner, October 16): the clank, where it leaves the bow.
+    if (Owner->GetChainCatches() != LastChainCatches)
+    {
+        LastChainCatches = Owner->GetChainCatches();
+        if (Owner->IsAnchored()) UEWSoundLibrary::PlaySoundAt(this, EEWSound::AnchorCatch, Owner->GetHawseWorld());
     }
 
     const float Water = Owner->GetWaterAboard();

@@ -423,7 +423,8 @@ STEPS = [
     ('Shift with A or D trims the sails to the wind', trim, trimmed, 8),
     ('The sloop sails for 4 s and the client keeps up', lambda: None, sailed, 8),
     ('It leaves the helm', leave_helm, left_helm, 6),
-    ('It drops the anchor and the sloop stops', work('Anchor'), anchored_again, 10),
+    # Under sail she runs out her chain's slack before it snubs her up (owner, October 16).
+    ('It drops the anchor and the sloop stops, held by her chain', work('Anchor'), anchored_again, 45),
     ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 75),
     ('E at the floating body picks it up', to_body, picked_up, 6),
     ('Carried ashore, E sets it down on the beach', ashore, set_down, 6),
