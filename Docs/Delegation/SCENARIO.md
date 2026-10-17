@@ -6,6 +6,8 @@ destination, so whoever runs it gets the same result. **Claude runs the jobs** t
 The owner can also run them in Scenario's web app. ChatGPT and Codex add jobs as `QUEUED` but never spend credits.
 Codex's list is [CODEX.md](CODEX.md); ChatGPT's is [CHATGPT.md](CHATGPT.md).
 
+Jobs run by anyone other than Claude are reported in [INBOX.md](INBOX.md).
+
 ## How jobs are run
 
 - **Account:** team `team_VYLneaunKSxVDcNF5J2w8BA8`, project `proj_UFoVjNUmi5nHcuBHuGuhSKof` (ids only; no keys

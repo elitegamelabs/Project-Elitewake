@@ -8,6 +8,9 @@ Owner, October 16: Claude coordinates Scenario (it calls it directly), ChatGPT a
 suit code, native or Python tests and scripts; **for ChatGPT** suit docs, the art catalogue, research and review;
 unmarked tasks suit either. Take what fits you.
 
+**Report to Claude (owner, October 17):** every claim, finish, blocker or stop gets an entry in
+[Delegation/INBOX.md](Delegation/INBOX.md), pushed to `main`; work left on a local branch is invisible.
+
 **Per-agent lists (October 16):** each agent now has its own file with new tasks and the earlier ones that suit it:
 [Delegation/CODEX.md](Delegation/CODEX.md), [Delegation/CHATGPT.md](Delegation/CHATGPT.md), and the Scenario job queue
 [Delegation/SCENARIO.md](Delegation/SCENARIO.md). New tasks (C1.., G1.., S1..) are claimed in those files; the T-tasks

@@ -4,6 +4,11 @@ Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each
 is **Codex's list**: code, native tests, Python tests and Play-check scripts. ChatGPT's is
 [CHATGPT.md](CHATGPT.md); Scenario's generation queue is [SCENARIO.md](SCENARIO.md).
 
+
+**Report to Claude (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
+[INBOX.md](INBOX.md) and push it with your work to `main`. Work left on a local branch or worktree is invisible to
+Claude and the owner.
+
 ## Before you start
 
 1. `git fetch && git pull --ff-only`. Claude, ChatGPT and the owner all commit to `main`.

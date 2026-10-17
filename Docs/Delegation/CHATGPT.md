@@ -4,6 +4,11 @@ Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each
 is **ChatGPT's list**: design write-ups, research, reference prompt sheets, the art catalogue and reviewing what the
 others built. Codex's list is [CODEX.md](CODEX.md); Scenario's generation queue is [SCENARIO.md](SCENARIO.md).
 
+
+**Report to Claude (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
+[INBOX.md](INBOX.md) and push it with your work to `main`. Work left on a local branch or worktree is invisible to
+Claude and the owner.
+
 ## Before you start
 
 1. `git fetch && git pull --ff-only`. Claude, Codex and the owner all commit to `main`.

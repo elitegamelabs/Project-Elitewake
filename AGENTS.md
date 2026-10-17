@@ -9,6 +9,8 @@ Claude coordinates the AIs on this project and keeps a task list for each: **Cod
 and Scenario generation jobs are queued in [Docs/Delegation/SCENARIO.md](Docs/Delegation/SCENARIO.md) (Claude runs them;
 do not spend Scenario credits yourself). Shared rules, the editor lock and the files Claude is working on are in the header
 of [Docs/DELEGATED_TASKS.md](Docs/DELEGATED_TASKS.md). Claim a task before starting it and record what you verified.
+**Report to Claude** (owner, October 17): every claim, finish, blocker or stop gets an entry in
+[Docs/Delegation/INBOX.md](Docs/Delegation/INBOX.md), pushed to `main` with your work; Claude reads it before each piece of work.
 
 ## Confirmed island and regional foliage requirements (owner, October 15, 2026)
 
