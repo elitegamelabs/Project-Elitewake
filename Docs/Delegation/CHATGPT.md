@@ -91,7 +91,7 @@ Claude and the owner.
   Every item is phrased as a question or a labelled suggestion.
 - **Done when:** the questions are in the file.
 
-### G6. The ship surgeon: a design brief — DONE (ChatGPT, 2026-10-18; delivery hash in INBOX.md)
+### G6. The ship surgeon: a design brief — DONE f339852 (ChatGPT, 2026-10-18)
 - **Why:** owner, October 17: every ship with a walkable deck below the top has an always-present surgeon in the rear
   left corner of the first deck below the top: an operating table, scissors and tools, shelving; 15 copper per
   treatment, restoring 25% of maximum health gradually, with an animation, safe in multiplayer.
@@ -104,7 +104,7 @@ Claude and the owner.
 
 - Delivered: surgeon brief and table/tools concept sheets with prompt/provenance files. Treatment runtime, animation and separate six-view files remain pending.
 
-### G7. Prompt sheets for the railing modules and sail assemblies — DONE (ChatGPT, 2026-10-18; delivery hash in INBOX.md)
+### G7. Prompt sheets for the railing modules and sail assemblies — DONE f339852 (ChatGPT, 2026-10-18)
 - **Why:** owner, October 17: orthographic references (front, back, left, right, top, underside, attachment details)
   for each railing module (plain wooden, dinghy attachment, two-cannon) and the six sail assemblies (small/medium/large
   rectangular draped, small/medium/large triangular weighted).

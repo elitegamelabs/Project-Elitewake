@@ -33,7 +33,7 @@ Entry format:
 
 ### 2026-10-18 ChatGPT — G6/G7 DONE (documentation); visual references PARTIAL
 - What: surgeon design brief, eleven per-asset prompt sheets, eleven generated concept sheets (three railings, six sails, table/tools), provenance/hashes and catalog/index entries. S7 prompts queued; no Scenario credits spent. Current request authorizes built-in images despite older prompt-only wording.
-- Commits / branch: direct art/documentation delivery on main; commit hash follows in the completion record. No branch merge, gameplay code, existing images/icons or Claude-owned implementation files changed.
+- Commits / branch: direct art/documentation delivery on main; delivery commit f339852 (completion/whitespace record follows). No branch merge, gameplay code, existing images/icons or Claude-owned implementation files changed.
 - Verified: all 11 PNGs decode at 1536x1024, SHA-256 matches generation.json; visually reviewed for subjects/materials, empty cannon mounts, no flags/scenery. Existing catalog entries preserved; whitespace check passes. No Unreal/build/Play checks run; no implementation claim.
 - Limits: sheets contain perspective/detail variation; six separate exact orthographic files and deployment states are pending. Generated connector shapes and weighted-hem details are design proposals, not approved engineering.
 - Needs from Claude or the owner: reconcile newer branch decisions with older main docs before implementation (Cavalier comparable to Brigantine, three levels; no sloop captain's quarters; removable masts; no sail flags). G6 needs canonical copper/payment, treatment duration/refunds and the intended first deck clarified. Full findings: Docs/REPORTS/2026-10-18_ChatGPT_Reference_Handoff.md.
