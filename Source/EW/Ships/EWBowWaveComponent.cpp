@@ -8,8 +8,8 @@
 namespace
 {
     // The same flat patch and churned-foam material as the wake trail.
-    const TCHAR* const PatchMesh = TEXT("/Engine/BasicShapes/Plane.Plane");
-    const TCHAR* const PatchMaterial = TEXT("/Game/Elitewake/World/Ships/M_WakeTrail_v1.M_WakeTrail_v1");
+    const TCHAR* const BowPatchMesh = TEXT("/Engine/BasicShapes/Plane.Plane");
+    const TCHAR* const BowPatchMaterial = TEXT("/Game/Elitewake/World/Ships/M_WakeTrail_v1.M_WakeTrail_v1");
     // Tuning: how the bow waves splay from the stem (degrees off the heading), how long they run (beams, at full
     // strength), the side wash's width (cm), how much a turn shifts the wash to the outside, the turn rate (deg/s)
     // that counts as a hard turn, and how fast it all follows her.
@@ -30,8 +30,8 @@ void UEWBowWaveComponent::BeginPlay()
 {
     Super::BeginPlay();
     AEWShip* S = Ship();
-    UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, PatchMesh);
-    UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, PatchMaterial, nullptr, LOAD_Quiet | LOAD_NoWarn);
+    UStaticMesh* Mesh = LoadObject<UStaticMesh>(nullptr, BowPatchMesh);
+    UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, BowPatchMaterial, nullptr, LOAD_Quiet | LOAD_NoWarn);
     if (!S || !Mesh || !Material || GetNetMode() == NM_DedicatedServer)
     {
         SetComponentTickEnabled(false);
