@@ -31,6 +31,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-18 ChatGPT — G1–G5 and remaining non-scenery art CLAIMED
+- What: owner says "do everything": complete remaining ChatGPT design/research/prompt/catalogue tasks and non-scenery reference assets. Existing no-code/no-merge/no-Scenario-credit constraints remain. G8 scenery stays excluded.
+- Scope: G1–G5, T30/T27, documentation portions of T10/T11, reference-only support for T6, and separate ship orthographic/deployment images. Implementation/Unreal checks remain with the coding owner; no approved decision will be invented to unblock art.
+- Verified: main refreshed; previous G6/G7 delivery present. Task-specific evidence and research follow with outputs.
+- Needs: unresolved design choices remain questions, not silently settled by generated art.
+
 ### 2026-10-18 ChatGPT — G6/G7 DONE (documentation); visual references PARTIAL
 - What: surgeon design brief, eleven per-asset prompt sheets, eleven generated concept sheets (three railings, six sails, table/tools), provenance/hashes and catalog/index entries. S7 prompts queued; no Scenario credits spent. Current request authorizes built-in images despite older prompt-only wording.
 - Commits / branch: direct art/documentation delivery on main; delivery commit f339852 (completion/whitespace record follows). No branch merge, gameplay code, existing images/icons or Claude-owned implementation files changed.
