@@ -22,7 +22,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_ship_fittings as fittings  # noqa: E402
-from build_schooner import data_asset, large_sail_item, mount  # noqa: E402
+from build_schooner import RAILING_LENGTH, data_asset, large_sail_item, mount, railing_mounts  # noqa: E402
 from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
@@ -33,8 +33,13 @@ MOORING = (7500.0, -4500.0, -65.0)   # south-east of the island, in deep water c
 T = unreal.EWShipMountType
 L, M, S = unreal.EWSailSize.LARGE, unreal.EWSailSize.MEDIUM, unreal.EWSailSize.SMALL
 
-PORT_XS = tuple(-990.0 + 180.0 * k for k in range(12))
-PORT = (64.0, 115.0, 180.0)          # width, sill and head heights
+# Owner, October 17: six individually crafted permanent circular hull gunports, three a side, each with its own
+# cannon, above the waterline (was twelve square ports a side).
+PORT_XS = (-660.0, 0.0, 660.0)
+PORT = (64.0, 115.0, 180.0)          # width, sill and head heights: a round port 64 cm across
+# Three railing hardpoints a side (owner, October 17): on the quarterdeck, amidships and on the forecastle, clear of
+# the shrouds' channels. (centre x, the deck they stand on.)
+RAILINGS = ((-1120.0, 520.0), (100.0, 300.0), (1180.0, 500.0))
 QUARTERDECK = (-900.0, 220.0)        # front x, rise above the main deck
 FORECASTLE = (1050.0, 200.0)         # back x, rise above the main deck
 CABIN_WINDOWS = (-1000.0, -1130.0, -1260.0)
@@ -44,7 +49,8 @@ HULL = Hull(stern_x=-1500.0, bow_x=1500.0, beam=420.0, keel_z=-230.0,
             sheer_mid=400.0, sheer_rise=120.0, sheer_flat=200.0,
             beam_power=2.6, keel_flat=650.0, keel_power=2.3, full_mid=3.2, full_end=1.7, full_len=600.0,
             strakes=16, wales=(10, 13), tar_line=100.0,
-            gunports=[(x, *PORT) for x in PORT_XS]
+            gunports=[(x, *PORT, 'round') for x in PORT_XS]
+                     + [(x, RAILING_LENGTH, floor + 3, 2000.0, 'gap') for x, floor in RAILINGS]
                      + [(x, 40.0, 400.0, 450.0) for x in CABIN_WINDOWS + FORECASTLE_WINDOWS],
             quarterdeck=QUARTERDECK, forecastle=FORECASTLE)
 DECK_Z, FLOOR_Z = HULL.deck_z, HULL.floor_z
@@ -204,6 +210,7 @@ def update_definition(hull, rig, looks, capstan):
         for k, x in enumerate(PORT_XS):
             y = side * (HULL.inner_y(x, (PORT[1] + PORT[2]) / 2) - 65)
             mounts.append(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90))
+    mounts += railing_mounts(HULL, RAILINGS)
     values = {
         'ship_id': 'Brigantine', 'display_name': 'Brigantine',
         'hull_mesh': hull, 'rigging_mesh': rig, 'hull_mesh_transform': unreal.Transform(),

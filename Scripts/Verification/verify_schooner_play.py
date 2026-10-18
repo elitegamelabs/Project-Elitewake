@@ -101,8 +101,11 @@ def prepare():
     mounts = ship.get_editor_property('definition').get_editor_property('mounts')
     sizes = [m.get_editor_property('sail_size') for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.SAIL]
     assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (1, 2, 3), sizes
-    cannons = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON)
-    assert cannons == 12, cannons
+    # Owner, October 17: hull cannon ports (no parent) and railing hardpoints, each railing opening two cannon places.
+    hull_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) == 'None')
+    railings = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.RAILING)
+    rail_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) != 'None')
+    assert (hull_guns, railings, rail_guns) == (12, 4, 8), (hull_guns, railings, rail_guns)
 
 
 def full_sail():
@@ -223,7 +226,7 @@ def into_cabin():
         return True
     return begin, done
 STEPS = [
-    ('Bare schooner, anchored, with 1 Large, 2 Medium and 3 Small sail mounts and 12 cannon hardpoints', prepare, lambda: True, 2),
+    ('Bare schooner, anchored, with 1 Large, 2 Medium and 3 Small sail mounts, 12 cannon hardpoints and 4 railing hardpoints', prepare, lambda: True, 2),
     ('Client installs a Large sail as the fore topsail', go('ForeTopsail', large),
      lambda: ship.get_fitting('ForeTopsail') == large and peer.get_fitting('ForeTopsail') == large, 6),
     ('Client installs a Medium sail on the mainmast', go('Mainsail', medium),

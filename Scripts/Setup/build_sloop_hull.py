@@ -32,7 +32,7 @@ MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in th
 # No hull gunports (owner, October 17): a railing hardpoint each side amidships instead, where the bulwark is open
 # from the deck up for 3.3 m under the continuous top rail; a railing module (build_railings.py) fills the gap.
 RAILING_X = -140.0
-RAILING_GAP = (RAILING_X, 330.0, 253.0, 2000.0)   # centre x, length, bottom z, top z: cut out of the bulwark
+RAILING_GAP = (RAILING_X, 330.0, 253.0, 2000.0, 'gap')   # centre x, length, bottom z, top z, kind: cut out of the bulwark
 HULL = Hull(stern_x=-700.0, bow_x=700.0,     # about 14 m overall, ends alike
             beam=250.0,                      # 5 m beam
             keel_z=-110.0, deck_z=250.0,

@@ -56,7 +56,7 @@ LOWER, RAISED, BOW = 50.0, DECK + 220.0, DECK + 200.0   # gun deck floor, quarte
 STAND = 98.0                            # capsule half height plus clearance
 # Where to stand, in the ship's frame, to reach each place: (x, y, floor height).
 STANDS = {'ForeCourse': (870, -90, DECK), 'Mainsail': (-620, -90, DECK), 'Helm': (-1110, -110, RAISED),
-          'Anchor': (520, -40, DECK), 'StarboardCannon7': (90, 130, LOWER)}
+          'Anchor': (520, -40, DECK), 'StarboardCannon2': (-10, 130, LOWER)}
 
 
 def local_of(actor, ship_copy=ship):
@@ -104,8 +104,11 @@ def prepare():
     mounts = ship.get_editor_property('definition').get_editor_property('mounts')
     sizes = [m.get_editor_property('sail_size') for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.SAIL]
     assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (4, 0, 2), sizes
-    cannons = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON)
-    assert cannons == 24, cannons
+    # Owner, October 17: hull cannon ports (no parent) and railing hardpoints, each railing opening two cannon places.
+    hull_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) == 'None')
+    railings = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.RAILING)
+    rail_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) != 'None')
+    assert (hull_guns, railings, rail_guns) == (6, 6, 12), (hull_guns, railings, rail_guns)
 
 
 def full_sail():
@@ -195,9 +198,9 @@ def walk(x, y, floor, yaw, until, name):
 
 
 def aim_cannon():
-    place(*STANDS['StarboardCannon7'])
+    place(*STANDS['StarboardCannon2'])
     state['input'] = None
-    state['aim'] = lambda: target('StarboardCannon7')
+    state['aim'] = lambda: target('StarboardCannon2')
 
 
 def climb_ladder():
@@ -267,7 +270,7 @@ def into_cabin():
         return True
     return begin, done
 STEPS = [
-    ('Bare brigantine, anchored, with 4 Large and 2 Small sail mounts and 24 cannon hardpoints', prepare, lambda: True, 2),
+    ('Bare brigantine, anchored, with 4 Large and 2 Small sail mounts, 6 round hull gunports and 6 railing hardpoints', prepare, lambda: True, 2),
     ('Client installs a Large sail as the fore course', go('ForeCourse', large),
      lambda: ship.get_fitting('ForeCourse') == large and peer.get_fitting('ForeCourse') == large, 6),
     ('Client installs a Large sail as the gaff mainsail', go('Mainsail', large),
@@ -286,7 +289,7 @@ STEPS = [
     ('She runs out her chain and stops, held by it', lambda: None, lambda: ship.get_speed() < 1, 45),
     ('Client walks down the hatch stairs to the gun deck', *down, 8),
     ('Client aims at a starboard cannon port from the gun deck', aim_cannon,
-     lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon7', 4),
+     lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon2', 4),
     ('Client walks back up the stairs to the main deck', *up, 8),
     ("Client walks through the doorway into the captain's cabin under the quarterdeck", *into_cabin(), 8),
     ("Client walks through the doorway into the crew's quarters under the forecastle", *into_quarters(), 8),

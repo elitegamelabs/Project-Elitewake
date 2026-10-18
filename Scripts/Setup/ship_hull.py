@@ -50,7 +50,9 @@ class Hull:
     tar_line: float = 75.0      # tar reaches this high above the waterline
     uv_tile: float = 120.0
     station_step: float = 20.0
-    gunports: list = field(default_factory=list)  # (centre x, width, bottom z, top z)
+    # (centre x, width, bottom z, top z[, kind]): kind 'square' (default, framed), 'round' (a framed circular port,
+    # owner, October 17: the brigantine's) or 'gap' (an opening for a railing module, no frame).
+    gunports: list = field(default_factory=list)
     quarterdeck: Optional[tuple] = None           # (front x, rise): a raised aft deck
     forecastle: Optional[tuple] = None            # (back x, rise): a raised deck at the bow
 
@@ -166,11 +168,18 @@ class Hull:
         return (p[2] / self.uv_tile, p[0] / self.uv_tile)
 
     def in_gunport(self, x, z):
-        return any(abs(x - cx) < w / 2 and z0 < z < z1 for cx, w, z0, z1 in self.gunports)
+        for port in self.gunports:
+            cx, w, z0, z1 = port[:4]
+            if len(port) > 4 and port[4] == 'round':
+                if ((x - cx) / (w / 2)) ** 2 + ((z - (z0 + z1) / 2) / ((z1 - z0) / 2)) ** 2 < 1:
+                    return True
+            elif abs(x - cx) < w / 2 and z0 < z < z1:
+                return True
+        return False
 
     def near_gunport(self, x, margin, z0, z1):
         """Whether a timber at x spanning z0..z1 would cross a gunport opening."""
-        return any(abs(x - cx) < w / 2 + margin and lo < z1 and hi > z0 for cx, w, lo, hi in self.gunports)
+        return any(abs(x - p[0]) < p[1] / 2 + margin and p[2] < z1 and p[3] > z0 for p in self.gunports)
 
     # ---- Planking ----------------------------------------------------------------------------------------
 
@@ -386,7 +395,22 @@ class Hull:
                     b.box((x, side * (y + ny * 1.5), z + nz * 1.5), (3.5, 3.5, 3.5), iron=1.0)
 
     def gunport_frames(self, b):
-        for cx, w, z0, z1 in self.gunports:
+        for port in self.gunports:
+            cx, w, z0, z1 = port[:4]
+            kind = port[4] if len(port) > 4 else 'square'
+            if kind == 'gap':
+                continue
+            if kind == 'round':
+                # A thick ring of timber round the port, in twelve segments.
+                zc, r = (z0 + z1) / 2, w / 2 + 5
+                for side in (1, -1):
+                    y_out = self.half_beam(cx) + 2
+                    y_in = self.inner_y(cx, zc) - 2
+                    yc, depth = side * (y_out + y_in) / 2, y_out - y_in + 4
+                    for k in range(12):
+                        a = 2 * math.pi * (k + .5) / 12
+                        b.box((cx + r * math.cos(a), yc, zc + r * math.sin(a)), (11 if abs(math.sin(a)) > .5 else 9, depth, 11 if abs(math.cos(a)) > .5 else 9))
+                continue
             for side in (1, -1):
                 y_out = self.half_beam(cx) + 2
                 y_in = self.inner_y(cx, (z0 + z1) / 2) - 2

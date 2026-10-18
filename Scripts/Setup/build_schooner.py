@@ -36,6 +36,11 @@ T = unreal.EWShipMountType
 PORT_XS = (-480.0, -280.0, -80.0, 120.0, 320.0, 520.0)
 PORT = (56.0, 105.0, 160.0)          # width, sill and head heights
 QUARTERDECK = (-560.0, 220.0)        # front x, rise above the main deck: standing room in the cabin under it
+# Railing hardpoints (owner, October 17: the schooner has four, two a side): (centre x, the deck they stand on), on the
+# main deck clear of the shrouds' channels and the quarterdeck's step. Her lower-deck gunports stay.
+RAILINGS = ((-330.0, 300.0), (230.0, 300.0))
+RAILING_LENGTH = 330.0               # the opening in the bulwark a railing module fills (build_railings.LENGTH)
+RAILING_HEIGHT = 66.0                # the module's built height (build_railings.HEIGHT); scaled to each bulwark
 # The captain's cabin under the raised aft deck: lights (windows) in the hull sides, a doorway and two windows in
 # its front, a skylight grating in the deck above, and beams overhead clear of the skylight.
 CABIN_WINDOWS = (-660.0, -770.0, -880.0)
@@ -49,7 +54,8 @@ HULL = Hull(stern_x=-1100.0, bow_x=1100.0, beam=330.0, keel_z=-170.0,
             beam_power=2.1, keel_flat=450.0, keel_power=2.2, full_mid=2.9, full_end=1.5, full_len=350.0,
             strakes=14, wales=(9, 12), tar_line=95.0,
             gunports=[(x, PORT[0], PORT[1], PORT[2]) for x in PORT_XS]
-                     + [(x, *CABIN_WINDOW) for x in CABIN_WINDOWS],
+                     + [(x, *CABIN_WINDOW) for x in CABIN_WINDOWS]
+                     + [(x, RAILING_LENGTH, floor + 3, 2000.0, 'gap') for x, floor in RAILINGS],
             quarterdeck=QUARTERDECK)
 DECK_Z, FLOOR_Z, QD_Z = HULL.deck_z, HULL.floor_z, HULL.deck_z + QUARTERDECK[1]
 UV_TILE = HULL.uv_tile
@@ -242,6 +248,28 @@ def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, look=N
     return m
 
 
+def railing_mounts(hull, rails):
+    """Railing hardpoints along both sides at `rails` ((x, deck z) each), every module scaled to its bulwark's
+    height, and behind each the two cannon places a two-cannon railing opens (owner, October 17)."""
+    out = []
+    for side, name in ((-1, 'Port'), (1, 'Starboard')):
+        for n, (x, floor) in enumerate(rails):
+            rail = f'{name}Railing{n + 1}'
+            m = unreal.EWShipMount()
+            m.set_editor_property('mount_id', rail)
+            m.set_editor_property('type', T.RAILING)
+            tall = max(.8, (hull.sheer(x) - floor - 2) / RAILING_HEIGHT)
+            m.set_editor_property('transform', unreal.Transform(location=unreal.Vector(x, side * (hull.half_beam(x) - 6), floor),
+                                                                rotation=unreal.Rotator(0, 0, side * 90), scale=unreal.Vector(1, 1, tall)))
+            out.append(m)
+            for k, dx in enumerate((80.0, -80.0)):
+                c = mount(f'{name}Rail{n + 1}Cannon{k + 1}', T.CANNON, (x + dx, side * (hull.inner_y(x + dx, floor + 40) - 45), floor + 40), yaw=side * 90)
+                c.set_editor_property('parent_mount', rail)
+                c.set_editor_property('parent_slot', k + 1)
+                out.append(c)
+    return out
+
+
 def update_definition(hull, rig, looks, capstan):
     d = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Schooner', unreal.EWShipDefinition)
     sizes = {'ForeTopsail': unreal.EWSailSize.LARGE, 'Mainsail': unreal.EWSailSize.MEDIUM, 'MizzenSail': unreal.EWSailSize.MEDIUM,
@@ -253,6 +281,7 @@ def update_definition(hull, rig, looks, capstan):
         for k, x in enumerate(PORT_XS):
             y = side * (HULL.inner_y(x, (PORT[1] + PORT[2]) / 2) - 60)
             mounts.append(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90))
+    mounts += railing_mounts(HULL, RAILINGS)
     values = {
         'ship_id': 'Schooner', 'display_name': 'Schooner',
         'hull_mesh': hull, 'rigging_mesh': rig, 'hull_mesh_transform': unreal.Transform(),
