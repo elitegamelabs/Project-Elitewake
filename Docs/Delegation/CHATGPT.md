@@ -23,7 +23,7 @@ Claude and the owner.
 
 ## New tasks (October 16)
 
-### G1. Attack and voice matrix for every animal — OPEN
+### G1. Attack and voice matrix for every animal — CLAIMED (ChatGPT, 2026-10-18)
 - **Why:** owner milestone "Species-appropriate attacks and vocalizations" (`Docs/MILESTONES.md`,
   [ANIMAL_ATTACK_AUDIO_AND_REGIONAL_WILDLIFE_PROPOSAL](../ANIMAL_ATTACK_AUDIO_AND_REGIONAL_WILDLIFE_PROPOSAL_2026-10-16.md)):
   bites and growls only where the species really bites or growls, and the right alternative for the rest.
@@ -38,7 +38,7 @@ Claude and the owner.
   be wrong.
 - **Done when:** the matrix covers every animal and links from the animal requirements document.
 
-### G2. Reconcile the wildlife roster documents for the owner — OPEN
+### G2. Reconcile the wildlife roster documents for the owner — CLAIMED (ChatGPT, 2026-10-18)
 - **Why:** the October 16 wildlife documents disagree.
   - [APPROVED_BEAR_ELEPHANT_GIANT_CROCODILE_LION_WILDLIFE](../APPROVED_BEAR_ELEPHANT_GIANT_CROCODILE_LION_WILDLIFE_2026-10-16.md)
     places elephants in the Central Plains.
@@ -51,7 +51,7 @@ Claude and the owner.
   documents, except to add a "superseded by" note where the correction already says so.
 - **Done when:** one clear roster table and its questions are in the open-questions file.
 
-### G3. Spider design brief — OPEN
+### G3. Spider design brief — CLAIMED (ChatGPT, 2026-10-18)
 - **Why:** owner milestone "Spiders in every cave and Southern Swamp", with full movement, bite, hit, death and web
   animations and synchronised sounds
   ([ELEPHANT_DESTRUCTION_WILDLIFE_ROAMING_AND_SPIDER_MILESTONES](../ELEPHANT_DESTRUCTION_WILDLIFE_ROAMING_AND_SPIDER_MILESTONES_2026-10-16.md)).
@@ -68,7 +68,7 @@ Claude and the owner.
 - **Done when:** the brief exists, its open questions are in `Docs/OPEN_QUESTIONS_2026-10-15.md`, and the sound jobs
   are queued.
 
-### G4. Six-view prompt sheets for the four new animals — OPEN
+### G4. Six-view prompt sheets for the four new animals — CLAIMED (ChatGPT, 2026-10-18)
 - **Why:** each animal needs six consistent views (front, back, left, right, top, underside), per
   [the animal requirements](../../Art/Animals/ANIMAL_MODEL_ANIMATION_AUDIO_REQUIREMENTS_2026-10-16.md) and
   `Art/Reference/README.md`.
@@ -79,7 +79,7 @@ Claude and the owner.
 - **Done when:** the four prompt sheets exist and `Art/Reference/README.md` lists them as "prompts written, images
   pending".
 
-### G5. Elephant knock-down rules for the owner — OPEN
+### G5. Elephant knock-down rules for the owner — CLAIMED (ChatGPT, 2026-10-18)
 - **Why:** owner milestone "Tropical elephant obstacle destruction": elephants push down trees and "appropriate
   obstacles", and protect critical structures. Codex is building the falling-tree half (CODEX.md C1).
 - **Do:** a short proposal in `Docs/OPEN_QUESTIONS_2026-10-15.md` covering:
