@@ -22,6 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+from set_coastal_ocean_depth import apply_depth  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 MESHES = '/Game/Elitewake/World/Meshes/Islands'
@@ -135,8 +136,24 @@ def make_material():
                    ' float3 hardpan = lerp(float3(.62, .5, .37), float3(.36, .28, .2), crack);'
                    ' float3 dune = C * lerp(.9, 1.06, ripple) * lerp(1, .82, step(.86, speck));'
                    ' c = lerp(c, lerp(dune, hardpan, pan), d * up);'
+                   # Under the sea (owner, October 17: deeper sand, dynamic sea-floor scenery): sand in wave ripples
+                   # with shell grit in the shallows, fine grey-green silt as it deepens, bare rock on steep faces,
+                   # and the sun's caustics drifting over the shallows (brightening the lit sand, so gone at night).
+                   ' float depth = -65.0 - P.z;'
+                   ' float sub = saturate((depth - 120.0) / 400.0), silty = saturate((depth - 2500.0) / 20000.0);'
+                   ' float wave = sin(dot(P.xy, float2(.042, .019)) + g.n2(P.xy / 180.0) * 5.0) * .5 + .5;'
+                   ' float3 sandy = C * lerp(.8, 1.08, wave) * lerp(.9, 1.05, mid);'
+                   ' sandy = lerp(sandy, float3(.72, .68, .6), step(.9, speck) * .55);'
+                   ' float3 silt = lerp(float3(.25, .26, .22), float3(.17, .19, .18), big) * lerp(.9, 1.1, fine);'
+                   ' float3 rock = lerp(float3(.16, .15, .14), float3(.27, .25, .21), mid) * lerp(.8, 1.1, fine);'
+                   ' float3 bed = lerp(lerp(sandy, silt, silty), rock, saturate((.78 - N.z) * 5.0));'
+                   ' float2 q = P.xy / 260.0; float t = T * .5;'
+                   ' float k = abs(sin(q.x * 1.7 + sin(q.y * 1.3 + t) + t * .7) * sin(q.y * 1.9 + sin(q.x * 1.1 - t * .8)));'
+                   ' k = pow(saturate(1.0 - k), 7.0) + pow(saturate(1.0 - abs(sin(q.x * 2.3 - q.y * 1.4 + t * 1.3))), 9.0) * .5;'
+                   ' bed *= 1.0 + k * .9 * saturate(1.0 - depth / 2500.0);'
+                   ' c = lerp(c, bed, sub);'
                    ' float3 snow = float3(.8, .84, .9) * lerp(.9, 1.05, fine) * lerp(.94, 1.02, big);'
-                   ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'A', 'P', 'N'))
+                   ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'A', 'P', 'N', 'T'))
     # Roughness: the Swamp's mud glistens, with glossy puddles in its hollows; the Desert is bone dry.
     snow_rough = custom('struct G { ' + noise + ' }; G g;'
                         ' float up = saturate((P.z + 45.0) / 60.0);' + regions +
@@ -146,6 +163,7 @@ def make_material():
                         ' return lerp(r, .97, d * up);',
                         unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('R', 'V', 'A', 'P'))
     link(colour, snowy, 'C'); link(paint, snowy, 'V'); link(position, snowy, 'P'); link(normal, snowy, 'N')
+    link(node(unreal.MaterialExpressionTime), snowy, 'T')
     link(rough, snow_rough, 'R'); link(paint, snow_rough, 'V'); link(position, snow_rough, 'P')
     link(paint, snowy, 'A', 'A'); link(paint, snow_rough, 'A', 'A')   # the vertex colour's alpha: the region
     assert mel.connect_material_property(snowy, '', unreal.MaterialProperty.MP_BASE_COLOR)
@@ -267,14 +285,29 @@ def build_swash(island, material):
     return actor
 
 
+FLOOR_SPACING = 5000.0   # the sea floor mesh's grid, cm: fine enough for its canyons, ridges and sand waves
+FLOOR_TUCK = 400.0       # how far it sinks under an island's own finer mesh, cm, so the two never flicker
+
+
 def sea_floor_height(x, y):
     """The sea floor mesh's height: the sea floor everywhere, but held 15 m under the sea wherever an island's land
-    is, so its coarse 200 m grid never pokes up through the land (or into a cave) of the bigger islands; each
-    island's own mesh carries the ground there."""
+    is, so its coarser grid never pokes up through the land (or into a cave) of the bigger islands, and tucked a
+    little under each island's own mesh where that carries the ground."""
     h = height(x, y)
     if any(i.distance(x, y) < 0 for i in W.ISLANDS if abs(x - i.cx) < i.reach() + 1 and abs(y - i.cy) < i.reach() + 1):
         h = min(h, SEA - 1500.0)
+    for cx, cy, reach in FINE_PATCHES:
+        inset = min(reach - abs(x - cx), reach - abs(y - cy))
+        if inset > 0:
+            h -= FLOOR_TUCK * min(1.0, inset / FLOOR_SPACING)
+            break
     return h
+
+
+# Where a finer mesh carries the ground over the coarse floor: each island's, and each seamount's (its own 5 m mesh,
+# so its rock and flat top read up close; a dive spot).
+SEAMOUNT_SPACING = 500.0
+FINE_PATCHES = [(i.cx, i.cy, i.reach() + T.SHELF) for i in W.ISLANDS] + [(mx, my, r * 2) for mx, my, _, r in T.SEAMOUNT_SITES]
 
 
 def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True, height=height):
@@ -338,7 +371,7 @@ for island in W.ISLANDS:
 
 # The sea floor between the islands, over the whole world and a margin.
 x0, x1, y0, y1 = W.bounds(3000 * 100)
-floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, 20000.0, material, colour=False,
+floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, FLOOR_SPACING, material,
                                       height=sea_floor_height)
 floor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
 floor.set_actor_label('Sea floor')
@@ -347,6 +380,15 @@ floor.static_mesh_component.set_static_mesh(floor_asset)
 floor.static_mesh_component.set_cast_shadow(False)
 terrains.append(floor)
 report['sea_floor'] = {'vertices': floor_verts, 'size_km': [round((x1 - x0) / 100000, 1), round((y1 - y0) / 100000, 1)]}
+report['seamounts'] = []
+for n, (mx, my, top, r) in enumerate(T.SEAMOUNT_SITES):
+    asset, verts = ground_mesh(f'{MESHES}/SM_Seamount_{n + 1}_v1', mx - 2 * r, mx + 2 * r, my - 2 * r, my + 2 * r, SEAMOUNT_SPACING, material)
+    actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+    actor.set_actor_label(f'Seamount {n + 1}')
+    actor.set_folder_path('World/Islands')
+    actor.static_mesh_component.set_static_mesh(asset)
+    terrains.append(actor)
+    report['seamounts'].append({'centre_m': [round(mx / 100), round(my / 100)], 'top_m': round(top / 100, 1), 'vertices': verts})
 
 # Keep the fixed places on the ground (the starter island did not change).
 start = next(a for a in actors.get_all_level_actors() if isinstance(a, unreal.PlayerStart))
@@ -372,7 +414,7 @@ for terrain in terrains:
 ocean = next(a for a in all_actors if isinstance(a, unreal.WaterBodyOcean))
 oc = ocean.get_water_body_component()
 oc.set_editor_property('ocean_extents', unreal.Vector2D(half * 2, half * 2))
-oc.set_editor_property('collision_extents', unreal.Vector(half, half, 10000))
+oc.set_editor_property('collision_extents', unreal.Vector(half, half, SEA - T.DEEP + 5000))
 SEA_MATERIAL = '/Game/Elitewake/World/Water/MI_CoastalOcean_v1'
 sea = unreal.load_asset(SEA_MATERIAL)
 if sea:
@@ -383,6 +425,9 @@ for label in ('Coastal ocean swimming volume', 'Coastal seabed'):
     sc = thing.get_actor_scale3d()
     thing.set_actor_scale3d(unreal.Vector(sc.x * half / extent.x, sc.y * half / extent.y, sc.z))
     thing.set_actor_location(unreal.Vector(0, 0, thing.get_actor_location().z), False, False)
+# The swimming volume reaches down to the deepest floor, and the old flat seabed lies just under it as a backstop.
+report['ocean_depth'] = apply_depth(next(a for a in all_actors if a.get_actor_label() == 'Coastal ocean swimming volume'),
+                                    next(a for a in all_actors if a.get_actor_label() == 'Coastal seabed'), SEA)
 report['sea_half_extent_km'] = round(half / 100000, 1)
 report['ocean'] = unreal.EWWorldEditorLibrary.rebuild_water_body(ocean)
 report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {

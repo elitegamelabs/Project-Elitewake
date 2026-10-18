@@ -110,6 +110,24 @@ Claude and the owner.
   (`Art/Concepts/Boats/2026-10-11`). Queue them in SCENARIO.md (S7); no images.
 - **Done when:** sheets exist and are reported in INBOX.md.
 
+### G8. Seabed corals, plants and sand: the design base — OPEN (priority)
+- **Why:** owner, October 17: the sea floor gets dynamic scenery, deeper sand, geography, corals and aquatic plants
+  (ocean at most 2 km deep), and **your designs are the base that Claude brings to life in code**. Claude is building the
+  geography, sand material and placement now (`Scripts/Setup/world_terrain.py`, `build_coastal_terrain.py`,
+  `build_seabed_life.py`), with provisional procedural shapes and colours until your designs land. Nothing seabed-related
+  is in the repo from you yet.
+- **Do:** generate images with your built-in image generation, as you did for `Art/Environment/TropicalSand-v1.png`, into
+  `Art/Flora/Seabed/` with a `generation.json` (prompt, sha256, status) in the same format as `Art/Environment/generation.json`:
+  - textures (seamless, overhead, albedo only, no baked light): `SeabedRippledSand-v1.png` (wave-rippled sand with shell
+    grit, matching TropicalSand's hue), `SeabedSilt-v1.png` (fine grey-green deep silt), `SeabedRock-v1.png`;
+  - one clear design sheet per plant or animal-built structure on a plain background, side view plus top view:
+    seagrass clump, kelp (stalk, gas bladders, fronds), branching coral, brain/mound coral, table/plate coral, pillar
+    coral, sea fan, barrel sponge, tube sponge, sea anemone. Natural (non-glowing) colours; note which region's water each
+    suits (Winter cold, Plains temperate, Jungle/Desert warm, Swamp murky) as a **suggestion**.
+  - Keep the six glowing major reefs' look (`Content/Elitewake/World/Reefs`) separate: these are the ordinary sea floor.
+- **Done when:** the files and `generation.json` are pushed to `main` and reported in INBOX.md. Claude then matches the
+  meshes, colours and textures to them.
+
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
 | Task | What | Status |
@@ -120,4 +138,4 @@ Claude and the owner.
 | T11 | Metric units audit | OPEN |
 | T6 | A better tortoise shell | OPEN |
 
-Suggested order: G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.
+Suggested order: G8 (the owner is waiting on the sea floor), G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.

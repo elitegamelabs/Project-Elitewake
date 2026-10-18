@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import unreal
 
-OCEAN_MAX_DEPTH_METERS = 500.0
+OCEAN_MAX_DEPTH_METERS = 2000.0  # owner, October 17: the ocean at most 2,000 m deep
 
 def apply_depth(volume, bed, surface_z):
     depth = OCEAN_MAX_DEPTH_METERS * 100.0  # Unreal centimeters.
@@ -14,7 +14,7 @@ def apply_depth(volume, bed, surface_z):
     center, extent = volume.get_actor_bounds(False)
     delta = unreal.Vector(-center.x, -center.y, surface_z - depth / 2 - center.z)
     volume.set_actor_location(volume.get_actor_location() + delta, False, False)
-    # Keep the existing seabed thickness; its upper face is exactly 500 m below water.
+    # Keep the existing seabed thickness; its upper face is exactly the maximum depth below water.
     center, extent = bed.get_actor_bounds(False)
     assert extent.z > 0, 'Seabed has no thickness'
     bed.set_actor_location(bed.get_actor_location() + unreal.Vector(0, 0,
@@ -40,7 +40,7 @@ def main():
     assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
     result.update(success=True, limits='Prototype flat deep seabed; regional bathymetry remains unbuilt')
     Path(unreal.Paths.project_saved_dir(), 'CoastalOceanDepthResult.json').write_text(json.dumps(result,indent=2))
-    unreal.log('Saved coastal maximum ocean depth: 500 meters')
+    unreal.log(f'Saved coastal maximum ocean depth: {OCEAN_MAX_DEPTH_METERS:.0f} meters')
 
 if __name__ == '__main__':
     main()

@@ -11,7 +11,7 @@ stop them. DECIDED (delegated):
     queue for non-Nanite meshes; Nanite also streams their detail. The fallback mesh (what collision and the
     dressing scripts' ground traces use) keeps every triangle, so nothing moves or floats.
   - No hardware ray tracing for foliage: the trees and their LODs, the gatherable plants, the grass and the Jungle's
-    understory. Ray tracing kept a copy of all of them resident in video memory; Lumen still lights them through
+    understory, and the sea floor's plants and corals. Ray tracing kept a copy of all of them resident in video memory; Lumen still lights them through
     its software path, which at their size looks the same.
 Writes Saved/TuneRenderingResult.json.
 """
@@ -20,8 +20,9 @@ from pathlib import Path
 import unreal
 
 NANITE = ['/Game/Elitewake/World/Meshes/Islands', '/Game/Elitewake/World/Rocks', '/Game/Elitewake/World/Landmarks',
-          '/Game/Elitewake/World/Caves', '/Game/Elitewake/World/Ports', '/Game/Elitewake/World/Flora']
-NO_RAY_TRACING = ['/Game/Elitewake/World/Flora', '/Game/Elitewake/World/Grass']
+          '/Game/Elitewake/World/Caves', '/Game/Elitewake/World/Ports', '/Game/Elitewake/World/Flora',
+          '/Game/Elitewake/World/Seabed']
+NO_RAY_TRACING = ['/Game/Elitewake/World/Flora', '/Game/Elitewake/World/Grass', '/Game/Elitewake/World/Seabed']
 
 
 def meshes(folder):

@@ -11,8 +11,10 @@ October 14-15):
     (the sea fills them).
 Some islands (by a hash of their name, so it is stable) have a cliff section where the land rises steeply straight
 from a narrow beach (owner: cliffs on selected islands in every region). Offshore, a sandy shelf falls away to the
-sea floor, about 60 m deep between islands and down to 500 m only in the open-sea basins far from any shore (owner:
-500 m in selected deep areas). All heights are tuning. Units: Unreal centimetres; the sea surface is at -65.
+sea floor: a slope cut by canyons down to basins a few hundred metres deep between the islands, ridges and sand waves
+across them, shallow seamounts to dive on, and the open ocean round the archipelago falling to 2 km, the deepest
+anywhere, with one trench reaching it between the islands (owner, October 17: dynamic sea-floor scenery and
+geography, the ocean at most 2,000 m deep). All heights are tuning. Units: Unreal centimetres; the sea surface is at -65.
 """
 import math
 import random
@@ -20,8 +22,8 @@ import random
 import world_layout as W
 
 SEA = -65.0
-FLOOR = -6000.0          # the sea floor between islands
-DEEP = -50000.0          # the deepest basins (owner: 500 m)
+FLOOR = -6000.0          # the foot of an island's shelf, 60 m down
+DEEP = SEA - 200000.0    # the deepest sea anywhere (owner, October 17: at most 2,000 m)
 SHELF = 20000.0          # how far an island's own terrain reaches past its shore (cm)
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
@@ -243,32 +245,169 @@ def island_land(i, x, y, inland):
     return h
 
 
-def floor_at(x, y, nearest_gap):
-    """The sea floor between islands: 60 m deep, falling to 500 m only well out in the open sea."""
-    far = min(1.0, max(0.0, (nearest_gap - 90000) / 60000))
-    far = far * far * (3 - 2 * far)
-    return FLOOR + (DEEP - FLOOR) * far
+# ---- The open sea floor ----------------------------------------------------------------------------------------
+# DECIDED (delegated; owner, October 17: dynamic sea-floor scenery, deeper sand, geography, the ocean at most 2 km).
+# Past an island's shelf the floor falls away down a slope cut by canyons, deeper the farther from any shore: a few
+# hundred metres in the middle of the channels between islands, the full 2 km only in the open ocean round the
+# archipelago and in one trench. Ridges cross the basins, long sand waves cover their floors, and seamounts rise to
+# within diving depth. Every size here is tuning.
+OPEN_SEA = 250000.0               # cm from the nearest shore where the open ocean reaches its full depth
+SLOPE_START = 15000.0             # cm offshore where the floor starts to fall from the shelf's foot
+CANYONS = 38000.0                 # cm of shoreline per canyon down an island's slope
+SEAMOUNTS = 7
+SEAMOUNT_TOPS = (1000.0, 2800.0)  # cm under the surface: within diving depth, under any keel
+TRENCH_HALF_WIDTH = 30000.0
+
+
+def _hash(ix, iy, seed):
+    h = (ix * 374761393 + iy * 668265263 + seed * 2147483647) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    return ((h ^ (h >> 16)) & 0xFFFF) / 65535.0
+
+
+def noise(x, y, scale, seed):
+    """Smooth value noise, 0-1, with features about `scale` cm across (turned by its seed, so it has no grain)."""
+    a = seed * 2.39996
+    c, s = math.cos(a), math.sin(a)
+    qx, qy = (x * c - y * s) / scale + seed * 17.3, (x * s + y * c) / scale - seed * 9.1
+    ix, iy = math.floor(qx), math.floor(qy)
+    fx, fy = qx - ix, qy - iy
+    fx, fy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    a, b = _hash(ix, iy, seed), _hash(ix + 1, iy, seed)
+    c, d = _hash(ix, iy + 1, seed), _hash(ix + 1, iy + 1, seed)
+    return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy
+
+
+def _smooth(t):
+    t = min(1.0, max(0.0, t))
+    return t * t * (3 - 2 * t)
+
+
+def _shore_gap(x, y):
+    return min(i.distance(x, y) for i in W.ISLANDS)
+
+
+def _between_islands(x, y, within=150000):
+    """Open water with shores on more than one side: at least three islands within `within` cm."""
+    return sum(1 for i in W.ISLANDS if i.distance(x, y) < within) >= 3
+
+
+def _seamounts():
+    """Where the seamounts stand: the most open water between the islands, well apart and clear of the trench
+    (stable, by a fixed seed)."""
+    x0, x1, y0, y1 = W.bounds(0)
+    rng = random.Random(1717)
+    spots = []
+    for gx in range(int(x0), int(x1), 25000):
+        for gy in range(int(y0), int(y1), 25000):
+            x, y = gx + rng.uniform(-8000, 8000), gy + rng.uniform(-8000, 8000)
+            g = _shore_gap(x, y)
+            if g > 35000 and _between_islands(x, y) and _trench_weight(x, y) == 0 and math.hypot(x - TRENCH[0][0], y - TRENCH[0][1]) > 80000:
+                spots.append((g + rng.uniform(0, 15000), x, y))
+    spots.sort(reverse=True)
+    out = []
+    for _, x, y in spots:
+        if all(math.hypot(x - m[0], y - m[1]) > 200000 for m in out):
+            out.append((x, y, rng.uniform(*SEAMOUNT_TOPS), rng.uniform(16000, 26000)))
+        if len(out) == SEAMOUNTS:
+            break
+    return out
+
+
+def _trench():
+    """The trench: from the widest open water among the islands straight out to the open ocean."""
+    x0, x1, y0, y1 = W.bounds(0)
+    best = None
+    for gx in range(int(x0) + 100000, int(x1) - 100000, 20000):
+        for gy in range(int(y0) + 100000, int(y1) - 100000, 20000):
+            g = _shore_gap(gx, gy)
+            if (best is None or g > best[0]) and _between_islands(gx, gy):
+                best = (g, gx, gy)
+    _, sx, sy = best
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    dx, dy = sx - cx, sy - cy
+    n = math.hypot(dx, dy) or 1.0
+    reach = max(x1 - x0, y1 - y0)
+    return (sx, sy), (sx + dx / n * reach, sy + dy / n * reach)
+
+
+TRENCH = _trench()
+
+
+def _trench_weight(x, y):
+    (ax, ay), (bx, by) = TRENCH
+    vx, vy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((x - ax) * vx + (y - ay) * vy) / (vx * vx + vy * vy)))
+    wander = (noise(x, y, 90000, 61) - .5) * 40000
+    across = math.hypot(x - ax - vx * t, y - ay - vy * t) + wander
+    # It opens from nothing at its head over its first 300 m.
+    head = _smooth(t * math.hypot(vx, vy) / 30000)
+    return head * _smooth(1 - abs(across) / TRENCH_HALF_WIDTH)
+
+
+SEAMOUNT_SITES = _seamounts()
+
+
+def floor_at(x, y, nearest_gap, nearest=None):
+    """The sea floor away from the shelves: slope, canyons, basins, ridges, sand waves, seamounts and the trench."""
+    g = nearest_gap
+    # The slope from the shelf's foot down to the open ocean's 2 km.
+    fall = _smooth((g - SLOPE_START) / (OPEN_SEA - SLOPE_START)) ** 1.25
+    depth = (SEA - FLOOR) + (SEA - DEEP - (SEA - FLOOR)) * fall
+    # Basins and rises: the depth itself wanders by up to 15 %.
+    depth *= .85 + .3 * (noise(x, y, 120000, 7) * .75 + noise(x, y, 40000, 8) * .25)
+    # Canyons cut down the slope off each island, a few hundred metres apart round its shore.
+    if nearest is not None and SLOPE_START < g < 110000:
+        a = math.atan2(y - nearest.cy, x - nearest.cx)
+        count = max(5, round(2 * math.pi * nearest.reach() / CANYONS))
+        phase = _hash(len(nearest.key), ord(nearest.key[0]), 5) * 6.283
+        groove = (.5 + .5 * math.cos(a * count + phase + (noise(x, y, 30000, 9) - .5) * 2.5)) ** 8
+        band = _smooth((g - SLOPE_START) / 15000) * _smooth((110000 - g) / 40000)
+        depth += groove * band * min(depth * .6, 9000)
+    # Ridges across the deep floor, standing up to a quarter of the depth.
+    warp = (noise(x, y, 50000, 24) - .5) * 60000
+    ridge = 1 - abs(2 * (noise(x + warp, y - warp, 70000, 23) * .7 + noise(x, y, 23000, 29) * .3) - 1)
+    depth -= ridge ** 3 * depth * .25 * _smooth((g - 40000) / 40000)
+    # Sand waves: long low dunes on the floor, crests a few metres high.
+    swell = math.sin((x * .8 + y * .6) / 4000 + noise(x, y, 40000, 31) * 5)
+    depth -= (1.5 + swell) * 150 * _smooth((g - SLOPE_START) / 20000)
+    z = SEA - depth
+    # The trench, down to the deepest water, never cutting into a shelf.
+    trench = _trench_weight(x, y)
+    if trench > 0:
+        z = z + (DEEP - z) * trench * _smooth((g - 30000) / 40000)
+    # Seamounts: steep cones with rounded tops a diver can reach.
+    for mx, my, top, radius in SEAMOUNT_SITES:
+        d = math.hypot(x - mx, y - my)
+        if d < radius * 2.0:
+            # A little past 1 at the middle, so every top is flat at its depth whatever the noise does.
+            rise = math.exp(-(d / radius) ** 2 * 2.2) * 1.12 * (1 + .12 * (noise(x, y, 6000, 41) - .5))
+            z = max(z, z + ((SEA - top) - z) * min(1.0, rise))
+            # Rock: knobs and ledges over its flanks and top, a metre or two.
+            if rise > .02:
+                z += (noise(x, y, 1400, 43) - .5) * 350 * min(1.0, rise * 3) + (noise(x, y, 450, 44) - .5) * 120 * min(1.0, rise * 3)
+    return max(DEEP, min(z, SEA - 600))
 
 
 def height_raw(x, y):
     """Ground (or sea floor) height in cm at (x, y), before the caves' notches."""
-    best, nearest = None, 1e18
+    best, nearest, closest = None, 1e18, None
     for i in W.ISLANDS:
-        dx, dy = x - i.cx, y - i.cy
-        if abs(dx) > i.reach() + SHELF + 60000 or abs(dy) > i.reach() + SHELF + 60000:
-            nearest = min(nearest, math.hypot(dx, dy) - i.reach())
-            continue
         d = i.distance(x, y)
-        nearest = min(nearest, d)
+        if d < nearest:
+            nearest, closest = d, i
+        if d > SHELF * 1.5:
+            continue
         ripple = 30 * math.sin(x / 700 + 0.5) * math.sin(y / 900 + 1.1) + 15 * math.sin((x + y) / 330)
         if d > 0:
-            h = seabed(d) + ripple
+            # Past the shelf the island's own slope gives way to the open sea floor (floor_at).
+            h = seabed(d) + ripple - max(0.0, d - SHELF) * 2
         elif i.key == 'Starter':
             h = starter_ground(i, x, y, d, ripple)
         else:
             h = island_land(i, x, y, -d)
         best = h if best is None else max(best, h)
-    floor = floor_at(x, y, nearest)
+    floor = floor_at(x, y, nearest, closest)
     return floor if best is None else max(best, floor)
 
 
