@@ -49,7 +49,7 @@ struct FEWHullHole
 };
 
 UENUM(BlueprintType)
-enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull };
+enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull, NeedsRailing, RailingHoldsCannons };
 
 /** How much sail is set. The helmsman steps between these, and trims the sails to the wind separately. */
 UENUM(BlueprintType)
@@ -275,6 +275,10 @@ public:
      *  sign which side the belly is blown to. 0 for a furled sail or none. Every machine works it out for itself. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetSailFill(FName MountId) const { return SailFill.FindRef(MountId); }
+    /** Whether a mount is there to use: always, unless it belongs to a railing module (FEWShipMount::ParentMount),
+     *  when the module fitted on that railing must open its place (UEWItemDefinition::FittingCannonSlots). */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    bool IsMountOpen(FName MountId) const;
     /** True when the ship is moved by sails (not paddled) and so has sails to trim. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     bool HasTrimmableSails() const;

@@ -69,6 +69,7 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
         // The helmsman needs only the anchor: their sails and wheel are already in hand.
         if (!bOutside && !bHelmsman) for (const FEWShipMount& Mount : Def->Mounts)
         {
+            if (!Ship->IsMountOpen(Mount.MountId)) continue;   // a railing's cannon place with no cannon railing fitted
             const FVector Where = Ship->GetMountWorldTransform(Mount.MountId).GetLocation();
             const UEWItemDefinition* Installed = Ship->GetFitting(Mount.MountId);
             const bool bThis = Aimed == Mount.MountId;
@@ -96,6 +97,16 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
             else if (Mount.Type == EEWShipMountType::Cannon && !Installed && FVector::Dist(Here, Where) < Range * .5f)
             {
                 Add(Where, TEXT("Cannon port"), MarkerEmpty * FLinearColor(1, 1, 1, .7f), bThis, false);
+            }
+            else if (Mount.Type == EEWShipMountType::Railing)
+            {
+                // The railing hardpoints along her sides (owner, October 17): what is fitted, or what may be.
+                if (Installed) Add(Where, Installed->DisplayName.ToString(), MarkerFitted, bThis, false);
+                else
+                {
+                    const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
+                    Add(Where, bFits ? TEXT("Fit the railing here") : TEXT("Railing hardpoint"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                }
             }
         }
         Add(Ship->GetAnchorPointWorld() + FVector(0, 0, 40), Ship->IsAnchored() ? TEXT("Anchor (down) - raise") : TEXT("Anchor (up) - drop"),

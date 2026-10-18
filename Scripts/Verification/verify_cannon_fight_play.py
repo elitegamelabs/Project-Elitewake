@@ -19,7 +19,8 @@ import unreal
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'CannonFightPlayResult.json')
-SLOOP_GUN, SCHOONER_GUN = 'StarboardCannon', 'PortCannon1'
+# The sloop's cannon stands behind a two-cannon railing at her railing hardpoint (owner, October 17: no hull gunports).
+SLOOP_GUN, SLOOP_RAILING, SCHOONER_GUN = 'StarboardCannon1', 'StarboardRailing', 'PortCannon1'
 worlds = lib.get_play_worlds()
 assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
 pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
@@ -88,6 +89,7 @@ def grant_and_place():
     for who, shots in ((owner, 6), (host, 14)):
         inv = who.get_inventory_component()
         assert inv.add_item(cannon, 1) == 1 and inv.add_item(shot, shots) == shots
+    assert owner.get_inventory_component().add_item(unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestRailingTwoCannon'), 1) == 1
     for name, n in (('DA_TestStone', 20), ('DA_TestWood', 30), ('DA_TestFiber', 15)):
         sloop.get_cargo().add_item(unreal.load_asset(f'/Game/Elitewake/Items/Testing/{name}'), n)
     # The schooner parallel to the sloop, 40 m off her starboard side: her port side faces the sloop.
@@ -108,6 +110,16 @@ def fit(ship, peer, mount, controller, who, people):
         keep_aim()
         assert lib.send_verification_interaction_request(controller, peer), 'the interaction request was refused'
     return begin
+
+
+def fit_railing():
+    """Stand by the railing's first cannon place, look at the railing hardpoint and press Interact."""
+    stand_at(sloop, SLOOP_GUN, (owner, pawn))
+    target = lambda: sloop.get_mount_world_transform(SLOOP_RAILING).translation + unreal.Vector(0, 0, 40)
+    state['aims'] = {(client, pawn): target, (owner.get_controller(), owner): target}
+    keep_aim()
+    assert not sloop.is_mount_open(SLOOP_GUN), 'a cannon place is open with no cannon railing fitted'
+    assert lib.send_verification_interaction_request(client, sloop_peer), 'the interaction request was refused'
 
 
 def fitted(ship, peer, mount):
@@ -193,6 +205,8 @@ def sunk():
 
 STEPS = [
     ('Cannons, shot and cargo granted in Play only; the schooner lies 40 m off the sloop\'s starboard side', grant_and_place, lambda: True, 2),
+    ('The client fits a two-cannon railing at the starboard railing hardpoint of the sloop', fit_railing,
+     lambda: sloop.is_mount_open(SLOOP_GUN) and sloop_peer.is_mount_open(SLOOP_GUN), 6),
     ('The client fits a cannon at the sloop\'s starboard hardpoint', fit(sloop, sloop_peer, SLOOP_GUN, client, owner, (owner, pawn)),
      fitted(sloop, sloop_peer, SLOOP_GUN), 6),
     ('...and mans it', fit(sloop, sloop_peer, SLOOP_GUN, client, owner, (owner, pawn)), manned(sloop, SLOOP_GUN, owner), 6),

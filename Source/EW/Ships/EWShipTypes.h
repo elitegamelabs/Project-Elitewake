@@ -8,7 +8,7 @@ class UStaticMesh;
 
 /** What a ship mount accepts. None marks an item that is not a ship fitting. */
 UENUM(BlueprintType)
-enum class EEWShipMountType : uint8 { None, Helm, Sail, Cannon, Utility };
+enum class EEWShipMountType : uint8 { None, Helm, Sail, Cannon, Utility, Railing };
 
 /** Sail mounts accept only their own size. */
 UENUM(BlueprintType)
@@ -41,6 +41,13 @@ struct FEWShipMount
     /** Relative to the mount; used with FittedMesh. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
     FTransform FittedMeshTransform;
+    /** A place that only exists with a module on another mount (owner, October 17: a two-cannon railing module opens
+     *  two cannon places behind it): that railing mount, and which of its module's cannon places this is (1-based).
+     *  None: always open. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
+    FName ParentMount;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
+    int32 ParentSlot = 0;
 };
 
 /** One installed fitting. Replicated as part of the ship's fitting list. */

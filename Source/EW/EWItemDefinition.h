@@ -130,6 +130,9 @@ public:
     /** Sails only: the mount size this sail fits. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     EEWSailSize FittingSailSize = EEWSailSize::None;
+    /** Railing modules only: how many cannon places the module opens behind it (0 plain or dinghy, 2 two-cannon). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
+    int32 FittingCannonSlots = 0;
     /** Shown on the ship while installed, attached at the mount. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     TSoftObjectPtr<UStaticMesh> FittingMesh;

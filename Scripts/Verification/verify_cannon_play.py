@@ -4,7 +4,8 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 Scripts/Setup/build_cannon.py. Run unattended with run_play_check.py.
 
 Through ordinary owned requests and keys, the client:
-  1. fits a cannon (test fitting granted in Play only) at the sloop's starboard hardpoint;
+  1. fits a two-cannon railing at the sloop's starboard railing hardpoint (owner, October 17: she has no hull
+     gunports), which opens two cannon places, and a cannon (test fittings granted in Play only) in the first;
   2. holds Interact at it to man it: it stands behind the carriage, riding the ship, on both machines;
   3. carrying round shot, sees the cannon load itself within its loading time, one shot leaving the inventory;
   4. aims with the view: the barrel follows on the client, clamped to the port's arc on the server;
@@ -20,7 +21,9 @@ import unreal
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'CannonPlayResult.json')
-MOUNT = 'StarboardCannon'
+# The sloop has no hull gunports (owner, October 17): her cannons stand behind a two-cannon railing module fitted at
+# a railing hardpoint, which opens two cannon places.
+MOUNT, RAILING = 'StarboardCannon1', 'StarboardRailing'
 worlds = lib.get_play_worlds()
 assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
 pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
@@ -38,8 +41,8 @@ owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_wo
 ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)
             if str(s.get_editor_property('definition').get_editor_property('ship_id')) == 'Sloop')
 peer = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWShip) if s.get_name() == ship.get_name())
-cannon, shot = (unreal.load_asset(f'/Game/Elitewake/Items/Testing/{n}') for n in ('DA_TestCannon', 'DA_TestRoundShot'))
-assert cannon and shot, 'Run Scripts/Setup/build_cannon.py first.'
+cannon, shot, railing = (unreal.load_asset(f'/Game/Elitewake/Items/Testing/{n}') for n in ('DA_TestCannon', 'DA_TestRoundShot', 'DA_TestRailingTwoCannon'))
+assert cannon and shot and railing, 'Run Scripts/Setup/build_cannon.py and build_railings.py first.'
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -59,8 +62,30 @@ def keep_aim():
         controller.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, state['aim']()))
 
 
-def mount_world():
-    return ship.get_mount_world_transform(MOUNT).translation
+def mount_world(which=None):
+    return ship.get_mount_world_transform(which or MOUNT).translation
+
+
+def railing_world():
+    return mount_world(RAILING) + unreal.Vector(0, 0, 40)
+
+
+def interact_at_railing():
+    """On deck inboard of the railing hardpoint, looking at it, and hold Interact."""
+    local = ship.get_actor_transform().inverse_transform_location(mount_world(RAILING))
+    spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + 60, local.y * .35, ship.get_deck_height() + 98))
+    for p in (owner, pawn):
+        assert p.teleport(spot, ship.get_actor_rotation())
+        p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
+    state['aim'] = railing_world
+    keep_aim()
+    assert not ship.is_mount_open(MOUNT), 'the cannon place is open with no cannon railing fitted'
+    assert lib.send_verification_interaction_request(client, peer)
+
+
+def railing_fitted():
+    return (ship.get_fitting(RAILING) == railing and peer.get_fitting(RAILING) == railing and ship.is_mount_open(MOUNT)
+            and peer.is_mount_open(MOUNT))
 
 
 def interact_at_mount():
@@ -78,7 +103,7 @@ def interact_at_mount():
 def grant():
     assert not ship.get_installed_fittings(), 'the sloop must start bare'
     inventory = owner.get_inventory_component()
-    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3
+    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3 and inventory.add_item(railing, 1) == 1
     state['memo']['shot_start'] = count(owner, shot)
 
 
@@ -188,8 +213,9 @@ def left():
 
 
 STEPS = [
-    ('A cannon and 3 round shot, granted in Play only; the sloop starts bare', grant, lambda: True, 2),
-    ('The client fits the cannon at the starboard hardpoint; server and client agree', interact_at_mount, fitted, 6),
+    ('A two-cannon railing, a cannon and 3 round shot, granted in Play only; the sloop starts bare', grant, lambda: True, 2),
+    ('The client fits the two-cannon railing at the starboard railing hardpoint: its two cannon places open', interact_at_railing, railing_fitted, 6),
+    ('The client fits the cannon in the first place behind the railing; server and client agree', interact_at_mount, fitted, 6),
     ('It holds Interact at the cannon to man it, standing behind the carriage and riding the ship on both machines', interact_at_mount, manned, 6),
     ('Carrying round shot, the cannon loads itself in its loading time, taking one shot', lambda: None, loaded, 10),
     ('The view aims it: the server and the client\'s barrel follow', aim, aimed, 5),

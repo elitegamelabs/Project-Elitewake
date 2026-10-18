@@ -438,6 +438,9 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - **Do:** point the check at the ships test map (its header, and how it finds the sloop, the schooner and the
   survivors, as `verify_cannon_fight_play.py` does there), keeping its three checks and result file. Skip survivors
   with no PlayerState when matching the client's survivor. Do not change gameplay code.
+- **Also (October 17):** the sloop has no hull gunports now: her cannon places `StarboardCannon1/2` open only with a
+  two-cannon railing (`DA_TestRailingTwoCannon`) fitted at `StarboardRailing`; fit it first, as
+  `verify_cannon_play.py` does.
 - **Done when:** it passes on the ships test map with run_play_check.py and VERIFICATION's hull row says where.
 
 ### T25. Measure a packaged game's frame rate on the bigger world — OPEN

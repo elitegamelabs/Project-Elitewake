@@ -503,6 +503,15 @@ void AEWShip::ShowSailFill(float DeltaSeconds)
     }
 }
 
+bool AEWShip::IsMountOpen(FName MountId) const
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!Mount) return false;
+    if (Mount->ParentMount.IsNone()) return true;
+    const UEWItemDefinition* Module = GetFitting(Mount->ParentMount);
+    return Module && Module->FittingCannonSlots >= Mount->ParentSlot;
+}
+
 UEWItemDefinition* AEWShip::GetFitting(FName MountId) const
 {
     const FEWInstalledFitting* Found = Fittings.FindByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
@@ -950,6 +959,7 @@ EEWFittingResult AEWShip::InstallFitting(AEWCharacter* Character, FName MountId)
     if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return EEWFittingResult::NoMount;
+    if (!IsMountOpen(MountId)) return EEWFittingResult::NeedsRailing;
     if (GetFitting(MountId)) return EEWFittingResult::Occupied;
     UEWItemDefinition* Item = FindCarriedFitting(Character, *Mount);
     if (!Item) return EEWFittingResult::NoFitting;
@@ -971,6 +981,10 @@ EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
     if (Definition && Definition->IsBuiltIn(MountId)) return EEWFittingResult::NotAllowed;
     if (Helmsman && Fittings[Index].Item && Fittings[Index].Item->FittingMountType == EEWShipMountType::Helm)
         return EEWFittingResult::Occupied;
+    // A railing comes off only once the cannons in its places are out.
+    if (Definition)
+        for (const FEWShipMount& Child : Definition->Mounts)
+            if (Child.ParentMount == MountId && GetFitting(Child.MountId)) return EEWFittingResult::RailingHoldsCannons;
     TGuardValue<bool> Guard(bChangingFittings, true);
     // The fitting stays on the ship unless the inventory accepts it.
     if (Character->GetInventoryComponent()->AddItem(Fittings[Index].Item, 1) != 1) return EEWFittingResult::InventoryFull;
@@ -991,7 +1005,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
-    if (!Mount) return false;
+    if (!Mount || !IsMountOpen(MountId)) return false;
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
     {
         // An installed helm is taken and a cannon manned, not removed; removing them is a Builder's Plan action.

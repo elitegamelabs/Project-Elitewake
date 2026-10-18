@@ -3,7 +3,7 @@ Safe to run again. Run in the editor, outside Play, with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
 A bare double-ended hull in weathered oak: the stern mirrors the bow, both sweeping up in a deep curve to a post.
-Planked sides with seams and two wales, a tarred bottom, low bulwarks with a rail and posts, one gunport each side. A flat deck
+Planked sides with seams and two wales, a tarred bottom, low bulwarks with a rail and posts, a railing hardpoint each side. A flat deck
 has a cargo hatch with a coaming and stairs down into a cramped hold of ribs, floorboards, deck beams and a post.
 A boarding ladder centred on the stern, a capstan near the bow, the mast and bowsprit are part of the hull, as are the
 working details of a real vessel: channels with deadeyes and chainplates for the shrouds, a pin rail at the mast,
@@ -29,13 +29,16 @@ DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Sloop'
 CAPSTAN_HEAD = '/Game/Elitewake/World/Ships/SM_CapstanHead_v1'
 MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 
-GUNPORT = (-140.0, 48.0, 268.0, 306.0)  # centre x, width, bottom z, top z: in the bulwark
+# No hull gunports (owner, October 17): a railing hardpoint each side amidships instead, where the bulwark is open
+# from the deck up for 3.3 m under the continuous top rail; a railing module (build_railings.py) fills the gap.
+RAILING_X = -140.0
+RAILING_GAP = (RAILING_X, 330.0, 253.0, 2000.0)   # centre x, length, bottom z, top z: cut out of the bulwark
 HULL = Hull(stern_x=-700.0, bow_x=700.0,     # about 14 m overall, ends alike
             beam=250.0,                      # 5 m beam
             keel_z=-110.0, deck_z=250.0,
             floor_z=30.0,                    # hold floor top, above the swell
             sheer_mid=315.0, sheer_rise=115.0,
-            gunports=[GUNPORT])
+            gunports=[RAILING_GAP])
 STERN_X, BOW_X, BEAM, KEEL_Z, DECK_Z, FLOOR_Z = HULL.stern_x, HULL.bow_x, HULL.beam, HULL.keel_z, HULL.deck_z, HULL.floor_z
 UV_TILE = HULL.uv_tile
 HATCH = (-280.0, -40.0, 50.0)  # hatch opening: aft x, forward x, half-width
@@ -68,7 +71,6 @@ def hull_mesh():
     h.ribs(b, FRAMES, FLOOR_Z, DECK_Z - h.deck_thick - 10)
     h.bulwark_posts(b, range(-630, 640, 90))
     h.stairs(b, HATCH[0] + 5, HATCH[1] - 5, DECK_Z, FLOOR_Z, 10)  # down from the hatch; the mast stands forward of them
-    h.gunport_frames(b)
     h.studs(b, FRAMES)
     h.stern_ladder(b, STERN_LADDER)
     h.capstan(b, *CAPSTAN, DECK_Z)
@@ -104,11 +106,13 @@ def capstan_head(timber):
     return write_static_mesh(b, CAPSTAN_HEAD, [timber], UV_TILE, collision=False)
 
 
-def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE):
+def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, parent='', slot=0):
     m = unreal.EWShipMount()
     m.set_editor_property('mount_id', mount_id)
     m.set_editor_property('type', kind)
     m.set_editor_property('sail_size', sail)
+    m.set_editor_property('parent_mount', parent)
+    m.set_editor_property('parent_slot', slot)
     m.set_editor_property('transform', unreal.Transform(location=unreal.Vector(*location), rotation=unreal.Rotator(0, 0, yaw)))
     return m
 
@@ -137,9 +141,12 @@ def update_definition(hull, rig, capstan):
             mount('Helm', t.HELM, (-520, 0, DECK_Z + 50)),
             mount('Mainsail', t.SAIL, (MAST_X, 0, DECK_Z + 50), sail=unreal.EWSailSize.MEDIUM),
             mount('Headsail', t.SAIL, (560, 0, DECK_Z + 50), sail=unreal.EWSailSize.SMALL),
-            mount('PortCannon', t.CANNON, (GUNPORT[0], -(deck_y(GUNPORT[0]) - 45), DECK_Z + 40), yaw=-90),
-            mount('StarboardCannon', t.CANNON, (GUNPORT[0], deck_y(GUNPORT[0]) - 45, DECK_Z + 40), yaw=90),
-        ],
+            # The railing hardpoints, and behind each the two cannon places a two-cannon railing opens.
+            mount('PortRailing', t.RAILING, (RAILING_X, -(HULL.half_beam(RAILING_X) - 6), DECK_Z), yaw=-90),
+            mount('StarboardRailing', t.RAILING, (RAILING_X, HULL.half_beam(RAILING_X) - 6, DECK_Z), yaw=90),
+        ] + [mount(f'{name}Cannon{k + 1}', t.CANNON, (RAILING_X + dx, side * (deck_y(RAILING_X + dx) - 45), DECK_Z + 40),
+                   yaw=side * 90, parent=f'{name}Railing', slot=k + 1)
+             for name, side in (('Port', -1), ('Starboard', 1)) for k, dx in enumerate((80.0, -80.0))],
     }
     for k, v in values.items():
         definition.set_editor_property(k, v)
