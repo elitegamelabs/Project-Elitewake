@@ -22,6 +22,20 @@ Claude and the owner.
    native test, with the result recorded in `Docs/VERIFICATION.md`.
 5. Do not invent balance values: working numbers are *tuning*; anything the owner has not decided stays TBD.
 
+## Owner-approved expansion: 40 islands and wildlife (October 18, 2026)
+
+### C-WORLD40. Expand world from 26 to 40 islands — OPEN (Codex/Claude coordination required)
+- **Owner directive:** exactly **8 islands in each of five regions**: Plains (Starter + Plains2–8), Winter1–8, Swamp1–8, Desert1–8, Jungle1–8. The 40-island wildlife specification is [WILDLIFE_DISTRIBUTION_26_ISLANDS.md](../WILDLIFE_DISTRIBUTION_26_ISLANDS.md) (legacy filename, **40-island content**). Owner approved this as the target and explicitly requests Claude/Codex implementation.
+- **Preserve all 26 original islands and their existing locations, shapes, ports, placed structures, wildlife and saves**. Current `Scripts/Setup/world_layout.py` uses one seeded sequential RNG loop; **do not merely change counts** because it can reshuffle later regions. Snapshot baseline island records and append 14 deterministically generated new islands with stable keys. Maintain nearest-shore separation rules, regional orientation, starter safe beach/dock/pond/sloop and one port per region. Flag any impossible geometry/spacing constraints rather than silently changing the world scale.
+- Audit every consumer of island count and island keys: terrain setup, water/ocean and nav, maps and discovery persistence, spawn generation, ports, save migration, multiplayer/world replication, milestones. Implement in small tested stages; coordinate with Claude before touching Claude-owned world or animal placement scripts.
+- **Verify:** Python layout check: 40 unique islands, 8 per region, original 26 unchanged by key and coordinates/geometry, nearest-neighbor constraints; then Unreal Engine **5.8.3** native/Play checks and multiplayer/saved discovery regression; record in `Docs/VERIFICATION.md`. Mark CLAIMED/DONE and report in `Docs/Delegation/INBOX.md`.
+
+### C-WILDLIFE40. Implement approved per-island animal additions — OPEN (after C-WORLD40 baseline)
+- **Owner directive:** follow every row in [40-island wildlife distribution](../WILDLIFE_DISTRIBUTION_26_ISLANDS.md), including the 14 new islands. **Additive only**: preserve every existing animal spawn, behavior, taming food, level, home-island assignment and safe area. The table's wildlife are additional habitat-based populations, not replacement/exhaustive lists.
+- First enumerate actual creature registry, spawn data, animal levels and island placements; reconcile with design guide (~60 estimate, count unverified) and flag missing creature assets or ambiguities. Do not fabricate implemented species or use provisional Plains species as proof of existing assets.
+- Use biome-specific spawn rules and density tuning for land/cave/freshwater/coast/reef/open ocean; keep wild spiders cave-only/no wild jumping and tamed jump/climb rules, approved water aggro and port safety. Coordinate with existing C2 animal-island roaming task and Claude's animal placement work. Ensure wildlife stays on its assigned island.
+- **Verify:** baseline existing spawns unchanged, 40 island distribution checks, creature coverage audit, no dangerous spawns in safe areas, no aquatic creatures on land, native/Play and multiplayer checks in Unreal **5.8.3**; log in `Docs/VERIFICATION.md`, report to INBOX. If missing assets block a species, mark explicitly pending instead of claiming it spawned.
+
 ## New tasks (October 16)
 
 ### C1. Trees that fall and stay to be chopped — OPEN
