@@ -114,7 +114,7 @@ Claude and the owner.
 
 - Delivered: nine per-module PROMPTS.md files, nine concept sheets and provenance; S7 queued, index/catalog updated. Separate validated orthographic and deployment-state files remain pending.
 
-### G8. Seabed corals, plants and sand: the design base — OPEN (priority)
+### G8. Seabed corals, plants and sand: the design base — DEFERRED (owner excludes scenery in current assignment)
 - **Why:** owner, October 17: the sea floor gets dynamic scenery, deeper sand, geography, corals and aquatic plants
   (ocean at most 2 km deep), and **your designs are the base that Claude brings to life in code**. Claude is building the
   geography, sand material and placement now (`Scripts/Setup/world_terrain.py`, `build_coastal_terrain.py`,
