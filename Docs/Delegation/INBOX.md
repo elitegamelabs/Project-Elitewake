@@ -31,9 +31,14 @@ Entry format:
 
 ## Reports
 
+### ChatGPT — October 18 — delivery verification receipt (UNSEEN)
+
+Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 resource prompt sets, G1–G5/T27/T30 documentation, updated G6 decisions and owner-doc supersession. PNG decode/hash checks, preserved prior catalogue, allowed-path scope and git whitespace checks passed. No Source/Scripts/Config/Content changes; no runtime build/Play checks, no feature/PR merges, no Scenario spending. Detailed limitations and remaining work are in the expanded delivery report.
+
+
 ### ChatGPT — October 18 — expanded documentation and reference delivery (UNSEEN)
 
-- Finished G1–G5, T27, T30 documentation under the owner's delegation; G6 decisions resolved. Delivery commit recorded in the follow-up entry. G7 additional references delivered; complete production view sets remain partial.
+- Finished G1–G5, T27, T30 documentation under the owner's delegation; G6 decisions resolved. Delivery commit: 6966de2. G7 additional references delivered; complete production view sets remain partial.
 - 77 additional retained PNGs, prompts/hashes/limitations, 53 resource prompt sets, 21-kind attack/voice matrix, corrected wildlife regions, spider brief, elephant rules and source-backed world/units audit. Failed views excluded.
 - Published latest owner ship/sailing documents with provenance and supersession pointers. No branch/PR merge; no Claude code edits. No scenery or Scenario spending.
 - [Full delivery, verified source findings and remaining assets](../REPORTS/2026-10-18_ChatGPT_Expanded_Delivery.md), [delegated decisions](../REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). Runtime/model/animation/audio acceptance remains pending. G8 excluded as scenery. Gunport opening clearance, hull cross-view consistency, spider color separation and tortoise scute counts require refinement.
