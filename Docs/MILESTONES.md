@@ -193,3 +193,10 @@ Work takes the first ⏳ item of the earliest unfinished milestone that is not b
 | **Art reference coverage** | ⏳ | Generate coherent orthographic views (front/back/left/right/top/underside and attachment/corner details) for each railing module and applicable ship assets; distinct deck-layout, sail, cannon, gunport, flag-damage and surgeon-station references. Confirm each image against specifications before use; reference images are not integrated game assets. |
 
 **Implementation sequence:** audit current ships and their assets first; reconcile with latest owner decisions, then implement one independently testable system at a time, preserving current gameplay. Record Unreal Play and multiplayer verification in `Docs/VERIFICATION.md`; do not mark complete without evidence.
+
+## Owner requests — October 17, 2026 (later)
+
+| Milestone | Status | Evidence / acceptance |
+|---|---|---|
+| **Placement highlight** — every placeable item shows a blue highlight where it can be placed, red where it cannot, normal once placed. | 🔨 ship fittings ✅ `8a3df15`; Build Mode placeables when Build Mode exists | `verify_placement_preview_play` (5): blue at a fitting mount, red at a wrong-size mount and at a closed cannon place, normal once installed; screenshots `Saved/Screenshots/Placement` |
+| **The ocean floor** — dynamic seabed scenery: deeper sand, varied geography, corals and aquatic plants; the ocean at most 2,000 m deep (owner, October 17; was 500 m). | ⏳ Claude, next | Seabed landforms across the world, sand, coral and plant dressing, depth to 2 km at most, verified in Play underwater and from a ship |
