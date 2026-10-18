@@ -19,7 +19,7 @@ import unreal
 HERE = Path(__file__).resolve().parent
 RESULT = Path(unreal.Paths.project_saved_dir(), 'WorldRebuildResult.json')
 STEPS = ['build_coastal_terrain', 'build_caves', 'build_cave_webs', 'build_landmarks', 'build_grass', 'build_coastal_flora',
-         'build_coastal_rocks', 'build_fish', 'place_animals', 'build_regions', 'build_ports', 'restore_sloop']
+         'build_coastal_rocks', 'build_fish', 'place_animals', 'build_regions', 'build_ports', 'restore_sloop', 'tune_rendering']
 
 
 def main():
