@@ -7,6 +7,7 @@
 #include "Wildlife/EWAnimal.h"
 #include "EWObjectiveComponent.h"
 #include "EWSoundscapeComponent.h"
+#include "EWPlacementPreviewComponent.h"
 #include "EWCompanyComponent.h"
 #include "EWContainerWidget.h"
 #include "Ships/EWShip.h"
@@ -51,6 +52,7 @@ AEWPlayerController::AEWPlayerController()
     ObjectiveComponent = CreateDefaultSubobject<UEWObjectiveComponent>(TEXT("Objectives"));
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
     SoundscapeComponent = CreateDefaultSubobject<UEWSoundscapeComponent>(TEXT("Soundscape"));
+    PlacementPreview = CreateDefaultSubobject<UEWPlacementPreviewComponent>(TEXT("PlacementPreview"));
 }
 
 void AEWPlayerController::OnPossess(APawn* InPawn)

@@ -31,6 +31,7 @@ class UEWHitMarkerWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
 class UEWSoundscapeComponent;
+class UEWPlacementPreviewComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -78,8 +79,12 @@ public:
     TObjectPtr<UEWObjectiveComponent> ObjectiveComponent;
     /** The surf, wind and seabirds this player hears. */
     UFUNCTION(BlueprintPure, Category="Sound") UEWSoundscapeComponent* GetSoundscapeComponent() const { return SoundscapeComponent; }
+    /** Where a carried placeable would go: blue if it can be placed there, red if not (owner, October 17). */
+    UFUNCTION(BlueprintPure, Category="Placement") UEWPlacementPreviewComponent* GetPlacementPreview() const { return PlacementPreview; }
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Sound")
     TObjectPtr<UEWSoundscapeComponent> SoundscapeComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Placement")
+    TObjectPtr<UEWPlacementPreviewComponent> PlacementPreview;
     UPROPERTY(Transient)
     TObjectPtr<UEWObjectiveWidget> ObjectiveWidget;
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
