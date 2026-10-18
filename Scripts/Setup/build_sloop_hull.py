@@ -106,13 +106,20 @@ def capstan_head(timber):
     return write_static_mesh(b, CAPSTAN_HEAD, [timber], UV_TILE, collision=False)
 
 
-def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, parent='', slot=0):
+PLAIN_RAILING = '/Game/Elitewake/World/Ships/SM_RailingPlain_v1'
+
+
+def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, parent='', slot=0, empty=None):
     m = unreal.EWShipMount()
     m.set_editor_property('mount_id', mount_id)
     m.set_editor_property('type', kind)
     m.set_editor_property('sail_size', sail)
     m.set_editor_property('parent_mount', parent)
     m.set_editor_property('parent_slot', slot)
+    if empty:
+        mesh = unreal.load_asset(empty)
+        assert mesh, 'Run Scripts/Setup/build_railings.py first.'
+        m.set_editor_property('empty_mesh', mesh)
     m.set_editor_property('transform', unreal.Transform(location=unreal.Vector(*location), rotation=unreal.Rotator(0, 0, yaw)))
     return m
 
@@ -142,8 +149,9 @@ def update_definition(hull, rig, capstan):
             mount('Mainsail', t.SAIL, (MAST_X, 0, DECK_Z + 50), sail=unreal.EWSailSize.MEDIUM),
             mount('Headsail', t.SAIL, (560, 0, DECK_Z + 50), sail=unreal.EWSailSize.SMALL),
             # The railing hardpoints, and behind each the two cannon places a two-cannon railing opens.
-            mount('PortRailing', t.RAILING, (RAILING_X, -(HULL.half_beam(RAILING_X) - 6), DECK_Z), yaw=-90),
-            mount('StarboardRailing', t.RAILING, (RAILING_X, HULL.half_beam(RAILING_X) - 6, DECK_Z), yaw=90),
+            # A plain railing stands at each until another module replaces it (owner, October 17).
+            mount('PortRailing', t.RAILING, (RAILING_X, -(HULL.half_beam(RAILING_X) - 6), DECK_Z), yaw=-90, empty=PLAIN_RAILING),
+            mount('StarboardRailing', t.RAILING, (RAILING_X, HULL.half_beam(RAILING_X) - 6, DECK_Z), yaw=90, empty=PLAIN_RAILING),
         ] + [mount(f'{name}Cannon{k + 1}', t.CANNON, (RAILING_X + dx, side * (deck_y(RAILING_X + dx) - 45), DECK_Z + 40),
                    yaw=side * 90, parent=f'{name}Railing', slot=k + 1)
              for name, side in (('Port', -1), ('Starboard', 1)) for k, dx in enumerate((80.0, -80.0))],

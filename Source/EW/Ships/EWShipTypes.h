@@ -48,6 +48,10 @@ struct FEWShipMount
     FName ParentMount;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     int32 ParentSlot = 0;
+    /** Shown, and solid, while nothing is fitted here (owner, October 17: a railing hardpoint carries a plain railing
+     *  until another module replaces it; taking that module off brings the plain railing back). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
+    TSoftObjectPtr<UStaticMesh> EmptyMesh;
 };
 
 /** One installed fitting. Replicated as part of the ship's fitting list. */

@@ -537,6 +537,11 @@ private:
     int8 SailTrimDirection = 0;
     /** The angle the sails are drawn at, easing toward SailAngle so they swing smoothly between updates. */
     float ShownSailAngle = 0.f;
+    /** The plain railings standing at empty railing hardpoints (FEWShipMount::EmptyMesh). */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> EmptyMountVisuals;
+    /** Railings stop people (not the ship's own movement): pawns collide with them, nothing else does. */
+    static void MakeRailingSolid(UStaticMeshComponent* Visual);
     /** Each fitted sail's look relative to its mount, before it is swung to its trim. */
     TMap<FName, FTransform> SailLooks;
     /** Each fitted sail's fill as drawn (GetSailFill), easing toward the wind's. */

@@ -193,6 +193,8 @@ void AEWShip::ApplyDefinition()
     if (AnchorVisual) AnchorVisual->DestroyComponent();
     if (CapstanVisual) CapstanVisual->DestroyComponent();
     AnchorTarget = nullptr; AnchorVisual = nullptr; CapstanVisual = nullptr;
+    for (const TPair<FName, TObjectPtr<UStaticMeshComponent>>& Plain : EmptyMountVisuals) if (Plain.Value) Plain.Value->DestroyComponent();
+    EmptyMountVisuals.Empty();
     if (CargoHatchTarget) CargoHatchTarget->DestroyComponent();
     if (CargoHatchVisual) CargoHatchVisual->DestroyComponent();
     CargoHatchTarget = nullptr; CargoHatchVisual = nullptr;
@@ -383,6 +385,7 @@ void AEWShip::RefreshFittingVisuals()
             Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
             Visual->RegisterComponent();
         }
+        if (Mount->Type == EEWShipMountType::Railing) MakeRailingSolid(Visual);
         // The mount's own look wins: the ship's rig decides how a fitting sits on it.
         const bool bMountLook = !Mount->FittedMesh.IsNull();
         FTransform Local = bMountLook ? Mount->FittedMeshTransform : Fitting.Item->FittingMeshTransform;
@@ -414,6 +417,29 @@ void AEWShip::RefreshFittingVisuals()
         if (Mount->Type == EEWShipMountType::Sail) SailLooks.Add(Fitting.MountId, Local);
     }
     for (auto It = SailLooks.CreateIterator(); It; ++It) if (!FittingVisuals.Contains(It.Key())) It.RemoveCurrent();
+    // An empty railing hardpoint keeps its plain railing (owner, October 17), shown and solid until a module replaces it.
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        UStaticMesh* Plain = Mount.EmptyMesh.IsNull() ? nullptr : Mount.EmptyMesh.LoadSynchronous();
+        TObjectPtr<UStaticMeshComponent>* Shown = EmptyMountVisuals.Find(Mount.MountId);
+        if (!Plain || GetFitting(Mount.MountId))
+        {
+            if (Shown && *Shown) (*Shown)->DestroyComponent();
+            EmptyMountVisuals.Remove(Mount.MountId);
+            continue;
+        }
+        if (!Shown || !*Shown)
+        {
+            UStaticMeshComponent* Visual = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+                *FString::Printf(TEXT("Empty_%s"), *Mount.MountId.ToString())), RF_Transient);
+            Visual->SetupAttachment(HullCollision);
+            Visual->SetStaticMesh(Plain);
+            Visual->SetRelativeTransform(Mount.Transform);
+            MakeRailingSolid(Visual);
+            Visual->RegisterComponent();
+            EmptyMountVisuals.Add(Mount.MountId, Visual);
+        }
+    }
     ShowSailTrim();
 
     // A helm's turning part (wheel, tiller) is its own piece, so it can turn with the rudder.
@@ -501,6 +527,13 @@ void AEWShip::ShowSailFill(float DeltaSeconds)
         // The cloth moves beyond the mesh's bounds when it bellies the other way.
         if (Sail->BoundsScale < 2.f) Sail->SetBoundsScale(2.f);
     }
+}
+
+void AEWShip::MakeRailingSolid(UStaticMeshComponent* Visual)
+{
+    Visual->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    Visual->SetCollisionResponseToAllChannels(ECR_Ignore);
+    Visual->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 }
 
 bool AEWShip::IsMountOpen(FName MountId) const

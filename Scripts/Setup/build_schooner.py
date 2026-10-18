@@ -248,6 +248,12 @@ def mount(mount_id, kind, location, yaw=0.0, sail=unreal.EWSailSize.NONE, look=N
     return m
 
 
+def plain_railing():
+    mesh = unreal.load_asset('/Game/Elitewake/World/Ships/SM_RailingPlain_v1')
+    assert mesh, 'Run Scripts/Setup/build_railings.py first.'
+    return mesh
+
+
 def railing_mounts(hull, rails):
     """Railing hardpoints along both sides at `rails` ((x, deck z) each), every module scaled to its bulwark's
     height, and behind each the two cannon places a two-cannon railing opens (owner, October 17)."""
@@ -261,6 +267,8 @@ def railing_mounts(hull, rails):
             tall = max(.8, (hull.sheer(x) - floor - 2) / RAILING_HEIGHT)
             m.set_editor_property('transform', unreal.Transform(location=unreal.Vector(x, side * (hull.half_beam(x) - 6), floor),
                                                                 rotation=unreal.Rotator(0, 0, side * 90), scale=unreal.Vector(1, 1, tall)))
+            # A plain railing stands here until another module replaces it (owner, October 17).
+            m.set_editor_property('empty_mesh', plain_railing())
             out.append(m)
             for k, dx in enumerate((80.0, -80.0)):
                 c = mount(f'{name}Rail{n + 1}Cannon{k + 1}', T.CANNON, (x + dx, side * (hull.inner_y(x + dx, floor + 40) - 45), floor + 40), yaw=side * 90)

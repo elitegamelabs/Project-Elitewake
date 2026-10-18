@@ -75,17 +75,29 @@ def interact_at_railing():
     local = ship.get_actor_transform().inverse_transform_location(mount_world(RAILING))
     spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + 60, local.y * .35, ship.get_deck_height() + 98))
     for p in (owner, pawn):
-        assert p.teleport(spot, ship.get_actor_rotation())
+        assert p.teleport(spot, ship.get_actor_rotation()), f'no room to stand at {spot} by the railing'
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
     state['aim'] = railing_world
     keep_aim()
     assert not ship.is_mount_open(MOUNT), 'the cannon place is open with no cannon railing fitted'
-    assert lib.send_verification_interaction_request(client, peer)
+    # Until then the hardpoint carries a plain railing, solid to people.
+    plain = plain_railing(peer)
+    assert plain and plain.is_visible(), 'no plain railing at the empty hardpoint on the client'
+    assert plain.get_collision_response_to_channel(unreal.CollisionChannel.ECC_PAWN) == unreal.CollisionResponseType.ECR_BLOCK, 'the plain railing does not stop people'
+    assert lib.send_verification_interaction_request(client, peer), f'the interaction request was refused (aimed mount on the server: {ship.find_aimed_mount(owner)})'
+
+
+def plain_railing(on):
+    """The plain railing standing at the empty hardpoint (owner, October 17), if this machine shows one."""
+    return next((c for c in on.get_components_by_class(unreal.StaticMeshComponent) if c.get_name().startswith(f'Empty_{RAILING}')), None)
 
 
 def railing_fitted():
-    return (ship.get_fitting(RAILING) == railing and peer.get_fitting(RAILING) == railing and ship.is_mount_open(MOUNT)
-            and peer.is_mount_open(MOUNT))
+    if not (ship.get_fitting(RAILING) == railing and peer.get_fitting(RAILING) == railing and ship.is_mount_open(MOUNT)
+            and peer.is_mount_open(MOUNT)):
+        return False
+    assert plain_railing(peer) is None, 'the plain railing still stands under the fitted module on the client'
+    return True
 
 
 def interact_at_mount():
