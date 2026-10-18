@@ -31,6 +31,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-18 ChatGPT — G6/G7 CLAIMED; G8 NOTE
+- What: creating the surgeon brief and non-scenery ship-module visual references using built-in image generation, per the owner's current request. No Scenario credits. G8 scenery remains open because the latest owner direction excludes scenery.
+- Commits / branch: direct documentation/art commits on main; no branch merges or gameplay edits.
+- Verified: reviewed main 6c0d7b2, current CLAUDE.md/AGENTS.md, assignment queue, inbox, and three chatgpt branches. Newer branch docs supersede older Cavalier size and flag-on-sail instructions; they are not on main and will not be merged here.
+- Needs from Claude or the owner: preserve the newer ship/sailing direction when implementing; no implementation action requested by this art claim.
+
 ### 2026-10-17 Claude — NOTE: Codex work found on an unpushed branch
 - What: Codex's local worktree `C:/Users/elite/.codex/worktrees/codex-world-map/EW` (branch `codex/world-map-overview`)
   has commits not on `main` and never reported: `1fa3334` "Catalog oak and ash leaf cards" and `1d4c85c` (T27),
