@@ -275,6 +275,24 @@ public:
      *  sign which side the belly is blown to. 0 for a furled sail or none. Every machine works it out for itself. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetSailFill(FName MountId) const { return SailFill.FindRef(MountId); }
+    /** Flags (owner, October 17): a flag on its mount, 0 new to 1 destroyed, or -1 for none. Flags wear only in combat:
+     *  every round shot that strikes the ship frays all of its flags a little, and one that strikes near a flag tears it
+     *  badly. A destroyed flag's cloth is gone (nothing comes back) and its staff stays; a torn flag taken down is lost
+     *  too, so wear is never undone: there is no repair, only a newly crafted flag. */
+    UFUNCTION(BlueprintPure, Category="Ship|Flags")
+    float GetFlagWear(FName MountId) const;
+    /** Which way a flag streams from its staff, as a world yaw in degrees: downwind of the wind it feels aboard (the
+     *  world's wind less the ship's own way). Every machine works it out for itself. */
+    UFUNCTION(BlueprintPure, Category="Ship|Flags")
+    float GetFlagYaw(FName MountId) const { return FlagYaw.FindRef(MountId); }
+    /** Tuning: how much one round shot striking the ship wears each of its flags, how much more a strike within
+     *  FlagNearHitRange (cm) of a flag adds, the wind's speed for a flag's apparent wind (cm/s), and how fast a flag
+     *  swings to it (degrees a second). */
+    static constexpr float FlagWearPerHit = .12f;
+    static constexpr float FlagWearNearHit = .45f;
+    static constexpr float FlagNearHitRange = 800.f;
+    static constexpr float FlagWindSpeed = 800.f;
+    static constexpr float FlagSwingRate = 120.f;
     /** Whether a mount is there to use: always, unless it belongs to a railing module (FEWShipMount::ParentMount),
      *  when the module fitted on that railing must open its place (UEWItemDefinition::FittingCannonSlots). */
     UFUNCTION(BlueprintPure, Category="Ship")
@@ -547,6 +565,13 @@ private:
     /** Each fitted sail's fill as drawn (GetSailFill), easing toward the wind's. */
     TMap<FName, float> SailFill;
     void ShowSailFill(float DeltaSeconds);
+    /** Each flag's drawn yaw (GetFlagYaw), swinging toward downwind of its apparent wind. */
+    TMap<FName, float> FlagYaw;
+    void ShowFlags(float DeltaSeconds);
+    /** Authority only: a round shot struck at Where (world); wears every flag, more near it, and drops destroyed ones. */
+    void WearFlags(const FVector& Where);
+    /** A flag mount's flag, where it flies in the world (the fitting's look on its mount). */
+    FTransform GetFlagLookWorld(const FEWShipMount& Mount, const UEWItemDefinition* Item) const;
     /** Helm parts that turn with the rudder, where they rest centred, and the rudder angle they show. */
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> TurningVisuals;

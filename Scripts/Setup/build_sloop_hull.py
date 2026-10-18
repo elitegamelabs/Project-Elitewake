@@ -22,6 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
+from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
 
 MESH = '/Game/Elitewake/World/Ships/SM_SloopHull_v2'
 RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
@@ -58,6 +59,14 @@ MOORING_Y = 2350.0     # clear of the dock's end, lying along the heading
 SHROUD_XS = (MAST_X - 30, MAST_X + 30)
 
 
+def flags(b):
+    """Her two flags (owner, October 17: the sloop has 2 flag positions): a flagstaff at the masthead and the ensign
+    staff at the stern, to port of the boarding ladder. Draws them into b; returns each flag's (belay, hoist, scale)."""
+    x = HULL.stern_x + 70
+    return {'MastheadFlag': (*masthead_staff(b, MAST_X, MAST_TOP, DECK_Z), MASTHEAD_FLAG),
+            'EnsignFlag': (*ensign_staff(b, x, -(HULL.half_beam(x) - 30), DECK_Z), ENSIGN_FLAG)}
+
+
 def hull_mesh():
     h = HULL
     b = Builder()
@@ -77,6 +86,7 @@ def hull_mesh():
     # The mast steps on the hold floor and rises through the deck; the bowsprit reaches out over the bow,
     # starting clear of heads on the foredeck.
     h.mast(b, MAST_X, MAST_TOP)
+    flags(b)
     h.bowsprit(b, (BOW_X - 70, 0.0, h.sheer(BOW_X - 70) + 30), STAY_BOW)
     # Working detail: the shrouds' channels and deadeyes, a pin rail at the mast, a rudder on the stern and an
     # anchor catted at each bow.
@@ -154,7 +164,8 @@ def update_definition(hull, rig, capstan):
             mount('StarboardRailing', t.RAILING, (RAILING_X, HULL.half_beam(RAILING_X) - 6, DECK_Z), yaw=90, empty=PLAIN_RAILING),
         ] + [mount(f'{name}Cannon{k + 1}', t.CANNON, (RAILING_X + dx, side * (deck_y(RAILING_X + dx) - 45), DECK_Z + 40),
                    yaw=side * 90, parent=f'{name}Railing', slot=k + 1)
-             for name, side in (('Port', -1), ('Starboard', 1)) for k, dx in enumerate((80.0, -80.0))],
+             for name, side in (('Port', -1), ('Starboard', 1)) for k, dx in enumerate((80.0, -80.0))]
+        + [flag_mount(mid, belay, hoist, scale) for mid, (belay, hoist, scale) in flags(Builder()).items()],
     }
     for k, v in values.items():
         definition.set_editor_property(k, v)

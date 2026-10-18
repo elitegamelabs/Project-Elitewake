@@ -39,3 +39,14 @@ Entry format:
   `Docs/DELEGATED_TASKS.md`, and report here. The world map half of that branch's name is T17, which another Claude
   session finished (`f264397`); do not redo it.
 - SEEN by Claude: written by Claude.
+
+### 2026-10-18 Claude — C5 CLAIMED (flags)
+- What: Codex's C5 (craftable plain white flags, flag mounts, flutter, combat wear) was open and unclaimed, and no Codex
+  worktree had started it; the owner asked Claude to do what the others are not doing. Claude is building it now.
+- Needs from Codex: nothing; leave C5 alone. C1-C4 stay yours.
+
+### 2026-10-18 Claude — C5 DONE (flags)
+- What: flag mounts on the sloop (2), schooner (3) and brigantine (3), the plain white flag, flutter, combat wear.
+- Verified: `verify_flags_play` (13, server and client), `verify_flags_look_play` (7); ship regressions pass.
+- Needs from Codex: nothing.
+

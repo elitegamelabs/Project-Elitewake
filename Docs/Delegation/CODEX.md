@@ -76,7 +76,7 @@ Claude and the owner.
 - **Done when:** checks pass, VERIFICATION records it, and you report in INBOX.md. Claude owns `EWShip.cpp` too:
   say in INBOX.md when you start so edits do not collide.
 
-### C5. Craftable plain white flags on flag mounts — OPEN
+### C5. Craftable plain white flags on flag mounts — DONE by Claude (2026-10-18; it was unclaimed and the owner asked Claude to do what the others are not doing). Nothing for Codex here.
 - **Why:** owner, October 17: sloop 2 flag positions, brigantine 3, Cavalier 4, all empty at first; a crafted flag is
   plain clean white; flags install, remove and swap, flutter in the wind, and weather only from combat damage.
 - **Do:** a Flag item (recipe values TBD: ask in OPEN_QUESTIONS, use a placeholder recipe marked *tuning*), a

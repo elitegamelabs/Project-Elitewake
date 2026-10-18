@@ -98,6 +98,21 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
             {
                 Add(Where, TEXT("Cannon port"), MarkerEmpty * FLinearColor(1, 1, 1, .7f), bThis, false);
             }
+            else if (Mount.Type == EEWShipMountType::Flag)
+            {
+                // The flag halyards (owner, October 17): what flies there and how worn it is, or a place to hoist one.
+                if (Installed)
+                {
+                    const float Wear = Ship->GetFlagWear(Mount.MountId);
+                    Add(Where, Wear > 0.f ? FString::Printf(TEXT("%s (%d%% torn)"), *Installed->DisplayName.ToString(), FMath::RoundToInt(Wear * 100.f))
+                        : Installed->DisplayName.ToString(), MarkerFitted, bThis, false);
+                }
+                else
+                {
+                    const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
+                    Add(Where, bFits ? TEXT("Hoist a flag here") : TEXT("Flag halyard"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                }
+            }
             else if (Mount.Type == EEWShipMountType::Railing)
             {
                 // The railing hardpoints along her sides (owner, October 17): what is fitted, or what may be.

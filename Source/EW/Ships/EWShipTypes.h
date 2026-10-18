@@ -8,7 +8,7 @@ class UStaticMesh;
 
 /** What a ship mount accepts. None marks an item that is not a ship fitting. */
 UENUM(BlueprintType)
-enum class EEWShipMountType : uint8 { None, Helm, Sail, Cannon, Utility, Railing };
+enum class EEWShipMountType : uint8 { None, Helm, Sail, Cannon, Utility, Railing, Flag };
 
 /** Sail mounts accept only their own size. */
 UENUM(BlueprintType)
@@ -64,4 +64,7 @@ struct FEWInstalledFitting
     FName MountId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
     TObjectPtr<UEWItemDefinition> Item;
+    /** How worn it is, 0 new to 1 destroyed. Only flags wear, and only from combat (owner, October 17). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship")
+    float Wear = 0.f;
 };

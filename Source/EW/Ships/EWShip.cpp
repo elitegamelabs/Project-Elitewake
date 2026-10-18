@@ -38,6 +38,7 @@ namespace
         case EEWShipMountType::Helm: return FVector(.3, .3, .8);
         case EEWShipMountType::Cannon: return FVector(1.2, .35, .35);
         case EEWShipMountType::Utility: return FVector(1, 1, .2);
+        case EEWShipMountType::Flag: return FVector(1.5, .02, 1);
         case EEWShipMountType::Sail:
             return Item->FittingSailSize == EEWSailSize::Large ? FVector(.05, 4, 6)
                 : Item->FittingSailSize == EEWSailSize::Medium ? FVector(.05, 3, 4.5) : FVector(.05, 2, 3);
@@ -52,6 +53,7 @@ namespace
         case EEWShipMountType::Helm: return NSLOCTEXT("Elitewake", "MountHelm", "helm");
         case EEWShipMountType::Cannon: return NSLOCTEXT("Elitewake", "MountCannon", "cannon");
         case EEWShipMountType::Utility: return NSLOCTEXT("Elitewake", "MountUtility", "utility attachment");
+        case EEWShipMountType::Flag: return NSLOCTEXT("Elitewake", "MountFlag", "flag");
         case EEWShipMountType::Sail:
             return Mount.SailSize == EEWSailSize::Large ? NSLOCTEXT("Elitewake", "MountSailLarge", "large sail")
                 : Mount.SailSize == EEWSailSize::Medium ? NSLOCTEXT("Elitewake", "MountSailMedium", "medium sail")
@@ -390,6 +392,8 @@ void AEWShip::RefreshFittingVisuals()
         const bool bMountLook = !Mount->FittedMesh.IsNull();
         FTransform Local = bMountLook ? Mount->FittedMeshTransform : Fitting.Item->FittingMeshTransform;
         UStaticMesh* Mesh = bMountLook ? Mount->FittedMesh.LoadSynchronous() : Fitting.Item->FittingMesh.LoadSynchronous();
+        // A flag is the item's own cloth (any flag on any staff), flown at the top of the staff its halyard rises to.
+        if (Mount->Type == EEWShipMountType::Flag && !bMountLook) Local = Fitting.Item->FittingMeshTransform * Mount->FittedMeshTransform;
         if (!Mesh)
         {
             // Stand-in box resting on the mount point until real fitting art exists.
@@ -415,8 +419,15 @@ void AEWShip::RefreshFittingVisuals()
         Visual->SetVisibility(bShown);
         Visual->SetRelativeTransform(Local * Mount->Transform);
         if (Mount->Type == EEWShipMountType::Sail) SailLooks.Add(Fitting.MountId, Local);
+        if (Mount->Type == EEWShipMountType::Flag)
+        {
+            // Its wear frays and holes the cloth (M_Flag_v1); it streams to the wind each frame (ShowFlags).
+            Visual->SetCustomPrimitiveDataFloat(0, Fitting.Wear);
+            if (Visual->BoundsScale < 2.f) Visual->SetBoundsScale(2.f);
+        }
     }
     for (auto It = SailLooks.CreateIterator(); It; ++It) if (!FittingVisuals.Contains(It.Key())) It.RemoveCurrent();
+    for (auto It = FlagYaw.CreateIterator(); It; ++It) if (!FittingVisuals.Contains(It.Key())) It.RemoveCurrent();
     // An empty railing hardpoint keeps its plain railing (owner, October 17), shown and solid until a module replaces it.
     for (const FEWShipMount& Mount : Definition->Mounts)
     {
@@ -527,6 +538,57 @@ void AEWShip::ShowSailFill(float DeltaSeconds)
         // The cloth moves beyond the mesh's bounds when it bellies the other way.
         if (Sail->BoundsScale < 2.f) Sail->SetBoundsScale(2.f);
     }
+}
+
+FTransform AEWShip::GetFlagLookWorld(const FEWShipMount& Mount, const UEWItemDefinition* Item) const
+{
+    const FTransform Local = !Mount.FittedMesh.IsNull() || !Item ? Mount.FittedMeshTransform : Item->FittingMeshTransform * Mount.FittedMeshTransform;
+    return Local * Mount.Transform * GetActorTransform();
+}
+
+float AEWShip::GetFlagWear(FName MountId) const
+{
+    const FEWInstalledFitting* Found = Fittings.FindByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
+    return Found && Found->Item && Found->Item->FittingMountType == EEWShipMountType::Flag ? Found->Wear : -1.f;
+}
+
+void AEWShip::ShowFlags(float DeltaSeconds)
+{
+    const UEWWindSubsystem* Wind = UEWWindSubsystem::GetForWorld(this);
+    if (!Wind || !Definition) return;
+    // The wind a flag feels aboard: the world's wind less the ship's own way through the water.
+    const FVector Apparent = Wind->GetWindDirection() * FlagWindSpeed - GetActorForwardVector() * Speed;
+    const float Downwind = FMath::RadiansToDegrees(FMath::Atan2(Apparent.Y, Apparent.X));
+    const float Flutter = FMath::Clamp(Apparent.Size2D() / 1200.f, .3f, 1.5f);
+    for (const FEWInstalledFitting& Fitting : Fittings)
+    {
+        if (!Fitting.Item || Fitting.Item->FittingMountType != EEWShipMountType::Flag) continue;
+        const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Fitting.MountId);
+        if (!Visual || !*Visual) continue;
+        float& Yaw = FlagYaw.FindOrAdd(Fitting.MountId, Downwind);
+        Yaw = DeltaSeconds > 0.f ? FMath::FixedTurn(Yaw, Downwind, FlagSwingRate * DeltaSeconds) : Downwind;
+        // Upright on its staff whatever the ship's roll, the hoist at the staff and the fly streaming out along +X.
+        (*Visual)->SetWorldRotation(FRotator(0.f, Yaw, 0.f));
+        (*Visual)->SetCustomPrimitiveDataFloat(1, Flutter);
+    }
+}
+
+void AEWShip::WearFlags(const FVector& Where)
+{
+    if (!HasAuthority() || !Definition) return;
+    bool bChanged = false;
+    for (int32 Index = Fittings.Num() - 1; Index >= 0; --Index)
+    {
+        FEWInstalledFitting& Fitting = Fittings[Index];
+        const FEWShipMount* Mount = Definition->FindMount(Fitting.MountId);
+        if (!Mount || !Fitting.Item || Fitting.Item->FittingMountType != EEWShipMountType::Flag) continue;
+        const bool bNear = FVector::Dist(GetFlagLookWorld(*Mount, Fitting.Item).GetLocation(), Where) < FlagNearHitRange;
+        Fitting.Wear = FMath::Min(1.f, Fitting.Wear + FlagWearPerHit + (bNear ? FlagWearNearHit : 0.f));
+        // Shot to pieces: the cloth is gone and nothing comes back; the staff (part of the hull) stays.
+        if (Fitting.Wear >= 1.f) Fittings.RemoveAt(Index);
+        bChanged = true;
+    }
+    if (bChanged) RefreshFittingVisuals();
 }
 
 void AEWShip::MakeRailingSolid(UStaticMeshComponent* Visual)
@@ -1019,8 +1081,10 @@ EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
         for (const FEWShipMount& Child : Definition->Mounts)
             if (Child.ParentMount == MountId && GetFitting(Child.MountId)) return EEWFittingResult::RailingHoldsCannons;
     TGuardValue<bool> Guard(bChangingFittings, true);
+    // A torn flag taken down is lost: wear is never undone (owner, October 17: no repair, only a new flag).
+    const bool bTornFlag = Fittings[Index].Item && Fittings[Index].Item->FittingMountType == EEWShipMountType::Flag && Fittings[Index].Wear > 0.f;
     // The fitting stays on the ship unless the inventory accepts it.
-    if (Character->GetInventoryComponent()->AddItem(Fittings[Index].Item, 1) != 1) return EEWFittingResult::InventoryFull;
+    if (!bTornFlag && Character->GetInventoryComponent()->AddItem(Fittings[Index].Item, 1) != 1) return EEWFittingResult::InventoryFull;
     Fittings.RemoveAt(Index);
     RefreshFittingVisuals();
     ForceNetUpdate();
@@ -1362,6 +1426,7 @@ void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWChar
     if (HullHealth <= 0.f) return;
     (void)Gunner;
     HullHealth = FMath::Max(0.f, HullHealth - RoundShotDamage);
+    WearFlags(Where);
     FEWHullHole Hole;
     Hole.Local = GetActorTransform().InverseTransformPosition(Where);
     Hole.Normal = GetActorTransform().InverseTransformVectorNoScale(Normal.GetSafeNormal());
@@ -1705,6 +1770,7 @@ void AEWShip::Tick(float DeltaSeconds)
         ShowSailTrim();
     }
     if (GetNetMode() != NM_DedicatedServer && SailLooks.Num()) ShowSailFill(DeltaSeconds);
+    if (GetNetMode() != NM_DedicatedServer) ShowFlags(DeltaSeconds);
     ShowChain(DeltaSeconds);
     if (!HasAuthority())
     {

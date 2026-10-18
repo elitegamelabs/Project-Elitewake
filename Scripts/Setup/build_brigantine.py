@@ -26,6 +26,7 @@ from build_schooner import RAILING_LENGTH, data_asset, large_sail_item, mount, r
 from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
+from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
 MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
@@ -144,6 +145,7 @@ def hull_mesh():
     h.capstan(b, *CAPSTAN, DECK_Z)
     h.mast(b, FORE_X, FORE_TOP, radius=24.0, top_radius=14.0)
     h.mast(b, MAIN_X, MAIN_TOP, radius=26.0, top_radius=15.0)
+    flags(b)
     heel = (1380.0, 0.0, h.sheer(1380.0) + 30)
     h.bowsprit(b, heel, BOWSPRIT_END, radius=(18.0, 11.0))
     for xs in (FORE_SHROUDS, MAIN_SHROUDS):
@@ -202,6 +204,15 @@ def sail_looks(timber, sails):
 
 # ---- Assets ------------------------------------------------------------------------------------------------
 
+def flags(b):
+    """Her three flags (owner, October 17: the brigantine has 3 flag positions): one at each masthead and the ensign
+    at the stern, to port of the boarding ladder. Draws them into b; returns each flag's (belay, hoist, scale)."""
+    x = HULL.stern_x + 90
+    return {'ForeFlag': (*masthead_staff(b, FORE_X, FORE_TOP, DECK_Z, 24.0), MASTHEAD_FLAG),
+            'MainFlag': (*masthead_staff(b, MAIN_X, MAIN_TOP, DECK_Z, 26.0), MASTHEAD_FLAG),
+            'EnsignFlag': (*ensign_staff(b, x, -(HULL.half_beam(x) - 40), QD_Z), ENSIGN_FLAG)}
+
+
 def update_definition(hull, rig, looks, capstan):
     d = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Brigantine', unreal.EWShipDefinition)
     mounts = [mount('Helm', T.HELM, (-1250.0, 0.0, QD_Z + 50))]
@@ -211,6 +222,7 @@ def update_definition(hull, rig, looks, capstan):
             y = side * (HULL.inner_y(x, (PORT[1] + PORT[2]) / 2) - 65)
             mounts.append(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90))
     mounts += railing_mounts(HULL, RAILINGS)
+    mounts += [flag_mount(mid, belay, hoist, scale) for mid, (belay, hoist, scale) in flags(Builder()).items()]
     values = {
         'ship_id': 'Brigantine', 'display_name': 'Brigantine',
         'hull_mesh': hull, 'rigging_mesh': rig, 'hull_mesh_transform': unreal.Transform(),

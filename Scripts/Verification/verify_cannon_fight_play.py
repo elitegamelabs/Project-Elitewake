@@ -120,6 +120,18 @@ def fit_railing():
     keep_aim()
     assert not sloop.is_mount_open(SLOOP_GUN), 'a cannon place is open with no cannon railing fitted'
     assert lib.send_verification_interaction_request(client, sloop_peer), 'the interaction request was refused'
+    state['memo']['railing_sent'] = time.monotonic()
+
+
+def railing_fitted():
+    """Fitted on both. A hold the server cancels (the aim slips off as the moored ship rolls) is held again, as a
+    player would, every 1.5 s."""
+    if sloop.is_mount_open(SLOOP_GUN) and sloop_peer.is_mount_open(SLOOP_GUN):
+        return True
+    if time.monotonic() - state['memo'].get('railing_sent', 0) > 1.5:
+        assert lib.send_verification_interaction_request(client, sloop_peer), 'the interaction request was refused'
+        state['memo']['railing_sent'] = time.monotonic()
+    return False
 
 
 def fitted(ship, peer, mount):
@@ -205,8 +217,7 @@ def sunk():
 
 STEPS = [
     ('Cannons, shot and cargo granted in Play only; the schooner lies 40 m off the sloop\'s starboard side', grant_and_place, lambda: True, 2),
-    ('The client fits a two-cannon railing at the starboard railing hardpoint of the sloop', fit_railing,
-     lambda: sloop.is_mount_open(SLOOP_GUN) and sloop_peer.is_mount_open(SLOOP_GUN), 6),
+    ('The client fits a two-cannon railing at the starboard railing hardpoint of the sloop', fit_railing, railing_fitted, 8),
     ('The client fits a cannon at the sloop\'s starboard hardpoint', fit(sloop, sloop_peer, SLOOP_GUN, client, owner, (owner, pawn)),
      fitted(sloop, sloop_peer, SLOOP_GUN), 6),
     ('...and mans it', fit(sloop, sloop_peer, SLOOP_GUN, client, owner, (owner, pawn)), manned(sloop, SLOOP_GUN, owner), 6),
