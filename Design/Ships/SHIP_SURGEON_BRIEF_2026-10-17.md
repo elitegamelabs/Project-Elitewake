@@ -33,3 +33,6 @@ Suggested interruption behavior: stop future healing on cancel, death, disconnec
 ## Acceptance handoff
 Keep references, separate six-view files, models, animation, currency, integration and in-game checks separate. Check qualifying-deck traversal; busy/no-copper/full-health rejection without charge; one charge; gradual capped healing; cancellation/disconnect cleanup; listen-server/client agreement; treatment aboard a moving ship. No implementation checks run by this art handoff.
 Table/tools prompts are in Art/Reference/Ships/SurgeonTable/PROMPTS.md and SurgeonTools/PROMPTS.md. Scenario S7 remains queued for pricing by Claude if needed; built-in-generated concept sheets spend no Scenario credits.
+
+## Delegated resolutions — October 18
+The open choices above are now resolved by the owner's decision-making delegation: first level below main weather deck, aft-port; integer copper wallet; one patient; 20-second gradual treatment; server charge/heal; no charge without benefit; interrupt on cancel/movement/attack/damage/death/disconnect/sinking; no refund after healing starts. See Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md for the complete contract. These choices are requirements/tuning, not implementation.

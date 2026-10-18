@@ -1,0 +1,10 @@
+{
+  "file": "front.png",
+  "sha256": "b20e329198bdf5e234a8a81063ca6407bd73c3f68dc3b821a3053eb2cc6c03cd",
+  "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, front elevation. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: One removable ship-side reinforced wooden railing module with exactly two open firing bays and exactly two EMPTY cannon attachment sockets behind them. Clear structural rail ends, iron load brackets and socket footings. Absolutely no cannon barrels or cannon carriages; cannons are separately craftable. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

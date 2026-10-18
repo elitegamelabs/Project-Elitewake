@@ -29,7 +29,7 @@ Jobs run by anyone other than Claude are reported in [INBOX.md](INBOX.md).
 
 Status: `QUEUED` (ready to run) · `WAITING` (needs something first) · `DONE <commit>` · `HELD` (needs the owner).
 
-### S1. Voices for the four approved animals — WAITING (on ChatGPT G1/G2 settling which sounds each needs)
+### S1. Voices for the four approved animals — QUEUED (G1/G2 matrix ready)
 
 | Job | Prompt | Length | ~Credits | Destination |
 |---|---|---|---|---|
@@ -54,7 +54,7 @@ made ahead.
 
 About 3 credits. They go with Codex's falling trees (CODEX.md C1); the tree-fall sound can be wired as soon as C1 lands.
 
-### S3. Spiders — WAITING (on ChatGPT G3's brief)
+### S3. Spiders — QUEUED (G3 brief ready)
 
 | Job | Prompt | Length | ~Credits | Destination |
 |---|---|---|---|---|
@@ -63,7 +63,7 @@ About 3 credits. They go with Codex's falling trees (CODEX.md C1); the tree-fall
 | Spider bite | A quick wet bite and click of fangs, close | 1 s | 1 | `Art/Audio/Fauna/SFX_SpiderBite-v1.wav` |
 | Spider death | A spider's legs curling and twitching to stillness, soft crackle | 2 s | 1 | `Art/Audio/Fauna/SFX_SpiderDeath-v1.wav` |
 
-About 4 credits. Adjust the prompts to G3's description of the spiders before running.
+About 4 credits for the initial rows. Use the shared-species cave/swamp brief; hiss/chitter is designed stridulation foley, not a claimed natural recording. Additional contact/web jobs below.
 
 ### S4. Bites and blows landing — DONE (generated October 16, 2 credits; saved, not imported until the attacks exist)
 
@@ -75,11 +75,11 @@ About 4 credits. Adjust the prompts to G3's description of the spiders before ru
 About 2 credits. These are used by the bite and swipe attacks once the attack animations exist (owner milestone
 "Species-appropriate attacks").
 
-### S5. Existing animals' missing sounds — WAITING (on ChatGPT G1's matrix)
+### S5. Existing animals' missing sounds — QUEUED (G1 matrix ready)
 The cottonmouth, tortoise and squirrel monkey have no sounds yet, and the alligator, flamingo and pelican have calls
 only (`Art/Audio/README.md`). Once G1 lists what each needs, add a row per sound here at about 1–2 credits each.
 
-### S6. Six-view reference images, a priced pilot — HELD (owner go-ahead needed)
+### S6. Six-view reference images — QUEUED (owner delegated approval; Claude prices Scenario use)
 - **Why:** owner, October 16: six views (front, back, left, right, top, underside) of every resource and every
   animal, the same object in each (`Art/Reference/README.md`; about 270 images in all).
 - **Pilot:** one resource (Oak Wood) and one animal (Bear, from ChatGPT G4's prompt sheet). Pick the model with
@@ -114,3 +114,24 @@ Shared job: repeat each asset's exact shared identity in PROMPTS.md with the fro
 | Third batch (Oct 16) | grass and stone steps, forest wind, jungle, swamp frogs | 14 | `0d0a685` |
 | Anchor (Oct 16) | chain drop, catch, raise | 5 | `8ae15b7` |
 | S2 + S4 (Oct 16) | tree fall, elephant step, bite contact, claw swipe | 5 | `e0c3f04` |
+
+## G1/G3 additional queued sound jobs — October 18
+
+Drafts only; Claude runs/prices these, no credits spent by ChatGPT. Follow the matrix. Idle/locomotion/contact variants need visual synchronization and licensing provenance.
+
+| Status | Job / exact prompt | Length | Destination |
+|---|---|---|---|
+| QUEUED | Dry snake scales sliding across leaf litter, close, no growl or rattle | 2 s | Art/Audio/Fauna/SFX_CottonmouthSlither-v1.wav |
+| QUEUED | Short defensive snake hiss, no rattlesnake rattle, no music | 2 s | Art/Audio/Fauna/SFX_CottonmouthHiss-v1.wav |
+| QUEUED | Slow heavy tortoise clawed footfalls and shell brush on dry ground, no voice | 2 s | Art/Audio/Fauna/SFX_TortoiseStep-v1.wav |
+| QUEUED | Short quiet tortoise withdrawal breath and shell scrape, no growl | 1 s | Art/Audio/Fauna/SFX_TortoiseWithdraw-v1.wav |
+| QUEUED | Squirrel monkey alarm chitter, close, no human voice or music | 2 s | Art/Audio/Fauna/SFX_MonkeyChitter-v1.wav |
+| QUEUED | Small primate light quick steps and branch rustle, no voice | 2 s | Art/Audio/Fauna/SFX_MonkeyStep-v1.wav |
+| QUEUED | Short small fang contact through cloth, no voice, no gore emphasis | 1 s | Art/Audio/Fauna/SFX_SpiderContact-v1.wav |
+| QUEUED | Thin dry silk strands stretching and tearing, close, no voice | 2 s | Art/Audio/Fauna/SFX_SpiderWebTear-v1.wav |
+| QUEUED | Light segmented spider legs contacting stone in a short alternating cycle, no voice | 2 s | Art/Audio/Fauna/SFX_SpiderLegStone-v1.wav |
+| QUEUED | Light segmented spider legs contacting damp mud, no voice | 2 s | Art/Audio/Fauna/SFX_SpiderLegMud-v1.wav |
+
+Additional species movement/hurt/death contacts follow the matrix, reusing suitable existing generic contact foley only where timbre matches. Do not generate predator voices for peaceful fish, manta or squid. Model/cost remains Claude-priced per current queue policy.
+
+October 18 update: the owner authorized autonomous decisions and approval in the current chat. Built-in image generation is authorized and is producing references without Scenario credits. ChatGPT still does not spend Scenario credits. Claude prices any Scenario follow-up and avoids duplicating delivered references. Approval is not a claim that all image files exist or pass QA.

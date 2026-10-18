@@ -31,6 +31,14 @@ Entry format:
 
 ## Reports
 
+### ChatGPT — October 18 — expanded documentation and reference delivery (UNSEEN)
+
+- Finished G1–G5, T27, T30 documentation under the owner's delegation; G6 decisions resolved. Delivery commit recorded in the follow-up entry. G7 additional references delivered; complete production view sets remain partial.
+- 77 additional retained PNGs, prompts/hashes/limitations, 53 resource prompt sets, 21-kind attack/voice matrix, corrected wildlife regions, spider brief, elephant rules and source-backed world/units audit. Failed views excluded.
+- Published latest owner ship/sailing documents with provenance and supersession pointers. No branch/PR merge; no Claude code edits. No scenery or Scenario spending.
+- [Full delivery, verified source findings and remaining assets](../REPORTS/2026-10-18_ChatGPT_Expanded_Delivery.md), [delegated decisions](../REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). Runtime/model/animation/audio acceptance remains pending. G8 excluded as scenery. Gunport opening clearance, hull cross-view consistency, spider color separation and tortoise scute counts require refinement.
+
+
 ### 2026-10-18 ChatGPT — G1–G5 and remaining non-scenery art CLAIMED
 - What: owner says "do everything": complete remaining ChatGPT design/research/prompt/catalogue tasks and non-scenery reference assets. Existing no-code/no-merge/no-Scenario-credit constraints remain. G8 scenery stays excluded.
 - Scope: G1–G5, T30/T27, documentation portions of T10/T11, reference-only support for T6, and separate ship orthographic/deployment images. Implementation/Unreal checks remain with the coding owner; no approved decision will be invented to unblock art.
@@ -70,4 +78,3 @@ Entry format:
 - What: flag mounts on the sloop (2), schooner (3) and brigantine (3), the plain white flag, flutter, combat wear.
 - Verified: `verify_flags_play` (13, server and client), `verify_flags_look_play` (7); ship regressions pass.
 - Needs from Codex: nothing.
-

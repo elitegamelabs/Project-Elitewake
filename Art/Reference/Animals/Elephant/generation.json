@@ -1,0 +1,83 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "e21f603d44e01db7acc49482b21badd442087dfb6ed832c36a0c1ac725d9dac1",
+      "prompt": "ELITEWAKE realistic animal modeling reference. Adult African-style elephant matching reference, warm grey wrinkled skin, large ears with rounded intact edges, two curved ivory tusks, long trunk hanging with softly curled tip, four columnar legs and sparse tail hair. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "back.png",
+      "sha256": "20c0892d4a8e06c8d249444f17563dc368179b40edf7d35a2176f40575269773",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: EXACT REAR view. Tail/rump faces camera; head points directly away and is mostly hidden behind torso. Do not show a front face. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "front.png",
+      "sha256": "a7338c478ad0eb33dccabfca7fc889555effaf7484f167d02b3a023edf468bfc",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: HEAD-ON FRONT view. Face/nose points directly at camera; bilateral symmetry. Entire body fits, body extends directly away behind face. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "left.png",
+      "sha256": "c9093c025da6eea2760b680b8ab5f797e3e0e3d522910187c7b7f3a5613e2e06",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: TRUE LEFT SIDE PROFILE. Head points to IMAGE LEFT, tail to IMAGE RIGHT. Camera perpendicular to the body's long axis. Four feet/limbs retain original anatomical placement. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "right.png",
+      "sha256": "118252bb985e3cefff0286d89cda2f3fdce6e15cd087e768ee28fc7985e873d6",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: TRUE RIGHT SIDE PROFILE. Head points to IMAGE RIGHT, tail to IMAGE LEFT. Camera perpendicular to body's long axis. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "top.png",
+      "sha256": "907542e1b82a5903e1f863210afe601c2720b0d567c521ff17b87e2ccd1ab3d6",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: DIRECT OVERHEAD DORSAL view. Camera looks vertically straight DOWN at spine/back. Nose toward image TOP and tail toward image BOTTOM. No face-on elevation; show full back outline. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "file": "underside.png",
+      "sha256": "d74c3d92cadeb5b76c660aec6385911ae80503b3728e652ccb1a72877d548691",
+      "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: DIRECT VENTRAL ORTHOGRAPHIC view looking UP from below body. Nose toward image TOP, tail toward image BOTTOM. Show belly and underside of paws/feet naturally, neutral extended standing limb pose, no dissection or injury. No body laid on a studio floor. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

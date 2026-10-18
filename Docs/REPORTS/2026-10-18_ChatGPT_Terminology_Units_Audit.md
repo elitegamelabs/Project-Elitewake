@@ -1,0 +1,6 @@
+# Port terminology and metric-unit audit
+T10/T11 documentation/source inspection, October 18, 2026. No gameplay code changed, no fresh build/Play check.
+
+Current documentation had one active gameplay phrase "purchased village NPCs" in MILESTONES.md; corrected to Port. Other nonarchive Village mentions in the inspected docs are deliberate retired-term/task/rename-policy descriptions, not active player-facing names. Source/ and Scripts/Setup searches found no Village/Free Port player-facing string requiring a code edit.
+No feet/yards/miles/knots distance label was found in current Widget/Journal source searches. Anatomy references to feet, enum slot Feet and local variable ft are not units. Unreal centimeters remain internal. Newer owner-approved speed values are explicitly expressed in knots in design documentation; preserve them as authority, display conversion may use m/s when implemented (one knot = 0.514444... m/s). Do not erase approved speed values under a distance-label audit.
+T10/T11 remain source-audited/documentation-corrected, with build/journal/affected UI checks unrun because implementation ownership stays with Claude/Codex. Do not mark their full implementation acceptance complete without those checks.

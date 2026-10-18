@@ -1,0 +1,22 @@
+{
+  "Bear": [
+    "grizzly_bear.png",
+    "Northern Winter",
+    "Adult brown/grizzly bear, dense warm brown fur with lighter shoulder tips, shoulder hump, rounded ears, dark nose, heavy plantigrade paws with five claws, neutral standing pose, mouth closed."
+  ],
+  "Lion": [
+    "lion.png",
+    "Central Plains",
+    "Adult male lion, tawny short fur, dark brown mane with warmer golden outer fringe, pale muzzle and underside, black nose, tufted tail, four planted paws, neutral standing pose, mouth closed."
+  ],
+  "GiantCrocodile": [
+    "crocodile.png",
+    "Southern Swamp",
+    "Giant crocodile matching existing crocodile concept, olive-grey armored dorsal scutes and subtle dark bands, pale cream underside, long tapered tail, broad crocodilian head and visible closed-jaw tooth pattern, four planted legs, neutral low standing pose. Giant scale has no approved meter dimension."
+  ],
+  "Elephant": [
+    "elephant.png",
+    "Western Jungle",
+    "Adult African-style elephant matching existing concept, warm grey wrinkled skin, large ears with intact rounded edges, two ivory curved tusks, long trunk hanging with softly curled tip, four columnar legs, sparse tail hair, neutral standing pose. Do not change to an Asian elephant silhouette."
+  ]
+}

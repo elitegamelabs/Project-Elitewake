@@ -8937,6 +8937,1797 @@
       "reviewNotes": [
         "Mild perspective/detail differences; relative scale and mating geometry need validation."
       ]
+    },
+    {
+      "path": "Art/Flora/Oak-Leaves-v1.png",
+      "bytes": 451202,
+      "sha256": "74b61b4828138e0b8aad19120e0079c8dc9f144a4fad143ed37565dbb4dd280b",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "classification": "generated-in-editor-draft",
+      "status": "Script-generated leaf card used by current regional tree builder; runtime look remains subject to Play review",
+      "metadata": "Art/Flora/Oak-Leaves-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Leaf card only; no new tree mesh or Play validation in this change."
+      ]
+    },
+    {
+      "path": "Art/Flora/Ash-Leaves-v1.png",
+      "bytes": 424987,
+      "sha256": "943eb6875752475729604a5d683a26ebd72403cbc07a165c1d057a0920eb95cb",
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "classification": "generated-in-editor-draft",
+      "status": "Script-generated leaf card used by current regional tree builder; runtime look remains subject to Play review",
+      "metadata": "Art/Flora/Ash-Leaves-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Leaf card only; no new tree mesh or Play validation in this change."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/front.png",
+      "bytes": 2031914,
+      "sha256": "82825e4c51cbad7ab5817714ef04b2e161847b31a2923bf66ba7a3dbbe98b166",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/front.png",
+      "bytes": 2076415,
+      "sha256": "0266f9daaf62c4720ba01bb4cd96b1e832a4fa0b6a8fe13ef13cd8ec80649c2b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/deployment-0.png",
+      "bytes": 1677150,
+      "sha256": "2ac9d979136f56c502e817738c9bf80a16f4df4f98b9022abbd5b76b26dfbce0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/deployment-0.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/deployment-25.png",
+      "bytes": 1796422,
+      "sha256": "e1d1a26e03aa3c004b7a27d5918b9c8de53a9bd8d754256792f21834898a8fe1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/deployment-25.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/deployment-50.png",
+      "bytes": 1966894,
+      "sha256": "5fcb5dc5128352851f918f2efe57afe88fd73bce046f0c15fd9a2cfb9b1a83d2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/deployment-50.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/deployment-75.png",
+      "bytes": 1984795,
+      "sha256": "ff3cc07189d4e3c1726374f9b268bf3e83d7b138531662c6e36936c090ccc6ad",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/deployment-75.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/front.png",
+      "bytes": 1667298,
+      "sha256": "4c785df627dea451ba8cc70110bf5034d14bffe8d67a514d5a0347ffd566aa46",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallWeightedSail/front.png",
+      "bytes": 1871112,
+      "sha256": "9099a7a9f26ac95192b042e266677185b149ff90c53a9543d90f8893b8b70ef5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallWeightedSail/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/front.png",
+      "bytes": 2403025,
+      "sha256": "b20e329198bdf5e234a8a81063ca6407bd73c3f68dc3b821a3053eb2cc6c03cd",
+      "dimensions": [
+        1983,
+        793
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/ConceptSheet-v1.png",
+      "bytes": 2651965,
+      "sha256": "7b545bfa0125de70ca8c7f92ef680697a076ebc95cb4daab9a81aa118ece84f6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/SpiderCave/ConceptSheet-v1.png",
+      "bytes": 2697511,
+      "sha256": "6d0b2f5b3a5ea1676bb827db46a0356f0870fa39e64f12bf7643bd95192dbb31",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/SpiderCave/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical.",
+        "Cave/swamp material color separation needs refinement against the delegated brief."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/ConceptSheet-v1.png",
+      "bytes": 2564463,
+      "sha256": "e21f603d44e01db7acc49482b21badd442087dfb6ed832c36a0c1ac725d9dac1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/ConceptSheet-v1.png",
+      "bytes": 2337473,
+      "sha256": "ddcd29084786f074df61511c87e76ae6a0867bac503689456eb5513ca25e23fa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/LargeRectangularSail/DeploymentSheet-v1.png",
+      "bytes": 1946307,
+      "sha256": "d7313e25172ca73d621082124d5c0a4c1c064f7de03f552dc784031daf99004d",
+      "dimensions": [
+        1983,
+        793
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/LargeRectangularSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/LargeWeightedSail/DeploymentSheet-v1.png",
+      "bytes": 2073327,
+      "sha256": "05c33b5b41acaed2860c540e39c540e2f5153bb2fae6393f69f4c80350ce58ce",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/LargeWeightedSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/ConceptSheet-v1.png",
+      "bytes": 2187400,
+      "sha256": "c5ca969643053a2f9cd7d9b6fe095f8fac88bd0274d23ff9f5e23d79b9c7f72d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/MediumRectangularSail/DeploymentSheet-v1.png",
+      "bytes": 1942308,
+      "sha256": "f50990cb2ded87865bd3935001a9ad60de25d6df5b9160c9994a750bb19e63f2",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/MediumRectangularSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/MediumWeightedSail/DeploymentSheet-v1.png",
+      "bytes": 1803634,
+      "sha256": "be8c9f202aaa1d2d31d37974b3a68e42d7c2d04364b1a188126d354ff1178fa1",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/MediumWeightedSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/DeploymentSheet-v1.png",
+      "bytes": 1862294,
+      "sha256": "c6a3dcd98470ef5cb68e1cc1bf18c02480a23bb2ec6bcc5a4ec03e53d3c5edc9",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallWeightedSail/DeploymentSheet-v1.png",
+      "bytes": 1903498,
+      "sha256": "5919f7a52302bef6407cb7806e19cb759439e3e53a461c52085936a5cc857058",
+      "dimensions": [
+        1983,
+        793
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/SmallWeightedSail/DeploymentSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/SpiderSwamp/ConceptSheet-v1.png",
+      "bytes": 2407617,
+      "sha256": "b2d749716888979a3492cc5868570e40723cd8babc7e9154b7fc7d688f510603",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/SpiderSwamp/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical.",
+        "Cave/swamp material color separation needs refinement against the delegated brief."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Tortoise/ConceptSheet-v1.png",
+      "bytes": 2615309,
+      "sha256": "2dc50f6da3c1e0bfc8dd05672e00dc7db1c504fa4573d7de3b7ab48d74701f2e",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Tortoise/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical.",
+        "Exact owner-approved scute counts are not validated by this sheet; T6 model acceptance remains open."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/back.png",
+      "bytes": 2250179,
+      "sha256": "bc9b2e0ce2d3ddfbff8ed5e9a7c17d70b7f68228be6544e7d860901d093e4167",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/back.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/front.png",
+      "bytes": 2199821,
+      "sha256": "ad0c766396c0b7f32206d776205ca9fcbd9bd95e47bd66652e4f3f5d4715bb16",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/left.png",
+      "bytes": 2642111,
+      "sha256": "168d541eacb36512766c6dade1fa7bf3281b110d1cc3a21b4ca38f84e40b0aaa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/left.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/right.png",
+      "bytes": 2716628,
+      "sha256": "82138f35fb5c1162451f06f96808b3513daadbcfc159d5d737e75bbaf2ea19f2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/right.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/top.png",
+      "bytes": 1983510,
+      "sha256": "4e4d3b31158b5716301222029933d2443e097845c95de7caa46a8c963a34c56e",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/top.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Bear/underside.png",
+      "bytes": 2123569,
+      "sha256": "5dba18058347aa158144ffc356165da5b1b4564467e592e684168349de2c80d1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Bear/underside.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/back.png",
+      "bytes": 2155111,
+      "sha256": "20c0892d4a8e06c8d249444f17563dc368179b40edf7d35a2176f40575269773",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/back.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/front.png",
+      "bytes": 2154648,
+      "sha256": "a7338c478ad0eb33dccabfca7fc889555effaf7484f167d02b3a023edf468bfc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/left.png",
+      "bytes": 2573398,
+      "sha256": "c9093c025da6eea2760b680b8ab5f797e3e0e3d522910187c7b7f3a5613e2e06",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/left.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/right.png",
+      "bytes": 2592728,
+      "sha256": "118252bb985e3cefff0286d89cda2f3fdce6e15cd087e768ee28fc7985e873d6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/right.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/top.png",
+      "bytes": 1883683,
+      "sha256": "907542e1b82a5903e1f863210afe601c2720b0d567c521ff17b87e2ccd1ab3d6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/top.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Elephant/underside.png",
+      "bytes": 1862930,
+      "sha256": "d74c3d92cadeb5b76c660aec6385911ae80503b3728e652ccb1a72877d548691",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Elephant/underside.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/back.png",
+      "bytes": 2019394,
+      "sha256": "096eeb348dbbc91cff30efa0e01fc34753682afe9d0cfb9ff13911ea459165a3",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/back.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/front.png",
+      "bytes": 2038898,
+      "sha256": "c4d02fd1f5e445ad9453a2e879772ef1c57210bebaa2197557946306e23f98e5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/left.png",
+      "bytes": 2055566,
+      "sha256": "9753367100f7f9a19d0521d0daed9ee45bc93da92d4181f210d6140c770a9e33",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/left.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/right.png",
+      "bytes": 2200551,
+      "sha256": "365538a61b16619b09c7cfc199f47bff6a62d23c2e1f9d8f9c8320ebf44089c0",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/right.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/top.png",
+      "bytes": 1878604,
+      "sha256": "50e72bbb8f8e80aa3880c32cd3927a28136e378f318917573c944add6c08f3e4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/top.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/GiantCrocodile/underside.png",
+      "bytes": 1701724,
+      "sha256": "bf47d01fd60939493de299bc27d8aa1316e90e0251ef9b911e60f8a0d1f40fe4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/GiantCrocodile/underside.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/back.png",
+      "bytes": 1859270,
+      "sha256": "0601ba5cdfae4a7b9ddf9c5a641d2f57e1f248ddc0d41aebfa2f65ec5f0385c0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/back.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/front.png",
+      "bytes": 1922121,
+      "sha256": "288f27643f0a3abce9e9f3297ecd430485d897b159e36bdbc48d58bd617bbcb0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/front.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/left.png",
+      "bytes": 2244340,
+      "sha256": "70eeca59239553cdc300fa9f346f2ce8b1ec5419b217982f764d2924d8951676",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/left.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/right.png",
+      "bytes": 2337236,
+      "sha256": "cbb12f3edfdf8baa4e04725776af3bebf61f52852e374ad5a8dac96c11baae37",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/right.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/top.png",
+      "bytes": 1739390,
+      "sha256": "8c8b508c89128ae752f233f3f7018ee2f40c56de4eaebc2d325f23c67a5fa328",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/top.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Animals/Lion/underside.png",
+      "bytes": 1772486,
+      "sha256": "edfe9e440e1df1943c6d81485cd303c3587dad92601708920a0b92454caffd1b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Animals/Lion/underside.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/attachment-v2.png",
+      "bytes": 2414000,
+      "sha256": "83a6eaefad4af1de820e0607fde4f5e9f904d6fa60a52c1f4a1f7b951cc848bd",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/attachment-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/back-v2.png",
+      "bytes": 1991315,
+      "sha256": "9f05a9e5561a51c56087e846771a0e43bcd1c39bb1f66245cc37cd9443adb08c",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/back-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/left-v2.png",
+      "bytes": 1956567,
+      "sha256": "17ca7e345194fa9353d7ad10d6b054ff01cf1e5fada5837d737e931da2e064e5",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/left-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/right-v2.png",
+      "bytes": 1929805,
+      "sha256": "47bd1a9e5841e3714ddcaecc4510927c3f0ffa86d980019c11b95a517e45a31d",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/right-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/top-v2.png",
+      "bytes": 1847774,
+      "sha256": "562429edd18a46a36225fc794d6f157c1c99e4b394db7f3f98be9f7522ecf91c",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/top-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/underside-v2.png",
+      "bytes": 1977722,
+      "sha256": "57d377bd247732cb5cac113ba74b8f0101c6c1f8810a971b139f2d8339bb69d0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/underside-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/attachment-v2.png",
+      "bytes": 2428746,
+      "sha256": "85316a263df8880f5b7bcbc76895b1fa45c4c38b67c438a639bea185eed3dae4",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/attachment-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/back-v2.png",
+      "bytes": 1949842,
+      "sha256": "ffca4df852153a72862265b682b614dce9c760c4ea0fe03a4d02f1e8b78dcfcc",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/back-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/left-v2.png",
+      "bytes": 1879247,
+      "sha256": "71b39c9b20830c46739e4d119628eed162eb401798214466f1e68c3139952c2d",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/left-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/right-v2.png",
+      "bytes": 2101931,
+      "sha256": "0722a7a0083840266a5d14a7f1f6b0fe0c890fb117fe03b0492ae6a08815ced4",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/right-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/top-v2.png",
+      "bytes": 1886321,
+      "sha256": "29ef29806c312752ffce7050f2f967606bf8009d6afe066fcbb7c9c9fda8ffeb",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/top-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/underside-v2.png",
+      "bytes": 1946284,
+      "sha256": "34cf192217970cf772c405b1345956fb5774f1e42b86df818f89a452e246eb4f",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/underside-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/attachment-v2.png",
+      "bytes": 2926718,
+      "sha256": "36063df007f9a6525e1c167a68203ae52ce369ff952106df83e86e421d408eca",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/attachment-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/back-v2.png",
+      "bytes": 2258612,
+      "sha256": "49ad63d3e2d1b1b6353d2c2d9500fccff08f1d0eeb44257dca89dd3d4adb4286",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/back-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/left-v2.png",
+      "bytes": 2014369,
+      "sha256": "f48d79ae9c28234ff4a15610234dddaa7e82beaa13d5832fd496ea6724f2ff77",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/left-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/right-v2.png",
+      "bytes": 1821843,
+      "sha256": "0d45812010215b3df8905d6e3f2d890e47a2c98a1b116e0792e3fd82143f77fa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/right-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/top-v2.png",
+      "bytes": 1802907,
+      "sha256": "cb42458a21cd4e07e27032dba3e23b47fc723ba84a9b6dc94af9c47fdee52ccf",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/top-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/underside-v2.png",
+      "bytes": 1816826,
+      "sha256": "bb44d9c5845556878fbf4842e50485f40af463b4ce7b9abd6f8ae6b389cfd673",
+      "dimensions": [
+        2172,
+        724
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/underside-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/BailBucket/ConceptSheet-v1.png",
+      "bytes": 2372233,
+      "sha256": "1c4d7681cae5bd7cee4ea8e624252f5b8c523bcffdeb01aadfcb09fd02245ce5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/BailBucket/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Cannon/ConceptSheet-v1.png",
+      "bytes": 2435056,
+      "sha256": "4dd7485b046b670541242347210e82a326fd7e8c756ced0cc94781404b63ed4e",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Cannon/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/FlagWhite/CombatWearSheet-v1.png",
+      "bytes": 1806525,
+      "sha256": "d34e7b7c6f08618ee47b443686749ae2b956b5023fa8be312e3b67ab6a5635ef",
+      "dimensions": [
+        1774,
+        887
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/FlagWhite/CombatWearSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/GunportRound/MechanismSheet-v1.png",
+      "bytes": 2492032,
+      "sha256": "54c1f036d1682218fafe36abefc19859c0e6fbb51a0dcfb72095b3d2f80eafd2",
+      "dimensions": [
+        1920,
+        819
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/GunportRound/MechanismSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Aft sliding direction illustrated; fully open panel still overlaps the aperture and must be corrected in production geometry."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/GunportSquare/MechanismSheet-v1.png",
+      "bytes": 2399088,
+      "sha256": "fbb1d0a90787910b38f16fe2ae4d0b917cc30cfbb98e8b3ea0752dc1f84626e1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/GunportSquare/MechanismSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Aft sliding direction illustrated; fully open panel still overlaps the aperture and must be corrected in production geometry."
+      ]
+    },
+    {
+      "path": "Art/Reference/Resources/OakWood/ConceptSheet-v1.png",
+      "bytes": 2504755,
+      "sha256": "e6e7580656bef983b354bc6e400f3040040180f2594919b7f1e0bbf605c792fc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Resources/OakWood/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Resources/SulfurOre/ConceptSheet-v1.png",
+      "bytes": 3014960,
+      "sha256": "653072bba96fb00a3239238a9102ca9144199030eb5ed050e9e9a5b29748d9dc",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Resources/SulfurOre/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/WreckCrate/ConceptSheet-v1.png",
+      "bytes": 2912361,
+      "sha256": "ece87ce8b69079e673015c7fcf7b37afc794a7e5bbae1425e4f52f5781b59086",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/WreckCrate/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Hulls/Cavalier/LayoutSheet-v1.png",
+      "bytes": 2619617,
+      "sha256": "0f6802087ef76a4c1dc789d9251f14867b087532c6de2d84be0ee5c2f1dcce51",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Hulls/Cavalier/LayoutSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Hulls/Sloop/LayoutSheet-v1.png",
+      "bytes": 2429566,
+      "sha256": "bf2ca7ceec213a3825ed2b0f95fe65f27f5244d0bc8212b4343632988e5d8773",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Hulls/Sloop/LayoutSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Hulls/Brigantine/LayoutSheet-v2.png",
+      "bytes": 2393902,
+      "sha256": "b57e217f2166234cdfedb3724e3947bc0e4433ab19752358829453c205ba4752",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Hulls/Brigantine/LayoutSheet-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Hulls/Raft/LayoutSheet-v2.png",
+      "bytes": 2712794,
+      "sha256": "cc35b088b1be9c89fda7f0327059ccb0ce8311c7b6ac2e4ac559bca17854be53",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Hulls/Raft/LayoutSheet-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/Hulls/Schooner/LayoutSheet-v2.png",
+      "bytes": 2390757,
+      "sha256": "bf0dc6d1b41e619d5629325e2a87691e046f9af466185a9bb9837c872700b52a",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "classification": "reference",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "metadata": "Art/Reference/Ships/Hulls/Schooner/LayoutSheet-v2.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
     }
   ]
 }

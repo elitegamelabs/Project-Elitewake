@@ -1,12 +1,82 @@
 {
   "generator": "ChatGPT built-in image generation",
-  "status": "Generated concept reference, visually reviewed; separate six-view set and integration pending",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
   "assets": [
     {
       "file": "ConceptSheet-v1.png",
       "sha256": "8fb130a720667dfe31351eeb154319ea87d85597ce90a6c6d837d0b5c555d621",
       "prompt": "Use case: stylized-concept. Asset type: ELITEWAKE orthographic modeling reference sheet, realistic physically based materials, mid-1700s naval carpentry. One consistent object repeated in a clean 3 by 2 grid: front, back, left profile, right profile, top, underside in that reading order. A seventh small detail inset at lower right shows the base attachment, without obscuring six views. Off-white neutral studio background, evenly lit. Natural weathered warm brown oak, pronounced grain and restrained brass and dark iron matching the approved ELITEWAKE hull. No scenery, water, sky, people, flags, labels, letters, numbers, watermark or dimensions. These are reference views, no ship hull. Primary subject: One removable ship-side wooden railing module with exactly two sturdy curved timber dinghy davit arms, reinforced dark iron brackets, rope guide pulleys and secured ropes, compatible base socket footings. Do not depict the dinghy itself. No cannon.",
       "status": "concept reference"
+    },
+    {
+      "file": "front.png",
+      "sha256": "82825e4c51cbad7ab5817714ef04b2e161847b31a2923bf66ba7a3dbbe98b166",
+      "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, front elevation. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: One removable ship-side wooden railing module with exactly two sturdy curved timber dinghy davit arms, reinforced dark iron brackets, rope guide pulleys and secured ropes, compatible base socket footings. Do not depict the dinghy itself. No cannon. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "attachment-v2.png",
+      "sha256": "83a6eaefad4af1de820e0607fde4f5e9f904d6fa60a52c1f4a1f7b951cc848bd",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE TIGHT CLOSE-UP OF A SINGLE FOOT CONNECTOR: crop to the lower section of one end post, its iron socket footing, horizontal locking pin and mating opening. Show bolts, pin and socket geometry clearly at three-quarter macro angle. Do NOT depict the whole railing or full-height posts. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "back-v2.png",
+      "sha256": "9f05a9e5561a51c56087e846771a0e43bcd1c39bb1f66245cc37cd9443adb08c",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE BACK ELEVATION: camera is on the opposite side from the large front view. Preserve widths and all counts. Show rear joinery and the reverse face of posts/fasteners, not a three-quarter view. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "left-v2.png",
+      "sha256": "17ca7e345194fa9353d7ad10d6b054ff01cf1e5fada5837d737e931da2e064e5",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE LEFT END ELEVATION: camera looks ALONG THE LENGTH of the top handrail from left to right. NARROW VERTICAL silhouette. Near end post hides balusters and the far post behind it; see only post thickness and projecting hardware, not the broad front rectangle. Davit arms if present overlap behind the near arm. Cannons remain absent. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "right-v2.png",
+      "sha256": "47bd1a9e5841e3714ddcaecc4510927c3f0ffa86d980019c11b95a517e45a31d",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE RIGHT END ELEVATION: camera looks ALONG THE LENGTH of the top handrail from right to left. NARROW VERTICAL silhouette. Near end post hides balusters and far post; see post thickness and protruding fittings, NOT a broad rectangle. Preserve davit profile if present. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "top-v2.png",
+      "sha256": "562429edd18a46a36225fc794d6f157c1c99e4b394db7f3f98be9f7522ecf91c",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE EXACT TOP PLAN: camera vertically ABOVE looking STRAIGHT DOWN. The object is a THIN LONG HORIZONTAL FOOTPRINT with the square TOPS of the two end posts at its ends and the slim TOP surface of the handrail spanning between them. Balusters lie underneath rail and are hidden. No tall front elevation visible. Davit arms if present project outward in plan; show top faces/pulley tops, not frontal arch elevations. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    },
+    {
+      "file": "underside-v2.png",
+      "sha256": "57d377bd247732cb5cac113ba74b8f0101c6c1f8810a971b139f2d8339bb69d0",
+      "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE EXACT BOTTOM PLAN: camera vertically BELOW looking STRAIGHT UP. Show a THIN LONG HORIZONTAL FOOTPRINT, the BOTTOMS of the socket feet and lower beam, posts foreshortened behind them. No full tall front elevation. Show actual bottom surfaces, no floor plane. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
     }
   ],
   "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."

@@ -21,7 +21,7 @@ Growth stages remain incomplete. The first growth board has incorrect species im
 
 Catalog classifications are intentionally cautious: reference art is not a mesh; pending-model art has model work tracked elsewhere; generated-in-editor drafts still need visual review; in-game art sources are not final-art approval; and legacy items remain for history. The catalog records generated wildlife, flora, rock, world-material and tool-animation folders separately from PNG sources. Forage sheet 3 version 2 replaces version 1. Insects sheet 1 needs Bloodwing anatomy review. Blueprint diagrams are illustrative and need a wooden-tool material correction. Atlas arrangements and cutout quality need visual approval before runtime binding. No game balance or distribution is inferred from art. Duplicate ZIP bundles are excluded from this publication; individual source images are supplied.
 
-Indexed images: **190**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
+Indexed images: **269**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
 
 ## Generated Unreal folders
 
@@ -230,3 +230,85 @@ These entries point to draft assets in `Content/`; the asset filenames appear in
 | [Reference/Ships/SurgeonTable/ConceptSheet-v1.png](Reference/Ships/SurgeonTable/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
 | [Reference/Ships/SurgeonTools/ConceptSheet-v1.png](Reference/Ships/SurgeonTools/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
 | [Reference/Ships/TwoCannonRailing/ConceptSheet-v1.png](Reference/Ships/TwoCannonRailing/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+
+| [Flora/Oak-Leaves-v1.png](Flora/Oak-Leaves-v1.png) | 1024 × 1024 | — | generated-in-editor-draft | Script-generated leaf card used by current regional tree builder; runtime look remains subject to Play review |
+
+| [Flora/Ash-Leaves-v1.png](Flora/Ash-Leaves-v1.png) | 1024 × 1024 | — | generated-in-editor-draft | Script-generated leaf card used by current regional tree builder; runtime look remains subject to Play review |
+
+| [Reference/Ships/DinghyRailing/front.png](Reference/Ships/DinghyRailing/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/front.png](Reference/Ships/PlainRailing/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/deployment-0.png](Reference/Ships/SmallRectangularSail/deployment-0.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/deployment-25.png](Reference/Ships/SmallRectangularSail/deployment-25.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/deployment-50.png](Reference/Ships/SmallRectangularSail/deployment-50.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/deployment-75.png](Reference/Ships/SmallRectangularSail/deployment-75.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/front.png](Reference/Ships/SmallRectangularSail/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallWeightedSail/front.png](Reference/Ships/SmallWeightedSail/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/front.png](Reference/Ships/TwoCannonRailing/front.png) | 1983 × 793 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/ConceptSheet-v1.png](Reference/Animals/Bear/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/SpiderCave/ConceptSheet-v1.png](Reference/Animals/SpiderCave/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/ConceptSheet-v1.png](Reference/Animals/Elephant/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/ConceptSheet-v1.png](Reference/Animals/GiantCrocodile/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/LargeRectangularSail/DeploymentSheet-v1.png](Reference/Ships/LargeRectangularSail/DeploymentSheet-v1.png) | 1983 × 793 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/LargeWeightedSail/DeploymentSheet-v1.png](Reference/Ships/LargeWeightedSail/DeploymentSheet-v1.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/ConceptSheet-v1.png](Reference/Animals/Lion/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/MediumRectangularSail/DeploymentSheet-v1.png](Reference/Ships/MediumRectangularSail/DeploymentSheet-v1.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/MediumWeightedSail/DeploymentSheet-v1.png](Reference/Ships/MediumWeightedSail/DeploymentSheet-v1.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallRectangularSail/DeploymentSheet-v1.png](Reference/Ships/SmallRectangularSail/DeploymentSheet-v1.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/SmallWeightedSail/DeploymentSheet-v1.png](Reference/Ships/SmallWeightedSail/DeploymentSheet-v1.png) | 1983 × 793 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/SpiderSwamp/ConceptSheet-v1.png](Reference/Animals/SpiderSwamp/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Tortoise/ConceptSheet-v1.png](Reference/Animals/Tortoise/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/back.png](Reference/Animals/Bear/back.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/front.png](Reference/Animals/Bear/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/left.png](Reference/Animals/Bear/left.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/right.png](Reference/Animals/Bear/right.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/top.png](Reference/Animals/Bear/top.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Bear/underside.png](Reference/Animals/Bear/underside.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/back.png](Reference/Animals/Elephant/back.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/front.png](Reference/Animals/Elephant/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/left.png](Reference/Animals/Elephant/left.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/right.png](Reference/Animals/Elephant/right.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/top.png](Reference/Animals/Elephant/top.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Elephant/underside.png](Reference/Animals/Elephant/underside.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/back.png](Reference/Animals/GiantCrocodile/back.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/front.png](Reference/Animals/GiantCrocodile/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/left.png](Reference/Animals/GiantCrocodile/left.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/right.png](Reference/Animals/GiantCrocodile/right.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/top.png](Reference/Animals/GiantCrocodile/top.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/GiantCrocodile/underside.png](Reference/Animals/GiantCrocodile/underside.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/back.png](Reference/Animals/Lion/back.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/front.png](Reference/Animals/Lion/front.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/left.png](Reference/Animals/Lion/left.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/right.png](Reference/Animals/Lion/right.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/top.png](Reference/Animals/Lion/top.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Animals/Lion/underside.png](Reference/Animals/Lion/underside.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/attachment-v2.png](Reference/Ships/DinghyRailing/attachment-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/back-v2.png](Reference/Ships/DinghyRailing/back-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/left-v2.png](Reference/Ships/DinghyRailing/left-v2.png) | 1024 × 1536 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/right-v2.png](Reference/Ships/DinghyRailing/right-v2.png) | 1024 × 1536 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/top-v2.png](Reference/Ships/DinghyRailing/top-v2.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/DinghyRailing/underside-v2.png](Reference/Ships/DinghyRailing/underside-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/attachment-v2.png](Reference/Ships/PlainRailing/attachment-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/back-v2.png](Reference/Ships/PlainRailing/back-v2.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/left-v2.png](Reference/Ships/PlainRailing/left-v2.png) | 1024 × 1536 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/right-v2.png](Reference/Ships/PlainRailing/right-v2.png) | 1024 × 1536 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/top-v2.png](Reference/Ships/PlainRailing/top-v2.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/PlainRailing/underside-v2.png](Reference/Ships/PlainRailing/underside-v2.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/attachment-v2.png](Reference/Ships/TwoCannonRailing/attachment-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/back-v2.png](Reference/Ships/TwoCannonRailing/back-v2.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/left-v2.png](Reference/Ships/TwoCannonRailing/left-v2.png) | 1024 × 1536 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/right-v2.png](Reference/Ships/TwoCannonRailing/right-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/top-v2.png](Reference/Ships/TwoCannonRailing/top-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/TwoCannonRailing/underside-v2.png](Reference/Ships/TwoCannonRailing/underside-v2.png) | 2172 × 724 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/BailBucket/ConceptSheet-v1.png](Reference/Ships/BailBucket/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Cannon/ConceptSheet-v1.png](Reference/Ships/Cannon/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/FlagWhite/CombatWearSheet-v1.png](Reference/Ships/FlagWhite/CombatWearSheet-v1.png) | 1774 × 887 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/GunportRound/MechanismSheet-v1.png](Reference/Ships/GunportRound/MechanismSheet-v1.png) | 1920 × 819 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/GunportSquare/MechanismSheet-v1.png](Reference/Ships/GunportSquare/MechanismSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Resources/OakWood/ConceptSheet-v1.png](Reference/Resources/OakWood/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Resources/SulfurOre/ConceptSheet-v1.png](Reference/Resources/SulfurOre/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/WreckCrate/ConceptSheet-v1.png](Reference/Ships/WreckCrate/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Hulls/Cavalier/LayoutSheet-v1.png](Reference/Ships/Hulls/Cavalier/LayoutSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Hulls/Sloop/LayoutSheet-v1.png](Reference/Ships/Hulls/Sloop/LayoutSheet-v1.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Hulls/Brigantine/LayoutSheet-v2.png](Reference/Ships/Hulls/Brigantine/LayoutSheet-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Hulls/Raft/LayoutSheet-v2.png](Reference/Ships/Hulls/Raft/LayoutSheet-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |
+| [Reference/Ships/Hulls/Schooner/LayoutSheet-v2.png](Reference/Ships/Hulls/Schooner/LayoutSheet-v2.png) | 1536 × 1024 | — | reference | Concept; geometry validation pending |

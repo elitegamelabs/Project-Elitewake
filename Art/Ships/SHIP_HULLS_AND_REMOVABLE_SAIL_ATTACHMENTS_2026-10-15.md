@@ -33,3 +33,6 @@ Do not interpret “ships without sails” as removing masts/poles and flags fro
 
 ## Cavalier class compatibility (owner decision, October 15, 2026)
 The Cavalier is a distinct ship class and must be the largest ship in ELITEWAKE, larger than the Brigantine. It requires its own high-definition hull and class-specific sail assemblies; do not simply scale up the Brigantine. Preserve the modular rule above: Cavalier hull has no permanently integrated sails, and compatible removable sail assemblies include supporting masts/poles, flags already mounted on poles, sail cloth, rigging, and attachment details. Exact dimensions and gameplay statistics remain TBD until approved. See [Cavalier Legendary Capital Ship](CAVALIER_LEGENDARY_CAPITAL_SHIP_2026-10-15.md).
+
+## Superseding owner update — October 18
+The older larger-than-Brigantine and pre-mounted sail-flag clauses above are superseded. Cavalier now has comparable overall size to Brigantine and retains three traversable levels; sail modules carry no flags. See [latest ship decisions](../../Docs/OwnerDecisions/SHIP_PROPORTIONS_AND_MODULAR_SAIL_HARDPOINTS_2026-10-18.md) and the [current delegated decision record](../../Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). This note changes documentation only.

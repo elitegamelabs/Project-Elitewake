@@ -1,0 +1,16 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "e6e7580656bef983b354bc6e400f3040040180f2594919b7f1e0bbf605c792fc",
+      "prompt": "Use case: stylized-concept. ELITEWAKE original realistic game asset reference sheet. One short oak timber offcut with a forked bark edge, warm brown porous end grain and readable rings. Six views of the SAME exact offcut: front, back, left, right, overhead, underside. Photorealistic natural material, not six random logs. Generic Wood item identity unchanged. Even diffuse studio illumination, plain pale neutral background, full requested object visible in all views, clear separated panels. No scenery, water, sky, human, text, labels, numbers, watermark or scale bars. Construction is a reversible proposed modeling reference, no runtime implementation claimed.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

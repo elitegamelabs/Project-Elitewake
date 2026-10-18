@@ -21,3 +21,6 @@ The bounded delivery completes G6/G7 documentation and produces their first visu
 
 ## Delivery verification
 Eleven PNG concept sheets decode at 1536x1024; hashes match provenance. All existing catalog entries are preserved and eleven reference entries added. Prompts/S7 queue/index updated. Visual review confirms no scenery or sail flags and no permanently mounted cannons in two-cannon railing. Mild perspective/detail differences remain; no exact orthographic set claimed complete. No build/Play tests run because this is art/documentation only.
+
+## Camera QA — October 18
+9 single-view/deployment drafts retained as concept references; 24 camera-mismatched drafts withheld in local work/rejected-views. They are not published as completed orthographic files. Corrected views use versioned filenames and individual review. No exact six-view set is claimed from these drafts.

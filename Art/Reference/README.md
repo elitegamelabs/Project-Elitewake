@@ -75,3 +75,13 @@ Eleven concept sheets generated with built-in image generation and visually revi
 - [SurgeonTable](Ships/SurgeonTable/ConceptSheet-v1.png) — [prompts](Ships/SurgeonTable/PROMPTS.md), [provenance](Ships/SurgeonTable/generation.json).
 - [SurgeonTools](Ships/SurgeonTools/ConceptSheet-v1.png) — [prompts](Ships/SurgeonTools/PROMPTS.md), [provenance](Ships/SurgeonTools/generation.json).
 - [TwoCannonRailing](Ships/TwoCannonRailing/ConceptSheet-v1.png) — [prompts](Ships/TwoCannonRailing/PROMPTS.md), [provenance](Ships/TwoCannonRailing/generation.json).
+
+## G4 animal prompts — October 18
+[Bear](Animals/Bear/PROMPTS.md), [Lion](Animals/Lion/PROMPTS.md), [Giant Crocodile](Animals/GiantCrocodile/PROMPTS.md), [Elephant](Animals/Elephant/PROMPTS.md): prompts written; generated concept-sheet status is recorded beside each asset. Six separate validated view files, models and integration remain pending until individually checked. Latest habitat correction and existing reference identity preserved.
+
+## Resource/material prompt coverage — October 18
+[53 reference sample prompt sets](Resources/REFERENCE_COVERAGE_2026-10-18.md) prepared. Each has a shared identity and six camera suffixes. Actual PNG completion is recorded only in local generation.json; a prompt folder is not an image set. Sulfur remains ore requiring Metal Pick or higher; canonical tool-ID gap documented. No scenery or inventory/crafting icons replaced.
+
+
+## Expanded delivery status — October 18
+77 additional retained reference PNGs, with per-image metadata and limitations. See [delivery and outstanding work](../../Docs/REPORTS/2026-10-18_ChatGPT_Expanded_Delivery.md). Animal six-view files exist; exact projection and cross-view geometry remain pending. Deployment sheets are illustrative. Prompt coverage is not PNG completion.

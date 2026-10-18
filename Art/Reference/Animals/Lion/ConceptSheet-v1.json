@@ -1,0 +1,11 @@
+{
+  "file": "ConceptSheet-v1.png",
+  "sha256": "c5ca969643053a2f9cd7d9b6fe095f8fac88bd0274d23ff9f5e23d79b9c7f72d",
+  "prompt": "ELITEWAKE realistic animal modeling reference. Adult male lion, tawny short fur, dark brown mane with warmer golden outer fringe, pale muzzle and underside, black nose, tufted tail, four planted paws, neutral standing pose, mouth closed. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "LayoutSheet-v2.png",
+      "sha256": "cc35b088b1be9c89fda7f0327059ccb0ce8311c7b6ac2e4ac559bca17854be53",
+      "prompt": "Replace the shaped-boat outline in the supplied raft study with a truly RECTANGULAR low log raft matching the owner's raft identity. Six views of ONE flat platform made from parallel round buoyant logs, cross timbers and hemp lashings, with a flat plank walking surface. NO pointed bow, no bowsprit, no keel, no enclosed room, NO HOLD or traversable enclosed lower deck, NO deep enclosed hollow hull. One FLUSH EMPTY sail socket, not a protruding mast stub. Simple stern-center boarding ladder. Retain compact proportions and warm natural timber style. Show top, side, bow end, stern end with centered ladder, underside logs, and simple structural section through solid raft timbers with NO room. Plain light background, no flags, poles, sails, text or scenery.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

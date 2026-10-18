@@ -82,6 +82,40 @@ All code paths named above are pointers to inspect, not declarations of complete
 
 - ANSWERED (owner, October 17: keep the schooner's 12 lower-deck gunports as they are). **The schooner's hull gunports.** Your ship systems list says the sloop has none and the brigantine six round ones, but does not mention the schooner. She keeps her twelve square lower-deck gunports (six a side) for now, with four railing hardpoints on her main deck. Should she keep them, have fewer, or have round ones like the brigantine?
 - ANSWERED (owner, October 17: plain railing until replaced; `9658ad6`). **An empty railing hardpoint** is an open gap in the bulwark (a survivor could step off there). Should a ship always carry at least a plain railing, or is the gap right?
-- **The new ships** (October 18, DECIDED, delegated; change any of it): ships fly one flag per masthead (the sheet's masts give your counts: sloop 2, brigantine 3, Cavalier 4; the schooner, with two masts, 2), no ensign staffs. The sloop's helm stands on her new stern deck; her cabin has a bed across the stern, a table and stools, a barrel and a chest; her hold benches, shelves, crates and barrels.
+- **SUPERSEDED delegated new-ship proposal** (October 18; latest owner ship/hardpoint decisions in `Docs/OwnerDecisions/SHIP_PROPORTIONS_AND_MODULAR_SAIL_HARDPOINTS_2026-10-18.md` take priority: no permanent base masts, no flags on sail assemblies, no sloop captain quarters). Historical text follows (October 18, DECIDED, delegated; change any of it): ships fly one flag per masthead (the sheet's masts give your counts: sloop 2, brigantine 3, Cavalier 4; the schooner, with two masts, 2), no ensign staffs. The sloop's helm stands on her new stern deck; her cabin has a bed across the stern, a table and stools, a barrel and a chest; her hold benches, shelves, crates and barrels.
 - **Gunport covers** (built October 18, DECIDED, delegated): opened with Up and shut with Down while manning the cannon; the cover slides aft along the hull; about 1.25 s to open or shut; ports start shut and stay as left. Should anything else open or shut them (a crew order, the helm)?
 - **Flags** (built October 18, DECIDED, delegated; change any of it): the schooner flies 3 flags (fore and main mastheads and the stern; you named the sloop, brigantine and Cavalier only). A flag flies at each masthead and one at the stern; it is hoisted at its halyard on deck. Each round shot that hits the ship wears every flag 12%, and a hit within 5 m of a flag 45% more. A torn flag taken down is lost (otherwise taking it down and up again would mend it). The plain white flag's recipe and cost are TBD.
+
+## G2 reconciled wildlife roster — October 18, 2026
+Latest authority: October 16 elephant habitat correction and elephant/spider milestone; October 18 delegation resolves remaining design choices. Region labels in older concept roster are provenance only.
+
+| Region | Approved habitat, not all built | Existing source placement | Pending / suggestions |
+|---|---|---|---|
+| Northern Winter | Bears; Snow Leopard (October 14 owner habitat) | No current Winter land-prototype placement (PER_ISLAND Winter is empty) | Bear/Snow Leopard full production work pending; elk/hares/wolves/lynx/owls are proposal-only |
+| Western Jungle | Elephants (latest correction); existing suitable coastal wildlife | Squirrel Monkey/Tortoise region entries and habitat tests are in place_animals.py | Elephant production work pending; jaguar/tapir/parrot additions deferred |
+| Southern Swamp | Giant Crocodile, spiders (including caves), existing reptiles | Alligator and Cottonmouth in source PER_ISLAND Swamp | Giant Crocodile/spider production work pending; boar/frogs/herons suggestions not new approvals |
+| Central Plains | Lions; Horses (October 14 owner habitat) | Plains has Pelican/Flamingo; starter also Tortoise/SquirrelMonkey in source | Lion/Horse production work pending; proposed deer/rabbits/foxes/wolves/boar/owls deferred |
+| Eastern Desert | Existing approved wildlife only | Tortoise, Flamingo and Brown Pelican in source PER_ISLAND Desert | Camel/fennec/jackal/lizard/scorpion additions deferred |
+| Freshwater / sea | Eight current build_fish.py kinds: Bass, Catfish, Piranha, MantaRay, Manatee, GreatWhiteShark, HammerheadShark, Squid | Freshwater pond entries plus WORLD/REEF_LIFE regional placements in build_fish.py | Current source is not proof that every final anatomy/animation/audio requirement is complete |
+
+Verified tree contains six land DA_Animal assets and eight aquatic definition assets. Four approved large additions plus spiders have no named production definition in the inspected main tree. Existing prototype placement source and owner-approved habitat are distinct milestones; no fresh runtime population check performed. Elephant's older Central Plains suggestion is superseded by Western Jungle. Other approved habitat placements are retained by the later milestone. Suggested species stay deferred until current roster production is complete (DECIDED, delegated), preserving the approved roster.
+
+## G3 spider decisions
+Resolved under delegation: one species, two cave/swamp material variants, shared rig. Exact production size/combat tuning remains data work, not a new requirement invented by art. Brief: Art/Animals/Spider/SPIDER_BRIEF_2026-10-16.md. No invented growls. Existing decorative webs remain nonblocking and do not become traps.
+
+## G5 elephant obstruction decision
+DECIDED (delegated): Jungle Ash and Maravai may be pushed only if explicitly destructible and actually blocking a valid route. Ordinary tagged destructible/movable clutter may also qualify. Protected tags win. Ports/docks, player buildings, ships, caves/terrain, landmarks, quest-critical objects and indestructible geometry are excluded. Wanderers route around obstacles where possible; if blocked, pause/telegraph then push the eligible obstacle. A charge may push eligible obstacles but does not bypass protection. Show trunk/head/body contact, cracking/foliage, fall/displacement and impact; server controls state/loot, clients show it once. Preserve existing tree regrowth/resource rules pending tested implementation changes. Source: October 16 elephant milestone; details resolved by current delegation.
+
+## T30 existing delegated world values retained
+These were formerly owner-confirmation questions. The owner now delegates the decisions; retain as reversible tuning, not final measured performance approval.
+
+| Choice retained under delegation | Current working value/source |
+|---|---|
+| Island size | 500–900 m long axis, starter about 620 m; Scripts/Setup/world_layout.py |
+| Dressing caps | MAX_TREES=500, MAX_PLANTS=220 per kind; build_coastal_flora.py; MAX_ROCKS=220 in build_coastal_rocks.py; latest Plains density reduction retained |
+| Wildlife rest | RestRange=20000 cm (200 m), LookSeconds=1; EWWildlifeRest.h |
+| Web regrowth/count | 600 s; two passage and three upper-chamber webs per cave; EWCobweb.h/build_cave_webs.py |
+| Terrain vocabulary | Winter peaks/ridges/valleys/plateaus; Jungle ridges/valleys/peaks/plateaus; Desert plateaus/valleys/ridges; Plains valleys/plateaus/ridges/peaks; Swamp remains low wetland; world_terrain.PLANS |
+| Jungle secondary trees | Ash primary, sparse Maravai secondary; biome table Ash 4.0, Maravai 0.5 in build_coastal_flora.py |
+
+These are source-inspected values and documented decisions. No scenery generated, world code changed or new Play verification claimed.

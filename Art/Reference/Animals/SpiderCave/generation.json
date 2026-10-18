@@ -1,0 +1,18 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "6d0b2f5b3a5ea1676bb827db46a0356f0870fa39e64f12bf7643bd95192dbb31",
+      "prompt": "ELITEWAKE realistic animal modeling reference. Same original spider anatomy as reference, exactly eight walking legs, two separate short pedipalps, two main body sections. Cave material variant: charcoal-dark brown body, muted rust joint hairs, subtle natural markings. No glowing eyes or fantasy spikes. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical.",
+        "Cave/swamp material color separation needs refinement against the delegated brief."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

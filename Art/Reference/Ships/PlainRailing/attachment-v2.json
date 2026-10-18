@@ -1,0 +1,10 @@
+{
+  "file": "attachment-v2.png",
+  "sha256": "85316a263df8880f5b7bcbc76895b1fa45c4c38b67c438a639bea185eed3dae4",
+  "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE TIGHT CLOSE-UP OF A SINGLE FOOT CONNECTOR: crop to the lower section of one end post, its iron socket footing, horizontal locking pin and mating opening. Show bolts, pin and socket geometry clearly at three-quarter macro angle. Do NOT depict the whole railing or full-height posts. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

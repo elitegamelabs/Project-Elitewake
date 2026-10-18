@@ -16,3 +16,6 @@ Owner confirms these additional animals for ELITEWAKE: **bears, elephants, giant
 5. Verify Unreal Play visuals, audio, collision, behavior, and performance; do not mark complete on documentation alone.
 
 **Status:** Approved species documented. Regional placements are recommendations, not final owner approval. Actual Unreal implementation and tests pending.
+
+## Superseded habitat note
+The elephant Central Plains suggestion above is superseded by [the October 16 tropical habitat correction](ELEPHANT_TROPICAL_ISLAND_HABITAT_CORRECTION_2026-10-16.md): elephants belong in Western Jungle. The later elephant/spider milestone preserves Bears Winter, Lions Plains and Giant Crocodiles Swamp.

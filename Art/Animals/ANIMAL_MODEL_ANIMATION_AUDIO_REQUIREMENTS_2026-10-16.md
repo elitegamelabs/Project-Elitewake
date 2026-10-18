@@ -97,3 +97,6 @@ Use each species' existing image in `Art/Concepts/Animals/2026-10-12/` as a star
 - **Giant spider:** clearly arachnid anatomy with eight legs, segmented body, multiple eyes as appropriate, fangs/pedipalps and a distinct silhouette. Use the established cave-threat design; animate idle leg movement, skitter/walk, fast run, pounce/leap and bite/strike. Audio should be designed as stylized creature Foley (leg taps, body movement, hiss/click/strike), not falsely presented as literal natural spider vocalization.
 
 For all other animals in `roster.json`, match the named real-world species anatomy and use its same-named concept image as the starting visual guide. Do not infer that every roster concept is currently approved for spawning. The current habitat and implementation authority remains the latest owner decisions and live animal catalog; keep candidate species clearly marked as pending. Aquatic creatures need swim/glide animations and appropriate underwater movement audio rather than land-only gait requirements, plus the required idle, faster movement and attack/action coverage when their design supports it.
+
+## Attack and voice coverage
+See [21-kind attack and voice matrix](ATTACK_AND_VOICE_MATRIX_2026-10-16.md). References, sounds, production clips and in-game verification remain separately tracked.

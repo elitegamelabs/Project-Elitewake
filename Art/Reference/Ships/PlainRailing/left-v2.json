@@ -1,0 +1,10 @@
+{
+  "file": "left-v2.png",
+  "sha256": "71b39c9b20830c46739e4d119628eed162eb401798214466f1e68c3139952c2d",
+  "prompt": "Create exactly ONE LEFT END ELEVATION of the wooden railing shown in reference image. Rotate the viewing camera 90 degrees horizontally from the large front elevation. Camera looks ALONG the LENGTH of the handrail from its left end toward the right end. The finished silhouette MUST be a NARROW VERTICAL POST, NOT a wide rectangle: the near square end post hides the four balusters and far end post behind it. Visible width is only the THICKNESS of one post and small protruding hardware. The top cap is narrow, handrail extends directly away behind it. Strict orthographic end elevation, no three-quarter view. Keep the weathered oak and iron foot socket, no redesign. Pale empty studio background. No text, grid, inset, extra view, people or scenery.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

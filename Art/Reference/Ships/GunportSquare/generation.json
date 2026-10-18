@@ -1,0 +1,17 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "MechanismSheet-v1.png",
+      "sha256": "fbb1d0a90787910b38f16fe2ae4d0b917cc30cfbb98e8b3ea0752dc1f84626e1",
+      "prompt": "Use case: stylized-concept. ELITEWAKE original realistic game asset reference sheet. One isolated square wooden ship gunport frame with dark OPAQUE GLASS pane in a dark iron rim. Three matching front views of same frame: fully closed, half slid horizontally to the RIGHT (aft in this reference), fully slid to the right exposing square empty firing opening. Frame retains pane on visible horizontal guide track. Dark glass not clear. No cannon. Small detail inset shows sliding guide only. No vertical hinge/shutter swing. Even diffuse studio illumination, plain pale neutral background, full requested object visible in all views, clear separated panels. No scenery, water, sky, human, text, labels, numbers, watermark or scale bars. Construction is a reversible proposed modeling reference, no runtime implementation claimed.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Aft sliding direction illustrated; fully open panel still overlaps the aperture and must be corrected in production geometry."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

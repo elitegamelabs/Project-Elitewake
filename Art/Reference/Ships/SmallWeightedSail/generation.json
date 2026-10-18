@@ -1,12 +1,34 @@
 {
   "generator": "ChatGPT built-in image generation",
-  "status": "Generated concept reference, visually reviewed; separate six-view set and integration pending",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
   "assets": [
     {
       "file": "ConceptSheet-v1.png",
       "sha256": "947c801896c9f11bc8a57d1b0e94e7b0ab597e088ff9dd404b1dee1364238676",
       "prompt": "Use case: stylized-concept. ELITEWAKE realistic game-asset reference design sheet. Show one complete removable sail assembly in six views, arranged front/back/left/right/top/underside; add small mast-base socket attachment inset. Each view same object. Pale natural canvas, believable stitching, hemp rigging, natural weathered warm brown oak mast and spar, restrained iron and brass fittings. Same straight removable mast in every view, complete mast-to-deck locking connector, NO ship hull or permanent ship structure. Neutral off-white studio background, even illumination, no scenery, water, sky, people, flags, lettering, labels, dimensions, watermark. Keep all views fully visible with margins. This is concept art, no invented exact measurements. Subject: Small triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Compact light assembly.",
       "status": "concept reference"
+    },
+    {
+      "file": "front.png",
+      "sha256": "9099a7a9f26ac95192b042e266677185b149ff90c53a9543d90f8893b8b70ef5",
+      "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, front elevation. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: Small triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Compact light assembly. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    },
+    {
+      "file": "DeploymentSheet-v1.png",
+      "sha256": "5919f7a52302bef6407cb7806e19cb759439e3e53a461c52085936a5cc857058",
+      "prompt": "ELITEWAKE sail deployment reference sheet using input image for identity. Five evenly spaced complete FRONT elevations left to right of the SAME sail assembly at 0%,25%,50%,75%,100% exposed canvas. Zero: cloth tightly bundled at spar, no exposed sail area. Each next view progressively lowers/unfurls more cloth, preserving total cloth, poles, base connector and rigging. Full: all cloth deployed. Small triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Compact light assembly. Keep mast/spar identical height in every panel. Pale natural canvas, weathered warm brown oak, dark iron/brass. No flags. No labels, text, numbers, scenery, hull, water or people. Five states on ONE wide landscape studio sheet, no extra views. This is reference art, not animation.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
     }
   ],
   "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."

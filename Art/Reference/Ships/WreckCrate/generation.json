@@ -1,0 +1,16 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "ece87ce8b69079e673015c7fcf7b37afc794a7e5bbae1425e4f52f5781b59086",
+      "prompt": "Use case: stylized-concept. ELITEWAKE original realistic game asset reference sheet. One compact floating-wreck cargo crate external prop, weathered plank sides and lid, secured rope lashings, a little attached weed, intact wooden box. Six consistent views front/back/left/right/top/underside, same exact crate. No contents, writing, symbols or treasure effects. Even diffuse studio illumination, plain pale neutral background, full requested object visible in all views, clear separated panels. No scenery, water, sky, human, text, labels, numbers, watermark or scale bars. Construction is a reversible proposed modeling reference, no runtime implementation claimed.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

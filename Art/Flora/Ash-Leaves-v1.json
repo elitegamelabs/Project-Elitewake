@@ -1,0 +1,6 @@
+{
+  "generator": "Scripts/Art/make_leaf_cluster.py",
+  "status": "Script-generated leaf card used by current regional tree builder; runtime look remains subject to Play review",
+  "sha256": "943eb6875752475729604a5d683a26ebd72403cbc07a165c1d057a0920eb95cb",
+  "source": "Scripts/Setup/build_coastal_flora.py imports the leaf card"
+}

@@ -1,0 +1,11 @@
+{
+  "file": "front.png",
+  "sha256": "9099a7a9f26ac95192b042e266677185b149ff90c53a9543d90f8893b8b70ef5",
+  "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, front elevation. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: Small triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Compact light assembly. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+  ]
+}

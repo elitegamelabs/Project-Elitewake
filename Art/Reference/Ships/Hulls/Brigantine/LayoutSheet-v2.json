@@ -1,0 +1,11 @@
+{
+  "file": "LayoutSheet-v2.png",
+  "sha256": "b57e217f2166234cdfedb3724e3947bc0e4433ab19752358829453c205ba4752",
+  "prompt": "Edit the supplied Brigantine sheet. Correct ONLY its gunport layout: EACH BROADSIDE has EXACTLY THREE LARGE ROUND gunport openings, evenly spaced fore/middle/aft. SIX TOTAL across the entire ship. In the top side elevation show exactly THREE circles, not six. Remove all surplus circular openings from that side; fill removed holes with matching uninterrupted timber planks. In cutaway, show the same three per side. Do not change captain's quarters, indoor wheel, three empty sail socket locations, stern-center ladder, materials or other layout. No square gunports, no permanent masts or flags. Keep the same modeling sheet with plain background, no text.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+  ]
+}

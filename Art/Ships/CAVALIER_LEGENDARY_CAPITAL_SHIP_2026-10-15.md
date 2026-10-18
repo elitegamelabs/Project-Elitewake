@@ -47,3 +47,6 @@ The Cavalier must have **three traversable levels**:
 3. **Lower interior deck/floor** — a third level reached by descending a ladder from the level above.
 
 The three levels must be physically legible and connected by usable ladders/access openings, with sufficient headroom, believable structural supports, lighting, collision, and navigation for characters. Do not interpret this as only two levels. Show the three-level arrangement in reference drawings and ensure the 3D layout supports actual in-game traversal. Exact room functions and weapon placements remain TBD unless separately approved; preserve established ship-system and combat requirements.
+
+## Superseding owner update — October 18
+The older larger-than-Brigantine and pre-mounted sail-flag clauses above are superseded. Cavalier now has comparable overall size to Brigantine and retains three traversable levels; sail modules carry no flags. See [latest ship decisions](../../Docs/OwnerDecisions/SHIP_PROPORTIONS_AND_MODULAR_SAIL_HARDPOINTS_2026-10-18.md) and the [current delegated decision record](../../Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). This note changes documentation only.

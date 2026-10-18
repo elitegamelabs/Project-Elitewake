@@ -1,12 +1,23 @@
 {
   "generator": "ChatGPT built-in image generation",
-  "status": "Generated concept reference, visually reviewed; separate six-view set and integration pending",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
   "assets": [
     {
       "file": "ConceptSheet-v1.png",
       "sha256": "020ae3b386bba3b3d677aa1f4baba93e3d64f6e365974ce1753b632403316831",
       "prompt": "Use case: stylized-concept. ELITEWAKE realistic game-asset reference design sheet. Show one complete removable sail assembly in six views, arranged front/back/left/right/top/underside; add small mast-base socket attachment inset. Each view same object. Pale natural canvas, believable stitching, hemp rigging, natural weathered warm brown oak mast and spar, restrained iron and brass fittings. Same straight removable mast in every view, complete mast-to-deck locking connector, NO ship hull or permanent ship structure. Neutral off-white studio background, even illumination, no scenery, water, sky, people, flags, lettering, labels, dimensions, watermark. Keep all views fully visible with margins. This is concept art, no invented exact measurements. Subject: Medium rectangular draped sail, square-yard assembly with horizontal spar, hanging rectangular canvas, no ballast or weights. More substantial intermediate assembly; same visual family as small.",
       "status": "concept reference"
+    },
+    {
+      "file": "DeploymentSheet-v1.png",
+      "sha256": "f50990cb2ded87865bd3935001a9ad60de25d6df5b9160c9994a750bb19e63f2",
+      "prompt": "ELITEWAKE sail deployment reference sheet using input image for identity. Five evenly spaced complete FRONT elevations left to right of the SAME sail assembly at 0%,25%,50%,75%,100% exposed canvas. Zero: cloth tightly bundled at spar, no exposed sail area. Each next view progressively lowers/unfurls more cloth, preserving total cloth, poles, base connector and rigging. Full: all cloth deployed. Medium rectangular draped sail, square-yard assembly with horizontal spar, hanging rectangular canvas, no ballast or weights. More substantial intermediate assembly; same visual family as small. Keep mast/spar identical height in every panel. Pale natural canvas, weathered warm brown oak, dark iron/brass. No flags. No labels, text, numbers, scenery, hull, water or people. Five states on ONE wide landscape studio sheet, no extra views. This is reference art, not animation.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
     }
   ],
   "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."

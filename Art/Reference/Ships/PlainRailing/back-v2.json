@@ -1,0 +1,10 @@
+{
+  "file": "back-v2.png",
+  "sha256": "ffca4df852153a72862265b682b614dce9c760c4ea0fe03a4d02f1e8b78dcfcc",
+  "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE BACK ELEVATION: camera is on the opposite side from the large front view. Preserve widths and all counts. Show rear joinery and the reverse face of posts/fasteners, not a three-quarter view. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

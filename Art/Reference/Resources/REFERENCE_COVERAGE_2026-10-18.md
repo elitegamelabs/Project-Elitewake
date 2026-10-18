@@ -1,0 +1,57 @@
+# Resource reference coverage — October 18
+
+Current source item identifiers are intentionally sparse: Test.Wood/Test.Stone/Test.Fiber and other test fixtures are not a complete production resource catalogue. This plan creates reference folders only, no item IDs, recipes or gameplay changes. Species-specific wood references do not split the existing generic Wood stack. create_mining_test_assets.py defines Test.Pickaxe as Pickaxe (Test); held mesh/icon mappings disagree (IronPickaxe versus StonePickaxe). No canonical MetalPick ID/tier was verified. Preserve the Metal Pick-or-higher sulfur rule and hand off that catalog gap; never silently substitute Iron Pick.
+
+- [OakWood](OakWood/PROMPTS.md) — prompts prepared; six image files pending.
+- [OakBranches](OakBranches/PROMPTS.md) — prompts prepared; six image files pending.
+- [OakBark](OakBark/PROMPTS.md) — prompts prepared; six image files pending.
+- [BirchWood](BirchWood/PROMPTS.md) — prompts prepared; six image files pending.
+- [BirchBranches](BirchBranches/PROMPTS.md) — prompts prepared; six image files pending.
+- [BirchBark](BirchBark/PROMPTS.md) — prompts prepared; six image files pending.
+- [AshWood](AshWood/PROMPTS.md) — prompts prepared; six image files pending.
+- [AshBranches](AshBranches/PROMPTS.md) — prompts prepared; six image files pending.
+- [AshBark](AshBark/PROMPTS.md) — prompts prepared; six image files pending.
+- [PalmWood](PalmWood/PROMPTS.md) — prompts prepared; six image files pending.
+- [PalmFronds](PalmFronds/PROMPTS.md) — prompts prepared; six image files pending.
+- [PalmFibers](PalmFibers/PROMPTS.md) — prompts prepared; six image files pending.
+- [SpruceWood](SpruceWood/PROMPTS.md) — prompts prepared; six image files pending.
+- [SpruceBranches](SpruceBranches/PROMPTS.md) — prompts prepared; six image files pending.
+- [SpruceResin](SpruceResin/PROMPTS.md) — prompts prepared; six image files pending.
+- [Stone](Stone/PROMPTS.md) — prompts prepared; six image files pending.
+- [Flint](Flint/PROMPTS.md) — prompts prepared; six image files pending.
+- [Gravel](Gravel/PROMPTS.md) — prompts prepared; six image files pending.
+- [IronOre](IronOre/PROMPTS.md) — prompts prepared; six image files pending.
+- [Coal](Coal/PROMPTS.md) — prompts prepared; six image files pending.
+- [CopperOre](CopperOre/PROMPTS.md) — prompts prepared; six image files pending.
+- [BogIron](BogIron/PROMPTS.md) — prompts prepared; six image files pending.
+- [Sandstone](Sandstone/PROMPTS.md) — prompts prepared; six image files pending.
+- [SulfurOre](SulfurOre/PROMPTS.md) — prompts prepared; six image files pending.
+- [Salt](Salt/PROMPTS.md) — prompts prepared; six image files pending.
+- [BlueWhiteCrystals](BlueWhiteCrystals/PROMPTS.md) — prompts prepared; six image files pending.
+- [GreenGemstones](GreenGemstones/PROMPTS.md) — prompts prepared; six image files pending.
+- [AmberGemstones](AmberGemstones/PROMPTS.md) — prompts prepared; six image files pending.
+- [DarkGemstones](DarkGemstones/PROMPTS.md) — prompts prepared; six image files pending.
+- [Sand](Sand/PROMPTS.md) — prompts prepared; six image files pending.
+- [Clay](Clay/PROMPTS.md) — prompts prepared; six image files pending.
+- [Soil](Soil/PROMPTS.md) — prompts prepared; six image files pending.
+- [Peat](Peat/PROMPTS.md) — prompts prepared; six image files pending.
+- [FreshWater](FreshWater/PROMPTS.md) — prompts prepared; six image files pending.
+- [Ice](Ice/PROMPTS.md) — prompts prepared; six image files pending.
+- [Snow](Snow/PROMPTS.md) — prompts prepared; six image files pending.
+- [Fibers](Fibers/PROMPTS.md) — prompts prepared; six image files pending.
+- [Vines](Vines/PROMPTS.md) — prompts prepared; six image files pending.
+- [LargeLeaves](LargeLeaves/PROMPTS.md) — prompts prepared; six image files pending.
+- [Reeds](Reeds/PROMPTS.md) — prompts prepared; six image files pending.
+- [Rushes](Rushes/PROMPTS.md) — prompts prepared; six image files pending.
+- [Moss](Moss/PROMPTS.md) — prompts prepared; six image files pending.
+- [Mushrooms](Mushrooms/PROMPTS.md) — prompts prepared; six image files pending.
+- [MedicinalHerbs](MedicinalHerbs/PROMPTS.md) — prompts prepared; six image files pending.
+- [ExoticPlants](ExoticPlants/PROMPTS.md) — prompts prepared; six image files pending.
+- [Resin](Resin/PROMPTS.md) — prompts prepared; six image files pending.
+- [Berries](Berries/PROMPTS.md) — prompts prepared; six image files pending.
+- [EdiblePlants](EdiblePlants/PROMPTS.md) — prompts prepared; six image files pending.
+- [WildFruits](WildFruits/PROMPTS.md) — prompts prepared; six image files pending.
+- [Coconuts](Coconuts/PROMPTS.md) — prompts prepared; six image files pending.
+- [Hide](Hide/PROMPTS.md) — prompts prepared; six image files pending.
+- [Fur](Fur/PROMPTS.md) — prompts prepared; six image files pending.
+- [Bones](Bones/PROMPTS.md) — prompts prepared; six image files pending.

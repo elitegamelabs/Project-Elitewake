@@ -1,0 +1,11 @@
+{
+  "file": "top.png",
+  "sha256": "4e4d3b31158b5716301222029933d2443e097845c95de7caa46a8c963a34c56e",
+  "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult brown/grizzly bear, dense warm brown fur with lighter shoulder tips, hump, rounded ears, dark nose, heavy plantigrade paws with five claws. ONE VIEW ONLY: DIRECT OVERHEAD DORSAL view. Camera looks vertically straight DOWN at spine/back. Nose toward image TOP and tail toward image BOTTOM. No face-on elevation; show full back outline. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

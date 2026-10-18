@@ -1,0 +1,11 @@
+{
+  "file": "ConceptSheet-v1.png",
+  "sha256": "ddcd29084786f074df61511c87e76ae6a0867bac503689456eb5513ca25e23fa",
+  "prompt": "ELITEWAKE realistic animal modeling reference. Giant crocodile matching reference, olive-grey armored dorsal scutes, subtle dark bands, pale cream underside, long tapered tail, four planted legs and closed jaws. Do not add fantasy horns. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}
