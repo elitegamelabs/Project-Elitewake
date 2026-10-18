@@ -565,6 +565,11 @@ void AEWCharacter::ServerFireCannon_Implementation()
     if (IsValid(GunShip)) GunShip->FireCannon(this);
 }
 
+void AEWCharacter::ServerSetGunport_Implementation(bool bOpen)
+{
+    if (IsValid(GunShip)) GunShip->SetGunportOpen(this, bOpen);
+}
+
 void AEWCharacter::OnRep_HelmShip()
 {
     CancelRestrictedActions();

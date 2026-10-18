@@ -203,7 +203,15 @@ void AEWPlayerController::SetupInputComponent()
 
 void AEWPlayerController::SetClimbInput(float Direction)
 {
-    if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->SetLadderArrowInput(Direction);
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor) return;
+    // A gunner opens their port with Up and shuts it with Down (owner, October 17); elsewhere these keys climb.
+    if (Survivor->GetGunShip())
+    {
+        if (Direction != 0.f && !IsMapOpen() && !IsSessionMenuOpen()) Survivor->ServerSetGunport(Direction > 0.f);
+        return;
+    }
+    Survivor->SetLadderArrowInput(Direction);
 }
 
 void AEWPlayerController::SetSailInput(float Direction)

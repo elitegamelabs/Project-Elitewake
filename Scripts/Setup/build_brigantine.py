@@ -26,6 +26,7 @@ from build_schooner import RAILING_LENGTH, data_asset, large_sail_item, mount, r
 from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
+from ship_gunports import cover_meshes, gunport  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
@@ -217,10 +218,11 @@ def update_definition(hull, rig, looks, capstan):
     d = data_asset('/Game/Elitewake/Ships', 'DA_Ship_Brigantine', unreal.EWShipDefinition)
     mounts = [mount('Helm', T.HELM, (-1250.0, 0.0, QD_Z + 50))]
     mounts += [mount(mid, T.SAIL, at, sail=size, look=looks[mid]) for mid, (at, size) in SAIL_MOUNTS.items()]
+    cover = cover_meshes(make_timber_material())['round'](PORT[0] + 8)
     for side, name in ((-1, 'Port'), (1, 'Starboard')):
         for k, x in enumerate(PORT_XS):
             y = side * (HULL.inner_y(x, (PORT[1] + PORT[2]) / 2) - 65)
-            mounts.append(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90))
+            mounts.append(gunport(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90), HULL, (x, *PORT), side, cover))
     mounts += railing_mounts(HULL, RAILINGS)
     mounts += [flag_mount(mid, belay, hoist, scale) for mid, (belay, hoist, scale) in flags(Builder()).items()]
     values = {

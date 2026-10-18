@@ -387,6 +387,20 @@ public:
     bool IsCannonLoaded(FName MountId) const;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     bool IsCannonLoading(FName MountId) const;
+    /** Hull gunports (owner, October 17): each has a sliding dark glass cover that its cannon's gunner opens (Up) and
+     *  shuts (Down), one port at a time; ports start shut. A cannon cannot fire through a shut port; it runs out as its
+     *  port opens and in as it shuts, and fires only once fully run out. A railing's cannon has no port: always open. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    bool IsGunportOpen(FName MountId) const;
+    /** How far open a port is drawn, 0 shut with its cannon run in to 1 open and run out. Every machine eases it the
+     *  same way from the replicated open ports. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    float GetGunportOpening(FName MountId) const;
+    /** Authority only, from the gunner of that port's cannon. */
+    bool SetGunportOpen(AEWCharacter* Character, bool bOpen);
+    /** Tuning: how fast a port opens or shuts (of the way a second), and how far its cannon runs in, cm. */
+    static constexpr float GunportRate = .8f;
+    static constexpr float CannonRunIn = 50.f;
     /** Pitch and yaw from the cannon's rest, in degrees. */
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     FRotator GetCannonAim(FName MountId) const;
@@ -501,6 +515,17 @@ private:
     /** Set whole from the definition as play begins, on the server; never saved with the map. */
     UPROPERTY(Replicated, Transient)
     float HullHealth = -1.f;
+    /** Which hull gunports are open (FEWShipMount::bGunport); the rest are shut. */
+    UPROPERTY(Replicated)
+    TArray<FName> OpenGunports;
+    /** Each port's drawn opening (GetGunportOpening), easing toward open or shut. */
+    TMap<FName, float> GunportOpening;
+    /** The gunports' covers. */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> CoverVisuals;
+    void ShowGunports(float DeltaSeconds);
+    /** A cannon mount's transform with its cannon run in as far as its port is shut. */
+    FTransform GunMountTransform(const FEWShipMount& Mount) const;
     UPROPERTY(ReplicatedUsing=OnRep_Holes)
     TArray<FEWHullHole> Holes;
     UPROPERTY(Replicated)

@@ -134,6 +134,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, Cannons);
     DOREPLIFETIME(AEWShip, HullHealth);
     DOREPLIFETIME(AEWShip, Holes);
+    DOREPLIFETIME(AEWShip, OpenGunports);
     DOREPLIFETIME(AEWShip, Load);
     DOREPLIFETIME(AEWShip, bOverloaded);
     DOREPLIFETIME(AEWShip, bSwamped);
@@ -417,7 +418,7 @@ void AEWShip::RefreshFittingVisuals()
         }
         Visual->SetStaticMesh(Mesh);
         Visual->SetVisibility(bShown);
-        Visual->SetRelativeTransform(Local * Mount->Transform);
+        Visual->SetRelativeTransform(Local * (Mount->Type == EEWShipMountType::Cannon ? GunMountTransform(*Mount) : Mount->Transform));
         if (Mount->Type == EEWShipMountType::Sail) SailLooks.Add(Fitting.MountId, Local);
         if (Mount->Type == EEWShipMountType::Flag)
         {
@@ -479,7 +480,8 @@ void AEWShip::RefreshFittingVisuals()
             Visual->RegisterComponent();
         }
         Visual->SetStaticMesh(Turning);
-        TurningRest.Add(Fitting.MountId, Fitting.Item->FittingTurningPivot * Fitting.Item->FittingMeshTransform * Mount->Transform);
+        TurningRest.Add(Fitting.MountId, Fitting.Item->FittingTurningPivot * Fitting.Item->FittingMeshTransform
+            * (Mount->Type == EEWShipMountType::Cannon ? GunMountTransform(*Mount) : Mount->Transform));
     }
     ShowTurning(0.f);
 }
@@ -1139,6 +1141,13 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         const FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
             : IsCannonLoading(Mount) ? NSLOCTEXT("Elitewake", "CannonLoading", "Loading...")
             : NSLOCTEXT("Elitewake", "CannonEmpty", "Empty: carry round shot to load it");
+        if (const FEWShipMount* Port = Definition ? Definition->FindMount(Mount) : nullptr; Port && Port->bGunport)
+        {
+            const FText PortState = !IsGunportOpen(Mount) ? NSLOCTEXT("Elitewake", "PortShut", "Port shut: Up opens it")
+                : GetGunportOpening(Mount) < .99f ? NSLOCTEXT("Elitewake", "PortOpening", "Running out...")
+                : NSLOCTEXT("Elitewake", "PortOpen", "Port open: Down shuts it");
+            return FText::Format(NSLOCTEXT("Elitewake", "LeaveCannonPort", "Leave the cannon  (mouse aims, Left Mouse fires)  -  {0}  -  {1}"), State, PortState);
+        }
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveCannon", "Leave the cannon  (mouse aims, Left Mouse fires)  -  {0}"), State);
     }
     if (IsAimingAtAnchor(Character))
@@ -1263,8 +1272,73 @@ bool AEWShip::GetCannonFrame(FName MountId, FTransform& Frame) const
     const UEWItemDefinition* Item = GetFitting(MountId);
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Item || !Mount || Item->FittingMountType != EEWShipMountType::Cannon) return false;
-    Frame = Item->FittingTurningPivot * Item->FittingMeshTransform * Mount->Transform;
+    Frame = Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(*Mount);
     return true;
+}
+
+FTransform AEWShip::GunMountTransform(const FEWShipMount& Mount) const
+{
+    if (!Mount.bGunport) return Mount.Transform;
+    // As built, the cannon stands run out at its port, the muzzle in the opening; shut, it is run in behind it.
+    return FTransform(FVector(-CannonRunIn * (1.f - GetGunportOpening(Mount.MountId)), 0.f, 0.f)) * Mount.Transform;
+}
+
+bool AEWShip::IsGunportOpen(FName MountId) const
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    return !Mount || !Mount->bGunport || OpenGunports.Contains(MountId);
+}
+
+float AEWShip::GetGunportOpening(FName MountId) const
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    return !Mount || !Mount->bGunport ? 1.f : GunportOpening.FindRef(MountId);
+}
+
+bool AEWShip::SetGunportOpen(AEWCharacter* Character, bool bOpen)
+{
+    if (!HasAuthority() || !IsGunnerHere(Character)) return false;
+    const FName MountId = Character->GetGunMount();
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!Mount || !Mount->bGunport || OpenGunports.Contains(MountId) == bOpen) return false;
+    if (bOpen) OpenGunports.Add(MountId);
+    else OpenGunports.Remove(MountId);
+    ForceNetUpdate();
+    return true;
+}
+
+void AEWShip::ShowGunports(float DeltaSeconds)
+{
+    if (!Definition) return;
+    const bool bDraw = GetNetMode() != NM_DedicatedServer;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        if (!Mount.bGunport) continue;
+        float& Opening = GunportOpening.FindOrAdd(Mount.MountId, 0.f);
+        const float Was = Opening;
+        Opening = FMath::FInterpConstantTo(Opening, OpenGunports.Contains(Mount.MountId) ? 1.f : 0.f, DeltaSeconds, GunportRate);
+        TObjectPtr<UStaticMeshComponent>& Cover = CoverVisuals.FindOrAdd(Mount.MountId);
+        if (bDraw && !Cover && !Mount.CoverMesh.IsNull())
+        {
+            Cover = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+                *FString::Printf(TEXT("Cover_%s"), *Mount.MountId.ToString())), RF_Transient);
+            Cover->SetupAttachment(HullCollision);
+            Cover->SetStaticMesh(Mount.CoverMesh.LoadSynchronous());
+            Cover->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Cover->RegisterComponent();
+            Cover->SetRelativeTransform(FTransform(Mount.CoverSlide * Opening) * Mount.CoverTransform * Mount.Transform);
+        }
+        if (Opening == Was) continue;
+        // The cover slides aside along the hull and the cannon runs out behind it, together.
+        if (Cover) Cover->SetRelativeTransform(FTransform(Mount.CoverSlide * Opening) * Mount.CoverTransform * Mount.Transform);
+        if (const UEWItemDefinition* Item = GetFitting(Mount.MountId); Item && Item->FittingMountType == EEWShipMountType::Cannon)
+        {
+            if (const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Mount.MountId); Visual && *Visual)
+                (*Visual)->SetRelativeTransform(Item->FittingMeshTransform * GunMountTransform(Mount));
+            if (TurningRest.Contains(Mount.MountId))
+                TurningRest.Add(Mount.MountId, Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(Mount));
+        }
+    }
 }
 
 AEWCharacter* AEWShip::GetCannonGunner(FName MountId) const
@@ -1365,6 +1439,8 @@ bool AEWShip::FireCannon(AEWCharacter* Character)
     const FName MountId = Character->GetGunMount();
     FEWCannonState* Cannon = FindCannon(MountId);
     if (!Cannon->bLoaded) return false;
+    // Not through a shut port, nor before the cannon is run out.
+    if (GetGunportOpening(MountId) < .99f) return false;
     const FTransform Muzzle = GetCannonMuzzleWorld(MountId);
     FActorSpawnParameters Params;
     Params.Owner = this;
@@ -1771,6 +1847,7 @@ void AEWShip::Tick(float DeltaSeconds)
     }
     if (GetNetMode() != NM_DedicatedServer && SailLooks.Num()) ShowSailFill(DeltaSeconds);
     if (GetNetMode() != NM_DedicatedServer) ShowFlags(DeltaSeconds);
+    ShowGunports(DeltaSeconds);
     ShowChain(DeltaSeconds);
     if (!HasAuthority())
     {

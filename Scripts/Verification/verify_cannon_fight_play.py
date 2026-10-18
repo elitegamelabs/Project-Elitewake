@@ -153,13 +153,16 @@ def lay_guns():
     # The schooner's guns sit low, on her gun deck: a level shot falls about 2 m in 40 m and goes into the sea short
     # of the sloop, so her gunner lays it a few degrees up, as a gunner would.
     host_pc.set_control_rotation(unreal.Rotator(roll=0, pitch=3, yaw=yaw - 90))
+    # Her gun stands behind a hull gunport, shut until its gunner opens it (owner, October 17): Up opens it.
+    assert lib.send_verification_gameplay_key(host_pc, 'Up'), 'the Up key was not handled'
     state['memo'].update(t=time.monotonic(), sloop0=sloop.get_hull_health(), schooner0=schooner.get_hull_health())
 
 
 def guns_ready():
     if time.monotonic() - state['memo']['t'] < 1.5:
         return False
-    return sloop.is_cannon_loaded(SLOOP_GUN) and schooner.is_cannon_loaded(SCHOONER_GUN)
+    return (sloop.is_cannon_loaded(SLOOP_GUN) and schooner.is_cannon_loaded(SCHOONER_GUN)
+            and schooner.get_gunport_opening(SCHOONER_GUN) >= .99 and schooner_peer.get_gunport_opening(SCHOONER_GUN) >= .99)
 
 
 def exchange():
@@ -224,7 +227,7 @@ STEPS = [
     ('The host fits a cannon at the schooner\'s port hardpoint', fit(schooner, schooner, SCHOONER_GUN, host_pc, host, (host,)),
      fitted(schooner, schooner_peer, SCHOONER_GUN), 6),
     ('...and mans it', fit(schooner, schooner, SCHOONER_GUN, host_pc, host, (host,)), manned(schooner, SCHOONER_GUN, host), 6),
-    ('Both guns laid at each other and loaded', lay_guns, guns_ready, 12),
+    ("Both guns laid at each other and loaded; the schooner's gunner opens her port", lay_guns, guns_ready, 12),
     ('They fire together: each ship is holed, and both machines agree on both hulls', exchange, both_holed, 8),
     ('The host keeps firing until the sloop\'s hull gives: she sinks, lets her gunner go, leaves wreck crates and is gone; the schooner floats',
      keep_firing, sunk, 160),

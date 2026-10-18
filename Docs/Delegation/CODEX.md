@@ -86,6 +86,14 @@ Claude and the owner.
   come later.
 - **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.
 
+### C6. Bring `verify_hull_damage_play` up to date — OPEN
+- **Why:** since the sloop lost her hull gunports (`4870f1f`, owner, October 17) her cannons stand behind a two-cannon
+  railing; the check still looks for the old `StarboardCannon` mount and times out at its first step.
+- **Do:** fit `DA_TestRailingTwoCannon` at `StarboardRailing` first and use `StarboardCannon1`, as
+  `verify_cannon_fight_play.py` does (including its hold-again loop). Keep its three checks (planking struck, health
+  falls by one shot on both machines, a hole drawn on the client).
+- **Done when:** it passes on the coastal map with a listen server plus client; reported in INBOX.md.
+
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
 | Task | What | Status |

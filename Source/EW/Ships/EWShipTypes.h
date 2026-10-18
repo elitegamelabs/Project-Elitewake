@@ -52,6 +52,17 @@ struct FEWShipMount
      *  until another module replaces it; taking that module off brings the plain railing back). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
     TSoftObjectPtr<UStaticMesh> EmptyMesh;
+    /** A cannon place behind a hull gunport (owner, October 17: each hull port has a sliding dark opaque glass cover,
+     *  opened and closed one at a time; a cannon cannot fire through a shut port and runs out as it opens). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Gunport")
+    bool bGunport = false;
+    /** The port's cover, where it closes the port (relative to the mount), and how far it slides aside to open it. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Gunport")
+    TSoftObjectPtr<UStaticMesh> CoverMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Gunport")
+    FTransform CoverTransform;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Gunport")
+    FVector CoverSlide = FVector::ZeroVector;
 };
 
 /** One installed fitting. Replicated as part of the ship's fitting list. */

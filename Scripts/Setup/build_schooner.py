@@ -25,6 +25,7 @@ import build_ship_fittings as fittings  # noqa: E402
 from build_sloop_hull import capstan_head  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import Hull, tar_rope  # noqa: E402
+from ship_gunports import cover_meshes, gunport  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
@@ -296,11 +297,12 @@ def update_definition(hull, rig, looks, capstan):
              'FlyingJib': unreal.EWSailSize.SMALL, 'Jib': unreal.EWSailSize.SMALL, 'Staysail': unreal.EWSailSize.SMALL}
     mounts = [mount('Helm', T.HELM, (-900.0, 0.0, QD_Z + 50))]
     mounts += [mount(mid, T.SAIL, looks[mid][0], sail=sizes[mid], look=looks[mid][1:]) for mid in sizes]
-    # Twelve cannon hardpoints at the lower deck's gunports, facing out.
+    # Twelve cannon hardpoints at the lower deck's gunports, facing out, each port with its sliding glass cover.
+    cover = cover_meshes(make_timber_material())['square'](PORT[0] + 10, PORT[2] - PORT[1] + 10)
     for side, name in ((-1, 'Port'), (1, 'Starboard')):
         for k, x in enumerate(PORT_XS):
             y = side * (HULL.inner_y(x, (PORT[1] + PORT[2]) / 2) - 60)
-            mounts.append(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90))
+            mounts.append(gunport(mount(f'{name}Cannon{k + 1}', T.CANNON, (x, y, FLOOR_Z + 40), yaw=side * 90), HULL, (x, *PORT), side, cover))
     mounts += railing_mounts(HULL, RAILINGS)
     mounts += [flag_mount(mid, belay, hoist, scale) for mid, (belay, hoist, scale) in flags(Builder()).items()]
     values = {

@@ -216,6 +216,9 @@ public:
     void ServerCannonAim(float Yaw, float Pitch);
     UFUNCTION(Server, Reliable)
     void ServerFireCannon();
+    /** The gunner opens (true) or shuts their cannon's hull gunport (AEWShip::SetGunportOpen). */
+    UFUNCTION(Server, Reliable)
+    void ServerSetGunport(bool bOpen);
 
     /** True while hanging on a ship's ladder. */
     UFUNCTION(BlueprintPure, Category="Ship")
