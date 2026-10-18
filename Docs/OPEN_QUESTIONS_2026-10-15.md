@@ -80,4 +80,4 @@ All code paths named above are pointers to inspect, not declarations of complete
 ## Ships (October 17)
 
 - ANSWERED (owner, October 17: keep the schooner's 12 lower-deck gunports as they are). **The schooner's hull gunports.** Your ship systems list says the sloop has none and the brigantine six round ones, but does not mention the schooner. She keeps her twelve square lower-deck gunports (six a side) for now, with four railing hardpoints on her main deck. Should she keep them, have fewer, or have round ones like the brigantine?
-- **An empty railing hardpoint** is an open gap in the bulwark (a survivor could step off there). Should a ship always carry at least a plain railing, or is the gap right?
+- ANSWERED (owner, October 17: plain railing until replaced; `9658ad6`). **An empty railing hardpoint** is an open gap in the bulwark (a survivor could step off there). Should a ship always carry at least a plain railing, or is the gap right?
