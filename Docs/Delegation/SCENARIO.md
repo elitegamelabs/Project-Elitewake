@@ -88,8 +88,22 @@ only (`Art/Audio/README.md`). Once G1 lists what each needs, add a row per sound
   `Art/Reference/Animals/Bear/` as `front.png` … `underside.png`.
 - **Then:** show the owner the pilot and the price of the full set; the rest waits for their answer.
 
-### S7. Ship module references — WAITING (on ChatGPT G6/G7 prompt sheets)
-Railing modules, sail assemblies, surgeon's table and tools: six views each, priced first as S6 is.
+### S7. Ship module references — QUEUED (prompts ready; Claude prices any Scenario run first)
+Railing modules, sail assemblies, surgeon's table and tools: six views each, priced first as S6 is. Eleven built-in-generated concept sheets now exist; do not rerun them blindly or spend credits without the existing priced-pilot procedure. Separate orthographic files remain pending.
+
+Shared job: repeat each asset's exact shared identity in PROMPTS.md with the front/back/left/right/top/underside camera line and an attachment detail; destination Art/Reference/Ships/<Module>/<view>.png. Cost/model TBD; Claude runs Scenario only.
+
+- QUEUED: [DinghyRailing](../../Art/Reference/Ships/DinghyRailing/PROMPTS.md).
+- QUEUED: [LargeRectangularSail](../../Art/Reference/Ships/LargeRectangularSail/PROMPTS.md).
+- QUEUED: [LargeWeightedSail](../../Art/Reference/Ships/LargeWeightedSail/PROMPTS.md).
+- QUEUED: [MediumRectangularSail](../../Art/Reference/Ships/MediumRectangularSail/PROMPTS.md).
+- QUEUED: [MediumWeightedSail](../../Art/Reference/Ships/MediumWeightedSail/PROMPTS.md).
+- QUEUED: [PlainRailing](../../Art/Reference/Ships/PlainRailing/PROMPTS.md).
+- QUEUED: [SmallRectangularSail](../../Art/Reference/Ships/SmallRectangularSail/PROMPTS.md).
+- QUEUED: [SmallWeightedSail](../../Art/Reference/Ships/SmallWeightedSail/PROMPTS.md).
+- QUEUED: [SurgeonTable](../../Art/Reference/Ships/SurgeonTable/PROMPTS.md).
+- QUEUED: [SurgeonTools](../../Art/Reference/Ships/SurgeonTools/PROMPTS.md).
+- QUEUED: [TwoCannonRailing](../../Art/Reference/Ships/TwoCannonRailing/PROMPTS.md).
 
 ## Done
 

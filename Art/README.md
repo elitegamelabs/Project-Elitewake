@@ -21,7 +21,7 @@ Growth stages remain incomplete. The first growth board has incorrect species im
 
 Catalog classifications are intentionally cautious: reference art is not a mesh; pending-model art has model work tracked elsewhere; generated-in-editor drafts still need visual review; in-game art sources are not final-art approval; and legacy items remain for history. The catalog records generated wildlife, flora, rock, world-material and tool-animation folders separately from PNG sources. Forage sheet 3 version 2 replaces version 1. Insects sheet 1 needs Bloodwing anatomy review. Blueprint diagrams are illustrative and need a wooden-tool material correction. Atlas arrangements and cutout quality need visual approval before runtime binding. No game balance or distribution is inferred from art. Duplicate ZIP bundles are excluded from this publication; individual source images are supplied.
 
-Indexed images: **179**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
+Indexed images: **190**. PNG sources are stored through Git LFS; use a normal Git LFS checkout to obtain full-resolution files.
 
 ## Generated Unreal folders
 
@@ -219,3 +219,14 @@ These entries point to draft assets in `Content/`; the asset filenames appear in
 | [UI/Title/2026-10-13/Title-Dock-Background-v1.png](UI/Title/2026-10-13/Title-Dock-Background-v1.png) | 1672 × 941 | — | reference | Existing source reference; consult adjacent README/selection/roster metadata |
 | [UI/Title/2026-10-13/Title-Waves-4Frame-v1.png](UI/Title/2026-10-13/Title-Waves-4Frame-v1.png) | 2172 × 724 | — | reference | Existing source reference; consult adjacent README/selection/roster metadata |
 | [UI/Title/Elitewake-Title-v1.png](UI/Title/Elitewake-Title-v1.png) | 1672 × 941 | — | reference | Existing source reference; consult adjacent README/selection/roster metadata |
+| [Reference/Ships/DinghyRailing/ConceptSheet-v1.png](Reference/Ships/DinghyRailing/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/LargeRectangularSail/ConceptSheet-v1.png](Reference/Ships/LargeRectangularSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/LargeWeightedSail/ConceptSheet-v1.png](Reference/Ships/LargeWeightedSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/MediumRectangularSail/ConceptSheet-v1.png](Reference/Ships/MediumRectangularSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/MediumWeightedSail/ConceptSheet-v1.png](Reference/Ships/MediumWeightedSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/PlainRailing/ConceptSheet-v1.png](Reference/Ships/PlainRailing/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/SmallRectangularSail/ConceptSheet-v1.png](Reference/Ships/SmallRectangularSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/SmallWeightedSail/ConceptSheet-v1.png](Reference/Ships/SmallWeightedSail/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/SurgeonTable/ConceptSheet-v1.png](Reference/Ships/SurgeonTable/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/SurgeonTools/ConceptSheet-v1.png](Reference/Ships/SurgeonTools/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |
+| [Reference/Ships/TwoCannonRailing/ConceptSheet-v1.png](Reference/Ships/TwoCannonRailing/ConceptSheet-v1.png) | 1536 × 1024 | — | reference | Generated concept reference; separate validated six-view files, models and integration pending |

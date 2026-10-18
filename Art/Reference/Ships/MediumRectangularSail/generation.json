@@ -1,0 +1,13 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "status": "Generated concept reference, visually reviewed; separate six-view set and integration pending",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "020ae3b386bba3b3d677aa1f4baba93e3d64f6e365974ce1753b632403316831",
+      "prompt": "Use case: stylized-concept. ELITEWAKE realistic game-asset reference design sheet. Show one complete removable sail assembly in six views, arranged front/back/left/right/top/underside; add small mast-base socket attachment inset. Each view same object. Pale natural canvas, believable stitching, hemp rigging, natural weathered warm brown oak mast and spar, restrained iron and brass fittings. Same straight removable mast in every view, complete mast-to-deck locking connector, NO ship hull or permanent ship structure. Neutral off-white studio background, even illumination, no scenery, water, sky, people, flags, lettering, labels, dimensions, watermark. Keep all views fully visible with margins. This is concept art, no invented exact measurements. Subject: Medium rectangular draped sail, square-yard assembly with horizontal spar, hanging rectangular canvas, no ballast or weights. More substantial intermediate assembly; same visual family as small.",
+      "status": "concept reference"
+    }
+  ],
+  "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."
+}

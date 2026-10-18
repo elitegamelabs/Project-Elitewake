@@ -59,3 +59,19 @@ Additional habitat-directed animals include Horse (Plains), Snow Leopard (Winter
 - [ ] Existing inventory/crafting menu icons preserved unchanged.
 
 Do not create fake placeholder PNGs, empty files, or misleading status markers to make the checklist look complete. If image generation or binary upload is unavailable, keep the set marked pending and report the blocker.
+
+## Ship references — October 18, 2026
+
+Eleven concept sheets generated with built-in image generation and visually reviewed. Prompt sheets include six camera lines and attachment detail. Separate validated orthographic files, deployment states, meshes, animation and integration remain pending. No scenery generated.
+
+- [DinghyRailing](Ships/DinghyRailing/ConceptSheet-v1.png) — [prompts](Ships/DinghyRailing/PROMPTS.md), [provenance](Ships/DinghyRailing/generation.json).
+- [LargeRectangularSail](Ships/LargeRectangularSail/ConceptSheet-v1.png) — [prompts](Ships/LargeRectangularSail/PROMPTS.md), [provenance](Ships/LargeRectangularSail/generation.json).
+- [LargeWeightedSail](Ships/LargeWeightedSail/ConceptSheet-v1.png) — [prompts](Ships/LargeWeightedSail/PROMPTS.md), [provenance](Ships/LargeWeightedSail/generation.json).
+- [MediumRectangularSail](Ships/MediumRectangularSail/ConceptSheet-v1.png) — [prompts](Ships/MediumRectangularSail/PROMPTS.md), [provenance](Ships/MediumRectangularSail/generation.json).
+- [MediumWeightedSail](Ships/MediumWeightedSail/ConceptSheet-v1.png) — [prompts](Ships/MediumWeightedSail/PROMPTS.md), [provenance](Ships/MediumWeightedSail/generation.json).
+- [PlainRailing](Ships/PlainRailing/ConceptSheet-v1.png) — [prompts](Ships/PlainRailing/PROMPTS.md), [provenance](Ships/PlainRailing/generation.json).
+- [SmallRectangularSail](Ships/SmallRectangularSail/ConceptSheet-v1.png) — [prompts](Ships/SmallRectangularSail/PROMPTS.md), [provenance](Ships/SmallRectangularSail/generation.json).
+- [SmallWeightedSail](Ships/SmallWeightedSail/ConceptSheet-v1.png) — [prompts](Ships/SmallWeightedSail/PROMPTS.md), [provenance](Ships/SmallWeightedSail/generation.json).
+- [SurgeonTable](Ships/SurgeonTable/ConceptSheet-v1.png) — [prompts](Ships/SurgeonTable/PROMPTS.md), [provenance](Ships/SurgeonTable/generation.json).
+- [SurgeonTools](Ships/SurgeonTools/ConceptSheet-v1.png) — [prompts](Ships/SurgeonTools/PROMPTS.md), [provenance](Ships/SurgeonTools/generation.json).
+- [TwoCannonRailing](Ships/TwoCannonRailing/ConceptSheet-v1.png) — [prompts](Ships/TwoCannonRailing/PROMPTS.md), [provenance](Ships/TwoCannonRailing/generation.json).

@@ -91,7 +91,7 @@ Claude and the owner.
   Every item is phrased as a question or a labelled suggestion.
 - **Done when:** the questions are in the file.
 
-### G6. The ship surgeon: a design brief — CLAIMED (ChatGPT, 2026-10-18)
+### G6. The ship surgeon: a design brief — DONE (ChatGPT, 2026-10-18; delivery hash in INBOX.md)
 - **Why:** owner, October 17: every ship with a walkable deck below the top has an always-present surgeon in the rear
   left corner of the first deck below the top: an operating table, scissors and tools, shelving; 15 copper per
   treatment, restoring 25% of maximum health gradually, with an animation, safe in multiplayer.
@@ -102,13 +102,17 @@ Claude and the owner.
   and tools to SCENARIO.md as QUEUED.
 - **Done when:** the brief exists and is reported in INBOX.md.
 
-### G7. Prompt sheets for the railing modules and sail assemblies — CLAIMED (ChatGPT, 2026-10-18)
+- Delivered: surgeon brief and table/tools concept sheets with prompt/provenance files. Treatment runtime, animation and separate six-view files remain pending.
+
+### G7. Prompt sheets for the railing modules and sail assemblies — DONE (ChatGPT, 2026-10-18; delivery hash in INBOX.md)
 - **Why:** owner, October 17: orthographic references (front, back, left, right, top, underside, attachment details)
   for each railing module (plain wooden, dinghy attachment, two-cannon) and the six sail assemblies (small/medium/large
   rectangular draped, small/medium/large triangular weighted).
 - **Do:** `Art/Reference/Ships/<Module>/PROMPTS.md` per module, as G4 did for animals, matching the hull timber
   (`Art/Concepts/Boats/2026-10-11`). Queue them in SCENARIO.md (S7); no images.
 - **Done when:** sheets exist and are reported in INBOX.md.
+
+- Delivered: nine per-module PROMPTS.md files, nine concept sheets and provenance; S7 queued, index/catalog updated. Separate validated orthographic and deployment-state files remain pending.
 
 ### G8. Seabed corals, plants and sand: the design base — OPEN (priority)
 - **Why:** owner, October 17: the sea floor gets dynamic scenery, deeper sand, geography, corals and aquatic plants

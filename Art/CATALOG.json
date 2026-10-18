@@ -8728,6 +8728,215 @@
       "rows": null,
       "items": [],
       "reviewNotes": []
+    },
+    {
+      "path": "Art/Reference/Ships/DinghyRailing/ConceptSheet-v1.png",
+      "bytes": 2169469,
+      "sha256": "8fb130a720667dfe31351eeb154319ea87d85597ce90a6c6d837d0b5c555d621",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/DinghyRailing/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/LargeRectangularSail/ConceptSheet-v1.png",
+      "bytes": 2329817,
+      "sha256": "83041bdf33fb26dfa9d8bead29f035c762bf37dc550455f7720d73049e8f4a0a",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/LargeRectangularSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/LargeWeightedSail/ConceptSheet-v1.png",
+      "bytes": 2143938,
+      "sha256": "97d34c2c3a2f07ad01f5bcf24aca0ac62e6abd2ca15cdcf9cdfc34829ede79b7",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/LargeWeightedSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/MediumRectangularSail/ConceptSheet-v1.png",
+      "bytes": 2210142,
+      "sha256": "020ae3b386bba3b3d677aa1f4baba93e3d64f6e365974ce1753b632403316831",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/MediumRectangularSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/MediumWeightedSail/ConceptSheet-v1.png",
+      "bytes": 2044098,
+      "sha256": "02a9b12258983e3f85f8cd86898db7ff398d60b05bc615570c6e5cd52a64600c",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/MediumWeightedSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/PlainRailing/ConceptSheet-v1.png",
+      "bytes": 2443968,
+      "sha256": "bd58cbc3cf912ad09fff4d914905fa457735d6f967dfa47c5263ea9cbd3f453b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/PlainRailing/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallRectangularSail/ConceptSheet-v1.png",
+      "bytes": 2267097,
+      "sha256": "ea30fb4df2d0dd441775605fd2bf33f32fb51dd5d51240f4a067d0e09167117c",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/SmallRectangularSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SmallWeightedSail/ConceptSheet-v1.png",
+      "bytes": 2161234,
+      "sha256": "947c801896c9f11bc8a57d1b0e94e7b0ab597e088ff9dd404b1dee1364238676",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/SmallWeightedSail/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SurgeonTable/ConceptSheet-v1.png",
+      "bytes": 2463617,
+      "sha256": "39df51a136c6ceac2d5a790709fd5fcfbe9b370464c66457fec99c1951e10003",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/SurgeonTable/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/SurgeonTools/ConceptSheet-v1.png",
+      "bytes": 2343463,
+      "sha256": "eeaf9726d40f1ae62a53235fc6336925b853c86f60ddc56ad0ad31c97ec1f644",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/SurgeonTools/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
+    },
+    {
+      "path": "Art/Reference/Ships/TwoCannonRailing/ConceptSheet-v1.png",
+      "bytes": 2324524,
+      "sha256": "a82967b94fdc38a03078159dd7027201d3674099223df67864d50f74b97ba6c6",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": null,
+      "classification": "reference",
+      "status": "Generated concept reference; separate validated six-view files, models and integration pending",
+      "metadata": "Art/Reference/Ships/TwoCannonRailing/ConceptSheet-v1.json",
+      "columns": null,
+      "rows": null,
+      "items": [],
+      "reviewNotes": [
+        "Mild perspective/detail differences; relative scale and mating geometry need validation."
+      ]
     }
   ]
 }

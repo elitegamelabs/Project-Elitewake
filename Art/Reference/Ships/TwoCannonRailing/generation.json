@@ -1,0 +1,13 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "status": "Generated concept reference, visually reviewed; separate six-view set and integration pending",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "a82967b94fdc38a03078159dd7027201d3674099223df67864d50f74b97ba6c6",
+      "prompt": "Use case: stylized-concept. Asset type: ELITEWAKE orthographic modeling reference sheet, realistic physically based materials, mid-1700s naval carpentry. One consistent object repeated in a clean 3 by 2 grid: front, back, left profile, right profile, top, underside in that reading order. A seventh small detail inset at lower right shows the base attachment, without obscuring six views. Off-white neutral studio background, evenly lit. Natural weathered warm brown oak, pronounced grain and restrained brass and dark iron matching the approved ELITEWAKE hull. No scenery, water, sky, people, flags, labels, letters, numbers, watermark or dimensions. These are reference views, no ship hull. Primary subject: One removable ship-side reinforced wooden railing module with exactly two open firing bays and exactly two EMPTY cannon attachment sockets behind them. Clear structural rail ends, iron load brackets and socket footings. Absolutely no cannon barrels or cannon carriages; cannons are separately craftable.",
+      "status": "concept reference"
+    }
+  ],
+  "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."
+}
