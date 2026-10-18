@@ -56,7 +56,8 @@ def stand_at(mount_id):
     mount = target_of(mount_id)
     forward = ship.get_actor_forward_vector()
     off = {'Helm': 110, 'Mainsail': 110}.get(mount_id, -120)
-    spot = unreal.Vector(mount.x + forward.x * off, mount.y + forward.y * off, ship.get_actor_location().z + ship.get_deck_height() + 98)
+    # On the deck the mount stands on (mounts sit 50 cm above it; the sloop's helm is on her raised stern deck).
+    spot = unreal.Vector(mount.x + forward.x * off, mount.y + forward.y * off, mount.z - 50 + 98)
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
     state['aim'] = mount_id

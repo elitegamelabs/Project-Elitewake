@@ -102,8 +102,8 @@ def gaff_sail(furled, boom=575.0, throat=516.0, peak=(-470.0, 778.0), belly=42.0
 
 
 def mainsail(furled):
-    """The sloop's mainsail."""
-    return gaff_sail(furled)
+    """The sloop's mainsail, shaped to her rig (build_sloop_hull.MAIN_GAFF)."""
+    return gaff_sail(furled, **getattr(hull, 'MAIN_GAFF', {}))
 
 
 def square_sail(furled, head=900.0, foot=1000.0, drop=760.0, belly=70.0):
@@ -289,7 +289,7 @@ def main():
     wheel_mesh = write_static_mesh(wheel_stand(), f'{FOLDER}/SM_ShipWheel_v1', [timber], UV_TILE, collision=False)
     spokes = write_static_mesh(wheel_spokes(), f'{FOLDER}/SM_ShipWheelSpokes_v1', [timber], UV_TILE, collision=False)
     at = mount_location(definition, 'Helm')
-    set_fitting('DA_TestShipHelm', wheel_mesh, unreal.Transform(location=unreal.Vector(0, 0, hull.DECK_Z - at.z)),
+    set_fitting('DA_TestShipHelm', wheel_mesh, unreal.Transform(location=unreal.Vector(0, 0, -50)),   # on the deck under its mount
                 turning=(spokes, WHEEL_HUB, unreal.Rotator(roll=WHEEL_TURN, pitch=0, yaw=0)))
 
     Path(unreal.Paths.project_saved_dir(), 'ShipFittingsResult.json').write_text(json.dumps({'success': True}))

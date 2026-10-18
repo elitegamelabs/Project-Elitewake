@@ -82,9 +82,10 @@ def keys(**down):
         lib.send_verification_gameplay_key_state(client, key, bool(down.get(key, False)))
 
 
-def on_deck(spot_x, spot_y, aim):
-    """Stand on the sloop's deck at (x, y) in its frame, looking at `aim` (a function giving a world point)."""
-    at = ship.get_actor_transform().transform_location(unreal.Vector(spot_x, spot_y, ship.get_deck_height() + 98))
+def on_deck(spot_x, spot_y, aim, deck_z=None):
+    """Stand on the sloop's deck at (x, y) in its frame (on the deck at deck_z, the main deck by default), looking at
+    `aim` (a function giving a world point)."""
+    at = ship.get_actor_transform().transform_location(unreal.Vector(spot_x, spot_y, (ship.get_deck_height() if deck_z is None else deck_z) + 98))
     put(at)
     state['aim'] = aim
     keep_aim()
@@ -242,7 +243,8 @@ def work(name):
     def begin():
         local = ship.get_actor_transform().inverse_transform_location(mount_world(name))
         off = {'Helm': 110, 'Mainsail': 110}.get(name, -120)
-        on_deck(local.x + off, local.y if name == 'Anchor' else 0.0, lambda: mount_world(name))
+        # On the deck the mount stands on (mounts sit 50 cm above it; her helm is on the raised stern deck).
+        on_deck(local.x + off, local.y if name == 'Anchor' else 0.0, lambda: mount_world(name), None if name == 'Anchor' else local.z - 50)
         assert lib.send_verification_interaction_request(client, peer)
         state['memo']['t'] = time.monotonic()
     return begin

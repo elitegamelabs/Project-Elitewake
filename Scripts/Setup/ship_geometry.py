@@ -27,11 +27,12 @@ class Builder:
         self.verts, self.colours, self.uvs, self.tris, self.slots = [], [], [], [], []
         self.alphas = []   # each vertex colour's alpha (1 unless set), apart so colours stay (r, g, b)
         self.slot = 0
+        self.alpha = 1.0   # the alpha new vertices take unless given; .5 marks brass (make_timber_material)
 
-    def vertex(self, p, tar=0.0, iron=0.0, tone=0.5, uv=None, alpha=1.0):
+    def vertex(self, p, tar=0.0, iron=0.0, tone=0.5, uv=None, alpha=None):
         self.verts.append(p)
         self.colours.append((tar, iron, tone))
-        self.alphas.append(alpha)
+        self.alphas.append(self.alpha if alpha is None else alpha)
         self.uvs.append(uv)
         return len(self.verts) - 1
 
@@ -186,16 +187,20 @@ def make_timber_material():
     material, node, custom = material_builder(TIMBER_MATERIAL)
     timber = node(unreal.MaterialExpressionTextureSample, texture=unreal.load_asset('/Game/Elitewake/World/Materials/T_Timber_v1'))
     flags = node(unreal.MaterialExpressionVertexColor)
+    # Brass (owner's ship design sheet, October 18: brass caps and trim) where the vertex alpha marks it (.5).
     colour = custom('float3 oak = Wood * float3(0.98, 0.7, 0.44);'
-                    ' float3 tarred = Wood * float3(0.2, 0.16, 0.13);'
+                    ' float3 tarred = Wood * float3(0.11, 0.085, 0.07);'
                     ' float3 c = lerp(oak, tarred, Flags.r) * lerp(0.72, 1.15, Flags.b);'
-                    ' return lerp(c, float3(0.05, 0.05, 0.055), Flags.g);',
-                    unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('Wood', 'Flags'))
-    rough = custom('return lerp(lerp(0.82, 0.62, Flags.r), 0.45, Flags.g);', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags',))
-    metal = custom('return Flags.g * 0.85;', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags',))
+                    ' c = lerp(c, float3(0.05, 0.05, 0.055), Flags.g);'
+                    ' return lerp(c, float3(0.62, 0.43, 0.15) * lerp(.85, 1.1, Wood.r * 2.0), step(A, 0.75));',
+                    unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('Wood', 'Flags', 'A'))
+    rough = custom('return lerp(lerp(lerp(0.82, 0.62, Flags.r), 0.45, Flags.g), 0.32, step(A, 0.75));',
+                   unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags', 'A'))
+    metal = custom('return lerp(Flags.g * 0.85, 0.9, step(A, 0.75));', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('Flags', 'A'))
     assert mel.connect_material_expressions(timber, 'RGB', colour, 'Wood')
     for n in (colour, rough, metal):
         assert mel.connect_material_expressions(flags, '', n, 'Flags')
+        assert mel.connect_material_expressions(flags, 'A', n, 'A')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
     assert mel.connect_material_property(metal, '', unreal.MaterialProperty.MP_METALLIC)

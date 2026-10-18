@@ -96,7 +96,7 @@ def fit_out():
     wind_of(server_world).set_wind_yaw(ship.get_actor_rotation().yaw + 90.0)
     helm = ship.get_mount_world_transform('Helm').translation
     forward = ship.get_actor_forward_vector()
-    spot = unreal.Vector(helm.x + forward.x * 110, helm.y + forward.y * 110, ship.get_actor_location().z + ship.get_deck_height() + 98)
+    spot = unreal.Vector(helm.x + forward.x * 110, helm.y + forward.y * 110, helm.z - 50 + 98)   # on the helm's own deck
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation())
     state['aim'] = True

@@ -40,6 +40,9 @@ class Hull:
     keel_flat: float = 120.0    # half-length of the flat keel
     keel_power: float = 1.7
     beam_power: float = 2.4     # higher keeps the beam further toward the ends
+    stern_power: Optional[float] = None   # the same aft of amidships, if the stern is fuller than the bow
+    stern_keel_power: Optional[float] = None   # keel_power aft: higher keeps the bottom low further aft
+    stern_full_len: Optional[float] = None     # full_len aft: full sections further aft
     full_mid: float = 2.8       # section superellipse exponent amidships ...
     full_end: float = 1.6       # ... and at the ends
     full_len: float = 200.0     # half-length of full sections
@@ -59,6 +62,8 @@ class Hull:
     # ---- Lines -------------------------------------------------------------------------------------------
 
     def half_beam(self, x):
+        if x < 0 and self.stern_power:
+            return self.beam * max(0.0, 1 - (abs(x) / abs(self.stern_x)) ** self.stern_power) ** 0.5
         return self.beam * max(0.0, 1 - (abs(x) / self.bow_x) ** self.beam_power) ** 0.5
 
     def quarterdeck_lift(self, x):
@@ -87,15 +92,17 @@ class Hull:
     def keel(self, x):
         """Bottom of the hull: flat amidships, sweeping up alike into the stem and the sternpost."""
         ax = abs(x)
+        power = self.stern_keel_power if x < 0 and self.stern_keel_power else self.keel_power
         if ax > self.keel_flat:
-            return self.keel_z + (self.end_sheer(x) - 12 - self.keel_z) * ((ax - self.keel_flat) / (self.bow_x - self.keel_flat)) ** self.keel_power
+            return self.keel_z + (self.end_sheer(x) - 12 - self.keel_z) * ((ax - self.keel_flat) / (self.bow_x - self.keel_flat)) ** power
         return self.keel_z
 
     def fullness(self, x):
         """Superellipse exponent of the sections: full amidships, sharp at both ends."""
         ax = abs(x)
-        if ax > self.full_len:
-            return self.full_mid - (self.full_mid - self.full_end) * (ax - self.full_len) / (self.bow_x - self.full_len)
+        full_len = self.stern_full_len if x < 0 and self.stern_full_len else self.full_len
+        if ax > full_len:
+            return self.full_mid - (self.full_mid - self.full_end) * (ax - full_len) / (self.bow_x - full_len)
         return self.full_mid
 
     def section_point(self, x, theta):
@@ -377,6 +384,48 @@ class Hull:
             y = -rail_y + 2 * rail_y * k / 6
             b.box((edge + 4 * facing, y, top + 45), (8, 8, 90))
         b.sweep([(edge + 4 * facing, -rail_y - 4, top + 92), (edge + 4 * facing, rail_y + 4, top + 92)], 10.0, 8.0, side=(1, 0, 0))
+
+    # ---- Trim (owner's ship design sheet, October 18) ---------------------------------------------------
+
+    def balustrade(self, b, x0, x1, skip=(), height=34.0, step=26.0):
+        """Turned balusters with brass caps standing on the bulwark's rail from x0 to x1 both sides, under a top rail;
+        none over the open stretches in `skip` [(x_from, x_to)]."""
+        def open_at(x):
+            return any(a <= x <= c for a, c in skip)
+        for side in (1, -1):
+            run = []
+            x = x0
+            while x <= x1 + 1e-6:
+                if open_at(x) or self.half_beam(x) < 40:
+                    if len(run) > 1:
+                        b.sweep([(px, py, pz + height + 4) for px, py, pz in run], 9.0, 7.0, side=(0, 0, 1))
+                    run = []
+                else:
+                    y, z = side * (self.half_beam(x) - 6), self.sheer(x) + 6
+                    b.tube([(x, y, z), (x, y, z + height * .5), (x, y, z + height)], lambda k: (3.2, 4.4, 3.0)[k], sides=8)
+                    b.alpha = .5
+                    b.tube([(x, y, z + height - 1), (x, y, z + height + 3)], 3.6, sides=8)
+                    b.alpha = 1.0
+                    run.append((x, y, z))
+                x += step
+            if len(run) > 1:
+                b.sweep([(px, py, pz + height + 4) for px, py, pz in run], 9.0, 7.0, side=(0, 0, 1))
+
+    def brass_band(self, b, below_sheer=38.0, x_pad=40.0):
+        """A brass strip along each side a little under the sheer, standing just proud of the planking."""
+        b.alpha = .5
+        for side in (1, -1):
+            path = []
+            for x in self.stations:
+                if x < self.stern_x + x_pad or x > self.bow_x - x_pad:
+                    continue
+                z = self.sheer(x) - below_sheer
+                t = self.theta_at(x, z)
+                y, zz = self.section_point(x, t)
+                ny, nz = self.section_normal(x, t)
+                path.append((x, side * (y + ny * 2.5), zz + nz * 2.5))
+            b.sweep(path, 3.0, 5.0, side=(0, side, 0))
+        b.alpha = 1.0
 
     # ---- Fittings in the hull ----------------------------------------------------------------------------
 

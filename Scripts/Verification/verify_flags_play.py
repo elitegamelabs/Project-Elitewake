@@ -4,7 +4,7 @@ tear only when damaged in combat, never from storms; no repair: destroyed fabric
 a replacement must be crafted). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one
 client, after build_flags.py and the hull scripts. Run unattended with run_play_check.py.
 
-  1. The sloop has 2 flag mounts (masthead, ensign), the brigantine 3, the schooner 3 (delegated); all empty, on both.
+  1. The sloop has 2 flag mounts (main and mizzen mastheads), the brigantine 3, the schooner 3; all empty, on both.
   2. The client hoists a white flag at the masthead halyard (on deck, the flag flies at the masthead): both agree.
   3. It streams downwind (the moored sloop feels the world's wind) on the client, and its cloth is drawn there.
   4. The client hoists a second at the ensign staff, lowers it (back to the inventory, unworn) and hoists it again.
@@ -46,7 +46,7 @@ old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 checks, measured = [], {}
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'aim': None, 'at': 0.0}
-MAST, ENSIGN = 'MastheadFlag', 'EnsignFlag'
+MAST, ENSIGN = 'MastheadFlag', 'MizzenFlag'   # her main and mizzen mastheads (the October 18 design)
 
 
 def count():
@@ -70,7 +70,10 @@ def keep_aim():
 def at_halyard(mount):
     """On deck by the flag's halyard pin, a little inboard and aft of it, looking at it."""
     local = ship.get_actor_transform().inverse_transform_location(ship.get_mount_world_transform(mount).translation)
-    spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + (110 if mount == ENSIGN else -110), local.y * .45, ship.get_deck_height() + 98))
+    # On the deck the pin stands on: forward of it on the main deck; aft of it on the raised stern deck (the mizzen's),
+    # whose forward edge is just ahead of the pin.
+    raised = local.z - 110 > ship.get_deck_height() + 100
+    spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + (-60 if raised else 90), local.y * .45, local.z - 110 + 98))
     for p in (owner, pawn):
         assert p.teleport(spot, ship.get_actor_rotation()), f'no room to stand at {spot} by the {mount} halyard'
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
@@ -124,7 +127,7 @@ def hoisted(mount, inventory_after):
         deck = ship.get_actor_location().z + ship.get_deck_height()
         measured[f'{mount}_height_m'] = round((v.get_world_location().z - deck) / 100, 1)
         if mount == MAST:
-            assert v.get_world_location().z - deck > 1200, f'the masthead flag flies only {(v.get_world_location().z - deck) / 100:.1f} m up'
+            assert v.get_world_location().z - deck > 1150, f'the masthead flag flies only {(v.get_world_location().z - deck) / 100:.1f} m up'
         return True
     return done
 

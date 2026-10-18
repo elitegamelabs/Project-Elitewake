@@ -22,7 +22,7 @@ ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unr
 flag = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestFlagWhite')
 checks, measured = [], {}
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'at': 0.0, 'shot': None, 'look': None, 'stand': None}
-MAST, ENSIGN = 'MastheadFlag', 'EnsignFlag'
+MAST, ENSIGN = 'MastheadFlag', 'MizzenFlag'   # her main and mizzen mastheads (the October 18 design)
 
 
 def flag_at(mount):
@@ -37,13 +37,13 @@ def hold():
     pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, look()))
 
 
-def deck(x, y):
-    return lambda: ship.get_actor_transform().transform_location(unreal.Vector(x, y, ship.get_deck_height() + 98))
+def deck(x, y, rise=0.0):
+    return lambda: ship.get_actor_transform().transform_location(unreal.Vector(x, y, ship.get_deck_height() + rise + 98))
 
 
-def hoist(mount, x, y):
+def hoist(mount, x, y, rise=0.0):
     def begin():
-        state.update(stand=deck(x, y), look=lambda: ship.get_mount_world_transform(mount).translation, at=time.monotonic(), shot=None)
+        state.update(stand=deck(x, y, rise), look=lambda: ship.get_mount_world_transform(mount).translation, at=time.monotonic(), shot=None)
         hold()
         assert lib.send_verification_interaction_request(pc, ship), f'refused at {mount} (aimed {ship.find_aimed_mount(pawn)})'
     return begin
@@ -85,8 +85,8 @@ def grant():
 
 STEPS = [
     ('Two white flags granted', grant, lambda: True, 3),
-    ('Hoisted at the masthead halyard', hoist(MAST, 10, 40), up(MAST), 8),
-    ('Hoisted at the ensign staff', hoist(ENSIGN, -500, -40), up(ENSIGN), 8),
+    ('Hoisted at the masthead halyard', hoist(MAST, 190, 40), up(MAST), 8),
+    ('Hoisted at the mizzen halyard, on the stern deck', hoist(ENSIGN, -400, 30, 200), up(ENSIGN), 8),
     ('Screenshot: the new masthead flag from the deck', *look(MAST, 560, -80, 'masthead_new'), 10),
     ('Screenshot: the new ensign from amidships', *look(ENSIGN, 150, 110, 'ensign_new'), 10),
     ('Round shots tear the ensign', tear, lambda: ship.get_flag_wear(ENSIGN) > .6, 5),

@@ -176,6 +176,20 @@ Terrain mesh construction is assigned to Claude. The five-region layout, substan
 Work takes the first ⏳ item of the earliest unfinished milestone that is not blocked. Each item: build, run its Play check and the regression checks it touches, update the docs, commit and push. Owner requests jump the queue. Before starting, check `git log` and `git status` for work committed by other sessions, and leave files someone else has uncommitted alone.
 
 
+## Ships rebuilt to the new design sheet — October 18, 2026 🔨
+
+Owner, October 18: "THE NEW SHIP DESIGN" (`Art/Concepts/Boats/2026-10-18/Ship-Design-Sheet-v1.webp`) is the base for every
+ship. Columns left to right: raft, sloop, schooner, brigantine, Cavalier; mast counts as drawn (raft 1, sloop 2, schooner 2,
+brigantine 3). One ship at a time, each verified in Play; the flags, railings, gunports and ladders carry over.
+
+| Ship | Status | Acceptance |
+|---|---|---|
+| Sloop: two masts (main and a mizzen on a raised stern deck), long bowsprit, baluster railings with brass caps, brass trim, dark tarred lower hull, furnished lantern-lit cabin under the stern deck and a furnished hold | ✅ first pass (this commit) | Play checks for her sailing, fittings, flags, ladder and cannons pass; screenshots `Saved/Screenshots/ShipLook/Sloop`. Interiors and colour to refine with the next ships |
+| Schooner (two masts) | ⏳ | as above |
+| Brigantine (three masts) | ⏳ | as above |
+| Raft | ⏳ | as above |
+| Cavalier (largest; three walkable decks, per the owner's specification) | ⏳ | as above |
+
 ## Owner ship systems expansion — October 17, 2026 ⏳
 
 **Status: design approved, implementation and Play verification pending.** Latest owner decisions override older conflicting ship rules. These are planning milestones, not proof of implemented features. Concept imagery is reference-only; models, assets, code, and multiplayer verification remain separate.

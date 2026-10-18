@@ -11,6 +11,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -188,6 +189,24 @@ void AEWShip::ApplyDefinition()
 {
     for (auto& Pair : MountTargets) if (Pair.Value) Pair.Value->DestroyComponent();
     MountTargets.Reset();
+    for (UPointLightComponent* Light : LanternVisuals) if (Light) Light->DestroyComponent();
+    LanternVisuals.Reset();
+    // Her lanterns' warm light, below decks, on every machine that draws (no shadows: there are many, and small).
+    if (Definition && GetNetMode() != NM_DedicatedServer)
+        for (const FVector& At : Definition->LanternLights)
+        {
+            auto* Light = NewObject<UPointLightComponent>(this, MakeUniqueObjectName(this, UPointLightComponent::StaticClass(), TEXT("Lantern")), RF_Transient);
+            Light->SetupAttachment(HullCollision);
+            Light->SetRelativeLocation(At);
+            Light->SetIntensityUnits(ELightUnits::Candelas);
+            Light->SetIntensity(LanternIntensity);
+            Light->SetAttenuationRadius(LanternReach);
+            Light->SetLightColor(FLinearColor(1.f, .62f, .3f));
+            Light->SetCastShadows(false);
+            Light->SetSourceRadius(6.f);
+            Light->RegisterComponent();
+            LanternVisuals.Add(Light);
+        }
     for (UBoxComponent* Target : BoardingTargets) if (Target) Target->DestroyComponent();
     BoardingTargets.Reset();
     for (UStaticMeshComponent* Ladder : LadderVisuals) if (Ladder) Ladder->DestroyComponent();
@@ -1561,7 +1580,7 @@ bool AEWShip::LeaveHelm(AEWCharacter* Character, bool bForce)
     {
         FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipHelmExit), false, Character);
         bool bFree = false;
-        for (const FVector& Offset : {FVector(0, 90.f, 0), FVector(0, -90.f, 0), FVector(150.f, 0, 0)})
+        for (const FVector& Offset : {FVector(0, 90.f, 0), FVector(0, -90.f, 0), FVector(150.f, 0, 0), FVector(150.f, 70.f, 0), FVector(150.f, -70.f, 0)})
         {
             const FVector Candidate = GetActorTransform().TransformPosition(Seat + Offset);
             if (!GetWorld()->OverlapBlockingTestByChannel(Candidate, FQuat::Identity, ECC_Pawn, Capsule->GetCollisionShape(), Query))
@@ -1777,7 +1796,9 @@ void AEWShip::StepSimulation(float Step)
             const float Tension = FMath::Clamp((Range - Free) / (ChainReach - Free), 0.f, 1.f);
             // Her speed allowed falls with the tension, down to a slow creep that takes up the last of the slack (tuning).
             Speed = FMath::Min(Speed, FMath::Max((Definition->TopSpeed > 0.f ? Definition->TopSpeed : 600.f) * .5f * (1.f - Tension), 30.f));
-            if (Tension >= 1.f) Speed = 0.f;
+            // Once the chain is taut she rides to it, held, until the swell or the wind gives it slack again: the
+            // swell rocking her bow must not let her creep.
+            if (Tension >= 1.f || bChainTaut) Speed = 0.f;
         }
         if (!bChainTaut && Range >= ChainReach * .97f)
         {

@@ -290,7 +290,7 @@ public:
      *  swings to it (degrees a second). */
     static constexpr float FlagWearPerHit = .12f;
     static constexpr float FlagWearNearHit = .45f;
-    static constexpr float FlagNearHitRange = 800.f;
+    static constexpr float FlagNearHitRange = 500.f;
     static constexpr float FlagWindSpeed = 800.f;
     static constexpr float FlagSwingRate = 120.f;
     /** Whether a mount is there to use: always, unless it belongs to a railing module (FEWShipMount::ParentMount),
@@ -515,6 +515,12 @@ private:
     /** Set whole from the definition as play begins, on the server; never saved with the map. */
     UPROPERTY(Replicated, Transient)
     float HullHealth = -1.f;
+    /** The lanterns' lights in her cabins and holds (UEWShipDefinition::LanternLights). */
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<class UPointLightComponent>> LanternVisuals;
+    /** Tuning: a lantern's light (candelas), reach (cm) and colour. */
+    static constexpr float LanternIntensity = 18.f;
+    static constexpr float LanternReach = 650.f;
     /** Which hull gunports are open (FEWShipMount::bGunport); the rest are shut. */
     UPROPERTY(Replicated)
     TArray<FName> OpenGunports;

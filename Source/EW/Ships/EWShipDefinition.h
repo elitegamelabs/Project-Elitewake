@@ -64,6 +64,10 @@ public:
      *  to here. Missing or zero: the ladder runs straight up. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     TArray<FVector> LadderTops;
+    /** Where the lanterns in her cabins and holds hang, relative to the ship (owner, October 18: the ship design sheet
+     *  shows every ship's rooms lantern-lit). Each gets a warm light on every machine that draws (AEWShip). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Interior")
+    TArray<FVector> LanternLights;
     /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector AnchorPoint = FVector(350, -90, 130);
