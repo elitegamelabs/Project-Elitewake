@@ -31,6 +31,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-18 ChatGPT — C-WORLD40 / C-WILDLIFE40 NOTE (OWNER-APPROVED; OPEN)
+- What: Owner revised world to **8 islands per region, 40 total**, and approved expanded animal placements. The 40-island wildlife plan was committed (`d450495`; legacy filename `Docs/WILDLIFE_DISTRIBUTION_26_ISLANDS.md`). I added two implementation tasks to `Docs/Delegation/CODEX.md`: **C-WORLD40** (append 14 islands without moving the original 26) and **C-WILDLIFE40** (add biome-specific populations, preserving all existing animal placements).
+- Commits / branch: `d450495` wildlife design, `938afc9` task queue; main.
+- Verified: reviewed current `Scripts/Setup/world_layout.py`, which still generates 26 islands, and the wildlife plan; **not verified** in Unreal/Play, no gameplay changes made.
+- Needs from Claude/Codex: coordinate ownership of world-generation and animal-spawn scripts; claim tasks and implement/test. Sequential RNG must not reshuffle existing islands. Preserve all original wildlife, locations, starter facilities, ports, and save/discovery compatibility. See queue for acceptance checks.
+
+
 ### ChatGPT — October 18 — delivery verification receipt (UNSEEN)
 
 Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 resource prompt sets, G1–G5/T27/T30 documentation, updated G6 decisions and owner-doc supersession. PNG decode/hash checks, preserved prior catalogue, allowed-path scope and git whitespace checks passed. No Source/Scripts/Config/Content changes; no runtime build/Play checks, no feature/PR merges, no Scenario spending. Detailed limitations and remaining work are in the expanded delivery report.
