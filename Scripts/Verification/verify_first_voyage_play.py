@@ -310,7 +310,16 @@ def left_helm():
 
 
 def anchored_again():
-    return ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1
+    m = state['memo']
+    # Interaction is a hold: on a ship still running before the wind, the survivor's aim can slip off the capstan and
+    # the hold is cancelled, where a player would keep holding E. Until the anchor is down, stand at the capstan again
+    # and hold once more every 4 s (longer than the 3 s hold, so a hold in progress is never cut short).
+    if not ship.is_anchored():
+        if time.monotonic() - m['t'] > 4.0:
+            m['anchor_presses'] = m.get('anchor_presses', 1) + 1
+            work('Anchor')()
+        return False
+    return peer.is_anchored() and ship.get_speed() < 1
 
 
 # 7. Fish ------------------------------------------------------------------------------------------------------
