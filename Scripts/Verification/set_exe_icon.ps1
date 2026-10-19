@@ -1,7 +1,9 @@
 <# Replace the icon of a Windows executable (or SFX module) with a .ico file, in place, using the Windows resource
 API: every existing icon group is removed, then the .ico's images are written as icon group 1. Use it on copies;
-the packer stamps the self-extractor module this way (owner, October 19: the EW icon with a silver box). #>
-param([Parameter(Mandatory=$true)][string]$Executable, [Parameter(Mandatory=$true)][string]$Icon)
+the packer stamps the self-extractor module this way (owner, October 19: the EW icon with a silver box).
+-AsInvoker also gives it a manifest that runs it with the user's own rights: the 7-Zip self-extractor has none and
+describes itself as a setup program, so Windows' installer detection otherwise demands an administrator prompt. #>
+param([Parameter(Mandatory=$true)][string]$Executable, [Parameter(Mandatory=$true)][string]$Icon, [switch]$AsInvoker)
 $ErrorActionPreference='Stop'
 if (-not ('EwIconRes' -as [type])) {
 Add-Type @'
@@ -38,6 +40,14 @@ public static class EwIconRes {
             }
         } finally { FreeLibrary(m); }
         return found;
+    }
+
+    public static void SetManifest(string path, string xml) {
+        byte[] b = System.Text.Encoding.UTF8.GetBytes(xml);
+        IntPtr u = BeginUpdateResource(path, false);
+        if (u == IntPtr.Zero) throw new IOException("BeginUpdateResource failed " + Marshal.GetLastWin32Error());
+        bool ok = UpdateResource(u, (IntPtr)24, (IntPtr)1, 1033, b, (uint)b.Length);   // RT_MANIFEST, CREATEPROCESS_MANIFEST_RESOURCE_ID
+        if (!EndUpdateResource(u, !ok) || !ok) throw new IOException("manifest failed " + Marshal.GetLastWin32Error());
     }
 
     public static string Replace(string path, string ico) {
@@ -77,5 +87,19 @@ public static class EwIconRes {
 $exe = (Resolve-Path -LiteralPath $Executable).Path
 $ico = (Resolve-Path -LiteralPath $Icon).Path
 [EwIconRes]::Replace($exe, $ico)
+if ($AsInvoker) {
+    [EwIconRes]::SetManifest($exe, @'
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+    <security><requestedPrivileges><requestedExecutionLevel level="asInvoker" uiAccess="false"/></requestedPrivileges></security>
+  </trustInfo>
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application><supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/></application>
+  </compatibility>
+</assembly>
+'@)
+    'manifest: runs as invoker'
+}
 $after = [EwIconRes]::List($exe)
 if (-not ($after | Where-Object { $_[0] -eq 14 -and $_[1] -eq 1 })) { throw 'The new icon group is missing.' }

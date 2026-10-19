@@ -117,7 +117,7 @@ $output=Join-Path $archive ($ProgramName+'.exe')
 # The self-extractor shows the program's icon: stamp a copy of the module (the original stays untouched).
 $stampedSfx=Join-Path $archive 'SingleExeModule.sfx'
 Copy-Item -LiteralPath $SfxModule -Destination $stampedSfx
-& (Join-Path $PSScriptRoot 'set_exe_icon.ps1') -Executable $stampedSfx -Icon $Icon
+& (Join-Path $PSScriptRoot 'set_exe_icon.ps1') -Executable $stampedSfx -Icon $Icon -AsInvoker
 if (Test-Path -LiteralPath $output) { throw 'A final EXE already exists and will not be overwritten.' }
 $outStream=[IO.File]::Create($output)
 try {
