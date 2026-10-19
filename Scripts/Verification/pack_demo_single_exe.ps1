@@ -2,10 +2,16 @@
 param(
     [Parameter(Mandatory=$true)][string]$ArchiveDirectory,
     [string]$SevenZip='C:/Program Files/7-Zip/7z.exe',
-    [string]$SfxModule='C:/UnrealProjects/EW/Saved/BuildTools/LzmaSdk/26.04/bin/7zSD.sfx'
+    [string]$SfxModule='C:/UnrealProjects/EW/Saved/BuildTools/LzmaSdk/26.04/bin/7zSD.sfx',
+    # Owner, October 19: the program is called Elite_Wake.exe, with the EW icon in a silver box.
+    [string]$ProgramName='Elite_Wake',
+    [string]$Icon=''
 )
 $ErrorActionPreference='Stop'
 $archive=(Resolve-Path -LiteralPath $ArchiveDirectory).Path
+if (!$Icon) { $Icon=Join-Path $PSScriptRoot '../../Build/Windows/Application.ico' }
+if (!(Test-Path -LiteralPath $Icon)) { throw 'The program icon (Build/Windows/Application.ico) is missing; run Scripts/Setup/make_app_icon.py.' }
+$Icon=(Resolve-Path -LiteralPath $Icon).Path
 $windows=Join-Path $archive 'Windows'
 $info=Join-Path $archive 'DemoBuildInfo.json'
 if (!(Test-Path -LiteralPath $info)) { throw 'A verified encrypted demo build is required.' }
@@ -74,13 +80,13 @@ internal static class DemoLauncher
 }
 '@ | Set-Content -LiteralPath $launcherSource -Encoding utf8
 $csc=Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
-& $csc '/nologo' '/target:winexe' '/platform:x64' '/optimize+' '/reference:System.Windows.Forms.dll' ("/out:"+(Join-Path $windows 'LaunchDemo.exe')) $launcherSource
+& $csc '/nologo' '/target:winexe' '/platform:x64' '/optimize+' '/reference:System.Windows.Forms.dll' ("/win32icon:"+$Icon) ("/out:"+(Join-Path $windows 'LaunchDemo.exe')) $launcherSource
 if ($LASTEXITCODE -ne 0) { throw 'The single-file demo launcher could not be compiled.' }
 Copy-Item -LiteralPath $info -Destination (Join-Path $windows 'DEMO_BUILD.json')
 @'
 ELITEWAKE — PRIVATE WINDOWS DEMO
 
-Double-click Elitewake-Demo.exe. It extracts the game temporarily, then opens
+Double-click Elite_Wake.exe. It extracts the game temporarily, then opens
 the title screen. Press any key, then choose Single Player to explore the coast.
 The temporary game folder is removed after you close the game. Keep the EXE
 to play again. The game requires 64-bit Windows and a DirectX 12 capable GPU.
@@ -106,12 +112,16 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'The demo payload could not be archived.' }
 } finally { Pop-Location }
 $config=Join-Path $archive 'SingleExeConfig.txt'
-[IO.File]::WriteAllText($config,";!@Install@!UTF-8!`r`nTitle=`"ELITEWAKE Demo`"`r`nProgress=`"yes`"`r`nRunProgram=`"LaunchDemo.exe`"`r`n;!@InstallEnd@!`r`n",(New-Object Text.UTF8Encoding($false)))
-$output=Join-Path $archive 'Elitewake-Demo.exe'
+[IO.File]::WriteAllText($config,";!@Install@!UTF-8!`r`nTitle=`"Elite Wake`"`r`nProgress=`"yes`"`r`nRunProgram=`"LaunchDemo.exe`"`r`n;!@InstallEnd@!`r`n",(New-Object Text.UTF8Encoding($false)))
+$output=Join-Path $archive ($ProgramName+'.exe')
+# The self-extractor shows the program's icon: stamp a copy of the module (the original stays untouched).
+$stampedSfx=Join-Path $archive 'SingleExeModule.sfx'
+Copy-Item -LiteralPath $SfxModule -Destination $stampedSfx
+& (Join-Path $PSScriptRoot 'set_exe_icon.ps1') -Executable $stampedSfx -Icon $Icon
 if (Test-Path -LiteralPath $output) { throw 'A final EXE already exists and will not be overwritten.' }
 $outStream=[IO.File]::Create($output)
 try {
-    foreach ($part in @($SfxModule,$config,$payload)) {
+    foreach ($part in @($stampedSfx,$config,$payload)) {
         $inputStream=[IO.File]::OpenRead($part)
         try { $inputStream.CopyTo($outStream) } finally { $inputStream.Dispose() }
     }
@@ -119,6 +129,6 @@ try {
 & $SevenZip t $output *> (Join-Path $archive 'SingleExeVerification.log')
 if ($LASTEXITCODE -ne 0) { throw 'The final single-EXE archive integrity check failed.' }
 $hash=(Get-FileHash -LiteralPath $output -Algorithm SHA256).Hash
-"$hash  Elitewake-Demo.exe" | Set-Content -LiteralPath (Join-Path $archive 'Elitewake-Demo.sha256.txt') -Encoding ascii
+"$hash  $ProgramName.exe" | Set-Content -LiteralPath (Join-Path $archive ($ProgramName+'.sha256.txt')) -Encoding ascii
 Write-Output "Single encrypted demo EXE ready: $output"
 Write-Output "Size: $([math]::Round((Get-Item -LiteralPath $output).Length/1MB)) MB"
