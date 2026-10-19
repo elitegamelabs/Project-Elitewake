@@ -352,7 +352,7 @@ int32 UEWEditorVerificationLibrary::FitOutShipForReview(AEWShip* Ship, AEWCharac
         if (Ship->InstallFitting(Character, Mount.MountId) == EEWFittingResult::Installed) ++Installed;
     if (Ship->TakeHelm(Character))
     {
-        for (int32 Step = 0; Step < 2; ++Step) Ship->StepSails(Character, -1);
+        for (int32 Step = 0; Step < 4; ++Step) Ship->StepSails(Character, -1);
         for (int32 Step = 0; Step < SailSteps; ++Step) Ship->StepSails(Character, 1);
         Ship->LeaveHelm(Character, true);
     }

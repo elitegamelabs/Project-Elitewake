@@ -2,7 +2,15 @@
 
 What has been tested, how, and what the tests do not cover. A passing test proves only its own scope. A test fixture is not a finished feature.
 
-Last updated: October 15, 2026. The full dated log of every run, including earlier failures, is in [ARCHIVE/2026-10_VERIFICATION_LOG.md](ARCHIVE/2026-10_VERIFICATION_LOG.md).
+Last updated: October 19, 2026. The full dated log of every run, including earlier failures, is in [ARCHIVE/2026-10_VERIFICATION_LOG.md](ARCHIVE/2026-10_VERIFICATION_LOG.md).
+
+## October 19 Codex pause checkpoint
+
+- UE 5.8.3 EWEditor build passed after the ship changes. The deprecated `GetMovementBase` warning is gone.
+- Focused native ship suite passed **8/8**: BoardingAndAnchor, BuiltInFittings, FittingAuthority, HullDamage, Leaks, SailingAuthority, SailPositions and WeightAndOverload.
+- `verify_ship_sailing_play.py` passed **11/11** with a listen server and client: replicated 25/50/75/100% sail settings, 21.6 m travel, 54.45 degrees of turn, 75.4 cm client gap, wake/roll/pitch/heel/wheel response, and an anchored final speed of zero.
+- Updated Python ship checks passed compile/syntax validation. The owner paused work before the final sail-trim and broader ship regression runs, so those are not claimed as passing.
+- Full details, exclusions and recovery branch are in [the October 19 local reconciliation handoff](REPORTS/2026-10-19_CODEX_LOCAL_RECONCILIATION_AND_HANDOFF.md).
 
 ## How things are tested
 

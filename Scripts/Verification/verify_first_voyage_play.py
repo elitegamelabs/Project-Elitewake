@@ -268,7 +268,7 @@ def at_helm():
 def full_sail():
     state['aim'] = None
     state['memo']['frame0'] = state['frame']
-    state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+    state['input'] = lambda f: pawn.do_move(0, 1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else pawn.do_move(0, 0)
 
 
 def sails_full():
@@ -310,16 +310,7 @@ def left_helm():
 
 
 def anchored_again():
-    m = state['memo']
-    # Interaction is a hold: on a ship still running before the wind, the survivor's aim can slip off the capstan and
-    # the hold is cancelled, where a player would keep holding E. Until the anchor is down, stand at the capstan again
-    # and hold once more every 4 s (longer than the 3 s hold, so a hold in progress is never cut short).
-    if not ship.is_anchored():
-        if time.monotonic() - m['t'] > 4.0:
-            m['anchor_presses'] = m.get('anchor_presses', 1) + 1
-            work('Anchor')()
-        return False
-    return peer.is_anchored() and ship.get_speed() < 1
+    return ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1
 
 
 # 7. Fish ------------------------------------------------------------------------------------------------------
@@ -430,7 +421,7 @@ STEPS = [
     ('It fits the headsail', work('Headsail'), fitted('Headsail', headsail), 6),
     ('It raises the anchor at the capstan', work('Anchor'), anchor_up, 8),
     ('It takes the helm', work('Helm'), at_helm, 6),
-    ('Forward twice sets full sail', full_sail, sails_full, 6),
+    ('Four forward taps set full sail', full_sail, sails_full, 6),
     ('Shift with A or D trims the sails to the wind', trim, trimmed, 8),
     ('The sloop sails for 4 s and the client keeps up', lambda: None, sailed, 8),
     ('It leaves the helm', leave_helm, left_helm, 6),

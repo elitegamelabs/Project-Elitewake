@@ -87,8 +87,23 @@ def fitted(mount_id, item):
 def begin_sailing():
     state['aim'] = None
     state['frame0'] = state['frame']
-    # Forward pressed, released, pressed: furled to half to full.
-    state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+    state['memo']['sail_fractions_seen'] = []
+    # Four separate forward taps step through quarter, half, three-quarter and full sail.
+    state['input'] = lambda f: pawn.do_move(0, 1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else pawn.do_move(0, 0)
+
+def sail_positions_replicated():
+    server_fraction = round(ship.get_sail_fraction(), 2)
+    client_fraction = round(peer.get_sail_fraction(), 2)
+    if abs(server_fraction - client_fraction) > .01:
+        return False
+    seen = state['memo']['sail_fractions_seen']
+    if server_fraction > 0 and (not seen or seen[-1] != server_fraction):
+        seen.append(server_fraction)
+    if len(seen) < 4:
+        return False
+    expected = [.25, .5, .75, 1.0]
+    assert seen == expected, f'sail positions {seen}, expected {expected}'
+    return True
 
 def begin_steering():
     state['memo'].update(start=ship.get_actor_location(), yaw=ship.get_actor_rotation().yaw, t=time.monotonic())
@@ -175,8 +190,8 @@ STEPS = [
     ('Client takes the helm; helmsman replicates and the survivor stays possessed', install('Helm'),
      lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn and pawn.get_helm_ship() == peer
      and client.get_controlled_pawn() == pawn, 6),
-    ('Forward input twice sets full sail on the server and client', begin_sailing,
-     lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
+    ('Four forward taps set quarter, half, three-quarter and full sail on server and client', begin_sailing,
+     sail_positions_replicated, 6),
     ('Client sails and steers for 4 s; its copy of the ship rocks on the swell, heels under sail, trails a wake and its wheel turns', begin_steering, steered, 8),
     ('Releasing the rudder centres it; the sails stay set', release_rudder, rudder_centred, 4),
     ('Client leaves the helm; movement and collision return', interact, left_helm, 6),

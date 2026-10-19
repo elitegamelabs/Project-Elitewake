@@ -157,13 +157,16 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     // Two identical ships side by side, and a third hull dead ahead of the first to collide with.
     AEWShip* A = SpawnShip(FVector(0, 0, 0));
     AEWShip* B = SpawnShip(FVector(0, 3000, 0));
-    AEWShip* Blocker = SpawnShip(FVector(2400, 0, 0));
+    // Keep the collision target clear of the anchor's permitted swing circle; it is repositioned for that check later.
+    AEWShip* Blocker = SpawnShip(FVector(50000, 0, 0));
     FActorSpawnParameters Params; Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
     auto* C = World->SpawnActor<AEWCharacter>(CharClass, FVector(-120, 0, 186), FRotator::ZeroRotator, Params);
     auto* Other = World->SpawnActor<AEWCharacter>(CharClass, FVector(-120, 60, 186), FRotator::ZeroRotator, Params);
     auto* PC = World->SpawnActor<AEWPlayerController>(PCClass);
     auto* OtherPC = World->SpawnActor<AEWPlayerController>(PCClass);
     PC->Possess(C); OtherPC->Possess(Other);
+    World->InitializeActorsForPlay(FURL());
+    World->BeginPlay();
     C->GetInventoryComponent()->AddItem(Helm, 2);
     C->GetInventoryComponent()->AddItem(MediumSail, 2);
 
@@ -171,6 +174,12 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("No helm, no helmsman"), A->TakeHelm(C));
     TestEqual(TEXT("No sails fitted"), A->GetFittedSailFraction(), 0.f);
     TestTrue(TEXT("Ships start anchored"), A->IsAnchored());
+    // These transient actors were spawned before this lightweight test world began play. Re-lay their anchors so
+    // the chain has the same bed and reach that a map-spawned ship receives in BeginPlay.
+    TestTrue(TEXT("Lift A's transient anchor"), A->SetAnchored(C, false));
+    TestTrue(TEXT("Lay A's transient anchor"), A->SetAnchored(C, true));
+    TestTrue(TEXT("Lift B's transient anchor"), B->SetAnchored(C, false));
+    TestTrue(TEXT("Lay B's transient anchor"), B->SetAnchored(C, true));
     for (AEWShip* S : {A, B})
     {
         TestEqual(TEXT("Helm installs"), S->InstallFitting(C, TEXT("Helm")), EEWFittingResult::Installed);
@@ -199,10 +208,17 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     PC->GetInteractionComponent()->SetMenuBlocked(true);
     TestFalse(TEXT("An open menu blocks commands"), A->StepSails(C, 1));
     PC->GetInteractionComponent()->SetMenuBlocked(false);
+    TestTrue(TEXT("Quarter sail"), A->StepSails(C, 1));
+    TestEqual(TEXT("Quarter setting"), A->GetSailState(), EEWSailState::Quarter);
     TestTrue(TEXT("Half sail"), A->StepSails(C, 1));
+    TestEqual(TEXT("Half setting"), A->GetSailState(), EEWSailState::Half);
+    TestTrue(TEXT("Three-quarter sail"), A->StepSails(C, 1));
+    TestEqual(TEXT("Three-quarter setting"), A->GetSailState(), EEWSailState::ThreeQuarter);
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
-    TestEqual(TEXT("An anchored ship does not sail, even under full sail"), A->ComputeTargetSpeed(), 0.f);
+    TestTrue(TEXT("Full sails load against the anchor chain"),
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * (2.f / 3.f)
+            * UEWWindSubsystem::MinUpwindFactor, 1.f));
     // Trim: the sails swing with the helmsman's held direction, at a fixed rate, within their limits.
     TestFalse(TEXT("Others cannot trim"), A->SetSailTrim(Other, 1));
     TestFalse(TEXT("Trim direction must be one notch"), A->SetSailTrim(C, 2));
@@ -212,10 +228,11 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
         for (int32 i = 0; i < Steps; ++i) Ship->SimulateSailing(AEWShip::SimulationStep);
         Ship->SetSailTrim(C, 0);
     };
-    // Wind: well trimmed, full speed running before it; never less than 30 percent, so a ship always makes headway.
+    // Wind: well trimmed, full speed running before it; never less than 45 percent, so a ship always makes headway.
     Wind->SetWindYaw(0.f);   // Blowing toward +X, the way the ships face.
     TestEqual(TEXT("Sails start along the centreline"), A->GetSailAngle(), 0.f);
-    TestTrue(TEXT("Running before the wind with the sails along the centreline gives the least"), FMath::IsNearlyEqual(A->GetWindFactor(), .3f, .01f));
+    TestTrue(TEXT("Running before the wind with the sails along the centreline gives the least"),
+        FMath::IsNearlyEqual(A->GetWindFactor(), UEWWindSubsystem::MinUpwindFactor, .01f));
     Swing(A, 1, 40);
     TestEqual(TEXT("The sails swing out to starboard and stop at their limit"), A->GetSailAngle(), AEWShip::MaxSailAngle);
     TestTrue(TEXT("Squared away running before the wind, they draw fully"), FMath::IsNearlyEqual(A->GetWindFactor(), 1.f, .01f));
@@ -223,19 +240,29 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Released, the sails stay where they are"), A->GetSailAngle(), AEWShip::MaxSailAngle);
     Wind->SetWindYaw(180.f);
     TestEqual(TEXT("Into the wind the best angle is the centreline"), A->GetBestSailAngle(), 0.f);
-    TestTrue(TEXT("Upwind still makes headway (30 percent)"), FMath::IsNearlyEqual(A->GetWindFactor(), .3f, .01f));
+    TestTrue(TEXT("Upwind still makes headway (45 percent)"),
+        FMath::IsNearlyEqual(A->GetWindFactor(), UEWWindSubsystem::MinUpwindFactor, .01f));
     Wind->SetWindYaw(90.f);  // Across the ship, toward starboard.
     TestTrue(TEXT("On a beam reach the best angle is half way out to starboard"), FMath::IsNearlyEqual(A->GetBestSailAngle(), 45.f, .01f));
-    TestTrue(TEXT("Squared away on a beam reach, they draw only half"), FMath::IsNearlyEqual(A->GetTrimQuality(), .5f, .01f));
+    const float BeamQuality = FMath::Cos(FMath::DegreesToRadians(67.5f));
+    TestTrue(TEXT("Squared away on a beam reach draws according to its 45 degree trim error"),
+        FMath::IsNearlyEqual(A->GetTrimQuality(), BeamQuality, .01f));
+    TestTrue(TEXT("Partly drawing sails blend between minimum and beam-reach wind"),
+        FMath::IsNearlyEqual(A->GetWindFactor(), UEWWindSubsystem::MinUpwindFactor
+            + (.725f - UEWWindSubsystem::MinUpwindFactor) * BeamQuality, .01f));
     Swing(A, -1, 18);        // 85 down to 44.5 degrees.
-    TestTrue(TEXT("Trimmed in to about 45 degrees, a beam reach gives 65 percent"), FMath::IsNearlyEqual(A->GetWindFactor(), .65f, .01f));
+    TestTrue(TEXT("Trimmed in to about 45 degrees, a beam reach gives 72.5 percent"), FMath::IsNearlyEqual(A->GetWindFactor(), .725f, .01f));
     Wind->SetWindYaw(0.f);
     Swing(A, 1, 40);
-    TestEqual(TEXT("An anchored ship does not move while its sails are trimmed"), A->GetSpeed(), 0.f);
+    for (int32 Step = 0; Step < 400 && !A->IsChainTaut(); ++Step) A->SimulateSailing(.05f);
+    TestTrue(TEXT("The anchor chain becomes taut under full sail"), A->IsChainTaut());
+    A->SimulateSailing(.05f);
+    TestEqual(TEXT("A taut anchor chain stops the ship under full sail"), A->GetSpeed(), 0.f);
     TestTrue(TEXT("Raise anchor on A"), A->SetAnchored(C, false));
     TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
     TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
-    TestTrue(TEXT("Downwind target is top speed times fitted sail"), FMath::IsNearlyEqual(A->ComputeTargetSpeed(), 700.f * 2.f / 3.f, 1.f));
+    TestTrue(TEXT("Downwind target includes the crossing pace and fitted sail"),
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * 2.f / 3.f, 1.f));
 
     // Leaving the helm keeps the sails set; the ship sails on.
     TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));
@@ -248,10 +275,13 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     C->SetActorLocation(B->GetActorTransform().TransformPosition(FVector(-120, 0, 186)));
     Aim(PC, C, B, TEXT("Helm"));
     TestTrue(TEXT("Take the helm of ship B"), B->Interact_Implementation(C));
-    B->StepSails(C, 1); B->StepSails(C, 1);
+    for (int32 Step = 0; Step < 4; ++Step) B->StepSails(C, 1);
     // Trimmed at anchor like A, so both start the comparison at rest.
     B->SetAnchored(C, true);
     Swing(B, 1, 40);
+    for (int32 Step = 0; Step < 400 && !B->IsChainTaut(); ++Step) B->SimulateSailing(.05f);
+    TestTrue(TEXT("Ship B is held at the same taut starting state"), B->IsChainTaut());
+    B->SimulateSailing(.05f);
     B->SetAnchored(C, false);
     TestTrue(TEXT("Leave the helm of ship B"), B->LeaveHelm(C));
     const FVector StartA = A->GetActorLocation(), StartB = B->GetActorLocation();
@@ -285,8 +315,10 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     // Dropping the anchor under way drags the ship to a stop, whatever the sails say.
     TestTrue(TEXT("Under way before anchoring"), A->GetSpeed() > 100.f);
     TestTrue(TEXT("Drop anchor"), A->SetAnchored(C, true));
-    for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
-    TestEqual(TEXT("The anchor stops the ship within 2 s"), A->GetSpeed(), 0.f);
+    for (int32 Step = 0; Step < 400 && !A->IsChainTaut(); ++Step) A->SimulateSailing(.05f);
+    TestTrue(TEXT("The dropped anchor chain becomes taut"), A->IsChainTaut());
+    A->SimulateSailing(.05f);
+    TestEqual(TEXT("The taut anchor chain stops the ship"), A->GetSpeed(), 0.f);
     const FVector Moored = A->GetActorLocation();
     for (int32 i = 0; i < 20; ++i) A->SimulateSailing(.1f);
     // It does not drift across the water; the swell only bobs it in place.
@@ -430,12 +462,15 @@ bool FEWShipBoardingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Ladder aim is not a mount"), Ship->FindAimedMount(C), FName());
     TestTrue(TEXT("A swimmer can climb the ladder"), Ship->CanInteract_Implementation(C));
 
-    // Something standing on the landing spot blocks the climb rather than overlapping it.
+    // Something standing on the preferred landing spot makes the climber use a clear alternate rather than overlap it.
     auto* Other = World->SpawnActor<AEWCharacter>(CharClass,
         FVector(-100, Def->HullExtent.Y - 70.f, Def->GetDeckHeight() + C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 2.f),
         FRotator::ZeroRotator, Params);
-    TestFalse(TEXT("A blocked landing spot refuses the climb"), Ship->ClimbAboard(C, 1));
+    TestTrue(TEXT("A blocked preferred landing uses a clear alternate"), Ship->ClimbAboard(C, 1));
+    C->SetActorLocation(FVector(-100, 330, -40), false, nullptr, ETeleportType::TeleportPhysics);
+    C->GetCharacterMovement()->SetMovementMode(MOVE_Swimming);
     Other->Destroy();
+    AimAtLadder(1);
 
     TestTrue(TEXT("Interact takes hold of the ladder"), Ship->Interact_Implementation(C) && C->GetLadderShip() == Ship);
     TestFalse(TEXT("Hanging on the ladder is not aboard"), Ship->IsAboard(C));
@@ -561,6 +596,48 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
     const FVector Start = Ship->GetActorLocation();
     for (int32 i = 0; i < 20; ++i) Ship->SimulateSailing(.1f);
     TestTrue(TEXT("Paddling moves the raft"), FVector::Dist(Start, Ship->GetActorLocation()) > 50.f);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWShipHullDamageTest, "Elitewake.Ships.HullDamage",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWShipHullDamageTest::RunTest(const FString& Parameters)
+{
+    using namespace EWShipTest;
+
+    auto* Def = NewObject<UEWShipDefinition>(GetTransientPackage());
+    Def->ShipId = TEXT("TestHull");
+    Def->HullHealth = 1000.f;
+    Def->Mounts = {Mount(TEXT("Helm"), EEWShipMountType::Helm, FVector(-250, 0, 130))};
+    TestTrue(TEXT("Valid definition"), Def->Validate().IsEmpty());
+
+    const auto Values = UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true)
+        .CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false);
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false, NAME_None, nullptr, true, ERHIFeatureLevel::Num, &Values);
+    auto* Ship = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), FTransform::Identity);
+    Ship->Definition = Def;
+    Ship->FinishSpawning(FTransform::Identity);
+    World->InitializeActorsForPlay(FURL());
+    World->BeginPlay();
+
+    TestEqual(TEXT("A whole hull starts at its definition's health"), Ship->GetHullHealth(), Def->HullHealth);
+    TestEqual(TEXT("Max hull health matches the definition"), Ship->GetMaxHullHealth(), Def->HullHealth);
+    TestEqual(TEXT("A whole hull has no holes"), Ship->GetHoleCount(), 0);
+
+    const FVector Where = Ship->GetActorLocation() + FVector(0, Def->HullExtent.Y, 0);
+    Ship->TakeRoundShot(Where, FVector(0, 1, 0), nullptr);
+    TestEqual(TEXT("One round shot takes RoundShotDamage"), Ship->GetHullHealth(), Def->HullHealth - AEWShip::RoundShotDamage);
+    TestEqual(TEXT("A hole is recorded"), Ship->GetHoleCount(), 1);
+    const FEWHullHole Hole = Ship->GetHole(0);
+    TestTrue(TEXT("The hole sits on the struck side"), FMath::Abs(Hole.Local.Y - Def->HullExtent.Y) < 1.f);
+    TestTrue(TEXT("The hole faces the strike"), Hole.Normal.Equals(FVector(0, 1, 0), .01f));
+
+    const float After = Ship->GetHullHealth();
+    Ship->TakeRoundShot(Where, FVector(0, 1, 0), nullptr);
+    TestEqual(TEXT("A second shot takes the same damage again"), Ship->GetHullHealth(), After - AEWShip::RoundShotDamage);
+    TestEqual(TEXT("A second hole is recorded"), Ship->GetHoleCount(), 2);
 
     World->DestroyWorld(false);
     return true;

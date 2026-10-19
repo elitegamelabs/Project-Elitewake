@@ -308,7 +308,7 @@ EEWSound AEWCharacter::FootstepSurface() const
     // What is underfoot (tuning): a ship's deck is wood; a cave's rock, a boulder or a mineable rock is stone; then
     // by region: snow in the Winter, sand in the Desert and on every beach (below the beach's top, about 1.4 m above
     // the sea), grass inland elsewhere.
-    const UPrimitiveComponent* Base = GetMovementBase();
+    const UPrimitiveComponent* Base = Cast<UPrimitiveComponent>(GetMovementBaseObject());
     const AActor* Under = Base ? Base->GetOwner() : nullptr;
     if (Under && Under->IsA<AEWShip>()) return EEWSound::StepDeck;
     const auto* Rock = Cast<UStaticMeshComponent>(Base);
@@ -335,7 +335,7 @@ void AEWCharacter::UpdateLoopAnimation(float DeltaSeconds)
         {
             const EEWSailState Stroke = HelmShip->GetSailState();
             Wanted = Stroke == EEWSailState::Furled ? nullptr : PaddleAnimation.Get();
-            Rate = Stroke == EEWSailState::Full ? 1.25f : .8f;
+            Rate = FMath::Lerp(.8f, 1.25f, HelmShip->GetSailFraction());
         }
         else Wanted = HelmHoldAnimation;
     }
@@ -420,9 +420,27 @@ void AEWCharacter::Tick(float DeltaSeconds)
             ServerHelmRudder(NewRudder);
             SentHelmRudder = NewRudder;
         }
-        const int8 ForwardSign = PendingHelmForward > .5f ? 1 : PendingHelmForward < -.5f ? -1 : 0;
-        if (ForwardSign != 0 && ForwardSign != LastHelmForwardSign) ServerSailStep(ForwardSign);
-        LastHelmForwardSign = ForwardSign;
+        const int8 HeldStep = SailStepInput > .5f ? 1 : SailStepInput < -.5f ? -1 : 0;
+        if (HeldStep != 0)
+        {
+            const double Now = GetWorld()->GetTimeSeconds();
+            if (HeldStep != ActiveSailStepSign || Now >= NextSailStepTime)
+            {
+                ServerSailStep(HeldStep);
+                NextSailStepTime = Now + SailStepInterval;
+            }
+            ActiveSailStepSign = HeldStep;
+            LastHelmForwardSign = 0;
+        }
+        else
+        {
+            ActiveSailStepSign = 0;
+            NextSailStepTime = 0.0;
+            // W/S retains the established tap-to-step behaviour while the dedicated sail keys support holding.
+            const int8 ForwardSign = PendingHelmForward > .5f ? 1 : PendingHelmForward < -.5f ? -1 : 0;
+            if (ForwardSign != 0 && ForwardSign != LastHelmForwardSign) ServerSailStep(ForwardSign);
+            LastHelmForwardSign = ForwardSign;
+        }
         PendingHelmRight = PendingHelmForward = 0.f;
     }
     if (IsLocallyControlled() && IsValid(GunShip))
@@ -575,8 +593,9 @@ void AEWCharacter::OnRep_HelmShip()
     CancelRestrictedActions();
     bSwimAscendInputHeld = false;
     StopJumping();
-    PendingHelmRight = PendingHelmForward = SentHelmRudder = 0.f;
-    LastHelmForwardSign = SentSailTrim = 0;
+    PendingHelmRight = PendingHelmForward = SentHelmRudder = SailStepInput = 0.f;
+    LastHelmForwardSign = ActiveSailStepSign = SentSailTrim = 0;
+    NextSailStepTime = 0.0;
     bHelmTrimHeld = false;
     GetCharacterMovement()->StopMovementImmediately();
     if (IsValid(HelmShip))

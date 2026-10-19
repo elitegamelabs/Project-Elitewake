@@ -119,7 +119,7 @@ def crew_settled():
 def host_full_sail():
     state['aim'] = None
     state['frame0'] = state['frame']
-    state['input'] = lambda f: host.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+    state['input'] = lambda f: host.do_move(0, 1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else host.do_move(0, 0)
 
 def start_voyage():
     m = state['memo']
@@ -177,7 +177,7 @@ def overboard():
 def host_furl():
     pawn.do_jump_end()
     state['frame0'] = state['frame']
-    state['input'] = lambda f: host.do_move(0, -1) if (f < 5 or 10 <= f < 15) else None
+    state['input'] = lambda f: host.do_move(0, -1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else host.do_move(0, 0)
 
 def stopped():
     return ship.get_sail_state() == unreal.EWSailState.FURLED and ship.get_speed() < 30

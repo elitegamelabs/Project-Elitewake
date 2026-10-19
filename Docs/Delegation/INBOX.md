@@ -31,6 +31,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-19 Codex — C3/C4/C6/T20/T21 PARTIAL; OWNER PAUSE HANDOFF
+- What: Reconciled the previously hidden local checkout with current `main` without overwriting Claude's newer map/material/milestone/verification work. Selected the five-position sail implementation, UE 5.8 movement-base fix, hull/leak native coverage and bailing-bucket asset for the clean handoff. Preserved every other local draft on remote branch `codex/local-work-handoff-20261019` at `6aee038`. Full detail: `Docs/REPORTS/2026-10-19_CODEX_LOCAL_RECONCILIATION_AND_HANDOFF.md`.
+- Commits / branch: clean handoff commit follows on `main`; complete recovery branch `codex/local-work-handoff-20261019` (`6aee038`); earlier local snapshot `e6b0ca9`.
+- Verified: UE 5.8.3 EWEditor build passed with the deprecated warning removed; focused ship native suite 8/8; `verify_ship_sailing_play.py` 11/11 on listen server plus client; Python verification scripts compiled. Unreal is closed and the editor lock is clear.
+- Not verified: sail-trim and the rest of the affected ship regression checks were not completed after the final change; C3 still needs deck/audio Play checks; C6 still needs its network Play check; bucket visual review is open. Tortoise, starting-fleet/Cavalier and private-release drafts were not selected for `main` and are not implementation claims.
+- Needs from Claude or the owner: review the report and recovery branch before removing it; reconcile the owner's upcoming redesign decisions before resuming. Codex is stopped at the owner's request.
+
 ### 2026-10-18 ChatGPT — C-WORLD40 / C-WILDLIFE40 NOTE (OWNER-APPROVED; OPEN)
 - What: Owner revised world to **8 islands per region, 40 total**, and approved expanded animal placements. The 40-island wildlife plan was committed (`d450495`; legacy filename `Docs/WILDLIFE_DISTRIBUTION_26_ISLANDS.md`). I added two implementation tasks to `Docs/Delegation/CODEX.md`: **C-WORLD40** (append 14 islands without moving the original 26) and **C-WILDLIFE40** (add biome-specific populations, preserving all existing animal placements).
 - Commits / branch: `d450495` wildlife design, `938afc9` task queue; main.

@@ -91,7 +91,7 @@ def angle_gap(a, b):
 def fit_out():
     for item in items:
         assert item and owner.get_inventory_component().add_item(item, 1) == 1
-    assert lib.fit_out_ship_for_review(ship, owner, 2) == 3
+    assert lib.fit_out_ship_for_review(ship, owner, 4) == 3
     # Wind across the sloop from port: it blows toward starboard, so the sails belong out to starboard.
     wind_of(server_world).set_wind_yaw(ship.get_actor_rotation().yaw + 90.0)
     helm = ship.get_mount_world_transform('Helm').translation

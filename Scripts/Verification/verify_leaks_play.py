@@ -29,16 +29,15 @@ client_world = worlds[pcs.index(client)]
 pawn = client.get_controlled_pawn()
 
 
-def player_id(p):
-    return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'), ['PlayerId']))['PlayerId']
-
-
 def ship_named(world, ship_id):
     return next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
                 if str(s.get_editor_property('definition').get_editor_property('ship_id')) == ship_id)
 
 
-owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
+# In this two-player listen-server check, the server-side copy of the remote client's survivor is not locally
+# controlled; the host's survivor is. Avoid editor-tool PlayerId JSON queries during Play, where those may be empty.
+owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter)
+             if p.get_controller() and not p.is_locally_controlled())
 ship = ship_named(server_world, 'Sloop')
 peer = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWShip) if s.get_name() == ship.get_name())
 definition = ship.get_editor_property('definition')

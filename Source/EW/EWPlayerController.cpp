@@ -205,10 +205,16 @@ void AEWPlayerController::SetClimbInput(float Direction)
 {
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
     if (!Survivor) return;
-    // A gunner opens their port with Up and shuts it with Down (owner, October 17); elsewhere these keys climb.
+    // A gunner opens their port with Up and shuts it with Down (owner, October 17).
     if (Survivor->GetGunShip())
     {
         if (Direction != 0.f && !IsMapOpen() && !IsSessionMenuOpen()) Survivor->ServerSetGunport(Direction > 0.f);
+        return;
+    }
+    // At a helm, holding Up/Down (or the D-pad) raises/lowers sail one 25% step at a time.
+    if (Survivor->GetHelmShip())
+    {
+        Survivor->SetSailStepInput(IsMapOpen() || IsSessionMenuOpen() ? 0.f : Direction);
         return;
     }
     Survivor->SetLadderArrowInput(Direction);

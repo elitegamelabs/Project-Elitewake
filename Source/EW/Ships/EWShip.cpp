@@ -429,7 +429,7 @@ void AEWShip::RefreshFittingVisuals()
             const FVector Scale = StandInScale(Fitting.Item);
             Local = FTransform(FRotator::ZeroRotator, FVector(0, 0, Scale.Z * 50.f), Scale);
         }
-        // Sails follow the helmsman's setting: rolled on their spars when furled, lowered toward their foot at half.
+        // Sails follow the helmsman's setting: rolled when furled, shortened to the selected fraction otherwise.
         bool bShown = true;
         if (Mount->Type == EEWShipMountType::Sail && Mesh != StandInCube())
         {
@@ -438,9 +438,9 @@ void AEWShip::RefreshFittingVisuals()
                 Mesh = bMountLook ? Mount->FittedFurledMesh.LoadSynchronous() : Fitting.Item->FittingFurledMesh.LoadSynchronous();
                 bShown = Mesh != nullptr;
             }
-            else if (SailState == EEWSailState::Half)
+            else
             {
-                Local.SetScale3D(Local.GetScale3D() * FVector(1, 1, .55f));
+                Local.SetScale3D(Local.GetScale3D() * FVector(1, 1, GetSailFraction()));
             }
         }
         Visual->SetStaticMesh(Mesh);
@@ -1641,7 +1641,9 @@ bool AEWShip::StepSails(AEWCharacter* Character, int32 Direction)
     if (!HasAuthority() || !IsValidHelmsman(Character) || (Direction != 1 && Direction != -1)) return false;
     const auto* PC = Cast<AEWPlayerController>(Character->GetController());
     if (!PC || PC->GetInteractionComponent()->IsMenuBlocked()) return false;
-    SailState = static_cast<EEWSailState>(FMath::Clamp(static_cast<int32>(SailState) + Direction, 0, 2));
+    // Paddled craft retain their two deliberate effort levels; sail rigs use all four 25% steps.
+    const int32 Step = Definition && Definition->bPaddled ? Direction * 2 : Direction;
+    SailState = static_cast<EEWSailState>(FMath::Clamp(static_cast<int32>(SailState) + Step, 0, 4));
     RefreshFittingVisuals();
     return true;
 }
@@ -1707,7 +1709,7 @@ float AEWShip::ComputeTargetSpeed() const
 {
     // At anchor the sails still drive her: the chain, not the anchor, stops her (StepSimulation).
     if (!Definition || bSwamped || SailState == EEWSailState::Furled) return 0.f;
-    const float SailSet = SailState == EEWSailState::Full ? 1.f : .5f;
+    const float SailSet = GetSailFraction();
     // Paddlers set their own pace whatever the wind, with no sails to fill.
     if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
     return Definition->TopSpeed * SailingPace * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
@@ -1837,7 +1839,7 @@ void AEWShip::StepSimulation(float Step)
     // sails. Movement follows the heading alone, never the roll or pitch.
     if (!bHasRestZ) { RestZ = GetActorLocation().Z; bHasRestZ = true; }
     SwayTime += Step;
-    const float SailSet = SailState == EEWSailState::Full ? 1.f : SailState == EEWSailState::Half ? .5f : 0.f;
+    const float SailSet = GetSailFraction();
     const float WantedHeel = HasTrimmableSails() && !bAnchored
         ? MaxHeel * SwayScale() * SailSet * GetFittedSailFraction() * GetWindFactor() * (SailAngle >= 0.f ? 1.f : -1.f) : 0.f;
     Heel = FMath::FInterpConstantTo(Heel, WantedHeel, Step, 2.f);

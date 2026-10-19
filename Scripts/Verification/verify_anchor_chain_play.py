@@ -63,7 +63,7 @@ def anchored_at_start():
 def set_sail():
     for item in items:
         assert item and host.get_inventory_component().add_item(item, 1) == 1
-    assert lib.fit_out_ship_for_review(ship, host, 2) == 3
+    assert lib.fit_out_ship_for_review(ship, host, 4) == 3
     # From astern: it blows toward her bow, filling her sails.
     unreal.EWWindSubsystem.get_for_world(server_world).set_wind_yaw(ship.get_actor_rotation().yaw)
     state['memo'].update(t=time.monotonic(), catches=ship.get_chain_catches(), heard=snd.get_play_count(client_world, 'S_AnchorCatch_v1'),

@@ -4,13 +4,12 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 from Scripts/Setup/build_schooner.py. Run unattended with run_play_check.py.
 
 Through ordinary owned requests and its own movement input, the client:
-  1. installs a Large sail assembly at the foresail hardpoint, a Medium one at the mainsail hardpoint (each with its own
-     mast; the hull is bare) and a ship's wheel on top of the captain's quarters (each granted in Play only, just
-     before it is fitted),
+  1. installs a Large sail as the fore topsail, a Medium sail on the mainmast and a ship's wheel on the raised
+     aft deck (each granted in Play only, just before it is fitted),
   2. raises the anchor, takes the helm, sets full sail, trims the sails to the wind and sails for 4 s, then leaves the helm and anchors,
   3. walks down the hatch stairs to the lower deck, aims at a cannon port there, and walks back up,
-  4. walks through the doorway into the captain's quarters under the raised aft deck, then climbs the stairs to
-     that deck (fixed rails along them),
+  4. walks through the doorway into the captain's cabin under the raised aft deck, then climbs the stairs to
+     that deck,
   5. swims beside the hull, looks up at the stern ladder's rungs and climbs aboard.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/SchoonerPlayResult.json.
@@ -50,11 +49,11 @@ checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'frame0': 0, 'handle': None, 'memo': {}}
 
 DECK = ship.get_deck_height()
-LOWER, RAISED = 20.0, DECK + 210.0      # the lower deck's floor and the raised aft deck, from build_schooner.py
+LOWER, RAISED = 40.0, DECK + 220.0      # the lower deck's floor and the raised aft deck, from build_schooner.py
 STAND = 98.0                            # capsule half height plus clearance
 # Where to stand, in the ship's frame, to reach each place: (x, y, floor height).
-STANDS = {'Foresail': (520, -80, DECK), 'Mainsail': (-80, -80, DECK), 'Helm': (-870, -110, RAISED),
-          'Anchor': (660, -60, DECK), 'StarboardCannon4': (120, 110, LOWER)}
+STANDS = {'ForeTopsail': (440, -80, DECK), 'Mainsail': (30, -80, DECK), 'Helm': (-740, -100, RAISED),
+          'Anchor': (650, -60, DECK), 'StarboardCannon4': (120, 110, LOWER)}
 
 
 def local_of(actor, ship_copy=ship):
@@ -101,7 +100,7 @@ def prepare():
     assert ship.is_anchored() and peer.is_anchored()
     mounts = ship.get_editor_property('definition').get_editor_property('mounts')
     sizes = [m.get_editor_property('sail_size') for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.SAIL]
-    assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (1, 1, 0), sizes   # two empty hardpoints (owner, October 18)
+    assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (1, 2, 3), sizes
     # Owner, October 17: hull cannon ports (no parent) and railing hardpoints, each railing opening two cannon places.
     hull_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) == 'None')
     railings = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.RAILING)
@@ -112,7 +111,7 @@ def prepare():
 def full_sail():
     state['aim'] = None
     state['frame0'] = state['frame']
-    state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+    state['input'] = lambda f: pawn.do_move(0, 1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else pawn.do_move(0, 0)
 
 
 def trim_sails():
@@ -210,33 +209,33 @@ def climbed():
 
 down = walk(40, 0, DECK, 0.0, lambda z: z < LOWER + STAND + 30, 'down')
 up = walk(450, 0, LOWER, 180.0, lambda z: z > DECK + 60, 'up')
-raised = walk(-500, -111, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
+raised = walk(-250, -231, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
 
 
 def into_cabin():
     """From the main deck, walk aft through the doorway under the raised deck until well inside the cabin."""
-    begin, _ = walk(-700, 0, DECK, 180.0, lambda z: True, 'cabin')
+    begin, _ = walk(-470, 0, DECK, 180.0, lambda z: True, 'cabin')
 
     def done():
         here, there = local_of(owner), local_of(pawn, peer)
         state['memo']['cabin'].update(server=[round(here.x), round(here.z)], client=[round(there.x), round(there.z)])
-        inside = lambda p: p.x < -850 and p.z < RAISED   # past the doorway (x -825), short of the berth (-900)
+        inside = lambda p: p.x < -660 and p.z < RAISED
         if not (inside(here) and inside(there) and ship.is_aboard(owner) and peer.is_aboard(pawn)):
             return False
         state['input'] = None
         return True
     return begin, done
 STEPS = [
-    ('Bare schooner, anchored, with a Large and a Medium sail hardpoint, 12 cannon hardpoints and 4 railing hardpoints', prepare, lambda: True, 2),
-    ('Client installs a Large sail assembly at the foresail hardpoint', go('Foresail', large),
-     lambda: ship.get_fitting('Foresail') == large and peer.get_fitting('Foresail') == large, 6),
-    ('Client installs a Medium sail assembly at the mainsail hardpoint', go('Mainsail', medium),
+    ('Bare schooner, anchored, with 1 Large, 2 Medium and 3 Small sail mounts, 12 cannon hardpoints and 4 railing hardpoints', prepare, lambda: True, 2),
+    ('Client installs a Large sail as the fore topsail', go('ForeTopsail', large),
+     lambda: ship.get_fitting('ForeTopsail') == large and peer.get_fitting('ForeTopsail') == large, 6),
+    ('Client installs a Medium sail on the mainmast', go('Mainsail', medium),
      lambda: ship.get_fitting('Mainsail') == medium and peer.get_fitting('Mainsail') == medium, 6),
-    ("Client installs the wheel on top of the captain's quarters", go('Helm', helm),
+    ('Client installs the wheel on the raised aft deck', go('Helm', helm),
      lambda: ship.get_fitting('Helm') == helm and peer.get_fitting('Helm') == helm, 6),
     ('Client raises the anchor', go('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
     ('Client takes the helm', go('Helm'), lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
-    ('Forward input twice sets full sail', full_sail,
+    ('Four forward taps set full sail', full_sail,
      lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
     ('Shift with A or D trims the sails until they draw well', trim_sails, trimmed, 8),
     ('The schooner sails for 4 s and the client copy keeps up', begin_run, ran, 8),

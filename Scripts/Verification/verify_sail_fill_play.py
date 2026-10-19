@@ -68,7 +68,7 @@ def describe_sails():
 def fit_out():
     for item in items:
         assert item and owner.get_inventory_component().add_item(item, 1) == 1
-    assert lib.fit_out_ship_for_review(ship, owner, 2) == 3
+    assert lib.fit_out_ship_for_review(ship, owner, 4) == 3
 
 
 def wind_from(side):

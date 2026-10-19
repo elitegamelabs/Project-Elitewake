@@ -62,8 +62,10 @@ void UEWShipSoundComponent::TickComponent(float DeltaSeconds, ELevelTick TickTyp
     const AEWShip* Owner = Ship();
     if (!Owner) return;
     const float Way = FMath::Clamp(FMath::Abs(Owner->GetSpeed()) / FullSpeed, 0.f, 1.f);
-    const EEWSailState Sail = Owner->GetSailState();
-    const float SailLevel = Sail == EEWSailState::Full ? RiggingFull : Sail == EEWSailState::Half ? RiggingHalf : 0.f;
+    const float SailSet = Owner->GetSailFraction();
+    const float SailLevel = SailSet <= .5f
+        ? FMath::Lerp(0.f, RiggingHalf, SailSet * 2.f)
+        : FMath::Lerp(RiggingHalf, RiggingFull, (SailSet - .5f) * 2.f);
     // Going down, the loops give way to the groan.
     const float Afloat = Owner->IsSinking() ? 0.f : 1.f;
     CreakLevel = FMath::FInterpConstantTo(CreakLevel, Afloat * FMath::Lerp(CreakAtRest, CreakAtSpeed, Way), DeltaSeconds, 1.f);

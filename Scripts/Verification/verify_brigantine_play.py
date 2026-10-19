@@ -114,7 +114,7 @@ def prepare():
 def full_sail():
     state['aim'] = None
     state['frame0'] = state['frame']
-    state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+    state['input'] = lambda f: pawn.do_move(0, 1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else pawn.do_move(0, 0)
 
 
 def trim_sails():
@@ -279,7 +279,7 @@ STEPS = [
      lambda: ship.get_fitting('Helm') == helm and peer.get_fitting('Helm') == helm, 6),
     ('Client raises the anchor', go('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
     ('Client takes the helm', go('Helm'), lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
-    ('Forward input twice sets full sail', full_sail,
+    ('Four forward taps set full sail', full_sail,
      lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
     ('Shift with A or D trims the sails until they draw well', trim_sails, trimmed, 8),
     ('The brigantine sails for 4 s, smoothly every frame on server and client, and the client copy keeps up', begin_run, ran, 8),

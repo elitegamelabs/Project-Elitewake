@@ -51,9 +51,9 @@ struct FEWHullHole
 UENUM(BlueprintType)
 enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMount, Occupied, NoFitting, InventoryFull, NeedsRailing, RailingHoldsCannons };
 
-/** How much sail is set. The helmsman steps between these, and trims the sails to the wind separately. */
+/** How much sail is set. The helmsman steps through five positions and trims to the wind separately. */
 UENUM(BlueprintType)
-enum class EEWSailState : uint8 { Furled, Half, Full };
+enum class EEWSailState : uint8 { Furled, Quarter, Half, ThreeQuarter, Full };
 
 /**
  * A vessel built from a ship definition: a complete hull with fixed mounts. Players install fittings
@@ -243,6 +243,10 @@ public:
     AEWCharacter* GetHelmsman() const { return Helmsman; }
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     EEWSailState GetSailState() const { return SailState; }
+    /** Fraction of available sail currently set, in 25% steps. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSailFraction() const { return SailFractionForState(SailState); }
+    static constexpr float SailFractionForState(EEWSailState State) { return static_cast<uint8>(State) * .25f; }
     /** Forward speed in cm/s. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetSpeed() const { return Speed; }

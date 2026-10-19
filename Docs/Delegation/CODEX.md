@@ -67,14 +67,15 @@ Claude and the owner.
   every awake land animal stayed above the sea and within its island.
 - **Done when:** it passes and VERIFICATION has it.
 
-### C3. Clear the deprecated `GetMovementBase` warning — OPEN
+### C3. Clear the deprecated `GetMovementBase` warning — PARTIAL (Codex paused 2026-10-19)
 - **Why:** `Source/EW/EWCharacter.cpp` line 311 calls `ACharacter::GetMovementBase`, deprecated in UE 5.8. It still
   compiles, but will break at the next engine upgrade.
 - **Do:** switch it to `GetMovementBaseObject` or `GetMovementBaseInterfaceData`, keeping the same behaviour. It is
   used for footstep surfaces (deck when the base is a ship).
 - **Done when:** the build has no C4996 warning there and `verify_ship_deck_play.py` and `verify_audio_play.py` pass.
+- **Pause state:** code and build-warning acceptance pass. Deck and audio Play checks still need rerunning; see the October 19 handoff report.
 
-### C4. Sails set in five positions, raised and lowered from the helm — OPEN
+### C4. Sails set in five positions, raised and lowered from the helm — PARTIAL (Codex paused 2026-10-19)
 - **Why:** owner, October 17 (`Docs/MILESTONES.md`, "Owner ship systems expansion"): sail positions 0/25/50/75/100%,
   raised and lowered progressively by holding keyboard Up/Down or the Xbox D-pad Up/Down at the helm; no wind
   propulsion at 0%. Today `EEWSailState` has Furled, Half and Full, stepped by forward/back input
@@ -89,6 +90,7 @@ Claude and the owner.
   add native tests for the setting's steps.
 - **Done when:** checks pass, VERIFICATION records it, and you report in INBOX.md. Claude owns `EWShip.cpp` too:
   say in INBOX.md when you start so edits do not collide.
+- **Pause state:** implementation, native coverage, build and the 11-step network sailing check pass. Sail-trim and the other affected ship regressions were not all rerun after the final change; see the October 19 handoff report.
 
 ### C5. Craftable plain white flags on flag mounts — DONE by Claude (2026-10-18; it was unclaimed and the owner asked Claude to do what the others are not doing). Nothing for Codex here.
 - **Why:** owner, October 17: sloop 2 flag positions, brigantine 3, Cavalier 4, all empty at first; a crafted flag is
@@ -100,13 +102,14 @@ Claude and the owner.
   come later.
 - **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.
 
-### C6. Bring `verify_hull_damage_play` up to date — OPEN
+### C6. Bring `verify_hull_damage_play` up to date — PARTIAL (Codex paused 2026-10-19)
 - **Why:** since the sloop lost her hull gunports (`4870f1f`, owner, October 17) her cannons stand behind a two-cannon
   railing; the check still looks for the old `StarboardCannon` mount and times out at its first step.
 - **Do:** fit `DA_TestRailingTwoCannon` at `StarboardRailing` first and use `StarboardCannon1`, as
   `verify_cannon_fight_play.py` does (including its hold-again loop). Keep its three checks (planking struck, health
   falls by one shot on both machines, a hole drawn on the client).
 - **Done when:** it passes on the coastal map with a listen server plus client; reported in INBOX.md.
+- **Pause state:** new native hull-damage coverage passes. The required listen-server/client Play check remains open.
 
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
@@ -117,12 +120,12 @@ Claude and the owner.
 | T31 | Why the sinking check sometimes cannot open a crate | OPEN |
 | T32 | Directional swimming animations | OPEN |
 | T23 | Native tests for the sound library | OPEN |
-| T20 | Native tests for leaks and bailing | OPEN |
+| T20 | Native tests for leaks and bailing | PARTIAL — native test passes; fresh Play rerun open |
 | T14 | Native tests for swing kinds and gather gains | OPEN |
 | T24 | Move the hull damage check to the ships test map | OPEN |
 | T25 | A packaged game's frame rate on the bigger world | OPEN |
 | T26 | What fills video memory with two players' views | OPEN |
 | T22 | A modelled wreck crate, and a native fill-sinking test | OPEN |
-| T21 | A modelled bailing bucket | OPEN |
+| T21 | A modelled bailing bucket | PARTIAL — asset integrated; visual acceptance open |
 
 Suggested order: C3 (quick), C1, T28, T29, T31, then the rest.

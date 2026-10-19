@@ -232,6 +232,8 @@ public:
     void SetLadder(AEWShip* Ship, int32 BoardingIndex, float Height);
     /** Local: the Up and Down arrows (or a pad's d-pad) climbing: +1 up, -1 down, 0 still. */
     void SetLadderArrowInput(float Direction) { LadderArrowInput = Direction; }
+    /** Local: Up/Down or the pad's d-pad held at a helm progressively raises or lowers sail. */
+    void SetSailStepInput(float Direction) { SailStepInput = Direction; }
     /** Left/Right Arrow or LB/RB held (-1 left, +1 right, 0 none): swings the sails while at a helm, nothing otherwise. */
     void SetSailArrowInput(float Direction) { SailArrowInput = Direction; }
     UFUNCTION(Server, Reliable)
@@ -272,6 +274,10 @@ private:
     float PendingHelmForward = 0.f;
     float SentHelmRudder = 0.f;
     int8 LastHelmForwardSign = 0;
+    float SailStepInput = 0.f;
+    int8 ActiveSailStepSign = 0;
+    double NextSailStepTime = 0.0;
+    static constexpr double SailStepInterval = .6;
     bool bHelmTrimHeld = false;
     int8 SentSailTrim = 0;
     /** At the helm the camera stands back over the ship to show its sails and the water ahead; these restore it. */

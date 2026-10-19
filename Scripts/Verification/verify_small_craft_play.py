@@ -86,7 +86,8 @@ def steps_for(ship_id):
     def full_sail():
         state['aim'] = None
         state['frame0'] = state['frame']
-        state['input'] = lambda f: pawn.do_move(0, 1) if (f < 5 or 10 <= f < 15) else None
+        taps = (0, 10) if paddled else (0, 10, 20, 30)
+        state['input'] = lambda f: pawn.do_move(0, 1) if any(start <= f < start + 5 for start in taps) else pawn.do_move(0, 0)
 
     def begin_run():
         state['memo'][ship_id] = {'start': ship.get_actor_location(), 't': time.monotonic()}
@@ -124,7 +125,7 @@ def steps_for(ship_id):
         (f'{ship_id}: client raises the anchor', go('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
         (f'{ship_id}: client takes the built-in helm', go('Helm'),
          lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
-        (f'{ship_id}: forward input twice sets {effort}', full_sail,
+        (f'{ship_id}: forward input sets {effort}', full_sail,
          lambda: ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL, 6),
         (f'{ship_id}: the craft moves for 4 s, the client copy keeps up, and the helmsman ' + ('paddles with a paddle in hand' if paddled else 'holds the tiller'), begin_run, ran, 8),
         (f'{ship_id}: client leaves the helm', leave, lambda: ship.get_helmsman() is None and peer.get_helmsman() is None, 6),

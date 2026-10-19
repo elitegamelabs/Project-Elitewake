@@ -46,5 +46,11 @@ Thumbs.db
 Plugins/*/Binaries/
 Plugins/*/Intermediate/
 
+# Local source bundles and Marketplace content. Keep their extracted/imported
+# project assets separate from redistributable Elitewake source.
+Art/**/*.zip
+/Content/Blacksmith_Setup/
+/Content/Burlap_Sacks/
+
 # Python caches from running setup scripts
 __pycache__/
