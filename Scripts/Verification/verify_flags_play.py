@@ -99,7 +99,7 @@ def counts():
     found = {n: flag_mounts(d) for n, d in defs.items()}
     measured['flag_mounts'] = found
     assert sorted(found['Sloop']) == sorted([MAST, ENSIGN]), found['Sloop']
-    assert len(found['Brigantine']) == 3 and len(found['Schooner']) == 3, found
+    assert len(found['Brigantine']) == 3 and sorted(found['Schooner']) == sorted([MAST, ENSIGN]), found
     for s in (ship, peer):
         assert all(s.get_flag_wear(m) == -1 for m in found['Sloop']), 'a flag flies already'
     assert not any(f.mount_id in (MAST, ENSIGN) for f in peer.get_installed_fittings())

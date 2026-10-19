@@ -5,7 +5,7 @@ with run_play_check.py.
 Two survivors, two ships, two cannons, everything through play (only the cannons, shot and some cargo are granted, and
 the schooner is brought alongside, server, Play only):
   1. The client fits a cannon at the sloop's starboard hardpoint and mans it; the host fits one at the schooner's
-     port hardpoint and mans it; the schooner lies 40 m off the sloop's starboard side.
+     port hardpoint and mans it; the schooner lies 20 m off the sloop's starboard side.
   2. They exchange fire: the client's shot holes the schooner and the host's holes the sloop; both machines agree on
      both hulls' health and holes.
   3. The host keeps firing until the sloop's hull is destroyed: she sinks, her gunner is let go, and her hold floats
@@ -74,12 +74,15 @@ def stand_at(ship, mount, people):
     local = ship.get_actor_transform().inverse_transform_location(at)
     # On the floor the gun stands on (a schooner's guns are on her lower deck), CannonMountHeight below the mount,
     # inboard of it, wherever there is room (masts, stairs and hatches stand about).
-    for dx, fy, dz in ((60, .5, 0), (60, .3, 0), (-60, .5, 0), (120, .4, 0), (-120, .4, 0), (0, .6, 0), (60, .5, 10), (-60, .3, 10)):
+    # (The fight parks the schooner over the island's shallow beach, so a spot a little higher keeps the capsule off the
+    # terrain; the survivor settles onto the floor.)
+    for dx, fy, dz in ((60, .5, 0), (60, .3, 0), (-60, .5, 0), (120, .4, 0), (-120, .4, 0), (0, .6, 0), (60, .5, 10), (-60, .3, 10),
+                       (60, .5, 40), (-60, .5, 40), (120, .4, 40)):
         spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + dx, local.y * fy, local.z - 40 + 98 + dz))
         if people[0].teleport(spot, ship.get_actor_rotation()):
             break
     else:
-        raise AssertionError(f'no room on the {ship.get_name()} deck by {mount}')
+        raise AssertionError(f'no room on the {ship.get_name()} deck by {mount}: mount at {local}, last spot {spot}, ship at {ship.get_actor_location()}')
     for p in people:
         assert p.teleport(spot, ship.get_actor_rotation()) or p is people[0], f'no room on the {ship.get_name()} deck'
         p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
@@ -92,9 +95,11 @@ def grant_and_place():
     assert owner.get_inventory_component().add_item(unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestRailingTwoCannon'), 1) == 1
     for name, n in (('DA_TestStone', 20), ('DA_TestWood', 30), ('DA_TestFiber', 15)):
         sloop.get_cargo().add_item(unreal.load_asset(f'/Game/Elitewake/Items/Testing/{name}'), n)
-    # The schooner parallel to the sloop, 40 m off her starboard side: her port side faces the sloop.
+    # The schooner parallel to the sloop, 20 m off her starboard side: her port side faces the sloop. The sloop's
+    # channel is about 20 m wide either way before the sea floor rises (a beach to starboard, an island to port),
+    # too shallow for the schooner's lower gun deck.
     right, at = sloop.get_actor_right_vector(), sloop.get_actor_location()
-    schooner.set_actor_location_and_rotation(unreal.Vector(at.x + right.x * 4000, at.y + right.y * 4000, schooner.get_actor_location().z),
+    schooner.set_actor_location_and_rotation(unreal.Vector(at.x + right.x * 2000, at.y + right.y * 2000, schooner.get_actor_location().z),
                                              sloop.get_actor_rotation(), False, True)
     state['memo']['t'] = time.monotonic()
 
@@ -225,7 +230,7 @@ def sunk():
 
 
 STEPS = [
-    ('Cannons, shot and cargo granted in Play only; the schooner lies 40 m off the sloop\'s starboard side', grant_and_place, lambda: True, 2),
+    ('Cannons, shot and cargo granted in Play only; the schooner lies 20 m off the sloop\'s starboard side', grant_and_place, lambda: True, 2),
     ('The client fits a two-cannon railing at the starboard railing hardpoint of the sloop', fit_railing, railing_fitted, 8),
     ('The client fits a cannon at the sloop\'s starboard hardpoint', fit(sloop, sloop_peer, SLOOP_GUN, client, owner, (owner, pawn)),
      fitted(sloop, sloop_peer, SLOOP_GUN), 6),

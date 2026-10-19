@@ -160,7 +160,8 @@ def sail_assembly_looks(assemblies, deck_z, timber, sails, prefix):
         name = f'{FOLDER}/SM_{prefix}{mount_id}'
         sail = write_static_mesh(square_sail(False, a['head'], a['foot'], a['drop'], a['belly']), name + '_v1', [timber, cloth], UV_TILE, collision=False)
         furled = write_static_mesh(square_sail(True, a['head'], a['foot'], a['drop']), name + 'Furled_v1', [timber, cloth], UV_TILE, collision=False)
-        mast = write_static_mesh(sail_assembly(a['height'], a['yard'], a['head'] / 2 + 40), name + 'Mast_v1', [timber], UV_TILE, collision=False)
+        mast = write_static_mesh(sail_assembly(a['height'], a['yard'], a['head'] / 2 + 40, a.get('radius', 14.0), a.get('top_radius', 9.0)),
+                                 name + 'Mast_v1', [timber], UV_TILE, collision=False)
         # Turned a quarter so its yard runs fore and aft (zero trim is along the ship), clear of the mast beside it.
         out[mount_id] = (sail, furled, unreal.Transform(location=unreal.Vector(0, 24, a['yard'] - 50), rotation=unreal.Rotator(0, 0, 90)), mast)
     return out

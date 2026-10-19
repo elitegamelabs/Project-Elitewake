@@ -80,17 +80,18 @@ class Room:
             b.colours[k] = (r, g, tone)
         b.slot = TIMBER
 
-    def bed(self, x, y, yaw=0.0):
-        """A wooden cot: frame on legs, linen mattress and pillow, a headboard; 200 by 110 cm."""
-        for dx in (-95, 95):
-            for dy in (-50, 50):
+    def bed(self, x, y, yaw=0.0, length=200.0, width=110.0):
+        """A wooden cot: frame on legs, linen mattress and pillow, a blanket and a headboard; 200 by 110 cm unless sized."""
+        h, w = length / 2, width / 2
+        for dx in (-(h - 5), h - 5):
+            for dy in (-(w - 5), w - 5):
                 self.box(x, y, yaw, dx, dy, 20, (8, 8, 40))
-        self.box(x, y, yaw, 0, 0, 38, (200, 110, 10))
-        self.box(x, y, yaw, 0, 0, 50, (190, 100, 14), slot=FABRIC, tone=LINEN)
-        self.box(x, y, yaw, -78, 0, 62, (30, 70, 10), slot=FABRIC, tone=LINEN)
-        self.box(x, y, yaw, 22, 0, 58, (140, 104, 4), slot=FABRIC, tone=RED_RUG)    # the blanket
-        self.box(x, y, yaw, -102, 0, 60, (6, 112, 80))
-        self.box(x, y, yaw, 102, 0, 45, (6, 112, 50))
+        self.box(x, y, yaw, 0, 0, 38, (length, width, 10))
+        self.box(x, y, yaw, 0, 0, 50, (length - 10, width - 10, 14), slot=FABRIC, tone=LINEN)
+        self.box(x, y, yaw, -(h - 22), 0, 62, (30, width - 40, 10), slot=FABRIC, tone=LINEN)
+        self.box(x, y, yaw, h * .11, 0, 58, (length * .7, width - 6, 4), slot=FABRIC, tone=RED_RUG)    # the blanket
+        self.box(x, y, yaw, -(h + 2), 0, 60, (6, width + 2, 80))
+        self.box(x, y, yaw, h + 2, 0, 45, (6, width + 2, 50))
 
     def table(self, x, y, yaw=0.0, length=120.0, width=70.0):
         for dx in (-length / 2 + 8, length / 2 - 8):

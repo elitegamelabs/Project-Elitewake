@@ -427,6 +427,29 @@ class Hull:
             b.sweep(path, 3.0, 5.0, side=(0, side, 0))
         b.alpha = 1.0
 
+    def stair_rails(self, b, edge, rise, facing, steps=11, run=25.0, height=88.0):
+        """Fixed safety railings along the inner edge of both staircases up to a raised deck (owner, October 18: fixed,
+        non-editable rails along the stairs and round the raised aft deck, apart from the modular outer railings):
+        posts a stride apart and a sloped top rail from the stair's foot to its head, brass-capped, with the same
+        geometry `raised_deck` builds its stairs on."""
+        top = self.deck_z + rise
+        stair_y = self.inner_y(edge, self.deck_z) - 55
+        foot_x, head_x = edge + run * steps * facing, edge
+        for side in (1, -1):
+            y = side * (stair_y - 35 - 4)
+            posts = max(3, steps // 2)
+            path = []
+            for k in range(posts + 1):
+                f = k / posts
+                x = foot_x + (head_x - foot_x) * f
+                z = self.deck_z + (top - self.deck_z) * f
+                b.tube([(x, y, z), (x, y, z + height * .5), (x, y, z + height)], lambda q: (3.2, 4.2, 3.0)[q], sides=8)
+                b.alpha = .5
+                b.tube([(x, y, z + height - 1), (x, y, z + height + 3)], 3.6, sides=8)
+                b.alpha = 1.0
+                path.append((x, y, z + height + 4))
+            b.sweep(path, 8.0, 6.0, side=(0, 1, 0))
+
     def sail_socket(self, b, x, y, deck_z, radius=26.0):
         """An empty sail hardpoint (owner, October 18: base hulls carry no permanent masts; each sail location keeps a
         clearly identified socket for a removable sail assembly): an iron base plate bolted to the deck, a collar with a

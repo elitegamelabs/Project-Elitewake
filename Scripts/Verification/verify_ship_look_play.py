@@ -32,7 +32,7 @@ state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'at': 0.0,
 
 
 def hold_view():
-    eye_local, target_local, hide = state['view']
+    eye_local, target_local, hide, inside = state['view']
     t = ship.get_actor_transform()
     move = pawn.get_component_by_class(unreal.CharacterMovementComponent)
     move.set_movement_mode(unreal.MovementMode.MOVE_FLYING)
@@ -40,13 +40,17 @@ def hold_view():
     assert pawn.teleport(at, unreal.Rotator()) or (pawn.get_actor_location() - at).length() < 30, f'no room for the camera at {eye_local}'
     move.stop_movement_immediately()
     pawn.set_actor_hidden_in_game(hide)
+    # Inside, the camera sits at the survivor's head (no third-person boom behind them, which would be outside the walls).
+    boom = pawn.get_component_by_class(unreal.SpringArmComponent)
+    if boom:
+        boom.set_editor_property('target_arm_length', 0.0 if inside else 400.0)
     eye = pawn.get_actor_location() + unreal.Vector(0, 0, pawn.get_editor_property('base_eye_height'))
     pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, t.transform_location(unreal.Vector(*target_local))))
 
 
-def view(label, eye, target, hide=False):
+def view(label, eye, target, hide=False, inside=False):
     def begin():
-        state.update(view=(eye, target, hide), at=time.monotonic(), shot=None)
+        state.update(view=(eye, target, hide, inside), at=time.monotonic(), shot=None)
         hold_view()
 
     def done():
@@ -85,14 +89,25 @@ def lanterns():
 
 
 L, B = E.x, E.y
+RAISED = DECK + 210.0       # the schooner's raised aft deck (her captain's quarters under it)
+OUTSIDE = [
+    ('three_quarter_bow', (L * 1.5, -B * 4.5, DECK + 900), (L * .1, 0, DECK + 300), True),
+    ('side_port', (0, -B * 6.5, DECK + 250), (0, 0, DECK + 350), True),
+    ('stern_ladder', (-L * 2.3, -B * .6, DECK + 120), (-L, 0, DECK - 20), True),
+    ('deck_from_above', (-L * .2, -B * .4, DECK + 1500), (L * .05, 0, DECK), True),
+]
+INSIDE = {
+    'Sloop': [('hold', (-L * .09, -B * .25, FLOOR + 95), (L * .6, 0, FLOOR + 40), True)],
+    # The captain's quarters under the raised aft deck, the gun deck, and the wheel on the quarters' roof from its stairs.
+    'Schooner': [('quarters', (-835.0, 0.0, DECK + 95), (-960.0, 0.0, DECK + 45), True),
+                 ('gun_deck', (-80.0, 0.0, FLOOR + 95), (700.0, 60.0, FLOOR + 70), True),
+                 ('wheel_roof', (-760.0, -110.0, RAISED + 95), (-940.0, 0.0, RAISED + 70), True),
+                 ('stairs_rails', (-460.0, -260.0, DECK + 160), (-700.0, -111.0, DECK + 110), True)],
+}
+INSIDE_NAMES = {'hold', 'quarters', 'gun_deck'}   # shot from the survivor's head, inside the hull
 STEPS = ([('Her helm and sail assemblies are fitted, masts standing', lambda: None, rig, 5)] if RIGGED else []) + [('Her lanterns are lit inside', lambda: None, lanterns, 5)] + [
-    (f'Screenshot: {label}', begin, done, 12) for label, begin, done in (
-        view('three_quarter_bow', (L * 1.5, -B * 4.5, DECK + 900), (L * .1, 0, DECK + 300), hide=True),
-        view('side_port', (0, -B * 6.5, DECK + 250), (0, 0, DECK + 350), hide=True),
-        view('stern_ladder', (-L * 2.3, -B * .6, DECK + 120), (-L, 0, DECK - 20), hide=True),
-        view('deck_from_above', (-L * .2, -B * .4, DECK + 1500), (L * .05, 0, DECK), hide=True),
-        view('hold', (-L * .09, -B * .25, FLOOR + 95), (L * .6, 0, FLOOR + 40), hide=True),
-    )]
+    (f'Screenshot: {label}', begin, done, 12) for label, begin, done in
+    [view(name, eye, target, hide=hide, inside=name in INSIDE_NAMES) for name, eye, target, hide in OUTSIDE + INSIDE.get(SHIP_ID, [])]]
 
 
 def finish(error=None):
