@@ -149,7 +149,8 @@ def manned(ship, mount, who):
 
 def lay_guns():
     yaw = sloop.get_actor_rotation().yaw
-    client.set_control_rotation(unreal.Rotator(roll=0, pitch=0, yaw=yaw + 90))
+    # The sloop's gun sits low too (her deck is 2.25 m up): a level shot can fall short at 34 m, so her gunner lays it up a little.
+    client.set_control_rotation(unreal.Rotator(roll=0, pitch=2, yaw=yaw + 90))
     # The schooner's guns sit low, on her gun deck: a level shot falls about 2 m in 40 m and goes into the sea short
     # of the sloop, so her gunner lays it a few degrees up, as a gunner would.
     host_pc.set_control_rotation(unreal.Rotator(roll=0, pitch=3, yaw=yaw - 90))
@@ -178,7 +179,12 @@ def both_holed():
     if time.monotonic() - m['t'] < 2.0:
         return False
     if not (sloop.get_hole_count() >= 1 and schooner.get_hole_count() >= 1):
-        assert time.monotonic() - m['t'] < 5.0, f'holes: sloop {sloop.get_hole_count()}, schooner {schooner.get_hole_count()}'
+        if time.monotonic() - m['t'] >= 5.0:
+            shot = unreal.EWCannonBall.get_last_shot(server_world)
+            struck = shot.get_struck() if shot else None
+            raise AssertionError(f'holes: sloop {sloop.get_hole_count()}, schooner {schooner.get_hole_count()}; last shot landed {shot.has_landed() if shot else None} '
+                                 f'on {struck.get_actor_label() if struck else "the sea"} at {shot.get_landed_at() if shot else None}, loaded sloop {sloop.is_cannon_loaded(SLOOP_GUN)} '
+                                 f'schooner {schooner.is_cannon_loaded(SCHOONER_GUN)}')
         return False
     for ship, peer in ((sloop, sloop_peer), (schooner, schooner_peer)):
         assert peer.get_hull_health() == ship.get_hull_health() and peer.get_hole_count() == ship.get_hole_count(), ship.get_name()

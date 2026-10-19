@@ -3,8 +3,7 @@ Ship-Design-Sheet-v1.webp). Needs Play in /Game/Elitewake/Maps/Test/Lvl_ShipsTes
 (EW_PLAY_PLAYERS=1). Set EW_LOOK_SHIP to the ship's id (default Sloop). Run unattended with run_play_check.py.
 
 The survivor hovers (flying: a camera stand, never in play) at set places round the ship and inside her, looking at
-her: a raised three-quarter view from the bow, her side, her stern and ladder, her deck from above, her cabin under the
-stern deck and her hold. Also checks her lanterns' lights are lit inside. Screenshots in Saved/Screenshots/ShipLook/<id>.
+her: a raised three-quarter view from the bow, her side, her stern and ladder, her deck from above, her hold. Also checks her lanterns' lights are lit inside. Screenshots in Saved/Screenshots/ShipLook/<id>.
 Writes Saved/ShipLookPlayResult.json.
 """
 import json
@@ -16,7 +15,8 @@ import unreal
 lib = unreal.EWEditorVerificationLibrary
 SHIP_ID = os.environ.get('EW_LOOK_SHIP', 'Sloop')
 RESULT = Path(unreal.Paths.project_saved_dir(), 'ShipLookPlayResult.json')
-SHOTS = Path(unreal.Paths.project_saved_dir(), 'Screenshots', 'ShipLook', SHIP_ID)
+RIGGED = os.environ.get('EW_LOOK_RIGGED') == '1'   # with her helm and sail assemblies fitted (a configured sailing vessel)
+SHOTS = Path(unreal.Paths.project_saved_dir(), 'Screenshots', 'ShipLook', SHIP_ID + ('_rigged' if RIGGED else ''))
 SHOTS.mkdir(parents=True, exist_ok=True)
 world = next(w for w in lib.get_play_worlds())
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
@@ -61,6 +61,20 @@ def view(label, eye, target, hide=False):
     return label, begin, done
 
 
+def rig():
+    folder = '/Game/Elitewake/Items/Testing'
+    inv = pawn.get_inventory_component()
+    for name in ('DA_TestShipHelm', 'DA_TestSailMedium', 'DA_TestSailSmall', 'DA_TestSailLarge'):
+        item = unreal.load_asset(f'{folder}/{name}')
+        if item:
+            inv.add_item(item, 1)
+    measured['fitted'] = lib.fit_out_ship_for_review(ship, pawn, 2)
+    assert measured['fitted'] >= 3, measured['fitted']
+    masts = [c for c in ship.get_components_by_class(unreal.StaticMeshComponent) if c.get_name().startswith('Mast_')]
+    measured['masts_standing'] = len(masts)
+    return True
+
+
 def lanterns():
     lights = [c for c in ship.get_components_by_class(unreal.PointLightComponent) if c.get_name().startswith('Lantern')]
     want = len(d.get_editor_property('lantern_lights'))
@@ -71,14 +85,13 @@ def lanterns():
 
 
 L, B = E.x, E.y
-STEPS = [('Her lanterns are lit inside', lambda: None, lanterns, 5)] + [
+STEPS = ([('Her helm and sail assemblies are fitted, masts standing', lambda: None, rig, 5)] if RIGGED else []) + [('Her lanterns are lit inside', lambda: None, lanterns, 5)] + [
     (f'Screenshot: {label}', begin, done, 12) for label, begin, done in (
         view('three_quarter_bow', (L * 1.5, -B * 4.5, DECK + 900), (L * .1, 0, DECK + 300), hide=True),
         view('side_port', (0, -B * 6.5, DECK + 250), (0, 0, DECK + 350), hide=True),
         view('stern_ladder', (-L * 2.3, -B * .6, DECK + 120), (-L, 0, DECK - 20), hide=True),
         view('deck_from_above', (-L * .2, -B * .4, DECK + 1500), (L * .05, 0, DECK), hide=True),
-        view('cabin', (-L * .681, -B * .216, DECK + 95), (-L * .823, B * .2, DECK + 40), hide=True),
-        view('hold', (-L * .174, B * .43, FLOOR + 95), (L * .6, 0, FLOOR + 40), hide=True),
+        view('hold', (-L * .09, -B * .25, FLOOR + 95), (L * .6, 0, FLOOR + 40), hide=True),
     )]
 
 

@@ -102,8 +102,8 @@ def gaff_sail(furled, boom=575.0, throat=516.0, peak=(-470.0, 778.0), belly=42.0
 
 
 def mainsail(furled):
-    """The sloop's mainsail, shaped to her rig (build_sloop_hull.MAIN_GAFF)."""
-    return gaff_sail(furled, **getattr(hull, 'MAIN_GAFF', {}))
+    """A gaff mainsail (the schooner's rig builds its own; the sloop now uses square-yard assemblies)."""
+    return gaff_sail(furled)
 
 
 def square_sail(furled, head=900.0, foot=1000.0, drop=760.0, belly=70.0):
@@ -120,6 +120,50 @@ def square_sail(furled, head=900.0, foot=1000.0, drop=760.0, belly=70.0):
               (SQUARE_ART['foot_port'], SQUARE_ART['foot_starboard'], SQUARE_ART['head_port'], SQUARE_ART['head_starboard']),
               belly=belly, axis=0, art_size=SQUARE_ART_SIZE)
     return b
+
+
+def sail_assembly(height, yard_z, yard_half, radius=14.0, top_radius=9.0, deck_to_mount=50.0, socket_top=34.0):
+    """A removable sail assembly's mast (owner, October 18: the mast belongs to the assembly, the hull has only the
+    empty socket; the sheet's masts with brass bands, a cap and lifts to the yard's ends). In the mount's frame, origin
+    at the hardpoint, Z up: `height` and `yard_z` are above the deck, `yard_half` is half the yard's length. A plug
+    reaches down into the socket's collar."""
+    b = Builder()
+    base = socket_top - deck_to_mount - 12.0               # the plug's foot, inside the collar
+    top = height - deck_to_mount
+    b.tube([(0, 0, base), (0, 0, base + 14), (0, 0, top - 30), (0, 0, top)],
+           lambda k: (radius * .8, radius, top_radius * 1.05, top_radius)[k], sides=14)
+    b.alpha = .5
+    for f in (.12, .38, .66, .9):
+        z = base + (top - base) * f
+        r = radius + (top_radius - radius) * f
+        b.tube([(0, 0, z - 3), (0, 0, z + 3)], r + 2.0, sides=14)
+    b.alpha = 1.0
+    b.box((0, 0, top + 6), (2.4 * top_radius, 2.4 * top_radius, 12), iron=1.0)         # the iron cap
+    first = len(b.colours)
+    # Lifts from the masthead to the yard's ends. The yard runs fore and aft at zero trim, like every sail on the
+    # shared trim model (angle 0 is along the ship; the sail swings out from it).
+    for sign in (-1, 1):
+        b.tube([(0, 0, top - 12), (sign * yard_half * .5, 0, (top + yard_z) / 2 + 20), (sign * (yard_half - 6), 0, yard_z + 6)], 1.3, sides=5)
+    for k in range(first, len(b.colours)):
+        b.colours[k] = (1.0, 0.0, 0.5)
+    return b
+
+
+def sail_assembly_looks(assemblies, deck_z, timber, sails, prefix):
+    """Write each hardpoint's removable sail assembly (owner, October 18): the square-yard sail with its yard, furled
+    or set, and the assembly's own mast. `assemblies` is a hull's ASSEMBLIES (mast and yard heights above the deck, the
+    sail's head and foot widths and drop); the mount stands 50 cm above the deck. Returns {mount: (sail mesh, furled
+    mesh, the sail's look transform relative to the mount, mast mesh)}."""
+    out = {}
+    for mount_id, a in assemblies.items():
+        cloth = sails['Large']                       # the square sail's art (the cloth's picture is a square sail)
+        name = f'{FOLDER}/SM_{prefix}{mount_id}'
+        sail = write_static_mesh(square_sail(False, a['head'], a['foot'], a['drop'], a['belly']), name + '_v1', [timber, cloth], UV_TILE, collision=False)
+        furled = write_static_mesh(square_sail(True, a['head'], a['foot'], a['drop']), name + 'Furled_v1', [timber, cloth], UV_TILE, collision=False)
+        mast = write_static_mesh(sail_assembly(a['height'], a['yard'], a['head'] / 2 + 40), name + 'Mast_v1', [timber], UV_TILE, collision=False)
+        # Turned a quarter so its yard runs fore and aft (zero trim is along the ship), clear of the mast beside it.
+        out[mount_id] = (sail, furled, unreal.Transform(location=unreal.Vector(0, 24, a['yard'] - 50), rotation=unreal.Rotator(0, 0, 90)), mast)
+    return out
 
 
 def jib_frame(stay_bow=None, stay_top=None, tack_t=0.04, head_t=0.68, clew=None):
@@ -272,19 +316,11 @@ def main():
     sails = cloth_materials()
     write = lambda b, name, cloth_mi: write_static_mesh(b, f'{FOLDER}/{name}', [timber, cloth_mi], UV_TILE, collision=False)
 
-    main_mesh = write(mainsail(False), 'SM_SailMain_v1', sails['Medium'])
-    main_furled = write(mainsail(True), 'SM_SailMainFurled_v1', sails['Medium'])
-    at = mount_location(definition, 'Mainsail')
-    set_fitting('DA_TestSailMedium', main_mesh,
-                unreal.Transform(location=unreal.Vector(hull.MAST_X - at.x, -at.y, hull.BOOM_Z - at.z)), main_furled)
-
-    jib_mesh = write(jib(False), 'SM_SailJib_v1', sails['Small'])
-    jib_furled = write(jib(True), 'SM_SailJibFurled_v1', sails['Small'])
-    frame, tack, _, _ = jib_frame()
-    at = mount_location(definition, 'Headsail')
-    set_fitting('DA_TestSailSmall', jib_mesh,
-                unreal.Transform(location=unreal.Vector(tack[0] - at.x, tack[1] - at.y, tack[2] - at.z),
-                                 rotation=frame.rotation.rotator()), jib_furled)
+    # The sloop's two removable sail assemblies; the same meshes are the Medium and Small items' own look.
+    looks = sail_assembly_looks(hull.ASSEMBLIES, hull.DECK_Z, timber, sails, 'Sloop')
+    for mount_id, item in (('Mainsail', 'DA_TestSailMedium'), ('Headsail', 'DA_TestSailSmall')):
+        sail, furled, look, _mast = looks[mount_id]
+        set_fitting(item, sail, look, furled)
 
     wheel_mesh = write_static_mesh(wheel_stand(), f'{FOLDER}/SM_ShipWheel_v1', [timber], UV_TILE, collision=False)
     spokes = write_static_mesh(wheel_spokes(), f'{FOLDER}/SM_ShipWheelSpokes_v1', [timber], UV_TILE, collision=False)

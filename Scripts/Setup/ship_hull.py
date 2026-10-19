@@ -427,6 +427,20 @@ class Hull:
             b.sweep(path, 3.0, 5.0, side=(0, side, 0))
         b.alpha = 1.0
 
+    def sail_socket(self, b, x, y, deck_z, radius=26.0):
+        """An empty sail hardpoint (owner, October 18: base hulls carry no permanent masts; each sail location keeps a
+        clearly identified socket for a removable sail assembly): an iron base plate bolted to the deck, a collar with a
+        brass band, a brass locking pin. The assembly's mast stands in it."""
+        b.box((x, y, deck_z + 3), (2 * radius + 26, 2 * radius + 26, 6), iron=1.0)
+        for dx in (-1, 1):
+            for dy in (-1, 1):
+                b.tube([(x + dx * (radius + 8), y + dy * (radius + 8), deck_z + 5), (x + dx * (radius + 8), y + dy * (radius + 8), deck_z + 9)], 3.2, sides=6, iron=1.0)
+        b.cylinder((x, y, deck_z + 6), radius, 28.0, sides=18, iron=1.0)
+        b.alpha = .5
+        b.cylinder((x, y, deck_z + 26), radius + 2.0, 6.0, sides=18)       # the brass band at the collar's lip
+        b.tube([(x + radius + 2, y - 8, deck_z + 18), (x + radius + 14, y - 8, deck_z + 18)], 3.0, sides=6)   # the locking pin
+        b.alpha = 1.0
+
     # ---- Fittings in the hull ----------------------------------------------------------------------------
 
     def studs(self, b, xs):

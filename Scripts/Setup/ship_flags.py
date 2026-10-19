@@ -2,6 +2,10 @@
 all empty at first; a crafted flag is plain clean white; flags install, remove and swap, flutter in the wind, and fray
 and tear only from combat damage; destroyed fabric disappears while its pole remains).
 
+October 18 (owner): base hulls have no permanent masts and sail assemblies carry no flags, so the flags of a hull
+with sail sockets fly from deck staffs (`deck_staff`: a jackstaff at the bow, an ensign staff at the stern, more on
+the larger hulls); the masthead flagstaffs below remain only for hulls not yet converted.
+
 DECIDED (delegated; recorded in Docs/OPEN_QUESTIONS_2026-10-15.md): a flag flies at the head of each mast, from a short
 flagstaff above the masthead cap, and one ensign at the stern on an ensign staff. That is the owner's count exactly for
 the sloop (one mast), the brigantine (two) and the Cavalier (three). The schooner was not named: she flies from her fore
@@ -34,6 +38,18 @@ def masthead_staff(b, x, top, deck_z, mast_radius=15.0):
     b.tube([(x, 4.0, head - 6), (x, mast_radius + 3.0, top - 40), (x, mast_radius + 3.0, deck_z + 400), belay], 0.8, sides=5)
     b.box(belay, (5.0, 5.0, 16.0))        # the pin the halyard is made fast to
     return belay, (x, 0.0, head - 14.0)
+
+
+def deck_staff(b, x, y, deck_z, rake=-30.0, height=None):
+    """A flagstaff standing on the deck at (x, y), raked `rake` cm along X at its head (aft for an ensign, forward for a
+    jack), its halyard made fast at its foot. Returns (belay, hoist)."""
+    top = (x + rake, y, deck_z + (height or ENSIGN_STAFF))
+    b.tube([(x, y, deck_z - 5), top], lambda k: (5.5, 3.2)[k], sides=8)
+    _truck(b, top)
+    belay = (x + (12.0 if rake <= 0 else -12.0), y, deck_z + HALYARD_Z)
+    b.tube([(top[0] + 4, y, top[2] - 6), belay], 0.8, sides=5)
+    b.box(belay, (5.0, 5.0, 16.0))
+    return belay, (top[0], y, top[2] - 14.0)
 
 
 def ensign_staff(b, x, y, deck_z):

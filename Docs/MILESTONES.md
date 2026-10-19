@@ -184,7 +184,7 @@ brigantine 3). One ship at a time, each verified in Play; the flags, railings, g
 
 | Ship | Status | Acceptance |
 |---|---|---|
-| Sloop: two masts (main and a mizzen on a raised stern deck), long bowsprit, baluster railings with brass caps, brass trim, dark tarred lower hull, furnished lantern-lit cabin under the stern deck and a furnished hold | ✅ first pass (this commit) | Play checks for her sailing, fittings, flags, ladder and cannons pass; screenshots `Saved/Screenshots/ShipLook/Sloop`. Interiors and colour to refine with the next ships |
+| Sloop: two masts (main and a mizzen on a raised stern deck), long bowsprit, baluster railings with brass caps, brass trim, dark tarred lower hull, furnished lantern-lit cabin under the stern deck and a furnished hold | ✅ reworked to the written rules (this commit): bare hull, two sockets, no captain's quarters, 3.6 m high, flags on deck staffs | Play checks for her sailing, fittings, flags, ladder and cannons pass; screenshots `Saved/Screenshots/ShipLook/Sloop` and `Sloop_rigged`. Interiors and colour to refine with the next ships |
 | Schooner (two masts) | ⏳ | as above |
 | Brigantine (three masts) | ⏳ | as above |
 | Raft | ⏳ | as above |

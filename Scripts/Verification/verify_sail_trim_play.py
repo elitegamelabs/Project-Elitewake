@@ -157,7 +157,8 @@ def settled_well():
     sail = next((c for c in peer.get_components_by_class(unreal.StaticMeshComponent) if 'Fitting_Mainsail' in c.get_name()), None)
     assert sail, 'no mainsail drawn on the client'
     drawn = sail.get_editor_property('relative_rotation').yaw
-    if angle_gap(drawn, -angle) > 3.0:
+    # The sloop's assemblies sit a quarter turn on their mounts (a fore-and-aft yard at zero trim), the look's 90 degrees.
+    if angle_gap(drawn, -angle + 90.0) > 3.0:
         return False
     c = compass()
     assert c.get_trim_advice() == 'Sails drawing well', c.get_trim_advice()

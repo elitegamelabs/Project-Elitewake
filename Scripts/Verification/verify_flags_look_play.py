@@ -22,7 +22,7 @@ ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unr
 flag = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestFlagWhite')
 checks, measured = [], {}
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'at': 0.0, 'shot': None, 'look': None, 'stand': None}
-MAST, ENSIGN = 'MastheadFlag', 'MizzenFlag'   # her main and mizzen mastheads (the October 18 design)
+MAST, ENSIGN = 'JackFlag', 'EnsignFlag'   # her bow jackstaff and stern ensign staff (the October 18 bare hull)
 
 
 def flag_at(mount):
@@ -85,12 +85,12 @@ def grant():
 
 STEPS = [
     ('Two white flags granted', grant, lambda: True, 3),
-    ('Hoisted at the masthead halyard', hoist(MAST, 190, 40), up(MAST), 8),
-    ('Hoisted at the mizzen halyard, on the stern deck', hoist(ENSIGN, -400, 30, 200), up(ENSIGN), 8),
-    ('Screenshot: the new masthead flag from the deck', *look(MAST, 560, -80, 'masthead_new'), 10),
-    ('Screenshot: the new ensign from amidships', *look(ENSIGN, 150, 110, 'ensign_new'), 10),
+    ('Hoisted at the jackstaff halyard', hoist(MAST, 440, 40), up(MAST), 8),
+    ('Hoisted at the ensign staff halyard', hoist(ENSIGN, -520, -60), up(ENSIGN), 8),
+    ('Screenshot: the new jack from the foredeck', *look(MAST, 330, 40, 'jack_new'), 10),
+    ('Screenshot: the new ensign from amidships', *look(ENSIGN, -250, 60, 'ensign_new'), 10),
     ('Round shots tear the ensign', tear, lambda: ship.get_flag_wear(ENSIGN) > .6, 5),
-    ('Screenshot: the torn ensign', *look(ENSIGN, 150, 110, 'ensign_torn'), 10),
+    ('Screenshot: the torn ensign', *look(ENSIGN, -250, 60, 'ensign_torn'), 10),
 ]
 
 

@@ -465,6 +465,9 @@ private:
     TMap<FName, TObjectPtr<UBoxComponent>> MountTargets;
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> FittingVisuals;
+    /** Each fitted sail assembly's mast (FEWShipMount::MastMesh), standing in the socket while a sail is fitted. */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> MastVisuals;
     /** Local query boxes and stand-in visuals for the built-in boarding ladders. */
     UPROPERTY(Transient)
     TArray<TObjectPtr<UBoxComponent>> BoardingTargets;

@@ -35,6 +35,11 @@ struct FEWShipMount
      *  so the same Small sail is a jib on one hull and sets on a short mast on another. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
     TSoftObjectPtr<UStaticMesh> FittedMesh;
+    /** Sails only (owner, October 18: the mast belongs to the removable sail assembly, the hull has only an empty
+     *  socket): the assembly's mast, drawn with the fitted sail at this hardpoint, standing in the socket (relative to
+     *  the mount). It turns with the sail's trim but never furls or lowers with it. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
+    TSoftObjectPtr<UStaticMesh> MastMesh;
     /** Sails only: shown while furled, replacing the item's furled mesh. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Look")
     TSoftObjectPtr<UStaticMesh> FittedFurledMesh;

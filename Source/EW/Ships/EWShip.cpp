@@ -191,6 +191,8 @@ void AEWShip::ApplyDefinition()
     MountTargets.Reset();
     for (UPointLightComponent* Light : LanternVisuals) if (Light) Light->DestroyComponent();
     LanternVisuals.Reset();
+    for (auto& Pair : MastVisuals) if (Pair.Value) Pair.Value->DestroyComponent();
+    MastVisuals.Reset();
     // Her lanterns' warm light, below decks, on every machine that draws (no shadows: there are many, and small).
     if (Definition && GetNetMode() != NM_DedicatedServer)
         for (const FVector& At : Definition->LanternLights)
@@ -393,6 +395,12 @@ void AEWShip::RefreshFittingVisuals()
             if (It.Value()) It.Value()->DestroyComponent();
             It.RemoveCurrent();
         }
+    for (auto It = MastVisuals.CreateIterator(); It; ++It)
+        if (!GetFitting(It.Key()))
+        {
+            if (It.Value()) It.Value()->DestroyComponent();
+            It.RemoveCurrent();
+        }
     if (!Definition) return;
     for (const FEWInstalledFitting& Fitting : Fittings)
     {
@@ -439,6 +447,21 @@ void AEWShip::RefreshFittingVisuals()
         Visual->SetVisibility(bShown);
         Visual->SetRelativeTransform(Local * (Mount->Type == EEWShipMountType::Cannon ? GunMountTransform(*Mount) : Mount->Transform));
         if (Mount->Type == EEWShipMountType::Sail) SailLooks.Add(Fitting.MountId, Local);
+        if (Mount->Type == EEWShipMountType::Sail && !Mount->MastMesh.IsNull())
+        {
+            // The assembly's own mast, standing in the socket (the hull has only the empty collar).
+            TObjectPtr<UStaticMeshComponent>& Mast = MastVisuals.FindOrAdd(Fitting.MountId);
+            if (!Mast)
+            {
+                Mast = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+                    *FString::Printf(TEXT("Mast_%s"), *Fitting.MountId.ToString())), RF_Transient);
+                Mast->SetupAttachment(HullCollision);
+                Mast->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                Mast->RegisterComponent();
+            }
+            Mast->SetStaticMesh(Mount->MastMesh.LoadSynchronous());
+            Mast->SetRelativeTransform(Mount->Transform);
+        }
         if (Mount->Type == EEWShipMountType::Flag)
         {
             // Its wear frays and holes the cloth (M_Flag_v1); it streams to the wind each frame (ShowFlags).
@@ -531,6 +554,9 @@ void AEWShip::ShowSailTrim()
         const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Look.Key);
         if (Mount && Visual && *Visual)
             (*Visual)->SetRelativeTransform(FTransform(FRotator(0, -ShownSailAngle, 0)) * Look.Value * Mount->Transform);
+        // The mast turns about its own upright axis with the sail it carries.
+        if (const TObjectPtr<UStaticMeshComponent>* Mast = MastVisuals.Find(Look.Key); Mount && Mast && *Mast)
+            (*Mast)->SetRelativeTransform(FTransform(FRotator(0, -ShownSailAngle, 0)) * Mount->Transform);
     }
 }
 
