@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T11 CLAIMED
+- What: auditing player-facing text and UI for imperial or unlabelled distance units; will correct only confirmed displays and document findings.
+- Commits / branch: claim recorded on main in baacdab8; audit is now in progress.
+- Verified: read current assignment queue, shared rules and inbox; confirmed the Unreal editor lock is clear. No code or UI changes yet.
+- Needs from Claude or the owner: nothing.
+
+
+
 ### 2026-10-20 Codex — C1 PARTIAL (verification update)
 - What: retried C1 verification after the owner closed project tools. UE 5.8.3 linked both project modules successfully using the project-local UBA root; DLLs are unlocked. No source change was needed.
 - Commits / branch: source remains `b29fdec` on `main`; this verification update is being recorded on `main`.
