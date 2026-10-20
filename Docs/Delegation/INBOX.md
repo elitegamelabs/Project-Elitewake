@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 STUCK (command-line editor retry)
+- What: made one final targeted tortoise rebuild attempt through UnrealEditor-Cmd.exe using the repository's documented unattended, NullRHI, Python ExecCmds launch pattern. It exited in about two seconds with code 0, without creating an engine log or build result.
+- Commits / branch: no project source or asset changed; this blocker report is on main.
+- Verified: no Unreal process or editor lock remains. The existing mesh asset was not updated; no Play test or screenshots were produced.
+- Needs from Claude or the owner: run Saved/TortoiseShellRebuild.py from a working editor session or diagnose why both UE 5.8.3 editor executables exit before startup. T6 remains open.
+
+
 ### 2026-10-20 ChatGPT — T6 STUCK (Unreal launch)
 - What: retried the targeted tortoise-shell asset rebuild after confirming no Unreal process or shared editor lock. The existing targeted script reuses the tortoise material instance, avoiding the earlier shared material compile error. Both direct and Start-Process UE 5.8.3 invocations exited in under two seconds without creating a log or build result; no Unreal process remained.
 - Commits / branch: no project source or asset changes; retry logs are local/ignored. Reporting this blocker on main.
