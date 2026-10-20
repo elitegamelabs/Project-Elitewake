@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 PARTIAL
+- What: corrected the tortoise shell generator's scute layout to 5 vertebral, 4 costal per side and 11 marginal plates per side, with plate tone variation, concentric growth rings, dark seams and slight relief. T6 remains open because no Unreal mesh was rebuilt or visually/Play checked.
+- Commits / branch: source `f703632`; verification `ddba7e9`; T6 left OPEN in `9479dda`. Published directly to main.
+- Verified: `py_compile` passed; an offline check exercised each of the 35 plate indices. Unreal launch attempts exited without logs or results; `AnimalsResult.json` remains dated October 15. No animal Play check or screenshots were produced.
+- Needs from Claude or the owner: diagnose the command-line Unreal startup issue or run the asset setup, animal Play check, and side/top capture from a working editor session.
+
+
+
 ### 2026-10-20 ChatGPT — T6 CLAIMED
 - What: resuming the previously drafted tortoise-shell scute layout; first comparing the current setup script and published source, then checking whether the Unreal asset rebuild and required Play verification now complete.
 - Commits / branch: claim recorded on main in `677ed86`.
