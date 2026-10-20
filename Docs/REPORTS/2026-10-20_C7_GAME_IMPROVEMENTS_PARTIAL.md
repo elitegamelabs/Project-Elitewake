@@ -1,7 +1,7 @@
 # C7 — Owner's 12 game-improvement requests (partial)
 
 Date: October 20, 2026
-Status: partial implementation; code, report and focused test committed as `41a050b`.
+Status: partial implementation; code, report and tests committed as `41a050b` and `e3161d7`.
 Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task list.
 
 ## Implemented in source
