@@ -34,11 +34,11 @@ Entry format:
 ### 2026-10-20 Codex — C7 native verification update
 - What: added focused automation coverage for hotbar key routing; updated the dated partial report and verification record. The owner authorized commit/push in the current turn.
 - Verified: UE 5.8.3 build succeeded; `Elitewake.Input.HotbarKeyboardAndControllerBindings` passed 1/1; Python syntax and whitespace checks passed. Unreal Play and physical controller checks remain pending.
-- `Config/DefaultEditor.ini` is excluded and preserved. Commit hash will be added after creation.
+- Commit: `41a050b` (`feat: improve map, hotbar, and pause options`). `Config/DefaultEditor.ini` is excluded and preserved.
 
 ### 2026-10-20 Codex — C7 / T9 PARTIAL (local; no push)
 - What: Implemented the independent map, controller hotbar/Y quick-assign, compass contrast and persistent options slice. Documented unfinished Claude-owned ship/cave work and the missing island-claim/general-placeable integration in `Docs/REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md`.
-- Commits / branch: no commit or push. Working-tree changes remain local pending review, consistent with the owner's earlier instruction to check with Claude before pushing.
+- Commits / branch: this entry records the initial local-only checkpoint before the owner's later explicit authorization to commit and push; see the native verification update above (`41a050b`).
 - Verified: UE 5.8.3 EWEditor build succeeded; updated Python checks compile; `git diff --check` passes. Play checks did not run because Unreal could not be kept open/launched through this session; stale October 10 results were not counted. `Config/DefaultEditor.ini` was preserved.
 - Needs from Claude or the owner: coordinate cave crystals, protected ship-builder/helm edits, and an island ownership API before claim-based placement restrictions. In-editor Play verification remains required.
 

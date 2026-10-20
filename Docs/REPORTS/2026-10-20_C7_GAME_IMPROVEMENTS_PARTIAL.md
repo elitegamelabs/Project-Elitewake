@@ -1,7 +1,7 @@
 # C7 — Owner's 12 game-improvement requests (partial)
 
-Date: October 20, 2026  
-Status: partial implementation, with local commit/push authorized by the owner on October 20.  
+Date: October 20, 2026
+Status: partial implementation; code, report and focused test committed as `41a050b`.
 Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task list.
 
 ## Implemented in source
@@ -36,5 +36,5 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 ## Working-tree notes
 
 - `Config/DefaultEditor.ini` was already modified by the owner and was not edited, staged, or reverted.
-- Claude's protected files were not changed. The owner explicitly authorized publishing this C7 partial update in the current turn; the resulting commit hash will be recorded in the task and inbox after the commit is created.
+- Claude's protected files were not changed. The owner explicitly authorized publishing this C7 partial update on October 20. Commit: `41a050b`.
 - An initial sandboxed Unreal build attempt repeatedly failed to access the shared UBA cache under `C:\ProgramData\Epic`; it was stopped. The approved build then succeeded and the focused native test passed. Unreal and build processes are closed and the editor lock was removed.

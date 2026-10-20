@@ -38,7 +38,7 @@ Claude and the owner.
 
 ## New tasks (October 16)
 
-### C7. Owner's 12 game-improvement requests — PARTIAL (Codex, 2026-10-20; local, uncommitted)
+### C7. Owner's 12 game-improvement requests — PARTIAL (Codex, 2026-10-20; commit `41a050b`)
 - **Source:** owner-pasted task list received October 20, 2026. Full request is in the conversation attachment; implementation status will be recorded in the dated report and `Docs/VERIFICATION.md`.
 - **Independent code scope:** map label and map-only messages; Xbox hotbar mappings/prompts; inventory Y quick-assign; compass contrast; persistent pause-menu brightness and mouse/controller look sensitivity.
 - **Map:** also T9 below. Preserve the player marker, support free pan/zoom, and use current world region actors rather than hard-coded island positions.
