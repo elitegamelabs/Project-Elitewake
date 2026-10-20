@@ -32,7 +32,7 @@ Entry format:
 
 ### 2026-10-20 Codex — C1 PARTIAL
 - What: implemented the first source slice of persistent felled trees: one-shot server authority, directional rotation from the ground pivot, replicated fall state/movement, a solid attached blocker that lies with the trunk, and preservation of the current Wood/Thatch stock and hatchet transaction. Added a native automation case and a two-player Coastal Play check script. The 2-second fall setting is tuning, not a final decision.
-- Commits / branch: source and handoff checkpoint to be committed and pushed on `main` after local checks.
+- Commits / branch: `b29fdec` (`feat: make felled trees persistent harvest logs`) on `main`.
 - Verified: Python syntax, the full 26-test Python suite, and `git diff --check` pass. UE compilation was attempted twice, but UBT's accelerator repeatedly failed to create its shared session directory under `C:\ProgramData\Epic\UnrealBuildAccelerator`, including when `-NoUBA` was supplied; no UE build, native test, or Play check completed. The Play script is ready to check replication, collision, and harvesting until the existing depletion cleanup.
 - Needs from Claude or the owner: a working supported UBT configuration for this sandbox is needed before the native and two-player checks can run. Keep C1 PARTIAL; elephant knockdown integration remains future work.
 

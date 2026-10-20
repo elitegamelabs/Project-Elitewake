@@ -18,6 +18,7 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 
 ## October 20 Codex C1 — felled tree source partial
 
+- Source checkpoint: `b29fdec`.
 - Added a server-only one-shot `AEWHarvestTree::Fell(Direction)` and a replicated felled flag. The server interpolates the actor rotation from its ground pivot, enables movement replication, and leaves the existing Wood/Thatch stock on the actor. The attached collision capsule is reoriented and extended along the trunk; clients configure it from the replicated state, including late joiners. Hatchet harvesting still uses the existing guarded stock transaction.
 - Added felled-state assertions to `Elitewake.Gathering.HatchetTree` and created `Scripts/Verification/verify_felled_tree_play.py` for a listen-server/client check of replication, solid log collision, and the existing 3 Wood/1 Thatch harvesting until depletion.
 - Not verified yet: the Python suite and source checks pass, but UE compilation stopped after the installed accelerator repeatedly failed to create its session directory under `C:\ProgramData\Epic\UnrealBuildAccelerator`; a `-NoUBA` retry had the same failure. No native test or Play check ran. The 2-second `FallDuration` is a working tuning default only; final duration and integration with elephant attacks remain open. Do not claim the behavior is compiled or runtime-verified.
