@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 STUCK
+- What: The tortoise mesh generator and durable geometry test are present on main. Retried a logged editor startup for the targeted rebuild; no Unreal project log or asset result was produced, and no saved mesh could be confirmed. Source-only regression suite passes 27/27. Prior same-day launch evidence shows CrashReportClient itself faulted, which does not establish why the editor failed.
+- Commits / branch: verification and task handoff recorded on main.
+- Verified: `python -m unittest discover -s Scripts/Tests -v` — 27 passed. No Unreal process or editor lock remains.
+- Needs from Claude or the owner: investigate reliable Unreal project startup; then continue saving `SM_Tortoise_v1` and running the animal Play check with screenshots.
+
+
 ### 2026-10-20 ChatGPT — T6 CLAIMED
 - What: Resuming the tortoise shell task; the source mesh generator and durable geometry test are already on main. Next I will diagnose and retry the targeted Unreal rebuild/save and Play verification, respecting the shared editor lock.
 - Commits / branch: claim recorded on main.
