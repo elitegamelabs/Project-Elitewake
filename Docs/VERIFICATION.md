@@ -185,6 +185,10 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 
 Static review of player-facing widget text, the Journal widget/data setup, and item-description setup text found no feet, yards, miles, or knots distance labels and no unitless numeric distance display. The raft Journal instruction uses “2.5 metres a second.” Ship speed is not currently displayed as a numeric value; knots remain in design authority only and should not be removed or rewritten. Matches for “feet” in anatomy, equipment-slot identifiers, rigging terminology, and developer comments are not player-facing units. Unreal centimetres remain internal. No gameplay/UI text changed, so no Play check was affected or required.
 
+## Tortoise shell scute layout — partial, October 20, 2026
+
+`Scripts/Setup/build_animals.py` now describes five vertebral scutes, four costal scutes on each side, and eleven marginal scutes on each side, with deterministic plate tone variation, concentric color rings, dark seams, and slight raised centers. Verified with `python -m py_compile Scripts/Setup/build_animals.py` and an offline geometry-layout check that exercised all 35 plate indices. This does not verify the generated Unreal mesh. The setup-script launch exited before creating an Unreal log or updating `Saved/AnimalsResult.json`; no asset rebuild, animal Play check, or screenshot was obtained. Keep T6 open until those checks pass.
+
 ## Known failures
 
 **Sloop sailing (October 11), prototype deleted.** The client boarded the sloop and held the helm, and an open inventory blocked steering. Then the steering phase failed: the hull stayed put at speed 0 (`Saved/CoastalSloopPlayResult.json`).
