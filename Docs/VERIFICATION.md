@@ -181,6 +181,10 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 | Ship cargo hold | `d4bb392` | `Inventory.ContainerTransfer`, `Ships.BoardingAndAnchor` | `verify_ship_cargo_play` (5): the client opens the hold at the hatch, stores 40 Wood; the host takes 15 out (server and client agree); the client's screen closes when it leaves; a request from out of reach is refused. Nothing lost or duplicated | Hold screen visual review, controller navigation, ownership permissions |
 | Ship weight and overload | `4913fdc` | `Ships.WeightAndOverload` | `verify_ship_cargo_play`: the client's copy shows the same ship load as the server | Sinking, wrecks, weight HUD art |
 
+## Metric units audit — October 20, 2026
+
+Static review of player-facing widget text, the Journal widget/data setup, and item-description setup text found no feet, yards, miles, or knots distance labels and no unitless numeric distance display. The raft Journal instruction uses “2.5 metres a second.” Ship speed is not currently displayed as a numeric value; knots remain in design authority only and should not be removed or rewritten. Matches for “feet” in anatomy, equipment-slot identifiers, rigging terminology, and developer comments are not player-facing units. Unreal centimetres remain internal. No gameplay/UI text changed, so no Play check was affected or required.
+
 ## Known failures
 
 **Sloop sailing (October 11), prototype deleted.** The client boarded the sloop and held the helm, and an open inventory blocked steering. Then the steering phase failed: the hull stayed put at speed 0 (`Saved/CoastalSloopPlayResult.json`).
