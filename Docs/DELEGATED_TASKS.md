@@ -306,7 +306,12 @@ only so you know where earlier world, cave and ship work lives.
 - **Codex, October 20 (`41a050b`):** source now derives an overview extent from the placed island-region actors, adds free pan/zoom and a player marker, and samples the current region label. Build and focused hotbar native verification passed; Play verification did not run in this session, so T9 remains partial. See `Docs/REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md`.
 - **World source:** `Source/EW/World/*` is open to edit (owner, October 20); add the field there if region actors do not provide sufficient map data.
 
-### T10. "Village" becomes "Port" — CLAIMED (ChatGPT, 2026-10-20)
+### T10. "Village" becomes "Port" — DONE 7ba3cff (ChatGPT, 2026-10-20)
+- **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.
+- **Do:** replace Village/Villages (and "Free Port") with Port/Ports in current authoritative docs, player-facing text, journal, and onboarding while preserving historical mentions and serialized IDs/assets.
+- **Done when:** non-archive current text uses only deliberate historical mentions; player-facing implementation checks pass if affected text changed.
+- **Result / verified (October 20):** changed the two active terminology uses in `Docs/WILDLIFE_DISTRIBUTION_26_ISLANDS.md` to Port wording. A repository search found no remaining source, setup-script or runtime UI references to Village/Free Port. Remaining occurrences are deliberate historical/retired terminology, task labels, or the rename-policy source itself. No code, runtime journal or UI text changed, so no build or Play check was required.
+
 - **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.
 - **Do:** replace Village/Villages (and "Free Port") with Port/Ports in current authoritative docs, player-facing
   text (search `Source/` for NSLOCTEXT/FText strings and `Scripts/Setup/` for display names and descriptions),
