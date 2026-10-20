@@ -46,6 +46,7 @@ The owner set this ahead of the milestone order: a clean island to play the core
 | Island rock formations rebuilt to look natural | ✅ `e0443c4` (with the rock rework above) |
 | The five-region world (owner, October 15): Plains centre with the starter island and five more, Winter north, Swamp south, Desert east, Jungle west, 5+ islands each, 800–2,000 m sea gaps, regional terrain, dressing, animals, sea life and climate on all 26 islands | ✅ `90978cc` |
 | **C-WORLD40 (owner, October 18):** expand to exactly eight islands in each region while preserving the original 26 islands and Port sites | 🟡 Source layout and offline checks pass; Unreal map rebuild, save/discovery migration, multiplayer and performance checks remain open |
+| **C-WILDLIFE40 (owner, October 18):** add approved wildlife to the 14 new islands without changing existing placements | 🟡 Additive source for six existing land species; new species assets, fish preservation/distribution, and Unreal verification remain open |
 | Ports: one per region (owner), stone quay, pier, plaza, nine masonry buildings with shops marked, town wall and gate, landmark lighthouse, regional character | ✅ `618acbb` (vendors, names, safe zones open) |
 | Caves: one per island, inland, cliff-face and coastal entrances, walkable passage and chamber | ✅ `fb35edc` (contents wait for design values) |
 | Grass you can see as plants on the Plains and Jungle islands | ✅ `fb35edc` |

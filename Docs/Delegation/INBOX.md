@@ -30,11 +30,12 @@ Entry format:
 
 ## Reports
 
-### 2026-10-20 Codex — C-WILDLIFE40 CLAIMED (audit stage)
-- What: beginning the required registry, placement, levels, and per-island distribution audit against the now-tested 40-island source layout. First pass is read-only and will identify which existing species can be placed additively and which requested species lack production assets.
-- Commits / branch: claim commit `911bf15` on `main` before any wildlife code changes.
-- Verified: C-WORLD40 source baseline was committed and pushed (`26ff380`, handoff `6a0760d`); current editor processes remain active, so no Unreal run is planned.
-- Needs from Claude or the owner: no decision requested for the audit. No animal asset IDs, production spawn changes, or new behavior will be inferred from reference images alone.
+### 2026-10-20 Codex — C-WILDLIFE40 PARTIAL
+- What: audit found six production land-animal definitions. `place_animals.py` now preserves all existing actors and fills missing per-species counts only on the fourteen appended islands, using existing regional rules. A pure-Python distribution helper and three regression tests cover legacy exclusion, added population targets, and repeat-run deficits. The current 26-island output file records 87 existing land animals; the 14 additions target 45 more.
+- Commits / branch: wildlife claim `911bf15`; implementation and handoff commits on `main` follow this report update.
+- Verified: focused wildlife tests pass 3/3; full Python suite passes 26/26; Python compilation and `git diff --check` pass.
+- Not verified / remaining: Unreal map rebuild and Play verification are still pending. Most candidate land species lack production definitions. `build_fish.py` still destroys/recreates all EWFish during full rebuild; aquatic preservation/distribution must be addressed before claiming wildlife migration complete. Two Unreal Editor processes remain active.
+- Needs from Claude or the owner: no decision for the existing six-species extension. Resolve/add missing production species through their own asset workflow; complete safe marine migration, then rebuild and verify in UE 5.8.3.
 
 ### 2026-10-20 Codex — C-WORLD40 PARTIAL
 - What: expanded the deterministic source layout from 26 to 40 islands (eight per region) by appending fourteen stable island keys. Kept every original layout record unchanged and pinned each Port to its original island key. Audited setup/verification consumers and added distinct terrain plans for new non-Swamp islands while preserving all existing terrain-plan assignments; expanded seabed channel acceptance to inspect all 40 islands.

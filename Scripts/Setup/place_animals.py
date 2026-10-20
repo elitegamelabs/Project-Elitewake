@@ -22,6 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+from wildlife_distribution import HABITAT, expansion_islands, missing_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
@@ -31,16 +32,6 @@ LEVEL_FOLDER = 'Coast/Wildlife/Animals'
 SPAWN, DOCK = (150.0, 0.0), (4000.0, 900.0)
 # Per island of each region: {animal: how many} (tuning). Habitats: shore (the beach band), trees (near trees),
 # low (wet low ground of the swamp), inland.
-PER_ISLAND = {'Swamp': {'Alligator': 2, 'Cottonmouth': 2},
-              'Jungle': {'SquirrelMonkey': 3, 'Tortoise': 1},
-              'Desert': {'Tortoise': 2, 'Flamingo': 2, 'Pelican': 1},
-              'Plains': {'Pelican': 2, 'Flamingo': 1},
-              'Winter': {}}
-STARTER = {'Pelican': 2, 'Flamingo': 2, 'Tortoise': 1, 'SquirrelMonkey': 2}
-HABITAT = {'Alligator': 'low', 'Cottonmouth': 'low', 'SquirrelMonkey': 'trees', 'Tortoise': 'inland',
-           'Flamingo': 'shore', 'Pelican': 'shore'}
-
-
 def fits(habitat, island, x, y, z, trees):
     inland = -island.distance(x, y)
     if habitat == 'shore':
@@ -57,20 +48,33 @@ def main():
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
-    for actor in actors.get_all_level_actors():
-        if isinstance(actor, unreal.EWAnimal):
-            actors.destroy_actor(actor)
+    existing_animals = [actor for actor in actors.get_all_level_actors() if isinstance(actor, unreal.EWAnimal)]
+    added_keys = {island.key for island in W.ISLANDS if island.key not in W.LEGACY_ISLAND_KEYS}
+    existing_by_island_kind = {}
+    for actor in existing_animals:
+        label = f' {actor.get_actor_label()} '
+        island_key = next((key for key in added_keys if f' {key} ' in label), None)
+        if island_key:
+            definition = actor.get_editor_property('definition')
+            kind = definition.get_name().removeprefix('DA_Animal_') if definition else ''
+            existing_by_island_kind[(island_key, kind)] = existing_by_island_kind.get((island_key, kind), 0) + 1
+    targets = expansion_islands()
+    # Leave all existing actors in place. Fill only missing species counts on the fourteen appended islands.
     trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
              if isinstance(t, unreal.EWHarvestTree)]
     ground = Ground()
     placed, counts = [], {}
-    for island in W.ISLANDS:
-        plan = STARTER if island.key == 'Starter' else PER_ISLAND[island.region]
+    for island in targets:
+        existing_counts = {kind: count for (key, kind), count in existing_by_island_kind.items() if key == island.key}
+        plan = missing_counts(island, existing_counts)
         rng = random.Random(sum(map(ord, island.key)) * 6151)
         reach = island.reach()
         near_trees = [(tx, ty) for tx, ty in trees if abs(tx - island.cx) < reach and abs(ty - island.cy) < reach]
-        taken = []
+        taken = [(a.get_actor_location().x, a.get_actor_location().y) for a in existing_animals
+                 if f' {island.key} ' in f' {a.get_actor_label()} ']
         for name, count in plan.items():
+            if count == 0:
+                continue
             definition = unreal.load_asset(f'{FOLDER}/DA_Animal_{name}')
             assert definition, f'run build_animals.py first ({name})'
             size = definition.get_editor_property('size')
@@ -92,17 +96,19 @@ def main():
                 made += 1
                 counts[name] = counts.get(name, 0) + 1
                 display = str(definition.get_editor_property('display_name'))
-                animal.set_actor_label(f'{display} {island.key} {made}')
+                animal.set_actor_label(f'{display} {island.key} {existing_counts.get(name, 0) + made + 1}')
                 animal.set_folder_path(LEVEL_FOLDER)
                 animal.set_editor_property('definition', definition)
                 animal.set_editor_property('surface_z', T.SEA)
                 taken.append((x, y))
                 placed.append((name, island.key, island.region, round(x), round(y), round(z)))
+            assert made == count, f'{island.key} could add only {made}/{count} {name} with current habitat constraints'
     assert level.save_current_level()
-    Path(unreal.Paths.project_saved_dir(), 'AnimalsPlacedResult.json').write_text(json.dumps({
-        'success': True, 'animals': len(placed), 'by_kind': counts,
-        'by_region': {r: sum(1 for p in placed if p[2] == r) for r in W.REGION_CENTRES}, 'placed': placed}, indent=2))
-    unreal.log(f'Animals placed: {len(placed)}')
+    Path(unreal.Paths.project_saved_dir(), 'AnimalsExpansionResult.json').write_text(json.dumps({
+        'success': True, 'islands_targeted': [i.key for i in targets],
+        'existing_animals_untouched': len(existing_animals), 'new_animals': len(placed),
+        'by_kind': counts, 'placed': placed}, indent=2))
+    unreal.log(f'Animals added to new islands: {len(placed)}')
 
 
 if __name__ == '__main__':

@@ -7,8 +7,14 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 ## October 20 Codex C-WORLD40 — source/layout partial
 
 - `python -m unittest Scripts.Tests.test_world_layout_expansion -v` passes **8/8**. It checks exactly 40 unique island keys and eight per region, preservation of all 26 legacy layout records against the committed pre-expansion fingerprint, stable appended keys and deterministic geometry, unchanged Port island keys, spacing/orientation, distinct terrain-plan coverage for new non-Swamp islands, and unchanged original terrain assignments.
-- `python -m unittest discover -s Scripts/Tests -v` passes **23/23**. `python Scripts/Setup/world_layout.py`, Python compilation, and `git diff --check` pass. The seabed Play acceptance script now checks the nearest-neighbor channel at all 40 generated islands.
+- `python -m unittest discover -s Scripts/Tests -v` passes **26/26**. `python Scripts/Setup/world_layout.py`, Python compilation, and `git diff --check` pass. The seabed Play acceptance script now checks the nearest-neighbor channel at all 40 generated islands.
 - This verifies source generation only. The saved coastal map still reflects its last Unreal rebuild; no editor rebuild, asset save, in-game run, save/discovery migration, multiplayer regression, or performance check is claimed. See C-WORLD40 in `Docs/Delegation/CODEX.md` and the latest inbox report.
+
+## October 20 Codex C-WILDLIFE40 — additive land population source partial
+
+- The live land-animal builder defines six species. `Saved/AnimalsPlacedResult.json` records the last saved 26-island setup as 87 actors; source rules target 45 additional instances across the fourteen new islands, only from existing regional species definitions. `place_animals.py` no longer deletes all animal actors: it targets only appended island keys and fills missing per-species counts by island label.
+- `python -m unittest Scripts.Tests.test_wildlife_distribution -v` passes **3/3**; the full Python suite passes **26/26**. Python compilation and whitespace checks pass. These tests cover pure placement target/deficit logic, not Unreal actors or mesh integration.
+- The candidate distribution includes many species without production definitions. Do not spawn them from concept art alone. The full world rebuild still runs `build_fish.py`, which destroys and recreates all fish; marine actor preservation and any aquatic placement changes remain open. No UE rebuild, Play, save, or multiplayer check is claimed.
 
 ## October 20 Codex C7 — partial
 
