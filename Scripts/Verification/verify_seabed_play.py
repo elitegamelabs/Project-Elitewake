@@ -75,9 +75,9 @@ def depth():
     trench = max(depth_m(ax + (bx - ax) * f, ay + (by - ay) * f) for f in (.1, .15, .2, .25))
     assert trench >= 1500, f'the trench is only {trench:.0f} m deep'
     assert deepest >= 1900, f'the deepest sample is {deepest:.0f} m'
-    # The middle of the channel between each island and its nearest neighbour.
+    # The middle of the channel between every island and its nearest neighbour.
     channels = []
-    for a in W.ISLANDS[:8]:
+    for a in W.ISLANDS:
         b = min((i for i in W.ISLANDS if i is not a), key=lambda i: math.hypot(i.cx - a.cx, i.cy - a.cy))
         ang = math.atan2(b.cy - a.cy, b.cx - a.cx)
         ra, rb = a.radius(ang), b.radius(ang + math.pi)

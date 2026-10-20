@@ -5,7 +5,8 @@ by the world setup scripts and checked on its own:
 Owner direction, October 15 (Docs/METRIC_WORLD_SCALE_AND_ISLAND_SPACING_2026-10-15.md,
 Art/REGIONAL_WORLD_AND_3D_ASSET_REQUIREMENTS_2026-10-15.md, Docs/STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md):
   - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (+X), Jungle west (-X);
-  - at least five islands in every region; the starter island is in Central Plains with at least five islands round it;
+  - the owner-approved October 18 target is exactly eight islands in each region; the starter island is in Central
+    Plains, with seven other Plains islands;
   - islands separated by open sea, 800 m to 2,000 m between shorelines.
 DECIDED (delegated): "every pair of islands 800-2,000 m apart" cannot hold literally for 25+ islands (they cannot
 all lie within 2 km of one another and 800 m apart); the layout keeps every pair at least 800 m apart and every
@@ -27,7 +28,8 @@ M = 100.0                       # cm per metre
 MIN_GAP, MAX_GAP = 800 * M, 2000 * M
 REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
                   'Desert': (7000 * M, 0.0), 'Jungle': (-7000 * M, 0.0)}
-ISLANDS_PER_REGION = {'Plains': 6, 'Winter': 5, 'Swamp': 5, 'Desert': 5, 'Jungle': 5}   # Plains: starter + 5
+LEGACY_ISLANDS_PER_REGION = {'Plains': 6, 'Winter': 5, 'Swamp': 5, 'Desert': 5, 'Jungle': 5}
+ISLANDS_PER_REGION = {'Plains': 8, 'Winter': 8, 'Swamp': 8, 'Desert': 8, 'Jungle': 8}
 REGION_SPREAD = 3000 * M        # how far a region's islands lie from its centre
 SEED = 1015
 
@@ -118,10 +120,11 @@ def quick_gap(a, b):
     return math.hypot(a.cx - b.cx, a.cy - b.cy) - a.reach() - b.reach()
 
 
-def generate(seed=SEED):
+def generate_legacy(seed=SEED):
+    """Recreate the pre-expansion layout exactly; its records are the preservation baseline."""
     rng = random.Random(seed)
     islands = [starter()]
-    for region, count in ISLANDS_PER_REGION.items():
+    for region, count in LEGACY_ISLANDS_PER_REGION.items():
         rcx, rcy = REGION_CENTRES[region]
         made, tries = (1 if region == 'Plains' else 0), 0
         while made < count:
@@ -161,16 +164,75 @@ def generate(seed=SEED):
     return islands
 
 
+_ADDITION_SEED_OFFSETS = {'Plains': 0xA510, 'Winter': 0xB620, 'Swamp': 0xC730,
+                          'Desert': 0xD840, 'Jungle': 0xE950}
+
+
+def _additional_island(region, key, rng, islands):
+    """Make one new island without consuming the legacy generator's random stream."""
+    rcx, rcy = REGION_CENTRES[region]
+    long_r = rng.uniform(250, 450) * M
+    short_r = long_r * rng.uniform(0.6, 0.9)
+    if region == 'Plains':
+        ang = rng.uniform(0, 2 * math.pi)
+        dist = islands[0].reach() * 0.75 + long_r + rng.uniform(850, 1700) * M
+        cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
+    else:
+        ang, dist = rng.uniform(0, 2 * math.pi), REGION_SPREAD * math.sqrt(rng.random())
+        cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
+    harmonics = [(k, rng.uniform(0.02, 0.09), rng.uniform(0, 2 * math.pi))
+                 for k in rng.sample([2, 4, 5, 6, 9], 3)]
+    cove = (rng.uniform(0, 2 * math.pi), rng.uniform(0.25, 0.45), rng.uniform(0.18, 0.35)) if rng.random() < 0.4 else None
+    peak = {'Winter': rng.uniform(1800, 3800), 'Jungle': rng.uniform(900, 2200), 'Desert': rng.uniform(400, 1400),
+            'Swamp': rng.uniform(80, 250), 'Plains': rng.uniform(400, 1200)}[region]
+    features = []
+    for _ in range(rng.randint(1, 3)):
+        fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0, 0.5) * short_r
+        features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.25, 0.5) * long_r,
+                         peak * rng.uniform(0.5, 1.0)))
+    return Island(key, region, cx, cy, long_r, short_r, rng.uniform(0, math.pi),
+                  rng.uniform(0.02, 0.06), harmonics, cove, features, peak)
+
+
+def _fits_spacing(island, placed):
+    """Cheap bounds first, then shoreline checks for minimum and nearest-neighbour gaps."""
+    if any(quick_gap(island, other) < MIN_GAP - 50 * M for other in placed):
+        return False
+    if any(shore_gap(island, other, 60) < MIN_GAP
+           for other in placed if quick_gap(island, other) < MIN_GAP + 400 * M):
+        return False
+    return any(shore_gap(island, other, 60) < MAX_GAP - 50 * M
+               for other in placed if quick_gap(island, other) < MAX_GAP)
+
+
+def generate(seed=SEED):
+    """Keep the original 26 islands intact, then append fourteen independently seeded islands."""
+    islands = generate_legacy(seed)
+    for region, target in ISLANDS_PER_REGION.items():
+        legacy_count = LEGACY_ISLANDS_PER_REGION[region]
+        rng = random.Random(seed + _ADDITION_SEED_OFFSETS[region])
+        made, tries = legacy_count, 0
+        while made < target:
+            tries += 1
+            assert tries < 200000, f'could not place {region} addition {made + 1}'
+            candidate = _additional_island(region, f'{region}{made + 1}', rng, islands)
+            if not _fits_spacing(candidate, islands):
+                continue
+            islands.append(candidate)
+            made += 1
+    return islands
+
+
 def check(islands):
     """The owner's rules, measured along the shorelines. Returns a list of problems (empty when it passes)."""
     problems = []
-    for region in REGION_CENTRES:
+    for region, expected in ISLANDS_PER_REGION.items():
         n = sum(1 for i in islands if i.region == region)
-        if n < 5:
-            problems.append(f'{region} has {n} islands; at least five are required')
+        if n != expected:
+            problems.append(f'{region} has {n} islands; exactly {expected} are required')
     around = [i for i in islands if i.region == 'Plains' and i.key != 'Starter']
-    if len(around) < 5:
-        problems.append(f'only {len(around)} islands round the starter')
+    if len(around) != ISLANDS_PER_REGION['Plains'] - 1:
+        problems.append(f'{len(around)} islands round the starter; seven are required')
     nearest = {}
     for a_i, a in enumerate(islands):
         for b in islands[a_i + 1:]:
@@ -194,6 +256,16 @@ def check(islands):
 
 
 ISLANDS = generate()
+
+
+def _legacy_port_island_keys():
+    """Freeze the original Port islands so new, larger islands cannot silently move any Port."""
+    legacy = generate_legacy()
+    return {region: max((i for i in legacy if i.region == region and i.key != 'Starter'),
+                        key=lambda i: i.rx * i.ry).key for region in REGION_CENTRES}
+
+
+LEGACY_PORT_ISLAND_KEYS = _legacy_port_island_keys()
 
 
 # ---- Ports ----------------------------------------------------------------------------------------------------
@@ -229,11 +301,8 @@ class Port:
 
 
 def _ports():
-    found = {}
-    for region in REGION_CENTRES:
-        options = [i for i in ISLANDS if i.region == region and i.key != 'Starter']
-        found[region] = Port(region, max(options, key=lambda i: i.rx * i.ry))
-    return found
+    by_key = {i.key: i for i in ISLANDS}
+    return {region: Port(region, by_key[key]) for region, key in LEGACY_PORT_ISLAND_KEYS.items()}
 
 
 PORTS = _ports()

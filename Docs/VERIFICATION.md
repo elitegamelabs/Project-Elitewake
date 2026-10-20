@@ -4,6 +4,12 @@ What has been tested, how, and what the tests do not cover. A passing test prove
 
 Last updated: October 20, 2026. The full dated log of every run, including earlier failures, is in [ARCHIVE/2026-10_VERIFICATION_LOG.md](ARCHIVE/2026-10_VERIFICATION_LOG.md).
 
+## October 20 Codex C-WORLD40 — source/layout partial
+
+- `python -m unittest Scripts.Tests.test_world_layout_expansion -v` passes **8/8**. It checks exactly 40 unique island keys and eight per region, preservation of all 26 legacy layout records against the committed pre-expansion fingerprint, stable appended keys and deterministic geometry, unchanged Port island keys, spacing/orientation, distinct terrain-plan coverage for new non-Swamp islands, and unchanged original terrain assignments.
+- `python -m unittest discover -s Scripts/Tests -v` passes **23/23**. `python Scripts/Setup/world_layout.py`, Python compilation, and `git diff --check` pass. The seabed Play acceptance script now checks the nearest-neighbor channel at all 40 generated islands.
+- This verifies source generation only. The saved coastal map still reflects its last Unreal rebuild; no editor rebuild, asset save, in-game run, save/discovery migration, multiplayer regression, or performance check is claimed. See C-WORLD40 in `Docs/Delegation/CODEX.md` and the latest inbox report.
+
 ## October 20 Codex C7 — partial
 
 - UE 5.8.3 `EWEditor` build succeeded after the controller, helm prompt, and mining changes. Focused native automation passed 1/1 for `Elitewake.Input.HotbarKeyboardAndControllerBindings` (number keys, D-pad, LB+face buttons and unmodified face-button rejection), and 1/1 for `Elitewake.Ships.SailingAuthority` (concise helm prompt, hold-to-leave interaction and sailing authority). Python syntax checks for the updated Play scripts and whitespace checks pass.

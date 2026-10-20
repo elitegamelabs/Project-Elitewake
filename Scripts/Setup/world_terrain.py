@@ -62,7 +62,7 @@ CLIFFS = {i.key: cliff_of(i) for i in W.ISLANDS}
 
 # Owner, October 15 (Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): every island
 # individually designed, with different combinations of mountains, hills, ridges, valleys and plateaus, so none is a
-# resized copy of another. DECIDED (delegated, tuning): each island but the starter and the Swamp's draws a terrain plan
+# resized copy of another. DECIDED (delegated, tuning): each non-starter island outside the Swamp draws a terrain plan
 # from its region's list, no two islands of a region the same plan; its own seed sets each shape's size, place and
 # heading. Peaks are sharp mountains, ridges long spines, plateaus flat-topped mesas with steep sides, valleys cut
 # across the island (never down to the sea). The Swamp stays low wetland, varied by its pools and channels.
@@ -71,6 +71,15 @@ PLANS = {'Winter': [('peak', 'ridge'), ('peak', 'valley'), ('ridge', 'valley', '
          'Desert': [('plateau',), ('plateau', 'valley'), ('ridge', 'plateau'), ('plateau', 'plateau'), ('ridge', 'valley')],
          'Plains': [('valley',), ('plateau', 'valley'), ('ridge',), ('peak', 'valley'), ('plateau', 'ridge')]}
 
+# These plans serve only the fourteen newly appended islands. Keeping additions separate preserves the shuffled
+# assignments, and therefore the authored terrain, of every original island.
+ADDITIONAL_PLANS = {
+    'Winter': [('peak', 'ridge', 'plateau'), ('peak', 'peak', 'valley'), ('ridge', 'ridge', 'peak')],
+    'Jungle': [('ridge', 'plateau'), ('peak', 'plateau'), ('valley', 'ridge', 'plateau')],
+    'Desert': [('plateau', 'ridge', 'valley'), ('peak', 'plateau'), ('plateau', 'valley', 'peak')],
+    'Plains': [('peak', 'ridge'), ('valley', 'plateau', 'ridge'), ('peak', 'plateau', 'valley')],
+}
+
 
 def _plans():
     plans = {}
@@ -78,7 +87,9 @@ def _plans():
         order = list(options)
         random.Random(sum(map(ord, region)) * 31).shuffle(order)
         islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        for isl, plan in zip(islands, order):
+        assignments = list(zip(islands[:len(order)], order))
+        assignments.extend(zip(islands[len(order):], ADDITIONAL_PLANS.get(region, ())))
+        for isl, plan in assignments:
             rng = random.Random(sum(map(ord, isl.key)) * 104723)
             shapes = []
             for kind in plan:

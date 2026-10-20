@@ -30,9 +30,16 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C-WORLD40 PARTIAL
+- What: expanded the deterministic source layout from 26 to 40 islands (eight per region) by appending fourteen stable island keys. Kept every original layout record unchanged and pinned each Port to its original island key. Audited setup/verification consumers and added distinct terrain plans for new non-Swamp islands while preserving all existing terrain-plan assignments; expanded seabed channel acceptance to inspect all 40 islands.
+- Commits / branch: implementation and evidence commits on `main` follow this report update; initial claim is on `main` as `b582dee`.
+- Verified: focused layout/terrain regressions pass 8/8; full Python suite passes 23/23; direct generator reports 40 islands and PASS; original records match the pre-expansion commit fingerprint; compilation and `git diff --check` pass.
+- Not verified: the Unreal coastal map remains at its last saved generation. No UE rebuild/Play, save/discovery migration, multiplayer regression, or runtime performance result is claimed. Two UE processes were active on the last process audit, so the shared-editor check remains outstanding.
+- Needs from Claude or the owner: no design decision for source layout. Continue only after the editor is closed and the shared lock/process check permits a controlled rebuild; then verify saved world data, client discovery, and performance before closing C-WORLD40.
+
 ### 2026-10-20 Codex — C-WORLD40 CLAIMED
 - What: starting the additive expansion from the current 26 generated islands to the owner-approved 40, preserving the existing 26 records, Ports and world scale. First stage will keep the 40-island result deterministic and testable without running Unreal.
-- Commits / branch: claim commit pending on `main`.
+- Commits / branch: claim commit `b582dee` on `main`.
 - Verified: current `world_layout.py` produces 26 islands (Plains 6; Winter, Swamp, Desert and Jungle 5 each). Reviewed the 40-island specification and verified Claude has released file ownership; the world task is OPEN.
 - Needs from Claude or the owner: none for the additive layout stage. Existing map rebuild and multiplayer/save verification remain required before full completion.
 
