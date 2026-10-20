@@ -210,5 +210,6 @@ Add or update the system's row: commit, test names, checkpoint count, and the ma
 ### T6 tortoise shell asset save and Play check (October 20)
 
 - Source geometry test: PASS as part of `python -m unittest discover -s Scripts/Tests -v` (27/27).
+- Unreal asset rebuild/save: VERIFIED by Claude, 2026-10-20 (see T6 in DELEGATED_TASKS.md: SM_Tortoise_v1 saved, animals Play 9/9, side/top/three-quarter screenshots). Superseded entry follows.
 - Unreal asset rebuild/save: NOT VERIFIED. Logged editor launches exited before a project log or asset result was produced; the existing same-day crash artifact identifies a CrashReportClient access violation, not the editor's root cause.
 - Animal multiplayer Play check and side/top screenshots: NOT RUN; depends on a successful asset save and reliable Unreal project startup.

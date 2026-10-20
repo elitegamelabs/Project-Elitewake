@@ -217,7 +217,7 @@ only so you know where earlier world, cave and ship work lives.
   passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
   `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
-### T6. A better tortoise shell — OPEN (source geometry verified; asset/Play pending)
+### T6. A better tortoise shell — DONE (asset saved and Play-verified by Claude, 2026-10-20; shell colour for the owner)
 - **Why:** the tortoise's scutes read as stripes (Saved/Screenshots/Animals, Docs/VERIFICATION.md "Land animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
 - **Do:** in Scripts/Setup/build_animals.py, function tortoise(), replace the shell() colouring with a proper scute layout: a row of 5 vertebral plates down the spine, 4 costal plates per side, about 11 marginal plates per side round the rim; each plate a polygon with a dark seam and concentric growth rings toward its centre, tone varied per plate. Keep the function's signature and everything else in the file. Rerun the script in the editor (it replaces the animals in the coastal map), then verify_animals_play.py must still pass.
 - **Done when:** a side and top screenshot clearly show plates; the animals check passes; screenshots saved under Saved/Screenshots/Animals.
@@ -225,6 +225,14 @@ only so you know where earlier world, cave and ship work lives.
 - **Additional source-geometry verification (October 20):** executing the current published tortoise() function with an inert Unreal API stub generated 3,450 vertices and 6,860 triangles. All triangle indices resolve, all coordinates are finite, and bounds are approximately 109.45 × 72 × 55.78 cm. This validates only the in-memory source geometry; no Unreal asset was saved. Added Scripts/Tests/test_tortoise_geometry.py to preserve the mesh-data regression check; the focused test passes 1/1 and the full Python suite passes 27/27.
 - **Editor state:** Saved/TortoiseShellRebuild.py reuses the existing tortoise material instance to avoid the standard setup script's unrelated shared-material compilation error. After confirming no process or editor lock, UnrealEditor.exe and UnrealEditor-Cmd.exe both exited in under two seconds with code 0 and produced no new engine log or result. No mesh rebuild, animal Play check or screenshots have been obtained.
 - **Next:** run the targeted rebuild from a working editor session or diagnose why UE 5.8.3 exits before startup, then inspect the saved shell from side/top and run verify_animals_play.py. Keep T6 open until those checks pass.
+- **Asset and Play (Claude, October 20):** the editor itself starts normally (a probe on the main checkout loaded the
+  project and ran Python in 20 s); ChatGPT's launches end within 2 s in its own environment, so its sandbox, not the
+  project, stops Unreal. Claude ran `Saved/TortoiseShellRebuild.py` (pointed at its worktree, on main b40c9a9):
+  `SM_Tortoise_v1` saved, 3,450 vertices and 6,860 triangles, matching the offline test; the definition already used it.
+  `verify_animals_play` passed 9/9; the new `verify_tortoise_look_play` (one player) took side, top and three-quarter
+  shots in `Saved/Screenshots/Animals` (`tortoise_side00001`, `tortoise_top00001`, `tortoise_three_quarter00001`):
+  the vertebral row, side rows and dark seams read as plates. **For the owner/ChatGPT:** in daylight the shell reads
+  pale cream, lighter than the owner's photo; darker plate tones in `tortoise()` would fix it if wanted.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
