@@ -189,7 +189,7 @@ Static review of player-facing widget text, the Journal widget/data setup, and i
 
 The published source at commit f703632 changes the shell to five vertebral scutes, four costal scutes per side, and eleven marginal scutes per side, with deterministic plate tone variation, concentric color rings, dark seams, and slight raised centers. Python compilation and an offline layout check for all 35 plate indices pass.
 
-A follow-up execution of the published tortoise() builder with an inert Unreal API stub generated 3,450 vertices and 6,860 triangles. Every triangle index resolves, every coordinate is finite, and the source mesh bounds are approximately 109.45 × 72 × 55.78 cm. This verifies the in-memory geometry generator only, not an Unreal asset.
+The published tortoise() builder was also executed with an inert Unreal API stub and produced 3,450 vertices and 6,860 triangles. Every triangle index resolves, every coordinate is finite, and the source mesh bounds are approximately 109.45 × 72 × 55.78 cm. Added Scripts/Tests/test_tortoise_geometry.py as a durable source-data regression check; the focused test passes 1/1 and the full Python suite passes 27/27. These checks verify generated in-memory geometry only, not an Unreal asset.
 
 The targeted script reuses the existing tortoise material instance to avoid rebuilding the unrelated shared animal material. UnrealEditor.exe and UnrealEditor-Cmd.exe both exited in under two seconds without creating a log or result. No UAsset update, animal Play check, or side/top screenshot has been produced. T6 remains open.
 
