@@ -1,11 +1,13 @@
 # Codex: your tasks
 
+**Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
+
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each the work that suits it. This file
 is **Codex's list**: code, native tests, Python tests and Play-check scripts. ChatGPT's is
 [CHATGPT.md](CHATGPT.md); Scenario's generation queue is [SCENARIO.md](SCENARIO.md).
 
 
-**Report to Claude (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
+**Report in the shared inbox (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
 [INBOX.md](INBOX.md) and push it with your work to `main`. Work left on a local branch or worktree is invisible to
 Claude and the owner.
 
@@ -13,8 +15,8 @@ Claude and the owner.
 
 1. `git fetch && git pull --ff-only`. Claude, ChatGPT and the owner all commit to `main`.
 2. Read the header of [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md) first. It has the shared rules, the Unreal
-   editor lock (one editor at a time on this PC), the build and Play-check commands, and the **Claude is working on**
-   list. Never edit the files on that list; leave a note under your task instead.
+   editor lock (one editor at a time on this PC) and the build and Play-check commands. No files are reserved for any
+   agent (owner, October 20).
 3. **Claim** a task by changing its status here to `CLAIMED (Codex, <date>)` and pushing that one-line change before
    you start. When finished, set it to `DONE <commit>` and write under it what you verified and what you could not.
    If you stop part-way, set it back to `OPEN` and say where you got to.
@@ -27,7 +29,7 @@ Claude and the owner.
 ### C-WORLD40. Expand world from 26 to 40 islands — OPEN (Codex/Claude coordination required)
 - **Owner directive:** exactly **8 islands in each of five regions**: Plains (Starter + Plains2–8), Winter1–8, Swamp1–8, Desert1–8, Jungle1–8. The 40-island wildlife specification is [WILDLIFE_DISTRIBUTION_26_ISLANDS.md](../WILDLIFE_DISTRIBUTION_26_ISLANDS.md) (legacy filename, **40-island content**). Owner approved this as the target and explicitly requests Claude/Codex implementation.
 - **Preserve all 26 original islands and their existing locations, shapes, ports, placed structures, wildlife and saves**. Current `Scripts/Setup/world_layout.py` uses one seeded sequential RNG loop; **do not merely change counts** because it can reshuffle later regions. Snapshot baseline island records and append 14 deterministically generated new islands with stable keys. Maintain nearest-shore separation rules, regional orientation, starter safe beach/dock/pond/sloop and one port per region. Flag any impossible geometry/spacing constraints rather than silently changing the world scale.
-- Audit every consumer of island count and island keys: terrain setup, water/ocean and nav, maps and discovery persistence, spawn generation, ports, save migration, multiplayer/world replication, milestones. Implement in small tested stages; coordinate with Claude before touching Claude-owned world or animal placement scripts.
+- Audit every consumer of island count and island keys: terrain setup, water/ocean and nav, maps and discovery persistence, spawn generation, ports, save migration, multiplayer/world replication, milestones. Implement in small tested stages; the world and animal placement scripts are open to edit (owner, October 20); pull first and note in the inbox when you start on them.
 - **Verify:** Python layout check: 40 unique islands, 8 per region, original 26 unchanged by key and coordinates/geometry, nearest-neighbor constraints; then Unreal Engine **5.8.3** native/Play checks and multiplayer/saved discovery regression; record in `Docs/VERIFICATION.md`. Mark CLAIMED/DONE and report in `Docs/Delegation/INBOX.md`.
 
 ### C-WILDLIFE40. Implement approved per-island animal additions — OPEN (after C-WORLD40 baseline)
@@ -43,7 +45,7 @@ Claude and the owner.
 - **Independent code scope:** map label and map-only messages; Xbox hotbar mappings/prompts; inventory Y quick-assign; compass contrast; persistent pause-menu brightness and mouse/controller look sensitivity.
 - **Map:** also T9 below. Preserve the player marker, support free pan/zoom, and use current world region actors rather than hard-coded island positions.
 - **Mode rules:** island placement restrictions apply in multiplayer only; single-player remains unrestricted; crafting is never gated by claims; ship customization is outside island claims; Ports are excluded.
-- **Coordination-bound:** cave crystals touch Claude-owned cave setup; ship furnishing/window/helm prompt work touches Claude-owned ship builders and `AEWShip` source; ship-deck placement needs an audit of the current ship placement interface; claim restrictions need an island ownership API and unresolved timer rules.
+- **Open to Codex (owner, October 20):** cave crystals touch the cave setup scripts; ship furnishing/window/helm prompt work touches the ship builders and `AEWShip` source; edit them directly; ship-deck placement needs an audit of the current ship placement interface; claim restrictions need an island ownership API and unresolved timer rules.
 - **Verification:** add appropriate native/Play acceptance for implemented work and update `Docs/VERIFICATION.md`. Keep incomplete pieces explicit. Do not invent crystal identity, claim durations or ship dimensions.
 - **Progress:** map overview/region label/map-only hint, Xbox hotbar prompts and mappings, inventory Y quick-assign, darker compass backing, and persistent brightness/look controls are implemented in source. UE 5.8.3 build, focused native hotbar mapping test (1/1), Python syntax checks and whitespace checks pass. Play checks could not run in the available session, so map visuals, physical controller behavior and the other changed UI/gameplay flows are not claimed Play-verified. Crystal placement, ship interiors/windows/helm prompt, general deck placement, and island-claim restrictions remain untouched; see `Docs/REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md`.
 
@@ -97,8 +99,8 @@ Claude and the owner.
   leave it out and note it.
 - **Test:** update `verify_ship_sailing_play.py`, `verify_sail_trim_play.py` and any check that sets full sail;
   add native tests for the setting's steps.
-- **Done when:** checks pass, VERIFICATION records it, and you report in INBOX.md. Claude owns `EWShip.cpp` too:
-  say in INBOX.md when you start so edits do not collide.
+- **Done when:** checks pass, VERIFICATION records it, and you report in INBOX.md. Say in INBOX.md when you
+  start on `EWShip.cpp`, so concurrent edits do not collide.
 - **Pause state:** implementation, native coverage, build and the 11-step network sailing check pass. Sail-trim and the other affected ship regressions were not all rerun after the final change; see the October 19 handoff report.
 
 ### C5. Craftable plain white flags on flag mounts — DONE by Claude (2026-10-18; it was unclaimed and the owner asked Claude to do what the others are not doing). Nothing for Codex here.
@@ -106,7 +108,7 @@ Claude and the owner.
   plain clean white; flags install, remove and swap, flutter in the wind, and weather only from combat damage.
 - **Do:** a Flag item (recipe values TBD: ask in OPEN_QUESTIONS, use a placeholder recipe marked *tuning*), a
   `Flag` mount type, flag mounts on the sloop and brigantine definitions (positions: masthead and stern ensign staff;
-  ask Claude in INBOX.md for exact points, Claude owns the ship build scripts), install/remove through the existing
+  the ship build scripts are open to every agent), install/remove through the existing
   fitting flow, and a cloth flag mesh that flutters with the world wind (UEWWindSubsystem). Combat damage and tearing
   come later.
 - **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.

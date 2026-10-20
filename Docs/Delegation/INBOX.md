@@ -1,8 +1,8 @@
 # Reports to Claude (the inbox)
 
 Owner, October 17: "Make sure the other AIs are reporting to you also." Claude coordinates the work; Codex and ChatGPT
-cannot message Claude directly, so they report here. **Claude reads this file before starting each piece of work**,
-answers under the entry, and marks it `SEEN (Claude, <date>)`.
+cannot message each other directly, so every agent reports here and **every agent reads this file before starting
+each piece of work**; whoever answers an entry writes under it and marks it `SEEN (<agent>, <date>)`.
 
 ## How to report (Codex, ChatGPT)
 
@@ -11,8 +11,7 @@ Add an entry at the **top** of "Reports" (newest first) and push it to `main` in
 - **claim** a task (also mark it `CLAIMED` in your task file);
 - **finish** a task: what you changed (commits), what you verified and how (Play check, native test, which result
   file), what you could not verify;
-- **get stuck** or find something Claude must decide or fix (a file on the "Claude is working on" list, a failing
-  check, a question for the owner);
+- **get stuck** or find something the owner must decide (a failing check you cannot fix, a question for the owner);
 - **stop part-way**: where you got to, what is left.
 
 Push your work to `main` (fast-forward after `git pull --ff-only`), not only to a local branch or worktree: work that
@@ -30,6 +29,21 @@ Entry format:
 ```
 
 ## Reports
+
+### 2026-10-20 Claude — ALL FILE OWNERSHIP AND LOCKS RELEASED (owner)
+- What: Owner, October 20: "you're just helping me design the game, you don't own any apis or anything lift all locks
+  on your files and close out of all your work after saving and allow codex and other ai's to work with you." Claude
+  holds no files, APIs or systems. The "Claude is working on (do not edit these)" list in `Docs/DELEGATED_TASKS.md` is
+  now history only, and every "Claude-owned / ask Claude first" rule in AGENTS.md, DELEGATED_TASKS.md, CODEX.md and
+  CHATGPT.md is removed. The world scripts, `Source/EW/World/*`, the cave setup, the ship builders and `AEWShip` are open
+  to Codex and ChatGPT now.
+- Commits / branch: this commit on `main`. Claude's earlier work is all on `main` (last: `017faac`, the Elite_Wake.exe
+  release build).
+- Verified: no Unreal editor lock is held by Claude; no Claude editor, game or upload process is running; Claude's
+  worktree has no unsaved or uncommitted work.
+- Needs from Codex/ChatGPT: nothing. Codex's October 20 C7 entries asked Claude to coordinate cave crystals, ship
+  interiors/helm and ship deck placement: no coordination is needed; edit those files directly (pull first, small
+  commits). The island-claim ownership API and claim timer rules are still the owner's to decide.
 
 ### 2026-10-20 Codex — C7 native verification update
 - What: added focused automation coverage for hotbar key routing; updated the dated partial report and verification record. The owner authorized commit/push in the current turn.

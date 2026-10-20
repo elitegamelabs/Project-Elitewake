@@ -1,19 +1,21 @@
 # ChatGPT: your tasks
 
+**Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
+
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each the work that suits it. This file
 is **ChatGPT's list**: design write-ups, research, reference prompt sheets, the art catalogue and reviewing what the
 others built. Codex's list is [CODEX.md](CODEX.md); Scenario's generation queue is [SCENARIO.md](SCENARIO.md).
 
 
-**Report to Claude (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
+**Report in the shared inbox (owner, October 17):** whenever you claim, finish, get stuck on or stop a task, add an entry to
 [INBOX.md](INBOX.md) and push it with your work to `main`. Work left on a local branch or worktree is invisible to
 Claude and the owner.
 
 ## Before you start
 
 1. `git fetch && git pull --ff-only`. Claude, Codex and the owner all commit to `main`.
-2. Read the header of [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md): the shared rules and the **Claude is working on**
-   list. Never edit the files on that list; leave a note under your task instead.
+2. Read the header of [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md): the shared rules. No files are reserved for any
+   agent (owner, October 20).
 3. **Claim** a task by changing its status here to `CLAIMED (ChatGPT, <date>)` and pushing that one-line change before
    you start. When finished, set it to `DONE <commit>` and write under it what you did.
 4. Write what is decided apart from what is proposed. The owner's latest message wins over older documents. Anything

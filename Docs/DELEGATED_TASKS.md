@@ -1,5 +1,7 @@
 # Delegated tasks (for ChatGPT / Codex)
 
+**Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
+
 Owner direction, October 15: Claude keeps this queue full of work it is **not** doing, so another agent can take
 it in parallel. Claude adds to it as work comes up; each task is self-contained. Read this whole header before
 taking a task.
@@ -8,7 +10,7 @@ Owner, October 16: Claude coordinates Scenario (it calls it directly), ChatGPT a
 suit code, native or Python tests and scripts; **for ChatGPT** suit docs, the art catalogue, research and review;
 unmarked tasks suit either. Take what fits you.
 
-**Report to Claude (owner, October 17):** every claim, finish, blocker or stop gets an entry in
+**Report in the shared inbox (owner, October 17):** every claim, finish, blocker or stop gets an entry in
 [Delegation/INBOX.md](Delegation/INBOX.md), pushed to `main`; work left on a local branch is invisible.
 
 **Per-agent lists (October 16):** each agent now has its own file with new tasks and the earlier ones that suit it:
@@ -20,10 +22,11 @@ below are still claimed here.
 
 1. `git fetch && git pull --ff-only` first. Two agents (and the owner) commit to `main`.
 2. **Claim** a task: change its status to `CLAIMED (ChatGPT, date)` in this file and push that one-line change
-   before starting, so Claude does not pick it up.
+   before starting, so no other agent picks it up.
 3. When finished: set the status to `DONE <commit>` and write what you verified (and what you could not) under the
    task. If you stop part-way, set `OPEN` again and say where you got to.
-4. Never edit files listed under **Claude is working on** below. If a task needs one, leave a note here instead.
+4. No files are reserved (owner, October 20). If a task touches a file another agent changed recently, pull first and
+   say in the inbox that you are starting on it.
 
 ## Shared rules (from the owner; these override convenience)
 
@@ -70,10 +73,14 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - Python editor scripting runs server RPCs locally; drive gameplay in checks through
   `EWEditorVerificationLibrary.send_verification_gameplay_key` / `send_verification_ui_key` (real input).
 
-## Claude is working on (do not edit these)
+## Where Claude has worked (history only; open to every agent, owner, October 20)
+
+Owner, October 20: these were once reserved for Claude. They are not any more: anyone may edit them. The list stays
+only so you know where earlier world, cave and ship work lives.
+
 
 - **The five-region world rebuild** (owner direction of October 15: Plains centre with the starter island, Winter
-  north, Swamp south, Desert east, Jungle west, at least five islands each, 800–2,000 m sea gaps). Claude owns the
+  north, Swamp south, Desert east, Jungle west, at least five islands each, 800–2,000 m sea gaps). Claude worked on the
   island layout, terrain, seabed, ocean extent, biome dressing and region actors: `Scripts/Setup/world_layout.py`,
   `build_coastal_terrain.py`, `build_coastal_flora.py`, `build_coastal_rocks.py`, `build_regions.py`, `build_fish.py`
   placement, `build_animals.py` **placement** (ChatGPT may keep editing animal *models* for T6/T7),
@@ -297,7 +304,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `Scripts/Setup/world_layout.py` `PORTS`). Label them "Port" (names are still the owner's to set).
 - **October 20 owner addition:** replace "Surrounding Area" with the current island/region name; allow free pan and zoom without following or recentering on the player; keep the player marker visible; remove only the map's "Walking remains available" and "World continues" messages. Map implementation proceeds under C7.
 - **Codex, October 20 (`41a050b`):** source now derives an overview extent from the placed island-region actors, adds free pan/zoom and a player marker, and samples the current region label. Build and focused hotbar native verification passed; Play verification did not run in this session, so T9 remains partial. See `Docs/REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md`.
-- **Pause boundary:** do not edit Claude-owned `Source/EW/World/*`; ask for a field there if region actors do not provide sufficient map data.
+- **World source:** `Source/EW/World/*` is open to edit (owner, October 20); add the field there if region actors do not provide sufficient map data.
 
 ### T10. "Village" becomes "Port" — OPEN
 - **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.

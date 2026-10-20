@@ -4,13 +4,15 @@ These instructions apply to every AI coding, design, art, and implementation ass
 
 ## Your task list (owner, October 16, 2026)
 
-Claude coordinates the AIs on this project and keeps a task list for each: **Codex** works from
+**Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
+
+Each agent has a task list: **Codex** works from
 [Docs/Delegation/CODEX.md](Docs/Delegation/CODEX.md), **ChatGPT** from [Docs/Delegation/CHATGPT.md](Docs/Delegation/CHATGPT.md),
 and Scenario generation jobs are queued in [Docs/Delegation/SCENARIO.md](Docs/Delegation/SCENARIO.md) (Claude runs them;
-do not spend Scenario credits yourself). Shared rules, the editor lock and the files Claude is working on are in the header
+do not spend Scenario credits yourself). Shared rules and the editor lock are in the header
 of [Docs/DELEGATED_TASKS.md](Docs/DELEGATED_TASKS.md). Claim a task before starting it and record what you verified.
-**Report to Claude** (owner, October 17): every claim, finish, blocker or stop gets an entry in
-[Docs/Delegation/INBOX.md](Docs/Delegation/INBOX.md), pushed to `main` with your work; Claude reads it before each piece of work.
+**Report in the shared inbox** (owner, October 17): every claim, finish, blocker or stop gets an entry in
+[Docs/Delegation/INBOX.md](Docs/Delegation/INBOX.md), pushed to `main` with your work; every agent reads it before each piece of work.
 
 ## Confirmed island and regional foliage requirements (owner, October 15, 2026)
 
