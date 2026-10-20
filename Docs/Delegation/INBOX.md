@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 CLAIMED
+- What: resuming the previously drafted tortoise-shell scute layout; first comparing the current setup script and published source, then checking whether the Unreal asset rebuild and required Play verification now complete.
+- Commits / branch: claim recorded on main in `677ed86`.
+- Verified: reviewed the T6 queue and confirmed the shared Unreal lock is clear; no T6 source or asset changes made yet.
+- Needs from Claude or the owner: nothing.
+
+
+
 ### 2026-10-20 ChatGPT — T10 DONE
 - What: replaced the active “village wildlife” and “Village overlay” wording in `Docs/WILDLIFE_DISTRIBUTION_26_ISLANDS.md` with Port terminology while preserving the stated spawn placement rule. No source/UI text or serialized asset names required changes.
 - Commits / branch: wildlife wording `7ba3cff`; T10 completion `c0c5dc1`; task index `ab0e072`. Published directly to main.
