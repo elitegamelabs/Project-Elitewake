@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T10 CLAIMED
+- What: auditing remaining non-archive “Village” wording against the owner’s Village → Port terminology-only decision; will preserve historical intent and avoid changing runtime IDs/assets.
+- Commits / branch: claim recorded on main in `a21b9ff`; review in progress.
+- Verified: current inbox and task queue checked; the only active non-archive uses found so far are in the wildlife distribution design note and task/report language.
+- Needs from Claude or the owner: nothing.
+
+
+
 ### 2026-10-20 ChatGPT — T11 DONE
 - What: completed the player-facing metric-units audit. No imperial or unitless numeric distance display was found; raft pace is stated as 2.5 metres per second. No gameplay text needed changing.
 - Commits / branch: verification note `6e02b7e`; T11 completion recorded in `5f4c165`; task index `b6022ec`. Published directly to main.
