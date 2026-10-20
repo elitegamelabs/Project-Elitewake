@@ -33,7 +33,7 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 - Added `Elitewake.Input.HotbarKeyboardAndControllerBindings`; Unreal native automation **passed 1/1**. It covers number keys 1–8, D-pad slots 1–4, LB+face-button slots 5–8, and rejects face-button shortcuts without LB.
 - Python syntax checks for `verify_map_play.py`, `verify_hotbar_play.py`, and `verify_options_menu_play.py`: **passed**.
 - `git diff --check`: **passed**.
-- `verify_map_play.py` passed 8/8 two-player listen-server/client checks; result: `Saved/MapPlayResult.json`. The mining lifecycle Play check also passed for its test fixture as described in `Docs/VERIFICATION.md`. Controller hotbar/Y assignment, compass presentation, options persistence, and visual map review still need dedicated Play review. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
+- `verify_map_play.py` passed 8/8 two-player listen-server/client checks (`cf6eca0`); result: `Saved/MapPlayResult.json`. The mining lifecycle Play check also passed for its test fixture as described in `Docs/VERIFICATION.md`. Controller hotbar/Y assignment, compass presentation, options persistence, and visual map review still need dedicated Play review. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
 - Physical Xbox controller, visual map review at both zoom limits, and multiplayer placement/claim acceptance: **not verified**.
 
 ## Working-tree notes

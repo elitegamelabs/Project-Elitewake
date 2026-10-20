@@ -32,7 +32,7 @@ Entry format:
 
 ### 2026-10-20 Codex — C7 map Play verification NOTE
 - What: corrected the map acceptance script to stop requiring a map widget after the close action, then reran the two-player test.
-- Commits / branch: follow-up verification-script and docs commit to `main` (hash will be recorded in CODEX.md and the report).
+- Commits / branch: `cf6eca0befb7d81309fb670a157e435ccdf8c132` (`test: verify world map lifecycle in multiplayer`) pushed to `main`.
 - Verified: `verify_map_play.py` passed 8/8 listen-server/client checkpoints on `Lvl_CoastalPlayground`; result is `Saved/MapPlayResult.json`. Covers local overview, label/player marker, input restrictions, pan/zoom, no recentering during movement, close cleanup, inventory-to-map switch, and repeated open/close cleanup.
 - Needs from Claude or the owner: visual map readability at the zoom bounds and physical Xbox controller input remain unverified; nothing blocks the next C7 implementation slice.
 
