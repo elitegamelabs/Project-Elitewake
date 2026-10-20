@@ -19,7 +19,7 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 
 | Request | Status and reason |
 | --- | --- |
-| Cave crystals | Not changed yet. File reservations were released on October 20; inspect the existing cave meshes and asset catalog before selecting an existing approved crystal asset or proposing a new one. |
+| Cave crystals and winter deposits | Mining support is now implemented in `AEWMineable`: pickaxe tiers gate mining, optional total stock randomizes from 4–8, depleted nodes can respawn on an authored timer, and depletion/respawn visibility and collision replicate. A two-player listen-server/client Play check passes against a test-only Metal Pick fixture. Production resource DataAssets/IDs, a production Metal Pick, resource-specific node meshes, and cave/winter placement are not integrated. `Scripts/Setup/build_caves.py` still builds cave rock only and explicitly leaves deposits pending. The owner-approved distribution rules remain in `Docs/OwnerDecisions/CRYSTAL_AND_COAL_SPAWN_RULES_2026-10-18.md`; do not substitute the test fixture for production content. |
 | Empty ship decks/interiors and sealed windows | Not changed yet. File reservations were released on October 20; audit the current hull/build scripts and verify that the surgeon's table remains while windows stay watertight. |
 | Helm prompt cleanup | Implemented in `AEWShip`; `Elitewake.Ships.SailingAuthority` passes assertions for the concise prompt and hold-to-leave interaction. A live on-screen Play review remains unverified. |
 | General deck/captain's-quarter placement | Audit found `UEWPlacementPreviewComponent` only previews ship fittings at mounts. There is no general ship deck/interior placement path here to extend safely in this task. |
@@ -27,12 +27,13 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 
 ## Verification
 
-- Unreal Engine 5.8.3 `EWEditor` build: **succeeded** after the last C++ change.
+- Unreal Engine 5.8.3 `EWEditor` build: **succeeded** after the mining tier, stock, respawn, and verification-helper changes.
+- `verify_resource_mining_lifecycle_play.py` passed **5/5** checkpoints in two-player listen-server/client Play: randomized 4–8 stock and Metal gate; generic pick rejected; Metal test pick accepted; depletion hid the node and disabled collision on both machines while awarding the full stock; 2-second test respawn restored 4–8 stock and collision on both. Result: `Saved/ResourceMiningLifecyclePlayResult.json`. This proves reusable mining behavior only, not production assets, cave/winter placement, one-hour balance timing, or visual resource identity.
 - Unreal native automation `Elitewake.Ships.SailingAuthority`: **passed 1/1** after the helm prompt change. It confirms the prompt includes leaving the helm, excludes the extra control legend, and keeps leaving as a hold interaction; the broader test also exercises helm sailing authority.
 - Added `Elitewake.Input.HotbarKeyboardAndControllerBindings`; Unreal native automation **passed 1/1**. It covers number keys 1–8, D-pad slots 1–4, LB+face-button slots 5–8, and rejects face-button shortcuts without LB.
 - Python syntax checks for `verify_map_play.py`, `verify_hotbar_play.py`, and `verify_options_menu_play.py`: **passed**.
 - `git diff --check`: **passed**.
-- Unreal Play checks: **not run**. The editor process exited immediately in the earlier available command session, no fresh Play result was written, and the desktop-control inventory exposed no native-app launcher. The existing `Saved/MapPlayResult.json` is dated October 10 and is stale; it is not evidence for this change. The requested Play checks still need to run in the editor.
+- Cave mining Play check passed. Separate C7 Play checks for the map, controller hotbar/Y assignment, compass presentation, and options persistence still have no fresh result in this session. The October 10 `Saved/MapPlayResult.json` is stale and was not counted. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
 - Physical Xbox controller, visual map review, map screenshots at both zoom limits, and multiplayer placement/claim acceptance: **not verified**.
 
 ## Working-tree notes

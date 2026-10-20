@@ -45,11 +45,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationFoodRequest(AEWPlayerController* Controller, UEWItemDefinition* Item);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
-    static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12);
+    static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12,
+        int32 PerStrike = 3, EEWPickaxeTier MinimumPickaxeTier = EEWPickaxeTier::None, bool bRespawnWhenDepleted = false,
+        float RespawnSeconds = 3600.f, bool bRandomizeStock = false, int32 MinimumStock = 4, int32 MaximumStock = 8);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWHarvestTree* SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationAttack(AEWPlayerController* Controller, AActor* Target);
+    UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
+    static AActor* GetVerificationInteractionTarget(AEWCharacter* Character);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWHandGatherable* SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks = false);
     /** PIE-only source; never adds water to a saved map. */

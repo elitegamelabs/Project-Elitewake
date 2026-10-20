@@ -34,6 +34,14 @@ bool FEWMiningTest::RunTest(const FString& Parameters)
     Inventory->AddItem(Tool,1); TestEqual(TEXT("Merely carrying a pickaxe cannot mine"),Node->TryMine(Pawn),0);
     TestTrue(TEXT("Owned tool equips"),Equipment->EquipItem(Tool,EEWEquipmentSlot::MainHand)==EEWEquipmentResult::Success);
     TestFalse(TEXT("Interact does not mine"),IEWInteractable::Execute_Interact(Node,Pawn));
+    Node->MinimumPickaxeTier=EEWPickaxeTier::Metal;
+    Tool->PickaxeTier=EEWPickaxeTier::Wooden;
+    TestFalse(TEXT("Wooden pickaxe is below a metal node requirement"),Node->CanMine(Pawn));
+    Tool->PickaxeTier=EEWPickaxeTier::Metal;
+    TestTrue(TEXT("Metal pickaxe meets its node requirement"),Node->CanMine(Pawn));
+    Tool->PickaxeTier=EEWPickaxeTier::Tungsten;
+    TestTrue(TEXT("Higher-tier pickaxe meets a metal node requirement"),Node->CanMine(Pawn));
+    Node->MinimumPickaxeTier=EEWPickaxeTier::None; Tool->PickaxeTier=EEWPickaxeTier::None;
     Tool->GatheringTool=EEWGatheringTool::Hatchet; TestEqual(TEXT("Hatchet cannot mine"),Node->TryMine(Pawn),0); Tool->GatheringTool=EEWGatheringTool::Pickaxe;
     TestEqual(TEXT("Pickaxe accepts stone"),Node->TryMine(Pawn),3);
     Node->Resource=Ore; TestEqual(TEXT("Authored ore is accepted"),Node->TryMine(Pawn),3); TestEqual(TEXT("Ore identity preserved"),Inventory->GetItemCount(Ore),3); Node->Resource=Stone;

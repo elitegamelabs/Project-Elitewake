@@ -60,11 +60,28 @@ bool UEWEditorVerificationLibrary::SendVerificationFoodRequest(AEWPlayerControll
     return true;
 }
 
-AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity)
+AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource,
+    int32 Quantity, int32 PerStrike, EEWPickaxeTier MinimumPickaxeTier, bool bRespawnWhenDepleted,
+    float RespawnSeconds, bool bRandomizeStock, int32 MinimumStock, int32 MaximumStock)
 {
-    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Resource) || Quantity <= 0) return nullptr;
-    auto* Node = World->SpawnActor<AEWMineable>(Location, FRotator::ZeroRotator);
-    if (Node) { Node->Resource = Resource; Node->Remaining = Quantity; Node->ForceNetUpdate(); }
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Resource)
+        || Quantity <= 0 || PerStrike <= 0 || !FMath::IsFinite(RespawnSeconds) || RespawnSeconds <= 0.f
+        || MinimumStock <= 0 || MaximumStock < MinimumStock) return nullptr;
+    const FTransform Transform(FRotator::ZeroRotator, Location);
+    auto* Node = World->SpawnActorDeferred<AEWMineable>(AEWMineable::StaticClass(), Transform, nullptr, nullptr,
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!Node) return nullptr;
+    Node->Resource = Resource;
+    Node->Remaining = Quantity;
+    Node->PerStrike = PerStrike;
+    Node->MinimumPickaxeTier = MinimumPickaxeTier;
+    Node->bRespawnWhenDepleted = bRespawnWhenDepleted;
+    Node->RespawnSeconds = RespawnSeconds;
+    Node->bRandomizeStock = bRandomizeStock;
+    Node->MinimumStock = MinimumStock;
+    Node->MaximumStock = MaximumStock;
+    Node->FinishSpawning(Transform);
+    Node->ForceNetUpdate();
     return Node;
 }
 
@@ -80,6 +97,12 @@ bool UEWEditorVerificationLibrary::SendVerificationAttack(AEWPlayerController* C
     if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
     TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
     Controller->ServerAttack(Target, 0); return true;
+}
+
+AActor* UEWEditorVerificationLibrary::GetVerificationInteractionTarget(AEWCharacter* Character)
+{
+    return Character && Character->GetWorld() && Character->GetWorld()->WorldType == EWorldType::PIE
+        ? FEWInteractionTargeting::FindTarget(Character) : nullptr;
 }
 
 AEWHandGatherable* UEWEditorVerificationLibrary::SpawnVerificationHandGatherable(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity, bool bSticks)

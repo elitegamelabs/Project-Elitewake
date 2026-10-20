@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C7 cave-resource PARTIAL
+- What: extended `AEWMineable` with pickaxe-tier gating, optional randomized total stock, server-timed respawn, and replicated visibility/collision changes. Added a verification-only Metal Pick asset and two-player lifecycle Play check. Production resource assets and cave/winter placement are still missing.
+- Commits / branch: implementation and documentation checkpoint on `main`; hashes will be added in the verification follow-up commit.
+- Verified: UE 5.8.3 EWEditor build succeeded. `verify_resource_mining_lifecycle_play.py` passed 5/5 listen-server/client checkpoints: generic pick rejection, Metal tier acceptance, full stock harvest, replicated depletion/collision disable, and timed respawn restoring stock/collision. Result: `Saved/ResourceMiningLifecyclePlayResult.json`.
+- Needs from Claude or the owner: production item catalog has no canonical Metal Pick definition/ID, and no production Ruby/Sapphire/Emerald/Obsidian/Coal item DataAssets or mining-node visuals exist. `build_caves.py` builds cave rock only. The code substrate is verified; production content and region placement remain open.
+
 
 ### 2026-10-20 Codex — C7 cave-resource implementation CLAIMED
 - What: implementing the owner-approved crystal and coal rules in the existing mining and world setup systems, preserving current resource IDs and unrelated terrain.

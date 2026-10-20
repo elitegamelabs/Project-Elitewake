@@ -16,6 +16,10 @@ enum class EEWFoodKind : uint8 { None, Berry };
 UENUM(BlueprintType)
 enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
 
+/** Ordered pickaxe material capability; None keeps older authored tools usable on unrestricted nodes. */
+UENUM(BlueprintType)
+enum class EEWPickaxeTier : uint8 { None, Wooden, Stone, Metal, Tungsten };
+
 UENUM(BlueprintType)
 enum class EEWItemCategory : uint8
 {
@@ -70,6 +74,9 @@ public:
     /** Capability used only when this owned unit is equipped in MainHand. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Gathering")
     EEWGatheringTool GatheringTool = EEWGatheringTool::None;
+	/** Material tier for pickaxes. Restricted mineable nodes compare this against their authored minimum. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Gathering")
+	EEWPickaxeTier PickaxeTier = EEWPickaxeTier::None;
 	/** Stable identifier used by saving, recipes, vendors, and networking. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item", meta=(AssetRegistrySearchable))
 	FName ItemId;
