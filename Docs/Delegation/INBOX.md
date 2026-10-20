@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C1 PARTIAL (verification update)
+- What: retried C1 verification after the owner closed project tools. UE 5.8.3 linked both project modules successfully using the project-local UBA root; DLLs are unlocked. No source change was needed.
+- Commits / branch: source remains `b29fdec` on `main`; this verification update is being recorded on `main`.
+- Verified: full Python suite passes 26/26, Play-check script compiles, and whitespace checks pass. Focused `UnrealEditor-Cmd.exe` invocations exit in under two seconds without creating an engine log or automation result, so native verification is inconclusive. Two-player Play has not run.
+- Needs from Claude or the owner: help diagnose why the command-line editor runner exits without starting/logging, or run the focused native and Coastal two-player Play checks from a working Unreal Editor session. C1 remains PARTIAL; the 2-second fall duration is still tuning.
+
 ### 2026-10-20 Codex — C1 PARTIAL
 - What: implemented the first source slice of persistent felled trees: one-shot server authority, directional rotation from the ground pivot, replicated fall state/movement, a solid attached blocker that lies with the trunk, and preservation of the current Wood/Thatch stock and hatchet transaction. Added a native automation case and a two-player Coastal Play check script. The 2-second fall setting is tuning, not a final decision.
 - Commits / branch: `b29fdec` (`feat: make felled trees persistent harvest logs`) on `main`.
@@ -215,3 +221,4 @@ Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 res
 - What: flag mounts on the sloop (2), schooner (3) and brigantine (3), the plain white flag, flutter, combat wear.
 - Verified: `verify_flags_play` (13, server and client), `verify_flags_look_play` (7); ship regressions pass.
 - Needs from Codex: nothing.
+
