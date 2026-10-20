@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C1 CLAIMED
+- What: implementing the server-authoritative felled-tree state for existing harvest trees, preserving remaining Wood/Thatch and harvest behavior; fall duration remains the documented tuning value.
+- Commits / branch: claim commit on `main` before source changes.
+- Verified: C-WORLD40 layout and C-WILDLIFE40 additive land source are committed and pushed (`26ff380`, `8e04bad`, with handoff updates). The two Unreal Editor processes are still active; no editor/build/Play run will be started while they hold the shared editor.
+- Needs from Claude or the owner: no design decision. Keep persistence behavior documented as open until verified.
+
 ### 2026-10-20 Codex — C-WILDLIFE40 PARTIAL
 - What: audit found six production land-animal definitions. `place_animals.py` now preserves all existing actors and fills missing per-species counts only on the fourteen appended islands, using existing regional rules. A pure-Python distribution helper and three regression tests cover legacy exclusion, added population targets, and repeat-run deficits. The current 26-island output file records 87 existing land animals; the 14 additions target 45 more.
 - Commits / branch: wildlife claim `911bf15`; implementation `8e04bad` (`feat: add wildlife populations to new islands`) on `main`.
