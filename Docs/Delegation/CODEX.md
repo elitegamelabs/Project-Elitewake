@@ -115,7 +115,7 @@ Claude and the owner.
   come later.
 - **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.
 
-### C6. Bring `verify_hull_damage_play` up to date — PARTIAL (Codex paused 2026-10-19)
+### C6. Bring `verify_hull_damage_play` up to date — CLAIMED (Codex, 2026-10-20 resumed)
 - **Why:** since the sloop lost her hull gunports (`4870f1f`, owner, October 17) her cannons stand behind a two-cannon
   railing; the check still looks for the old `StarboardCannon` mount and times out at its first step.
 - **Do:** fit `DA_TestRailingTwoCannon` at `StarboardRailing` first and use `StarboardCannon1`, as

@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C6 hull-damage Play check CLAIMED
+- What: resuming the paused ship verification task; updating the acceptance script for the sloop's two-cannon railing and current `StarboardCannon1` hardpoint, then rerunning its listen-server/client check.
+- Commits / branch: claim on `main`; implementation and verification checkpoint to follow.
+- Verified: read C6 acceptance steps and compared the old hull-damage script to the updated `verify_cannon_fight_play.py` railing interaction. No Unreal Editor lock is held; owner editor preference remains unstaged.
+- Needs from Claude or the owner: nothing for this bounded acceptance-script update.
+
 ### 2026-10-20 Codex — C7 map Play verification NOTE
 - What: corrected the map acceptance script to stop requiring a map widget after the close action, then reran the two-player test.
 - Commits / branch: `cf6eca0befb7d81309fb670a157e435ccdf8c132` (`test: verify world map lifecycle in multiplayer`) pushed to `main`.
