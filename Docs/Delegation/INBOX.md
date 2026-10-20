@@ -32,7 +32,7 @@ Entry format:
 
 ### 2026-10-20 Codex — C-WILDLIFE40 CLAIMED (audit stage)
 - What: beginning the required registry, placement, levels, and per-island distribution audit against the now-tested 40-island source layout. First pass is read-only and will identify which existing species can be placed additively and which requested species lack production assets.
-- Commits / branch: claim commit on `main` before any wildlife code changes.
+- Commits / branch: claim commit `911bf15` on `main` before any wildlife code changes.
 - Verified: C-WORLD40 source baseline was committed and pushed (`26ff380`, handoff `6a0760d`); current editor processes remain active, so no Unreal run is planned.
 - Needs from Claude or the owner: no decision requested for the audit. No animal asset IDs, production spawn changes, or new behavior will be inferred from reference images alone.
 
