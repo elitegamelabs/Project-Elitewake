@@ -195,6 +195,13 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Survivor knows its helm"), C->GetHelmShip(), A);
     TestTrue(TEXT("Helmsman rides the ship"), C->GetAttachParentActor() == A);
     TestTrue(TEXT("Survivor movement is off at the helm"), C->GetCharacterMovement()->MovementMode == MOVE_None);
+    TestTrue(TEXT("Leaving the helm remains a hold interaction"),
+        A->GetInteractionModeFor_Implementation(C) == EEWInteractionMode::Hold);
+    const FString HelmPrompt = A->GetInteractionPrompt_Implementation(C).ToString();
+    TestTrue(TEXT("Helm interaction still offers leaving the helm"), HelmPrompt.Contains(TEXT("Leave the helm")));
+    TestFalse(TEXT("Helm prompt omits extra W/S sail controls"), HelmPrompt.Contains(TEXT("W/S sails")));
+    TestFalse(TEXT("Helm prompt omits extra A/D rudder controls"), HelmPrompt.Contains(TEXT("A/D rudder")));
+    TestFalse(TEXT("Helm prompt omits extra sail trim controls"), HelmPrompt.Contains(TEXT("trim")));
     TestEqual(TEXT("Interaction targets the helm ship from any aim"), FEWInteractionTargeting::FindTarget(C), static_cast<AActor*>(A));
     TestFalse(TEXT("A second survivor cannot take an occupied helm"), A->TakeHelm(Other));
     TestEqual(TEXT("The occupied helm cannot be removed"), A->RemoveFitting(C, TEXT("Helm")), EEWFittingResult::Occupied);

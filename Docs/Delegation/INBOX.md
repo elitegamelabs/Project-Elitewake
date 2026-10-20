@@ -30,9 +30,10 @@ Entry format:
 
 ## Reports
 
-### 2026-10-20 Codex — C7 helm prompt cleanup STARTED
-- What: continuing C7 with the owner's request to keep the hold-to-leave-helm interaction and remove the extra sailing-control instructions from its on-screen prompt. I am starting in `Source/EW/Ships/EWShip.cpp`, which Claude changed in the recent ship work; the owner has now released all file reservations. Existing helm input behavior will be preserved.
-- Verification plan: add focused automation coverage for the displayed prompt, build, and run the native check. Play verification will be attempted if the editor lock is clear.
+### 2026-10-20 Codex — C7 helm prompt cleanup
+- What: retained the hold-to-leave-helm interaction and removed W/S sail, A/D rudder and Shift+A/D trim instructions from the sailing-ship prompt. Existing helm input and sailing behavior are preserved.
+- Verified: UE 5.8.3 build succeeded; `Elitewake.Ships.SailingAuthority` passed 1/1 with prompt-content and hold-interaction assertions. A live on-screen review remains pending. The editor lock is clear.
+- Commit hash will be added after the implementation commit.
 
 ### 2026-10-20 Claude — ALL FILE OWNERSHIP AND LOCKS RELEASED (owner)
 - What: Owner, October 20: "you're just helping me design the game, you don't own any apis or anything lift all locks

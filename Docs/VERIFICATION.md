@@ -6,10 +6,10 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 
 ## October 20 Codex C7 — partial, local only
 
-- UE 5.8.3 `EWEditor` build succeeded after the final controller changes (map hint API, whole-world width, ladder D-pad priority, and LB+Y context). The focused native automation `Elitewake.Input.HotbarKeyboardAndControllerBindings` passed 1/1, covering number-key, D-pad, and LB+face-button slot routing and rejection of unmodified face buttons. Python syntax checks for the three updated Play scripts and `git diff --check` pass.
+- UE 5.8.3 `EWEditor` build succeeded after the controller and helm prompt changes. Focused native automation passed 1/1 for `Elitewake.Input.HotbarKeyboardAndControllerBindings` (number keys, D-pad, LB+face buttons and unmodified face-button rejection), and 1/1 for `Elitewake.Ships.SailingAuthority` (concise helm prompt, hold-to-leave interaction and sailing authority). Python syntax checks for the three updated Play scripts and `git diff --check` pass.
 - The world-map, Xbox hotbar/Y assignment, compass contrast and persistent options code are present in the working tree. This is source/build status only; do not treat those gameplay changes as Play-verified.
 - Play verification could not run in this session: Unreal Editor exited immediately when invoked from the available command session and no native-app launcher was exposed. No fresh result was written. The October 10 `Saved/MapPlayResult.json` is stale and was not counted. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
-- Cave crystals, ship interior/window/helm changes, general deck placement and island-claim placement restrictions were not changed; see [the C7 partial report](REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md) for ownership and dependency notes.
+- Cave crystals, ship interior/windows, general deck placement and island-claim placement restrictions remain incomplete; helm prompt wording is changed but has not had a visual Play review. See [the C7 partial report](REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md) for remaining work.
 
 ## October 19 Codex pause checkpoint
 

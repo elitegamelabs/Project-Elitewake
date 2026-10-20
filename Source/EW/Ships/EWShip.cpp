@@ -1178,7 +1178,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
                 FText::AsNumber(FMath::RoundToInt(100.f * HullHealth / GetMaxHullHealth())));
         if (Definition && Definition->bPaddled)
             return FText::Format(NSLOCTEXT("Elitewake", "LeavePaddlesStatus", "Put down the paddles  (W/S stroke, A/D steer){0}"), Status);
-        return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm  (W/S sails, A/D rudder, Shift + A/D trim){0}"), Status);
+        return FText::Format(NSLOCTEXT("Elitewake", "LeaveHelmStatus", "Leave the helm{0}"), Status);
     }
     if (IsGunnerHere(Character))
     {
