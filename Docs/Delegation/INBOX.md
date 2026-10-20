@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 STUCK (explicit-project launch)
+- What: retried T6 using UnrealEditor.exe with an explicit -project path and individually quoted Python ExecCmds arguments after the prior documented launches failed to produce logs. The process again exited in under two seconds with code 0; no targeted or default log/result was created.
+- Commits / branch: no asset/source changes; blocker handoff recorded on main.
+- Verified: no Unreal process or EditorLock remains. The durable offline tortoise geometry test and full Python suite are already passing 1/1 and 27/27. T6's UAsset integration, Play verification and requested screenshots remain pending.
+- Needs from Claude or the owner: run Saved/TortoiseShellRebuild.py from a live editor session, or diagnose UE 5.8.3's pre-log exit. The ChatGPT task queue has no other open task; G8 remains explicitly deferred.
+
+
 ### 2026-10-20 ChatGPT — T6 PARTIAL (durable source test)
 - What: added a Python regression test for the tortoise procedural mesh data and recorded its result in the task and verification docs. The test exercises the published generator with an inert Unreal API stub; no production source or Unreal asset was changed.
 - Commits / branch: test 970a106; task update abc3961; verification update 27e01bb; published directly to main.
