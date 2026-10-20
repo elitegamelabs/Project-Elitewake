@@ -217,44 +217,14 @@ only so you know where earlier world, cave and ship work lives.
   passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
   `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
-### T6. A better tortoise shell — OPEN (source partial; asset/Play verification pending)
-- **Why:** the tortoise's scutes read as stripes (`Saved/Screenshots/Animals`, `Docs/VERIFICATION.md` "Land
-  animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
-- **Do:** in `Scripts/Setup/build_animals.py`, function `tortoise()`, replace the `shell()` colouring with a proper
-  scute layout: a row of 5 vertebral plates down the spine, 4 costal plates per side, about 11 marginal plates per
-  side round the rim; each plate a polygon with a dark seam and concentric growth rings toward its centre, tone
-  varied per plate. Keep the function's signature and everything else in the file. Rerun the script in the editor
-  (it replaces the animals in the coastal map), then `verify_animals_play.py` must still pass.
-- **Done when:** a side and top screenshot clearly show plates; the animals check passes; screenshots saved under
-  `Saved/Screenshots/Animals`.
-- **Progress (October 15):** drafted raised polygonal vertebral, costal, and marginal scutes with dark seams and
-  nested ring tones in `tortoise()`; Python syntax and `git diff --check` pass. The editor built the updated static
-  mesh in memory, but saving existing animal assets fails with Windows sharing violation (error 32). The standard
-  setup script also stops while recompiling/saving the shared animal material, which reports a missing Transform
-  Position input. Existing material, tortoise mesh, material instance, and definition files are currently locked by
-  another process; no Unreal Editor process is running in this workspace. No regenerated asset, Play result, or
-  screenshot is committed. The local function edit remains uncommitted.
-- **Next:** release the asset file locks, resolve or bypass the shared-material save failure without changing
-  unrelated material behavior, rerun the in-editor setup, then capture side/top views and run the animal Play check.
-
-- **Note from Claude (October 15):** the "sharing violation" was four of these build editors still running
-  (`UnrealEditor.exe ... build_animals.py` and `TortoiseShellRebuild.py`, started 05:25-05:32, all hung, each locking
-  the others' files). With the owner's approval Claude closed all four; the asset locks are gone. Your uncommitted
-  `build_animals.py` edit and the animal assets on disk were left untouched. Please launch one build at a time and
-  make sure it exits (`quit` after the script, or a wrapper that quits) before starting another.
-- **Retry (October 15):** after the owner confirmed Unreal Editor was closed, retried the asset access check. Windows
-  still denies exclusive access to `SM_Tortoise_v1.uasset`, `MI_Tortoise_v1.uasset`, and `DA_Animal_Tortoise.uasset`;
-  no Unreal Editor process is visible in this session, and the system's open-file listing is unavailable. The live
-  `Saved/Logs/EW.log` identifies a separate Claude `run_then_quit.py` Unreal automation that is actively creating
-  port meshes and saving the coastal map. A new T6 launch did not reach its wrapper while that run was active, so it
-  was stopped to avoid overlapping writes. The previous in-memory mesh build is the latest verified T6 result; no
-  saved tortoise asset, screenshots, or Play test yet.
-- **Handoff to Claude (October 15):** Codex stopped its waiting launch on the owner's pause request; no Unreal
-  process is visible in this session. The latest exclusive-access check now succeeds for the tortoise mesh, material
-  instance, and definition, and `Saved/Logs/EW.log` has stopped advancing (last write 08:30 local). The `tortoise()`
-  scute draft in `Scripts/Setup/build_animals.py` remains uncommitted; Python syntax and diff checks pass. No T6
-  wrapper completion, saved shell update, screenshots, or Play result were produced by the retry. Please review the
-  working-tree changes before resuming; other animal and world files are also modified and must be preserved.
+### T6. A better tortoise shell — OPEN (source geometry verified; asset/Play pending)
+- **Why:** the tortoise's scutes read as stripes (Saved/Screenshots/Animals, Docs/VERIFICATION.md "Land animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
+- **Do:** in Scripts/Setup/build_animals.py, function tortoise(), replace the shell() colouring with a proper scute layout: a row of 5 vertebral plates down the spine, 4 costal plates per side, about 11 marginal plates per side round the rim; each plate a polygon with a dark seam and concentric growth rings toward its centre, tone varied per plate. Keep the function's signature and everything else in the file. Rerun the script in the editor (it replaces the animals in the coastal map), then verify_animals_play.py must still pass.
+- **Done when:** a side and top screenshot clearly show plates; the animals check passes; screenshots saved under Saved/Screenshots/Animals.
+- **Source checkpoint (published f703632):** tortoise() describes five vertebral, four costal per side and eleven marginal per side, with deterministic plate tone variation, concentric rings, dark seams and slight raised centers. Python compilation and an offline index check for all 35 plate indices pass.
+- **Additional source-geometry verification (October 20):** executing the current published tortoise() function with an inert Unreal API stub generated 3,450 vertices and 6,860 triangles. All triangle indices resolve, all coordinates are finite, and bounds are approximately 109.45 × 72 × 55.78 cm. This validates only the in-memory source geometry; no Unreal asset was saved.
+- **Editor state:** Saved/TortoiseShellRebuild.py reuses the existing tortoise material instance to avoid the standard setup script's unrelated shared-material compilation error. After confirming no process or editor lock, UnrealEditor.exe and UnrealEditor-Cmd.exe both exited in under two seconds with code 0 and produced no new engine log or result. No mesh rebuild, animal Play check or screenshots have been obtained.
+- **Next:** run the targeted rebuild from a working editor session or diagnose why UE 5.8.3 exits before startup, then inspect the saved shell from side/top and run verify_animals_play.py. Keep T6 open until those checks pass.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.
