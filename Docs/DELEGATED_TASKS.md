@@ -315,7 +315,7 @@ only so you know where earlier world, cave and ship work lives.
 - **Done when:** `git grep -i village` outside the archive only shows deliberate historical mentions, the build
   passes, and the journal check (`verify_journal_play.py`) still passes if journal text changed.
 
-### T11. Metric units audit — OPEN
+### T11. Metric units audit — CLAIMED (ChatGPT, 2026-10-20)
 - **Why:** owner direction in `Docs/METRIC_WORLD_SCALE_AND_ISLAND_SPACING_2026-10-15.md`: player-facing distances
   in metres.
 - **Do:** search player-facing text and UI (`Source/EW/**/*Widget*.cpp`, journal text, item descriptions in
