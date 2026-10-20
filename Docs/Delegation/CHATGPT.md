@@ -141,7 +141,7 @@ Claude and the owner.
 | T30 | List the October 15–16 delegated world decisions for the owner | DONE 6966de2 |
 | T27 | Catalogue the new oak and ash leaf art | DONE 6966de2 |
 | T10 | "Village" becomes "Port" | OPEN |
-| T11 | Metric units audit | OPEN |
+| T11 | Metric units audit | DONE 5f4c165 |
 | T6 | A better tortoise shell | OPEN |
 
 Suggested order: G8 (the owner is waiting on the sea floor), G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.
