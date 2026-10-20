@@ -21,7 +21,7 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 - Source checkpoint: `b29fdec`.
 - Added a server-only one-shot `AEWHarvestTree::Fell(Direction)` and a replicated felled flag. The server interpolates the actor rotation from its ground pivot, enables movement replication, and leaves the existing Wood/Thatch stock on the actor. The attached collision capsule is reoriented and extended along the trunk; clients configure it from the replicated state, including late joiners. Hatchet harvesting still uses the existing guarded stock transaction.
 - Added felled-state assertions to `Elitewake.Gathering.HatchetTree` and created `Scripts/Verification/verify_felled_tree_play.py` for a listen-server/client check of replication, solid log collision, and the existing 3 Wood/1 Thatch harvesting until depletion.
-- Not verified yet: Python and source checks pass. The default UBA attempts could not create session directories under `C:\ProgramData\Epic\UnrealBuildAccelerator`; using a project-local UBA root allowed the UE build to compile its C++ sources, but final linking failed with LNK1104 on the existing `UnrealEditor-EW.dll` and `UnrealEditor-EWEditor.dll`. An exclusive-open check showed both DLLs held by another process, although no Unreal process is visible by name in this session. No native test or Play check ran. Do not force-close an unidentified process or overwrite the DLLs. The 2-second `FallDuration` is a working tuning default only; final duration and integration with elephant attacks remain open. Do not claim the behavior is linked or runtime-verified.
+- Verified after the owner closed project tools: `EWEditor Win64 Development` links successfully with the project-local UBA root; both `UnrealEditor-EW.dll` and `UnrealEditor-EWEditor.dll` were confirmed unlocked. Python compilation, the 26-test Python suite, and `git diff --check` pass. Focused `UnrealEditor-Cmd.exe` attempts exit successfully in under two seconds without producing an Unreal log or automation result, so native verification is inconclusive. The two-player Play check has not run. Keep C1 PARTIAL; do not claim runtime behavior verified. The 2-second `FallDuration` is a working tuning default only; final duration and integration with elephant attacks remain open.
 
 ## October 20 Codex C7 — partial
 
@@ -192,3 +192,4 @@ The cause was found afterwards. The editor ran in the background at about 3 fram
 ## Adding a result
 
 Add or update the system's row: commit, test names, checkpoint count, and the main thing not covered. Record failures as failures, with their evidence path. Put any long narrative in the commit message, not here.
+
