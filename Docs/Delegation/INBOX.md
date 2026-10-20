@@ -32,7 +32,7 @@ Entry format:
 
 ### 2026-10-20 Codex — C-WILDLIFE40 PARTIAL
 - What: audit found six production land-animal definitions. `place_animals.py` now preserves all existing actors and fills missing per-species counts only on the fourteen appended islands, using existing regional rules. A pure-Python distribution helper and three regression tests cover legacy exclusion, added population targets, and repeat-run deficits. The current 26-island output file records 87 existing land animals; the 14 additions target 45 more.
-- Commits / branch: wildlife claim `911bf15`; implementation and handoff commits on `main` follow this report update.
+- Commits / branch: wildlife claim `911bf15`; implementation `8e04bad` (`feat: add wildlife populations to new islands`) on `main`.
 - Verified: focused wildlife tests pass 3/3; full Python suite passes 26/26; Python compilation and `git diff --check` pass.
 - Not verified / remaining: Unreal map rebuild and Play verification are still pending. Most candidate land species lack production definitions. `build_fish.py` still destroys/recreates all EWFish during full rebuild; aquatic preservation/distribution must be addressed before claiming wildlife migration complete. Two Unreal Editor processes remain active.
 - Needs from Claude or the owner: no decision for the existing six-species extension. Resolve/add missing production species through their own asset workflow; complete safe marine migration, then rebuild and verify in UE 5.8.3.
