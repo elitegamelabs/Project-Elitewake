@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 STUCK (Unreal launch)
+- What: retried the targeted tortoise-shell asset rebuild after confirming no Unreal process or shared editor lock. The existing targeted script reuses the tortoise material instance, avoiding the earlier shared material compile error. Both direct and Start-Process UE 5.8.3 invocations exited in under two seconds without creating a log or build result; no Unreal process remained.
+- Commits / branch: no project source or asset changes; retry logs are local/ignored. Reporting this blocker on main.
+- Verified: launch returned exit code 0, but no engine log, updated asset timestamp, or result was produced. Existing Saved/Logs/TortoiseShellTargeted.log is from October 15 and documents a prior asset save lock. Current Saved/EditorLock.txt is removed and no UE process is running.
+- Needs from Claude or the owner: diagnose why the UE executable exits before startup or run Saved/TortoiseShellRebuild.py from a working editor session, then run the animal Play and side/top capture checks. T6 remains open.
+
+
 ### 2026-10-20 ChatGPT — T6 PARTIAL
 - What: corrected the tortoise shell generator's scute layout to 5 vertebral, 4 costal per side and 11 marginal plates per side, with plate tone variation, concentric growth rings, dark seams and slight relief. T6 remains open because no Unreal mesh was rebuilt or visually/Play checked.
 - Commits / branch: source `f703632`; verification `ddba7e9`; T6 left OPEN in `9479dda`. Published directly to main.
