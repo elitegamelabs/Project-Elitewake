@@ -2,18 +2,18 @@
 Art/Concepts/Boats/2026-10-18/Ship-Design-Sheet-v1.webp, shows every ship's rooms furnished and lantern-lit: a bed,
 a table and stools, barrels, sea chests, benches, shelves, rugs, lanterns on the beams).
 
-The pieces are built into a hull's own mesh with three material slots: 0 the hull's timber (make_timber_material:
-tar, iron and brass by vertex colour), 1 cloth (FABRIC: the vertex tone picks linen, a red rug or a blue rug) and 2
-lantern glass, which glows warm. Each lantern's position goes in the ship definition's LanternLights, where the ship
+The pieces are built into a hull's own mesh with four material slots: 0 the hull's timber (make_timber_material:
+tar, iron and brass by vertex colour), 1 cloth (FABRIC: the vertex tone picks linen, a red rug or a blue rug), 2
+lantern glass, which glows warm, and 3 blue-grey window glass. Each lantern's position goes in the ship definition's LanternLights, where the ship
 hangs a warm point light (AEWShip). Sizes and colours are tuning.
 """
 import math
 import unreal
 
-from ship_geometry import material_builder
+from ship_geometry import WINDOW_GLASS, material_builder
 
 FOLDER = '/Game/Elitewake/World/Ships'
-TIMBER, FABRIC, GLASS, WINDOW_GLASS = 0, 1, 2, 3
+TIMBER, FABRIC, GLASS = 0, 1, 2
 LINEN, RED_RUG, BLUE_RUG = .8, .15, .45      # vertex tones FABRIC reads
 
 
@@ -116,6 +116,18 @@ class Room:
             for dy in (-width / 2 + 8, width / 2 - 8):
                 self.box(x, y, yaw, dx, dy, 36, (7, 7, 72))
         self.box(x, y, yaw, 0, 0, 75, (length, width, 6))
+
+    def surgeon_table(self, x, y, yaw=0.0, length=140.0, width=70.0):
+        """A secured lower-deck treatment table prop; interaction and treatment logic live elsewhere."""
+        self.table(x, y, yaw, length, width)
+        # Fixed side rails, a removable linen pad, and a compact retained instrument tray.
+        for side in (-1, 1):
+            self.box(x, y, yaw, 0, side * (width / 2 - 3), 82, (length - 8, 5, 10))
+        self.box(x, y, yaw, 0, 0, 79, (length - 20, width - 18, 2), slot=FABRIC, tone=LINEN)
+        self.box(x, y, yaw, length * .32, 0, 83, (24, 18, 4), iron=1.0)
+        # Simple period forceps and shears silhouettes, held inside the tray.
+        self.box(x, y, yaw, length * .32, -3, 87, (15, 1.5, 1.5), iron=1.0)
+        self.box(x, y, yaw, length * .32, 3, 87, (15, 1.5, 1.5), iron=1.0)
 
     def stool(self, x, y):
         for dx, dy in ((-12, -12), (12, -12), (-12, 12), (12, 12)):

@@ -28,7 +28,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 from ship_hull import Hull, tar_rope  # noqa: E402
 from ship_gunports import cover_meshes, gunport  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
-from ship_interior import materials as interior_materials  # noqa: E402
+from ship_interior import Room, materials as interior_materials  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
 MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
@@ -124,6 +124,8 @@ def gun_deck(b):
         b.cylinder((x, 0.0, FLOOR_Z + 10), 38, 60, sides=8)
         for z in (FLOOR_Z + 22, FLOOR_Z + 58):
             b.cylinder((x, 0.0, z), 39.5, 5, sides=8, iron=1.0)
+    # The treatment station is aft-port on the first deck below the weather deck (visual prop only).
+    Room(b, FLOOR_Z).surgeon_table(-1300.0, -90.0, yaw=90.0, length=130.0, width=70.0)
 
 
 def hull_mesh():

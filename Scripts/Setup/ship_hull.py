@@ -8,6 +8,7 @@ ladders, a capstan, masts and standing rigging. Each ship script sets the lines 
 import math
 from dataclasses import dataclass, field
 from typing import Optional
+from ship_geometry import WINDOW_GLASS
 
 
 
@@ -369,9 +370,9 @@ class Hull:
         windows = [(y - 20.0, y + 20.0, self.deck_z + 95, self.deck_z + 140) for y in (-130.0, 130.0)]
         self.bulkhead(b, edge, self.deck_z, top, openings=[(-door_w / 2, door_w / 2, self.deck_z, self.deck_z + door_h)] + windows)
         # The cut-outs above must be closed panes, not open passages into the cabin. Slot 3 is
-        # WINDOW_GLASS in ship_interior.materials(); the box remains in complex hull collision.
+        # The dedicated window pane is also a box in complex hull collision.
         old_slot = b.slot
-        b.slot = 3
+        b.slot = WINDOW_GLASS
         for y0, y1, z0, z1 in windows:
             b.box((edge + 2.0 * facing, (y0 + y1) / 2, (z0 + z1) / 2),
                   (4.0, y1 - y0, z1 - z0))
@@ -382,7 +383,7 @@ class Hull:
             for side in (1, -1):
                 y_out, y_in = self.half_beam(x), self.inner_y(x, (z0 + z1) / 2)
                 yc, depth = side * (y_out + y_in) / 2, y_out - y_in + 2
-                b.slot = 3
+                b.slot = WINDOW_GLASS
                 b.box((x, yc, (z0 + z1) / 2), (4, depth, z1 - z0))
                 b.slot = old_slot
                 for z in (z0 + 2, z1 - 2):

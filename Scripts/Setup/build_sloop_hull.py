@@ -93,6 +93,8 @@ def hold(b):
     for x, side in ((360.0, -1), (360.0, 1), (-380.0, 1)):
         room.barrel(x, side * (HULL.inner_y(x, FLOOR_Z + 40) - 40), height=85.0, radius=28.0)
     room.bench(-400.0, port(-400.0), length=140.0)
+    # The treatment station sits aft-port in the first deck below the weather deck (visual prop only).
+    room.surgeon_table(-520.0, -105.0, length=110.0, width=55.0)
     # Hung from the beams over the sides, clear of the walkway down the middle.
     for x, side in ((-120.0, 1), (360.0, -1)):
         room.lantern(x, side * 105.0, DECK_Z - HULL.deck_thick - 14)

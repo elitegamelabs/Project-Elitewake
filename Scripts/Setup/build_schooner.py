@@ -121,6 +121,8 @@ def hold(b):
     room.chest(-720.0, 112.0, yaw=90.0)
     room.barrel(-740.0, -120.0, height=85.0, radius=26.0)
     room.crate(-800.0, 60.0, size=50.0)
+    # Aft-port on the first deck below the weather deck; visual station only, not an interaction.
+    room.surgeon_table(-900.0, -50.0, length=130.0, width=60.0)
     for x, y in ((-300.0, 105.0), (300.0, -105.0), (-760.0, -75.0)):
         room.lantern(x, y, DECK_Z - HULL.deck_thick - 14)
     return room.lights

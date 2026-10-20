@@ -7,6 +7,7 @@ import math
 import unreal
 
 TIMBER_MATERIAL = '/Game/Elitewake/World/Ships/M_ShipTimber_v1'
+WINDOW_GLASS = 3  # hull material slot after timber, fabric and lantern glass
 
 
 def sub(a, b): return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
