@@ -217,7 +217,7 @@ only so you know where earlier world, cave and ship work lives.
   passed. Python syntax and `git diff --check` passed. Play results: `Saved/PickaxeFirstSwingPlayResult.json`,
   `Saved/CoreToolsPlayResult.json`, `Saved/WorkFeedbackPlayResult.json`.
 
-### T6. A better tortoise shell — OPEN
+### T6. A better tortoise shell — CLAIMED (ChatGPT, 2026-10-20)
 - **Why:** the tortoise's scutes read as stripes (`Saved/Screenshots/Animals`, `Docs/VERIFICATION.md` "Land
   animals"). The owner's photo shows a high dome of polygonal plates with dark seams and growth rings.
 - **Do:** in `Scripts/Setup/build_animals.py`, function `tortoise()`, replace the `shell()` colouring with a proper
