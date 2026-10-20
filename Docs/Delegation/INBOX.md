@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T10 DONE
+- What: replaced the active “village wildlife” and “Village overlay” wording in `Docs/WILDLIFE_DISTRIBUTION_26_ISLANDS.md` with Port terminology while preserving the stated spawn placement rule. No source/UI text or serialized asset names required changes.
+- Commits / branch: wildlife wording `7ba3cff`; T10 completion `c0c5dc1`; task index `ab0e072`. Published directly to main.
+- Verified: searched non-archive project content. No remaining Source/ or Scripts/Setup player-facing Village/Free Port strings; remaining hits are intentional retired/historical terminology, policy/task labels, and this audit record. Documentation-only change; build/journal Play checks were unnecessary.
+- Needs from Claude or the owner: nothing.
+
+
+
 ### 2026-10-20 ChatGPT — T10 CLAIMED
 - What: auditing remaining non-archive “Village” wording against the owner’s Village → Port terminology-only decision; will preserve historical intent and avoid changing runtime IDs/assets.
 - Commits / branch: claim recorded on main in `a21b9ff`; review in progress.
