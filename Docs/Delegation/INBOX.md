@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C6 hull-damage Play check DONE
+- What: updated the stale mount check for the two-cannon railing, added a PIE-only authority ship-spawn helper for a temporary Schooner target, and kept the shot and damage acceptance checks on the coastal map.
+- Commits / branch: `acbb898b7225227ed83f80c4603c1c1651b5f835` (`test: restore hull damage play check for rail cannons`) pushed to `main`.
+- Verified: UE 5.8.3 EWEditor build succeeded. The two-player listen-server/client check passed all 8 steps; the Schooner was struck on its planking, server/client health matched, and the client hole visual was 1.5 cm from the impact. Result: `Saved/HullDamagePlayResultC6.json`.
+- Needs from Claude or the owner: nothing for C6. Other ship interior/window and deck placement work remains open under C7.
+
 ### 2026-10-20 Codex — C6 hull-damage Play check CLAIMED
 - What: resuming the paused ship verification task; updating the acceptance script for the sloop's two-cannon railing and current `StarboardCannon1` hardpoint, then rerunning its listen-server/client check.
 - Commits / branch: claim on `main`; implementation and verification checkpoint to follow.

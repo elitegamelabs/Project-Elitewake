@@ -12,6 +12,10 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 - `verify_map_play.py` passed 8/8 two-player listen-server/client checkpoints on the current coastal map. `Saved/MapPlayResult.json` is fresh for this run; it covers the local overview, map label/player marker, pan/zoom, movement without recentering, close cleanup, inventory-to-map switch, and repeated input cleanup. Physical Xbox controller behavior, map readability at both zoom limits, hotbar/Y assignment, compass presentation and options persistence still need dedicated Play review.
 - Cave mining behavior is implemented as reusable support but production cave crystals/winter deposits are incomplete. Ship interior/windows, general deck placement, island-claim placement restrictions, and a visual helm-prompt review remain incomplete. See [the C7 partial report](REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md) for remaining work.
 
+## October 20 Codex C6 — hull damage Play check
+
+- UE 5.8.3 `EWEditor` build succeeded after adding a Play-only verification spawn helper. `verify_hull_damage_play.py` passes all 8 setup/acceptance steps in a two-player listen-server/client run on `Lvl_CoastalPlayground`: two-cannon railing and cannon fit, cannon operation, planking strike, matching server/client hull health, client shot-hole placement, and leaving the cannon. The coastal map only has a Sloop, so the check spawns a temporary Schooner from the existing ship definition; no map actor is saved. `Saved/HullDamagePlayResultC6.json` records the Schooner strike and 1.5 cm decal offset. Commit: `acbb898`.
+
 ## October 19 Codex pause checkpoint
 
 - UE 5.8.3 EWEditor build passed after the ship changes. The deprecated `GetMovementBase` warning is gone.

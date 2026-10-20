@@ -115,14 +115,13 @@ Claude and the owner.
   come later.
 - **Done when:** a Play check installs, swaps and removes a flag on the sloop on server and client; reported in INBOX.md.
 
-### C6. Bring `verify_hull_damage_play` up to date — CLAIMED (Codex, 2026-10-20 resumed)
+### C6. Bring `verify_hull_damage_play` up to date — DONE `acbb898` (Codex, 2026-10-20)
 - **Why:** since the sloop lost her hull gunports (`4870f1f`, owner, October 17) her cannons stand behind a two-cannon
   railing; the check still looks for the old `StarboardCannon` mount and times out at its first step.
 - **Do:** fit `DA_TestRailingTwoCannon` at `StarboardRailing` first and use `StarboardCannon1`, as
   `verify_cannon_fight_play.py` does (including its hold-again loop). Keep its three checks (planking struck, health
   falls by one shot on both machines, a hole drawn on the client).
-- **Done when:** it passes on the coastal map with a listen server plus client; reported in INBOX.md.
-- **Pause state:** new native hull-damage coverage passes. The required listen-server/client Play check remains open.
+- **Verified:** the two-player `verify_hull_damage_play.py` run passes on the coastal map. Because the saved map contains only the sloop, the check spawns a temporary Schooner from its existing definition on the listen server; it is not saved to the map. The client fits the two-cannon railing, installs and mans the first starboard cannon, strikes the Schooner's planking, and sees replicated health and a shot hole placed within 1.5 cm of impact. Result: `Saved/HullDamagePlayResultC6.json`; implementation commit `acbb898`.
 
 ## Earlier tasks that suit you (full text in [../DELEGATED_TASKS.md](../DELEGATED_TASKS.md); claim them there)
 
