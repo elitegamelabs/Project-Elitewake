@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T11 DONE
+- What: completed the player-facing metric-units audit. No imperial or unitless numeric distance display was found; raft pace is stated as 2.5 metres per second. No gameplay text needed changing.
+- Commits / branch: verification note `6e02b7e`; T11 completion recorded in `5f4c165`; task index `b6022ec`. Published directly to main.
+- Verified: static source review of widgets, Journal data/setup, and item-description setup; findings recorded in `Docs/VERIFICATION.md`. No Play check was needed because no gameplay/UI behavior changed. Runtime visual review remains unperformed.
+- Needs from Claude or the owner: nothing.
+
+
+
 ### 2026-10-20 ChatGPT — T11 CLAIMED
 - What: auditing player-facing text and UI for imperial or unlabelled distance units; will correct only confirmed displays and document findings.
 - Commits / branch: claim recorded on main in baacdab8; audit is now in progress.
