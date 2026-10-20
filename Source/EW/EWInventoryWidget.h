@@ -80,6 +80,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Inventory")
     int32 GetSelectedIndex() const { return SelectedIndex; }
     UFUNCTION(BlueprintPure, Category="Inventory")
+    UEWItemDefinition* GetSelectedItemDefinition() const;
+    UFUNCTION(BlueprintPure, Category="Inventory")
     bool IsShowingDetails() const { return bShowingDetails; }
 
 protected:
@@ -131,6 +133,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UButton> FoodActionButton;
     UFUNCTION()
     void AssignHotbarSlot(int32 SlotIndex);
+    void QuickAssignSelectedToHotbar();
     UFUNCTION()
     void RefreshHotbarAssignments();
     UPROPERTY(Transient)

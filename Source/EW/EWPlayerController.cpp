@@ -33,6 +33,7 @@
 #include "EWOptionsWidget.h"
 #include "EWSurvivorSave.h"
 #include "Engine/Engine.h"
+#include "Misc/ConfigCacheIni.h"
 #include "Kismet/GameplayStatics.h"
 #include "EWCharacter.h"
 #include "EWPickup.h"
@@ -59,11 +60,22 @@ void AEWPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
     if (ObjectiveComponent) ObjectiveComponent->ApplyCompletionRecipes();
+    if (auto* SurvivorCharacter = Cast<AEWCharacter>(InPawn)) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
 }
 
 void AEWPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+    if (GConfig)
+    {
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
+        MouseLookSensitivity = FMath::Clamp(MouseLookSensitivity, .1f, 3.f);
+        ControllerLookSensitivity = FMath::Clamp(ControllerLookSensitivity, .1f, 3.f);
+    }
+    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
     if (IsLocalPlayerController())
     {
         ObjectiveWidget = CreateWidget<UEWObjectiveWidget>(this, UEWObjectiveWidget::StaticClass());
@@ -101,6 +113,40 @@ void AEWPlayerController::BeginPlay()
 		}
 
 	}
+}
+
+void AEWPlayerController::SetUserBrightness(float Value)
+{
+    if (!IsLocalPlayerController()) return;
+    UserBrightness = FMath::Clamp(Value, -.5f, .5f);
+    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
+    if (GConfig)
+    {
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
+        GConfig->Flush(false, GGameUserSettingsIni);
+    }
+}
+
+void AEWPlayerController::SetMouseLookSensitivity(float Value)
+{
+    if (!IsLocalPlayerController()) return;
+    MouseLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
+    if (GConfig)
+    {
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
+        GConfig->Flush(false, GGameUserSettingsIni);
+    }
+}
+
+void AEWPlayerController::SetControllerLookSensitivity(float Value)
+{
+    if (!IsLocalPlayerController()) return;
+    ControllerLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
+    if (GConfig)
+    {
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        GConfig->Flush(false, GGameUserSettingsIni);
+    }
 }
 
 void AEWPlayerController::SetupInputComponent()
@@ -347,11 +393,12 @@ void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bB
 int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
 {
     static const FKey Numbers[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight};
-    static const FKey ControllerKeys[] = {EKeys::Gamepad_FaceButton_Bottom,EKeys::Gamepad_FaceButton_Right,
-        EKeys::Gamepad_FaceButton_Left,EKeys::Gamepad_FaceButton_Top,
-        EKeys::Gamepad_DPad_Up,EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,EKeys::Gamepad_DPad_Left};
+    static const FKey ControllerKeys[] = {EKeys::Gamepad_DPad_Left,EKeys::Gamepad_DPad_Up,
+        EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,
+        EKeys::Gamepad_FaceButton_Bottom,EKeys::Gamepad_FaceButton_Left,
+        EKeys::Gamepad_FaceButton_Right,EKeys::Gamepad_FaceButton_Top};
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
-        if (Key==Numbers[i] || (bControllerModifier && Key==ControllerKeys[i])) return i;
+        if (Key==Numbers[i] || (i < 4 && Key==ControllerKeys[i]) || (i >= 4 && bControllerModifier && Key==ControllerKeys[i])) return i;
     return INDEX_NONE;
 }
 
@@ -363,6 +410,26 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
+    if (bMapOpen)
+    {
+        // The map owns right-stick panning and trigger zoom while open, so those inputs
+        // cannot leak into gameplay actions such as attack or weapon selection.
+        if (Params.Key == EKeys::Gamepad_RightX || Params.Key == EKeys::Gamepad_RightY)
+        {
+            if (MapWidget)
+            {
+                MapWidget->SetPanAxis(Params.Key == EKeys::Gamepad_RightX, Params.AmountDepressed
+                    * (Params.Key == EKeys::Gamepad_RightX ? 1.f : -1.f));
+            }
+            return true;
+        }
+        if (Params.Key == EKeys::Gamepad_RightTriggerAxis || Params.Key == EKeys::Gamepad_LeftTriggerAxis)
+        {
+            if (MapWidget) MapWidget->SetZoomInput((Params.Key == EKeys::Gamepad_RightTriggerAxis ? 1.f : -1.f)
+                * FMath::Max(0.f, Params.AmountDepressed));
+            return true;
+        }
+    }
     if (Params.Key == EKeys::M)
     {
         if (Params.Event == IE_Pressed) SetMapOpen(!bMapOpen);
@@ -394,14 +461,17 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
     if (!InventoryWidget || !InventoryWidget->IsInViewport())
     {
         const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld);
-        if (Slot!=INDEX_NONE && Params.Event==IE_Pressed)
+        const AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
+        const bool bClimbDirection = Survivor && Survivor->IsOnLadder()
+            && (Params.Key == EKeys::Gamepad_DPad_Up || Params.Key == EKeys::Gamepad_DPad_Down);
+        if (Slot!=INDEX_NONE && !bClimbDirection && Params.Event==IE_Pressed)
         {
             // Consume the complete chord, including releases after LB is released, before Enhanced Input.
             SuppressedHotbarKeys.Add(Params.Key);
             RequestHotbarActivation(Slot);
             return true;
         }
-        if (Slot!=INDEX_NONE && Params.Event==IE_Repeat) return true;
+        if (Slot!=INDEX_NONE && !bClimbDirection && Params.Event==IE_Repeat) return true;
     }
     return Super::InputKey(Params);
 }
@@ -665,7 +735,19 @@ void AEWPlayerController::SetMapOpen(bool bOpen)
         if (MapWidget) MapWidget->AddToPlayerScreen(30);
     }
     else if (MapWidget) { MapWidget->RemoveFromParent(); MapWidget = nullptr; }
-    SetInputMode(FInputModeGameOnly()); SetShowMouseCursor(false);
+    if (bOpen && MapWidget)
+    {
+        FInputModeGameAndUI InputMode;
+        InputMode.SetWidgetToFocus(MapWidget->TakeWidget());
+        InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+        SetInputMode(InputMode);
+        SetShowMouseCursor(true);
+    }
+    else
+    {
+        SetInputMode(FInputModeGameOnly());
+        SetShowMouseCursor(false);
+    }
 }
 void AEWPlayerController::ServerSetMapOpen_Implementation(bool bOpen)
 {

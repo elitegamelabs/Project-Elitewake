@@ -54,9 +54,13 @@ private:
     UPROPERTY(Transient)
     TArray<TObjectPtr<UTextBlock>> Labels;
     UPROPERTY(Transient)
+    TArray<TObjectPtr<UTextBlock>> KeyHints;
+    UPROPERTY(Transient)
     TArray<TObjectPtr<UBorder>> Cells;
     UPROPERTY(Transient)
     TObjectPtr<UTextBlock> Status;
+    UPROPERTY(Transient)
+    TObjectPtr<UTextBlock> ModifierHint;
     TWeakObjectPtr<UEWHotbarComponent> PreviousHotbar;
     FString LastDisplay;
     float MessageRemaining = 0.f;

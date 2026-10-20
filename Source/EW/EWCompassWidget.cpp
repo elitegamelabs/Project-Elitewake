@@ -15,7 +15,8 @@ const FLinearColor CompassInk(.93f, .9f, .82f);           // bearings
 const FLinearColor CompassNorth(1.f, .55f, .35f);         // N stands out
 const FLinearColor CompassWind(.55f, .8f, 1.f);        // the wind, as the ship markers' working blue
 const FLinearColor CompassGood(.45f, 1.f, .45f);
-const FLinearColor CompassBacking(.02f, .03f, .04f, .5f);
+// The same compass strip location with a darker, more opaque plate for sea/sky contrast.
+const FLinearColor CompassBacking(.008f, .014f, .022f, .82f);
 
 float Bearing(float Yaw) { return FMath::Fmod(FMath::Fmod(Yaw, 360.f) + 360.f, 360.f); }
 

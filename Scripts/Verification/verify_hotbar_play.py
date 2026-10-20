@@ -18,6 +18,9 @@ def run_hotbar_verification():
     hat=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestHat')
     alternate=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestHatAlternate')
     wood=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
+    stone=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestStone')
+    torch=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestInnTorch')
+    assert torch, 'Y quick-assign needs the existing hand-tool fixture'
     assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'Use fresh PIE'
     assert all(hotbar.get_bound_item(i) is None for i in range(8))
     if other:assert other.get_inventory_component().add_item(alternate,1)==1
@@ -37,9 +40,9 @@ def run_hotbar_verification():
     def request(slot,item=None,activate=False):assert lib.send_verification_hotbar_request(controller,slot,item,activate)
     def ui():return next((u for u in unreal.WidgetLibrary.get_all_widgets_of_class(world,unreal.EWInventoryWidget,False) if u.get_owning_player()==controller and u.is_in_viewport()),None)
     def chord(name):event('Gamepad_LeftShoulder',True);key(name);event('Gamepad_LeftShoulder',False)
-    names=['Gamepad_FaceButton_Bottom','Gamepad_FaceButton_Right','Gamepad_FaceButton_Left','Gamepad_FaceButton_Top',
-           'Gamepad_DPad_Up','Gamepad_DPad_Right','Gamepad_DPad_Down','Gamepad_DPad_Left']
-    def check(label,bindings,selected,equipped,hat_count=1,alt_count=0,wood_count=251,opened=False):
+    names=['Gamepad_DPad_Left','Gamepad_DPad_Up','Gamepad_DPad_Right','Gamepad_DPad_Down',
+           'Gamepad_FaceButton_Bottom','Gamepad_FaceButton_Left','Gamepad_FaceButton_Right','Gamepad_FaceButton_Top']
+    def check(label,bindings,selected,equipped,hat_count=1,alt_count=0,wood_count=251,stone_count=0,torch_count=0,main_hand=None,opened=False):
         row={'label':label,'states':[]};report['checkpoints'].append(row)
         hud=next((u for u in unreal.WidgetLibrary.get_all_widgets_of_class(world,unreal.EWHotbarWidget,False) if u.get_owning_player()==controller and u.is_in_viewport()),None)
         assert hud,label+': local HUD missing'
@@ -48,14 +51,19 @@ def run_hotbar_verification():
             h=p.get_hotbar_component();inventory=p.get_inventory_component();equipment=p.get_equipment_component()
             state={'bindings':[h.get_bound_item(i).get_name() if h.get_bound_item(i) else None for i in range(8)],
                    'selected':h.get_selected_slot(),'hat':inventory.get_item_count(hat),'alternate':inventory.get_item_count(alternate),
-                   'wood':inventory.get_item_count(wood),'equipment':equipment.get_equipped_item(unreal.EWEquipmentSlot.HEAD).get_name() if equipment.get_equipped_item(unreal.EWEquipmentSlot.HEAD) else None,
+                   'wood':inventory.get_item_count(wood),'stone':inventory.get_item_count(stone),'torch':inventory.get_item_count(torch),
+                   'main_hand':equipment.get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND).get_name() if equipment.get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND) else None,
+                   'equipment':equipment.get_equipped_item(unreal.EWEquipmentSlot.HEAD).get_name() if equipment.get_equipped_item(unreal.EWEquipmentSlot.HEAD) else None,
                    'weight':p.get_survival_component().get_carried_weight()}
             row['states'].append(state)
             assert all(h.get_bound_item(i)==bindings.get(i) for i in range(8)),label+': binding replication differs'
             assert state['selected']==selected,label+': wrong selected slot'
             assert equipment.get_equipped_item(unreal.EWEquipmentSlot.HEAD)==equipped,label+': wrong equipped item'
             assert (state['hat'],state['alternate'],state['wood'])==(hat_count,alt_count,wood_count),label+': item quantities differ'
-            expected_weight=hat_count*2+alt_count*3+wood_count*.1+(equipped.get_editor_property('unit_weight') if equipped else 0)
+            assert state['stone']==stone_count,label+': stone quantity differs'
+            assert state['torch']==torch_count,label+': torch quantity differs'
+            assert state['main_hand']==(main_hand.get_name() if main_hand else None),label+': main-hand item differs'
+            expected_weight=hat_count*2+alt_count*3+wood_count*.1+stone_count*stone.get_editor_property('unit_weight')+torch_count*torch.get_editor_property('unit_weight')+(equipped.get_editor_property('unit_weight') if equipped else 0)+(main_hand.get_editor_property('unit_weight') if main_hand else 0)
             assert abs(state['weight']-expected_weight)<.02,label+': carried weight differs'
         if other:
             assert other.get_inventory_component().get_item_count(alternate)==1 and not other.get_equipment_component().get_equipment_entries(),label+': foreign player changed'
@@ -104,8 +112,21 @@ def run_hotbar_verification():
     steps.extend([(lambda:event('Gamepad_LeftShoulder',True),.1),(lambda:event('Gamepad_FaceButton_Bottom',True),.1),
                   (lambda:event('Gamepad_LeftShoulder',False),.1),(lambda:event('Gamepad_FaceButton_Bottom',False),1.5),
                   (lambda:world_chord_check(0),.1),
-                  (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:key('Gamepad_FaceButton_Right'),.4),
-                  (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=1),.1),
+                  (lambda:inv.add_item(torch,1),1.5),
+                  (lambda:key('Gamepad_FaceButton_Top'),.4),
+                  (lambda:select_inventory_item(torch),.2),
+                  (lambda:key('Gamepad_FaceButton_Top'),1.5),
+                  (lambda:check('Xbox Y quick-assigns selected item to nearest empty slot',
+                                {0:hat,1:alternate,2:torch,7:wood},2,alternate,hat_count=0,alt_count=1,wood_count=1,torch_count=1,opened=True),.1),
+                  (lambda:key('Gamepad_FaceButton_Right'),.4),
+                  (lambda:key('Gamepad_DPad_Right'),1.5),
+                  (lambda:check('Y-assigned item activates from slot 3',{0:hat,1:alternate,2:torch,7:wood},2,alternate,hat_count=0,alt_count=1,wood_count=1,torch_count=0,main_hand=torch),.1),
+                  (lambda:lib.send_verification_equipment_request(controller,None,unreal.EWEquipmentSlot.MAIN_HAND,True),1.5),
+                  (lambda:request(2,None),1.5),(lambda:inv.remove_item(torch,1),1.5),
+                  (lambda:request(1,alternate),1.5),
+                  (lambda:key('Gamepad_DPad_Right'),.4),
+                  (lambda:key('Gamepad_FaceButton_Right'),.4),
+                  (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},0,hat_count=0,alt_count=1,wood_count=1),.1),
                   # Closing UI recaptures the mouse; re-aim after any resulting cursor delta.
                   (position_for_pickup,2),
                   (lambda:key('Gamepad_FaceButton_Left'),1.5),
@@ -119,6 +140,12 @@ def run_hotbar_verification():
                   (lambda:key('Gamepad_FaceButton_Right'),.4)])
     def assert_jump():assert report['checkpoints'][-1]['falling'],'Normal A did not jump'
     def assert_flush():assert lib.flush_verification_input(controller),'Engine flush did not clear LB'
+    def select_inventory_item(item):
+        panel=ui();assert panel,'Y quick-assign needs the inventory open'
+        for _ in range(32):
+            if panel.get_selected_item_definition()==item:return
+            key('Down')
+        assert panel.get_selected_item_definition()==item,'Could not select quick-assign item'
     index=0;next_time=unreal.GameplayStatics.get_time_seconds(world)+1;handle=None
     def finish():
         if world in lib.get_play_worlds() and unreal.SystemLibrary.is_valid(controller):

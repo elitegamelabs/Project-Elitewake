@@ -436,6 +436,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	/** Applies the local player's persistent exposure adjustment to the survivor cameras. */
+	void ApplyUserBrightness(float ExposureBias);
 
 	/** Returns FirstPersonCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }

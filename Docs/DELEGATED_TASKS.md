@@ -296,6 +296,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   `StaticMeshActor` labelled `Port of the <Region>: plaza`; the site centre and waterfront bearing are also in
   `Scripts/Setup/world_layout.py` `PORTS`). Label them "Port" (names are still the owner's to set).
 - **October 20 owner addition:** replace "Surrounding Area" with the current island/region name; allow free pan and zoom without following or recentering on the player; keep the player marker visible; remove only the map's "Walking remains available" and "World continues" messages. Map implementation proceeds under C7.
+- **Codex, October 20:** source now derives an overview extent from the placed island-region actors, adds free pan/zoom and a player marker, and samples the current region label. Build passed; Play verification did not run in this session, so T9 remains partial. See `Docs/REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md`.
 - **Pause boundary:** do not edit Claude-owned `Source/EW/World/*`; ask for a field there if region actors do not provide sufficient map data.
 
 ### T10. "Village" becomes "Port" — OPEN

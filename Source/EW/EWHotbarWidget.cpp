@@ -1,5 +1,6 @@
 #include "EWHotbarWidget.h"
 #include "EWCharacter.h"
+#include "EWPlayerController.h"
 #include "Blueprint/WidgetTree.h"
 #include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/CanvasPanel.h"
@@ -54,6 +55,16 @@ void UEWHotbarWidget::BuildWidgetTree()
     auto* StatusSlot=Canvas->AddChildToCanvas(Status);
     StatusSlot->SetAnchors(FAnchors(.5f,1.f));StatusSlot->SetAlignment(FVector2D(.5f,1.f));
     StatusSlot->SetOffsets(FMargin(0,-112,608,52));
+    ModifierHint = WidgetTree->ConstructWidget<UTextBlock>();
+    ModifierHint->SetText(FText::FromString(TEXT("LB")));
+    ModifierHint->SetJustification(ETextJustify::Center);
+    Font.Size = 12; ModifierHint->SetFont(Font);
+    ModifierHint->SetColorAndOpacity(FLinearColor(.94f,.96f,1.f));
+    ModifierHint->SetShadowOffset(FVector2D(1,1));
+    ModifierHint->SetShadowColorAndOpacity(FLinearColor::Black);
+    auto* ModifierSlot = Canvas->AddChildToCanvas(ModifierHint);
+    ModifierSlot->SetAnchors(FAnchors(.5f,1.f)); ModifierSlot->SetAlignment(FVector2D(.5f,1.f));
+    ModifierSlot->SetOffsets(FMargin(36,-120,42,18));
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
     {
         auto* Box=WidgetTree->ConstructWidget<USizeBox>();Box->SetWidthOverride(72);Box->SetHeightOverride(76);
@@ -75,6 +86,7 @@ void UEWHotbarWidget::BuildWidgetTree()
         auto* Key=WidgetTree->ConstructWidget<UTextBlock>();Key->SetFont(Font);
         Key->SetShadowOffset(FVector2D(1,1));Key->SetShadowColorAndOpacity(FLinearColor::Black);
         Key->SetText(FText::AsNumber(i+1));CellContent->AddChildToCanvas(Key)->SetOffsets(FMargin(2,0,18,18));
+        KeyHints.Add(Key);
         auto* Quantity=WidgetTree->ConstructWidget<UTextBlock>();Quantity->SetFont(Font);Quantity->SetShadowOffset(FVector2D(1,1));Quantity->SetShadowColorAndOpacity(FLinearColor::Black);Quantity->SetJustification(ETextJustify::Right);
         CellContent->AddChildToCanvas(Quantity)->SetOffsets(FMargin(30,51,34,18));Quantities.Add(Quantity);
         auto* Selected=WidgetTree->ConstructWidget<UTextBlock>();Selected->SetFont(Font);
@@ -97,6 +109,8 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     if (Status) { Status->SetRenderTransformPivot(FVector2D(.5f,1.f));Status->SetRenderScale(FVector2D(ReadableScale)); }
 
     const auto* Pawn = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    const auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    const bool bController = Controller && Controller->UsesControllerPrompts();
     UEWHotbarComponent* Hotbar = Pawn ? Pawn->GetHotbarComponent() : nullptr;
     if (PreviousHotbar.Get() != Hotbar)
     {
@@ -112,10 +126,17 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Display += FString::Printf(TEXT("%d:%s:%d:%.4f;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0,Freshness);
     }
     Display += FString::FromInt(Hotbar ? Hotbar->GetSelectedSlot() : INDEX_NONE);
+    Display += bController ? TEXT(":PAD") : TEXT(":KEYBOARD");
     if (Display == LastDisplay) return;
     LastDisplay = Display;
+    static const FText GamepadHints[] = {
+        FText::FromString(TEXT("←")), FText::FromString(TEXT("↑")),
+        FText::FromString(TEXT("→")), FText::FromString(TEXT("↓")),
+        FText::FromString(TEXT("A")), FText::FromString(TEXT("X")),
+        FText::FromString(TEXT("B")), FText::FromString(TEXT("Y"))};
     for (int32 i=0; i<Labels.Num(); ++i)
     {
+        KeyHints[i]->SetText(bController ? GamepadHints[i] : FText::AsNumber(i+1));
         const auto* Item = Hotbar ? Hotbar->GetBoundItem(i) : nullptr;
         const int32 Quantity = Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0;
         const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
@@ -146,6 +167,7 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Cells[i]->SetToolTipText(Item ? Item->DisplayName : FText::FromString(TEXT("Empty slot")));
 
     }
+    if (ModifierHint) ModifierHint->SetVisibility(bController ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
 
 FText UEWHotbarWidget::ResultText(EEWHotbarResult Result)

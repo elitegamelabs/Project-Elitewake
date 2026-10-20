@@ -2,7 +2,14 @@
 
 What has been tested, how, and what the tests do not cover. A passing test proves only its own scope. A test fixture is not a finished feature.
 
-Last updated: October 19, 2026. The full dated log of every run, including earlier failures, is in [ARCHIVE/2026-10_VERIFICATION_LOG.md](ARCHIVE/2026-10_VERIFICATION_LOG.md).
+Last updated: October 20, 2026. The full dated log of every run, including earlier failures, is in [ARCHIVE/2026-10_VERIFICATION_LOG.md](ARCHIVE/2026-10_VERIFICATION_LOG.md).
+
+## October 20 Codex C7 — partial, local only
+
+- UE 5.8.3 `EWEditor` build succeeded after the final controller changes (map hint API, whole-world width, ladder D-pad priority, and LB+Y context). The focused native automation `Elitewake.Input.HotbarKeyboardAndControllerBindings` passed 1/1, covering number-key, D-pad, and LB+face-button slot routing and rejection of unmodified face buttons. Python syntax checks for the three updated Play scripts and `git diff --check` pass.
+- The world-map, Xbox hotbar/Y assignment, compass contrast and persistent options code are present in the working tree. This is source/build status only; do not treat those gameplay changes as Play-verified.
+- Play verification could not run in this session: Unreal Editor exited immediately when invoked from the available command session and no native-app launcher was exposed. No fresh result was written. The October 10 `Saved/MapPlayResult.json` is stale and was not counted. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
+- Cave crystals, ship interior/window/helm changes, general deck placement and island-claim placement restrictions were not changed; see [the C7 partial report](REPORTS/2026-10-20_C7_GAME_IMPROVEMENTS_PARTIAL.md) for ownership and dependency notes.
 
 ## October 19 Codex pause checkpoint
 

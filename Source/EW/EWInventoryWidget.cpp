@@ -650,13 +650,20 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     { if (!Event.IsRepeat()) PerformCraft(); return FReply::Handled(); }
     auto* OwnerController = Cast<AEWPlayerController>(GetOwningPlayer());
     if (OwnerController) OwnerController->RecordInputDevice(Key);
+    if (Key == EKeys::Gamepad_FaceButton_Top && !(OwnerController && OwnerController->IsHotbarModifierHeld()))
+    {
+        if (!Event.IsRepeat()) QuickAssignSelectedToHotbar();
+        return FReply::Handled();
+    }
     if (Key==EKeys::Gamepad_LeftShoulder)
     {
         if (OwnerController) OwnerController->SetHotbarModifierHeld(true);
         return FReply::Handled();
     }
-    const int32 HotbarSlotIndex = AEWPlayerController::HotbarSlotForKey(Key,OwnerController && OwnerController->IsHotbarModifierHeld());
-    if (HotbarSlotIndex!=INDEX_NONE)
+    const int32 HotbarSlotIndex = AEWPlayerController::HotbarSlotForKey(
+        Key, OwnerController && OwnerController->IsHotbarModifierHeld());
+    const bool bHotbarChord = OwnerController && OwnerController->IsHotbarModifierHeld();
+    if (HotbarSlotIndex!=INDEX_NONE && (bHotbarChord || !Key.IsGamepadKey()))
     {
         if (!Event.IsRepeat()) AssignHotbarSlot(HotbarSlotIndex);
         return FReply::Handled();
@@ -680,6 +687,40 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
         return FReply::Handled();
     }
     return FReply::Handled(); // UI owns input while open, including gameplay bindings.
+}
+
+void UEWInventoryWidget::QuickAssignSelectedToHotbar()
+{
+    UEWItemDefinition* Item = SelectedItem();
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    auto* Character = Controller ? Cast<AEWCharacter>(Controller->GetPawn()) : nullptr;
+    UEWHotbarComponent* Hotbar = Character ? Character->GetHotbarComponent() : nullptr;
+    if (!Item || !Controller || !Hotbar) return;
+
+    int32 ExistingSlot = INDEX_NONE;
+    int32 EmptySlot = INDEX_NONE;
+    const int32 Preferred = FMath::Clamp(Hotbar->GetSelectedSlot(), 0, UEWHotbarComponent::SlotCount - 1);
+    for (int32 Offset = 0; Offset < UEWHotbarComponent::SlotCount; ++Offset)
+    {
+        const int32 SlotIndex = (Preferred + Offset) % UEWHotbarComponent::SlotCount;
+        if (Hotbar->GetBoundItem(SlotIndex) == Item) { ExistingSlot = SlotIndex; break; }
+        if (EmptySlot == INDEX_NONE && !Hotbar->GetBoundItem(SlotIndex)) EmptySlot = SlotIndex;
+    }
+
+    if (ExistingSlot != INDEX_NONE)
+    {
+        ShowHotbarResult(EEWHotbarResult::Success);
+        return;
+    }
+    if (EmptySlot != INDEX_NONE)
+    {
+        Controller->RequestHotbarBinding(EmptySlot, Item);
+        ShowHotbarResult(EEWHotbarResult::Success);
+        return;
+    }
+
+    if (EquipmentResultText)
+        EquipmentResultText->SetText(NSLOCTEXT("Elitewake", "HotbarFullQuickAssign", "Hotbar full — clear a slot before assigning this item."));
 }
 
 FReply UEWInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry, const FKeyEvent& Event)
@@ -785,6 +826,11 @@ UEWItemDefinition* UEWInventoryWidget::SelectedItem() const
     if (DisplayedEntries.IsValidIndex(SelectedIndex)) return DisplayedEntries[SelectedIndex].ItemDefinition.Get();
     const int32 EquipmentIndex = SelectedIndex - DisplayedEntries.Num();
     return DisplayedEquipment.IsValidIndex(EquipmentIndex) ? DisplayedEquipment[EquipmentIndex].ItemDefinition.Get() : nullptr;
+}
+
+UEWItemDefinition* UEWInventoryWidget::GetSelectedItemDefinition() const
+{
+    return SelectedItem();
 }
 
 EEWEquipmentSlot UEWInventoryWidget::SelectedEquipmentSlot() const

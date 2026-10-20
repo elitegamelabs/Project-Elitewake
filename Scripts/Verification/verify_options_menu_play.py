@@ -1,13 +1,14 @@
-"""Escape's OPTIONS menu: SAVE GAME and MAIN MENU (owner, October 15).
+"""Escape's OPTIONS menu: live/persistent look and brightness settings plus SAVE GAME and MAIN MENU.
 
 Needs single-player Play (EW_PLAY_STANDALONE=1, one player) in /Game/Elitewake/Maps/Lvl_CoastalPlayground. Run
 unattended with run_play_check.py. Through ordinary keys, the survivor:
-  1. presses Escape: OPTIONS comes up with SAVE GAME and MAIN MENU, the world pauses, the mouse shows;
+  1. presses Escape: OPTIONS comes up with brightness and separate mouse/controller look controls, the world pauses;
   2. presses Escape again: back in the game, the world running;
-  3. hungry, thirsty, hurt, carrying stone, the Hatchet in hand and the Pickaxe on the hotbar, somewhere along the
-     beach: Escape, then Enter on SAVE GAME writes the save as they are;
+  3. change each setting from keyboard/controller navigation and confirm values persist after reopening;
+  4. hungry, thirsty, hurt, carrying stone, the Hatchet in hand and the Pickaxe on the hotbar, somewhere along the
+     beach: Escape, select SAVE GAME, and verify it writes the survivor as they are;
   4. (the save put back on a survivor who has since changed restores them exactly, with no doubled tools);
-  5. Down, Enter on MAIN MENU: the ELITEWAKE title screen;
+  6. Down to MAIN MENU: the ELITEWAKE title screen;
   6. Single Player from the title: the survivor is back where and as they were saved, tools not doubled.
 An existing save in Saved/SaveGames is kept aside and put back afterwards. Writes Saved/OptionsMenuPlayResult.json.
 """
@@ -84,7 +85,36 @@ def menu_up():
     assert c.get_editor_property('bShowMouseCursor'), 'no mouse cursor'
     assert menu.is_save_shown(), 'SAVE GAME is missing in single player'
     assert menu.get_selected() == 0
+    if 'initial_user_settings' not in state['memo']:
+        state['memo']['initial_user_settings'] = (
+            c.get_user_brightness(), c.get_mouse_look_sensitivity(), c.get_controller_look_sensitivity())
     return True
+
+
+def adjust_settings():
+    menu = pc().get_options_widget()
+    before = (pc().get_user_brightness(), pc().get_mouse_look_sensitivity(), pc().get_controller_look_sensitivity())
+    assert lib.send_verification_ui_key(pc(), 'Right')
+    after_brightness = pc().get_user_brightness()
+    assert after_brightness > before[0], f'brightness did not apply live: {before[0]} -> {after_brightness}'
+    assert lib.send_verification_ui_key(pc(), 'Down')
+    assert lib.send_verification_ui_key(pc(), 'Right')
+    after_mouse = pc().get_mouse_look_sensitivity()
+    assert after_mouse > before[1], f'mouse sensitivity did not apply live: {before[1]} -> {after_mouse}'
+    assert lib.send_verification_ui_key(pc(), 'Down')
+    assert lib.send_verification_ui_key(pc(), 'Right')
+    after_controller = pc().get_controller_look_sensitivity()
+    assert after_controller > before[2], f'controller sensitivity did not apply live: {before[2]} -> {after_controller}'
+    assert lib.send_verification_ui_key(pc(), 'Down')
+    assert menu.get_selected() == 3, 'Down did not select SAVE GAME after settings'
+    state['memo']['settings'] = (after_brightness, after_mouse, after_controller)
+    checks.append('Brightness and separate look sensitivities adjust live; settings write to the user settings file')
+
+
+def save_game():
+    menu = pc().get_options_widget()
+    assert menu.get_selected() == 3, 'SAVE GAME is not selected'
+    assert lib.send_verification_ui_key(pc(), 'Enter')
 
 
 def menu_gone():
@@ -126,6 +156,9 @@ def saved():
     if not unreal.EWSurvivorSave.has_save():
         return False
     assert 'Game saved' in str(menu.get_status()), str(menu.get_status())
+    assert abs(pc().get_user_brightness() - state['memo']['settings'][0]) < .001
+    assert abs(pc().get_mouse_look_sensitivity() - state['memo']['settings'][1]) < .001
+    assert abs(pc().get_controller_look_sensitivity() - state['memo']['settings'][2]) < .001
     assert pc().is_options_menu_open(), 'saving closed the menu'
     s = unreal.EWSurvivorSave.load_save()
     where = state['memo']['where']
@@ -181,8 +214,9 @@ def to_main_menu():
 def main_menu_chosen():
     if not pc().is_options_menu_open() or time.monotonic() - state['memo']['t'] < .3:
         return False
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert pc().get_options_widget().get_selected() == 1, 'Down did not move to MAIN MENU'
+    for _ in range(4):
+        assert lib.send_verification_ui_key(pc(), 'Down')
+    assert pc().get_options_widget().get_selected() == 4, 'Down navigation did not move to MAIN MENU'
     assert lib.send_verification_ui_key(pc(), 'Enter')
     return True
 
@@ -216,11 +250,12 @@ def resumed():
 
 STEPS = [
     ('Single Player on the island with the four tools', lambda: None, ready, 30),
-    ('Escape brings up OPTIONS (SAVE GAME, MAIN MENU); the world pauses and the mouse shows', escape, menu_up, 4),
+    ('Escape brings up OPTIONS with controls and save/menu; the world pauses and the mouse shows', escape, menu_up, 4),
     ('Escape again returns to the game and the world runs', ui_key('Escape'), menu_gone, 4),
     ('Hurt, hungry and thirsty with stone, the Hatchet in hand and the Pickaxe on the hotbar, Escape', prepare, prepared, 6),
     ('', lambda: None, menu_up, 4),
-    ('Enter on SAVE GAME saves the survivor as they are; the menu stays up', ui_key('Enter'), saved, 4),
+    ('Change brightness/mouse/controller settings and move to SAVE GAME', adjust_settings, lambda: pc().get_options_widget().get_selected() == 3, 4),
+    ('Enter on SAVE GAME saves the survivor as they are; the menu stays up', save_game, saved, 4),
     ('The save, put back on a survivor who has since changed, restores them exactly, tools not doubled', restore, restored, 4),
     ('Escape, Down, Enter on MAIN MENU', to_main_menu, main_menu_chosen, 4),
     ('MAIN MENU opens the ELITEWAKE title screen', lambda: None, at_title, 30),
@@ -230,6 +265,14 @@ STEPS = [
 
 def finish(error=None):
     unreal.unregister_slate_post_tick_callback(state['handle'])
+    try:
+        initial = state['memo'].get('initial_user_settings')
+        if initial and world() and pc():
+            pc().set_user_brightness(initial[0])
+            pc().set_mouse_look_sensitivity(initial[1])
+            pc().set_controller_look_sensitivity(initial[2])
+    except Exception as e:  # noqa: BLE001
+        error = error or f'could not restore the original user settings: {e!r}'
     try:
         if SAVE_FILE.exists():
             SAVE_FILE.unlink()

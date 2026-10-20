@@ -59,6 +59,13 @@ public:
     bool bSessionMenuOpen = false;
     /** Escape's OPTIONS menu. In single player it pauses the world. */
     UFUNCTION(BlueprintCallable, Category="Options") void SetOptionsMenuOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Options") float GetUserBrightness() const { return UserBrightness; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetUserBrightness(float Value);
+    UFUNCTION(BlueprintPure, Category="Options") float GetMouseLookSensitivity() const { return MouseLookSensitivity; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetMouseLookSensitivity(float Value);
+    UFUNCTION(BlueprintPure, Category="Options") float GetControllerLookSensitivity() const { return ControllerLookSensitivity; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetControllerLookSensitivity(float Value);
+    float GetActiveLookSensitivity() const { return bControllerPrompts ? ControllerLookSensitivity : MouseLookSensitivity; }
     UFUNCTION(BlueprintPure, Category="Options") bool IsOptionsMenuOpen() const { return bOptionsMenuOpen; }
     UFUNCTION(BlueprintPure, Category="Options") UEWOptionsWidget* GetOptionsWidget() const { return OptionsWidget; }
     UFUNCTION(Server, Reliable) void ServerSetOptionsMenuOpen(bool bOpen);
@@ -197,6 +204,9 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UEWShipMarkersWidget> ShipMarkersWidget;
     UPROPERTY(Transient) TObjectPtr<UEWCompassWidget> CompassWidget;
     bool bControllerPrompts = false;
+    float UserBrightness = 0.f;
+    float MouseLookSensitivity = 1.f;
+    float ControllerLookSensitivity = 1.f;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
