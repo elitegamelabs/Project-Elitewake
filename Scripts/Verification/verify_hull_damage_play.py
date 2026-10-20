@@ -11,19 +11,22 @@ is moved (server, Play only) to lie 40 m off the sloop's starboard side, and the
 Writes Saved/HullDamagePlayResult.json.
 """
 import json
+import os
 import time
 from pathlib import Path
 import unreal
 
 lib = unreal.EWEditorVerificationLibrary
-RESULT = Path(unreal.Paths.project_saved_dir(), 'HullDamagePlayResult.json')
-MOUNT = 'StarboardCannon'
+RESULT = Path(unreal.Paths.project_saved_dir(), os.environ.get('EW_PLAY_RESULT', 'HullDamagePlayResult.json'))
+MOUNT, RAILING = 'StarboardCannon1', 'StarboardRailing'
 SHOT_DAMAGE = 100.0   # AEWShip::RoundShotDamage
 worlds = lib.get_play_worlds()
 assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
 pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
-client = next(c for c in pcs if not c.has_authority())
-server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
+client = next((c for c in pcs if not c.has_authority()), None)
+server_pc = next((c for c in pcs if c.has_authority()), None)
+assert client and server_pc, f'Expected listen-server and client controllers; found {len(pcs)} controllers.'
+server_world = server_pc.get_world()
 client_world = worlds[pcs.index(client)]
 pawn = client.get_controlled_pawn()
 
@@ -33,21 +36,31 @@ def player_id(p):
 
 
 def ship_named(world, ship_id):
-    return next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
-                if str(s.get_editor_property('definition').get_editor_property('ship_id')) == ship_id)
+    ships = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
+    found = next((s for s in ships if s.get_editor_property('definition') and
+                  str(s.get_editor_property('definition').get_editor_property('ship_id')) == ship_id), None)
+    assert found, f'Missing {ship_id} ship fixture; available: ' + ', '.join(
+        str(s.get_editor_property('definition').get_editor_property('ship_id'))
+        for s in ships if s.get_editor_property('definition'))
+    return found
 
 
 def copy_in(world, actor):
-    return next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip) if s.get_name() == actor.get_name())
+    return next((s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
+                 if s.get_name() == actor.get_name()), None)
 
 
-owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
+owner = next((p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter)
+              if player_id(p) == player_id(pawn)), None)
+assert owner, 'Could not find the server-side character matching the client player id.'
 ship = ship_named(server_world, 'Sloop')
 peer = copy_in(client_world, ship)
-target = ship_named(server_world, 'Schooner')
-target_peer = copy_in(client_world, target)
-cannon, shot = (unreal.load_asset(f'/Game/Elitewake/Items/Testing/{n}') for n in ('DA_TestCannon', 'DA_TestRoundShot'))
-assert cannon and shot, 'Run Scripts/Setup/build_cannon.py first.'
+assert peer, 'The client has not received the sloop fixture.'
+target = None
+target_peer = None
+cannon, shot, railing = (unreal.load_asset(f'/Game/Elitewake/Items/Testing/{n}') for n in
+                         ('DA_TestCannon', 'DA_TestRoundShot', 'DA_TestRailingTwoCannon'))
+assert cannon and shot and railing, 'Run Scripts/Setup/build_cannon.py and build_railings.py first.'
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -80,9 +93,39 @@ def interact_at_mount():
 
 
 def grant():
+    global target
     assert not ship.get_installed_fittings(), 'the sloop must start bare'
     inventory = owner.get_inventory_component()
+    assert inventory.add_item(railing, 1) == 1
     assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3
+    definition = unreal.load_asset('/Game/Elitewake/Ships/DA_Ship_Schooner')
+    assert definition, 'Missing schooner ship definition.'
+    right, at = ship.get_actor_right_vector(), ship.get_actor_location()
+    target = lib.spawn_verification_ship(server_world, definition,
+        unreal.Vector(at.x + right.x * 4000, at.y + right.y * 4000, at.z), ship.get_actor_rotation())
+    assert target, 'Could not spawn the schooner test target on the listen server.'
+
+
+def fit_railing():
+    """Fit the two-cannon railing; retry the held interaction while the ship rolls."""
+    local = ship.get_actor_transform().inverse_transform_location(ship.get_mount_world_transform(MOUNT).translation)
+    spot = ship.get_actor_transform().transform_location(unreal.Vector(local.x + 60, local.y * .35, ship.get_deck_height() + 98))
+    for p in (owner, pawn):
+        assert p.teleport(spot, ship.get_actor_rotation())
+        p.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
+    state['aim'] = lambda: ship.get_mount_world_transform(RAILING).translation + unreal.Vector(0, 0, 40)
+    keep_aim()
+    assert lib.send_verification_interaction_request(client, peer)
+    state['memo']['railing_sent'] = time.monotonic()
+
+
+def railing_fitted():
+    if ship.is_mount_open(MOUNT) and peer.is_mount_open(MOUNT):
+        return True
+    if time.monotonic() - state['memo'].get('railing_sent', 0) > 1.5:
+        assert lib.send_verification_interaction_request(client, peer)
+        state['memo']['railing_sent'] = time.monotonic()
+    return False
 
 
 def fitted():
@@ -106,6 +149,11 @@ def place_target():
 
 
 def target_ready():
+    global target_peer
+    if target_peer is None:
+        target_peer = copy_in(client_world, target)
+    if target_peer is None:
+        return False
     m = state['memo']
     if time.monotonic() - m['t'] < 2.0 or not ship.is_cannon_loaded(MOUNT):
         return False
@@ -164,8 +212,9 @@ def left():
 
 
 STEPS = [
-    ('A cannon and 3 round shot, granted in Play only; the sloop starts bare', grant, lambda: True, 2),
-    ('The client fits the cannon at the starboard hardpoint', interact_at_mount, fitted, 6),
+    ('A two-cannon railing, cannon and 3 round shot are granted in Play only; the sloop starts bare', grant, lambda: True, 2),
+    ('The client fits the two-cannon railing at the starboard railing hardpoint', fit_railing, railing_fitted, 8),
+    ('The client fits the cannon at the first starboard hardpoint', interact_at_mount, fitted, 6),
     ('It mans the cannon', interact_at_mount, manned, 6),
     ("The cannon loads; the whole schooner lies 40 m off the sloop's starboard side; the gun is laid level at it", place_target, target_ready, 10),
     ("Left Mouse fires: the shot strikes the schooner's planking (not its hull box, not the sloop)", fire, struck, 6),

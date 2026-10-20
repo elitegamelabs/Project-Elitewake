@@ -10,6 +10,7 @@ class AEWPickup;
 class AEWInnTorchPickup;
 class AEWCharacter;
 class AEWShip;
+class UEWShipDefinition;
 class UEWCraftingRecipe;
 class AEWPlayerController;
 class UEWItemDefinition;
@@ -48,6 +49,9 @@ public:
     static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12,
         int32 PerStrike = 3, EEWPickaxeTier MinimumPickaxeTier = EEWPickaxeTier::None, bool bRespawnWhenDepleted = false,
         float RespawnSeconds = 3600.f, bool bRandomizeStock = false, int32 MinimumStock = 4, int32 MaximumStock = 8);
+    /** Play-only ship fixture. Definition is assigned before construction and only the authority may spawn it. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWShip* SpawnVerificationShip(UWorld* World, UEWShipDefinition* Definition, FVector Location, FRotator Rotation);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWHarvestTree* SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")

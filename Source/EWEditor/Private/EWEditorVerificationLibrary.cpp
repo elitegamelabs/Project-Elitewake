@@ -85,6 +85,19 @@ AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* Wor
     return Node;
 }
 
+AEWShip* UEWEditorVerificationLibrary::SpawnVerificationShip(UWorld* World, UEWShipDefinition* Definition, FVector Location, FRotator Rotation)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Definition)) return nullptr;
+    const FTransform Transform(Rotation, Location);
+    auto* Ship = World->SpawnActorDeferred<AEWShip>(AEWShip::StaticClass(), Transform, nullptr, nullptr,
+        ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+    if (!Ship) return nullptr;
+    Ship->Definition = Definition;
+    Ship->FinishSpawning(Transform);
+    Ship->ForceNetUpdate();
+    return Ship;
+}
+
 AEWHarvestTree* UEWEditorVerificationLibrary::SpawnVerificationHarvestTree(UWorld* World, FVector Location, UEWItemDefinition* Wood, UEWItemDefinition* Thatch)
 {
     if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
