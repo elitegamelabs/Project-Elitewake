@@ -32,7 +32,7 @@ Entry format:
 
 ### 2026-10-20 Codex — C7 ship interior/window audit PARTIAL
 - What: source audit found that Schooner/Brigantine raised-cabin window openings lacked dedicated panes; side openings used opaque timber, while the front bulkhead openings were open. Added source geometry for closed window-glass panes and a distinct glass material slot, plus a focused mesh rebuild script that does not modify maps or ship definitions and a 20-trace two-player acceptance script. No dedicated surgeon's table exists in the authored first-below-weather-deck aft-port positions; ordinary captain's tables do not satisfy that requirement.
-- Commits / branch: source and report commit to follow on `main`.
+- Commits / branch: `46d37eb` (`feat: define sealed glass panes for ship cabins`) on `main`; report/hash follow-up to follow.
 - Verified: Python syntax and `git diff --check` pass. Unreal 5.8.3 generated/saved `M_ShipWindowGlass_v1`, then failed saving the modified `SM_SchoonerHull_v1.uasset` with Win32 Error Code 32 (file in use); no build result JSON was produced, and no Play check was run. Hull-mesh integration and watertight behavior remain unverified.
 - Needs from Claude or the owner: release the lock on the Schooner hull asset, then rerun `Scripts/Setup/rebuild_sealed_ship_windows.py` and `Scripts/Verification/verify_ship_windows_play.py`; separately add the dedicated surgeon station when the shared ship interior work continues.
 
