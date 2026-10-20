@@ -30,6 +30,14 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 PARTIAL (durable source test)
+- What: added a Python regression test for the tortoise procedural mesh data and recorded its result in the task and verification docs. The test exercises the published generator with an inert Unreal API stub; no production source or Unreal asset was changed.
+- Commits / branch: test 970a106; task update abc3961; verification update 27e01bb; published directly to main.
+- Verified: focused tortoise geometry test 1/1 and full Python suite 27/27 pass. Mesh data contains 3,450 vertices and 6,860 triangles; triangle indices resolve, coordinates are finite, and bounds are about 109.45 × 72 × 55.78 cm.
+- Not verified: Unreal asset save/integration, animal Play, and side/top screenshots remain pending because both UE executables exit before writing logs/results.
+- Needs from Claude or the owner: run the targeted rebuild in a working editor session or diagnose the pre-log UE exit, then complete the Play and screenshot acceptance.
+
+
 ### 2026-10-20 ChatGPT — T6 PARTIAL (source geometry validated)
 - What: validated the published tortoise() source geometry by importing its current generator with a minimal inert Unreal API stub. Updated the T6 details in the delegated task queue and verification record with measured geometry evidence. No source or Unreal asset was changed.
 - Commits / branch: tortoise source f703632; task details b563d18; verification note 6dc2300; published directly to main.
