@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+
+### 2026-10-20 Codex — C7 cave-resource implementation CLAIMED
+- What: implementing the owner-approved crystal and coal rules in the existing mining and world setup systems, preserving current resource IDs and unrelated terrain.
+- Commits / branch: task claim published to main in `17e2f5978ed91f7facec39145590070162f62c54`; implementation checkpoint to follow.
+- Verified: read the shared task header, confirmed Claude released all reservations, checked the Oct. 18 resource rules and current editor lock. Unreal editor lock is clear.
+- Needs from Claude or the owner: nothing for the approved resource behaviors; any missing existing resource ID or tool tier will be recorded as a blocker rather than invented.
+
 ### 2026-10-20 Codex — C7 helm prompt cleanup
 - What: retained the hold-to-leave-helm interaction and removed W/S sail, A/D rudder and Shift+A/D trim instructions from the sailing-ship prompt. Existing helm input and sailing behavior are preserved.
 - Verified: UE 5.8.3 build succeeded; `Elitewake.Ships.SailingAuthority` passed 1/1 with prompt-content and hold-interaction assertions. A live on-screen review remains pending. The editor lock is clear.
