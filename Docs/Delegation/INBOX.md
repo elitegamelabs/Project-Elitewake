@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C7 ship interior/window audit CLAIMED
+- What: checking the authored ship builders and definitions for window openings/water sealing and current interior furnishings, while preserving the surgeon's table. Any change will be limited to a concrete gap confirmed by the audit.
+- Commits / branch: claim on `main`; implementation and verification checkpoint to follow.
+- Verified: read the C7 acceptance summary and latest ship authority; the existing C6 coastal hull Play test is complete. Unreal Editor lock is clear.
+- Needs from Claude or the owner: no design decision is required for the audit; any unspecified room use or furnishing stays undecided.
+
 ### 2026-10-20 Codex — C6 hull-damage Play check DONE
 - What: updated the stale mount check for the two-cannon railing, added a PIE-only authority ship-spawn helper for a temporary Schooner target, and kept the shot and damage acceptance checks on the coastal map.
 - Commits / branch: `acbb898b7225227ed83f80c4603c1c1651b5f835` (`test: restore hull damage play check for rail cannons`) pushed to `main`.
