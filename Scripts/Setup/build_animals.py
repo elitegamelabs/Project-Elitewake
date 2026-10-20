@@ -278,31 +278,54 @@ def tortoise():
     b = Builder()
     tan, seam, plastron, skin = (.28, .2, .1), (.025, .02, .012), (.34, .29, .17), (.09, .08, .06)
 
+    def plate_at(q):
+        # The shell is lofted along X. Give each anatomical band its own count along that axis.
+        across = math.atan2(q[1], max(q[2] - 12, .1)) / (math.pi / 2)
+        side = 1 if across >= 0 else -1
+        a = abs(across)
+        if a < .30:
+            row, count, centre, half = 0, 5, 0.0, .30
+        elif a < .76:
+            row, count, centre, half = 1, 4, .53, .23
+        elif a < 1.22:
+            row, count, centre, half = 2, 11, .99, .23
+        else:
+            return None
+        u = min(count - 1e-6, max(0.0, (q[0] + 40) / 80 * count))
+        index = int(u)
+        along = (u - index - .5) * 2
+        across_local = (a - centre) / half
+        radial = min(1.0, math.sqrt((along * along + across_local * across_local) * .5))
+        return row, count, index, along, across_local, radial, side
+
     def shell(q, n):
         if n[2] < -.45:
             return plastron
-        # Scutes: a band of plates down the spine, rows of plates on the flanks and a rim of marginals.
-        ang = math.atan2(q[1], max(q[2] - 12, .1))
-        across = ang / (math.pi / 2)
-        row = 0 if abs(across) < .3 else (1 if abs(across) < .75 else 2)
-        cells = 4 if row < 2 else 9
-        u = (q[0] + 38) / 76 * cells
-        edge = min(u - math.floor(u), math.ceil(u) - u)
-        bands = [.3, .75]
-        dist_row = min([abs(abs(across) - v) for v in bands])
-        rings = .5 + .5 * math.sin((min(edge, dist_row * 3) * 18))
-        c = mix(tan, mix(tan, seam, .5), rings * .35)
-        rnd = random.Random(int(math.floor(u)) * 7 + row * 31 + (1 if q[1] > 0 else 0))
-        c = mix(c, (.42, .34, .2), rnd.uniform(0, .35))
-        if edge < .07 or dist_row < .025:
+        plate = plate_at(q)
+        if not plate:
+            return tan
+        row, _, index, along, across_local, radial, side = plate
+        # A repeatable but subtle tone shift keeps neighbouring plates distinct.
+        rnd = random.Random(row * 1000 + side * 100 + index)
+        base = mix(tan, (.42, .34, .2), rnd.uniform(.08, .36))
+        rings = .5 + .5 * math.cos(radial * math.pi * 4)
+        c = mix(base, mix(base, (.62, .49, .31), .42), rings * .24)
+        # Dark seams divide every plate and the three shell bands.
+        if abs(along) > .92 or abs(across_local) > .91:
             c = seam
         return c
 
-    def flatten(q, n, k):
-        return -max(0.0, 12.5 - (q[2])) if n[2] < 0 else 0.0
+    def shell_shape(q, n, k):
+        flatten = -max(0.0, 12.5 - q[2]) if n[2] < 0 else 0.0
+        plate = plate_at(q)
+        if not plate or n[2] < .15:
+            return flatten
+        radial = plate[5]
+        # Lift the centre of each scute slightly, leaving the polygonal seam visible around its rim.
+        return flatten + 1.1 * max(0.0, 1.0 - radial * radial)
 
     body(b, [(40, 0, 27, 8, 5), (34, 0, 27, 25, 16), (20, 0, 27, 33, 24), (0, 0, 27, 36, 27), (-20, 0, 27, 33, 24),
-             (-34, 0, 27, 25, 16), (-40, 0, 27, 8, 5)], shell, BODY, sides=28, shape=flatten)
+             (-34, 0, 27, 25, 16), (-40, 0, 27, 8, 5)], shell, BODY, sides=56, shape=shell_shape, steps=8)
     neck = [(28, 0, 22), (40, 0, 24), (50, 0, 29), (55, 0, 31)]
     path, _ = stations([(x, y, z, 0, 0) for x, y, z in neck], 3)
     tube(b, path, lambda k: 6.0 - 1.5 * k / len(path), lambda q, n, k: mix(skin, (.2, .17, .12), max(0, n[2])), HEAD,
@@ -315,8 +338,6 @@ def tortoise():
         limb(b, [(x, 22 * y, 21), (x + 3, 27 * y, 10), (x + 3, 28 * y, 0)], 8.5 if x > 0 else 9.5, 7.0, leg, part, 21)
     body(b, [(-36, 0, 17, 3, 3), (-42, 0, 14, 1, 1)], lambda q, n: skin, TAIL, lambda q, k: .5, 8, steps=1)
     return b
-
-
 def squirrel_monkey():
     b = Builder()
     olive, grey, orange, cream, white, black = (.16, .15, .07), (.2, .2, .17), (.6, .3, .04), (.55, .5, .4), (.75, .72, .66), (.03, .03, .03)
