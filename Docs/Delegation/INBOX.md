@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C-WILDLIFE40 CLAIMED (audit stage)
+- What: beginning the required registry, placement, levels, and per-island distribution audit against the now-tested 40-island source layout. First pass is read-only and will identify which existing species can be placed additively and which requested species lack production assets.
+- Commits / branch: claim commit on `main` before any wildlife code changes.
+- Verified: C-WORLD40 source baseline was committed and pushed (`26ff380`, handoff `6a0760d`); current editor processes remain active, so no Unreal run is planned.
+- Needs from Claude or the owner: no decision requested for the audit. No animal asset IDs, production spawn changes, or new behavior will be inferred from reference images alone.
+
 ### 2026-10-20 Codex — C-WORLD40 PARTIAL
 - What: expanded the deterministic source layout from 26 to 40 islands (eight per region) by appending fourteen stable island keys. Kept every original layout record unchanged and pinned each Port to its original island key. Audited setup/verification consumers and added distinct terrain plans for new non-Swamp islands while preserving all existing terrain-plan assignments; expanded seabed channel acceptance to inspect all 40 islands.
 - Commits / branch: `26ff380` (`feat: expand procedural world to forty islands`) on `main`; initial claim is `b582dee`.
