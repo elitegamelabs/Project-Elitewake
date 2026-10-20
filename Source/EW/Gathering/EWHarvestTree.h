@@ -14,6 +14,7 @@ class EW_API AEWHarvestTree : public AEWStation
     GENERATED_BODY()
 public:
     AEWHarvestTree();
+    virtual void Tick(float DeltaSeconds) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Harvest") TObjectPtr<UEWItemDefinition> Wood;
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Harvest") TObjectPtr<UEWItemDefinition> Thatch;
@@ -25,8 +26,19 @@ public:
     UFUNCTION(BlueprintPure, Category="Harvest") bool CanAccessSource(AEWCharacter* Survivor) const;
     /** Authority-only native entry; validates aim, equipment and permissions again. */
     int32 TryHarvest(AEWCharacter* Survivor);
+    /** Authority-only environmental knockdown. The stump pivot stays at the ground while the tree tips over. */
+    UFUNCTION(BlueprintCallable, Category="Harvest") bool Fell(FVector Direction);
+    UFUNCTION(BlueprintPure, Category="Harvest") bool IsFelled() const { return bFelled; }
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest|Tuning", meta=(ClampMin="0.1")) float FallDuration = 2.f;
+    virtual void PlayHitShake(const FVector& Direction, float Degrees) override;
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override { return false; }
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override { return false; }
 private:
     bool bHarvesting = false;
+    UPROPERTY(ReplicatedUsing=OnRep_Felled, BlueprintReadOnly, Category="Harvest", meta=(AllowPrivateAccess="true")) bool bFelled = false;
+    FQuat FallStartRotation = FQuat::Identity;
+    FQuat FallTargetRotation = FQuat::Identity;
+    float FallElapsed = 0.f;
+    UFUNCTION() void OnRep_Felled();
+    void ConfigureFelledCollision();
 };

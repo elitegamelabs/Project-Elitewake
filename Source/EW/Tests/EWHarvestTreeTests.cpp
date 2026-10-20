@@ -5,6 +5,7 @@
 #include "EWEquipmentComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "Engine/Engine.h"
 #include "GameFramework/PlayerController.h"
@@ -48,6 +49,26 @@ bool FEWHarvestTreeTest::RunTest(const FString& Parameters)
     while(!Tree->IsActorBeingDestroyed()) Tree->TryHarvest(Pawn);
     TestEqual(TEXT("All remaining wood conserved"),Inventory->GetItemCount(Wood),8); TestEqual(TEXT("All remaining thatch conserved"),Inventory->GetItemCount(Thatch),3);
     TestEqual(TEXT("Destroyed tree cannot replay"),Tree->TryHarvest(Pawn),0);
+
+    auto* FelledTree=World->SpawnActor<AEWHarvestTree>(FVector(1000,0,0),FRotator::ZeroRotator,Spawn);
+    FelledTree->Wood=Wood; FelledTree->Thatch=Thatch; FelledTree->WoodRemaining=7; FelledTree->ThatchRemaining=2;
+    FelledTree->BlockerRadius=52.f; FelledTree->BlockerHalfHeight=220.f;
+    FelledTree->OnConstruction(FTransform(FRotator::ZeroRotator,FelledTree->GetActorLocation()));
+    TestTrue(TEXT("Configured standing tree blocks movement"),FelledTree->Blocker->GetCollisionEnabled()==ECollisionEnabled::QueryAndPhysics);
+    TestTrue(TEXT("Authority can fell toward a horizontal direction"),FelledTree->Fell(FVector::ForwardVector));
+    TestTrue(TEXT("Felled state is exposed for replication"),FelledTree->IsFelled());
+    TestTrue(TEXT("Actor movement replication enabled on fall"),FelledTree->IsReplicatingMovement());
+    TestEqual(TEXT("Felling preserves remaining wood"),FelledTree->WoodRemaining,7);
+    TestEqual(TEXT("Felling preserves remaining thatch"),FelledTree->ThatchRemaining,2);
+    TestFalse(TEXT("Second fall cannot restart the fall"),FelledTree->Fell(FVector::RightVector));
+    FelledTree->Tick(FelledTree->FallDuration*.5f);
+    TestTrue(TEXT("Tree rotates progressively while falling"),FelledTree->GetActorUpVector().X>.2f && FelledTree->GetActorUpVector().X<.99f);
+    FelledTree->Tick(FelledTree->FallDuration);
+    TestTrue(TEXT("Tree settles horizontally in the requested direction"),FVector::DotProduct(FelledTree->GetActorUpVector(),FVector::ForwardVector)>.99f);
+    TestTrue(TEXT("Blocker turns with the fallen trunk"),FVector::DotProduct(FelledTree->Blocker->GetUpVector(),FVector::ForwardVector)>.99f);
+    TestTrue(TEXT("Fallen trunk remains solid"),FelledTree->Blocker->GetCollisionEnabled()==ECollisionEnabled::QueryAndPhysics);
+    TestEqual(TEXT("Repeated fall leaves wood unchanged"),FelledTree->WoodRemaining,7);
+    TestEqual(TEXT("Repeated fall leaves thatch unchanged"),FelledTree->ThatchRemaining,2);
     GEngine->DestroyWorldContext(World); World->DestroyWorld(false); return true;
 }
 #endif

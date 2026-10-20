@@ -37,7 +37,7 @@ public:
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override;
     virtual void Tick(float DeltaSeconds) override;
     /** Every machine, cosmetic: shakes from a blow coming from Direction, by Degrees at first, dying away. */
-    void PlayHitShake(const FVector& Direction, float Degrees);
+    virtual void PlayHitShake(const FVector& Direction, float Degrees);
     UFUNCTION(BlueprintPure, Category="Fixture") bool IsShaking() const { return ShakeSeconds > 0.f; }
 private:
     float ShakeSeconds = 0.f;

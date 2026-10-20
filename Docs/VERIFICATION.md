@@ -16,6 +16,12 @@ Last updated: October 20, 2026. The full dated log of every run, including earli
 - `python -m unittest Scripts.Tests.test_wildlife_distribution -v` passes **3/3**; the full Python suite passes **26/26**. Python compilation and whitespace checks pass. These tests cover pure placement target/deficit logic, not Unreal actors or mesh integration.
 - The candidate distribution includes many species without production definitions. Do not spawn them from concept art alone. The full world rebuild still runs `build_fish.py`, which destroys and recreates all fish; marine actor preservation and any aquatic placement changes remain open. No UE rebuild, Play, save, or multiplayer check is claimed.
 
+## October 20 Codex C1 — felled tree source partial
+
+- Added a server-only one-shot `AEWHarvestTree::Fell(Direction)` and a replicated felled flag. The server interpolates the actor rotation from its ground pivot, enables movement replication, and leaves the existing Wood/Thatch stock on the actor. The attached collision capsule is reoriented and extended along the trunk; clients configure it from the replicated state, including late joiners. Hatchet harvesting still uses the existing guarded stock transaction.
+- Added felled-state assertions to `Elitewake.Gathering.HatchetTree` and created `Scripts/Verification/verify_felled_tree_play.py` for a listen-server/client check of replication, solid log collision, and the existing 3 Wood/1 Thatch harvesting until depletion.
+- Not verified yet: the Python suite and source checks pass, but UE compilation stopped after the installed accelerator repeatedly failed to create its session directory under `C:\ProgramData\Epic\UnrealBuildAccelerator`; a `-NoUBA` retry had the same failure. No native test or Play check ran. The 2-second `FallDuration` is a working tuning default only; final duration and integration with elephant attacks remain open. Do not claim the behavior is compiled or runtime-verified.
+
 ## October 20 Codex C7 — partial
 
 - UE 5.8.3 `EWEditor` build succeeded after the controller, helm prompt, and mining changes. Focused native automation passed 1/1 for `Elitewake.Input.HotbarKeyboardAndControllerBindings` (number keys, D-pad, LB+face buttons and unmodified face-button rejection), and 1/1 for `Elitewake.Ships.SailingAuthority` (concise helm prompt, hold-to-leave interaction and sailing authority). Python syntax checks for the updated Play scripts and whitespace checks pass.
