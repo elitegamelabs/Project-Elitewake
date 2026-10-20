@@ -142,7 +142,7 @@ Claude and the owner.
 | T27 | Catalogue the new oak and ash leaf art | DONE 6966de2 |
 | T10 | "Village" becomes "Port" | DONE c0c5dc1 |
 | T11 | Metric units audit | DONE 5f4c165 |
-| T6 | A better tortoise shell | OPEN |
+| T6 | A better tortoise shell | CLAIMED (ChatGPT, 2026-10-20) |
 
 Suggested order: G8 (the owner is waiting on the sea floor), G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.
 
