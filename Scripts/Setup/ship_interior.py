@@ -13,7 +13,7 @@ import unreal
 from ship_geometry import material_builder
 
 FOLDER = '/Game/Elitewake/World/Ships'
-TIMBER, FABRIC, GLASS = 0, 1, 2
+TIMBER, FABRIC, GLASS, WINDOW_GLASS = 0, 1, 2, 3
 LINEN, RED_RUG, BLUE_RUG = .8, .15, .45      # vertex tones FABRIC reads
 
 
@@ -52,9 +52,27 @@ def glass_material():
     return material
 
 
+def window_material():
+    """A restrained, translucent blue-grey pane; collision remains part of the hull mesh."""
+    mel = unreal.MaterialEditingLibrary
+    material, node, _ = material_builder(f'{FOLDER}/M_ShipWindowGlass_v1')
+    material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_TRANSLUCENT)
+    colour = node(unreal.MaterialExpressionConstant3Vector, constant=unreal.LinearColor(.24, .34, .38, 1))
+    opacity = node(unreal.MaterialExpressionConstant, r=.28)
+    roughness = node(unreal.MaterialExpressionConstant, r=.16)
+    specular = node(unreal.MaterialExpressionConstant, r=.72)
+    assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(opacity, '', unreal.MaterialProperty.MP_OPACITY)
+    assert mel.connect_material_property(roughness, '', unreal.MaterialProperty.MP_ROUGHNESS)
+    assert mel.connect_material_property(specular, '', unreal.MaterialProperty.MP_SPECULAR)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
 def materials(timber):
-    """The three slots for a hull with furnished rooms."""
-    return [timber, fabric_material(), glass_material()]
+    """Stable material slots: timber, fabric, lantern glow and separate hull-window glass."""
+    return [timber, fabric_material(), glass_material(), window_material()]
 
 
 def _rot(dx, dy, yaw):

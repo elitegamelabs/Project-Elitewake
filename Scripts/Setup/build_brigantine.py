@@ -28,6 +28,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 from ship_hull import Hull, tar_rope  # noqa: E402
 from ship_gunports import cover_meshes, gunport  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, ensign_staff, flag_mount, masthead_staff  # noqa: E402
+from ship_interior import materials as interior_materials  # noqa: E402
 
 FOLDER = '/Game/Elitewake/World/Ships'
 MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
@@ -264,7 +265,7 @@ def main():
     timber = make_timber_material()
     sails = fittings.cloth_materials()
     b = hull_mesh()
-    hull = write_static_mesh(b, f'{FOLDER}/SM_BrigantineHull_v1', [timber], UV_TILE)
+    hull = write_static_mesh(b, f'{FOLDER}/SM_BrigantineHull_v1', interior_materials(timber), UV_TILE)
     rig = write_static_mesh(rigging(), f'{FOLDER}/SM_BrigantineRigging_v1', [timber], UV_TILE, collision=False)
     looks = sail_looks(timber, sails)
     large_sail_item()
