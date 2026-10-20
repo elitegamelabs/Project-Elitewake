@@ -45,7 +45,8 @@ def tick(delta):
     try:
         ui = next((x for x in unreal.WidgetLibrary.get_all_widgets_of_class(cw, unreal.EWMapWidget, False)
                    if x.get_owning_player() == c and x.is_in_viewport()), None)
-        assert ui, 'local world-map widget missing'
+        if phase not in (4, 6):
+            assert ui, 'local world-map widget missing'
         if phase == 0:
             assert c.is_map_open() and server_pc.is_map_open() and not host.is_map_open()
             assert ui.has_map_capture()

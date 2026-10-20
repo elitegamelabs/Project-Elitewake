@@ -6,7 +6,7 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 
 ## Implemented in source
 
-- The map now builds an overview center and fit width from the placed `AEWClimateRegion` actors, updates the title from the survivor's sampled region, overlays a player marker, supports mouse drag/wheel and right-stick/trigger navigation, and does not recenter when the survivor moves. The overview maximum was raised to fit the five-region layout. The unwanted map-only status phrases were removed while movement and world ticking remain allowed. This remains a live scene capture; clear water/land presentation and complete island visibility need in-game review.
+- The map now builds an overview center and fit width from the placed `AEWClimateRegion` actors, updates the title from the survivor's sampled region, overlays a player marker, supports mouse drag/wheel and right-stick/trigger navigation, and does not recenter when the survivor moves. The overview maximum was raised to fit the five-region layout. The unwanted map-only status phrases were removed while movement and world ticking remain allowed. The map lifecycle and pan/zoom controls passed a two-player Play check; clear water/land presentation, readability at both zoom bounds, and complete island visibility still need a visual review.
 - The hotbar maps D-pad Left/Up/Right/Down to slots 1–4, and LB+A/X/B/Y to slots 5–8. Controller glyphs and the LB label above slot 5 are shown when the controller is the active input device; number keys remain supported.
 - D-pad Up/Down continues to reach the existing ladder-climb input while the survivor is on a ladder. In inventory, Y quick-assigns only when LB is not held, preserving LB+Y as slot 8.
 - Pressing Y with an inventory item selected requests a binding in the nearest empty hotbar slot, starting at the currently selected slot. It leaves existing bindings untouched when full or already assigned.
@@ -33,8 +33,8 @@ Scope source: `Docs/Delegation/CODEX.md` C7 and the owner's pasted 12-item task 
 - Added `Elitewake.Input.HotbarKeyboardAndControllerBindings`; Unreal native automation **passed 1/1**. It covers number keys 1–8, D-pad slots 1–4, LB+face-button slots 5–8, and rejects face-button shortcuts without LB.
 - Python syntax checks for `verify_map_play.py`, `verify_hotbar_play.py`, and `verify_options_menu_play.py`: **passed**.
 - `git diff --check`: **passed**.
-- Cave mining Play check passed. Separate C7 Play checks for the map, controller hotbar/Y assignment, compass presentation, and options persistence still have no fresh result in this session. The October 10 `Saved/MapPlayResult.json` is stale and was not counted. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
-- Physical Xbox controller, visual map review, map screenshots at both zoom limits, and multiplayer placement/claim acceptance: **not verified**.
+- `verify_map_play.py` passed 8/8 two-player listen-server/client checks; result: `Saved/MapPlayResult.json`. The mining lifecycle Play check also passed for its test fixture as described in `Docs/VERIFICATION.md`. Controller hotbar/Y assignment, compass presentation, options persistence, and visual map review still need dedicated Play review. The native hotbar test covers mapping logic only; it does not verify physical controller input or in-world behavior.
+- Physical Xbox controller, visual map review at both zoom limits, and multiplayer placement/claim acceptance: **not verified**.
 
 ## Working-tree notes
 

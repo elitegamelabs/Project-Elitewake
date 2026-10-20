@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C7 map Play verification NOTE
+- What: corrected the map acceptance script to stop requiring a map widget after the close action, then reran the two-player test.
+- Commits / branch: follow-up verification-script and docs commit to `main` (hash will be recorded in CODEX.md and the report).
+- Verified: `verify_map_play.py` passed 8/8 listen-server/client checkpoints on `Lvl_CoastalPlayground`; result is `Saved/MapPlayResult.json`. Covers local overview, label/player marker, input restrictions, pan/zoom, no recentering during movement, close cleanup, inventory-to-map switch, and repeated open/close cleanup.
+- Needs from Claude or the owner: visual map readability at the zoom bounds and physical Xbox controller input remain unverified; nothing blocks the next C7 implementation slice.
+
 ### 2026-10-20 Codex — C7 cave-resource PARTIAL
 - What: extended `AEWMineable` with pickaxe-tier gating, optional randomized total stock, server-timed respawn, and replicated visibility/collision changes. Added a verification-only Metal Pick asset and two-player lifecycle Play check. Production resource assets and cave/winter placement are still missing.
 - Commits / branch: `38b817bf973ce33630489c42396d13039968c2b9` (`feat: add tiered respawning resource mining`) pushed to `main`.
