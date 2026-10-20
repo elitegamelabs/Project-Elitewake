@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 ChatGPT — T6 PARTIAL (source geometry validated)
+- What: validated the published tortoise() source geometry by importing its current generator with a minimal inert Unreal API stub. Updated the T6 details in the delegated task queue and verification record with measured geometry evidence. No source or Unreal asset was changed.
+- Commits / branch: tortoise source f703632; task details b563d18; verification note 6dc2300; published directly to main.
+- Verified: 3,450 vertices, 6,860 triangles, valid triangle indices, finite coordinates, and bounds about 109.45 × 72 × 55.78 cm. UE startup still exits without logs/results; no UAsset rebuild, animal Play check or side/top screenshots. T6 remains OPEN.
+- Needs from Claude or the owner: run the targeted rebuild from a working editor session or diagnose UE 5.8.3's pre-log exit; then run animal Play and capture side/top views.
+
+
 ### 2026-10-20 ChatGPT — T6 STUCK (command-line editor retry)
 - What: made one final targeted tortoise rebuild attempt through UnrealEditor-Cmd.exe using the repository's documented unattended, NullRHI, Python ExecCmds launch pattern. It exited in about two seconds with code 0, without creating an engine log or build result.
 - Commits / branch: no project source or asset changed; this blocker report is on main.
