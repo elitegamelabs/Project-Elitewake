@@ -233,6 +233,9 @@ only so you know where earlier world, cave and ship work lives.
   shots in `Saved/Screenshots/Animals` (`tortoise_side00001`, `tortoise_top00001`, `tortoise_three_quarter00001`):
   the vertebral row, side rows and dark seams read as plates. **For the owner/ChatGPT:** in daylight the shell reads
   pale cream, lighter than the owner's photo; darker plate tones in `tortoise()` would fix it if wanted.
+- **Shell colour (owner, October 20: "a darker brown like my photo"):** the plate, ring and plastron tones in
+  `tortoise()` lowered to about a seventh; rebuilt and rechecked (`verify_tortoise_look_play` 4/4): a dark brown dome
+  with the plates and seams still clear.
 
 ### T7. Snow Leopard for the Winter island — OPEN (needs the editor)
 - **Why:** owner habitat direction (October 14): Snow Leopards belong in Winter. No counts or values were set.

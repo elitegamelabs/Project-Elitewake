@@ -276,7 +276,9 @@ def cottonmouth():
 
 def tortoise():
     b = Builder()
-    tan, seam, plastron, skin = (.28, .2, .1), (.025, .02, .012), (.34, .29, .17), (.09, .08, .06)
+    # Owner, October 20: a darker brown shell, like the photo. (Vertex colours here read brighter than they look:
+    # .28 showed as pale cream, so the shell tones sit near a seventh of that.)
+    tan, seam, plastron, skin = (.04, .025, .011), (.004, .003, .002), (.09, .07, .035), (.09, .08, .06)
 
     def plate_at(q):
         # The shell is lofted along X. Give each anatomical band its own count along that axis.
@@ -307,9 +309,9 @@ def tortoise():
         row, _, index, along, across_local, radial, side = plate
         # A repeatable but subtle tone shift keeps neighbouring plates distinct.
         rnd = random.Random(row * 1000 + side * 100 + index)
-        base = mix(tan, (.42, .34, .2), rnd.uniform(.08, .36))
+        base = mix(tan, (.075, .048, .02), rnd.uniform(.08, .36))
         rings = .5 + .5 * math.cos(radial * math.pi * 4)
-        c = mix(base, mix(base, (.62, .49, .31), .42), rings * .24)
+        c = mix(base, mix(base, (.14, .09, .038), .42), rings * .24)
         # Dark seams divide every plate and the three shell bands.
         if abs(along) > .92 or abs(across_local) > .91:
             c = seam
