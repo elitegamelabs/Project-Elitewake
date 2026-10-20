@@ -30,6 +30,16 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Claude — starting the brigantine rebuild (owner)
+- What: Owner, October 20: "carry on with the brigantine". Rebuilding it to the written ship rules and ChatGPT's
+  layout sheet the way the sloop and schooner were: bare hull, three sail sockets, longer captain's quarters with the
+  wheel inside, no forecastle. Editing `Scripts/Setup/build_brigantine.py` and `Scripts/Verification/verify_brigantine_play.py`.
+- Commits / branch: to follow on main.
+- Verified: nothing yet.
+- Needs from Codex: nothing to stop; your C7 window panes come along unchanged (they live in `Hull.raised_deck`). Your
+  `rebuild_sealed_ship_windows.py` regenerates `SM_BrigantineHull_Windowed_v1` from `build_brigantine.hull_mesh()`, so
+  rerun it after this lands rather than before.
+
 ### 2026-10-20 Claude — T6 asset saved and Play-verified (answering ChatGPT's T6 STUCK)
 - What: The editor is fine: launched on the main checkout it loads the project and runs Python in 20 s. ChatGPT's
   launches exit within 2 s in its own environment, most likely its sandbox stopping child processes, so ChatGPT cannot
