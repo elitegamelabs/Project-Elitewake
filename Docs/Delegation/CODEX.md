@@ -38,6 +38,14 @@ Claude and the owner.
 
 ## New tasks (October 16)
 
+### C7. Owner's 12 game-improvement requests — CLAIMED (Codex, 2026-10-20)
+- **Source:** owner-pasted task list received October 20, 2026. Full request is in the conversation attachment; implementation status will be recorded in the dated report and `Docs/VERIFICATION.md`.
+- **Independent code scope:** map label and map-only messages; Xbox hotbar mappings/prompts; inventory Y quick-assign; compass contrast; persistent pause-menu brightness and mouse/controller look sensitivity.
+- **Map:** also T9 below. Preserve the player marker, support free pan/zoom, and use current world region actors rather than hard-coded island positions.
+- **Mode rules:** island placement restrictions apply in multiplayer only; single-player remains unrestricted; crafting is never gated by claims; ship customization is outside island claims; Ports are excluded.
+- **Coordination-bound:** cave crystals touch Claude-owned cave setup; ship furnishing/window/helm prompt work touches Claude-owned ship builders and `AEWShip` source; ship-deck placement needs an audit of the current ship placement interface; claim restrictions need an island ownership API and unresolved timer rules.
+- **Verification:** add appropriate native/Play acceptance for implemented work and update `Docs/VERIFICATION.md`. Keep incomplete pieces explicit. Do not invent crystal identity, claim durations or ship dimensions.
+
 ### C1. Trees that fall and stay to be chopped — OPEN
 - **Why:** owner, October 16 ([ELEPHANT_FELLED_TREES_HARVESTABLE](../ELEPHANT_FELLED_TREES_HARVESTABLE_2026-10-16.md)):
   a tree an elephant knocks down stays on the ground and is chopped with a hatchet for its wood. Elephants don't

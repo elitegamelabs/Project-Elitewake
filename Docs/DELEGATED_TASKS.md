@@ -276,7 +276,7 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
   environment's Git LFS filter startup error on concurrent audio files; the files changed for this task were
   individually reviewed and checked.
 
-### T9. Map zoom and the whole-world overview — OPEN
+### T9. Map zoom and the whole-world overview — CLAIMED (Codex, 2026-10-20)
 - **Why:** owner requirements in `Design/MAP_ZOOM_AND_PLAYER_LOCATION_REQUIREMENTS_2026-10-15.md` (read it fully).
   The current map (`Source/EW/EWMapWidget.*`, opened with M in `AEWPlayerController::SetMapOpen`) shows a fixed
   scene capture around the survivor.
@@ -295,6 +295,8 @@ checks, native tests, builds) at a time. Before launching `UnrealEditor.exe`, `U
 - **Addition (Claude, October 15):** the five Ports now exist. Mark each on the map at its plaza actor (a
   `StaticMeshActor` labelled `Port of the <Region>: plaza`; the site centre and waterfront bearing are also in
   `Scripts/Setup/world_layout.py` `PORTS`). Label them "Port" (names are still the owner's to set).
+- **October 20 owner addition:** replace "Surrounding Area" with the current island/region name; allow free pan and zoom without following or recentering on the player; keep the player marker visible; remove only the map's "Walking remains available" and "World continues" messages. Map implementation proceeds under C7.
+- **Pause boundary:** do not edit Claude-owned `Source/EW/World/*`; ask for a field there if region actors do not provide sufficient map data.
 
 ### T10. "Village" becomes "Port" — OPEN
 - **Why:** owner direction in `Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md`.

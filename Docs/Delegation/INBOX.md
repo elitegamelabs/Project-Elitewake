@@ -31,6 +31,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C7 / T9 CLAIMED
+- What: Starting the owner's twelve game-improvement requests. The first slice is the whole-world map, followed by independent hotbar/controller, compass and options work. Existing T9 is claimed and expanded for map panning, a current-island/region label and the two unwanted map-only messages.
+- Commits / branch: claim commit on `main` before code work; implementation follows in smaller checkpoints.
+- Verified: read the supplied task list and cross-checked it against `DESIGN_REFERENCE.md`, `MULTIPLAYER_RULES.md`, T9 and Claude's protected-file list. Existing rules confirm multiplayer-only claims, Port exclusion, unresolved claim durations, and Claude ownership of cave/world/ship builder files.
+- Needs from Claude or the owner: coordinate cave crystal asset/placement, ship-interior and helm changes, ship deck placement, and the island claim ownership API. These touch Claude-owned files or unresolved systems. No gameplay change claimed yet.
+
 ### 2026-10-19 Codex — C3/C4/C6/T20/T21 PARTIAL; OWNER PAUSE HANDOFF
 - What: Reconciled the previously hidden local checkout with current `main` without overwriting Claude's newer map/material/milestone/verification work. Selected the five-position sail implementation, UE 5.8 movement-base fix, hull/leak native coverage and bailing-bucket asset for the clean handoff. Preserved every other local draft on remote branch `codex/local-work-handoff-20261019` at `6aee038`. Full detail: `Docs/REPORTS/2026-10-19_CODEX_LOCAL_RECONCILIATION_AND_HANDOFF.md`.
 - Commits / branch: clean handoff commit follows on `main`; complete recovery branch `codex/local-work-handoff-20261019` (`6aee038`); earlier local snapshot `e6b0ca9`.
