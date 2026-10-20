@@ -30,6 +30,12 @@ Entry format:
 
 ## Reports
 
+### 2026-10-20 Codex — C-WORLD40 CLAIMED
+- What: starting the additive expansion from the current 26 generated islands to the owner-approved 40, preserving the existing 26 records, Ports and world scale. First stage will keep the 40-island result deterministic and testable without running Unreal.
+- Commits / branch: claim commit pending on `main`.
+- Verified: current `world_layout.py` produces 26 islands (Plains 6; Winter, Swamp, Desert and Jungle 5 each). Reviewed the 40-island specification and verified Claude has released file ownership; the world task is OPEN.
+- Needs from Claude or the owner: none for the additive layout stage. Existing map rebuild and multiplayer/save verification remain required before full completion.
+
 ### 2026-10-20 Codex — C7 ship interior/window rebuild BLOCKED
 - What: continued the versioned hull approach, added the visual aft-port surgeon-table prop to the Sloop, Schooner and Brigantine builders, and updated the acceptance script to test the exact pane locations on both server and client. No Cavalier builder exists in the current source, so it has no table prop. The focused rebuild now generates all three versioned meshes before attempting the three DataAsset reference updates; the helper has not run after this refactor. Added a no-Unreal Python geometry test for the six pane boxes/slot output.
 - Verified: Python syntax and text `git diff --check` pass. `python -m unittest discover -s Scripts/Tests -v` passes 15/15, including the new raised-deck glass pane geometry check. This source-only test does not verify actual ship-specific asset generation or runtime collision. A previous UE commandlet saved `SM_SchoonerHull_Windowed_v1.uasset` and `M_ShipWindowGlass_v1.uasset`, but the Schooner DataAsset save failed with Win32 Error Code 32. The existing versioned Schooner mesh predates the surgeon-table source addition. No hull definition is verified as updated and no Play check has run.

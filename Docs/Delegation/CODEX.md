@@ -26,7 +26,7 @@ Claude and the owner.
 
 ## Owner-approved expansion: 40 islands and wildlife (October 18, 2026)
 
-### C-WORLD40. Expand world from 26 to 40 islands — OPEN (Codex/Claude coordination required)
+### C-WORLD40. Expand world from 26 to 40 islands — CLAIMED (Codex, 2026-10-20)
 - **Owner directive:** exactly **8 islands in each of five regions**: Plains (Starter + Plains2–8), Winter1–8, Swamp1–8, Desert1–8, Jungle1–8. The 40-island wildlife specification is [WILDLIFE_DISTRIBUTION_26_ISLANDS.md](../WILDLIFE_DISTRIBUTION_26_ISLANDS.md) (legacy filename, **40-island content**). Owner approved this as the target and explicitly requests Claude/Codex implementation.
 - **Preserve all 26 original islands and their existing locations, shapes, ports, placed structures, wildlife and saves**. Current `Scripts/Setup/world_layout.py` uses one seeded sequential RNG loop; **do not merely change counts** because it can reshuffle later regions. Snapshot baseline island records and append 14 deterministically generated new islands with stable keys. Maintain nearest-shore separation rules, regional orientation, starter safe beach/dock/pond/sloop and one port per region. Flag any impossible geometry/spacing constraints rather than silently changing the world scale.
 - Audit every consumer of island count and island keys: terrain setup, water/ocean and nav, maps and discovery persistence, spawn generation, ports, save migration, multiplayer/world replication, milestones. Implement in small tested stages; the world and animal placement scripts are open to edit (owner, October 20); pull first and note in the inbox when you start on them.
