@@ -1,5 +1,8 @@
 # ChatGPT: your tasks
 
+**OWNER OVERRIDE, OCTOBER 21:** current world milestone is exactly five playable islands, one per region. The 40-island expansion is paused, not to be deleted. ChatGPT coordinates repository docs, decisions, review, and PRs; it does not claim local Unreal verification. See `../AI_WORK_PROTOCOL.md` and `../FIVE_ISLAND_RECOVERY_PLAN.md`.
+
+
 **Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
 
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each the work that suits it. This file
