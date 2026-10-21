@@ -142,10 +142,13 @@ Claude and the owner.
 | T27 | Catalogue the new oak and ash leaf art | DONE 6966de2 |
 | T10 | "Village" becomes "Port" | DONE c0c5dc1 |
 | T11 | Metric units audit | DONE 5f4c165 |
-| T6 | A better tortoise shell | OPEN (Unreal asset save and Play verification pending) |
+| T6 | A better tortoise shell | PAUSED (owner recovery directive, 2026-10-21) |
 
 
 T6 update (2026-10-20): the durable tortoise geometry test passes (included in the 27-test Python suite). Unreal asset rebuild/save and the animal Play check are still not verified: the editor launch attempts exited before producing a project log or result. The existing `Saved/Crashes/_0000` artifact is from the earlier `T6BuildAnimalsVisible` launch; its recorded access violation is in CrashReportClient, so it does not identify the root cause in the editor process. Next: diagnose a reliable project editor launch, rebuild/save `SM_Tortoise_v1`, then run `verify_animals_play.py` and capture the requested views.
+
+
+T6 pause (2026-10-21): owner reprioritized all work to project discovery/recovery and explicitly directed no new gameplay development until recovery is complete. Existing generator geometry test passes; Unreal asset save and Play verification remain pending. Resume only after the recovery phase and then continue the open asset task.
 
 Suggested order: G8 (the owner is waiting on the sea floor), G2 (it settles the roster the others depend on), G1, G3, G4, G5, T30, then the rest.
 
