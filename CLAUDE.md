@@ -1,5 +1,10 @@
 # ELITEWAKE AI Agent Instructions
 
+> **OWNER OVERRIDE — 2026-10-21 — FIVE-ISLAND FIRST PLAYABLE.** The immediate world target is **exactly five playable islands, one per region** (Plains starter, Winter, Swamp, Desert, Jungle). The prior 40-island target, and its 26-island baseline, are historical implementation work, **not** the current shipping or rebuild target. Pause C-WORLD40 and C-WILDLIFE40 expansion work. Preserve existing code, island records, maps, assets, Port placements, save data, and tests until a reversible five-island configuration and migration/compatibility plan is approved and verified. Do **not** delete 35 islands, regenerate the saved map, or replace existing save IDs as part of this documentation PR. The exact four non-starter islands to use and how their Ports map into the five-island configuration require a source audit and owner review before runtime conversion. See [FIVE_ISLAND_RECOVERY_PLAN.md](Docs/FIVE_ISLAND_RECOVERY_PLAN.md).
+
+> **AGENT COORDINATION — 2026-10-21.** No permanent agent file ownership or Claude sign-off. One active implementer per task, one Unreal Editor/build session on the shared PC, and an inbox entry before overlapping edits. ChatGPT: repo/design/PR coordination. Claude: local Unreal assets/editor/Play verification. Codex: C++/Python/tests. Scenario: approved import-ready asset generation only, idle by default. The owner approves merges, destructive operations, and new work. See [AI_WORK_PROTOCOL.md](Docs/AI_WORK_PROTOCOL.md).
+
+
 These instructions apply to every AI coding, design, art, and implementation assistant working in this repository. Read `Docs/DESIGN_REFERENCE.md` and the latest owner decisions before changing project behavior. The owner's latest explicit direction takes precedence over older documentation. Do not claim a design requirement is implemented unless code/assets and verification confirm it.
 
 ## Confirmed island and regional foliage requirements (owner, October 15, 2026)
@@ -13,10 +18,10 @@ Canonical details: [Island Terrain and Regional Tree Assignments](Design/World/I
 - Terrain and biome must influence vegetation placement. Preserve visual differences between islands while making each region's assigned tree identity clearly readable. These are primary species, not a blanket ban on other appropriate vegetation.
 - Apply these requirements to every existing and future island, including the starter island in Central Plains. Keep island layouts and foliage placement distinct. Prefer data-driven configurations where they fit existing architecture.
 - Preserve unrelated gameplay, asset IDs, inventory/crafting icons, and established systems. Do not invent new species or gameplay rules without owner direction.
-- When implementing, inspect the current world-generation scripts and asset catalog first; coordinate with the agent responsible for the world rebuild. Do not edit files another agent explicitly owns in `Docs/DELEGATED_TASKS.md`. Only one agent may run Unreal Editor/build/Play checks at a time; follow the repository's editor-lock instructions.
+- When implementing, inspect the current world-generation scripts and asset catalog first; coordinate with the agent responsible for the world rebuild. No permanent file reservations apply; coordinate active task edits through the shared inbox. Only one agent may run Unreal Editor/build/Play checks at a time; follow the repository's editor-lock instructions.
 - Distinguish status honestly: design requirements documented, code changed, assets generated, assets integrated, and in-game verification are separate milestones. Do not say terrain or tree placement is implemented merely because these instructions or a design document are committed.
 
-Claude-specific note: check `Docs/DELEGATED_TASKS.md` before choosing work and respect the files owned by other agents.
+Claude-specific note: check `Docs/DELEGATED_TASKS.md` and the shared inbox before choosing work; no files are permanently owned by any agent.
 
 ## Disk-space cleanup: mandatory safe procedure
 
@@ -58,4 +63,4 @@ Canonical requirements: `Art/Animals/ANIMAL_MODEL_ANIMATION_AUDIO_REQUIREMENTS_2
 
 ## Latest ship/art authority — October 18, 2026
 The owner's newer [ship proportions and hardpoints](Docs/OwnerDecisions/SHIP_PROPORTIONS_AND_MODULAR_SAIL_HARDPOINTS_2026-10-18.md) and [queued sailing rules](Docs/OwnerDecisions/SAIL_SPEED_WIND_AND_CODEX_PRIORITY_2026-10-18.md) supersede older conflicting text above. Cavalier is comparable in overall size to Brigantine with three traversable levels; preserve a distinct design. Sloop has lower-deck access but no captain's quarters. Base hulls have empty sail hardpoints; removable sail assemblies include their masts/poles and carry no flags. Stern boarding ladders are centered. Preserve approved shipyard tiers, captain's-quarter and helm placements. No scenery art in this pass.
-The owner's current delegation authorizes ChatGPT to resolve remaining decisions, recorded as DECIDED (delegated) in [the decision record](Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). These are reversible design choices, not in-engine implementation evidence. Preserve code ownership and the no-merge constraint.
+The owner's current delegation authorizes ChatGPT to resolve remaining decisions, recorded as DECIDED (delegated) in [the decision record](Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). These are reversible design choices, not in-engine implementation evidence. Preserve current task coordination and the no-merge-without-owner-approval constraint.
