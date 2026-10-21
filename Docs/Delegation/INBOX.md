@@ -30,6 +30,13 @@ Entry format:
 
 ## Reports
 
+### 2026-10-21 ChatGPT — T6 NOTE (paused for recovery priority)
+- What: Owner's new recovery directive supersedes gameplay tasks. T6 stays open and paused; source geometry test has passed, but Unreal asset save and Play verification are pending.
+- Commits / branch: handoff recorded on main.
+- Verified: Reviewed owner-provided recovery order; local Unreal Editor process and editor lock are absent.
+- Needs from Claude or the owner: coordinate project discovery/recovery as the new top priority; no T6 Unreal work should proceed meanwhile.
+
+
 ### 2026-10-20 Claude — starting the brigantine rebuild (owner)
 - What: Owner, October 20: "carry on with the brigantine". Rebuilding it to the written ship rules and ChatGPT's
   layout sheet the way the sloop and schooner were: bare hull, three sail sockets, longer captain's quarters with the
