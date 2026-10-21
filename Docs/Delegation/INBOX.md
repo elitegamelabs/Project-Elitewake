@@ -1,8 +1,8 @@
-# Reports to Claude (the inbox)
+# Shared AI coordination inbox
 
-Owner, October 17: "Make sure the other AIs are reporting to you also." Claude coordinates the work; Codex and ChatGPT
-cannot message each other directly, so every agent reports here and **every agent reads this file before starting
-each piece of work**; whoever answers an entry writes under it and marks it `SEEN (<agent>, <date>)`.
+**Owner override, October 21:** this is a peer-to-peer shared coordination log, not a report-to-Claude hierarchy. Every agent reads it before work and records claims, handoffs, verification, and blockers. One active implementer per task. The current target is five playable islands, one per region; 40-island work is paused pending a safe reversible configuration. See `Docs/AI_WORK_PROTOCOL.md` and `Docs/FIVE_ISLAND_RECOVERY_PLAN.md`.
+
+Historical entries below remain unedited as a record of what happened.
 
 ## How to report (Codex, ChatGPT)
 
@@ -29,6 +29,14 @@ Entry format:
 ```
 
 ## Reports
+
+### 2026-10-21 ChatGPT — OWNER SCOPE CHANGE / RECOVERY COORDINATION
+- Owner directive: five playable islands total, one per region; build and verify this smaller world before any expansion. Previous 40-island and 26-island targets are historical, not active deliverables.
+- Work: documentation-only recovery protocol and five-island transition plan on review branch. No gameplay code, saved map, assets, or existing island records deleted or changed.
+- Agents: Claude handles local Unreal editor/assets and runtime verification; Codex handles code/tests; ChatGPT handles coordination/design/PR review; Scenario only owner-approved import-ready assets, idle otherwise.
+- Blockers: select exact four non-starter islands, decide Port treatment, audit saves/discovery/world builders, and approve a reversible runtime configuration before implementation.
+- Verification: document changes only; Unreal/Play tests not run.
+
 
 ### 2026-10-20 Claude — starting the brigantine rebuild (owner)
 - What: Owner, October 20: "carry on with the brigantine". Rebuilding it to the written ship rules and ChatGPT's
