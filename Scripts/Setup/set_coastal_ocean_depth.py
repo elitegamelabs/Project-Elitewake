@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import unreal
 
-OCEAN_MAX_DEPTH_METERS = 2000.0  # owner, October 17: the ocean at most 2,000 m deep
+OCEAN_MAX_DEPTH_METERS = 1500.0  # owner, October 22: the ocean at most 1,500 m deep (was 2,000 m)
 
 def apply_depth(volume, bed, surface_z):
     depth = OCEAN_MAX_DEPTH_METERS * 100.0  # Unreal centimeters.

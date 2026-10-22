@@ -1,5 +1,9 @@
 # ChatGPT: your tasks
 
+**Handoff rule (owner, October 22): before your usage runs out, close out what you have open, push, and write a `HANDOFF` entry in [INBOX.md](INBOX.md); at the start of each session continue any unpicked `HANDOFF` first ([TEAM_CHARTER](../TEAM_CHARTER.md) section 7).**
+
+**Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [../TEAM_CHARTER.md](../TEAM_CHARTER.md). `CLAIMED` / `IN PROGRESS` below is a courtesy notice only: it blocks nobody. Any teammate may add, take over or finish any task. Grok has joined ([GROK.md](GROK.md)).
+
 **Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
 
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each the work that suits it. This file
@@ -154,3 +158,15 @@ Suggested order: G8 (the owner is waiting on the sea floor), G2 (it settles the 
 
 ## October 18 delegated completion notes
 G1: 21-kind matrix (14 existing source kinds, five current additions, two earlier approved habitat animals). G2: reconciled region/status/source table in OPEN_QUESTIONS. G3: shared spider species/two variants brief, animation/audio contract and S3 jobs queued. G4: four identical-description six-camera prompt sets and reference images tracked by provenance. G5: obstruction policy resolved under current delegation. T27: oak/ash card provenance/catalogue, no pixels changed. T30: source-inspected world tuning recorded and retained under current delegation. G8 remains scenery-excluded. T6/T10/T11 implementation acceptance is not claimed; no code/build/Play work in this pass.
+
+## New tasks (October 22, 2026), all `OPEN`: anyone may take them
+
+### G-RES. Resource reference images and regional resource table
+- **Why:** owner item 5: "Confirm whether all resource reference images are in the GitHub repository." Plan: `Design/World/RESOURCE_DISTRIBUTION_AND_SIX_VIEW_ASSET_PLAN_2026-10-16.md`; target `Art/Reference/Resources/<Name>/` (six views each).
+- **Done when:** `Art/Reference/README.md` lists, per resource, which of the six views exist in the repo and which are missing, checked against the files actually on `main`.
+
+### G-EDGE. World-edge design alternatives
+- **Why:** owner, October 22: edge teleports that expand outwards as the map grows. Write two or three concrete designs (wrap-around, turn-back with a message, sea-fog barrier that moves), with the effect on ships, wildlife and the map, labelled as proposals for the owner to pick.
+
+### G-REVIEW. Read the UI text and design of the October 22 menus
+- Read `Source/EW/EWSkillTree.cpp`, `EWProgressionComponent.cpp` (stat names and effects), `EWDeathWidget.cpp`, `EWMapWidget.cpp`, and the journal text. Correct typos, tone and anything that contradicts owner decisions. Small fixes may be pushed directly.

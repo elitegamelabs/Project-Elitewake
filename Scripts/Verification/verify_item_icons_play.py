@@ -40,7 +40,7 @@ def tick(delta):
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==3:
             assert inv.get_item_count(output)==1 and inv.get_item_count(material)==0
-            assert lib.send_verification_ui_key(client,'Tab')
+            assert lib.send_verification_ui_key(client,'PageUp')
         elif phase==4:
             assert menu().get_displayed_inventory_icon(output)==texture
             assert menu().get_displayed_inventory_icon(material) is None

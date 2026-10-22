@@ -59,6 +59,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Survival|Health")
 	void RestoreHealth(float RestoreAmount);
 
+	/** True once health has run out; the survivor stays dead until the server revives them (owner, October 22: death and respawn). */
+	UFUNCTION(BlueprintPure, Category="Survival|Health")
+	bool IsDead() const { return Health <= KINDA_SMALL_NUMBER; }
+	/** Authority only. Brings a dead survivor back: health to the given fraction, and hunger, thirst and stamina to at least the given fraction of full. */
+	UFUNCTION(BlueprintCallable, Category="Survival|Health")
+	void Revive(float HealthFraction = 1.f, float MinNeedFraction = .5f);
+	/** Authority only. What the stat points add (owner, October 22): to maximum health, stamina and carry weight, and the fraction of cold and heat damage turned aside. A
+	 *  raised maximum health also heals by the amount it grew. Safe to call again with new totals. */
+	void SetStatBonuses(float MaxHealthBonus, float MaxStaminaBonus, float MaxCarryBonus, float ClimateResistance);
+	/** Counts every hit of a point or more (smaller ones add up first), so a HUD can flash once per hit; LastDamageAmount is that hit's size. */
+	UFUNCTION(BlueprintPure, Category="Survival|Health")
+	int32 GetDamageEventCount() const { return DamageEventCount; }
+	UFUNCTION(BlueprintPure, Category="Survival|Health")
+	float GetLastDamageAmount() const { return LastDamageAmount; }
+
 	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
 	void SetHunger(float NewHunger);
 
@@ -186,5 +201,12 @@ private:
     friend class UEWInventoryComponent;
     UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
     int32 StaminaExhaustionCount = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
+    int32 DamageEventCount = 0;
+    UPROPERTY(Replicated)
+    float LastDamageAmount = 0.f;
+    float PendingSmallDamage = 0.f;
+    float BaseMaxHealth = -1.f, BaseMaxStamina = -1.f, BaseMaxCarry = -1.f;
+    float ClimateResistance = 0.f;
 	void NotifyStatsChanged();
 };

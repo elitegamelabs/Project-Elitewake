@@ -7,6 +7,7 @@
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
 #include "EWInventoryComponent.h"
+#include "EWProgressionComponent.h"
 #include "Characters/EWAppearance.h"
 #include "EWWorkFeedback.h"
 #include "EWPlayerController.generated.h"
@@ -18,6 +19,8 @@ class UEWInventoryWidget;
 class AEWPickup;
 class UEWHotbarWidget;
 class UEWSurvivalWidget;
+class UEWDeathWidget;
+class UEWExplorationComponent;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
 class UEWShipMarkersWidget;
@@ -97,7 +100,23 @@ public:
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
     void RequestCraft(UEWCraftingRecipe* Recipe);
     UFUNCTION(Server, Reliable) void ServerCraft(UEWCraftingRecipe* Recipe);
+    /** The dead survivor chooses to respawn (owner, October 22): the server drops their bag where they fell and brings them back at a safe place away from it. */
+    void RequestRespawn() { ServerRequestRespawn(); }
+    UFUNCTION(Server, Reliable) void ServerRequestRespawn();
+    /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
+    void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
+    UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
+    /** Lights a star of the constellation tree with skill points (owner, October 22). */
+    void RequestUnlockSkill(FName Id) { if (IsLocalPlayerController()) ServerUnlockSkill(Id); }
+    UFUNCTION(Server, Reliable) void ServerUnlockSkill(FName Id);
+    UFUNCTION(BlueprintPure, Category="Death") UEWDeathWidget* GetDeathWidget() const { return DeathWidget; }
+    /** What this player has explored: the map clears its mist from it. */
+    UFUNCTION(BlueprintPure, Category="Exploration") UEWExplorationComponent* GetExploration() const { return ExplorationComponent; }
     UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
+    /** The server accepted the recipe: the work takes this long. */
+    UFUNCTION(Client, Reliable) void ClientCraftStarted(UEWCraftingRecipe* Recipe, float Seconds);
+    /** Server: true while a craft is under way (one at a time). */
+    UFUNCTION(BlueprintPure, Category="Crafting") bool IsCraftingNow() const { return CraftingRecipe != nullptr; }
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     void RequestConsumeFood(UEWItemDefinition* Item);
     UFUNCTION(Server, Reliable)
@@ -210,6 +229,14 @@ protected:
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWCraftingRecipe> CraftingRecipe;
+    FTimerHandle CraftTimer;
+    void FinishCraft();
+    UPROPERTY(Transient)
+    TObjectPtr<UEWDeathWidget> DeathWidget;
+    UPROPERTY(VisibleAnywhere, Category="Exploration")
+    TObjectPtr<UEWExplorationComponent> ExplorationComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;

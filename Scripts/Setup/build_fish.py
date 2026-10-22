@@ -4,11 +4,11 @@ Run Scripts/Art/make_fish_models.py and Scripts/Art/make_food_icons.py first, th
 
 From the owner's art (Art/Concepts/Fish/2026-10-12), each creature gets its cut-out art as a texture, a body
 inflated from its silhouette, and a material that makes it swim: fish sway their tails, the manta beats its wings.
-Every creature has a definition with its habits from the design reference: bass, catfish and manatees are
+Every creature has a definition with its habits from the design reference: bass and catfish are
 peaceful; piranhas, mantas (a tail sting), sharks (a bite) and squid are aggressive. Killed, a creature floats up
-and is harvested for Raw Fish, or Raw Meat from a manatee; both are new items, not yet edible.
+and is harvested for Raw Fish. (The manatee was removed from active gameplay by the owner on October 22, 2026; its assets are in quarantine.)
 
-In the coastal sea: mantas and manatees in the warmer shallows, sharks and squid out in deeper water, the aggressive
+In the coastal sea: mantas in the warmer shallows, sharks and squid out in deeper water, the aggressive
 ones well away from the spawn, the dock and the moorings. In the island's freshwater pond (build_freshwater_pond.py
 first): bass, catfish and piranhas. All numbers are tuning.
 """
@@ -35,7 +35,7 @@ ART = ROOT / 'Art/Fauna/Fish'
 ICONS = ROOT / 'Art/Items'
 
 # Name, display name, water, aggressive, [swim, dash, turn], roam, shallowest and deepest it goes, notice, [damage, interval, reach],
-# attack name, health, yield (item, (fewest, most): 2-5 fish meat for ordinary fish, 6-10 for sharks, the manatee and
+# attack name, health, yield (item, (fewest, most): 2-5 fish meat for ordinary fish, 6-10 for sharks and
 # bigger creatures, owner, October 14), and how its body moves: (amplitude cm, beats per second, waves along
 # the body, wing beat 0/1).
 CREATURES = {
@@ -47,8 +47,6 @@ CREATURES = {
                     notice=0, attack=(0, 1, 0), attack_name='', health=25, yield_=('RawFish', (2, 5)), swim=(5, 1.2, 1.0, 0)),
     'MantaRay': dict(display='Manta Ray', water='SALT', aggressive=True, speeds=(140, 380, 70), roam=2200, depth=150, deepest=450,
                      notice=600, attack=(15, 2.0, 120), attack_name='sting', health=120, yield_=('RawFish', (6, 10)), swim=(45, .35, 0, 1)),
-    'Manatee': dict(display='Manatee', water='SALT', aggressive=False, speeds=(60, 200, 40), roam=1500, depth=90, deepest=300,
-                    notice=0, attack=(0, 1, 0), attack_name='', health=200, yield_=('RawFish', (6, 10)), swim=(7, .45, .6, 0)),
     'GreatWhiteShark': dict(display='Great White Shark', water='SALT', aggressive=True, speeds=(200, 560, 70), roam=3500, depth=200, deepest=600,
                             notice=1500, attack=(25, 1.5, 90), attack_name='bite', health=400, yield_=('RawFish', (6, 10)), swim=(20, .8, .7, 0)),
     'HammerheadShark': dict(display='Hammerhead Shark', water='SALT', aggressive=True, speeds=(220, 520, 80), roam=3500, depth=200, deepest=600,
@@ -60,7 +58,7 @@ ITEMS = {'RawFish': ('Raw Fish', 'Raw-Fish-v1.png', 'Fresh from the sea or a pon
          'RawMeat': ('Raw Meat', 'Raw-Meat-v1.png', 'Fresh meat. Cook it before eating: raw meat makes you sick.')}
 # Sea creatures on the coastal map: how many, how deep the water must be (cm below the surface), and how far from
 # the spawn, the dock and the moorings they must start (cm).
-PLACEMENT = {'MantaRay': (3, 250, 3500), 'Manatee': (3, 180, 1500), 'GreatWhiteShark': (2, 700, 6000),
+PLACEMENT = {'MantaRay': (3, 250, 3500), 'GreatWhiteShark': (2, 700, 6000),
              'HammerheadShark': (2, 700, 6000), 'Squid': (3, 900, 5500)}
 # Freshwater kinds in the island's pond (build_freshwater_pond.py): how many of each.
 POND_FISH = {'Bass': 3, 'Catfish': 2, 'Piranha': 2}
@@ -69,7 +67,6 @@ PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 2350.0)]   # 
 # (DECIDED, delegated; tuning). 'Starter' is the starter island's own waters (kept as before, for the first sessions
 # and the checks); a region name means its other islands; 'any' means any island but the starter.
 WORLD = {'MantaRay': [('Starter', 3), ('Plains', 3), ('Desert', 3), ('Jungle', 2)],
-         'Manatee': [('Starter', 3), ('Plains', 3), ('Swamp', 3), ('Desert', 2)],
          'GreatWhiteShark': [('Starter', 2), ('any', 6)],
          'HammerheadShark': [('Starter', 2), ('any', 6)],
          'Squid': [('Starter', 3), ('any', 6)]}

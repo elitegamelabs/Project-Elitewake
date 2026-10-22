@@ -1,6 +1,7 @@
 #include "Wildlife/EWAnimal.h"
 #include "Wildlife/EWAnimalDefinition.h"
 #include "EWCharacter.h"
+#include "EWProgressionComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
@@ -279,7 +280,7 @@ bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
     Health = FMath::Max(0.f, Health - Damage);
     MulticastFlinch();
     Call();
-    if (Health <= 0.f) Die();
+    if (Health <= 0.f) { Die(); if (Striker && Striker->GetProgressionComponent()) Striker->GetProgressionComponent()->Award(EEWExperienceSource::Hunt); }
     else if (Definition->bAggressive) Quarry = Striker;
     else
     {

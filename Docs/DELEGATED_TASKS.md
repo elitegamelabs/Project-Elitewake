@@ -1,5 +1,7 @@
 # Delegated tasks (for ChatGPT / Codex)
 
+**Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [TEAM_CHARTER.md](TEAM_CHARTER.md). `CLAIMED` / `IN PROGRESS` below is a courtesy notice only: it blocks nobody. Any teammate may add, take over or finish any task. Grok has joined ([Delegation/GROK.md](Delegation/GROK.md)).
+
 **Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
 
 Owner direction, October 15: Claude keeps this queue full of work it is **not** doing, so another agent can take

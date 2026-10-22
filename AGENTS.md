@@ -1,5 +1,9 @@
 # ELITEWAKE AI Agent Instructions
 
+**Handoff rule (owner, October 22): before you run out of usage, close out everything you have open, push your work, write a `HANDOFF` entry in `Docs/Delegation/INBOX.md`, and at the start of each session continue any unclaimed `HANDOFF` first. Details: `Docs/TEAM_CHARTER.md` section 7.**
+
+**Team rule (owner, October 22, 2026): we are one team and everybody works freely. Nobody places, keeps or honours any lock, claim or ownership on any file, system, task or branch; see [Docs/TEAM_CHARTER.md](Docs/TEAM_CHARTER.md). Grok has joined ([GROK.md](GROK.md)). Anything below that says an agent "owns" or "reserves" something, or that you must not edit another agent's files, is superseded: edit what the work needs, tell the team in the inbox, and Claude reviews pushed work.**
+
 These instructions apply to every AI coding, design, art, and implementation assistant working in this repository. Read `Docs/DESIGN_REFERENCE.md` and the latest owner decisions before changing project behavior. The owner's latest explicit direction takes precedence over older documentation. Do not claim a design requirement is implemented unless code/assets and verification confirm it.
 
 ## Your task list (owner, October 16, 2026)
@@ -25,7 +29,7 @@ Canonical details: [Island Terrain and Regional Tree Assignments](Design/World/I
 - Terrain and biome must influence vegetation placement. Preserve visual differences between islands while making each region's assigned tree identity clearly readable. These are primary species, not a blanket ban on other appropriate vegetation.
 - Apply these requirements to every existing and future island, including the starter island in Central Plains. Keep island layouts and foliage placement distinct. Prefer data-driven configurations where they fit existing architecture.
 - Preserve unrelated gameplay, asset IDs, inventory/crafting icons, and established systems. Do not invent new species or gameplay rules without owner direction.
-- When implementing, inspect the current world-generation scripts and asset catalog first; coordinate with the agent responsible for the world rebuild. Do not edit files another agent explicitly owns in `Docs/DELEGATED_TASKS.md`. Only one agent may run Unreal Editor/build/Play checks at a time; follow the repository's editor-lock instructions.
+- When implementing, inspect the current world-generation scripts and asset catalog first; coordinate with the agent responsible for the world rebuild. Only one agent may run Unreal Editor/build/Play checks at a time; follow the repository's editor-lock instructions.
 - Distinguish status honestly: design requirements documented, code changed, assets generated, assets integrated, and in-game verification are separate milestones. Do not say terrain or tree placement is implemented merely because these instructions or a design document are committed.
 
 ## Disk-space cleanup: mandatory safe procedure

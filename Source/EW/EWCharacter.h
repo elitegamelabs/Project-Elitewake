@@ -19,6 +19,7 @@ class UStaticMeshComponent;
 class UPointLightComponent;
 class UInputAction;
 class UEWSurvivalComponent;
+class UEWProgressionComponent;
 class UEWInventoryComponent;
 class UEWEquipmentComponent;
 class UEWHotbarComponent;
@@ -94,6 +95,10 @@ class EW_API AEWCharacter : public ACharacter
 	/** Server-authoritative survival values for this character. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
 	UEWSurvivalComponent* SurvivalComponent;
+
+	/** Level, experience and stat points. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Progression", meta=(AllowPrivateAccess="true"))
+	UEWProgressionComponent* ProgressionComponent;
 
 	/** Server-authoritative item stacks and carried weight. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
@@ -181,6 +186,21 @@ protected:
 
 public:
     void CancelRestrictedActions() { StopSprint(); CancelStanceInput(); }
+
+    /** True once health has run out and until the server brings the survivor back (owner, October 22). */
+    UFUNCTION(BlueprintPure, Category="Death")
+    bool IsDead() const;
+    /** Authority only. A dead survivor's belongings drop in a bag where they fell (it stays 30 real minutes), they leave any helm, gun or ladder, and they return to
+     *  life, rested and fed to half, at a safe randomized spot: ground in the same region, a meaningful distance from where they died. False if not dead. */
+    bool RespawnAfterDeath();
+    /** A safe place to respawn, found by tracing random points in a ring round the death spot: walkable, above the sea, clear of ships and bodies, in the same region
+     *  (any region, when they died at sea). Falls back to the level's player start. */
+    bool FindRespawnPoint(const FVector& DeathSpot, FVector& OutLocation) const;
+    /** How far from the death spot the survivor may come back, cm (owner: a meaningful distance; tuning). The ring widens when no ground is found. */
+    UPROPERTY(EditDefaultsOnly, Category="Death", meta=(ClampMin="0"))
+    float RespawnMinDistance = 6000.f;
+    UPROPERTY(EditDefaultsOnly, Category="Death", meta=(ClampMin="0"))
+    float RespawnMaxDistance = 20000.f;
 
     /** The ship whose helm this survivor holds, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
@@ -445,6 +465,10 @@ public:
 	/** Returns the survival-stat component. */
 	UFUNCTION(BlueprintPure, Category="Survival")
 	UEWSurvivalComponent* GetSurvivalComponent() const { return SurvivalComponent; }
+
+	/** Returns the level, experience and stat-point component. */
+	UFUNCTION(BlueprintPure, Category="Progression")
+	UEWProgressionComponent* GetProgressionComponent() const { return ProgressionComponent; }
 
 	/** Returns the character inventory component. */
 	UFUNCTION(BlueprintPure, Category="Inventory")

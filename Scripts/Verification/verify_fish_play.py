@@ -7,7 +7,7 @@ from Scripts/Setup/build_fish.py. Run unattended with run_play_check.py.
      server's.
   2. A swimmer near a great white is noticed and bitten: health falls on server and client.
   3. Out of the water on the dock, the shark gives up.
-  4. Struck once with Left Mouse with the torch in hand (anything strikes a creature), a peaceful manatee darts away.
+  4. Struck once with Left Mouse with the torch in hand (anything strikes a creature), a peaceful bass darts away.
   5. Struck, an aggressive manta ray turns on the swimmer; struck until dead, it floats belly-up on both machines.
   6. E at the floating body picks it up; carried, it follows the swimmer on both machines.
   7. Ashore, E sets it down on the land; E at it there harvests it: 6 to 10 Raw Fish for a manta ray (owner,
@@ -144,26 +144,26 @@ def swing():
         assert lib.send_verification_gameplay_key(client, 'LeftMouseButton')
 
 
-def manatee_fled():
+def peaceful_fled():
     swing()
-    manatee = state['follow'][0]
-    if manatee.get_health() >= state['memo']['health0']:
+    fish = state['follow'][0]
+    if fish.get_health() >= state['memo']['health0']:
         return False
     # Stop following: it should now swim off faster than it cruises.
     state['follow'] = None
-    state['memo'].update(manatee=manatee, manatee_from=manatee.get_actor_location(), t=time.monotonic(),
-                         manatee_health=manatee.get_health())
+    state['memo'].update(peaceful=fish, peaceful_from=fish.get_actor_location(), t=time.monotonic(),
+                         peaceful_health=fish.get_health())
     return True
 
 
-def manatee_away():
+def peaceful_away():
     m = state['memo']
     if time.monotonic() - m['t'] < 2.0:
         return False
-    run = (m['manatee'].get_actor_location() - m['manatee_from']).length()
-    cruise = m['manatee'].get_editor_property('definition').get_editor_property('swim_speed') * 2.0
-    assert run > cruise * 1.3, f'manatee moved {run:.0f} cm in 2 s; cruising would be {cruise:.0f}'
-    m['manatee_ran'] = round(run)
+    run = (m['peaceful'].get_actor_location() - m['peaceful_from']).length()
+    cruise = m['peaceful'].get_editor_property('definition').get_editor_property('swim_speed') * 2.0
+    assert run > cruise * 1.3, f'the struck bass moved {run:.0f} cm in 2 s; cruising would be {cruise:.0f}'
+    m['peaceful_ran'] = round(run)
     return True
 
 
@@ -272,15 +272,15 @@ def equip_torch():
     if not owner.get_inventory_component().get_item_count(torch):
         owner.get_inventory_component().add_item(torch, 1)
     assert lib.send_verification_equipment_request(client, torch, unreal.EWEquipmentSlot.MAIN_HAND)
-    strike(lambda: named('Manatee'), 140)()
+    strike(lambda: named('Bass'), 140)()
 
 
 STEPS = [
     ('The client sees every creature the server has, all swimming, each copy close to the server', begin_count, all_swimming, 6),
     ('A swimmer near a great white is noticed and bitten: health falls on server and client', near_shark, bitten, 12),
     ('Out of the water on the dock, the shark gives up', to_dock, gave_up, 5),
-    ('Struck with Left Mouse with the torch in hand, a peaceful manatee is hurt', equip_torch, manatee_fled, 8),
-    ('The struck manatee darts away faster than it cruises', lambda: None, manatee_away, 4),
+    ('Struck with Left Mouse with the torch in hand, a peaceful bass is hurt', equip_torch, peaceful_fled, 8),
+    ('The struck bass darts away faster than it cruises', lambda: None, peaceful_away, 4),
     ('Struck, a manta ray turns on the swimmer; struck until dead, it floats belly-up at the surface on the client',
      strike(lambda: named('Manta Ray'), 120), manta_killed, 25),
     ('', lambda: None, floated, 10),

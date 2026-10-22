@@ -49,6 +49,8 @@ void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	DOREPLIFETIME(UEWSurvivalComponent, Health);
 	DOREPLIFETIME(UEWSurvivalComponent, MaxStamina);
     DOREPLIFETIME_CONDITION(UEWSurvivalComponent, StaminaExhaustionCount, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UEWSurvivalComponent, DamageEventCount, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UEWSurvivalComponent, LastDamageAmount, COND_OwnerOnly);
 	DOREPLIFETIME(UEWSurvivalComponent, Stamina);
 	DOREPLIFETIME(UEWSurvivalComponent, Hunger);
 	DOREPLIFETIME(UEWSurvivalComponent, Hydration);
@@ -88,7 +90,46 @@ void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 		return;
 	}
 
+	const float Before = Health;
 	Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+	// One flash per hit of a point or more; the slow drain of cold or hunger adds up until it is worth showing.
+	PendingSmallDamage += Before - Health;
+	if (PendingSmallDamage >= 1.f || (Health <= KINDA_SMALL_NUMBER && PendingSmallDamage > 0.f))
+	{
+		LastDamageAmount = PendingSmallDamage;
+		PendingSmallDamage = 0.f;
+		DamageEventCount = DamageEventCount == MAX_int32 ? 1 : DamageEventCount + 1;
+	}
+	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::SetStatBonuses(float MaxHealthBonus, float MaxStaminaBonus, float MaxCarryBonus, float InClimateResistance)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	if (BaseMaxHealth < 0.f) { BaseMaxHealth = MaxHealth; BaseMaxStamina = MaxStamina; BaseMaxCarry = MaxCarryWeight; }
+	const float NewMaxHealth = BaseMaxHealth + FMath::Max(0.f, MaxHealthBonus);
+	if (NewMaxHealth > MaxHealth && !IsDead()) Health += NewMaxHealth - MaxHealth;
+	MaxHealth = NewMaxHealth;
+	Health = FMath::Min(Health, MaxHealth);
+	const float NewMaxStamina = BaseMaxStamina + FMath::Max(0.f, MaxStaminaBonus);
+	if (NewMaxStamina > MaxStamina) Stamina += NewMaxStamina - MaxStamina;
+	MaxStamina = NewMaxStamina;
+	Stamina = FMath::Min(Stamina, MaxStamina);
+	MaxCarryWeight = BaseMaxCarry + FMath::Max(0.f, MaxCarryBonus);
+	ClimateResistance = FMath::Clamp(InClimateResistance, 0.f, .9f);
+	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::Revive(float HealthFraction, float MinNeedFraction)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+	Health = FMath::Clamp(MaxHealth * FMath::Clamp(HealthFraction, .01f, 1.f), 1.f, MaxHealth);
+	const float Floor = FMath::Clamp(MinNeedFraction, 0.f, 1.f) * 100.f;
+	Hunger = FMath::Max(Hunger, Floor);
+	Hydration = FMath::Max(Hydration, Floor);
+	Stamina = FMath::Max(Stamina, MaxStamina * FMath::Clamp(MinNeedFraction, 0.f, 1.f));
+	BodyTemperatureCelsius = NormalBody;
+	PendingSmallDamage = 0.f;
 	NotifyStatsChanged();
 }
 
@@ -134,8 +175,8 @@ void UEWSurvivalComponent::UpdateClimate(const FEWClimate& Here, bool bInWater, 
     TargetBodyTemperature = NormalBody - Shortfall * ColdPull * (bInWater ? WaterChill : 1.f)
         + Excess * HeatPush * Insulation * Here.Humidity / 100.f;
     BodyTemperatureCelsius = FMath::FInterpConstantTo(BodyTemperatureCelsius, TargetBodyTemperature, DeltaSeconds, BodyRate);
-    if (IsFreezing()) ApplyDamage(FreezeDamage * DeltaSeconds);
-    if (IsOverheating()) ApplyDamage(HeatDamage * DeltaSeconds);
+    if (IsFreezing()) ApplyDamage(FreezeDamage * DeltaSeconds * (1.f - ClimateResistance));
+    if (IsOverheating()) ApplyDamage(HeatDamage * DeltaSeconds * (1.f - ClimateResistance));
     // The condition notices, held while they last.
     auto Notice = [this](FName Id, bool bOn, const FText& Label)
     {

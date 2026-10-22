@@ -12,9 +12,9 @@ October 14-15):
 Some islands (by a hash of their name, so it is stable) have a cliff section where the land rises steeply straight
 from a narrow beach (owner: cliffs on selected islands in every region). Offshore, a sandy shelf falls away to the
 sea floor: a slope cut by canyons down to basins a few hundred metres deep between the islands, ridges and sand waves
-across them, shallow seamounts to dive on, and the open ocean round the archipelago falling to 2 km, the deepest
+across them, shallow seamounts to dive on, and the open ocean round the archipelago falling to 1.5 km, the deepest
 anywhere, with one trench reaching it between the islands (owner, October 17: dynamic sea-floor scenery and
-geography, the ocean at most 2,000 m deep). All heights are tuning. Units: Unreal centimetres; the sea surface is at -65.
+geography; October 22: the ocean at most 1,500 m deep, was 2,000 m). All heights are tuning. Units: Unreal centimetres; the sea surface is at -65.
 """
 import math
 import random
@@ -23,7 +23,7 @@ import world_layout as W
 
 SEA = -65.0
 FLOOR = -6000.0          # the foot of an island's shelf, 60 m down
-DEEP = SEA - 200000.0    # the deepest sea anywhere (owner, October 17: at most 2,000 m)
+DEEP = SEA - 150000.0    # the deepest sea anywhere (owner, October 22: at most 1,500 m; was 2,000 m)
 SHELF = 20000.0          # how far an island's own terrain reaches past its shore (cm)
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)

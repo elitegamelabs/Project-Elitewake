@@ -1,4 +1,5 @@
 #include "Ships/EWWreckCrate.h"
+#include "EWDeathBag.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "EWCharacter.h"
@@ -87,6 +88,7 @@ UEWInventoryComponent* FEWContainerAccess::Inventory(const AActor* Container)
 {
     if (const auto* Ship = Cast<AEWShip>(Container)) return Ship->GetCargo();
     if (const auto* Crate = Cast<AEWWreckCrate>(Container)) return Crate->GetContents();
+    if (const auto* Bag = Cast<AEWDeathBag>(Container)) return Bag->GetContents();
     return nullptr;
 }
 
@@ -94,5 +96,6 @@ bool FEWContainerAccess::CanAccess(const AActor* Container, const AEWCharacter* 
 {
     if (const auto* Ship = Cast<AEWShip>(Container)) return Ship->CanAccessCargo(Survivor);
     if (const auto* Crate = Cast<AEWWreckCrate>(Container)) return Crate->CanAccess(Survivor);
+    if (const auto* Bag = Cast<AEWDeathBag>(Container)) return Bag->CanAccess(Survivor);
     return false;
 }
