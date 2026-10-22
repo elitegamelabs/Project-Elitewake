@@ -326,6 +326,15 @@ void UEWMapWidget::UpdateFog(float DeltaSeconds)
     // The part of the mist image under the picture: the world square the mist covers, and the window the map shows within it.
     const float Size = Exploration->GetBoundsSize();
     if (Size <= 0.f) return;
+    // The edge has grown: a map showing the whole world grows with it.
+    if (!FMath::IsNearlyEqual(Size, OverviewViewWidth, 1.f))
+    {
+        const bool bWhole = TargetViewWidth >= OverviewViewWidth * .999f;
+        const float Old = OverviewViewWidth;
+        OverviewViewWidth = Size;
+        if (bWhole) { TargetViewWidth = Size; CurrentViewWidth = Size * CurrentViewWidth / Old; }
+        else TargetViewWidth = FMath::Min(TargetViewWidth, Size);
+    }
     const FVector2D Min = Exploration->GetBoundsMin();
     const float Half = CurrentViewWidth * .5f;
     const float U0 = (MapCenter.Y - Half - Min.Y) / Size, U1 = (MapCenter.Y + Half - Min.Y) / Size;

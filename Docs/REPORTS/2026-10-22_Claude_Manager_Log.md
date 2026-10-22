@@ -39,4 +39,4 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 - Skill points: one per level, separate from the stat point. Stats: Vitality, Endurance, Strength, Fortitude (effects in `EWProgressionComponent.h`). XP: gather 3, craft 12, hunt 25, fish 10; level cost 100 + 50 per level.
 - Respawn distance 60 to 200 m (widens if no ground), bag 30 minutes, respawn at half hunger/thirst minimum.
 - Map: up is +X ("N" at the top); reveal radius 500 m.
-- Edge teleports (C11): wrap to the opposite side or turn back? Which one do you want?
+- Edge teleports (C11): owner chose wrap-around. Done: the game mode keeps the world edge (`UEWExplorationComponent` as `WorldEdge`); survivors and ships past it come out on the opposite side; the square widens 25% once a third of it is cleared. Tested by `verify_world_edge_play`. Known gap: each client's map grows from its own discoveries, the server's from everyone's, so they can differ until C9/replication is done.

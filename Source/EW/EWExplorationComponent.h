@@ -37,6 +37,14 @@ public:
     UFUNCTION(BlueprintPure, Category="Exploration") float GetRevealedFraction() const { return float(RevealedCells) / float(GridSize * GridSize); }
     /** Changes every time something new is cleared; the map redraws its mist when it moves. */
     UFUNCTION(BlueprintPure, Category="Exploration") int32 GetRevision() const { return Revision; }
+    /** The map's edge grows (owner, October 22): once this share of the covered square has been cleared, the square widens by ExpandFactor, centred, and keeps what was cleared. */
+    UPROPERTY(EditDefaultsOnly, Category="Exploration") float ExpandAtFraction = .35f;
+    UPROPERTY(EditDefaultsOnly, Category="Exploration", meta=(ClampMin="1.05")) float ExpandFactor = 1.25f;
+    UFUNCTION(BlueprintCallable, Category="Exploration") void ExpandBounds(float Factor);
+    /** On the game mode (server) this component is the world's edge: whoever and whatever crosses it comes out on the opposite side. */
+    UFUNCTION(BlueprintPure, Category="Exploration") bool IsWorldEdge() const;
+    /** Moves a place that is past the edge to the opposite side; unchanged inside. */
+    UFUNCTION(BlueprintPure, Category="Exploration") FVector WrapLocation(FVector Location) const;
     /** Forgets everything (a new character; tests). */
     UFUNCTION(BlueprintCallable, Category="Exploration") void ForgetAll();
 

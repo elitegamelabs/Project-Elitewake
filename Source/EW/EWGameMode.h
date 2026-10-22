@@ -18,6 +18,10 @@ public:
 	
 	/** Constructor */
 	AEWGameMode();
+
+	/** The world's edge and its growth (see UEWExplorationComponent). */
+	UPROPERTY(VisibleAnywhere, Category="World")
+	TObjectPtr<class UEWExplorationComponent> WorldEdge;
 };
 
 

@@ -7,6 +7,8 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "World/EWClimateRegion.h"
+#include "GameFramework/GameModeBase.h"
+#include "Ships/EWShip.h"
 
 UEWExplorationComponent::UEWExplorationComponent()
 {
@@ -73,7 +75,40 @@ void UEWExplorationComponent::RevealAround(FVector Location, float Radius)
             uint8& Cell = Cells[Y * GridSize + X];
             if (!Cell) { Cell = 255; ++RevealedCells; bChanged = true; }
         }
-    if (bChanged) ++Revision;
+    if (bChanged) { ++Revision; if (GetRevealedFraction() >= ExpandAtFraction) ExpandBounds(ExpandFactor); }
+}
+
+void UEWExplorationComponent::ExpandBounds(float Factor)
+{
+    if (BoundsSize <= 0.f || Factor <= 1.f) return;
+    const float NewSize = BoundsSize * Factor;
+    const FVector2D NewMin = BoundsMin - FVector2D(NewSize - BoundsSize, NewSize - BoundsSize) * .5f;
+    TArray<uint8> Old = MoveTemp(Cells);
+    Cells.Init(0, GridSize * GridSize);
+    RevealedCells = 0;
+    // Every old cell lands in the new, coarser grid.
+    for (int32 Y = 0; Y < GridSize; ++Y)
+        for (int32 X = 0; X < GridSize; ++X)
+            if (Old[Y * GridSize + X])
+            {
+                const int32 Nx = FMath::FloorToInt(((X + .5f) / GridSize * BoundsSize + BoundsMin.X - NewMin.X) / NewSize * GridSize);
+                const int32 Ny = FMath::FloorToInt(((Y + .5f) / GridSize * BoundsSize + BoundsMin.Y - NewMin.Y) / NewSize * GridSize);
+                uint8& Cell = Cells[Ny * GridSize + Nx];
+                if (!Cell) { Cell = 255; ++RevealedCells; }
+            }
+    BoundsMin = NewMin; BoundsSize = NewSize; ++Revision;
+}
+
+bool UEWExplorationComponent::IsWorldEdge() const
+{
+    return Cast<AGameModeBase>(GetOwner()) != nullptr;
+}
+
+FVector UEWExplorationComponent::WrapLocation(FVector L) const
+{
+    if (BoundsSize <= 0.f) return L;
+    auto Wrap = [this](double V, double Min) { return V < Min ? V + BoundsSize : V >= Min + BoundsSize ? V - BoundsSize : V; };
+    return FVector(Wrap(L.X, BoundsMin.X), Wrap(L.Y, BoundsMin.Y), L.Z);
 }
 
 bool UEWExplorationComponent::IsRevealed(FVector Location) const
@@ -98,6 +133,27 @@ void UEWExplorationComponent::LoadCells(const TArray<uint8>& Saved, const FVecto
 void UEWExplorationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (IsWorldEdge())
+    {
+        // The world's edge, kept by the server: it grows as players clear the map, and anything past it comes out on the other side.
+        UWorld* World = GetWorld();
+        if (!World || !GetOwner()->HasAuthority()) return;
+        EnsureBounds();
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            if (const APawn* P = It->IsValid() ? It->Get()->GetPawn() : nullptr) RevealAround(P->GetActorLocation(), RevealRadius);
+        for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
+            if (APawn* P = It->IsValid() ? It->Get()->GetPawn() : nullptr)
+            {
+                const FVector Here = P->GetActorLocation(), There = WrapLocation(Here);
+                if (!Here.Equals(There, 1.0) && !P->GetAttachParentActor()) P->TeleportTo(There, P->GetActorRotation());
+            }
+        for (TActorIterator<AEWShip> Ship(World); Ship; ++Ship)
+        {
+            const FVector Here = Ship->GetActorLocation(), There = WrapLocation(Here);
+            if (!Here.Equals(There, 1.0)) Ship->SetActorLocation(There, false, nullptr, ETeleportType::TeleportPhysics);
+        }
+        return;
+    }
     const APlayerController* PC = Cast<APlayerController>(GetOwner());
     if (!PC || !PC->IsLocalController() || !PC->GetPawn()) return;
     if (const UEWSurvivalComponent* Body = PC->GetPawn()->FindComponentByClass<UEWSurvivalComponent>()) if (Body->IsDead()) return;
