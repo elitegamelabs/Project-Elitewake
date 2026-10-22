@@ -1,5 +1,7 @@
 # Scenario: generation queue
 
+**Handoff rule (owner, October 22): before your usage runs out, close out what you have open, push, and write a `HANDOFF` entry in [INBOX.md](INBOX.md); at the start of each session continue any unpicked `HANDOFF` first ([TEAM_CHARTER](../TEAM_CHARTER.md) section 7).**
+
 **Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [../TEAM_CHARTER.md](../TEAM_CHARTER.md). `CLAIMED` / `IN PROGRESS` below is a courtesy notice only: it blocks nobody. Any teammate may add, take over or finish any task. Grok has joined ([GROK.md](GROK.md)).
 
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario. Scenario is a generation service on the owner's

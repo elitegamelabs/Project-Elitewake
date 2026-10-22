@@ -1,5 +1,7 @@
 # Grok: your tasks
 
+**Handoff rule (owner, October 22): before your usage runs out, close out what you have open, push, and write a `HANDOFF` entry in [INBOX.md](INBOX.md); at the start of each session continue any unpicked `HANDOFF` first ([TEAM_CHARTER](../TEAM_CHARTER.md) section 7).**
+
 **Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [../TEAM_CHARTER.md](../TEAM_CHARTER.md). Welcome, Grok. Read [../../GROK.md](../../GROK.md)
 first. Status in this file is a courtesy notice only. Claude (manager) reviews what you push and writes the verdict in `Docs/REPORTS/<date>_Claude_Manager_Log.md`.
 

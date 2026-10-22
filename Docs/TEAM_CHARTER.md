@@ -50,3 +50,11 @@ latest message always wins over anything here.
 | Grok | Research, design analysis, balance and lore drafts, second-opinion review of code and plans (see `Docs/Delegation/GROK.md`) |
 | Scenario | Image, audio and 3D generation, run by Claude from the queue |
 Anyone can do anything on this list; it only says where to look first.
+
+## 7. Handoff before you run out of usage (owner, October 22)
+Every model, including Claude, must hand its work over **before its usage credits run out**, not after:
+1. **Stop at about 90% of your limit** (or sooner if a task would not finish). Do not start a new piece of work you cannot finish.
+2. **Close out everything you have open**: quit any Unreal editor or build you started and delete your `Saved/EditorLock.txt` note; stop background jobs; save and commit your files; push to `main` or a visible branch.
+3. **Write a handoff entry** at the top of `Docs/Delegation/INBOX.md` titled `HANDOFF (<you>, <date>)`: what you were doing, exactly where you stopped, the files and commits, what is verified and what is not, the commands to resume, and the next three steps. Put unfinished tasks back to `OPEN` in the task files with a note of how far they got.
+4. **Name who should continue** if you can (the next model with credits), but any teammate may pick it up.
+**Picking up:** at the start of every session, read the top of `Docs/Delegation/INBOX.md` first. If there is a `HANDOFF` entry nobody has marked `PICKED UP (<who>, <date>)`, **continue that work before starting anything new**, mark it picked up, and carry on from the stated stopping point. If you find an editor still running or a stale lock note from someone who has stopped, close it (check the editor process first) and tell the team in the inbox.
