@@ -26,6 +26,7 @@ wood = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
 output = recipes[0].get_editor_property('output')
 outputs = [r.get_editor_property('output') for r in recipes]
 hide = flask_costs[0].get_editor_property('item')
+base = [inv.get_item_count(o) for o in outputs]   # the starter kit already carries some of these tools
 thatch = flask_costs[1].get_editor_property('item')
 for r in recipes: assert inv.unlock_recipe(r)
 phase = 0
@@ -75,26 +76,26 @@ def tick(delta):
             assert lib.send_verification_ui_key(client,'Down')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==6:
-            assert inv.get_item_count(outputs[1])==1 and remote.get_item_count(outputs[1])==1
+            assert inv.get_item_count(outputs[1])==base[1]+1 and remote.get_item_count(outputs[1])==base[1]+1
             assert inv.get_item_count(wood)==20 and remote.get_item_count(wood)==20
             checks.append('Wooden Axe consumes 20 Wood and replicates one output')
             assert lib.send_verification_ui_key(client,'Down')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==7:
-            assert inv.get_item_count(outputs[2])==1 and remote.get_item_count(outputs[2])==1
+            assert inv.get_item_count(outputs[2])==base[2]+1 and remote.get_item_count(outputs[2])==base[2]+1
             assert inv.get_item_count(wood)==0 and remote.get_item_count(wood)==0
             checks.append('Wooden Pickaxe consumes 20 Wood and replicates one output')
             assert lib.send_verification_ui_key(client,'Down')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==8:
-            assert inv.get_item_count(outputs[3])==1 and remote.get_item_count(outputs[3])==1
+            assert inv.get_item_count(outputs[3])==base[3]+1 and remote.get_item_count(outputs[3])==base[3]+1
             assert inv.get_item_count(hide)==0 and remote.get_item_count(hide)==0
             assert inv.get_item_count(thatch)==0 and remote.get_item_count(thatch)==0
             checks.append('Hide Water Flask consumes 1 Hide and 10 Thatch and replicates one output')
-            assert lib.send_verification_ui_key(client,'Tab')
+            assert lib.send_verification_ui_key(client,'PageUp')
             checks.append('Returns to inventory')
             finish();return
         phase+=1
     except Exception as exc:
-        finish(str(exc))
+        finish(f'Phase {phase}: {exc!r} wood={inv.get_item_count(wood)}/{remote.get_item_count(wood)} outputs={[inv.get_item_count(o) for o in outputs]} hide={inv.get_item_count(hide)} thatch={inv.get_item_count(thatch)}')
 handle=unreal.register_slate_post_tick_callback(tick)

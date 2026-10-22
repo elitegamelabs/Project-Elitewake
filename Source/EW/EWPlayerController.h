@@ -7,6 +7,7 @@
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
 #include "EWInventoryComponent.h"
+#include "EWProgressionComponent.h"
 #include "Characters/EWAppearance.h"
 #include "EWWorkFeedback.h"
 #include "EWPlayerController.generated.h"
@@ -18,6 +19,7 @@ class UEWInventoryWidget;
 class AEWPickup;
 class UEWHotbarWidget;
 class UEWSurvivalWidget;
+class UEWDeathWidget;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
 class UEWShipMarkersWidget;
@@ -97,6 +99,13 @@ public:
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
     void RequestCraft(UEWCraftingRecipe* Recipe);
     UFUNCTION(Server, Reliable) void ServerCraft(UEWCraftingRecipe* Recipe);
+    /** The dead survivor chooses to respawn (owner, October 22): the server drops their bag where they fell and brings them back at a safe place away from it. */
+    void RequestRespawn() { ServerRequestRespawn(); }
+    UFUNCTION(Server, Reliable) void ServerRequestRespawn();
+    /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
+    void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
+    UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
+    UFUNCTION(BlueprintPure, Category="Death") UEWDeathWidget* GetDeathWidget() const { return DeathWidget; }
     UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     void RequestConsumeFood(UEWItemDefinition* Item);
@@ -210,6 +219,8 @@ protected:
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWDeathWidget> DeathWidget;
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;

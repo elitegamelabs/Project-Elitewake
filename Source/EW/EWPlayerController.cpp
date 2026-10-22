@@ -29,6 +29,8 @@
 #include "EWCompassWidget.h"
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
+#include "EWDeathWidget.h"
+#include "EWProgressionComponent.h"
 #include "InputKeyEventArgs.h"
 #include "EWOptionsWidget.h"
 #include "EWSurvivorSave.h"
@@ -90,6 +92,8 @@ void AEWPlayerController::BeginPlay()
         if (ShipMarkersWidget) ShipMarkersWidget->AddToPlayerScreen(1);
         CompassWidget = CreateWidget<UEWCompassWidget>(this, UEWCompassWidget::StaticClass());
         if (CompassWidget) CompassWidget->AddToPlayerScreen(1);
+        DeathWidget = CreateWidget<UEWDeathWidget>(this, UEWDeathWidget::StaticClass());
+        if (DeathWidget) DeathWidget->AddToPlayerScreen(90);
         HitMarkerWidget = CreateWidget<UEWHitMarkerWidget>(this, UEWHitMarkerWidget::StaticClass());
         if (HitMarkerWidget) HitMarkerWidget->AddToPlayerScreen(4);
         if (auto* Instance=GetGameInstance<UEWGameInstance>()) Instance->LocalControllerReady(this);
@@ -498,12 +502,25 @@ void AEWPlayerController::RequestCraft(UEWCraftingRecipe* Recipe)
 {
     if (IsLocalPlayerController() && !IsMapOpen() && !IsSessionMenuOpen()) ServerCraft(Recipe);
 }
+void AEWPlayerController::ServerSpendStatPoint_Implementation(EEWStat Stat)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (Survivor && Survivor->GetProgressionComponent() && !Survivor->IsDead()) Survivor->GetProgressionComponent()->SpendPoint(Stat);
+}
+
+void AEWPlayerController::ServerRequestRespawn_Implementation()
+{
+    if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->RespawnAfterDeath();
+}
+
 void AEWPlayerController::ServerCraft_Implementation(UEWCraftingRecipe* Recipe)
 {
     auto* OwnedCrafter = Cast<AEWCharacter>(GetPawn());
     if (IsMapOpen() || IsSessionMenuOpen() || !OwnedCrafter || OwnedCrafter->GetController() != this || OwnedCrafter->GetSurvivalComponent()->GetHealth() <= 0.f)
     { ClientCraftResult(EEWCraftResult::Busy); return; }
-    ClientCraftResult(OwnedCrafter->GetInventoryComponent()->CraftItem(Recipe));
+    const EEWCraftResult Result = OwnedCrafter->GetInventoryComponent()->CraftItem(Recipe);
+    if (Result == EEWCraftResult::Success && OwnedCrafter->GetProgressionComponent()) OwnedCrafter->GetProgressionComponent()->Award(EEWExperienceSource::Craft);
+    ClientCraftResult(Result);
 }
 void AEWPlayerController::ClientCraftResult_Implementation(EEWCraftResult Result)
 {

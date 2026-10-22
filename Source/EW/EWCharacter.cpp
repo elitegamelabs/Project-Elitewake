@@ -7,6 +7,10 @@
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
 #include "EWSurvivalComponent.h"
+#include "EWProgressionComponent.h"
+#include "EWDeathBag.h"
+#include "GameFramework/GameModeBase.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
 #include "Camera/CameraComponent.h"
@@ -42,6 +46,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
 	SurvivalComponent = CreateDefaultSubobject<UEWSurvivalComponent>(TEXT("SurvivalComponent"));
+	ProgressionComponent = CreateDefaultSubobject<UEWProgressionComponent>(TEXT("ProgressionComponent"));
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
@@ -78,6 +83,9 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	GetCharacterMovement()->MaxSwimSpeed = 450.f;
 	// Above 1 a survivor floats with head and shoulders out of the water and drifts back up after a dive (tuning).
 	GetCharacterMovement()->Buoyancy = 1.3f;
+	// Swimmers stop soon after the stick or keys are released instead of coasting away (owner, October 22). The engine default of 0
+	// leaves only fluid friction, so a swimmer drifts for many seconds; this braking halts a full-speed stroke in about a third of a second.
+	GetCharacterMovement()->BrakingDecelerationSwimming = 1400.f;
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
@@ -527,6 +535,69 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
     DOREPLIFETIME(AEWCharacter, Ladder);
     DOREPLIFETIME(AEWCharacter, Appearance);
     DOREPLIFETIME_CONDITION(AEWCharacter, bFacingView, COND_SkipOwner);
+}
+
+bool AEWCharacter::IsDead() const
+{
+    return SurvivalComponent && SurvivalComponent->IsDead();
+}
+
+bool AEWCharacter::FindRespawnPoint(const FVector& DeathSpot, FVector& OutLocation) const
+{
+    UWorld* World = GetWorld();
+    if (!World) return false;
+    const EEWRegion DeathRegion = AEWClimateRegion::SampleClimate(this, DeathSpot).Region;
+    const float HalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight(), Radius = GetCapsuleComponent()->GetScaledCapsuleRadius();
+    const float SeaZ = -65.f;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWRespawnProbe), false, this);
+    const FCollisionShape Body = FCollisionShape::MakeCapsule(Radius, HalfHeight);
+    float MaxDistance = FMath::Max(RespawnMaxDistance, RespawnMinDistance + 1000.f);
+    for (int32 Attempt = 0; Attempt < 60; ++Attempt)
+    {
+        // The ring widens every 15 tries so a survivor lost far offshore still finds ground.
+        if (Attempt > 0 && Attempt % 15 == 0) MaxDistance *= 2.f;
+        const float Angle = FMath::FRandRange(0.f, TWO_PI), Distance = FMath::FRandRange(RespawnMinDistance, MaxDistance);
+        const FVector Probe = DeathSpot + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.f) * Distance;
+        FHitResult Hit;
+        if (!World->LineTraceSingleByChannel(Hit, FVector(Probe.X, Probe.Y, 40000.f), FVector(Probe.X, Probe.Y, -20000.f), ECC_Visibility, Query)) continue;
+        if (Hit.ImpactNormal.Z < .8f || Hit.ImpactPoint.Z < SeaZ + 60.f) continue;
+        const AActor* HitActor = Hit.GetActor();
+        if (HitActor && (HitActor->IsA<AEWShip>() || HitActor->IsA<APawn>())) continue;
+        const FVector Spot = Hit.ImpactPoint + FVector(0.f, 0.f, HalfHeight + 6.f);
+        const EEWRegion Region = AEWClimateRegion::SampleClimate(this, Spot).Region;
+        if (DeathRegion != EEWRegion::OpenSea && Region != DeathRegion) continue;
+        if (Region == EEWRegion::OpenSea) continue;
+        if (World->OverlapBlockingTestByChannel(Spot, FQuat::Identity, ECC_Pawn, Body, Query)) continue;
+        OutLocation = Spot;
+        return true;
+    }
+    // No ground found: the level's start (the Plains port in the main world).
+    if (AGameModeBase* GameMode = World->GetAuthGameMode())
+        if (AActor* Start = GameMode->FindPlayerStart(GetController()))
+        {
+            OutLocation = Start->GetActorLocation() + FVector(0.f, 0.f, HalfHeight);
+            return true;
+        }
+    return false;
+}
+
+bool AEWCharacter::RespawnAfterDeath()
+{
+    if (!HasAuthority() || !IsDead()) return false;
+    const FVector DeathSpot = GetActorLocation();
+    AEWDeathBag::DropInventoryOf(this, DeathSpot);
+    // Out of any post, off any ladder.
+    if (IsValid(HelmShip)) HelmShip->LeaveHelm(this, true);
+    if (IsValid(GunShip)) { SetGunPost(nullptr, NAME_None); DetachFromActor(FDetachmentTransformRules::KeepWorldTransform); GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); }
+    if (IsOnLadder()) ReleaseLadder(false);
+    FVector Where;
+    if (!FindRespawnPoint(DeathSpot, Where)) Where = DeathSpot + FVector(0.f, 0.f, 300.f);
+    SurvivalComponent->Revive(1.f, .5f);
+    GetCharacterMovement()->StopMovementImmediately();
+    TeleportTo(Where, FRotator(0.f, FMath::FRandRange(0.f, 360.f), 0.f));
+    GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+    ForceNetUpdate();
+    return true;
 }
 
 void AEWCharacter::SetHelmShip(AEWShip* Ship)
@@ -1040,6 +1111,7 @@ EEWLocomotionState AEWCharacter::GetLocomotionState() const
 
 void AEWCharacter::DoMove(float Right, float Forward)
 {
+    if (IsDead()) return;
     if (IsOnLadder())
     {
         PendingLadderForward = Forward;
@@ -1103,6 +1175,7 @@ void AEWCharacter::ApplyUserBrightness(float ExposureBias)
 
 void AEWCharacter::DoJumpStart()
 {
+    if (IsDead()) return;
     if (HelmShip || GunShip) return;
     // Space lets go of a ladder.
     if (IsOnLadder()) { ServerLetGoOfLadder(); return; }
@@ -1213,6 +1286,7 @@ void AEWCharacter::MulticastWorkImpact_Implementation(AActor* Target, FVector_Ne
 void AEWCharacter::PlayGatherMotion(bool bBush, const TArray<FEWGatherGain>& Gains)
 {
     if (!HasAuthority()) return;
+    if (Gains.Num() > 0 && ProgressionComponent) ProgressionComponent->Award(EEWExperienceSource::Gather, Gains.Num());
     MulticastToolAnimation(bBush ? GatherBushAnimation : GatherGroundAnimation);
     MulticastGatherSound();
     ClientGathered(Gains);

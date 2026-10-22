@@ -1,12 +1,12 @@
 """Acceptance for the sea floor (owner, October 17: dynamic sea-floor scenery, deeper sand, geography, corals and
-aquatic plants, the ocean at most 2,000 m deep). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground with one
+aquatic plants, the ocean at most 1,500 m deep from October 22). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground with one
 player (EW_PLAY_PLAYERS=1: the screenshots are the player's own view), after build_coastal_terrain.py and
 build_seabed_life.py. Run unattended with run_play_check.py.
 
-  1. Depth: across the whole sea the floor is never deeper than 2,000 m, the open ocean and the trench reach at least
-     1,900 m, and the channels between islands are 100-600 m deep in their middles.
+  1. Depth: across the whole sea the floor is never deeper than 1,500 m, the open ocean and the trench reach at least
+     1,400 m, and the channels between islands are 100-600 m deep in their middles.
   2. Geography: every seamount's top is within diving depth (8-30 m), well above its surroundings.
-  3. The water reaches the deepest floor: the swimming volume goes down 2,000 m, and a survivor 1,500 m down in the
+  3. The water reaches the deepest floor: the swimming volume goes down 1,500 m, and a survivor 1,100 m down in the
      trench is swimming, not falling.
   4. Life: thousands of seagrass clumps, kelp, corals, sea fans and sponges; every kelp's tip stays under water.
   5. Corals and sponges are solid to a trace; plants are not.
@@ -68,13 +68,13 @@ def depth():
             if d is None:
                 missing += 1
                 continue
-            assert d <= 2001, f'the floor is {d:.0f} m deep'
+            assert d <= 1501, f'the floor is {d:.0f} m deep'
             deepest = max(deepest, d)
     assert missing == 0, f'{missing} samples found no sea floor'
     (ax, ay), (bx, by) = T.TRENCH
     trench = max(depth_m(ax + (bx - ax) * f, ay + (by - ay) * f) for f in (.1, .15, .2, .25))
-    assert trench >= 1500, f'the trench is only {trench:.0f} m deep'
-    assert deepest >= 1900, f'the deepest sample is {deepest:.0f} m'
+    assert trench >= 1100, f'the trench is only {trench:.0f} m deep'
+    assert deepest >= 1400, f'the deepest sample is {deepest:.0f} m'
     # The middle of the channel between every island and its nearest neighbour.
     channels = []
     for a in W.ISLANDS:
@@ -107,7 +107,7 @@ def deep_water():
     assert origin.z - extent.z <= T.DEEP + 100, f'the swimming volume ends {(T.SEA - (origin.z - extent.z)) / 100:.0f} m down'
     (ax, ay), (bx, by) = T.TRENCH
     x, y = ax + (bx - ax) * .15, ay + (by - ay) * .15
-    pawn.teleport(unreal.Vector(x, y, T.SEA - 150000), pawn.get_actor_rotation())
+    pawn.teleport(unreal.Vector(x, y, T.SEA - 110000), pawn.get_actor_rotation())
     state['at'] = time.monotonic()
     return True
 
@@ -225,10 +225,10 @@ def warmup():
 
 
 STEPS = [
-    ('The floor is never deeper than 2,000 m; the open ocean and the trench reach it; channels are 60-600 m deep', warmup, depth, 30),
+    ('The floor is never deeper than 1,500 m; the open ocean and the trench reach it; channels are 60-600 m deep', warmup, depth, 30),
     ('Every seamount top is within diving depth, well above its surroundings', lambda: None, seamounts, 10),
-    ('The swimming volume reaches 2,000 m down', lambda: None, deep_water, 5),
-    ('1,500 m down in the trench the survivor swims', lambda: None, swimming_deep, 8),
+    ('The swimming volume reaches 1,500 m down', lambda: None, deep_water, 5),
+    ('1,100 m down in the trench the survivor swims', lambda: None, swimming_deep, 8),
     ('Thousands of seagrass clumps, kelp, corals, fans and sponges; every kelp tip under water', lambda: None, life, 30),
     ('Corals and sponges stop a trace; seagrass and kelp do not', lambda: None, solid, 10),
     ('Screenshot: a seagrass meadow off the starter island', view('Seagrass', 'Starter'), shot('seagrass_starter'), 10),

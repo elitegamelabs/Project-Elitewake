@@ -1,4 +1,5 @@
 #include "EWMineable.h"
+#include "EWProgressionComponent.h"
 #include "EWCharacter.h"
 #include "EWEquipmentComponent.h"
 #include "EWInventoryComponent.h"
@@ -102,6 +103,7 @@ int32 AEWMineable::TryMine(AEWCharacter* Survivor)
     TGuardValue<bool> Guard(bMining, true);
     const int32 Added = Survivor->GetInventoryComponent()->AddItem(Resource, FMath::Min(Remaining, PerStrike));
     Remaining -= Added;
+    if (Added > 0) if (auto* Progress = Survivor->GetProgressionComponent()) Progress->Award(EEWExperienceSource::Gather, 2);
     if (Remaining == 0)
     {
         RefreshNodeAvailability();

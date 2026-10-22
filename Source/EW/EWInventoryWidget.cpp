@@ -16,6 +16,7 @@
 #include "Components/WrapBoxSlot.h"
 #include "Engine/Texture2D.h"
 #include "EWSurvivalComponent.h"
+#include "EWProgressionComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/BorderSlot.h"
@@ -301,7 +302,7 @@ void UEWInventoryWidget::ShowCraftingTab() { SelectSection(1); }
 void UEWInventoryWidget::SelectSection(int32 Index)
 {
     if (!SectionButtons.IsValidIndex(Index)) return;
-    SelectedSection=Index; bCraftingOpen=Index==1; bShowingDetails=false;
+    SelectedSection=Index; bCraftingOpen=Index==1; bShowingDetails=false; StatFocus=INDEX_NONE;
     RefreshCrafting(); SetUserFocus(GetOwningPlayer());
 }
 void UEWInventoryWidget::SelectRecipe(int32 Index)
@@ -495,6 +496,82 @@ void UEWInventoryWidget::BuildStatRows(UVerticalBox* Into)
     auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(8); BarSize->SetContent(HumidityBar);
     Column->AddChildToVerticalBox(BarSize);
     Into->AddChildToVerticalBox(Column)->SetPadding(FMargin(0,20,0,0));
+
+    // Level and stat points (owner, October 22): shown beside the survivor even before a point is earned; each stat's arrow is faint and dead until a point can be spent.
+    auto* Level = WidgetTree->ConstructWidget<UVerticalBox>();
+    LevelValue = WidgetTree->ConstructWidget<UTextBlock>(); { auto F = LevelValue->GetFont(); F.Size = 20; LevelValue->SetFont(F); }
+    Level->AddChildToVerticalBox(LevelValue)->SetPadding(FMargin(0,0,0,4));
+    LevelBar = WidgetTree->ConstructWidget<UProgressBar>(); LevelBar->SetFillColorAndOpacity(FLinearColor(.45f,.78f,.95f));
+    auto* LevelBarSize = WidgetTree->ConstructWidget<USizeBox>(); LevelBarSize->SetHeightOverride(8); LevelBarSize->SetContent(LevelBar);
+    Level->AddChildToVerticalBox(LevelBarSize)->SetPadding(FMargin(0,0,0,6));
+    PointsValue = WidgetTree->ConstructWidget<UTextBlock>(); PointsValue->SetAutoWrapText(true); { auto F = PointsValue->GetFont(); F.Size = 15; PointsValue->SetFont(F); }
+    Level->AddChildToVerticalBox(PointsValue)->SetPadding(FMargin(0,0,0,8));
+    for (int32 Stat = 0; Stat < UEWProgressionComponent::StatCount; ++Stat)
+    {
+        auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetAutoWrapText(true); { auto F = Label->GetFont(); F.Size = 15; Label->SetFont(F); }
+        Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        auto* Arrow = WidgetTree->ConstructWidget<UEWRecipeButton>(); Arrow->Initialize(Stat);
+        Arrow->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SpendStat);
+        auto* Glyph = WidgetTree->ConstructWidget<UTextBlock>(); Glyph->SetText(FText::FromString(TEXT("\u25B2"))); Glyph->SetJustification(ETextJustify::Center);
+        { auto F = Glyph->GetFont(); F.Size = 18; Glyph->SetFont(F); }
+        Arrow->SetContent(Glyph);
+        auto* ArrowSize = WidgetTree->ConstructWidget<USizeBox>(); ArrowSize->SetWidthOverride(44); ArrowSize->SetHeightOverride(40); ArrowSize->SetContent(Arrow);
+        auto* ArrowSlot = Row->AddChildToHorizontalBox(ArrowSize); ArrowSlot->SetVerticalAlignment(VAlign_Center); ArrowSlot->SetPadding(FMargin(8,0,0,0));
+        Level->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,0,0,6));
+        AllocValues.Add(Label); AllocArrows.Add(Arrow);
+    }
+    auto* Hint = WidgetTree->ConstructWidget<UTextBlock>(); Hint->SetAutoWrapText(true); Hint->SetColorAndOpacity(FSlateColor(FLinearColor(.65f,.7f,.75f)));
+    Hint->SetText(NSLOCTEXT("Elitewake", "StatHint", "C or left stick click: pick a stat with Up/Down or the d-pad, Enter or A raises it. One point per level."));
+    { auto F = Hint->GetFont(); F.Size = 12; Hint->SetFont(F); }
+    Level->AddChildToVerticalBox(Hint);
+    Into->AddChildToVerticalBox(Level)->SetPadding(FMargin(0,24,0,0));
+}
+
+FText UEWInventoryWidget::GetLevelText() const
+{
+    return LevelValue ? LevelValue->GetText() : FText::GetEmpty();
+}
+bool UEWInventoryWidget::IsStatArrowEnabled(int32 StatIndex) const
+{
+    return AllocArrows.IsValidIndex(StatIndex) && AllocArrows[StatIndex]->GetIsEnabled();
+}
+float UEWInventoryWidget::GetStatArrowOpacity(int32 StatIndex) const
+{
+    return AllocArrows.IsValidIndex(StatIndex) ? AllocArrows[StatIndex]->GetRenderOpacity() : 0.f;
+}
+void UEWInventoryWidget::SetStatFocus(int32 StatIndex)
+{
+    StatFocus = StatIndex >= 0 && StatIndex < UEWProgressionComponent::StatCount && SelectedSection != 4 && SelectedSection != 6 ? StatIndex : INDEX_NONE;
+    RefreshProgression();
+}
+void UEWInventoryWidget::SpendStat(int32 StatIndex)
+{
+    const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
+    if (!Progress || Progress->GetUnspentPoints() <= 0 || StatIndex < 0 || StatIndex >= UEWProgressionComponent::StatCount) return;
+    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RequestSpendStatPoint(static_cast<EEWStat>(StatIndex));
+}
+void UEWInventoryWidget::RefreshProgression()
+{
+    const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
+    if (!Progress || !LevelValue || !LevelBar || !PointsValue || AllocArrows.Num() != UEWProgressionComponent::StatCount) return;
+    LevelValue->SetText(FText::Format(NSLOCTEXT("Elitewake", "LevelFormat", "LEVEL {0}"), Progress->GetLevel()));
+    LevelBar->SetPercent(Progress->IsAtMaxLevel() ? 1.f : FMath::Clamp(float(Progress->GetExperience()) / FMath::Max(1, Progress->GetExperienceForNextLevel()), 0.f, 1.f));
+    const int32 Points = Progress->GetUnspentPoints();
+    PointsValue->SetText(Progress->IsAtMaxLevel() ? NSLOCTEXT("Elitewake", "MaxLevel", "Highest level reached")
+        : FText::Format(NSLOCTEXT("Elitewake", "PointsFormat", "Experience {0} / {1}     Stat points to spend: {2}"), Progress->GetExperience(), Progress->GetExperienceForNextLevel(), Points));
+    for (int32 Stat = 0; Stat < UEWProgressionComponent::StatCount; ++Stat)
+    {
+        const EEWStat Which = static_cast<EEWStat>(Stat);
+        AllocValues[Stat]->SetText(FText::Format(NSLOCTEXT("Elitewake", "StatRow", "{0}{1}  {2}\n{3}"), FText::FromString(Stat == StatFocus ? TEXT("\u25BA ") : TEXT("")),
+            UEWProgressionComponent::StatName(Which), Progress->GetStatPoints(Which), Progress->StatEffect(Which)));
+        const bool bLive = Points > 0;
+        AllocArrows[Stat]->SetIsEnabled(bLive);
+        AllocArrows[Stat]->SetRenderOpacity(bLive ? 1.f : .25f);
+        AllocArrows[Stat]->SetBackgroundColor(bLive ? FLinearColor(.2f,.6f,.35f) : FLinearColor(.1f,.12f,.14f));
+    }
 }
 
 void UEWInventoryWidget::PerformCraft()
@@ -586,6 +663,7 @@ void UEWInventoryWidget::RefreshSummary()
             HumidityBar->SetPercent(FMath::Clamp(C.Humidity / 100.f, 0.f, 1.f));
         }
     }
+    RefreshProgression();
 
 }
 
@@ -642,8 +720,31 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
 {
     const FKey Key = Event.GetKey();
     if (Key==EKeys::M) { if (!Event.IsRepeat()) if (auto* PC=Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMapOpen(true); return FReply::Handled(); }
-    if (Key == EKeys::Tab || Key == EKeys::Gamepad_RightShoulder)
-    { if (!Event.IsRepeat()) ToggleCrafting(); return FReply::Handled(); }
+    // Stat points: C or a left-stick press starts choosing; Up/Down or the d-pad pick; Enter or A spends; Escape, B or C again stops.
+    if (Key==EKeys::C || Key==EKeys::Gamepad_LeftThumbstick)
+    { if (!Event.IsRepeat()) SetStatFocus(StatFocus==INDEX_NONE ? 0 : INDEX_NONE); return FReply::Handled(); }
+    const bool bSectionKey = Key==EKeys::Tab || Key==EKeys::PageUp || Key==EKeys::PageDown || Key==EKeys::Gamepad_RightShoulder || Key==EKeys::Gamepad_LeftTrigger;
+    if (StatFocus != INDEX_NONE && !bSectionKey)
+    {
+        if (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) SetStatFocus((StatFocus + UEWProgressionComponent::StatCount - 1) % UEWProgressionComponent::StatCount);
+        else if (Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down) SetStatFocus((StatFocus + 1) % UEWProgressionComponent::StatCount);
+        else if (Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) SpendStat(StatFocus); }
+        else if (Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right) SetStatFocus(INDEX_NONE);
+        return FReply::Handled();      // while choosing a stat, the other keys do nothing
+    }
+    const bool bNextSection = Key==EKeys::PageDown || Key==EKeys::Gamepad_RightShoulder || (Key==EKeys::Tab && !Event.IsShiftDown());
+    const bool bPreviousSection = Key==EKeys::PageUp || Key==EKeys::Gamepad_LeftTrigger || (Key==EKeys::Tab && Event.IsShiftDown());
+    if (bNextSection || bPreviousSection)
+    { if (!Event.IsRepeat()) CycleSection(bNextSection ? 1 : -1); return FReply::Handled(); }
+    if (SelectedSection >= 2)
+    {
+        // Building, Skills, Company, Tames and Journal have no item list: the arrows page the Journal, and the rest of the keys only close the menu.
+        if (SelectedSection==6 && JournalPanel && (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up || Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down))
+            JournalPanel->ShowPage(FMath::Clamp(JournalPanel->GetSelectedPage() + ((Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) ? -1 : 1), 0, FMath::Max(0, JournalPanel->GetPageCount()-1)));
+        else if (Key==EKeys::I || Key==EKeys::Gamepad_FaceButton_Right || Key==EKeys::Escape)
+        { if (!Event.IsRepeat()) if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->SetInventoryOpen(false); }
+        return FReply::Handled();
+    }
     if (bCraftingOpen && (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up || Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down))
     { SelectRecipe(FMath::Clamp(SelectedRecipeIndex + ((Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) ? -1 : 1),0,FMath::Max(0,DisplayedRecipes.Num()-1))); return FReply::Handled(); }
     if (bCraftingOpen && (Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom))

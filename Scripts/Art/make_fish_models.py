@@ -32,7 +32,6 @@ CREATURES = [
     ('Bass', 'bass.png', 'left', 50.0, .10, .48),
     ('Catfish', 'catfish.png', 'left', 90.0, .12, .95),
     ('MantaRay', 'mantaray.png', 'left', 380.0, .12, 0.0),
-    ('Manatee', 'mantee.png', 'right', 300.0, .12, 1.05),
     ('GreatWhiteShark', 'shark.png', 'left', 450.0, .08, .78),
     ('HammerheadShark', 'shark2.png', 'left', 400.0, .08, .74),
     ('Squid', 'squid.png', 'left', 180.0, .12, .95),

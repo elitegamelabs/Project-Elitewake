@@ -61,6 +61,18 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") UEWJournalWidget* GetJournalPanel() const { return JournalPanel; }
     /** Opens a menu section by its tab: 0 inventory, 1 crafting, ... 6 journal. */
     UFUNCTION(BlueprintCallable, Category="Menu") void OpenSection(int32 Index) { SelectSection(Index); }
+    /** The open menu section (0 inventory ... 6 journal). */
+    UFUNCTION(BlueprintPure, Category="Menu") int32 GetSelectedSection() const { return SelectedSection; }
+    UFUNCTION(BlueprintPure, Category="Menu") static int32 GetSectionCount() { return 7; }
+    /** Moves to the next (+1) or previous (-1) menu section, wrapping round: Tab/Shift+Tab, PageDown/PageUp, RB/LT on a controller. */
+    /** The stat the arrows or d-pad have picked for spending a point on (C or left stick press starts it), or -1. */
+    UFUNCTION(BlueprintPure, Category="Menu") int32 GetStatFocus() const { return StatFocus; }
+    /** Whether a stat's raise arrow is clear and live: only while a point is unspent. */
+    UFUNCTION(BlueprintPure, Category="Menu") bool IsStatArrowEnabled(int32 StatIndex) const;
+    UFUNCTION(BlueprintPure, Category="Menu") float GetStatArrowOpacity(int32 StatIndex) const;
+    UFUNCTION(BlueprintPure, Category="Menu") FText GetLevelText() const;
+    UFUNCTION(BlueprintCallable, Category="Menu") void SetStatFocus(int32 StatIndex);
+    UFUNCTION(BlueprintCallable, Category="Menu") void CycleSection(int32 Direction) { SelectSection((SelectedSection + Direction + GetSectionCount()) % GetSectionCount()); }
     UPROPERTY(Transient) TObjectPtr<UWidget> SurvivorPanel;
     UFUNCTION(BlueprintPure, Category="Inventory|Presentation")
     FText GetDisplayedDetails() const;
@@ -103,6 +115,14 @@ private:
     UBorder* MakeSlotTile(UEWItemDefinition* Item, const FString& Corner, float Freshness, UImage*& Image, UProgressBar*& FreshBar);
     void AddToGrid(UWrapBox* Grid, UBorder* Tile);
     void BuildStatRows(UVerticalBox* Into);
+    void RefreshProgression();
+    UFUNCTION() void SpendStat(int32 StatIndex);
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> LevelValue;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> LevelBar;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> PointsValue;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> AllocValues;
+    UPROPERTY(Transient) TArray<TObjectPtr<UButton>> AllocArrows;
+    int32 StatFocus = INDEX_NONE;
     UFUNCTION() void ShowInventoryTab();
     UFUNCTION() void ShowCraftingTab();
     UPROPERTY(Transient) TObjectPtr<UButton> InventoryTab;

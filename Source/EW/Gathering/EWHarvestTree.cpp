@@ -1,4 +1,5 @@
 #include "EWHarvestTree.h"
+#include "EWProgressionComponent.h"
 #include "EWCharacter.h"
 #include "EWEquipmentComponent.h"
 #include "EWInventoryComponent.h"
@@ -125,6 +126,7 @@ int32 AEWHarvestTree::TryHarvest(AEWCharacter* Survivor)
     WoodRemaining -= AddedWood;
     const int32 AddedThatch = Inventory->AddItem(Thatch, FMath::Min(ThatchRemaining, ThatchPerStrike));
     ThatchRemaining -= AddedThatch;
+    if (AddedWood + AddedThatch > 0) if (auto* Progress = Survivor->GetProgressionComponent()) Progress->Award(EEWExperienceSource::Gather);
     if (WoodRemaining == 0 && ThatchRemaining == 0) Destroy();
     else if (AddedWood > 0 || AddedThatch > 0) ForceNetUpdate();
     return AddedWood + AddedThatch;
