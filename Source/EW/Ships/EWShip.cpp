@@ -1000,13 +1000,14 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
         {
             FVector Deck = Head - Outward * In + Across * Aside;
             if (FMath::Abs(Outward.Y) > .5f && Deck.Y * Outward.Y < 0.f) Deck.Y = 0.f;   // never past the centreline
-            // On whichever deck is there: the main deck, or a raised quarterdeck at the stern.
+            // On whichever deck is there: the main deck, or a raised quarterdeck at the stern. The hull ignores the
+            // Visibility channel (so interaction aims pass through it), so look for the floor a survivor stands on.
             float Floor = Definition->GetDeckHeight();
             FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipBoarding), false, Character);
             FHitResult Hit;
             const FTransform& Frame = GetActorTransform();
             if (GetWorld()->LineTraceSingleByChannel(Hit, Frame.TransformPosition(FVector(Deck.X, Deck.Y, Top + 400.f)),
-                    Frame.TransformPosition(FVector(Deck.X, Deck.Y, Floor - 40.f)), ECC_Visibility, Query) && Hit.GetActor() == this)
+                    Frame.TransformPosition(FVector(Deck.X, Deck.Y, Floor - 40.f)), ECC_Pawn, Query) && Hit.GetActor() == this)
                 Floor = Frame.InverseTransformPosition(Hit.ImpactPoint).Z;
             Deck.Z = Floor + HalfHeight + 2.f;
             const FVector Candidate = GetActorTransform().TransformPosition(Deck);
