@@ -26,4 +26,7 @@ public:
     TArray<FEWCraftingIngredient> Ingredients;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<UEWItemDefinition> Output = nullptr;
+    /** Seconds the work takes (owner, October 22: crafting takes several seconds). Materials are used up only when it finishes. Cooking is 5 to 12 s by recipe. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Crafting", meta=(ClampMin="0"))
+    float CraftSeconds = 4.f;
 };

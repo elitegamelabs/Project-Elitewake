@@ -105,8 +105,15 @@ public:
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
     UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
+    /** Lights a star of the constellation tree with skill points (owner, October 22). */
+    void RequestUnlockSkill(FName Id) { if (IsLocalPlayerController()) ServerUnlockSkill(Id); }
+    UFUNCTION(Server, Reliable) void ServerUnlockSkill(FName Id);
     UFUNCTION(BlueprintPure, Category="Death") UEWDeathWidget* GetDeathWidget() const { return DeathWidget; }
     UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
+    /** The server accepted the recipe: the work takes this long. */
+    UFUNCTION(Client, Reliable) void ClientCraftStarted(UEWCraftingRecipe* Recipe, float Seconds);
+    /** Server: true while a craft is under way (one at a time). */
+    UFUNCTION(BlueprintPure, Category="Crafting") bool IsCraftingNow() const { return CraftingRecipe != nullptr; }
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     void RequestConsumeFood(UEWItemDefinition* Item);
     UFUNCTION(Server, Reliable)
@@ -219,6 +226,10 @@ protected:
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWCraftingRecipe> CraftingRecipe;
+    FTimerHandle CraftTimer;
+    void FinishCraft();
     UPROPERTY(Transient)
     TObjectPtr<UEWDeathWidget> DeathWidget;
     UPROPERTY(Transient)

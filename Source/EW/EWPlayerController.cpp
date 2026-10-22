@@ -30,6 +30,7 @@
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "EWDeathWidget.h"
+#include "EWCraftingRecipe.h"
 #include "EWProgressionComponent.h"
 #include "InputKeyEventArgs.h"
 #include "EWOptionsWidget.h"
@@ -502,6 +503,30 @@ void AEWPlayerController::RequestCraft(UEWCraftingRecipe* Recipe)
 {
     if (IsLocalPlayerController() && !IsMapOpen() && !IsSessionMenuOpen()) ServerCraft(Recipe);
 }
+void AEWPlayerController::FinishCraft()
+{
+    UEWCraftingRecipe* Recipe = CraftingRecipe;
+    CraftingRecipe = nullptr;
+    GetWorldTimerManager().ClearTimer(CraftTimer);
+    auto* Crafter = Cast<AEWCharacter>(GetPawn());
+    // A survivor who died, or whose menu or map was taken away, gets nothing and loses nothing.
+    if (!Recipe || !Crafter || Crafter->IsDead()) { ClientCraftResult(EEWCraftResult::Busy); return; }
+    const EEWCraftResult Result = Crafter->GetInventoryComponent()->CraftItem(Recipe);
+    if (Result == EEWCraftResult::Success && Crafter->GetProgressionComponent()) Crafter->GetProgressionComponent()->Award(EEWExperienceSource::Craft);
+    ClientCraftResult(Result);
+}
+
+void AEWPlayerController::ClientCraftStarted_Implementation(UEWCraftingRecipe* Recipe, float Seconds)
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowCraftStarted(Recipe, Seconds);
+}
+
+void AEWPlayerController::ServerUnlockSkill_Implementation(FName Id)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (Survivor && Survivor->GetProgressionComponent() && !Survivor->IsDead()) Survivor->GetProgressionComponent()->UnlockSkill(Id);
+}
+
 void AEWPlayerController::ServerSpendStatPoint_Implementation(EEWStat Stat)
 {
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
@@ -518,9 +543,15 @@ void AEWPlayerController::ServerCraft_Implementation(UEWCraftingRecipe* Recipe)
     auto* OwnedCrafter = Cast<AEWCharacter>(GetPawn());
     if (IsMapOpen() || IsSessionMenuOpen() || !OwnedCrafter || OwnedCrafter->GetController() != this || OwnedCrafter->GetSurvivalComponent()->GetHealth() <= 0.f)
     { ClientCraftResult(EEWCraftResult::Busy); return; }
-    const EEWCraftResult Result = OwnedCrafter->GetInventoryComponent()->CraftItem(Recipe);
-    if (Result == EEWCraftResult::Success && OwnedCrafter->GetProgressionComponent()) OwnedCrafter->GetProgressionComponent()->Award(EEWExperienceSource::Craft);
-    ClientCraftResult(Result);
+    if (CraftingRecipe) { ClientCraftResult(EEWCraftResult::Busy); return; }
+    // Checked now so a craft that cannot succeed never starts, and again when it finishes: the materials are used up only on completion.
+    const EEWCraftResult Ready = OwnedCrafter->GetInventoryComponent()->GetCraftReadiness(Recipe);
+    if (Ready != EEWCraftResult::Success) { ClientCraftResult(Ready); return; }
+    CraftingRecipe = Recipe;
+    const float Seconds = Recipe->CraftSeconds;
+    ClientCraftStarted(Recipe, Seconds);
+    if (Seconds <= .02f) FinishCraft();
+    else GetWorldTimerManager().SetTimer(CraftTimer, this, &AEWPlayerController::FinishCraft, Seconds, false);
 }
 void AEWPlayerController::ClientCraftResult_Implementation(EEWCraftResult Result)
 {

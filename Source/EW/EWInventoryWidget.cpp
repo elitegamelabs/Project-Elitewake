@@ -3,6 +3,11 @@
 #include "EWInventoryWidget.h"
 #include "EWCompanyWidget.h"
 #include "EWJournalWidget.h"
+#include "EWSkillTreeWidget.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/SceneCapture2D.h"
+#include "Engine/TextureRenderTarget2D.h"
+#include "Engine/World.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
 #include "EWHotbarWidget.h"
@@ -61,8 +66,66 @@ void UEWInventoryWidget::NativeConstruct()
 	RefreshInventory();
 }
 
+void UEWInventoryWidget::ClosePortrait()
+{
+    if (PortraitCapture) PortraitCapture->Destroy();
+    PortraitCapture = nullptr;
+    PortraitTarget = nullptr;
+}
+
+void UEWInventoryWidget::UpdatePortrait(float DeltaTime)
+{
+    auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    UWorld* World = GetWorld();
+    const bool bShown = SurvivorPanel && SurvivorPanel->GetVisibility() == ESlateVisibility::Visible && PortraitImage;
+    if (!bShown || !Character || !World) return;
+    if (!PortraitCapture)
+    {
+        PortraitTarget = NewObject<UTextureRenderTarget2D>(this);
+        PortraitTarget->RenderTargetFormat = RTF_RGBA8;
+        PortraitTarget->InitAutoFormat(340, 540);
+        PortraitTarget->UpdateResourceImmediate(true);
+        FActorSpawnParameters Params;
+        Params.ObjectFlags |= RF_Transient;
+        PortraitCapture = World->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
+        if (!PortraitCapture) return;
+        PortraitCapture->SetReplicates(false);
+        auto* Camera = PortraitCapture->GetCaptureComponent2D();
+        Camera->TextureTarget = PortraitTarget;
+        Camera->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+        Camera->bCaptureEveryFrame = false;
+        Camera->bCaptureOnMovement = false;
+        Camera->FOVAngle = 30.f;
+        Camera->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+        Camera->ShowFlags.SetAtmosphere(false);
+        Camera->ShowFlags.SetFog(false);
+        Camera->ShowFlags.SetBloom(false);
+        FSlateBrush Brush; Brush.SetResourceObject(PortraitTarget); Brush.ImageSize = FVector2D(170, 270); Brush.DrawAs = ESlateBrushDrawType::Image;
+        PortraitImage->SetBrush(Brush);
+        PortraitImage->SetColorAndOpacity(FLinearColor::White);
+        PortraitClock = 10.f;
+    }
+    PortraitClock += DeltaTime;
+    if (PortraitClock < .15f) return;
+    PortraitClock = 0.f;
+    // In front of the survivor, a little above the waist, looking at the chest: the whole figure fits the 190 x 300 frame.
+    auto* Camera = PortraitCapture->GetCaptureComponent2D();
+    Camera->ShowOnlyActors.Reset();
+    Camera->ShowOnlyActors.Add(Character);
+    TArray<AActor*> Attached;
+    Character->GetAttachedActors(Attached);
+    for (AActor* Held : Attached) Camera->ShowOnlyActors.Add(Held);
+    const FVector Body = Character->GetActorLocation();
+    const FVector Facing = Character->GetActorForwardVector();
+    const FVector Front = FVector(Facing.X, Facing.Y, 0.f).GetSafeNormal();
+    const FVector Eye = Body + Front * 250.f + FVector(0.f, 0.f, 12.f);
+    PortraitCapture->SetActorLocationAndRotation(Eye, (Body + FVector(0.f, 0.f, 5.f) - Eye).Rotation());
+    Camera->CaptureScene();
+}
+
 void UEWInventoryWidget::NativeDestruct()
 {
+    ClosePortrait();
 	if (BoundInventory)
 	{
 		BoundInventory->OnInventoryChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshInventory);
@@ -127,23 +190,32 @@ void UEWInventoryWidget::BuildWidgetTree()
     JournalPanel=CreateWidget<UEWJournalWidget>(GetOwningPlayer());
     Body->AddChildToHorizontalBox(JournalPanel)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     JournalPanel->SetVisibility(ESlateVisibility::Collapsed);
+    SkillsPanel=CreateWidget<UEWSkillTreeWidget>(GetOwningPlayer());
+    Body->AddChildToHorizontalBox(SkillsPanel)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    SkillsPanel->SetVisibility(ESlateVisibility::Collapsed);
     auto* Browser = WidgetTree->ConstructWidget<UVerticalBox>(); BrowserPanel=Browser;
     auto* BrowserSlot = Body->AddChildToHorizontalBox(Browser);
-    auto BrowserSize=FSlateChildSize(ESlateSizeRule::Fill); BrowserSize.Value=1.2f;
+    auto BrowserSize=FSlateChildSize(ESlateSizeRule::Fill); BrowserSize.Value=1.f;
     BrowserSlot->SetSize(BrowserSize); BrowserSlot->SetPadding(FMargin(0,12,16,0));
     auto* SurvivorBorder=WidgetTree->ConstructWidget<UBorder>();
     SurvivorPanel=SurvivorBorder;
     SurvivorBorder->SetPadding(FMargin(16)); SurvivorBorder->SetBrushColor(FLinearColor(.025f,.035f,.045f,.8f));
     auto* SurvivorSlot=Body->AddChildToHorizontalBox(SurvivorBorder);
-    auto SurvivorSize=FSlateChildSize(ESlateSizeRule::Fill); SurvivorSize.Value=.8f;
+    auto SurvivorSize=FSlateChildSize(ESlateSizeRule::Fill); SurvivorSize.Value=1.3f;
     SurvivorSlot->SetSize(SurvivorSize); SurvivorSlot->SetPadding(FMargin(0,12,16,0));
     auto* SurvivorScroll=WidgetTree->ConstructWidget<UScrollBox>(); SurvivorBorder->SetContent(SurvivorScroll);
     auto* SurvivorBody=WidgetTree->ConstructWidget<UVerticalBox>(); SurvivorScroll->AddChild(SurvivorBody);
     auto* SurvivorTitle=WidgetTree->ConstructWidget<UTextBlock>(); SurvivorTitle->SetText(FText::FromString(TEXT("SURVIVOR")));
     SurvivorBody->AddChildToVerticalBox(SurvivorTitle)->SetPadding(FMargin(0,0,0,18));
-    Content->RemoveChild(SummaryText); SurvivorBody->AddChildToVerticalBox(SummaryText);
+    // The survivor on the left, their numbers beside them on the right.
+    auto* SurvivorColumns=WidgetTree->ConstructWidget<UHorizontalBox>(); SurvivorBody->AddChildToVerticalBox(SurvivorColumns);
+    PortraitImage=WidgetTree->ConstructWidget<UImage>(); PortraitImage->SetColorAndOpacity(FLinearColor(1.f,1.f,1.f,0.f));
+    auto* PortraitSize=WidgetTree->ConstructWidget<USizeBox>(); PortraitSize->SetWidthOverride(170); PortraitSize->SetHeightOverride(270); PortraitSize->SetContent(PortraitImage);
+    auto* PortraitSlot=SurvivorColumns->AddChildToHorizontalBox(PortraitSize); PortraitSlot->SetVerticalAlignment(VAlign_Top); PortraitSlot->SetPadding(FMargin(0,0,14,0));
+    auto* StatsColumn=WidgetTree->ConstructWidget<UVerticalBox>(); SurvivorColumns->AddChildToHorizontalBox(StatsColumn)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    Content->RemoveChild(SummaryText); StatsColumn->AddChildToVerticalBox(SummaryText);
     SummaryText->SetAutoWrapText(true); auto SummaryFont=SummaryText->GetFont(); SummaryFont.Size=16; SummaryText->SetFont(SummaryFont);
-    BuildStatRows(SurvivorBody);
+    BuildStatRows(StatsColumn);
     SectionMessage=WidgetTree->ConstructWidget<UTextBlock>(); SectionMessage->SetAutoWrapText(true); SectionMessage->SetFont(SummaryFont);
     SurvivorBody->AddChildToVerticalBox(SectionMessage)->SetPadding(FMargin(0,20,0,0));
     auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>();
@@ -318,12 +390,13 @@ void UEWInventoryWidget::RefreshCrafting()
     const bool BrowserVisible=SelectedSection<2;
     CompanyPanel->SetVisibility(SelectedSection==4 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     JournalPanel->SetVisibility(SelectedSection==6 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    SkillsPanel->SetVisibility(SelectedSection==3 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     SurvivorPanel->SetVisibility(SelectedSection==4 || SelectedSection==6 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
     BrowserPanel->SetVisibility(BrowserVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     DetailsPanel->SetVisibility(BrowserVisible ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    const TCHAR* Messages[]={TEXT(""),TEXT(""),TEXT("BUILDING\nUse the Builder's Plan to place unlocked structures."),TEXT("SKILLS\nSkill branches will appear here."),TEXT("COMPANY\nCompany membership and shared permissions will appear here."),TEXT("TAMES\nYour claimed animals will appear here."),TEXT("")};
+    const TCHAR* Messages[]={TEXT(""),TEXT(""),TEXT("BUILDING\nUse the Builder's Plan to place unlocked structures."),TEXT(""),TEXT("COMPANY\nCompany membership and shared permissions will appear here."),TEXT("TAMES\nYour claimed animals will appear here."),TEXT("")};
     SectionMessage->SetText(FText::FromString(Messages[SelectedSection]));
-    SectionMessage->SetVisibility(BrowserVisible || SelectedSection==4 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    SectionMessage->SetVisibility(BrowserVisible || SelectedSection==4 || SelectedSection==3 ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
     ItemPreview->GetParent()->SetVisibility(ESlateVisibility::Collapsed);
     RecipeDetailsBox->SetVisibility(bCraftingOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     DetailsText->SetVisibility(bCraftingOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
@@ -352,6 +425,8 @@ void UEWInventoryWidget::RefreshCrafting()
         auto* Button = WidgetTree->ConstructWidget<UEWRecipeButton>(); Button->Initialize(Index);
         Button->SetBackgroundColor(Index==SelectedRecipeIndex ? FLinearColor(.4f,.43f,.47f,1.f) : FLinearColor(.07f,.085f,.1f,1.f));
         Button->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SelectRecipe);
+        Button->OnRecipeHovered.AddDynamic(this, &UEWInventoryWidget::HoverRecipe);
+        Button->EnableHover();
         auto* Row = WidgetTree->ConstructWidget<UVerticalBox>();
         if (auto* Texture = ResolveIcon(Recipe->Output))
         {
@@ -410,6 +485,15 @@ void UEWInventoryWidget::RefreshCrafting()
         CraftingDetails->SetText(FText::FromString(Details + TEXT("\n") + (Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
             : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory") : TEXT("Recipe unavailable"))));
     RecipeDetailsBox->AddChildToVerticalBox(CraftButton);
+    // The work in progress: a bar filling over the recipe's time.
+    CraftBar = WidgetTree->ConstructWidget<UProgressBar>(); CraftBar->SetFillColorAndOpacity(FLinearColor(.9f,.7f,.25f));
+    auto* CraftBarSize = WidgetTree->ConstructWidget<USizeBox>(); CraftBarSize->SetHeightOverride(10); CraftBarSize->SetContent(CraftBar);
+    RecipeDetailsBox->AddChildToVerticalBox(CraftBarSize)->SetPadding(FMargin(0,8,0,2));
+    CraftBarText = WidgetTree->ConstructWidget<UTextBlock>(); { auto F = CraftBarText->GetFont(); F.Size = 14; CraftBarText->SetFont(F); }
+    RecipeDetailsBox->AddChildToVerticalBox(CraftBarText);
+    CraftBar->SetPercent(GetCraftProgress());
+    if (Recipe->CraftSeconds > .02f) CraftBarText->SetText(CraftSecondsLeft > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "CraftTimeLeft", "Crafting... {0} s"), FMath::CeilToInt(CraftSecondsLeft))
+        : FText::Format(NSLOCTEXT("Elitewake", "CraftTime", "Takes {0} s"), FMath::RoundToInt(Recipe->CraftSeconds)));
 }
 UBorder* UEWInventoryWidget::MakeSlotTile(UEWItemDefinition* Item, const FString& Corner, float Freshness, UImage*& Image, UProgressBar*& FreshBar)
 {
@@ -581,7 +665,18 @@ void UEWInventoryWidget::PerformCraft()
 }
 bool UEWInventoryWidget::IsCraftActionEnabled() const
 {
-    return bCraftingOpen && CraftButton && CraftButton->GetIsEnabled();
+    return bCraftingOpen && CraftButton && CraftButton->GetIsEnabled() && CraftSecondsLeft <= 0.f;
+}
+void UEWInventoryWidget::ShowCraftStarted(UEWCraftingRecipe* Recipe, float Seconds)
+{
+    CraftSecondsTotal = CraftSecondsLeft = FMath::Max(0.f, Seconds);
+    if (EquipmentResultText && Recipe && Recipe->Output && Seconds > .02f)
+        EquipmentResultText->SetText(FText::Format(NSLOCTEXT("Elitewake", "CraftingNow", "Crafting {0}..."), Recipe->Output->DisplayName));
+    RefreshCrafting();
+}
+void UEWInventoryWidget::HoverRecipe(int32 Index)
+{
+    if (bCraftingOpen && Index != SelectedRecipeIndex && CraftSecondsLeft <= 0.f) SelectRecipe(Index);
 }
 
 UHorizontalBox* UEWInventoryWidget::MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image)
@@ -612,6 +707,7 @@ UTexture2D* UEWInventoryWidget::GetDisplayedMaterialIcon(UEWItemDefinition* Item
 }
 void UEWInventoryWidget::ShowCraftResult(EEWCraftResult Result)
 {
+    CraftSecondsLeft = CraftSecondsTotal = 0.f;
     FString Message;
     switch (Result)
     {
@@ -622,6 +718,7 @@ void UEWInventoryWidget::ShowCraftResult(EEWCraftResult Result)
         default: Message=TEXT("Crafting could not be completed"); break;
     }
     if (EquipmentResultText) EquipmentResultText->SetText(FText::FromString(Message));
+    if (bCraftingOpen) RefreshCrafting();
 }
 
 void UEWInventoryWidget::RefreshSummary()
@@ -738,7 +835,15 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     { if (!Event.IsRepeat()) CycleSection(bNextSection ? 1 : -1); return FReply::Handled(); }
     if (SelectedSection >= 2)
     {
-        // Building, Skills, Company, Tames and Journal have no item list: the arrows page the Journal, and the rest of the keys only close the menu.
+        // Building, Skills, Company, Tames and Journal have no item list: the arrows page the Journal or move among the stars, and the rest of the keys only close the menu.
+        if (SelectedSection==3 && SkillsPanel)
+        {
+            if (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) SkillsPanel->MoveSelection(FVector2D(0, -1));
+            else if (Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down) SkillsPanel->MoveSelection(FVector2D(0, 1));
+            else if (Key==EKeys::Left || Key==EKeys::Gamepad_DPad_Left) SkillsPanel->MoveSelection(FVector2D(-1, 0));
+            else if (Key==EKeys::Right || Key==EKeys::Gamepad_DPad_Right) SkillsPanel->MoveSelection(FVector2D(1, 0));
+            else if ((Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom) && !Event.IsRepeat()) SkillsPanel->UnlockSelected();
+        }
         if (SelectedSection==6 && JournalPanel && (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up || Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down))
             JournalPanel->ShowPage(FMath::Clamp(JournalPanel->GetSelectedPage() + ((Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) ? -1 : 1), 0, FMath::Max(0, JournalPanel->GetPageCount()-1)));
         else if (Key==EKeys::I || Key==EKeys::Gamepad_FaceButton_Right || Key==EKeys::Escape)
@@ -875,6 +980,13 @@ FReply UEWInventoryWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, co
 void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
     Super::NativeTick(Geometry, DeltaTime);
+    UpdatePortrait(DeltaTime);
+    if (CraftSecondsLeft > 0.f)
+    {
+        CraftSecondsLeft = FMath::Max(0.f, CraftSecondsLeft - DeltaTime);
+        if (CraftBar) CraftBar->SetPercent(GetCraftProgress());
+        if (CraftBarText) CraftBarText->SetText(FText::Format(NSLOCTEXT("Elitewake", "CraftTimeLeft", "Crafting... {0} s"), FMath::CeilToInt(CraftSecondsLeft)));
+    }
     const auto* OwningCharacter = Cast<AEWCharacter>(GetOwningPlayerPawn());
     UEWHotbarComponent* Hotbar = OwningCharacter ? OwningCharacter->GetHotbarComponent() : nullptr;
     if (Hotbar != BoundHotbar)

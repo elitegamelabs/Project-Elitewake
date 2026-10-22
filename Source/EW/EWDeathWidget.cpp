@@ -32,17 +32,17 @@ TSharedRef<SWidget> UEWDeathWidget::RebuildWidget()
         // The black the screen fades to.
         Black = WidgetTree->ConstructWidget<UBorder>(); Black->SetBrushColor(FLinearColor(0.f, 0.f, 0.f, 0.f)); Black->SetVisibility(ESlateVisibility::HitTestInvisible);
         Fill(Black);
-        // Frost closing in from the edges: five stepped bands on each side, thicker towards the middle, so the rim is the iciest.
+        // Frost closing in from the edges: twelve fine bands on each side, thicker towards the middle, so the rim is the iciest.
         FrostOverlay = WidgetTree->ConstructWidget<UOverlay>(); FrostOverlay->SetVisibility(ESlateVisibility::HitTestInvisible);
         Fill(FrostOverlay);
-        static const float Bands[5] = { 34.f, 78.f, 130.f, 190.f, 260.f };
+        static const float Bands[12] = { 12.f, 28.f, 46.f, 66.f, 88.f, 112.f, 138.f, 166.f, 196.f, 228.f, 262.f, 300.f };
         for (int32 Side = 0; Side < 4; ++Side)
             for (float Band : Bands)
             {
                 auto* Size = WidgetTree->ConstructWidget<USizeBox>();
                 const bool bHorizontalStrip = Side < 2;           // top and bottom strips are wide, left and right are tall
                 if (bHorizontalStrip) Size->SetHeightOverride(Band); else Size->SetWidthOverride(Band);
-                auto* Ice = WidgetTree->ConstructWidget<UBorder>(); Ice->SetBrushColor(FLinearColor(.72f, .9f, 1.f, .1f)); Size->SetContent(Ice);
+                auto* Ice = WidgetTree->ConstructWidget<UBorder>(); Ice->SetBrushColor(FLinearColor(.72f, .9f, 1.f, .045f)); Size->SetContent(Ice);
                 auto* Strip = FrostOverlay->AddChildToOverlay(Size);
                 Strip->SetHorizontalAlignment(bHorizontalStrip ? HAlign_Fill : (Side == 2 ? HAlign_Left : HAlign_Right));
                 Strip->SetVerticalAlignment(bHorizontalStrip ? (Side == 0 ? VAlign_Top : VAlign_Bottom) : VAlign_Fill);

@@ -28,7 +28,9 @@ outputs = [r.get_editor_property('output') for r in recipes]
 hide = flask_costs[0].get_editor_property('item')
 base = [inv.get_item_count(o) for o in outputs]   # the starter kit already carries some of these tools
 thatch = flask_costs[1].get_editor_property('item')
-for r in recipes: assert inv.unlock_recipe(r)
+for r in recipes:
+    r.set_editor_property('craft_seconds', 0.2)   # the timing has its own check (verify_craft_time_play)
+    assert inv.unlock_recipe(r)
 phase = 0
 started = time.monotonic()
 next_at = started + 2

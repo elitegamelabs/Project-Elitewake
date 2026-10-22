@@ -44,6 +44,15 @@ public:
     UFUNCTION(BlueprintPure, Category="Progression") int32 GetExperienceForNextLevel() const { return ExperienceForLevel(Level); }
     UFUNCTION(BlueprintPure, Category="Progression") int32 GetUnspentPoints() const { return UnspentPoints; }
     UFUNCTION(BlueprintPure, Category="Progression") int32 GetStatPoints(EEWStat Stat) const { return StatPoints.IsValidIndex(int32(Stat)) ? StatPoints[int32(Stat)] : 0; }
+    /** Skill points to spend in the constellation tree: one is earned with every level, beside the stat point. */
+    UFUNCTION(BlueprintPure, Category="Progression") int32 GetSkillPoints() const { return SkillPoints; }
+    /** A free root star with nothing above it counts as lit from the start. */
+    UFUNCTION(BlueprintPure, Category="Progression") bool IsSkillUnlocked(FName Id) const;
+    /** Whether the star can be lit now: not lit yet, the stars it hangs from lit, and enough skill points. */
+    UFUNCTION(BlueprintPure, Category="Progression") bool CanUnlockSkill(FName Id) const;
+    UFUNCTION(BlueprintPure, Category="Progression") int32 GetUnlockedSkillCount() const { return UnlockedSkills.Num(); }
+    /** Authority only. Lights a star: spends its points, adds its recipes to the crafting menu and applies its bonuses. */
+    UFUNCTION(BlueprintCallable, Category="Progression") bool UnlockSkill(FName Id);
     UFUNCTION(BlueprintPure, Category="Progression") bool IsAtMaxLevel() const { return Level >= MaxLevel; }
     /** Experience needed to climb from the given level to the next. */
     UFUNCTION(BlueprintPure, Category="Progression") int32 ExperienceForLevel(int32 FromLevel) const;
@@ -56,6 +65,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="Progression") bool SpendPoint(EEWStat Stat);
     /** Authority only: sets level and spent points straight (a saved survivor coming back, and tests). */
     void Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints);
+    /** Authority only: gives the inventory every recipe the lit stars name (on arrival, after a load, and when a star is lit). */
+    void GrantSkillRecipes();
 
     /** The most stat points the level allows in all; the rest is the unspent count. */
     UPROPERTY(EditDefaultsOnly, Category="Progression", meta=(ClampMin="1")) int32 MaxLevel = 50;
@@ -81,4 +92,6 @@ private:
     UPROPERTY(ReplicatedUsing=OnRep_Progression) int32 Experience = 0;
     UPROPERTY(ReplicatedUsing=OnRep_Progression) int32 UnspentPoints = 0;
     UPROPERTY(ReplicatedUsing=OnRep_Progression) TArray<int32> StatPoints;
+    UPROPERTY(ReplicatedUsing=OnRep_Progression) int32 SkillPoints = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_Progression) TArray<FName> UnlockedSkills;
 };

@@ -2,6 +2,9 @@
 
 #include "EWProgressionComponent.h"
 #include "EWSurvivalComponent.h"
+#include "EWSkillTree.h"
+#include "EWInventoryComponent.h"
+#include "EWCraftingRecipe.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
@@ -16,7 +19,7 @@ void UEWProgressionComponent::BeginPlay()
 {
     Super::BeginPlay();
     if (StatPoints.Num() != StatCount) StatPoints.SetNumZeroed(StatCount);
-    if (GetOwner() && GetOwner()->HasAuthority()) ApplyStats();
+    if (GetOwner() && GetOwner()->HasAuthority()) { ApplyStats(); GrantSkillRecipes(); }
 }
 
 void UEWProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -26,6 +29,8 @@ void UEWProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(UEWProgressionComponent, Experience);
     DOREPLIFETIME(UEWProgressionComponent, UnspentPoints);
     DOREPLIFETIME(UEWProgressionComponent, StatPoints);
+    DOREPLIFETIME(UEWProgressionComponent, SkillPoints);
+    DOREPLIFETIME(UEWProgressionComponent, UnlockedSkills);
 }
 
 FText UEWProgressionComponent::StatName(EEWStat Stat)
@@ -63,7 +68,7 @@ int32 UEWProgressionComponent::GrantExperience(int32 Amount)
     while (!IsAtMaxLevel() && Experience >= ExperienceForLevel(Level))
     {
         Experience -= ExperienceForLevel(Level);
-        ++Level; ++UnspentPoints; ++Gained;
+        ++Level; ++UnspentPoints; ++SkillPoints; ++Gained;
     }
     if (IsAtMaxLevel()) Experience = 0;
     Changed();
@@ -98,11 +103,50 @@ void UEWProgressionComponent::Restore(int32 NewLevel, int32 NewExperience, int32
     Changed();
 }
 
+bool UEWProgressionComponent::IsSkillUnlocked(FName Id) const
+{
+    const FEWSkillNode* Node = FEWSkillTree::Find(Id);
+    return Node && (UnlockedSkills.Contains(Id) || (Node->Cost <= 0 && Node->Requires.IsEmpty()));
+}
+
+bool UEWProgressionComponent::CanUnlockSkill(FName Id) const
+{
+    const FEWSkillNode* Node = FEWSkillTree::Find(Id);
+    if (!Node || IsSkillUnlocked(Id) || SkillPoints < Node->Cost) return false;
+    for (const FName& Parent : Node->Requires) if (!IsSkillUnlocked(Parent)) return false;
+    return true;
+}
+
+bool UEWProgressionComponent::UnlockSkill(FName Id)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !CanUnlockSkill(Id)) return false;
+    const FEWSkillNode* Node = FEWSkillTree::Find(Id);
+    SkillPoints -= Node->Cost;
+    UnlockedSkills.Add(Id);
+    ApplyStats();
+    GrantSkillRecipes();
+    Changed();
+    return true;
+}
+
+void UEWProgressionComponent::GrantSkillRecipes()
+{
+    auto* Pack = GetOwner() ? GetOwner()->FindComponentByClass<UEWInventoryComponent>() : nullptr;
+    if (!Pack || !GetOwner()->HasAuthority()) return;
+    for (const FEWSkillNode& Node : FEWSkillTree::Nodes())
+        if (IsSkillUnlocked(Node.Id))
+            for (const TSoftObjectPtr<UEWCraftingRecipe>& Recipe : Node.Recipes)
+                if (UEWCraftingRecipe* Loaded = Recipe.LoadSynchronous()) Pack->UnlockRecipe(Loaded);
+}
+
 void UEWProgressionComponent::ApplyStats()
 {
+    float Health = GetStatPoints(EEWStat::Vitality) * HealthPerVitality, Stamina = GetStatPoints(EEWStat::Endurance) * StaminaPerEndurance;
+    float Carry = GetStatPoints(EEWStat::Strength) * CarryPerStrength;
+    for (const FEWSkillNode& Node : FEWSkillTree::Nodes())
+        if (IsSkillUnlocked(Node.Id)) { Health += Node.MaxHealthBonus; Stamina += Node.MaxStaminaBonus; Carry += Node.CarryBonus; }
     if (UEWSurvivalComponent* Survival = GetOwner() ? GetOwner()->FindComponentByClass<UEWSurvivalComponent>() : nullptr)
-        Survival->SetStatBonuses(GetStatPoints(EEWStat::Vitality) * HealthPerVitality, GetStatPoints(EEWStat::Endurance) * StaminaPerEndurance,
-            GetStatPoints(EEWStat::Strength) * CarryPerStrength, FMath::Min(.6f, GetStatPoints(EEWStat::Fortitude) * ResistPerFortitude));
+        Survival->SetStatBonuses(Health, Stamina, Carry, FMath::Min(.6f, GetStatPoints(EEWStat::Fortitude) * ResistPerFortitude));
 }
 
 void UEWProgressionComponent::OnRep_Progression()

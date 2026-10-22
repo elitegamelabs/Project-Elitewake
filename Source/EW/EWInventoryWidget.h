@@ -24,6 +24,9 @@ class UTexture2D;
 class UProgressBar;
 class UEWCompanyWidget;
 class UEWJournalWidget;
+class UEWSkillTreeWidget;
+class ASceneCapture2D;
+class UTextureRenderTarget2D;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEWRecipePressed, int32, Index);
 UCLASS()
@@ -34,9 +37,13 @@ public:
     UEWRecipeButton() { InitIsFocusable(false); }
     int32 RecipeIndex = 0;
     FEWRecipePressed OnRecipePressed;
+    FEWRecipePressed OnRecipeHovered;
     void Initialize(int32 Index) { RecipeIndex = Index; OnClicked.AddDynamic(this, &UEWRecipeButton::Pressed); }
+    /** Hovering with the mouse also tells the owner (recipe tiles show their materials on hover). */
+    void EnableHover() { OnHovered.AddDynamic(this, &UEWRecipeButton::Hovered); }
 private:
     UFUNCTION() void Pressed() { OnRecipePressed.Broadcast(RecipeIndex); }
+    UFUNCTION() void Hovered() { OnRecipeHovered.Broadcast(RecipeIndex); }
 };
 
 /** Keep mouse actions from taking navigation focus away from the inventory panel. */
@@ -57,6 +64,9 @@ class EW_API UEWInventoryWidget : public UUserWidget
 public:
     UPROPERTY(Transient) TObjectPtr<UEWCompanyWidget> CompanyPanel;
     UPROPERTY(Transient) TObjectPtr<UEWJournalWidget> JournalPanel;
+    UPROPERTY(Transient) TObjectPtr<UEWSkillTreeWidget> SkillsPanel;
+    /** The Skills section's constellation, for tests and tools. */
+    UFUNCTION(BlueprintPure, Category="Menu") UEWSkillTreeWidget* GetSkillsPanel() const { return SkillsPanel; }
     /** The Journal section's panel, for tests and tools. */
     UFUNCTION(BlueprintPure, Category="Menu") UEWJournalWidget* GetJournalPanel() const { return JournalPanel; }
     /** Opens a menu section by its tab: 0 inventory, 1 crafting, ... 6 journal. */
@@ -66,6 +76,13 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") static int32 GetSectionCount() { return 7; }
     /** Moves to the next (+1) or previous (-1) menu section, wrapping round: Tab/Shift+Tab, PageDown/PageUp, RB/LT on a controller. */
     /** The stat the arrows or d-pad have picked for spending a point on (C or left stick press starts it), or -1. */
+    /** True while the server is crafting; the Craft button is dead until it ends. */
+    UFUNCTION(BlueprintPure, Category="Menu") bool IsCraftInProgress() const { return CraftSecondsLeft > 0.f; }
+    UFUNCTION(BlueprintPure, Category="Menu") float GetCraftProgress() const { return CraftSecondsTotal > 0.f ? 1.f - CraftSecondsLeft / CraftSecondsTotal : 0.f; }
+    /** The server accepted a craft that takes this long. */
+    void ShowCraftStarted(UEWCraftingRecipe* Recipe, float Seconds);
+    /** The recipe the details panel is showing, for tests. */
+    UFUNCTION(BlueprintPure, Category="Menu") UEWCraftingRecipe* GetShownRecipe() const { return DisplayedRecipes.IsValidIndex(SelectedRecipeIndex) ? DisplayedRecipes[SelectedRecipeIndex].Get() : nullptr; }
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetStatFocus() const { return StatFocus; }
     /** Whether a stat's raise arrow is clear and live: only while a point is unspent. */
     UFUNCTION(BlueprintPure, Category="Menu") bool IsStatArrowEnabled(int32 StatIndex) const;
@@ -116,6 +133,21 @@ private:
     void AddToGrid(UWrapBox* Grid, UBorder* Tile);
     void BuildStatRows(UVerticalBox* Into);
     void RefreshProgression();
+    /** The Survivor panel shows the survivor as they stand (owner, October 22: the existing character until character creation arrives). */
+    void UpdatePortrait(float DeltaTime);
+    void ClosePortrait();
+    UPROPERTY(Transient) TObjectPtr<UImage> PortraitImage;
+    UPROPERTY(Transient) TObjectPtr<ASceneCapture2D> PortraitCapture;
+    UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> PortraitTarget;
+    float PortraitClock = 0.f;
+public:
+    /** True once the Survivor panel has a live picture of the survivor. */
+    UFUNCTION(BlueprintPure, Category="Menu") bool HasSurvivorPortrait() const { return PortraitCapture != nullptr && PortraitTarget != nullptr; }
+private:
+    float CraftSecondsLeft = 0.f, CraftSecondsTotal = 0.f;
+    UPROPERTY(Transient) TObjectPtr<UProgressBar> CraftBar;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> CraftBarText;
+    UFUNCTION() void HoverRecipe(int32 Index);
     UFUNCTION() void SpendStat(int32 StatIndex);
     UPROPERTY(Transient) TObjectPtr<UTextBlock> LevelValue;
     UPROPERTY(Transient) TObjectPtr<UProgressBar> LevelBar;
