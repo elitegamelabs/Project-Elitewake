@@ -1,5 +1,7 @@
 #include "EWMapWidget.h"
 
+#include "EWExplorationComponent.h"
+#include "EWPlayerController.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/CanvasPanel.h"
@@ -13,6 +15,7 @@
 #include "Components/OverlaySlot.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/SceneCapture2D.h"
+#include "Engine/Texture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -20,15 +23,24 @@
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
+#include "Kismet/KismetRenderingLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/MaterialInterface.h"
 #include "World/EWClimateRegion.h"
 
 namespace
 {
     constexpr float MinMapViewWidth = 2500.f;
-    // The five regions span roughly 200 km from the outer Winter/Swamp shores to Desert/Jungle.
     // Keep the overview wide enough to fit every island; zoom-in still clamps to this map's overview.
     constexpr float MaxMapViewWidth = 40000000.f;
-    constexpr float MapCaptureHeight = 400000.f;
+    // A top-down scene capture draws nothing past about 2.5 km from the camera, and the sea floor lies 1.5 km under the sea: 600 m up sees both.
+    constexpr float MapCaptureHeight = 60000.f;
+}
+
+UEWExplorationComponent* UEWMapWidget::GetExploration() const
+{
+    const auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    return Controller ? Controller->GetExploration() : nullptr;
 }
 
 TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
@@ -62,6 +74,9 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
 
         MapImage = WidgetTree->ConstructWidget<UImage>();
         Overlay->AddChildToOverlay(MapImage);
+        FogImage = WidgetTree->ConstructWidget<UImage>();
+        FogImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+        Overlay->AddChildToOverlay(FogImage);
         MapCanvas = WidgetTree->ConstructWidget<UCanvasPanel>();
         Overlay->AddChildToOverlay(MapCanvas);
 
@@ -73,6 +88,28 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
         PlayerMarkerSlot = MapCanvas->AddChildToCanvas(PlayerMarker);
         PlayerMarkerSlot->SetAlignment(FVector2D(.5f, .5f));
         PlayerMarkerSlot->SetAutoSize(true);
+
+        // The top of the map is the world's +X, which the compass calls north.
+        NorthLabel = WidgetTree->ConstructWidget<UTextBlock>();
+        NorthLabel->SetText(NSLOCTEXT("Elitewake", "MapNorth", "N"));
+        NorthLabel->SetColorAndOpacity(FLinearColor(.95f, .9f, .7f));
+        { auto F = NorthLabel->GetFont(); F.Size = 22; F.TypefaceFontName = FName("Bold"); NorthLabel->SetFont(F); }
+        NorthLabel->SetShadowOffset(FVector2D(1.5f, 1.5f)); NorthLabel->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, .9f));
+        auto* NorthSlot = MapCanvas->AddChildToCanvas(NorthLabel);
+        NorthSlot->SetAnchors(FAnchors(.5f, 0.f)); NorthSlot->SetAlignment(FVector2D(.5f, 0.f)); NorthSlot->SetAutoSize(true); NorthSlot->SetPosition(FVector2D(0.f, 6.f));
+
+        // A scale bar in the lower left corner of the picture.
+        ScaleBar = WidgetTree->ConstructWidget<UBorder>();
+        ScaleBar->SetBrushColor(FLinearColor(.95f, .9f, .75f, .95f));
+        ScaleBarSlot = MapCanvas->AddChildToCanvas(ScaleBar);
+        ScaleBarSlot->SetAnchors(FAnchors(0.f, 1.f)); ScaleBarSlot->SetAlignment(FVector2D(0.f, 1.f)); ScaleBarSlot->SetAutoSize(false);
+        ScaleBarSlot->SetPosition(FVector2D(18.f, -18.f)); ScaleBarSlot->SetSize(FVector2D(120.f, 5.f));
+        ScaleLabel = WidgetTree->ConstructWidget<UTextBlock>();
+        ScaleLabel->SetColorAndOpacity(FLinearColor(.95f, .9f, .75f));
+        { auto F = ScaleLabel->GetFont(); F.Size = 16; ScaleLabel->SetFont(F); }
+        ScaleLabel->SetShadowOffset(FVector2D(1.5f, 1.5f)); ScaleLabel->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, .9f));
+        auto* ScaleLabelSlot = MapCanvas->AddChildToCanvas(ScaleLabel);
+        ScaleLabelSlot->SetAnchors(FAnchors(0.f, 1.f)); ScaleLabelSlot->SetAlignment(FVector2D(0.f, 1.f)); ScaleLabelSlot->SetAutoSize(true); ScaleLabelSlot->SetPosition(FVector2D(18.f, -30.f));
 
         Content->AddChildToVerticalBox(Scale)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
@@ -106,45 +143,57 @@ void UEWMapWidget::NativeConstruct()
     Camera->TextureTarget = RenderTarget;
     Camera->ProjectionType = ECameraProjectionMode::Orthographic;
     Camera->OrthoWidth = CurrentViewWidth;
-    Camera->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
+    // The world's own colours, without light or shadow: a single captured frame has no time to settle an exposure, so the lit picture came out black.
+    Camera->CaptureSource = ESceneCaptureSource::SCS_BaseColor;
     Camera->bCaptureEveryFrame = false;
     Camera->bCaptureOnMovement = false;
     Camera->ShowFlags.SetAtmosphere(false);
     Camera->ShowFlags.SetFog(false);
 
+    // The capture's alpha is 0, which an image would draw as nothing: a UI material shows its colour at full opacity.
     FSlateBrush Brush;
     Brush.DrawAs = ESlateBrushDrawType::Image;
-    Brush.SetResourceObject(RenderTarget);
     Brush.ImageSize = FVector2D(1024, 1024);
+    if (UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Elitewake/UI/Map/M_MapCapture_v1.M_MapCapture_v1")))
+    {
+        MapMaterial = UMaterialInstanceDynamic::Create(Base, this);
+        MapMaterial->SetTextureParameterValue(TEXT("Map"), RenderTarget);
+        Brush.SetResourceObject(MapMaterial);
+    }
+    else Brush.SetResourceObject(RenderTarget);
     MapImage->SetBrush(Brush);
+
+    // The mist: a texture redrawn from what the survivor has seen. Its edge texels clamp, so past the world the mist simply goes on.
+    FogTexture = UTexture2D::CreateTransient(FogSize, FogSize, PF_B8G8R8A8);
+    FogTexture->SRGB = true;
+    FogTexture->Filter = TF_Bilinear;
+    FogTexture->AddressX = TA_Clamp; FogTexture->AddressY = TA_Clamp;
+    FogTexture->NeverStream = true;
+    FogTexture->UpdateResource();
+    FSlateBrush FogBrush;
+    FogBrush.DrawAs = ESlateBrushDrawType::Image;
+    FogBrush.ImageSize = FVector2D(1024, 1024);
+    FogBrush.SetResourceObject(FogTexture);
+    FogImage->SetBrush(FogBrush);
 
     InitializeWorldOverview();
     CaptureRemaining = 0.f;
+    FogClock = 10.f;
+    FogRevisionDrawn = -1;
 }
 
 void UEWMapWidget::InitializeWorldOverview()
 {
     if (!GetWorld() || bHasInitializedView) return;
 
-    FVector2D Min(TNumericLimits<float>::Max(), TNumericLimits<float>::Max());
-    FVector2D Max(TNumericLimits<float>::Lowest(), TNumericLimits<float>::Lowest());
-    bool bFoundRegion = false;
-
-    for (TActorIterator<AEWClimateRegion> It(GetWorld()); It; ++It)
+    if (UEWExplorationComponent* Exploration = GetExploration())
     {
-        const FVector Location = It->GetActorLocation();
-        const FVector2D Radii = It->Radii;
-        Min.X = FMath::Min(Min.X, Location.X - Radii.X);
-        Min.Y = FMath::Min(Min.Y, Location.Y - Radii.Y);
-        Max.X = FMath::Max(Max.X, Location.X + Radii.X);
-        Max.Y = FMath::Max(Max.Y, Location.Y + Radii.Y);
-        bFoundRegion = true;
-    }
-
-    if (bFoundRegion)
-    {
-        MapCenter = FVector((Min.X + Max.X) * .5f, (Min.Y + Max.Y) * .5f, 0.f);
-        OverviewViewWidth = FMath::Max(Max.X - Min.X, Max.Y - Min.Y) * 1.12f;
+        // The map and its mist cover the same square.
+        Exploration->EnsureBounds();
+        const FVector2D Min = Exploration->GetBoundsMin();
+        const float Size = Exploration->GetBoundsSize();
+        MapCenter = FVector(Min.X + Size * .5f, Min.Y + Size * .5f, 0.f);
+        OverviewViewWidth = Size;
     }
     else if (const APawn* Pawn = GetOwningPlayerPawn())
     {
@@ -169,8 +218,9 @@ void UEWMapWidget::PanByScreenDelta(const FVector2D& Delta)
     const FVector2D Size = MapImage->GetCachedGeometry().GetLocalSize();
     if (Size.X <= 1.f || Size.Y <= 1.f) return;
 
-    MapCenter.X -= (Delta.X / Size.X) * CurrentViewWidth;
-    MapCenter.Y += (Delta.Y / Size.Y) * CurrentViewWidth;
+    // Dragging the picture right shows more of what lies to the left: -Y; dragging it down shows what lies above: +X.
+    MapCenter.Y -= (Delta.X / Size.X) * CurrentViewWidth;
+    MapCenter.X += (Delta.Y / Size.Y) * CurrentViewWidth;
 }
 
 bool UEWMapWidget::IsPointerOverMap(const FVector2D& ScreenPosition) const
@@ -228,11 +278,72 @@ void UEWMapWidget::PositionPlayerMarker(const APawn* Pawn)
     if (Size.X <= 1.f || Size.Y <= 1.f) return;
 
     const FVector Location = Pawn->GetActorLocation();
-    const float HalfWidth = CurrentViewWidth * .5f;
-    const float X = FMath::Clamp(((Location.X - MapCenter.X) / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
-    const float Y = FMath::Clamp((.5f - (Location.Y - MapCenter.Y) / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
+    // Right is +Y, up is +X.
+    const float X = FMath::Clamp(((Location.Y - MapCenter.Y) / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
+    const float Y = FMath::Clamp((.5f - (Location.X - MapCenter.X) / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
     PlayerMarkerSlot->SetPosition(FVector2D(X, Y));
     PlayerMarker->SetRenderTransformAngle(Pawn->GetActorRotation().Yaw);
+}
+
+void UEWMapWidget::UpdateScaleBar()
+{
+    if (!ScaleBarSlot || !ScaleLabel || !MapImage) return;
+    const FVector2D Size = MapImage->GetCachedGeometry().GetLocalSize();
+    if (Size.X <= 1.f) return;
+    // A round distance (1, 2, 5 times a power of ten metres) that makes a bar about a fifth of the picture wide.
+    const double WantedMetres = CurrentViewWidth / 100.0 * .2;
+    const double Power = FMath::Pow(10.0, FMath::FloorToDouble(FMath::LogX(10.0, FMath::Max(1.0, WantedMetres))));
+    double Metres = Power;
+    for (double Step : {2.0, 5.0, 10.0}) if (Power * Step <= WantedMetres) Metres = Power * Step;
+    ScaleBarSlot->SetSize(FVector2D(float(Metres * 100.0 / CurrentViewWidth) * Size.X, 5.f));
+    ScaleLabel->SetText(Metres >= 1000.0 ? FText::Format(NSLOCTEXT("Elitewake", "ScaleKm", "{0} km"), FText::AsNumber(Metres / 1000.0))
+        : FText::Format(NSLOCTEXT("Elitewake", "ScaleM", "{0} m"), FText::AsNumber(Metres)));
+}
+
+FText UEWMapWidget::GetScaleText() const
+{
+    return ScaleLabel ? ScaleLabel->GetText() : FText::GetEmpty();
+}
+
+void UEWMapWidget::UpdateFog(float DeltaSeconds)
+{
+    UEWExplorationComponent* Exploration = GetExploration();
+    if (!Exploration || !FogTexture || !FogImage) return;
+    Exploration->EnsureBounds();
+    // Redraw the mist when something new is cleared, and a few times a second for the drifting cloud.
+    FogClock += DeltaSeconds;
+    if (FogClock >= .2f || Exploration->GetRevision() != FogRevisionDrawn)
+    {
+        FogClock = 0.f;
+        FogRevisionDrawn = Exploration->GetRevision();
+        Exploration->BuildFog(FogSize, GetWorld()->GetTimeSeconds(), FogPixels);
+        FTexture2DMipMap& Mip = FogTexture->GetPlatformData()->Mips[0];
+        void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+        FMemory::Memcpy(Data, FogPixels.GetData(), FogPixels.Num() * sizeof(FColor));
+        Mip.BulkData.Unlock();
+        FogTexture->UpdateResource();
+    }
+    // The part of the mist image under the picture: the world square the mist covers, and the window the map shows within it.
+    const float Size = Exploration->GetBoundsSize();
+    if (Size <= 0.f) return;
+    const FVector2D Min = Exploration->GetBoundsMin();
+    const float Half = CurrentViewWidth * .5f;
+    const float U0 = (MapCenter.Y - Half - Min.Y) / Size, U1 = (MapCenter.Y + Half - Min.Y) / Size;
+    const float V0 = 1.f - (MapCenter.X + Half - Min.X) / Size, V1 = 1.f - (MapCenter.X - Half - Min.X) / Size;
+    FSlateBrush Brush = FogImage->GetBrush();
+    Brush.SetUVRegion(FBox2f(FVector2f(U0, V0), FVector2f(U1, V1)));
+    FogImage->SetBrush(Brush);
+}
+
+float UEWMapWidget::GetFogAlphaAtWorld(FVector Location) const
+{
+    const UEWExplorationComponent* Exploration = GetExploration();
+    if (!Exploration || FogPixels.Num() != FogSize * FogSize || Exploration->GetBoundsSize() <= 0.f) return 1.f;
+    const FVector2D Min = Exploration->GetBoundsMin();
+    const float Size = Exploration->GetBoundsSize();
+    const int32 X = FMath::Clamp(int32((Location.Y - Min.Y) / Size * FogSize), 0, FogSize - 1);
+    const int32 Y = FMath::Clamp(int32((1.f - (Location.X - Min.X) / Size) * FogSize), 0, FogSize - 1);
+    return FogPixels[Y * FogSize + X].A / 255.f;
 }
 
 void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
@@ -243,9 +354,10 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
 
     if (!ControllerPanInput.IsNearlyZero())
     {
+        // The right stick: right is +Y, up is +X.
         const FVector2D Normalized = ControllerPanInput.GetClampedToMaxSize(1.f);
-        MapCenter.X += Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
-        MapCenter.Y += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
+        MapCenter.Y += Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
+        MapCenter.X += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
     }
     if (!FMath::IsNearlyZero(ControllerZoomInput)) AdjustZoom(ControllerZoomInput * DeltaSeconds * 3.f);
 
@@ -257,11 +369,14 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
     Heading->SetText(FText::Format(NSLOCTEXT("Elitewake", "MapHeading", "Current region  |  Facing {0}°"),
         FText::AsNumber(FMath::RoundToInt(FMath::Fmod(Pawn->GetActorRotation().Yaw + 360.f, 360.f)))));
     PositionPlayerMarker(Pawn);
+    UpdateScaleBar();
+    UpdateFog(DeltaSeconds);
 
     CaptureRemaining -= DeltaSeconds;
     if (CaptureRemaining > 0.f) return;
     CaptureRemaining = .5f;
-    Capture->SetActorLocation(MapCenter + FVector(0, 0, MapCaptureHeight));
+    // Straight down, up the page being the world's +X.
+    Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, 0.f, 0.f));
     Capture->GetCaptureComponent2D()->CaptureScene();
 }
 
@@ -270,12 +385,21 @@ void UEWMapWidget::NativeDestruct()
     if (Capture) Capture->Destroy();
     Capture = nullptr;
     RenderTarget = nullptr;
+    MapMaterial = nullptr;
+    FogTexture = nullptr;
     Super::NativeDestruct();
 }
 
 bool UEWMapWidget::HasMapCapture() const
 {
     return Capture && RenderTarget && MapImage;
+}
+
+FLinearColor UEWMapWidget::ProbeMapPixel(FVector2D Uv) const
+{
+    if (!RenderTarget || !GetWorld()) return FLinearColor::Black;
+    const int32 X = FMath::Clamp(int32(Uv.X * RenderTarget->SizeX), 0, RenderTarget->SizeX - 1), Y = FMath::Clamp(int32(Uv.Y * RenderTarget->SizeY), 0, RenderTarget->SizeY - 1);
+    return UKismetRenderingLibrary::ReadRenderTargetPixel(const_cast<UEWMapWidget*>(this), RenderTarget, X, Y);
 }
 
 FText UEWMapWidget::GetRegionTitle() const

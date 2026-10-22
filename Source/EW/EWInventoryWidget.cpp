@@ -8,6 +8,7 @@
 #include "Engine/SceneCapture2D.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Engine/World.h"
+#include "Kismet/KismetRenderingLibrary.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
 #include "EWHotbarWidget.h"
@@ -1160,4 +1161,11 @@ UTexture2D* UEWInventoryWidget::ResolveIcon(UEWItemDefinition* Item)
     else if (Item->Category==EEWItemCategory::Clothing) Kind=9;
     if (!FallbackIcons.Contains(Kind)) FallbackIcons.Add(Kind,EWHudIcon::Make(Kind,false));
     return FallbackIcons[Kind];
+}
+
+FLinearColor UEWInventoryWidget::ProbePortraitPixel(FVector2D Uv) const
+{
+    if (!PortraitTarget) return FLinearColor::Black;
+    const int32 X = FMath::Clamp(int32(Uv.X * PortraitTarget->SizeX), 0, PortraitTarget->SizeX - 1), Y = FMath::Clamp(int32(Uv.Y * PortraitTarget->SizeY), 0, PortraitTarget->SizeY - 1);
+    return UKismetRenderingLibrary::ReadRenderTargetPixel(const_cast<UEWInventoryWidget*>(this), PortraitTarget, X, Y);
 }

@@ -20,6 +20,7 @@ class AEWPickup;
 class UEWHotbarWidget;
 class UEWSurvivalWidget;
 class UEWDeathWidget;
+class UEWExplorationComponent;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
 class UEWShipMarkersWidget;
@@ -109,6 +110,8 @@ public:
     void RequestUnlockSkill(FName Id) { if (IsLocalPlayerController()) ServerUnlockSkill(Id); }
     UFUNCTION(Server, Reliable) void ServerUnlockSkill(FName Id);
     UFUNCTION(BlueprintPure, Category="Death") UEWDeathWidget* GetDeathWidget() const { return DeathWidget; }
+    /** What this player has explored: the map clears its mist from it. */
+    UFUNCTION(BlueprintPure, Category="Exploration") UEWExplorationComponent* GetExploration() const { return ExplorationComponent; }
     UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
     /** The server accepted the recipe: the work takes this long. */
     UFUNCTION(Client, Reliable) void ClientCraftStarted(UEWCraftingRecipe* Recipe, float Seconds);
@@ -232,6 +235,8 @@ protected:
     void FinishCraft();
     UPROPERTY(Transient)
     TObjectPtr<UEWDeathWidget> DeathWidget;
+    UPROPERTY(VisibleAnywhere, Category="Exploration")
+    TObjectPtr<UEWExplorationComponent> ExplorationComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;

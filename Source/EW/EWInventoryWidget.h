@@ -143,6 +143,8 @@ private:
 public:
     /** True once the Survivor panel has a live picture of the survivor. */
     UFUNCTION(BlueprintPure, Category="Menu") bool HasSurvivorPortrait() const { return PortraitCapture != nullptr && PortraitTarget != nullptr; }
+    /** The colour of the survivor picture at a point of it (0..1 across and down), for tests. */
+    UFUNCTION(BlueprintCallable, Category="Menu") FLinearColor ProbePortraitPixel(FVector2D Uv) const;
 private:
     float CraftSecondsLeft = 0.f, CraftSecondsTotal = 0.f;
     UPROPERTY(Transient) TObjectPtr<UProgressBar> CraftBar;

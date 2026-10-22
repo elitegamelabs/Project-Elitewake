@@ -1,5 +1,7 @@
 # Codex: your tasks
 
+**Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [../TEAM_CHARTER.md](../TEAM_CHARTER.md). `CLAIMED` / `IN PROGRESS` below is a courtesy notice only: it blocks nobody. Any teammate may add, take over or finish any task. Grok has joined ([GROK.md](GROK.md)).
+
 **Owner, October 20: no agent owns any file, API or system.** Claude helps the owner design the game; it holds no locks and reserves nothing. Codex, ChatGPT and Claude may all edit any file. To avoid collisions: pull first, check `git log` and the inbox for recent work on the same files, keep commits small, and say in the inbox when you start on a file another agent changed recently. The shared Unreal editor lock (one editor at a time on this PC) still applies to everyone.
 
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario and hands each the work that suits it. This file
@@ -24,7 +26,28 @@ Claude and the owner.
    native test, with the result recorded in `Docs/VERIFICATION.md`.
 5. Do not invent balance values: working numbers are *tuning*; anything the owner has not decided stays TBD.
 
-## Owner-approved expansion: 40 islands and wildlife (October 18, 2026)
+## Owner's October 22 priorities (new; Claude is working the same list, so pull often)
+
+Source: `Docs/OwnerDecisions/GAMEPLAY_FIXES_AND_FEATURES_2026-10-22.md` and `GAMEPLAY_DESIGN_DECISIONS_2026-10-22.md`. **The owner's October 21 directive limits the world to five islands, one per region:
+C-WORLD40 and C-WILDLIFE40 below are paused until the owner says otherwise.** Anyone may take any task here; say so in the inbox.
+
+### C8. Controller support and the hotbar (owner item 1) — OPEN
+- **Why:** "Every keyboard/mouse action has an equivalent controller input, using standard MMORPG-style mappings. Redesign hotbar assignment so players can easily assign, switch and activate abilities with a controller."
+- **Done when:** a table of every action with its keyboard/mouse and controller input in `Docs/CONTROLS.md`; hotbar slots assignable and activatable by controller alone (a Play check that sends only gamepad keys); a check that every menu is operable by gamepad. Existing partial work: `EWHotbarComponent`, `EWHotbarWidget`, LB-modifier hotbar chords, `C7` (`41a050b`). Menu section cycling already works (RB/LT, `verify_menu_sections_play`).
+
+### C9. Save and load progression, skills and discoveries — OPEN
+- **Do:** persist `UEWProgressionComponent` (level, experience, points, stat points, lit stars) and `UEWExplorationComponent` cells in `EWSurvivorSave`; old saves must still load. Round-trip native test.
+
+### C10. Hunger, thirst, food sickness and cooking times — OPEN
+- **Why:** owner decisions 2 and 8 (100-point needs; hunger empties in about 45 min and thirst in about 25 min; zero hunger or thirst drains health gradually; raw fish 15% and raw meat 25% sickness for 3 min, -30% stamina regen, +50% thirst depletion; cooking 5 to 12 s via `UEWCraftingRecipe::CraftSeconds`).
+- **Done when:** configurable data, a Play check for each rule, and the food table values from the owner's document.
+
+### C11. Edge-of-the-world teleports that move outward as the map grows — OPEN
+- **Owner, October 22:** "I want the teleports on the edges of the map to expand outwards as you add to the map." Working interpretation (reversible): the world square the map covers (`UEWExplorationComponent` bounds) has an edge;
+  a survivor or ship that reaches the edge is teleported to the opposite side (or turned back; the owner chooses), and the edge moves outward as exploration reaches it. Claude may implement this himself;
+  check the inbox first. Ask the owner which behaviour (wrap or turn back) when you reach that choice.
+
+## Owner-approved expansion: 40 islands and wildlife (October 18, 2026) (PAUSED by the five-island directive)
 
 ### C-WORLD40. Expand world from 26 to 40 islands — PARTIAL (Codex, 2026-10-20)
 - **Owner directive:** exactly **8 islands in each of five regions**: Plains (Starter + Plains2–8), Winter1–8, Swamp1–8, Desert1–8, Jungle1–8. The 40-island wildlife specification is [WILDLIFE_DISTRIBUTION_26_ISLANDS.md](../WILDLIFE_DISTRIBUTION_26_ISLANDS.md) (legacy filename, **40-island content**). Owner approved this as the target and explicitly requests Claude/Codex implementation.

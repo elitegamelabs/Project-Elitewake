@@ -1,5 +1,7 @@
 # Scenario: generation queue
 
+**Team rule (owner, October 22): everyone works freely; no locks, claims or ownership of anything.** See [../TEAM_CHARTER.md](../TEAM_CHARTER.md). `CLAIMED` / `IN PROGRESS` below is a courtesy notice only: it blocks nobody. Any teammate may add, take over or finish any task. Grok has joined ([GROK.md](GROK.md)).
+
 Owner, October 16: Claude coordinates Codex, ChatGPT and Scenario. Scenario is a generation service on the owner's
 account; it does not read this repository. This file is its **job queue**: each job's model, prompt, length, cost and
 destination, so whoever runs it gets the same result. **Claude runs the jobs** through the Scenario MCP connection.

@@ -30,6 +30,7 @@
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "EWDeathWidget.h"
+#include "EWExplorationComponent.h"
 #include "EWCraftingRecipe.h"
 #include "EWProgressionComponent.h"
 #include "InputKeyEventArgs.h"
@@ -57,6 +58,7 @@ AEWPlayerController::AEWPlayerController()
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
     SoundscapeComponent = CreateDefaultSubobject<UEWSoundscapeComponent>(TEXT("Soundscape"));
     PlacementPreview = CreateDefaultSubobject<UEWPlacementPreviewComponent>(TEXT("PlacementPreview"));
+    ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
 }
 
 void AEWPlayerController::OnPossess(APawn* InPawn)
