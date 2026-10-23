@@ -25,6 +25,14 @@ SEA = -65.0
 FLOOR = -6000.0          # the foot of an island's shelf, 60 m down
 DEEP = SEA - 150000.0    # the deepest sea anywhere (owner, October 22: at most 1,500 m; was 2,000 m)
 SHELF = 20000.0          # how far an island's own terrain reaches past its shore (cm)
+
+
+def ground_spacing(island):
+    """The island mesh's grid step, cm. The five-island world's islands are about 2 km across, so the step is coarser than the old islands' (400 cm on the starter, 300 elsewhere) to keep each mesh near a million vertices."""
+    if W.FIVE_ISLAND_WORLD:
+        return 400.0 if island.key == 'Starter' else 300.0
+    return 200.0 if island.key == 'Starter' else 400.0
+
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
 POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 260.0
@@ -439,7 +447,7 @@ class Cave:
     def __init__(self, island, kind, mx, my, heading, floor, scale, bend):
         self.island, self.kind = island, kind
         self.mx, self.my, self.heading, self.floor, self.scale, self.bend = mx, my, heading, floor, scale, bend
-        self.cell = 200.0 if island.key == 'Starter' else 400.0       # the island mesh's grid
+        self.cell = ground_spacing(island)       # the island mesh's grid
         self.margin = 1.5 * self.cell                                  # notch past the hollow
         self.length = 1400.0 * scale                                   # passage
         self.chamber = (600.0 * scale, 500.0 * max(scale, .8), 450.0)  # chamber half-sizes (u, v, z)
@@ -651,7 +659,7 @@ def region_code(x, y):
 def grid_of(island):
     """The island mesh's grid as build_coastal_terrain.py builds it: (x0, y0, step x, step y, cells x, cells y)."""
     reach = island.reach() + SHELF
-    spacing = 200.0 if island.key == 'Starter' else 400.0
+    spacing = ground_spacing(island)
     x0, x1, y0, y1 = island.cx - reach, island.cx + reach, island.cy - reach, island.cy + reach
     nx, ny = max(2, int(round((x1 - x0) / spacing))), max(2, int(round((y1 - y0) / spacing)))
     return x0, y0, (x1 - x0) / nx, (y1 - y0) / ny, nx, ny

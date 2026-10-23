@@ -40,3 +40,9 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 - Respawn distance 60 to 200 m (widens if no ground), bag 30 minutes, respawn at half hunger/thirst minimum.
 - Map: up is +X ("N" at the top); reveal radius 500 m.
 - Edge teleports (C11): owner chose wrap-around. Done: the game mode keeps the world edge (`UEWExplorationComponent` as `WorldEdge`); survivors and ships past it come out on the opposite side; the square widens 25% once a third of it is cleared. Tested by `verify_world_edge_play`. Known gap: each client's map grows from its own discoveries, the server's from everyone's, so they can differ until C9/replication is done.
+
+## Update (later, October 22): five-island world, branch `claude/five-islands-20261022`
+- Done: `FIVE_ISLAND_WORLD` layout (Plains/Starter 2.0 km, Winter 2.4, Swamp 2.0, Desert 2.2, Jungle 2.0 km across, organic coasts, none alike), world rebuilt in the editor, wildlife re-placed at 7x density, ports one per region (Plains port on the new south-west shore), controller map button (Back/View), `Docs/CONTROLS.md`.
+  Checks passing on the new world: ocean depth, seabed, fish, first voyage, journal, map fog, world edge, death/respawn, menus, skills; `Scripts/Tests` (32 tests, 12 legacy ones skipped as superseded). Details: `Design/World/FIVE_ISLAND_WORLD_IMPLEMENTATION_2026-10-22.md`.
+- Honest gaps: Winter has no land animals and the owner's species list (deer, wolves, bears...) has no assets; trees/resources per island were not re-audited visually; I could not take PIE screenshots of the islands (the screenshot tool captured the editor viewport); the map picture (`capture_map_pixels.py`) shows the five islands in the expected places.
+- The compass in-game puts N at heading 0 (+X) but the regions put Winter (north) at +Y: a pre-existing contradiction the owner should settle; the map shows no N label for that reason.

@@ -223,16 +223,51 @@ def generate(seed=SEED):
     return islands
 
 
+# ---- The five-island test world (owner, October 21 and 22) ------------------------------------------------------
+# "One island in all 5 regions, not 40 islands all together" and islands about 1,500 to 2,500 m across with organic, irregular coastlines.
+# The 26/40-island generators above stay as the preserved baseline; FIVE_ISLAND_WORLD selects the world the project builds.
+FIVE_ISLAND_WORLD = True
+FIVE_PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
+
+
+def _organic(key, region, cx, cy, rx, ry, turn, seed, peak, hills, cove):
+    """An island with a hand-set size and an irregular shore: eight harmonics of its own, a cove or two, ridges and hills of its own."""
+    rng = random.Random(seed)
+    harmonics = [(k, rng.uniform(0.035, 0.11) / (1 + 0.12 * k), rng.uniform(0, 2 * math.pi)) for k in (2, 3, 4, 5, 6, 8, 11, 14)]
+    features = []
+    for n in range(hills):
+        fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0.05, 0.6) * min(rx, ry)
+        features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.18, 0.34) * min(rx, ry), peak * (1.0 if n == 0 else rng.uniform(0.35, 0.8))))
+    return Island(key, region, cx, cy, rx, ry, turn, rng.uniform(0.04, 0.07), harmonics, cove, features, peak)
+
+
+def generate_five():
+    """The Plains island (the starter, grown to about 2 km) in the middle and one island each for Winter (north), Swamp (south), Desert (east) and Jungle (west)."""
+    old = Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
+                 features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
+    # The old east end keeps the beach spawn, dock, pond and sloop mooring; the island grows west from it, about 2 km across, with a notched, irregular shore.
+    west = _organic('StarterWest', 'Plains', -99000.0, -400.0, 101000.0, 82000.0, 0.15, 7101, 2600.0, 6, (math.pi * 0.9, 0.3, 0.22))
+    west.cx = 3000.0 - west.radius(0.0)      # its east shore lands 30 m east of the old centre, just inside the old east end
+    west.features = [(x + west.cx - old.cx, y + west.cy - old.cy, r, h) for x, y, r, h in west.features]
+    islands = [StarterIsland(old, west)]
+    islands.append(_organic('Winter1', 'Winter', -60000.0, 280000.0, 118000.0, 82000.0, 0.45, 7202, 11000.0, 5, (-math.pi / 2, 0.35, 0.25)))
+    islands.append(_organic('Swamp1', 'Swamp', -30000.0, -270000.0, 100000.0, 80000.0, 2.6, 7303, 260.0, 4, (math.pi / 3, 0.4, 0.3)))
+    islands.append(_organic('Desert1', 'Desert', 280000.0, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (math.pi, 0.3, 0.2)))
+    islands.append(_organic('Jungle1', 'Jungle', -380000.0, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (0.3, 0.35, 0.24)))
+    return islands
+
+
 def check(islands):
     """The owner's rules, measured along the shorelines. Returns a list of problems (empty when it passes)."""
     problems = []
-    for region, expected in ISLANDS_PER_REGION.items():
+    per_region = FIVE_PER_REGION if FIVE_ISLAND_WORLD else ISLANDS_PER_REGION
+    for region, expected in per_region.items():
         n = sum(1 for i in islands if i.region == region)
         if n != expected:
             problems.append(f'{region} has {n} islands; exactly {expected} are required')
     around = [i for i in islands if i.region == 'Plains' and i.key != 'Starter']
-    if len(around) != ISLANDS_PER_REGION['Plains'] - 1:
-        problems.append(f'{len(around)} islands round the starter; seven are required')
+    if len(around) != per_region['Plains'] - 1:
+        problems.append(f'{len(around)} islands round the starter; {per_region["Plains"] - 1} are required')
     nearest = {}
     for a_i, a in enumerate(islands):
         for b in islands[a_i + 1:]:
@@ -255,7 +290,7 @@ def check(islands):
     return problems, nearest
 
 
-ISLANDS = generate()
+ISLANDS = generate_five() if FIVE_ISLAND_WORLD else generate()
 
 
 def _legacy_port_island_keys():
@@ -302,6 +337,16 @@ class Port:
 
 def _ports():
     by_key = {i.key: i for i in ISLANDS}
+    if FIVE_ISLAND_WORLD:
+        # One Port in each region on its one island; the Plains Port (the starter port, owner October 22) faces south-west on the new western shore.
+        ports = {region: Port(region, i) for region in REGION_CENTRES for i in ISLANDS if i.region == region}
+        starter_port = ports['Plains']
+        starter_port.facing = -2.3
+        r = starter_port.island.radius(starter_port.facing)
+        starter_port.shore = (starter_port.island.cx + r * math.cos(starter_port.facing), starter_port.island.cy + r * math.sin(starter_port.facing))
+        starter_port.cx = starter_port.island.cx + (r - PORT_INLAND) * math.cos(starter_port.facing)
+        starter_port.cy = starter_port.island.cy + (r - PORT_INLAND) * math.sin(starter_port.facing)
+        return ports
     return {region: Port(region, by_key[key]) for region, key in LEGACY_PORT_ISLAND_KEYS.items()}
 
 

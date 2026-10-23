@@ -358,7 +358,7 @@ report = {'removed': len(removed), 'islands': {}}
 terrains = []
 for island in W.ISLANDS:
     reach = island.reach() + T.SHELF
-    spacing = 200.0 if island.key == 'Starter' else 400.0
+    spacing = T.ground_spacing(island)
     asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
                                island.cy - reach, island.cy + reach, spacing, material)
     actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))

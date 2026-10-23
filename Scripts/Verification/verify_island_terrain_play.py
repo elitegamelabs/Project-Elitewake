@@ -46,7 +46,7 @@ def relief(i):
 def designed():
     for region in T.PLANS:
         plans = [T.TERRAIN_PLANS[i.key][0] for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        assert len(plans) >= 5 and len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
+        assert len(plans) >= (0 if W.FIVE_ISLAND_WORLD and region == 'Plains' else 1 if W.FIVE_ISLAND_WORLD else 5) and len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
     stats = {i.key: relief(i) for i in W.ISLANDS}
     keys = list(stats)
     same = [(a, b) for n, a in enumerate(keys) for b in keys[n + 1:]
@@ -96,8 +96,8 @@ def caves():
     return True
 
 
-VIEWS = [('starter', 'Starter'), ('plains', 'Plains2'), ('winter', 'Winter4'), ('jungle', 'Jungle3'),
-         ('desert', 'Desert2'), ('swamp', 'Swamp1')]
+VIEWS = [('starter', 'Starter'), ('winter', 'Winter1'), ('jungle', 'Jungle1'), ('desert', 'Desert1'), ('swamp', 'Swamp1')] if W.FIVE_ISLAND_WORLD else [
+         ('starter', 'Starter'), ('plains', 'Plains2'), ('winter', 'Winter4'), ('jungle', 'Jungle3'), ('desert', 'Desert2'), ('swamp', 'Swamp1')]
 STEPS = [('Every island has its own plan and its own size, outline and relief', designed),
          ('The built ground in the map matches every island\'s plan', built),
          ('Every island has its cave with a walkable way in', caves)]
@@ -120,7 +120,7 @@ def tick(delta):
             state['step'] += 1
             return
         if state['view'] >= len(VIEWS):
-            checks.append('Screenshots of six islands from the sea')
+            checks.append(f'Screenshots of {len(VIEWS)} islands from the sea')
             finish()
             return
         name, key = VIEWS[state['view']]

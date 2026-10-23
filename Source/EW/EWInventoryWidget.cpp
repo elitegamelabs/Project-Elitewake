@@ -817,7 +817,7 @@ void UEWInventoryWidget::ConfirmSelection()
 FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
-    if (Key==EKeys::M) { if (!Event.IsRepeat()) if (auto* PC=Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMapOpen(true); return FReply::Handled(); }
+    if (Key==EKeys::M || Key==EKeys::Gamepad_Special_Left) { if (!Event.IsRepeat()) if (auto* PC=Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMapOpen(true); return FReply::Handled(); }
     // Stat points: C or a left-stick press starts choosing; Up/Down or the d-pad pick; Enter or A spends; Escape, B or C again stops.
     if (Key==EKeys::C || Key==EKeys::Gamepad_LeftThumbstick)
     { if (!Event.IsRepeat()) SetStatFocus(StatFocus==INDEX_NONE ? 0 : INDEX_NONE); return FReply::Handled(); }

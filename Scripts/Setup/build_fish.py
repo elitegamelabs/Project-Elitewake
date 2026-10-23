@@ -269,6 +269,8 @@ def main():
         for where, count in WORLD[name]:
             islands = [i for i in W.ISLANDS if (i.key == 'Starter') == (where == 'Starter')
                        and (where in ('Starter', 'any') or i.region == where)]
+            if not islands:      # the five-island world has no other Plains island: use every island of that region, or all of them
+                islands = [i for i in W.ISLANDS if where in ('Starter', 'any') or i.region == where] or list(W.ISLANDS)
             spots += sea_spots(ground, name, count, depth, keep_away, placed + spots, islands)
         if name in REEF_LIFE:
             spots += reef_spots(ground, name, REEF_LIFE[name], depth, placed + spots)

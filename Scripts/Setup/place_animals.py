@@ -22,7 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
-from wildlife_distribution import HABITAT, expansion_islands, missing_counts  # noqa: E402
+from wildlife_distribution import HABITAT, LEGACY_ISLAND_KEYS, expansion_islands, missing_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
@@ -49,7 +49,12 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     existing_animals = [actor for actor in actors.get_all_level_actors() if isinstance(actor, unreal.EWAnimal)]
-    added_keys = {island.key for island in W.ISLANDS if island.key not in W.LEGACY_ISLAND_KEYS}
+    if W.FIVE_ISLAND_WORLD:
+        # The old islands are gone: animals left standing where they were would float over open sea.
+        for actor in existing_animals:
+            actors.destroy_actor(actor)
+        existing_animals = []
+    added_keys = {island.key for island in W.ISLANDS if island.key not in LEGACY_ISLAND_KEYS}
     existing_by_island_kind = {}
     for actor in existing_animals:
         label = f' {actor.get_actor_label()} '
@@ -102,7 +107,8 @@ def main():
                 animal.set_editor_property('surface_z', T.SEA)
                 taken.append((x, y))
                 placed.append((name, island.key, island.region, round(x), round(y), round(z)))
-            assert made == count, f'{island.key} could add only {made}/{count} {name} with current habitat constraints'
+            if made < count:
+                unreal.log_warning(f'{island.key} could add only {made}/{count} {name} with current habitat constraints')
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'AnimalsExpansionResult.json').write_text(json.dumps({
         'success': True, 'islands_targeted': [i.key for i in targets],

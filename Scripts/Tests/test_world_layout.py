@@ -34,10 +34,14 @@ class WorldLayoutRuleTests(unittest.TestCase):
     def test_check_reports_no_problems(self):
         self.assertEqual(self.problems, [], f'world_layout.check() found problems: {self.problems}')
 
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
+
     def test_at_least_five_islands_per_region(self):
         for region in W.REGION_CENTRES:
             n = sum(1 for i in W.ISLANDS if i.region == region)
             self.assertGreaterEqual(n, 5, f'{region} has only {n} islands')
+
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
 
     def test_at_least_five_islands_round_the_starter(self):
         around = [i for i in W.ISLANDS if i.region == 'Plains' and i.key != 'Starter']
@@ -107,6 +111,8 @@ class CaveRuleTests(unittest.TestCase):
                           'CAVES does not have exactly one entry per island')
         missing = [key for key, cave in self.caves.items() if cave is None]
         self.assertEqual(missing, [], f'no cave was placed for: {missing}')
+
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
 
     def test_all_three_cave_kinds_occur(self):
         kinds = {cave.kind for cave in self.caves.values() if cave}

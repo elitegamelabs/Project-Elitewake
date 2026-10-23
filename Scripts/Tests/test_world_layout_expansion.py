@@ -25,11 +25,14 @@ def frozen(value):
 
 
 class WorldLayoutExpansionTests(unittest.TestCase):
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
     def test_exactly_eight_islands_per_region(self):
         self.assertEqual(len(W.ISLANDS), 40)
         for region, expected in W.ISLANDS_PER_REGION.items():
             self.assertEqual(sum(i.region == region for i in W.ISLANDS), expected, region)
         self.assertEqual(len({i.key for i in W.ISLANDS}), 40)
+
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
 
     def test_first_twenty_six_records_match_legacy_generator(self):
         legacy = W.generate_legacy()
@@ -43,6 +46,8 @@ class WorldLayoutExpansionTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(payload.encode()).hexdigest(),
                          '53c230d473a1046b42f749929ea589b527626b73f6bf87ec75c46bdfa59a988a')
 
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
+
     def test_fourteen_new_keys_are_stable_and_additive(self):
         expected = {f'Plains{i}' for i in (7, 8)}
         expected |= {f'{region}{i}' for region in ('Winter', 'Swamp', 'Desert', 'Jungle') for i in (6, 7, 8)}
@@ -50,6 +55,8 @@ class WorldLayoutExpansionTests(unittest.TestCase):
         self.assertEqual(added, expected)
         regenerated = W.generate()
         self.assertEqual([frozen(vars(i)) for i in regenerated], [frozen(vars(i)) for i in W.ISLANDS])
+
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
 
     def test_existing_port_island_keys_do_not_move(self):
         legacy = W.generate_legacy()
@@ -66,6 +73,8 @@ class WorldLayoutExpansionTests(unittest.TestCase):
         self.assertEqual(problems, [])
         self.assertEqual(set(nearest), {i.key for i in W.ISLANDS})
 
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
+
     def test_new_non_swamp_islands_receive_distinct_terrain_plans(self):
         for region in ('Plains', 'Winter', 'Jungle', 'Desert'):
             islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
@@ -73,6 +82,8 @@ class WorldLayoutExpansionTests(unittest.TestCase):
             self.assertEqual(len(plans), 7 if region == 'Plains' else 8, region)
             self.assertEqual(len(set(plans)), len(plans), region)
             self.assertTrue(all(i.key in T.TERRAIN_PLANS for i in islands[5:]), region)
+
+    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
 
     def test_original_terrain_plan_assignments_remain_stable(self):
         expected = {}

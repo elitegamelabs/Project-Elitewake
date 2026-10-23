@@ -89,15 +89,6 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
         PlayerMarkerSlot->SetAlignment(FVector2D(.5f, .5f));
         PlayerMarkerSlot->SetAutoSize(true);
 
-        // The top of the map is the world's +X, which the compass calls north.
-        NorthLabel = WidgetTree->ConstructWidget<UTextBlock>();
-        NorthLabel->SetText(NSLOCTEXT("Elitewake", "MapNorth", "N"));
-        NorthLabel->SetColorAndOpacity(FLinearColor(.95f, .9f, .7f));
-        { auto F = NorthLabel->GetFont(); F.Size = 22; F.TypefaceFontName = FName("Bold"); NorthLabel->SetFont(F); }
-        NorthLabel->SetShadowOffset(FVector2D(1.5f, 1.5f)); NorthLabel->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, .9f));
-        auto* NorthSlot = MapCanvas->AddChildToCanvas(NorthLabel);
-        NorthSlot->SetAnchors(FAnchors(.5f, 0.f)); NorthSlot->SetAlignment(FVector2D(.5f, 0.f)); NorthSlot->SetAutoSize(true); NorthSlot->SetPosition(FVector2D(0.f, 6.f));
-
         // A scale bar in the lower left corner of the picture.
         ScaleBar = WidgetTree->ConstructWidget<UBorder>();
         ScaleBar->SetBrushColor(FLinearColor(.95f, .9f, .75f, .95f));

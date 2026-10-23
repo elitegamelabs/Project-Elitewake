@@ -437,7 +437,8 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
             return true;
         }
     }
-    if (Params.Key == EKeys::M)
+    // M opens and closes the map; on a controller the Back / View button does, and B closes it.
+    if (Params.Key == EKeys::M || Params.Key == EKeys::Gamepad_Special_Left || (bMapOpen && Params.Key == EKeys::Gamepad_FaceButton_Right))
     {
         if (Params.Event == IE_Pressed) SetMapOpen(!bMapOpen);
         return true;
