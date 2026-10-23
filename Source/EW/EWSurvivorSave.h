@@ -43,4 +43,15 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Inventory;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWEquipmentEntry> Equipment;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<TObjectPtr<UEWItemDefinition>> Hotbar;
+    /** Level, experience, stat and skill points and the lit stars (October 22). Older saves have none: the survivor then keeps level 1. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 Level = 0;
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 Experience = 0;
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 UnspentStatPoints = 0;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<int32> StatPoints;
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 SkillPoints = 0;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> UnlockedSkills;
+    /** What the survivor has explored: the map's cleared cells, a bit each, and the square they cover. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<uint8> ExploredBits;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FVector2D ExploredMin = FVector2D::ZeroVector;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float ExploredSize = 0.f;
 };

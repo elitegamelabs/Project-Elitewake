@@ -91,7 +91,7 @@ bool UEWProgressionComponent::SpendPoint(EEWStat Stat)
     return true;
 }
 
-void UEWProgressionComponent::Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints)
+void UEWProgressionComponent::Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints, int32 NewSkillPoints, const TArray<FName>& NewSkills)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority()) return;
     Level = FMath::Clamp(NewLevel, 1, MaxLevel);
@@ -99,7 +99,11 @@ void UEWProgressionComponent::Restore(int32 NewLevel, int32 NewExperience, int32
     UnspentPoints = FMath::Max(0, NewUnspent);
     StatPoints.SetNumZeroed(StatCount);
     for (int32 i = 0; i < StatCount && i < NewStatPoints.Num(); ++i) StatPoints[i] = FMath::Max(0, NewStatPoints[i]);
+    SkillPoints = FMath::Max(0, NewSkillPoints);
+    UnlockedSkills.Reset();
+    for (const FName& Id : NewSkills) if (FEWSkillTree::Find(Id)) UnlockedSkills.AddUnique(Id);     // a star that no longer exists is left out
     ApplyStats();
+    GrantSkillRecipes();
     Changed();
 }
 

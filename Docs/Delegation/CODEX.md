@@ -37,7 +37,7 @@ C-WORLD40 and C-WILDLIFE40 below are paused until the owner says otherwise.** An
 - **Why:** "Every keyboard/mouse action has an equivalent controller input, using standard MMORPG-style mappings. Redesign hotbar assignment so players can easily assign, switch and activate abilities with a controller."
 - **Done when:** a table of every action with its keyboard/mouse and controller input in `Docs/CONTROLS.md`; hotbar slots assignable and activatable by controller alone (a Play check that sends only gamepad keys); a check that every menu is operable by gamepad. Existing partial work: `EWHotbarComponent`, `EWHotbarWidget`, LB-modifier hotbar chords, `C7` (`41a050b`). Menu section cycling already works (RB/LT, `verify_menu_sections_play`).
 
-### C9. Save and load progression, skills and discoveries — OPEN
+### C9. Save and load progression, skills and discoveries — DONE by Claude (2026-10-23; `Elitewake.Save.SurvivorRoundTrip` extended and passing). Open: the grown world edge is not saved or synced to clients
 - **Do:** persist `UEWProgressionComponent` (level, experience, points, stat points, lit stars) and `UEWExplorationComponent` cells in `EWSurvivorSave`; old saves must still load. Round-trip native test.
 
 ### C10. Hunger, thirst, food sickness and cooking times — OPEN

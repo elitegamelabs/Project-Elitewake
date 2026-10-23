@@ -3,6 +3,9 @@
 #include "EWHotbarComponent.h"
 #include "EWStarterKit.h"
 #include "EWSurvivalComponent.h"
+#include "EWProgressionComponent.h"
+#include "EWExplorationComponent.h"
+#include "EWPlayerController.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -37,6 +40,20 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
     if (const auto* Worn = Survivor->GetEquipmentComponent()) Save->Equipment = Worn->GetEquipmentEntries();
     if (const auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Save->Hotbar.Add(Bar->GetBoundItem(i));
+    if (const auto* Progress = Survivor->GetProgressionComponent())
+    {
+        Save->Level = Progress->GetLevel(); Save->Experience = Progress->GetExperience(); Save->UnspentStatPoints = Progress->GetUnspentPoints();
+        Save->StatPoints = Progress->GetAllStatPoints(); Save->SkillPoints = Progress->GetSkillPoints(); Save->UnlockedSkills = Progress->GetUnlockedSkills();
+    }
+    if (const auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (const UEWExplorationComponent* Explored = Controller->GetExploration())
+            if (Explored->GetBoundsSize() > 0.f)
+            {
+                const TArray<uint8>& Cells = Explored->GetCells();
+                Save->ExploredBits.Init(0, (Cells.Num() + 7) / 8);
+                for (int32 i = 0; i < Cells.Num(); ++i) if (Cells[i]) Save->ExploredBits[i >> 3] |= uint8(1 << (i & 7));
+                Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
+            }
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
@@ -72,6 +89,10 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         if (Entry.ItemDefinition) Worn->EquipItem(Entry.ItemDefinition, Entry.Slot);
     if (auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Bar->BindItem(i, Hotbar.IsValidIndex(i) ? Hotbar[i].Get() : nullptr);
+    // Levels first: their health bonus raises the maximum before the saved health is put back.
+    if (Level > 0)
+        if (auto* Progress = Survivor->GetProgressionComponent())
+            Progress->Restore(Level, Experience, UnspentStatPoints, StatPoints, SkillPoints, UnlockedSkills);
     if (auto* Needs = Survivor->GetSurvivalComponent())
     {
         const float Change = Health - Needs->GetHealth();
@@ -80,6 +101,14 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         Needs->SetHunger(Hunger);
         Needs->SetHydration(Hydration);
     }
+    if (ExploredSize > 0.f)
+        if (auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+            if (UEWExplorationComponent* Explored = Controller->GetExploration())
+            {
+                TArray<uint8> Cells; Cells.Init(0, UEWExplorationComponent::GridSize * UEWExplorationComponent::GridSize);
+                for (int32 i = 0; i < Cells.Num() && (i >> 3) < ExploredBits.Num(); ++i) if (ExploredBits[i >> 3] & (1 << (i & 7))) Cells[i] = 255;
+                Explored->LoadCells(Cells, ExploredMin, ExploredSize);
+            }
     Survivor->TeleportTo(Location, FRotator(0.f, Facing.Yaw, 0.f), false, true);
     if (AController* Controller = Survivor->GetController()) Controller->SetControlRotation(Facing);
     return true;
