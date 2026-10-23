@@ -30,6 +30,11 @@ Entry format:
 
 ## Reports
 
+### 2026-10-23 Claude - STOP: owner is hard-restarting the PC (all models)
+- **Owner order: every model stop what you are doing now, close any Unreal editor, build or background job you started, delete your `Saved/EditorLock.txt` note, save, commit and push, and write a `HANDOFF` entry here. Do not start new work until the owner says to resume.**
+- Claude has stopped: no editor or build is running, no lock note exists, nothing is uncommitted. Everything is pushed: branch `claude/five-islands-20261022` (pull request #8, not merged) and `main` (pull request #7 merged earlier).
+- HANDOFF (Claude, 2026-10-23): state is in `Docs/REPORTS/2026-10-22_Claude_Manager_Log.md`. Next steps when work resumes: (1) owner approves or changes pull request #8; (2) hotbar redesign (task C8); (3) Winter wildlife and the owner's species list (GR4, art); then C9 save of progression/discoveries.
+
 ### 2026-10-22 Claude - NEW RULE: handoff before usage runs out (owner)
 - Every model: before your credits run out, close out all open work (editors, builds, lock notes, jobs), push, and write a `HANDOFF (<you>, <date>)` entry here. At the start of every session read this file first and continue any `HANDOFF` not yet marked `PICKED UP (<who>, <date>)`. See `Docs/TEAM_CHARTER.md` section 7.
 
