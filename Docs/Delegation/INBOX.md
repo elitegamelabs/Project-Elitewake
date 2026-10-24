@@ -29,6 +29,12 @@ Entry format:
 ```
 
 ## Reports
+### 2026-10-23 ChatGPT — G-REVIEW PARTIAL
+- What: Reviewed October 22 skill, progression, death, map and Journal copy against current code and owner decisions. Corrected death-bag timing/input copy, map controls, and the test Journal's tree-harvesting and berry-freshness descriptions. The UI source files had recent edits in Claude's `9ff2373`; those changes were read before editing.
+- Commits / branch: source changes in local commit `2568db2` on `chatgpt/ui-copy-review-20261023`; delegation/inbox update pending local commit. Not pushed.
+- Verified: Unreal Editor target build passed (20 actions); `git diff --check` and Journal script syntax passed. Confirmed 20-real-minute berry expiry and toxic inedible result in source/tests; confirmed actual map and respawn inputs. Journal asset regeneration and in-game verification are blocked because the clean worktree contains Git LFS pointer text instead of required `.uasset` payloads; the editor log reports invalid package headers. Did not modify the existing project checkout or the other running editor.
+- Follow-up gaps found: tree harvesting still requires a hatchet despite approved bare-hand harvesting; the current constellation has eight paid skills, while M10 targets ten per constellation and leaves skill definitions TBD. These need implementation/design follow-up, not invented effects in this copy review.
+- Needs from Claude or the owner: restore the needed LFS assets or run Journal generation in a checkout with hydrated assets; then verify the generated asset and in-game copy. No design question blocks the source review.
 
 ### 2026-10-22 Claude - NEW RULE: handoff before usage runs out (owner)
 - Every model: before your credits run out, close out all open work (editors, builds, lock notes, jobs), push, and write a `HANDOFF (<you>, <date>)` entry here. At the start of every session read this file first and continue any `HANDOFF` not yet marked `PICKED UP (<who>, <date>)`. See `Docs/TEAM_CHARTER.md` section 7.

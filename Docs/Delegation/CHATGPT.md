@@ -168,5 +168,5 @@ G1: 21-kind matrix (14 existing source kinds, five current additions, two earlie
 ### G-EDGE. World-edge design alternatives
 - **Why:** owner, October 22: edge teleports that expand outwards as the map grows. Write two or three concrete designs (wrap-around, turn-back with a message, sea-fog barrier that moves), with the effect on ships, wildlife and the map, labelled as proposals for the owner to pick.
 
-### G-REVIEW. Read the UI text and design of the October 22 menus
+### G-REVIEW. Read the UI text and design of the October 22 menus — PARTIAL (ChatGPT, 2026-10-23)
 - Read `Source/EW/EWSkillTree.cpp`, `EWProgressionComponent.cpp` (stat names and effects), `EWDeathWidget.cpp`, `EWMapWidget.cpp`, and the journal text. Correct typos, tone and anything that contradicts owner decisions. Small fixes may be pushed directly.
