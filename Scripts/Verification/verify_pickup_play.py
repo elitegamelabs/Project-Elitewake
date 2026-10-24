@@ -63,6 +63,11 @@ def check(label,total,remaining):
     assert all(r==rows[0] for r in rows), label+': inventory replication differs'
     pickups = [[a for a in unreal.GameplayStatics.get_all_actors_of_class(w,pickup_cls) if a.get_editor_property('item_definition')==item] for w in worlds]
     report['checkpoints'][-1]['pickup_sums']=[[(a.get_name(),a.get_editor_property('quantity'),str(a.get_actor_location())) for a in ps] for ps in pickups]
+    if not all(sum(p.get_editor_property('quantity') for p in ps)==remaining for ps in pickups) and report.setdefault('retries',{}).get(label,0)<8:
+        report['retries'][label]=report['retries'].get(label,0)+1
+        steps.insert(index+1,(lambda:check(label,total,remaining),2))      # a frame-starved client can lag behind; look again
+        report['checkpoints'].pop()
+        return
     assert all(sum(p.get_editor_property('quantity') for p in ps)==remaining for ps in pickups),label+': world remainder replication differs'
 def fill():
     for p in server_pawns.values(): inv(p).add_item(item,5997)

@@ -133,6 +133,17 @@ def all_present():
     return True
 
 
+def to_animals():
+    """Stand among the peaceful animals: where the survivor begins there may be none within the client's range."""
+    here = owner.get_actor_location()
+    calm = [a for a in animals if not a.get_editor_property('definition').get_editor_property('aggressive')]
+    if sum(1 for a in calm if (a.get_actor_location() - here).length() < 14000) >= 3:
+        return
+    target = max(calm, key=lambda a: sum(1 for b in calm if (b.get_actor_location() - a.get_actor_location()).length() < 6000))
+    spot = target.get_actor_location() + unreal.Vector(400, 0, 150)
+    owner.teleport(spot, unreal.Rotator())
+
+
 def wandered():
     m = state['memo']
     # Watch the legs on the client: a copy that is walking should be striding.
@@ -274,7 +285,7 @@ def harvested():
 STEPS = [
     ('The client has every animal the server has, all six kinds, across the islands of the world, each standing on the ground',
      begin_count, all_present, 4),
-    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', lambda: None, wandered, 20),
+    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', to_animals, wandered, 20),
     ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),
     ('Struck with Left Mouse, a flamingo is hurt', strike('Flamingo', 110), flamingo_hit, 8),
     ('The struck flamingo runs off faster than it walks', lambda: None, flamingo_ran, 4),

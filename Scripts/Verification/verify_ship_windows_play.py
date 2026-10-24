@@ -66,10 +66,7 @@ for world in worlds:
         for side in (-1, 1):
             checks.append(sealed_window(world, schooner, f'{role} Schooner side {x:g} {side:+d}',
                                         (x, side * 300.0, 377.5), (x, 0.0, 377.5), (x, side * y_out, 377.5)))
-    # Schooner aft-quarterdeck bulkhead lights, facing the main deck at x=-775 (the schooner's rebuilt bulkhead, set by rebuild_sealed_ship_windows.py).
-    for y in (-130.0, 130.0):
-        checks.append(sealed_window(world, schooner, f'{role} Schooner quarterdeck front {y:+g}',
-                                    (-750.0, y, 377.5), (-890.0, y, 377.5), (-775.0, y, 377.5)))
+    # The reworked schooner (October 18) has side lights only; its quarters front has a doorway and no window panes, so no front pane is traced.
 
     # Brigantine captain's quarters (October 20 rebuild: no forecastle): side panes at the builder's CABIN_WINDOWS
     # (z 400..450); front panes at deck+95..140 in the wall at QUARTERDECK's front edge.
@@ -83,6 +80,6 @@ for world in worlds:
         checks.append(sealed_window(world, brig, f'{role} Brigantine quarterdeck front {y:+g}',
                                     (front + 100.0, y, 417.5), (front - 150.0, y, 417.5), (front + 4.0, y, 417.5)))
 
-assert len(checks) == 28, len(checks)   # 2 roles x (schooner 6 + brigantine 8)
+assert len(checks) == 24, len(checks)   # 2 roles x (schooner 4 + brigantine 8)
 RESULT.write_text(json.dumps({'success': True, 'checks': checks,
                               'note': 'Generated mesh assets were assigned to HullVisual components in PIE only; map and ship definitions were not saved.'}, indent=2))
