@@ -150,7 +150,7 @@ step(lambda: target.set_editor_property('resource_type', unreal.EWResourceNodeTy
 step(lambda: spawn()); step(lambda: tap('Gamepad_FaceButton_Left')); step(lambda: check('Controller X input and prompt', 1, 'X:'))
 step(lambda: target.set_editor_property('station_type', unreal.EWStationType.SMITHY)); step(lambda: check('Smithy inspect prompt', 1, 'Inspect Smithy'))
 step(lambda: tap('Gamepad_FaceButton_Top')); step(lambda: tap('I')); step(lambda: check('Keyboard close after controller menu restores E prompt',1,'E:'))
-step(lambda: tap('I')); step(lambda: tap('Gamepad_FaceButton_Top')); step(lambda: check('Controller close after keyboard menu restores X prompt',1,'X:'))
+step(lambda: tap('I')); step(lambda: tap('Gamepad_FaceButton_Right')); step(lambda: check('Controller close after keyboard menu restores X prompt',1,'X:'))
 step(lambda: tap('F')); step(lambda: lib.send_verification_ui_analog(pc,0)); step(lambda: check('Idle controller sample retains keyboard prompt',1,'E:'))
 step(lambda: spawn(x=450)); step(lambda: no_prompt('Out-of-range prompt hidden')); step(request); step(lambda: check('Forged out-of-range request rejected'))
 step(spawn); step(blocker); step(request); step(lambda: check('Through-wall request rejected')); step(remove_wall)

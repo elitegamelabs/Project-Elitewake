@@ -18,6 +18,8 @@ eye,_=owner.get_actor_eyes_view_point()
 item=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestInnTorch')
 torch=lib.spawn_verification_inn_torch(server_world,eye+unreal.Vector(150,0,0),item)
 assert torch
+for _who in (owner, host_pawn):      # the starter kit carries a torch of its own
+    _who.get_inventory_component().remove_item(item,99)
 wood=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
 inv=owner.get_inventory_component()
 remote=client.get_controlled_pawn().get_inventory_component()
@@ -47,7 +49,7 @@ def tick(delta):
             assert ui().get_highlighted_torch_count()==1 and str(ui().get_inn_message())==''
             checks.append('Highlight persists after looking away')
             client.set_control_rotation(unreal.Rotator())
-            assert inv.add_item(wood,6000)==6000
+            inv.add_item(wood,6000); assert inv.get_used_slot_count()==inv.get_max_slot_count()
         elif phase==2:
             assert lib.send_verification_interaction_request(client,local_torch(),False)
         elif phase==3:

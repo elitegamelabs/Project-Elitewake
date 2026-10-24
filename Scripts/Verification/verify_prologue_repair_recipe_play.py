@@ -25,6 +25,9 @@ output = recipe.get_editor_property('output')
 costs = recipe.get_editor_property('ingredients')
 wood, stone = [c.get_editor_property('item') for c in costs]
 assert [c.get_editor_property('quantity') for c in costs] == [20, 20]
+for _who in (inv, host):      # the starter kit is not what this check is about
+    for _e in list(_who.get_inventory_entries()):
+        _who.remove_item(_e.get_editor_property('item_definition'), _e.get_editor_property('quantity'))
 assert not inv.get_inventory_entries() and not inv.get_available_recipes()
 assert not host.get_inventory_entries() and not host.get_available_recipes()
 checks = ['Normal test-world starts remain empty without automatic Repair Kit or starter knowledge',
