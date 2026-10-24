@@ -11,7 +11,7 @@ class UTexture2D;
 class UStaticMesh;
 
 UENUM(BlueprintType)
-enum class EEWFoodKind : uint8 { None, Berry };
+enum class EEWFoodKind : uint8 { None, Berry, RawFish, CookedFish, RawMeat, CookedMeat, BerryDish, Remedy };
 
 UENUM(BlueprintType)
 enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
@@ -59,9 +59,15 @@ public:
     /** Fraction of the full hunger bar restored by one unit (berries: 1/16). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
     float HungerRestoreFraction = 0.f;
-    /** Fraction of current maximum unlocked health, not remaining health (Azul: .05). */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    /** Fraction of current maximum unlocked health, not remaining health (Azul: .05). Negative for food that harms (raw meat: -.03). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="-1", ClampMax="1"))
     float HealthRestoreFraction = 0.f;
+    /** Chance eating one unit brings on food sickness (owner, October 22: raw fish .15, raw meat .25). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    float SicknessChance = 0.f;
+    /** Eating or using one unit ends food sickness early (medicinal herbs, a crafted remedy). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
+    bool bCuresFoodSickness = false;
     /** Real elapsed seconds in the running session; berries use 1200. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0"))
     float FreshLifetimeSeconds = 0.f;

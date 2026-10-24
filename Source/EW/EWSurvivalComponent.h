@@ -77,6 +77,31 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
 	void SetHunger(float NewHunger);
 
+	/** Authority: a step of time on the needs (owner, October 22). Hunger empties in about 45 minutes and thirst in about 25 of ordinary activity; sprinting, heat and
+	 *  cold quicken them and food sickness quickens thirst. At zero, health falls gradually. Also counts food sickness down. */
+	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
+	void UpdateNeeds(bool bIsSprinting, float DeltaSeconds);
+	/** Authority: food sickness for this long (default three minutes). It never kills by itself. */
+	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
+	void ContractFoodSickness(float Seconds = 180.f);
+	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
+	void CureFoodSickness();
+	UFUNCTION(BlueprintPure, Category="Survival|Needs")
+	bool IsFoodSick() const { return FoodSicknessLeft > 0.f; }
+	UFUNCTION(BlueprintPure, Category="Survival|Needs")
+	float GetFoodSicknessLeft() const { return FoodSicknessLeft; }
+
+	/** Working rules from the owner's design decisions of October 22. */
+	static constexpr float HungerEmptySeconds = 45.f * 60.f;
+	static constexpr float ThirstEmptySeconds = 25.f * 60.f;
+	static constexpr float SprintNeedFactor = 1.5f;     // exertion
+	static constexpr float HotThirstFactor = 1.5f;      // overheating
+	static constexpr float ColdHungerFactor = 1.3f;     // freezing
+	static constexpr float SickThirstFactor = 1.5f;     // food sickness: thirst depletion +50%
+	static constexpr float SickStaminaFactor = .7f;     // food sickness: stamina regeneration -30%
+	static constexpr float StarvationDamage = .25f;     // health per second at zero hunger
+	static constexpr float DehydrationDamage = .35f;    // health per second at zero thirst
+
 	UFUNCTION(BlueprintCallable, Category="Survival|Needs")
 	void SetHydration(float NewHydration);
 
@@ -196,6 +221,8 @@ protected:
 	void OnRep_SurvivalStats();
 
 private:
+    /** Server only: seconds of food sickness left. */
+    float FoodSicknessLeft = 0.f;
     UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
     TArray<FEWDebuffNotice> DebuffNotices;
     friend class UEWInventoryComponent;

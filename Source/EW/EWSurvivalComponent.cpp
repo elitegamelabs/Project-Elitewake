@@ -72,7 +72,7 @@ void UEWSurvivalComponent::UpdateStamina(bool bIsSprinting, float DeltaSeconds)
 	const float PreviousStamina = Stamina;
 	const float Delta = bIsSprinting
 		? -SprintStaminaDrainRate * DeltaSeconds
-		: StaminaRecoveryRate * DeltaSeconds;
+		: StaminaRecoveryRate * DeltaSeconds * (IsFoodSick() ? SickStaminaFactor : 1.f);
 	Stamina = FMath::Clamp(Stamina + Delta, 0.0f, MaxStamina);
     if (PreviousStamina > KINDA_SMALL_NUMBER && Stamina <= KINDA_SMALL_NUMBER)
         StaminaExhaustionCount = StaminaExhaustionCount == MAX_int32 ? 0 : StaminaExhaustionCount + 1;
@@ -130,6 +130,7 @@ void UEWSurvivalComponent::Revive(float HealthFraction, float MinNeedFraction)
 	Stamina = FMath::Max(Stamina, MaxStamina * FMath::Clamp(MinNeedFraction, 0.f, 1.f));
 	BodyTemperatureCelsius = NormalBody;
 	PendingSmallDamage = 0.f;
+	CureFoodSickness();
 	NotifyStatsChanged();
 }
 
@@ -151,6 +152,40 @@ void UEWSurvivalComponent::SetHunger(float NewHunger)
 		Hunger = FMath::Clamp(NewHunger, 0.0f, 100.0f);
 		NotifyStatsChanged();
 	}
+}
+
+void UEWSurvivalComponent::UpdateNeeds(bool bIsSprinting, float DeltaSeconds)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f || IsDead()) return;
+	const float Hungry = 100.f / HungerEmptySeconds * DeltaSeconds * (bIsSprinting ? SprintNeedFactor : 1.f) * (IsFreezing() ? ColdHungerFactor : 1.f);
+	const float Thirsty = 100.f / ThirstEmptySeconds * DeltaSeconds * (bIsSprinting ? SprintNeedFactor : 1.f)
+		* (IsOverheating() ? HotThirstFactor : 1.f) * (IsFoodSick() ? SickThirstFactor : 1.f);
+	Hunger = FMath::Max(0.f, Hunger - Hungry);
+	Hydration = FMath::Max(0.f, Hydration - Thirsty);
+	if (Hunger <= KINDA_SMALL_NUMBER) ApplyDamage(StarvationDamage * DeltaSeconds);
+	if (Hydration <= KINDA_SMALL_NUMBER) ApplyDamage(DehydrationDamage * DeltaSeconds);
+	if (FoodSicknessLeft > 0.f)
+	{
+		FoodSicknessLeft = FMath::Max(0.f, FoodSicknessLeft - DeltaSeconds);
+		if (FoodSicknessLeft <= 0.f) ClearDebuffNotice(TEXT("FoodSickness"));
+	}
+	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::ContractFoodSickness(float Seconds)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(Seconds) || Seconds <= 0.f || IsDead()) return;
+	FoodSicknessLeft = FMath::Max(FoodSicknessLeft, Seconds);
+	SetDebuffNotice(TEXT("FoodSickness"), NSLOCTEXT("Elitewake", "FoodSickness", "Food sickness: slower stamina, quicker thirst"), FoodSicknessLeft);
+	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::CureFoodSickness()
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || FoodSicknessLeft <= 0.f) return;
+	FoodSicknessLeft = 0.f;
+	ClearDebuffNotice(TEXT("FoodSickness"));
+	NotifyStatsChanged();
 }
 
 void UEWSurvivalComponent::SetHydration(float NewHydration)

@@ -477,6 +477,7 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	if (HasAuthority() && SurvivalComponent)
 	{
 		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
+		SurvivalComponent->UpdateNeeds(bIsSprinting, DeltaSeconds);
 		// The climate where the survivor stands, twice a second.
 		ClimateClock += DeltaSeconds;
 		if (ClimateClock >= .5f)

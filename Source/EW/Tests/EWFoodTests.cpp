@@ -103,4 +103,51 @@ bool FEWFoodTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("No freshness bar for expired original definition"), Inventory->GetFoodFreshness(Berry), -1.f);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWNeedsTest, "Elitewake.Survival.HungerThirstAndFoodSickness",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FEWNeedsTest::RunTest(const FString& Parameters)
+{
+    AActor* Owner = NewObject<AActor>();
+    auto* Inventory = NewObject<UEWInventoryComponent>(Owner);
+    auto* Survival = NewObject<UEWSurvivalComponent>(Owner);
+    Owner->AddInstanceComponent(Inventory); Owner->AddInstanceComponent(Survival);
+    Owner->SetRole(ROLE_Authority);
+    Survival->UpdateNeeds(false, 60.f);
+    TestTrue(TEXT("Hunger empties in 45 minutes"), FMath::IsNearlyEqual(100.f - Survival->GetHunger(), 100.f / 2700.f * 60.f, .01f));
+    TestTrue(TEXT("Thirst empties in 25 minutes"), FMath::IsNearlyEqual(100.f - Survival->GetHydration(), 100.f / 1500.f * 60.f, .01f));
+    Survival->SetHunger(0.f);
+    const float Before = Survival->GetHealth();
+    Survival->UpdateNeeds(false, 10.f);
+    TestTrue(TEXT("Zero hunger costs health gradually"), Survival->GetHealth() < Before && Survival->GetHealth() > Before - 5.f);
+    Survival->SetHunger(100.f); Survival->SetHydration(100.f);
+    Survival->ContractFoodSickness();
+    TestTrue(TEXT("Sickness lasts three minutes"), FMath::IsNearlyEqual(Survival->GetFoodSicknessLeft(), 180.f));
+    Survival->UpdateNeeds(false, 60.f);
+    TestTrue(TEXT("Sickness quickens thirst by half"), FMath::IsNearlyEqual(100.f - Survival->GetHydration(), 100.f / 1500.f * 60.f * 1.5f, .01f));
+    Survival->UpdateNeeds(false, 130.f);
+    TestFalse(TEXT("Sickness ends by itself"), Survival->IsFoodSick());
+    auto* Meat = NewObject<UEWItemDefinition>();
+    Meat->ItemId = TEXT("Test.RawMeat"); Meat->Category = EEWItemCategory::Consumable; Meat->FoodKind = EEWFoodKind::RawMeat;
+    Meat->MaxStackSize = 50; Meat->UnitWeight = .4f; Meat->bFoodConsumptionEnabled = true;
+    Meat->HungerRestoreFraction = .12f; Meat->HealthRestoreFraction = -.03f; Meat->SicknessChance = 1.f;
+    Survival->SetHunger(20.f);
+    const float HealthBeforeMeat = Survival->GetHealth();
+    Inventory->AddItem(Meat, 1);
+    TestEqual(TEXT("Raw meat is eaten"), Inventory->ConsumeFood(Meat), EEWFoodUseResult::Success);
+    TestTrue(TEXT("Raw meat restores 12 hunger"), FMath::IsNearlyEqual(Survival->GetHunger(), 32.f, .01f));
+    TestTrue(TEXT("Raw meat costs 3 health"), FMath::IsNearlyEqual(Survival->GetHealth(), HealthBeforeMeat - 3.f, .01f));
+    TestTrue(TEXT("A certain sickness chance sickens"), Survival->IsFoodSick());
+    auto* Herb = NewObject<UEWItemDefinition>();
+    Herb->ItemId = TEXT("Test.Herb"); Herb->Category = EEWItemCategory::Consumable; Herb->FoodKind = EEWFoodKind::Remedy;
+    Herb->MaxStackSize = 50; Herb->UnitWeight = .05f; Herb->bFoodConsumptionEnabled = true; Herb->bCuresFoodSickness = true;
+    Inventory->AddItem(Herb, 1);
+    TestEqual(TEXT("A herb is eaten while sick"), Inventory->ConsumeFood(Herb), EEWFoodUseResult::Success);
+    TestFalse(TEXT("The herb cures the sickness"), Survival->IsFoodSick());
+    Inventory->AddItem(Herb, 1);
+    TestEqual(TEXT("A herb does nothing when well"), Inventory->ConsumeFood(Herb), EEWFoodUseResult::NoBenefit);
+    return true;
+}
+
 #endif
