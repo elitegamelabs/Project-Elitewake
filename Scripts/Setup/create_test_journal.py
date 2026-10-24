@@ -88,7 +88,7 @@ Paddling ignores the wind, but a raft is slow: about 2.5 metres a second at a ha
 - The hold: hold E at the cargo hatch to open it beside your inventory, then click a stack to move it across. Anyone aboard can use it.
 - Load: everything in the hold plus the fitted sails and wheel is the ship's load. Past half its capacity she slows, and an overloaded ship is swamped after 60 seconds until you lighten her.'''),
     ('The coast', 'Gathering', '''- Fiber plants, piles of fallen sticks and berry bushes: look at one and press E to gather all of it.
-- Palms: equip the wooden axe (open your inventory with I, select it and choose Equip, or put it on the hotbar and press its number). Aim at the trunk and press Left Mouse (RT): Wood and Thatch.
+- Trees: in this test build, equip the wooden axe (open your inventory with I, select it and choose Equip, or put it on the hotbar and press its number). Aim at the trunk and press Left Mouse (RT): Wood and Thatch. The approved design allows bare-hand tree harvesting, but that is not implemented in this build.
 - Boulders: equip the wooden pickaxe the same way and strike a boulder with Left Mouse: Stone.
 - The tool you equip is in your hand, and Left Mouse chops with it. The torch lights your way at night.
 
@@ -101,7 +101,7 @@ Nothing grows back yet, so share the island.'''),
 
 The sea gets deep a short way past the sand, beyond a sharp edge where the water turns dark blue.'''),
     ('The coast', 'Water and food', '''- Fresh water: the spring is a pool inland, north-west of where you start. Look at it and press E while thirsty.
-- Berries: eat them from your inventory. Fresh berries go bad after a while and then make you sick.
+- Berries: eat them from your inventory while fresh. They stay fresh for 20 real minutes, then become an inedible toxic crafting resource.
 - Watch the bars in the corner: health, stamina, hunger, thirst and the weight you carry.'''),
     ('The coast', 'Fighting', '''Left Mouse (RT) swings once a second. A swing that reaches another survivor or a sea creature within arm's length deals 10 damage, and they flinch.
 

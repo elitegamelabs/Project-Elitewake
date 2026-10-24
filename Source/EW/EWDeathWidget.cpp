@@ -59,9 +59,9 @@ TSharedRef<SWidget> UEWDeathWidget::RebuildWidget()
             auto* Slot = Message->AddChildToVerticalBox(Label); Slot->SetPadding(FMargin(0.f, 0.f, 0.f, 12.f)); Slot->SetHorizontalAlignment(HAlign_Center); return Label;
         };
         Text(NSLOCTEXT("Elitewake", "YouDied", "YOU HAVE DIED"), 44, FLinearColor(.88f, .95f, 1.f));
-        Text(NSLOCTEXT("Elitewake", "DeathBagNote", "What you carried waits in a bag where you fell for 30 minutes."), 18, FLinearColor(.72f, .8f, .86f));
+        Text(NSLOCTEXT("Elitewake", "DeathBagNote", "Your belongings wait in a bag where you fell for 30 real minutes."), 18, FLinearColor(.72f, .8f, .86f));
         RespawnButton = WidgetTree->ConstructWidget<UButton>(); RespawnButton->SetBackgroundColor(FLinearColor(.08f, .26f, .34f, .95f));
-        RespawnLabel = WidgetTree->ConstructWidget<UTextBlock>(); RespawnLabel->SetText(NSLOCTEXT("Elitewake", "Respawn", "Respawn  (Enter / A)"));
+        RespawnLabel = WidgetTree->ConstructWidget<UTextBlock>(); RespawnLabel->SetText(NSLOCTEXT("Elitewake", "Respawn", "Respawn  (Click / Enter / A)"));
         { auto Font = RespawnLabel->GetFont(); Font.Size = 24; RespawnLabel->SetFont(Font); }
         RespawnButton->SetContent(RespawnLabel);
         RespawnButton->OnClicked.AddDynamic(this, &UEWDeathWidget::OnRespawnClicked);
