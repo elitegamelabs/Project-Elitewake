@@ -71,3 +71,7 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 - Hunger/thirst depletion broke exact-reading checks. Added console variable `ew.NeedsDepletion` (default 1); `run_play_check.py` sets it to 0, `verify_needs_play` turns it on. Game behaviour unchanged.
 - Hotbar slot picker (controller): Y when the item is already on the bar or the bar is full; d-pad moves, A assigns/removes, B cancels. New check `verify_hotbar_picker_play` passes. World-edge size now saved/restored (`GrowToCover`), coded and builds; no dedicated test yet.
 - Build succeeds; 36 native tests pass; the previously failing 7 checks plus needs, picker, hotbar, inventory-selection checks all pass (full sweep otherwise 95 pass).
+
+## Oct 24 (night)
+- C2 done: `verify_animals_stay_home_play` passes (1,801 samples, 140 animals, 37 stops: always above the sea, never past the roam radius).
+- Owner request (testing phase only): Shift + 1 to 5 teleport to Plains, Jungle, Desert, Swamp, Winter (`ServerDebugTeleportToRegion`, compiled out of shipping builds). `verify_region_teleport_play` passes. Note: the Jungle and Winter spots land on high ground (z 17,000 and 33,700 cm) because the island centres are on peaks.

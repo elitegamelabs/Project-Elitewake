@@ -103,6 +103,9 @@ public:
     /** The dead survivor chooses to respawn (owner, October 22): the server drops their bag where they fell and brings them back at a safe place away from it. */
     void RequestRespawn() { ServerRequestRespawn(); }
     UFUNCTION(Server, Reliable) void ServerRequestRespawn();
+    /** Testing only (owner, October 24): Shift + 1 to 5 carries the survivor to Plains, Jungle, Desert, Swamp or Winter. Does nothing in a shipping build. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToRegion(int32 RegionIndex) { ServerDebugTeleportToRegion(RegionIndex); }
+    UFUNCTION(Server, Reliable) void ServerDebugTeleportToRegion(int32 RegionIndex);
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
     UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);

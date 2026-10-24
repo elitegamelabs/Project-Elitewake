@@ -2,6 +2,8 @@
 
 
 #include "EWPlayerController.h"
+#include "WaterBodyActor.h"
+#include "EngineUtils.h"
 #include "Ships/EWWreckCrate.h"
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
@@ -422,6 +424,14 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
+#if !UE_BUILD_SHIPPING
+    // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24). Compiled out of shipping builds.
+    if (Params.Event==IE_Pressed && (IsInputKeyDown(EKeys::LeftShift) || IsInputKeyDown(EKeys::RightShift)))
+    {
+        static const FKey RegionKeys[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five};
+        for (int32 i=0; i<5; ++i) if (Params.Key==RegionKeys[i]) { ServerDebugTeleportToRegion(i); return true; }
+    }
+#endif
     if (bMapOpen)
     {
         // The map owns right-stick panning and trigger zoom while open, so those inputs
@@ -551,6 +561,39 @@ void AEWPlayerController::ServerSpendStatPoint_Implementation(EEWStat Stat)
 void AEWPlayerController::ServerRequestRespawn_Implementation()
 {
     if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->RespawnAfterDeath();
+}
+
+void AEWPlayerController::ServerDebugTeleportToRegion_Implementation(int32 RegionIndex)
+{
+#if !UE_BUILD_SHIPPING
+    // Island centres from Scripts/Setup/world_layout.py (cm): Starter (Plains), Jungle1, Desert1, Swamp1, Winter1.
+    static const FVector2D Centres[] = {FVector2D(-800.f, -100.f), FVector2D(-380000.f, 20000.f), FVector2D(280000.f, -30000.f), FVector2D(-30000.f, -270000.f), FVector2D(-60000.f, 280000.f)};
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || Survivor->IsDead() || RegionIndex < 0 || RegionIndex >= 5 || !GetWorld()) return;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWDebugTeleport), false, Survivor);
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
+    // Dry ground nearest the island's centre: the centre itself, then rings round it (a swamp's middle can lie under water).
+    static const float Radii[] = {0.f, 4000.f, 9000.f, 16000.f, 25000.f, 36000.f, 50000.f};
+    const FVector2D Centre = Centres[RegionIndex];
+    FVector Spot(Centre.X, Centre.Y, 500.f);
+    bool bFound = false;
+    for (const float Radius : Radii)
+    {
+        for (int32 Step = 0; Step < (Radius <= 0.f ? 1 : 12) && !bFound; ++Step)
+        {
+            const float Angle = Step * (PI / 6.f);
+            const FVector From(Centre.X + FMath::Cos(Angle) * Radius, Centre.Y + FMath::Sin(Angle) * Radius, 100000.f);
+            FHitResult Hit;
+            if (GetWorld()->LineTraceSingleByObjectType(Hit, From, From - FVector(0.f, 0.f, 300000.f), FCollisionObjectQueryParams(ECC_WorldStatic), Query) && Hit.ImpactPoint.Z > -40.f)
+            {
+                Spot = FVector(From.X, From.Y, Hit.ImpactPoint.Z + 120.f);
+                bFound = true;
+            }
+        }
+        if (bFound) break;
+    }
+    Survivor->TeleportTo(Spot, Survivor->GetActorRotation(), false, true);
+#endif
 }
 
 void AEWPlayerController::ServerCraft_Implementation(UEWCraftingRecipe* Recipe)
