@@ -66,10 +66,10 @@ for world in worlds:
         for side in (-1, 1):
             checks.append(sealed_window(world, schooner, f'{role} Schooner side {x:g} {side:+d}',
                                         (x, side * 300.0, 377.5), (x, 0.0, 377.5), (x, side * y_out, 377.5)))
-    # Schooner aft-quarterdeck bulkhead lights, facing the main deck at x=-825.
+    # Schooner aft-quarterdeck bulkhead lights, facing the main deck at x=-775 (the schooner's rebuilt bulkhead, set by rebuild_sealed_ship_windows.py).
     for y in (-130.0, 130.0):
         checks.append(sealed_window(world, schooner, f'{role} Schooner quarterdeck front {y:+g}',
-                                    (-750.0, y, 377.5), (-890.0, y, 377.5), (-821.0, y, 377.5)))
+                                    (-750.0, y, 377.5), (-890.0, y, 377.5), (-775.0, y, 377.5)))
 
     # Brigantine captain's quarters (October 20 rebuild: no forecastle): side panes at the builder's CABIN_WINDOWS
     # (z 400..450); front panes at deck+95..140 in the wall at QUARTERDECK's front edge.

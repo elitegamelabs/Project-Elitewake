@@ -19,6 +19,8 @@ def run_inventory_selection_verification():
     inventory=server_pawn.get_inventory_component()
     item=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
     assert item
+    for e in list(server_pawn.get_equipment_component().get_equipment_entries()): server_pawn.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(inventory.get_inventory_entries()): inventory.remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))      # the starter kit arrives with every survivor
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
     old_throttle=settings.get_editor_property('bThrottleCPUWhenNotForeground')
     settings.set_editor_property('bThrottleCPUWhenNotForeground',False)

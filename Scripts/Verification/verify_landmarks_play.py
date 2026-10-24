@@ -19,6 +19,7 @@ from pathlib import Path
 import unreal
 
 sys.path.insert(0, str(Path(unreal.Paths.project_dir(), 'Scripts', 'Setup')))
+import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from world_landmarks import LANDMARKS  # noqa: E402
 

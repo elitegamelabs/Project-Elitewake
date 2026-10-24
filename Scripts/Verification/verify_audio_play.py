@@ -348,8 +348,8 @@ def surf_heard(key, inland_cm, low, high):
             return False   # sampled twice a second, faded over 2.5 s
         level, reach = scape.get_surf_level(), scape.get_shore_distance()
         measured[f'surf_{key}_{inland_cm}'] = dict(level=round(level, 2), shore_cm=round(reach), region=str(scape.get_heard_region()))
-        if high <= .01 and reach < 2100: high = .25      # a bay or cove on the five-island world's irregular coasts brings the water within 22 m of the walker: still soft, not silent
-        assert low <= level <= high, f'the surf at {inland_cm} cm in on {key} is {level:.2f} (shore {reach:.0f} cm), not {low}-{high}'
+        limit = .25 if (high <= .01 and reach < 2100) else high      # a bay or cove on the five-island world's irregular coasts brings the water within 22 m of the walker: still soft, not silent
+        assert low <= level <= limit, f'the surf at {inland_cm} cm in on {key} is {level:.2f} (shore {reach:.0f} cm), not {low}-{high}'
         return True
     return done
 

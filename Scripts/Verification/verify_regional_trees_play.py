@@ -100,7 +100,7 @@ def grounded():
 
 def stand_of(region):
     """A place among the most trees of that region's primary kind: the centre of a dense patch on its biggest island."""
-    isl = max((i for i in W.ISLANDS if i.region == region and i.key != 'Starter'), key=lambda i: i.rx * i.ry)
+    isl = max((i for i in W.ISLANDS if i.region == region and (i.key != 'Starter' or W.FIVE_ISLAND_WORLD)), key=lambda i: i.rx * i.ry)
     mine = [t.get_actor_location() for t in trees if kind(t) == PRIMARY[region] and island_of(t) is isl]
     best = max(mine, key=lambda p: sum(1 for q in mine if (q - p).length() < 2500))
     return best
