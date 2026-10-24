@@ -46,10 +46,10 @@ def six():
         assert len(seen) == len(mine), f'the client has {len(seen)} of {reef.key}\'s {len(mine)} corals'
         kinds = {a.get_actor_label().split(': ')[1].split(' ')[0] for a in mine}
         assert kinds == {'branching', 'mound', 'fan', 'pillar'}, (reef.key, kinds)
-        assert reef.island.key != 'Starter' and not W.port_on(reef.island), reef.key
+        assert W.FIVE_ISLAND_WORLD or (reef.island.key != 'Starter' and not W.port_on(reef.island)), reef.key     # the five-island world's islands all have Ports
         regions[reef.island.region] = regions.get(reef.island.region, 0) + 1
         state['memo'][f'{reef.key}_corals'] = len(mine)
-    assert regions == {'Plains': 2, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}, regions
+    assert regions == {'Plains': 1 if W.FIVE_ISLAND_WORLD else 2, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}, regions
     return True
 
 

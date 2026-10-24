@@ -107,7 +107,8 @@ RECIPES = {'Plains': dict(trees={'Oak': 0.8}, groups=True, plants=(0.45, 0.3, 0.
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
            'Jungle': dict(trees={'Ash': 4.0, 'Maravai': 0.5}, groups=False, plants=(0.5, 0.4, 0.25)),
            'Swamp': dict(trees={'Spruce': 2.2}, groups=True, plants=(0.7, 0.3, 0.15))}
-MAX_TREES = 500        # per island (the bigger islands of October 15 night; tuning)
+MAX_TREES = 800        # per island and kind (the five-island world's islands are about 2 km across; tuning)
+MAX_BY_KIND = {'Maravai': 120}      # the jungle's secondary tree stays a minority beside its Ash
 MAX_PLANTS = 220       # of each kind per island
 PALM_SCALE = (.7, 1.35)
 MARAVAI_SCALE = (.75, 1.25)
@@ -739,7 +740,7 @@ def dress_islands(actors, ground, kinds, wood, thatch):
         reach = island.reach()
         here = []
         for kind, density in recipe['trees'].items():
-            wanted = min(MAX_TREES, int(round(density * area)))
+            wanted = min(MAX_BY_KIND.get(kind, MAX_TREES), int(round(density * area)))
             meshes, scales, radius, half, sink = kinds[kind]
             spacing = {'Spruce': 450.0, 'Ash': 500.0, 'Oak': 800.0}.get(kind, 650.0)
             centres = [(island.cx + rng.uniform(-reach, reach) * .7, island.cy + rng.uniform(-reach, reach) * .7) for _ in range(max(1, wanted // 5))]

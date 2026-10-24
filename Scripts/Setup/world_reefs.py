@@ -14,7 +14,7 @@ import world_layout as W
 import world_terrain as T
 from world_landmarks import near_landmark
 
-PER_REGION = {'Plains': 2, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
+PER_REGION = {'Plains': 1 if W.FIVE_ISLAND_WORLD else 2, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
 CORALS = 70                       # per reef (tuning)
 KINDS = ('branching', 'mound', 'fan', 'pillar')
 OUT = (1700.0, 3000.0)            # cm beyond the shore
@@ -66,7 +66,8 @@ def _reefs():
     rng = random.Random(6006)
     found = []
     for region, count in PER_REGION.items():
-        options = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter' and not W.port_on(i)]
+        # The five-island world has one island, with its Port, in each region: the reef lies off a shore clear of the Port.
+        options = [i for i in W.ISLANDS if i.region == region] if W.FIVE_ISLAND_WORLD else [i for i in W.ISLANDS if i.region == region and i.key != 'Starter' and not W.port_on(i)]
         rng.shuffle(options)
         for island in options:
             if sum(1 for r in found if r.island.region == region) >= count:

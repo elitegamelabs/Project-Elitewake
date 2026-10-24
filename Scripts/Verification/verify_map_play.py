@@ -58,7 +58,7 @@ def tick(delta):
             hint = str(ui.get_map_hint_text())
             assert 'Walking remains available' not in hint and 'World continues' not in hint, hint
             regions = unreal.GameplayStatics.get_all_actors_of_class(cw, unreal.EWClimateRegion)
-            assert len(regions) >= 25, f'world map only knows {len(regions)} island-region actors'
+            assert len(regions) >= 5, f'world map only knows {len(regions)} island-region actors'
             xs = [r.get_actor_location().x for r in regions]
             ys = [r.get_actor_location().y for r in regions]
             rx = [r.get_editor_property('radii').x for r in regions]
