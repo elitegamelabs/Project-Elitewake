@@ -146,7 +146,8 @@ public:
     virtual bool InputKey(const FInputKeyEventArgs& Params) override;
     virtual void FlushPressedKeys() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    static int32 HotbarSlotForKey(const FKey& Key, bool bControllerModifier);
+    /** Slot for a key: 1-8 on the keyboard; d-pad = slots 1-4 on a controller; hold LB + a face button, or hold LT + the d-pad (owner, October 22: all eight within reach of one thumb), for 5-8. */
+    static int32 HotbarSlotForKey(const FKey& Key, bool bControllerModifier, bool bTriggerModifier = false);
     void SetHotbarModifierHeld(bool bHeld) { bHotbarModifierHeld = bHeld; }
     bool IsHotbarModifierHeld() const { return bHotbarModifierHeld; }
     UFUNCTION(BlueprintCallable, Category="Hotbar")
@@ -240,6 +241,7 @@ protected:
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;
+    bool bHotbarTriggerHeld = false;
     TSet<FKey> SuppressedHotbarKeys;
     UPROPERTY(EditAnywhere, Category="Input|Interaction")
     TObjectPtr<UInputAction> InteractAction;

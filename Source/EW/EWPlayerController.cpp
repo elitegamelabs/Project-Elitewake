@@ -397,8 +397,13 @@ void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bB
     InteractionComponent->SetMenuBlocked(bBlocked || IsMapOpen() || IsSessionMenuOpen());
 }
 
-int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
+int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier, bool bTriggerModifier)
 {
+    if (bTriggerModifier)
+    {
+        static const FKey Pad[] = {EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Right, EKeys::Gamepad_DPad_Down};
+        for (int32 i = 0; i < 4; ++i) if (Key == Pad[i]) return 4 + i;
+    }
     static const FKey Numbers[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight};
     static const FKey ControllerKeys[] = {EKeys::Gamepad_DPad_Left,EKeys::Gamepad_DPad_Up,
         EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,
@@ -466,9 +471,16 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         if (Params.Event==IE_Released) bHotbarModifierHeld=false;
         return true;
     }
+    // The left trigger held turns the d-pad into slots 5 to 8 (the menu uses the same trigger to go back a section, so only in the world).
+    if (Params.Key==EKeys::Gamepad_LeftTrigger && (!InventoryWidget || !InventoryWidget->IsInViewport()) && !bMapOpen)
+    {
+        if (Params.Event==IE_Pressed) bHotbarTriggerHeld=true;
+        if (Params.Event==IE_Released) bHotbarTriggerHeld=false;
+        return true;
+    }
     if (!InventoryWidget || !InventoryWidget->IsInViewport())
     {
-        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld);
+        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld,bHotbarTriggerHeld);
         const AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
         const bool bClimbDirection = Survivor && Survivor->IsOnLadder()
             && (Params.Key == EKeys::Gamepad_DPad_Up || Params.Key == EKeys::Gamepad_DPad_Down);
@@ -488,7 +500,7 @@ void AEWPlayerController::FlushPressedKeys()
 {
     ReleaseInteraction();
     // The engine also flushes on viewport focus loss; custom chord state must follow it.
-    bHotbarModifierHeld=false;
+    bHotbarModifierHeld=false; bHotbarTriggerHeld=false;
     SuppressedHotbarKeys.Reset();
     Super::FlushPressedKeys();
 }

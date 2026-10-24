@@ -21,7 +21,12 @@ def run_hotbar_verification():
     stone=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestStone')
     torch=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestInnTorch')
     assert torch, 'Y quick-assign needs the existing hand-tool fixture'
-    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'Use fresh PIE'
+    # The starter kit now arrives with every survivor: empty the pack and the body first (this check counts every item).
+    for e in list(authority.get_equipment_component().get_equipment_entries()):
+        authority.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(inv.get_inventory_entries()):
+        inv.remove_item(e.get_editor_property('item_definition'), e.get_editor_property('quantity'))
+    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'could not empty the starter kit'
     assert all(hotbar.get_bound_item(i) is None for i in range(8))
     if other:assert other.get_inventory_component().add_item(alternate,1)==1
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
