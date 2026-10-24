@@ -61,22 +61,24 @@ def check(label,total,remaining):
     report['checkpoints'].append({'label':label,'inventory_by_world':rows,'remaining':stack.get_editor_property('quantity') if unreal.SystemLibrary.is_valid(stack) else 0})
     assert all(sum(r.values())==total for r in rows), label+': wrong inventory total'
     assert all(r==rows[0] for r in rows), label+': inventory replication differs'
-    pickups = [unreal.GameplayStatics.get_all_actors_of_class(w,pickup_cls) for w in worlds]
+    pickups = [[a for a in unreal.GameplayStatics.get_all_actors_of_class(w,pickup_cls) if a.get_editor_property('item_definition')==item] for w in worlds]
+    report['checkpoints'][-1]['pickup_sums']=[[(a.get_name(),a.get_editor_property('quantity'),str(a.get_actor_location())) for a in ps] for ps in pickups]
     assert all(sum(p.get_editor_property('quantity') for p in ps)==remaining for ps in pickups),label+': world remainder replication differs'
 def fill():
     for p in server_pawns.values(): inv(p).add_item(item,5997)
 def free_capacity():
     for p in server_pawns.values(): inv(p).remove_item(item,10)
 def empty():
-    for p in server_pawns.values(): inv(p).remove_item(item,100000)
+    for p in server_pawns.values():
+        for e in list(inv(p).get_inventory_entries()): inv(p).remove_item(e.get_editor_property('item_definition'),100000)      # the starter kit would take slots from the capacity maths
 n=len(ids)
-steps=[(lambda:spawn(10,450),1),(press,.2),(release,1.5),(lambda:check('out of range',0,10),.1),
-       (lambda:spawn(10),1),(press,.2),(release,1.5),(lambda:check('competing pickup conserved',10,0),.1),
-       (empty,.5),(fill,1),(lambda:spawn(10),1),(press,.2),(release,1.5),
-       (lambda:check('partial capacity',6000*n,10-3*n),.1),
-       (press,.2),(release,1.5),(lambda:check('full inventory preserves remainder',6000*n,10-3*n),.1),
-       (free_capacity,1),(press,.2),(release,1.5),
-       (lambda:check('remainder collected once',6000*n-10*n+10-3*n,0),.1)]
+steps=[(lambda:spawn(10,450),8),(press,.2),(release,4),(lambda:check('out of range',0,10),4),
+       (lambda:spawn(10),6),(press,.2),(release,4),(lambda:check('competing pickup conserved',10,0),4),
+       (empty,.5),(fill,1),(lambda:spawn(10),6),(press,.2),(release,4),
+       (lambda:check('partial capacity',6000*n,10-3*n),4),
+       (press,.2),(release,4),(lambda:check('full inventory preserves remainder',6000*n,10-3*n),4),
+       (free_capacity,1),(press,.2),(release,4),
+       (lambda:check('remainder collected once',6000*n-10*n+10-3*n,0),4)]
 index=0
 next_time=unreal.GameplayStatics.get_time_seconds(server)+1
 handle=None
