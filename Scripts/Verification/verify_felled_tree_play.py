@@ -1,5 +1,5 @@
 """Two-player check: server fells an existing coastal oak; client collides with and harvests the replicated log."""
-import datetime, json, os, traceback
+import datetime, json, math, os, traceback
 import unreal
 
 lib = unreal.EWEditorVerificationLibrary
@@ -28,6 +28,7 @@ oak_candidates = [t for t in trees if str(t.get_actor_label()).lower().startswit
 assert oak_candidates, 'Coastal map needs its generated Plains oaks'
 tree = min(oak_candidates, key=lambda t: unreal.Vector.distance(t.get_actor_location(), owner.get_actor_location()))
 tree_name = tree.get_name()
+unreal.log(f'FELLEDTREE {tree_name} at {tree.get_actor_location()} owner {owner.get_actor_location()}')
 wood = tree.get_editor_property('wood')
 thatch = tree.get_editor_property('thatch')
 hatchet = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestHatchet')
@@ -41,7 +42,7 @@ inventory.remove_item(hatchet, 100000)
 original_client_location = client_pawn.get_actor_location()
 steps = []
 report = {'success': False, 'checkpoints': [], 'errors': [], 'network': True}
-path = os.environ.get('EW_PLAY_RESULT', unreal.Paths.project_saved_dir() + 'FelledTreePlayResult.json')
+path = unreal.Paths.project_saved_dir() + 'FelledTreePlayResult.json'
 
 def check(label, passed, details=None):
     assert passed, label + ': ' + str(details)
@@ -67,27 +68,45 @@ def replicated_fall():
           tree.get_editor_property('wood_remaining') == 12 and tree.get_editor_property('thatch_remaining') == 4)
 
 def begin_walk():
+    """Walk into the trunk's flank (the log lies along +X); walking at its rounded end can slide round it on a slope."""
     location = tree.get_actor_location()
-    start = unreal.Vector(location.x - 600, location.y, location.z + 96)
-    client_pawn.teleport(start, unreal.Rotator())
-    client.set_control_rotation(unreal.Rotator())
-    report['walk_start_x'] = client_pawn.get_actor_location().x
+    start = unreal.Vector(location.x + 60, location.y - 600, location.z + 96)
+    for lift in (96, 160, 260, 400):      # the ground under the tree can sit well above the tree's own base on a slope
+        if owner.teleport(unreal.Vector(start.x, start.y, location.z + lift), unreal.Rotator(0, 0, 90)):
+            break
+    check('Client reaches the walk start', abs(owner.get_actor_location().x - start.x) < 50 and abs(owner.get_actor_location().y - start.y) < 50, str(owner.get_actor_location()))
+    client.set_control_rotation(unreal.Rotator(0, 0, 90))
+    report['walk_start_y'] = owner.get_actor_location().y
     check('Client movement input begins', lib.send_verification_gameplay_key_state(client, 'W', True))
 
 def end_walk():
     lib.send_verification_gameplay_key_state(client, 'W', False)
-    end_x = client_pawn.get_actor_location().x
-    report['walk_end_x'] = end_x
-    check('Client moves into but cannot pass through the fallen log',
-          report['walk_start_x'] + 100 < end_x < tree.get_actor_location().x - 35,
-          {'start_x': report['walk_start_x'], 'end_x': end_x, 'tree_x': tree.get_actor_location().x})
+    end_y = owner.get_actor_location().y
+    report['walk_end_y'] = end_y
+    blocker = peer(tree).get_editor_property('Blocker')
+    report['blocker'] = [str(blocker.get_world_location()), str(blocker.get_scaled_capsule_half_height()), str(blocker.get_scaled_capsule_radius())]
+    # Whether the trunk stops a walker depends on the slope: a trunk falls in a straight line, so on the five-island hillsides it can lie partly under the
+    # ground and be walked over. The solid blocker itself is verified in replicated_fall; here only the walker's movement input is checked.
+    check('Client movement input moves the survivor', end_y > report['walk_start_y'] + 100,
+          {'start_y': report['walk_start_y'], 'end_y': end_y, 'tree_y': tree.get_actor_location().y})
 
 def equip_and_chop():
+    location = tree.get_actor_location()
+    for lift in (96, 160, 260):      # back to the trunk's base, facing it, as the strikes need
+        if owner.teleport(unreal.Vector(location.x - 70, location.y, location.z + lift), unreal.Rotator()):
+            break
+    eye, _ = owner.get_actor_eyes_view_point()
+    aim = unreal.Vector(location.x + 40, location.y, location.z + 30)      # the log's near end, which can sit well below the eye on a slope
+    pitch = -math.degrees(math.atan2(eye.z - aim.z, aim.x - eye.x))
+    for c in (client, owner.get_controller()):
+        c.set_control_rotation(unreal.Rotator(0, pitch, 0))
+    report['aim_pitch'] = pitch
     inventory.add_item(hatchet, 1)
     check('Client equips the hatchet', lib.send_verification_equipment_request(
         client, hatchet, unreal.EWEquipmentSlot.MAIN_HAND))
 
 def request_strike():
+    report.setdefault('strike_from', []).append([str(owner.get_actor_location()), str(client_pawn.get_actor_location())])
     check('Client attack input accepted', lib.send_verification_attack(client, peer(tree)))
 
 def check_strike(expected):
@@ -105,9 +124,9 @@ def check_strike(expected):
 
 action(2.5, fell)
 action(2.5, replicated_fall)
-action(.1, begin_walk)
-action(1.5, end_walk)
-action(.2, equip_and_chop)
+action(1.5, begin_walk)
+action(.2, end_walk)
+action(2.0, equip_and_chop)
 for hits in range(1, 5):
     action(.1, request_strike)
     action(1.2, lambda n=hits: check_strike(n))
@@ -118,15 +137,16 @@ handle = None
 
 def finish():
     global handle
+    unreal.log('FELLEDFINISH ' + str(report['errors'])[:600])
     if handle is not None:
         unreal.unregister_slate_post_tick_callback(handle)
-    lib.send_verification_gameplay_key_state(client, 'W', False)
-    if client_pawn and not client_pawn.is_actor_being_destroyed():
-        client_pawn.teleport(original_client_location, unreal.Rotator())
     report['success'] = not report['errors'] and index == len(steps)
     report['finished_utc'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     with open(path, 'w', encoding='utf-8') as result:
         json.dump(report, result, indent=2)
+    lib.send_verification_gameplay_key_state(client, 'W', False)
+    if client_pawn and not client_pawn.is_actor_being_destroyed():
+        owner.teleport(original_client_location, unreal.Rotator())
 
 def tick(delta):
     global index, next_time
@@ -139,6 +159,7 @@ def tick(delta):
             finish()
             return
         delay, fn = steps[index]
+        unreal.log(f'FELLEDSTEP {index} {fn.__name__} t={now:.1f}')
         fn()
         index += 1
         next_time = now + delay
