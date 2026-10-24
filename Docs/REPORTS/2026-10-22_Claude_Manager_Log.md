@@ -48,9 +48,9 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 - The compass in-game puts N at heading 0 (+X) but the regions put Winter (north) at +Y: a pre-existing contradiction the owner should settle; the map shows no N label for that reason.
 
 ## Update (October 24): Play-check sweep on the five-island world
-- Full sweep of every `verify_*_play` check on branch `claude/five-islands-20261022` (commit `5361cc1`): 101 checks run, 99 pass after repairs; native tests 35/35 (`Elitewake.*`, headless).
+- Full sweep of every `verify_*_play` check on branch `claude/five-islands-20261022` (commit `5361cc1`): 101 checks run, all pass after repairs; native tests 35/35 (`Elitewake.*`, headless).
 - Repaired (stale checks, not game faults): starter kit occupied slots/hotbar in pickup, inn torch, objective rewards, prologue repair recipe; interaction check closed the menu with Y (Y quick-assigns now; B closes); schooner front window panes no longer exist since the Oct 18 rework; felled-tree check wrote its result to the wrong folder (looked like a hang), now aims down at the log and walks into its flank; animals check starts the survivor among animals; pickup and stance checks look again when the client lags.
 - Plains grass rebuilt thicker (density 7.0). The grass check now samples about 60,000 clumps instead of reading every instance (it stalled the editor for six minutes).
-- Known open: `verify_leaks_play` step 4 ("three strokes bail 75 kg") measures 55 to 58 kg on the slower frames of the thick-grass island; it passed before the grass rebuild. Cause not found; likely frame-rate sensitive but unproven.
+- `verify_leaks_play` step 4 was a check error, now fixed: as the ship fills she settles, holes that rode above the sea go under and the leak count rises from 8 to 9 mid-step; the check now adds up the inflow frame by frame (three passes in a row). All 101 Play checks pass.
 - Known limitation: a felled trunk falls in a straight line, so on the five-island hillsides it can lie partly under the ground and be walked over. The solid blocker is verified, walking into it is not.
 - Performance: PIE frame rate near the thick Plains grass is poor (about 1 fps in one run near the trees); not measured in a packaged build. Worth a look (grass cull distance 4500 to 6500 cm in `build_grass.py`).
