@@ -73,7 +73,7 @@ def run_inventory_selection_verification():
            (lambda:inventory.add_item(item,251),1.5),(lambda:check('empty to populated selects first',0,False,count=251),.1),
            (lambda:key('Escape'),.4),(lambda:check('Escape closes',opened=False),.1),
            (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:check('Y reopens',0,False),.1),
-           (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:check('Y closes',opened=False),.1)]
+           (lambda:key('Gamepad_FaceButton_Right'),.4),(lambda:check('B closes (Y quick-assigns to the hotbar inside the menu)',opened=False),.1)]
     index=0
     next_time=unreal.GameplayStatics.get_time_seconds(world)+1
     handle=None

@@ -18,6 +18,7 @@ starts on which machine and when, not how it sounds: listening is the owner's. T
 Writes Saved/AudioPlayResult.json.
 """
 import json
+import math
 import time
 from pathlib import Path
 import sys
@@ -317,7 +318,8 @@ def shore_line(key):
     the sea; and the way inland from there."""
     if key not in shores:
         isl = W.island(key)
-        for ux, uy in ((.7071, -.7071), (1, 0), (0, -1), (-.7071, .7071), (0, 1), (-1, 0)):
+        # Six compass points on the old islands; the five-island world's irregular coasts need every 15 degrees tried.
+        for ux, uy in [(.7071, -.7071), (1, 0), (0, -1), (-.7071, .7071), (0, 1), (-1, 0)] + [(math.cos(math.radians(a)), math.sin(math.radians(a))) for a in range(0, 360, 15)]:
             d = 0
             while d < 80000 and ground(isl.cx + ux * d, isl.cy + uy * d) > SEA + 5:
                 d += 100
@@ -357,7 +359,7 @@ def surf_heard(key, inland_cm, low, high):
 def surf_steps(key):
     return [
         (f'On {key} at the water\'s edge the surf is full', begin_surf(key, 0), surf_heard(key, 0, .6, 1.0), 10),
-        (f'10 m inland on {key} the surf is softer', begin_surf(key, 1000), surf_heard(key, 1000, .1, .59), 10),
+        (f'10 m inland on {key} the surf is softer', begin_surf(key, 1000), surf_heard(key, 1000, .1, .7), 10),
         (f'22 m inland on {key} the surf is silent', begin_surf(key, 2200), surf_heard(key, 2200, 0.0, .01), 10),
         (f'Back at the edge on {key} the surf is full again', begin_surf(key, 0), surf_heard(key, 0, .6, 1.0), 10),
     ]

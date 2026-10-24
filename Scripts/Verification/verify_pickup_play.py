@@ -35,7 +35,7 @@ for p in unreal.GameplayStatics.get_all_actors_of_class(server,pickup_cls): p.de
 for w in worlds:
     for p in peers(w):
         y = -45 if pid(p)==ids[0] else 45
-        p.teleport(unreal.Vector(home.x,home.y+y,home.z),unreal.Rotator())
+        p.teleport(unreal.Vector(0,y,92),unreal.Rotator())
         if p.has_authority(): inv(p).remove_item(item,100000)
 for c in controllers: c.set_control_rotation(unreal.Rotator())
 subsystems = [unreal.EWEditorVerificationLibrary.get_player_input_subsystem(c) for c in controllers]
@@ -48,7 +48,7 @@ def spawn(quantity, x=150):
     global stack
     if stack and unreal.SystemLibrary.is_valid(stack): stack.destroy_actor()
     # Each player's parallel forward ray intersects this wider fixture mesh.
-    stack = unreal.EWEditorVerificationLibrary.spawn_verification_pickup(server,unreal.Vector(home.x+x,home.y,home.z+64),item,quantity)
+    stack = unreal.EWEditorVerificationLibrary.spawn_verification_pickup(server,unreal.Vector(x,0,156),item,quantity)
     stack.set_actor_scale3d(unreal.Vector(1,5,2))
 def press():
     global active

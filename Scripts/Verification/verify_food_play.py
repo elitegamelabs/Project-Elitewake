@@ -41,7 +41,7 @@ for c in controllers: lib.flush_verification_input(c)
 pc.set_inventory_open(False)
 for a in unreal.GameplayStatics.get_all_actors_of_class(server, unreal.EWPickup): a.destroy_actor()
 for w in worlds:
-    for p in characters(w): p.teleport(unreal.Vector(home.x, home.y, home.z) if pid(p) == owner_id else unreal.Vector(home.x - 500, home.y + 500, home.z), unreal.Rotator())
+    for p in characters(w): p.teleport(unreal.Vector(0, 0, 96) if pid(p) == owner_id else unreal.Vector(-500, 500, 96), unreal.Rotator())
 for c in controllers: c.set_control_rotation(unreal.Rotator())
 survival.set_hunger(50); survival.apply_damage(50)
 fixtures = []; steps = []
@@ -52,7 +52,7 @@ def widget(name):
 def step(fn, delay=1.25): steps.append((fn, delay))
 def key(name): assert lib.send_verification_ui_key(pc, name)
 def spawn(count):
-    node = lib.spawn_verification_hand_gatherable(server, unreal.Vector(home.x + 150, home.y, home.z + 64), berry, count)
+    node = lib.spawn_verification_hand_gatherable(server, unreal.Vector(150, 0, 160), berry, count)
     assert node
     node.set_editor_property('gathering_kind', unreal.EWHandGatheringKind.BERRIES); node.force_net_update(); fixtures.append(node)
 def check(label, berries, residue, hunger, health, slots=None):
@@ -86,7 +86,7 @@ def offset_check():
     report['checkpoints'].append({'label': 'Real clock offset updates replicated freshness', 'freshness': value})
 def chord():
     assert lib.send_verification_ui_key_event(pc, 'Gamepad_LeftShoulder', True)
-    key('Gamepad_FaceButton_Bottom')
+    key('Gamepad_DPad_Left')      # slot 1 is the d-pad's left; the face buttons are slots 5 to 8 now
     assert lib.send_verification_ui_key_event(pc, 'Gamepad_LeftShoulder', False)
 step(lambda: check('Fresh empty inventory; no automatic grant', 0, 0, 50, 50, 0))
 step(lambda: spawn(5)); step(lambda: key('E')); step(lambda: check('E gathers authored Azren', 5, 0, 50, 50, 1))
@@ -96,7 +96,7 @@ step(lambda: key('Gamepad_FaceButton_Left')); step(lambda: check('Inventory X ea
 step(full); step(lambda: key('R')); step(lambda: check('No-benefit inventory use preserves units', 3, 0, 100, 100))
 step(lambda: key('One')); step(lambda: key('I')); step(damaged)
 step(lambda: key('One')); step(lambda: check('Keyboard hotbar consumes one berry', 2, 0, 56.25, 55))
-step(chord); step(lambda: check('Controller LB+A consumes one berry', 1, 0, 62.5, 60))
+step(chord); step(lambda: check('Controller LB + d-pad left consumes one berry', 1, 0, 62.5, 60))
 step(lambda: lib.send_verification_food_request(pc, toxic)); step(lambda: lib.send_verification_food_request(pc, wood))
 step(lambda: check('Toxic/resource/unowned requests preserve stats and units', 1, 0, 62.5, 60))
 step(lambda: survival.apply_damage(100)); step(lambda: lib.send_verification_food_request(pc, berry))

@@ -172,7 +172,7 @@ def mined():
 
 def to_spring():
     state['memo']['hydration_before_fill'] = owner.get_survival_component().get_hydration()
-    approach(spring, 120, 0)
+    approach(spring, 150, 0)       # 150 cm: the five-island rebuild put its rim a little closer
 
 
 def filled():

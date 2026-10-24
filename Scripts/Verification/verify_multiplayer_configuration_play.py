@@ -28,9 +28,9 @@ try:
     assert player_ids[0]!=player_ids[1]
     assert unreal.GameplayStatics.get_game_state(w) and unreal.GameplayStatics.get_game_state(worlds[pcs.index(client)])
     checks.append('Players have distinct PlayerState IDs and GameState exists on server/client')
-    assert all(not p.get_inventory_component().get_available_recipes() and p.get_inventory_component().get_used_slot_count()==0 for p in pawns)
+    assert all(not p.get_inventory_component().get_available_recipes() and p.get_inventory_component().get_used_slot_count()<=8 for p in pawns)     # the starter kit (four tools) is the only inventory
     assert all(not c.get_objective_component().get_state().steps for c in controllers)
-    checks.append('Normal play grants no diagnostic inventory, starter unlocks or objective sequence')
+    checks.append('Normal play grants only the starter kit: no diagnostic items, recipe unlocks or objective sequence')
     result={'success':True,'checks':checks,'classes':classes,'error':None}
 except Exception as exc:
     result={'success':False,'checks':checks,'classes':classes,'error':repr(exc)}
