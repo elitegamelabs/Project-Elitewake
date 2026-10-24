@@ -857,6 +857,16 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     { if (!Event.IsRepeat()) PerformCraft(); return FReply::Handled(); }
     auto* OwnerController = Cast<AEWPlayerController>(GetOwningPlayer());
     if (OwnerController) OwnerController->RecordInputDevice(Key);
+    if (HotbarPick != INDEX_NONE)
+    {
+        // Picking a slot: the d-pad or arrows move the cursor, A or Enter assigns (or takes the item off that slot), B, Y or Escape stop.
+        const int32 Count = UEWHotbarComponent::SlotCount;
+        if (Key==EKeys::Left || Key==EKeys::Gamepad_DPad_Left || Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) SetHotbarPick((HotbarPick + Count - 1) % Count);
+        else if (Key==EKeys::Right || Key==EKeys::Gamepad_DPad_Right || Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down) SetHotbarPick((HotbarPick + 1) % Count);
+        else if ((Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom) && !Event.IsRepeat()) { AssignHotbarSlot(HotbarPick); SetHotbarPick(INDEX_NONE); }
+        else if ((Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right || Key==EKeys::Gamepad_FaceButton_Top) && !Event.IsRepeat()) SetHotbarPick(INDEX_NONE);
+        return FReply::Handled();
+    }
     if (Key == EKeys::Gamepad_FaceButton_Top && !(OwnerController && OwnerController->IsHotbarModifierHeld()))
     {
         if (!Event.IsRepeat()) QuickAssignSelectedToHotbar();
@@ -916,7 +926,7 @@ void UEWInventoryWidget::QuickAssignSelectedToHotbar()
 
     if (ExistingSlot != INDEX_NONE)
     {
-        ShowHotbarResult(EEWHotbarResult::Success);
+        SetHotbarPick(ExistingSlot);      // already on the bar: choose another slot, or take it off this one
         return;
     }
     if (EmptySlot != INDEX_NONE)
@@ -926,8 +936,17 @@ void UEWInventoryWidget::QuickAssignSelectedToHotbar()
         return;
     }
 
-    if (EquipmentResultText)
-        EquipmentResultText->SetText(NSLOCTEXT("Elitewake", "HotbarFullQuickAssign", "Hotbar full — clear a slot before assigning this item."));
+    SetHotbarPick(Preferred);      // the bar is full: choose the slot to replace
+}
+
+void UEWInventoryWidget::SetHotbarPick(int32 SlotIndex)
+{
+    const bool bCan = SelectedItem() && BoundHotbar && SlotIndex >= 0 && SlotIndex < UEWHotbarComponent::SlotCount;
+    if (bCan && !bShowingDetails) ConfirmSelection();      // the slots sit in the item's details
+    HotbarPick = bCan ? SlotIndex : INDEX_NONE;
+    if (EquipmentResultText && HotbarPick != INDEX_NONE)
+        EquipmentResultText->SetText(NSLOCTEXT("Elitewake", "HotbarPick", "Pick a hotbar slot: d-pad moves, A assigns or removes, B cancels."));
+    RefreshHotbarAssignments();
 }
 
 FReply UEWInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry, const FKeyEvent& Event)
@@ -1127,11 +1146,14 @@ void UEWInventoryWidget::RefreshHotbarAssignments()
 {
     if (!HotbarAssignments) return;
     UEWItemDefinition* Item = SelectedItem();
+    if (!(bShowingDetails && Item && BoundHotbar)) HotbarPick = INDEX_NONE;
     HotbarAssignments->SetVisibility(bShowingDetails && Item && BoundHotbar ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     for (int32 i=0; i<HotbarButtons.Num(); ++i)
     {
         const bool bBound = Item && BoundHotbar && BoundHotbar->GetBoundItem(i)==Item;
-        HotbarButtonLabels[i]->SetText(FText::FromString(FString::Printf(TEXT("%d%s"),i+1,bBound ? TEXT(" ✓") : TEXT(""))));
+        const bool bPicked = HotbarPick == i;
+        HotbarButtonLabels[i]->SetText(FText::FromString(bPicked ? FString::Printf(TEXT("[%d]%s"),i+1,bBound ? TEXT(" ✓") : TEXT("")) : FString::Printf(TEXT("%d%s"),i+1,bBound ? TEXT(" ✓") : TEXT(""))));
+        HotbarButtons[i]->SetBackgroundColor(bPicked ? FLinearColor(1.f, .85f, .35f, 1.f) : FLinearColor::White);
         HotbarButtons[i]->SetToolTipText(FText::FromString(bBound
             ? FString::Printf(TEXT("Remove this shortcut from slot %d"),i+1)
             : FString::Printf(TEXT("Assign selected item to slot %d"),i+1)));

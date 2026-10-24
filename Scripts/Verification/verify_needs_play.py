@@ -27,6 +27,7 @@ assert all((raw_fish, raw_meat, cooked_fish, cooked_meat, herb, fish_recipe, mea
 chances = {raw_fish: raw_fish.get_editor_property('sickness_chance'), raw_meat: raw_meat.get_editor_property('sickness_chance')}
 checks = []
 memo = {}
+unreal.SystemLibrary.execute_console_command(None, 'ew.NeedsDepletion 1')
 phase = 0
 next_at = time.monotonic() + 3
 handle = None
@@ -43,6 +44,7 @@ def clear():
 
 def finish(error=None):
     unreal.unregister_slate_post_tick_callback(handle)
+    unreal.SystemLibrary.execute_console_command(None, 'ew.NeedsDepletion 0')
     for item, chance in chances.items():
         item.set_editor_property('sickness_chance', chance)
     Path(unreal.Paths.project_saved_dir(), 'NeedsPlayResult.json').write_text(json.dumps({'success': error is None, 'checks': checks, 'measured': memo, 'error': error}, indent=2))

@@ -99,6 +99,12 @@ void UEWExplorationComponent::ExpandBounds(float Factor)
     BoundsMin = NewMin; BoundsSize = NewSize; ++Revision;
 }
 
+void UEWExplorationComponent::GrowToCover(float Size)
+{
+    EnsureBounds();
+    for (int32 Guard = 0; BoundsSize > 0.f && BoundsSize < Size * .999f && Guard < 20; ++Guard) ExpandBounds(ExpandFactor);
+}
+
 bool UEWExplorationComponent::IsWorldEdge() const
 {
     return Cast<AGameModeBase>(GetOwner()) != nullptr;

@@ -36,6 +36,7 @@ result = saved / os.environ['EW_PLAY_RESULT']
 players = int(os.environ.get('EW_PLAY_PLAYERS', '2'))
 timeout = float(os.environ.get('EW_PLAY_TIMEOUT', '180'))
 
+unreal.SystemLibrary.execute_console_command(None, 'ew.NeedsDepletion 0')   # checks read exact hunger and thirst; verify_needs_play turns depletion back on
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 started = time.time()

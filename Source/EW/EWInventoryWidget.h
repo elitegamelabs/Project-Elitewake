@@ -89,6 +89,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") float GetStatArrowOpacity(int32 StatIndex) const;
     UFUNCTION(BlueprintPure, Category="Menu") FText GetLevelText() const;
     UFUNCTION(BlueprintCallable, Category="Menu") void SetStatFocus(int32 StatIndex);
+    /** The hotbar slot the controller cursor is on while picking where an item goes (owner, October 22: hotbar assignment by controller); INDEX_NONE when not picking. */
+    UFUNCTION(BlueprintPure, Category="Menu") int32 GetHotbarPick() const { return HotbarPick; }
+    UFUNCTION(BlueprintCallable, Category="Menu") void SetHotbarPick(int32 SlotIndex);
     UFUNCTION(BlueprintCallable, Category="Menu") void CycleSection(int32 Direction) { SelectSection((SelectedSection + Direction + GetSectionCount()) % GetSectionCount()); }
     UPROPERTY(Transient) TObjectPtr<UWidget> SurvivorPanel;
     UFUNCTION(BlueprintPure, Category="Inventory|Presentation")
@@ -157,6 +160,7 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> AllocValues;
     UPROPERTY(Transient) TArray<TObjectPtr<UButton>> AllocArrows;
     int32 StatFocus = INDEX_NONE;
+    int32 HotbarPick = INDEX_NONE;
     UFUNCTION() void ShowInventoryTab();
     UFUNCTION() void ShowCraftingTab();
     UPROPERTY(Transient) TObjectPtr<UButton> InventoryTab;

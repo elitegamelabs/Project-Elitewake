@@ -17,7 +17,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Options menu | Escape | Start | OK |
 | Private-test session menu | F10 | (none) | GAP, test-only |
 | Hotbar slots 1 to 8 | 1 to 8 | d-pad left/up/right/down = 1 to 4; hold LT + the d-pad = 5 to 8 (one thumb, added Oct 23, `verify_hotbar_trigger_play`); or hold LB + A/X/B/Y = 5 to 8 | OK (`verify_hotbar_play`, `verify_hotbar_trigger_play`) |
-| Assign item to hotbar | Open inventory, press 1 to 8 | Select item, hold LB + slot button, or Y quick-assigns | OK |
+| Assign item to hotbar | Open inventory, press 1 to 8 | Select item, hold LB + slot button, or Y quick-assigns to the first empty slot; Y again (item already on bar, or bar full) opens a slot picker: d-pad moves, A assigns or removes, B cancels | OK (`verify_hotbar_picker_play`) |
 | Climb ladder | Up / Down arrows | d-pad up / down | OK |
 | Sail trim left / right | Left / Right arrows | LB / RB | OK |
 | Respawn after death | Enter / Space / click | A | OK (`verify_death_respawn_play`) |

@@ -63,5 +63,18 @@ def recipe(name, raw, cooked, seconds):
 
 recipe('DA_RecipeCookedFish', raw_fish, cooked_fish, 6.0)
 recipe('DA_RecipeCookedMeat', raw_meat, cooked_meat, 8.0)
+# The crafted remedy (owner: food sickness is "cured early by medicinal herbs or a crafted remedy"): plant fibre pounded with a berry. Working values.
+remedy = data_asset(RECIPES, 'DA_RecipeHerbalRemedy', unreal.EWCraftingRecipe)
+parts = []
+for item_path, quantity in (('/Game/Elitewake/Items/Testing/DA_TestThatch', 3), ('/Game/Elitewake/Items/Testing/DA_TestAzulBerry', 1)):
+    part = unreal.EWCraftingIngredient()
+    part.set_editor_property('item', unreal.load_asset(item_path))
+    part.set_editor_property('quantity', quantity)
+    assert part.get_editor_property('item'), item_path
+    parts.append(part)
+remedy.set_editor_property('ingredients', parts)
+remedy.set_editor_property('output', herb)
+remedy.set_editor_property('craft_seconds', 5.0)
+assert unreal.EditorAssetLibrary.save_loaded_asset(remedy)
 unreal.log('Food items and cooking recipes written')
 unreal.SystemLibrary.quit_editor()

@@ -5,6 +5,10 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/World.h"
 #include "World/EWSnowfall.h"
+#include "HAL/IConsoleManager.h"
+
+/** ew.NeedsDepletion 0 pauses hunger and thirst (the Play checks switch it off so their exact readings hold; only the needs check turns it on). */
+static TAutoConsoleVariable<int32> CVarNeedsDepletion(TEXT("ew.NeedsDepletion"), 1, TEXT("1 lets hunger and thirst deplete (default); 0 pauses them for automated checks."));
 
 void UEWSurvivalComponent::SetDebuffNotice(FName Id, FText Label, float DurationSeconds)
 {
@@ -160,10 +164,13 @@ void UEWSurvivalComponent::UpdateNeeds(bool bIsSprinting, float DeltaSeconds)
 	const float Hungry = 100.f / HungerEmptySeconds * DeltaSeconds * (bIsSprinting ? SprintNeedFactor : 1.f) * (IsFreezing() ? ColdHungerFactor : 1.f);
 	const float Thirsty = 100.f / ThirstEmptySeconds * DeltaSeconds * (bIsSprinting ? SprintNeedFactor : 1.f)
 		* (IsOverheating() ? HotThirstFactor : 1.f) * (IsFoodSick() ? SickThirstFactor : 1.f);
+	if (CVarNeedsDepletion.GetValueOnGameThread() != 0)
+	{
 	Hunger = FMath::Max(0.f, Hunger - Hungry);
 	Hydration = FMath::Max(0.f, Hydration - Thirsty);
 	if (Hunger <= KINDA_SMALL_NUMBER) ApplyDamage(StarvationDamage * DeltaSeconds);
 	if (Hydration <= KINDA_SMALL_NUMBER) ApplyDamage(DehydrationDamage * DeltaSeconds);
+	}
 	if (FoodSicknessLeft > 0.f)
 	{
 		FoodSicknessLeft = FMath::Max(0.f, FoodSicknessLeft - DeltaSeconds);

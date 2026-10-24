@@ -5,6 +5,7 @@
 #include "EWSurvivalComponent.h"
 #include "EWProgressionComponent.h"
 #include "EWExplorationComponent.h"
+#include "EWGameMode.h"
 #include "EWPlayerController.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
@@ -108,6 +109,9 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
                 TArray<uint8> Cells; Cells.Init(0, UEWExplorationComponent::GridSize * UEWExplorationComponent::GridSize);
                 for (int32 i = 0; i < Cells.Num() && (i >> 3) < ExploredBits.Num(); ++i) if (ExploredBits[i >> 3] & (1 << (i & 7))) Cells[i] = 255;
                 Explored->LoadCells(Cells, ExploredMin, ExploredSize);
+                // The server's own edge grows to where this survivor has been, so teleports do not fire inside their explored map.
+                if (const AEWGameMode* Mode = Survivor->GetWorld() ? Survivor->GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr)
+                    if (Mode->WorldEdge) Mode->WorldEdge->GrowToCover(ExploredSize);
             }
     Survivor->TeleportTo(Location, FRotator(0.f, Facing.Yaw, 0.f), false, true);
     if (AController* Controller = Survivor->GetController()) Controller->SetControlRotation(Facing);

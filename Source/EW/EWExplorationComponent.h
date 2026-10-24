@@ -41,6 +41,8 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Exploration") float ExpandAtFraction = .35f;
     UPROPERTY(EditDefaultsOnly, Category="Exploration", meta=(ClampMin="1.05")) float ExpandFactor = 1.25f;
     UFUNCTION(BlueprintCallable, Category="Exploration") void ExpandBounds(float Factor);
+    /** The world edge only: grow, by the usual steps, until the square is at least this wide (a loaded survivor has explored further than a fresh server). */
+    UFUNCTION(BlueprintCallable, Category="Exploration") void GrowToCover(float Size);
     /** On the game mode (server) this component is the world's edge: whoever and whatever crosses it comes out on the opposite side. */
     UFUNCTION(BlueprintPure, Category="Exploration") bool IsWorldEdge() const;
     /** Moves a place that is past the edge to the opposite side; unchanged inside. */
