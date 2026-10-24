@@ -81,9 +81,14 @@ def run_hotbar_verification():
         check(label+str(index+1),{0:hat,1:alternate,7:wood},index,expected,
               hat_count=0 if expected==hat else 1,alt_count=1 if expected==hat else 0,wood_count=1)
         assert not pawn.is_prone and not pawn.get_editor_property('bIsCrouched') and not pawn.get_movement_component().is_falling(),'Chord leaked into stance/jump'
+    start=authority.get_actor_location()
     def position_for_pickup():
-        if other:other.teleport(unreal.Vector(-500,500,96),unreal.Rotator())
-        authority.teleport(unreal.Vector(0,0,96),unreal.Rotator())
+        # The map no longer carries a fixture: put ten wood on the ground 1.1 m ahead of the survivor's own start, at eye height where the pickup is aimed.
+        here=unreal.Vector(start.x,start.y,start.z)
+        if other:other.teleport(unreal.Vector(here.x-500,here.y+500,here.z),unreal.Rotator())
+        authority.teleport(here,unreal.Rotator())
+        now=authority.get_actor_location()      # where the teleport really left the survivor
+        assert lib.spawn_verification_pickup(server,unreal.Vector(now.x+110,now.y,now.z+18),wood,10)
         authority.get_controller().set_control_rotation(unreal.Rotator())
         controller.set_control_rotation(unreal.Rotator())
     steps=[(initial,.1),(lambda:inv.add_item(hat,1),.1),(lambda:inv.add_item(wood,251),1.5),
@@ -134,14 +139,14 @@ def run_hotbar_verification():
                   (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=1),.1),
                   # Closing UI recaptures the mouse; re-aim after any resulting cursor delta.
                   (position_for_pickup,2),
-                  (lambda:key('Gamepad_FaceButton_Left'),1.5),
-                  (lambda:check('X ordinary pickup restored after LB release',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=11),.1),
+                  (lambda:event('Gamepad_FaceButton_Left',True),1.6),(lambda:event('Gamepad_FaceButton_Left',False),1.0),   # picking up is a held action
+                  (lambda:check('X ordinary pickup restored after LB release',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=11),.1),
                   (lambda:key('Gamepad_FaceButton_Bottom'),.15),
                   (lambda:report['checkpoints'].append({'label':'A ordinary jump restored','falling':pawn.get_movement_component().is_falling()}),.1),
                   (lambda:assert_jump(),1.5),
                   (lambda:event('Gamepad_LeftShoulder',True),.1),
                   (lambda:assert_flush(),.1),(lambda:key('Gamepad_FaceButton_Top'),.4),
-                  (lambda:check('engine focus flush releases LB',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=11,opened=True),.1),
+                  (lambda:check('engine focus flush releases LB',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=11,opened=True),.1),
                   (lambda:key('Gamepad_FaceButton_Right'),.4)])
     def assert_jump():assert report['checkpoints'][-1]['falling'],'Normal A did not jump'
     def assert_flush():assert lib.flush_verification_input(controller),'Engine flush did not clear LB'
