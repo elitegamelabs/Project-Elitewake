@@ -4,15 +4,15 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 from Scripts/Setup/build_brigantine.py. Run unattended with run_play_check.py.
 
 Through ordinary owned requests and its own movement input, the client:
-  1. installs a Large sail as the fore course, a Large sail as the gaff mainsail and a ship's wheel on the
-     quarterdeck (each granted in Play only, just before it is fitted),
+  1. installs Large sail assemblies at the foresail and mainsail hardpoints (each with its own mast; the hull is
+     bare) and a ship's wheel inside the captain's quarters (each granted in Play only, just before it is fitted),
   2. raises the anchor, takes the helm, sets full sail, trims the sails to the wind and sails for 4 s, then leaves the helm and anchors.
      Every frame of the sail is measured: the ship on the server, its copy on the client and the client's own
      survivor at the helm must each move by what the ship's speed asks for that frame, with at most 5% of frames
      stalling or jumping (lag a player would see),
   3. walks down the hatch stairs to the gun deck, aims at a cannon port there, and walks back up,
-  4. walks through the doorway into the captain's cabin, then into the crew's quarters under the forecastle,
-     and climbs the stairs to the quarterdeck and to the forecastle,
+  4. walks through the doorway into the captain's quarters, and climbs the stairs (fixed rails along them) to the
+     raised aft deck over them,
   5. swims beside the hull, looks up at the stern ladder's rungs and climbs aboard.
 Each step waits for its result on the server and on the client's copy, with a timeout.
 Writes Saved/BrigantinePlayResult.json.
@@ -52,11 +52,11 @@ checks = []
 state = {'index': 0, 'begun': False, 'deadline': 0.0, 'aim': None, 'input': None, 'frame': 0, 'frame0': 0, 'handle': None, 'memo': {}}
 
 DECK = ship.get_deck_height()
-LOWER, RAISED, BOW = 50.0, DECK + 220.0, DECK + 200.0   # gun deck floor, quarterdeck and forecastle, from build_brigantine.py
+LOWER, RAISED = 50.0, DECK + 220.0   # gun deck floor and the raised aft deck, from build_brigantine.py
 STAND = 98.0                            # capsule half height plus clearance
 # Where to stand, in the ship's frame, to reach each place: (x, y, floor height).
-STANDS = {'ForeCourse': (870, -90, DECK), 'Mainsail': (-620, -90, DECK), 'Helm': (-1110, -110, RAISED),
-          'Anchor': (520, -40, DECK), 'StarboardCannon2': (-10, 130, LOWER)}
+STANDS = {'Foresail': (920, -90, DECK), 'Mainsail': (10, -90, DECK), 'Helm': (-990, -80, DECK),
+          'Anchor': (680, -70, DECK), 'StarboardCannon2': (-10, 130, LOWER)}
 
 
 def local_of(actor, ship_copy=ship):
@@ -103,7 +103,7 @@ def prepare():
     assert ship.is_anchored() and peer.is_anchored()
     mounts = ship.get_editor_property('definition').get_editor_property('mounts')
     sizes = [m.get_editor_property('sail_size') for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.SAIL]
-    assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (4, 0, 2), sizes
+    assert (sizes.count(unreal.EWSailSize.LARGE), sizes.count(unreal.EWSailSize.MEDIUM), sizes.count(unreal.EWSailSize.SMALL)) == (2, 1, 0), sizes   # three hardpoints (owner, October 18)
     # Owner, October 17: hull cannon ports (no parent) and railing hardpoints, each railing opening two cannon places.
     hull_guns = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.CANNON and str(m.get_editor_property('parent_mount')) == 'None')
     railings = sum(1 for m in mounts if m.get_editor_property('type') == unreal.EWShipMountType.RAILING)
@@ -235,25 +235,9 @@ def climbed():
     return True
 
 
-down = walk(40, 0, DECK, 0.0, lambda z: z < LOWER + STAND + 30, 'down')
-up = walk(500, 0, LOWER, 180.0, lambda z: z > DECK + 60, 'up')
-raised = walk(-590, -287, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
-forecastle = walk(760, -248, DECK, 0.0, lambda z: z > BOW + 60, 'forecastle')
-
-
-def into_quarters():
-    """From the main deck, walk forward through the doorway under the forecastle into the crew's quarters."""
-    begin, _ = walk(900, 0, DECK, 0.0, lambda z: True, 'quarters')
-
-    def done():
-        here, there = local_of(owner), local_of(pawn, peer)
-        state['memo']['quarters'].update(server=[round(here.x), round(here.z)], client=[round(there.x), round(there.z)])
-        inside = lambda p: p.x > 1150 and p.z < BOW
-        if not (inside(here) and inside(there) and ship.is_aboard(owner) and peer.is_aboard(pawn)):
-            return False
-        state['input'] = None
-        return True
-    return begin, done
+down = walk(170, 0, DECK, 0.0, lambda z: z < LOWER + STAND + 30, 'down')
+up = walk(620, 0, LOWER, 180.0, lambda z: z > DECK + 60, 'up')
+raised = walk(-540, -287, DECK, 180.0, lambda z: z > RAISED + 60, 'raised')
 
 
 def into_cabin():
@@ -263,19 +247,19 @@ def into_cabin():
     def done():
         here, there = local_of(owner), local_of(pawn, peer)
         state['memo']['cabin'].update(server=[round(here.x), round(here.z)], client=[round(there.x), round(there.z)])
-        inside = lambda p: p.x < -1000 and p.z < RAISED
+        inside = lambda p: p.x < -950 and p.z < RAISED   # past the doorway (x -850), short of the wheel (-1080)
         if not (inside(here) and inside(there) and ship.is_aboard(owner) and peer.is_aboard(pawn)):
             return False
         state['input'] = None
         return True
     return begin, done
 STEPS = [
-    ('Bare brigantine, anchored, with 4 Large and 2 Small sail mounts, 6 round hull gunports and 6 railing hardpoints', prepare, lambda: True, 2),
-    ('Client installs a Large sail as the fore course', go('ForeCourse', large),
-     lambda: ship.get_fitting('ForeCourse') == large and peer.get_fitting('ForeCourse') == large, 6),
-    ('Client installs a Large sail as the gaff mainsail', go('Mainsail', large),
+    ('Bare brigantine, anchored, with 2 Large and 1 Medium sail hardpoints, 6 round hull gunports and 6 railing hardpoints', prepare, lambda: True, 2),
+    ('Client installs a Large sail assembly at the foresail hardpoint', go('Foresail', large),
+     lambda: ship.get_fitting('Foresail') == large and peer.get_fitting('Foresail') == large, 6),
+    ('Client installs a Large sail assembly at the mainsail hardpoint', go('Mainsail', large),
      lambda: ship.get_fitting('Mainsail') == large and peer.get_fitting('Mainsail') == large, 6),
-    ('Client installs the wheel on the quarterdeck', go('Helm', helm),
+    ("Client installs the wheel inside the captain's quarters", go('Helm', helm),
      lambda: ship.get_fitting('Helm') == helm and peer.get_fitting('Helm') == helm, 6),
     ('Client raises the anchor', go('Anchor'), lambda: not ship.is_anchored() and not peer.is_anchored(), 6),
     ('Client takes the helm', go('Helm'), lambda: ship.get_helmsman() == owner and peer.get_helmsman() == pawn, 6),
@@ -291,10 +275,8 @@ STEPS = [
     ('Client aims at a starboard cannon port from the gun deck', aim_cannon,
      lambda: str(ship.find_aimed_mount(owner)) == 'StarboardCannon2', 4),
     ('Client walks back up the stairs to the main deck', *up, 8),
-    ("Client walks through the doorway into the captain's cabin under the quarterdeck", *into_cabin(), 8),
-    ("Client walks through the doorway into the crew's quarters under the forecastle", *into_quarters(), 8),
-    ('Client climbs the stairs to the quarterdeck', *raised, 8),
-    ('Client climbs the stairs to the forecastle', *forecastle, 8),
+    ("Client walks through the doorway into the captain's quarters", *into_cabin(), 8),
+    ('Client climbs the stairs to the raised aft deck', *raised, 8),
     ('Client, swimming beside the hull, looks up at the stern ladder, takes hold and climbs aboard', climb_ladder, climbed, 14),
 ]
 
@@ -307,7 +289,7 @@ def finish(error=None):
         'success': error is None, 'checks': checks, 'error': error,
         'run': {k: round(m[k]) for k in ('moved', 'gap') if k in m},
         'smoothness': m.get('smoothness'),
-        'walks': {k: m[k] for k in ('down', 'up', 'cabin', 'quarters', 'raised', 'forecastle') if k in m},
+        'walks': {k: m[k] for k in ('down', 'up', 'cabin', 'raised') if k in m},
         'client_local': str(local_of(pawn, peer)), 'server_local': str(local_of(owner)),
     }, indent=2), encoding='utf-8')
     unreal.log(f'EWPLAYCHECK Brigantine success={error is None} error={error}')
