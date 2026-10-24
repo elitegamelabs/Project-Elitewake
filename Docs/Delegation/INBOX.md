@@ -365,5 +365,5 @@ Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 res
 
 ### 2026-10-24 Claude — Play-check sweep status
 - What: branch `claude/five-islands-20261022` at `5361cc1` pushed. all 101 Play checks pass, native tests 35/35. Details in `Docs/REPORTS/2026-10-22_Claude_Manager_Log.md` (October 24 update).
-- Open for anyone: thick-grass frame rate (see log); PR #8 still needs the owner's Merge.
+- Open for anyone: PR #8 still needs the owner's Merge.
 - Needs from others: nothing; no locks held.
