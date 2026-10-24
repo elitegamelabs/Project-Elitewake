@@ -23,7 +23,9 @@ def run_equipment_verification():
     wood=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
     assert hat and alternate and wood
     head=unreal.EWEquipmentSlot.HEAD
-    assert not inventory.get_inventory_entries() and not equipment.get_equipment_entries(),'Use fresh PIE'
+    for e in list(equipment.get_equipment_entries()): equipment.unequip_item(e.get_editor_property('slot'))
+    for e in list(inventory.get_inventory_entries()): inventory.remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))      # the starter kit arrives with every survivor
+    assert not inventory.get_inventory_entries() and not equipment.get_equipment_entries(),'could not empty the starter kit'
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
     old_throttle=settings.get_editor_property('bThrottleCPUWhenNotForeground')
     settings.set_editor_property('bThrottleCPUWhenNotForeground',False)

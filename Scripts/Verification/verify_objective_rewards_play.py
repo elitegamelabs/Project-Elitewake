@@ -17,6 +17,7 @@ assert not authority.get_state().steps and not remote.get_state().steps
 first=unreal.EWObjectiveStep();first.set_editor_property('id','Test.First');first.set_editor_property('description','Diagnostic first objective');first.set_editor_property('required_count',2)
 last=unreal.EWObjectiveStep();last.set_editor_property('id','Test.Last');last.set_editor_property('description','Diagnostic last objective')
 recipes=[unreal.load_asset('/Game/Elitewake/Crafting/Testing/DA_Recipe'+n) for n in ['WoodenShovel','WoodenAxe','WoodenPickaxe','HideWaterFlask']]
+for _r in recipes: _r.set_editor_property('craft_seconds',0.2)  # crafting takes seconds now; these checks are about what it makes (verify_craft_time_play times it)
 assert all(recipes)
 assert authority.start_recipe_sequence('Test.Objectives',[first,last],recipes+[recipes[0]])
 checks=[];phase=0;next_at=time.monotonic()+3;handle=None;fixture=None

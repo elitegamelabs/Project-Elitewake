@@ -16,6 +16,7 @@ inv=owner.get_inventory_component()
 assert not inv.get_inventory_entries() and not inv.get_available_recipes()
 items={n:unreal.load_asset('/Game/Elitewake/Items/Testing/DA_Test'+n) for n in ['Wood','Thatch','Stone','WoodenAxe','WoodenPickaxe','WoodenShovel','HideWaterFlask','InnTorch']}
 recipes={n:unreal.load_asset('/Game/Elitewake/Crafting/Testing/DA_Recipe'+n) for n in ['WoodenAxe','WoodenPickaxe']}
+for _r in recipes.values(): _r.set_editor_property('craft_seconds',0.2)  # crafting takes seconds now; these checks are about what it makes (verify_craft_time_play times it)
 icons={n:unreal.load_asset('/Game/Elitewake/UI/PlaceholderIcons/T_'+t+'_v1') for n,t in [('WoodenAxe','Axe'),('WoodenPickaxe','Pickaxe'),('WoodenShovel','Shovel'),('HideWaterFlask','Flask'),('InnTorch','Torch')]}
 assert all(items.values()) and all(recipes.values()) and all(icons.values())
 assert inv.add_item(items['Wood'],40)==40

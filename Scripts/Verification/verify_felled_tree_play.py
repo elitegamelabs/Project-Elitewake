@@ -26,7 +26,7 @@ peer = lambda actor: next(a for a in unreal.GameplayStatics.get_all_actors_of_cl
                           if a.get_name() == actor.get_name())
 oak_candidates = [t for t in trees if str(t.get_actor_label()).lower().startswith('oak')]
 assert oak_candidates, 'Coastal map needs its generated Plains oaks'
-tree = min(oak_candidates, key=lambda t: (t.get_actor_location() - owner.get_actor_location()).size())
+tree = min(oak_candidates, key=lambda t: unreal.Vector.distance(t.get_actor_location(), owner.get_actor_location()))
 tree_name = tree.get_name()
 wood = tree.get_editor_property('wood')
 thatch = tree.get_editor_property('thatch')

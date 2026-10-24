@@ -16,7 +16,15 @@ owner_id = pid(pc.get_controlled_pawn())
 def characters(w): return unreal.GameplayStatics.get_all_actors_of_class(w, unreal.EWCharacter)
 owner = next(p for p in characters(server) if pid(p) == owner_id)
 inv = owner.get_inventory_component(); survival = owner.get_survival_component()
-assert all(not p.get_inventory_component().get_inventory_entries() for p in characters(server)), 'Use fresh empty Play'
+# The starter kit arrives with every survivor: empty the pack and the body first, since this check counts every item.
+def clear_survivor(who):
+    for e in list(who.get_equipment_component().get_equipment_entries()):
+        who.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(who.get_inventory_component().get_inventory_entries()):
+        who.get_inventory_component().remove_item(e.get_editor_property('item_definition'), e.get_editor_property('quantity'))
+for p in characters(server): clear_survivor(p)
+home = owner.get_actor_location()      # the survivor's own start: the fixtures are laid out from it, not from fixed map coordinates
+assert all(not p.get_inventory_component().get_inventory_entries() for p in characters(server)), 'could not empty the starter kit'
 berry = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestAzulBerry')
 toxic = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestToxicBerry')
 wood = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
@@ -33,7 +41,7 @@ for c in controllers: lib.flush_verification_input(c)
 pc.set_inventory_open(False)
 for a in unreal.GameplayStatics.get_all_actors_of_class(server, unreal.EWPickup): a.destroy_actor()
 for w in worlds:
-    for p in characters(w): p.teleport(unreal.Vector(0, 0, 96) if pid(p) == owner_id else unreal.Vector(-500, 500, 96), unreal.Rotator())
+    for p in characters(w): p.teleport(unreal.Vector(home.x, home.y, home.z) if pid(p) == owner_id else unreal.Vector(home.x - 500, home.y + 500, home.z), unreal.Rotator())
 for c in controllers: c.set_control_rotation(unreal.Rotator())
 survival.set_hunger(50); survival.apply_damage(50)
 fixtures = []; steps = []
@@ -44,7 +52,7 @@ def widget(name):
 def step(fn, delay=1.25): steps.append((fn, delay))
 def key(name): assert lib.send_verification_ui_key(pc, name)
 def spawn(count):
-    node = lib.spawn_verification_hand_gatherable(server, unreal.Vector(150, 0, 160), berry, count)
+    node = lib.spawn_verification_hand_gatherable(server, unreal.Vector(home.x + 150, home.y, home.z + 64), berry, count)
     assert node
     node.set_editor_property('gathering_kind', unreal.EWHandGatheringKind.BERRIES); node.force_net_update(); fixtures.append(node)
 def check(label, berries, residue, hunger, health, slots=None):

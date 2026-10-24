@@ -15,10 +15,14 @@ def run_survival_hud_verification():
     authority=next(x for x in unreal.GameplayStatics.get_all_actors_of_class(server,unreal.EWCharacter) if pid(x)==pid(pawn))
     authority_controller=authority.get_controller()
     other=next((x for x in unreal.GameplayStatics.get_all_actors_of_class(server,unreal.EWCharacter) if x!=authority),None)
+    for e in list(other.get_equipment_component().get_equipment_entries()) if other else []: other.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(other.get_inventory_component().get_inventory_entries()) if other else []: other.get_inventory_component().remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))
     s=authority.get_survival_component();inv=authority.get_inventory_component()
     hat=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestHat')
     wood=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
-    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'Use fresh PIE'
+    for e in list(authority.get_equipment_component().get_equipment_entries()): authority.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(inv.get_inventory_entries()): inv.remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))      # the starter kit arrives with every survivor
+    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'could not empty the starter kit'
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
     old_throttle=settings.get_editor_property('bThrottleCPUWhenNotForeground')
     settings.set_editor_property('bThrottleCPUWhenNotForeground',False)

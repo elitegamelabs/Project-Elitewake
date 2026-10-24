@@ -19,6 +19,7 @@ host = unreal.GameplayStatics.get_player_controller(server, 0).get_controlled_pa
 inv = owner.get_inventory_component()
 remote = client.get_controlled_pawn().get_inventory_component()
 recipe = unreal.load_asset('/Game/Elitewake/Crafting/Testing/DA_RecipePrologueRepairKit')
+recipe.set_editor_property('craft_seconds', 0.2)  # crafting takes seconds now; these checks are about what it makes (verify_craft_time_play times it)
 assert recipe
 output = recipe.get_editor_property('output')
 costs = recipe.get_editor_property('ingredients')

@@ -250,3 +250,19 @@ void FEWSavedMove::PrepMoveFor(ACharacter* Character)
     CastChecked<UEWCharacterMovementComponent>(Character->GetCharacterMovement())->bWantsToProne = bSavedWantsToProne;
     CastChecked<AEWCharacter>(Character)->bSprintInputHeld = bSavedSprintInputHeld;
 }
+
+void UEWCharacterMovementComponent::CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration)
+{
+    if (!(IsSwimming() && bFluid && Acceleration.IsNearlyZero()))
+    {
+        Super::CalcVelocity(DeltaTime, Friction, bFluid, BrakingDeceleration);
+        return;
+    }
+    // Idle in the water: braking steadies the swimmer's drift, never the vertical float the water's buoyancy is working on.
+    const FVector Before = Velocity;
+    Super::CalcVelocity(DeltaTime, Friction, bFluid, 0.f);
+    const float FloatZ = Velocity.Z;
+    Velocity = Before;
+    Super::CalcVelocity(DeltaTime, Friction, bFluid, BrakingDeceleration);
+    Velocity.Z = FloatZ;
+}
