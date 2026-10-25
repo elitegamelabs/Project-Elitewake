@@ -40,7 +40,7 @@ C-WORLD40 and C-WILDLIFE40 below are paused until the owner says otherwise.** An
 ### C9. Save and load progression, skills and discoveries — DONE by Claude (2026-10-23; `Elitewake.Save.SurvivorRoundTrip` extended and passing). Open: the grown world edge is not saved or synced to clients
 - **Do:** persist `UEWProgressionComponent` (level, experience, points, stat points, lit stars) and `UEWExplorationComponent` cells in `EWSurvivorSave`; old saves must still load. Round-trip native test.
 
-### C10. Hunger, thirst, food sickness and cooking times — DONE by Claude (2026-10-24; `verify_needs_play`, native `Elitewake.Survival.HungerThirstAndFoodSickness`). Open: nausea and screen distortion while sick (only the notice and the stat effects exist); berries still use the test item (fresh +6.25 hunger, +5% health, not the owner's +6 and 0)
+### C10. Hunger, thirst, food sickness and cooking times — DONE by Claude (2026-10-24; `verify_needs_play`, native `Elitewake.Survival.HungerThirstAndFoodSickness`). Nausea visuals added Oct 25 (grey-green tint and colour fringe on the sick survivor’s own camera, `AEWCharacter::UpdateNauseaLook`, checked in `verify_needs_play`). Open: berries still use the test item (fresh +6.25 hunger, +5% health, not the owner's +6 and 0)
 - **Why:** owner decisions 2 and 8 (100-point needs; hunger empties in about 45 min and thirst in about 25 min; zero hunger or thirst drains health gradually; raw fish 15% and raw meat 25% sickness for 3 min, -30% stamina regen, +50% thirst depletion; cooking 5 to 12 s via `UEWCraftingRecipe::CraftSeconds`).
 - **Done when:** configurable data, a Play check for each rule, and the food table values from the owner's document.
 

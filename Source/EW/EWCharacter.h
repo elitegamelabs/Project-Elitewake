@@ -456,6 +456,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	/** The local screen's nausea, 0 to 1 (for the checks). */
+	UFUNCTION(BlueprintPure, Category="Survival") float GetNausea() const { return Nausea; }
 	/** Applies the local player's persistent exposure adjustment to the survivor cameras. */
 	void ApplyUserBrightness(float ExposureBias);
 
@@ -629,6 +631,9 @@ private:
     TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
     int32 WorkImpactCount = 0;
     float ClimateClock = 0.f;
+    /** The local screen's food-sickness queasiness, 0 to 1: the picture greys and greens and the colours fringe and sway while sick (owner, October 22: nausea). */
+    float Nausea = 0.f;
+    void UpdateNauseaLook(float DeltaSeconds);
     /** Every machine: a footstep each stride (wood on deck, sand, snow in the Winter region) or a stroke while swimming. */
     void UpdateFootsteps(float DeltaSeconds);
     /** The step for the ground under the survivor's feet. */

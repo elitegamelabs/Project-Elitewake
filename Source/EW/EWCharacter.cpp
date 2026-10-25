@@ -376,6 +376,27 @@ UStaticMesh* AEWCharacter::GetHeldMesh() const
     return HeldItem ? HeldItem->GetStaticMesh() : nullptr;
 }
 
+void AEWCharacter::UpdateNauseaLook(float DeltaSeconds)
+{
+	bool bSick = false;
+	if (SurvivalComponent)
+		for (const FEWDebuffNotice& Notice : SurvivalComponent->GetDebuffNotices()) if (Notice.Id == TEXT("FoodSickness")) { bSick = true; break; }
+	const float Target = bSick && !IsDead() ? 1.f : 0.f;
+	if (Nausea == Target) return;
+	Nausea = FMath::FInterpConstantTo(Nausea, Target, DeltaSeconds, 1.f / 2.f);   // two seconds to come on or fade
+	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	const float Wave = .5f + .5f * FMath::Sin(float(Now) * 1.6f);
+	for (UCameraComponent* Camera : {FollowCamera, FirstPersonCamera})
+	{
+		if (!Camera) continue;
+		FPostProcessSettings& Look = Camera->PostProcessSettings;
+		Look.bOverride_ColorSaturation = true;  Look.ColorSaturation = FVector4(1.f - .35f * Nausea, 1.f - .2f * Nausea, 1.f - .35f * Nausea, 1.f);
+		Look.bOverride_ColorGain = true;        Look.ColorGain = FVector4(1.f - .12f * Nausea, 1.f, 1.f - .18f * Nausea, 1.f);
+		Look.bOverride_SceneFringeIntensity = true; Look.SceneFringeIntensity = 4.f * Nausea * (.4f + .6f * Wave);
+		Camera->PostProcessBlendWeight = Nausea;
+	}
+}
+
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -473,6 +494,8 @@ void AEWCharacter::Tick(float DeltaSeconds)
 		if (IsLocallyControlled() && bSwimAscendInputHeld && GetCharacterMovement()->ImmersionDepth() >= .99f)
 			AddMovementInput(FVector::UpVector);
 	}
+
+	if (IsLocallyControlled()) UpdateNauseaLook(DeltaSeconds);
 
 	if (HasAuthority() && SurvivalComponent)
 	{

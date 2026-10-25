@@ -144,6 +144,8 @@ def tick(delta):
             checks.append('Food sickness quickens thirst by half')
         elif phase == 9:
             assert stats.get_food_sickness_left() < 125, 'the sickness did not count down'
+            assert remote.get_nausea() > .2, f'the sick screen shows no queasiness ({remote.get_nausea():.2f})'
+            checks.append('Food sickness greys and fringes their own screen')
             inv.add_item(herb, 1)
             assert inv.consume_food(herb) == unreal.EWFoodUseResult.SUCCESS
         elif phase == 10:
