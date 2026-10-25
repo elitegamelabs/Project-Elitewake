@@ -367,3 +367,9 @@ Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 res
 - What: branch `claude/five-islands-20261022` at `5361cc1` pushed. all 101 Play checks pass, native tests 35/35. Details in `Docs/REPORTS/2026-10-22_Claude_Manager_Log.md` (October 24 update).
 - Open for anyone: PR #8 still needs the owner's Merge.
 - Needs from others: nothing; no locks held.
+
+### 2026-10-25 Claude — status: C10 regression fixed, picker, teleports, tests
+- What: branch `claude/five-islands-20261022` pushed. Hunger/thirst depletion can be paused for checks with `ew.NeedsDepletion 0` (the check runner does this; `verify_needs_play` turns it on). Controller hotbar slot picker (`verify_hotbar_picker_play`). Testing-phase Shift+1..5 region teleport (`verify_region_teleport_play`, compiled out of shipping). C2 done (`verify_animals_stay_home_play`). Nausea look while food sick. Swim braking check. Native tests 39/39 (T29 wildlife rest and cobweb, world edge growth).
+- A full audit sweep of every Play check started 2026-10-25; results go to `Saved/Sweep_Results.csv` and the manager log.
+- Open for anyone: PR #8 still needs the owner's Merge; resource six-view references (2 of 54 folders have a concept sheet, none have six views; Scenario credits needed); compass/map/region direction decision (owner).
+- Needs from others: nothing; no locks held.
