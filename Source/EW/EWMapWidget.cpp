@@ -105,7 +105,7 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
         Content->AddChildToVerticalBox(Scale)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
         MapHint = WidgetTree->ConstructWidget<UTextBlock>();
-        MapHint->SetText(NSLOCTEXT("Elitewake", "MapHint", "M: Close map  |  Drag: pan  |  Wheel / triggers: zoom  |  Right stick: pan"));
+        MapHint->SetText(NSLOCTEXT("Elitewake", "MapHint", "M / Esc / Start: close  |  Drag / right stick: pan  |  Wheel / triggers: zoom"));
         MapHint->SetFont(Font);
         Content->AddChildToVerticalBox(MapHint);
     }

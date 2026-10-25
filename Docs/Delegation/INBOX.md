@@ -29,6 +29,18 @@ Entry format:
 ```
 
 ## Reports
+### 2026-10-25 ChatGPT — VISUAL TEXT DESCRIPTIONS DONE
+- What: Added `Art/TEXT_ONLY_VISUAL_BUILD_GUIDE_FOR_CLAUDE_2026-10-25.md` with written build cues for key existing berry, resource, food, ship, animal, foliage, HUD, title-screen, and workstation references. Added a permanent `AGENTS.md` rule requiring every future visual design to have a detailed linked or adjacent text description, plus an index entry in `Art/README.md`. The rule requires source path, visual construction, proportions, materials, camera/pose, constraints, intended use, actionable modeling notes, provenance, and status; inaccessible or LFS-only images must be labeled without guessing.
+- Commits / branch: pending local commit on `chatgpt/ui-copy-review-20261023`; not pushed, following the owner's prior instruction to ask before publishing.
+- Verified: checked key source references and catalog notes; documentation links and whitespace checks pass. Documentation only; no production assets or runtime behavior changed. This first pass does not describe every catalog image.
+- Needs from Claude or the owner: none to apply the rule; add descriptions for remaining catalog items as they are worked on.
+
+### 2026-10-23 ChatGPT — G-REVIEW PARTIAL
+- What: Reviewed October 22 skill, progression, death, map and Journal copy against current code and owner decisions. Corrected death-bag timing/input copy, map controls, and the test Journal's tree-harvesting and berry-freshness descriptions. The UI source files had recent edits in Claude's `9ff2373`; those changes were read before editing.
+- Commits / branch: source changes in local commit `2568db2` on `chatgpt/ui-copy-review-20261023`; delegation/inbox update pending local commit. Not pushed.
+- Verified: Unreal Editor target build passed (20 actions); `git diff --check` and Journal script syntax passed. Confirmed 20-real-minute berry expiry and toxic inedible result in source/tests; confirmed actual map and respawn inputs. Journal asset regeneration and in-game verification are blocked because the clean worktree contains Git LFS pointer text instead of required `.uasset` payloads; the editor log reports invalid package headers. Did not modify the existing project checkout or the other running editor.
+- Follow-up gaps found: tree harvesting still requires a hatchet despite approved bare-hand harvesting; the current constellation has eight paid skills, while M10 targets ten per constellation and leaves skill definitions TBD. These need implementation/design follow-up, not invented effects in this copy review.
+- Needs from Claude or the owner: restore the needed LFS assets or run Journal generation in a checkout with hydrated assets; then verify the generated asset and in-game copy. No design question blocks the source review.
 
 ### 2026-10-23 Claude - STOP: owner is hard-restarting the PC (all models)
 - **Owner order: every model stop what you are doing now, close any Unreal editor, build or background job you started, delete your `Saved/EditorLock.txt` note, save, commit and push, and write a `HANDOFF` entry here. Do not start new work until the owner says to resume.**
