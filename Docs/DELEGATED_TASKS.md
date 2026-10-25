@@ -483,7 +483,7 @@ only so you know where earlier world, cave and ship work lives.
   change the world scripts; if a test fails, write it up here.
 - **Done when:** `python -m unittest Scripts/Tests/test_world.py` passes and VERIFICATION has a line for it.
 
-### T29. Native tests for the cobweb and wildlife rest (for Codex) — OPEN
+### T29. Native tests for the cobweb and wildlife rest (for Codex) — DONE by Claude (Oct 25, `EWWorldDressingTests.cpp`)
 - **Why:** `AEWCobweb` (`Source/EW/EWCobweb.*`) and `FEWWildlifeRest` (`Source/EW/Wildlife/EWWildlifeRest.*`) are
   covered only by Play checks.
 - **Do:** a new `Source/EW/Tests/EWWorldDressingTests.cpp` (Elitewake filter): a spawned web starts whole, `Tear()`

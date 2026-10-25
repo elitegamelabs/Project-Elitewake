@@ -157,7 +157,7 @@ C-WORLD40 and C-WILDLIFE40 below are paused until the owner says otherwise.** An
 | Task | What | Status |
 |---|---|---|
 | T28 | Python unit tests for `world_layout.py` / `world_terrain.py` | OPEN |
-| T29 | Native tests for the cobweb and wildlife rest | OPEN |
+| T29 | Native tests for the cobweb and wildlife rest | DONE (Oct 25) |
 | T31 | Why the sinking check sometimes cannot open a crate | OPEN |
 | T32 | Directional swimming animations | OPEN |
 | T23 | Native tests for the sound library | OPEN |
