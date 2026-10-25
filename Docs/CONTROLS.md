@@ -26,11 +26,13 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 ## In the menu (inventory screen)
 | Action | Keyboard / mouse | Controller | Status |
 |---|---|---|---|
-| Next / previous section | Tab / Shift+Tab, PageDown / PageUp, click a tab | RB / LT | OK (`verify_menu_sections_play`) |
-| Move selection | Arrows | d-pad | OK |
+| Next / previous section (Inventory, Skills, Company, Tames, Journal; the menu always opens on Inventory) | Tab / Shift+Tab, PageDown / PageUp, click a tab | RB / LT, or tap LB | OK (`verify_menu_sections_play`, `verify_menu_layout_play`) |
+| Move selection (a gold ring marks it; Down past the last item row enters the crafting list, Up returns) | Arrows | d-pad / left stick | OK (`verify_menu_layout_play`) |
+| Company (front-end prototype): pick member / action, next lower panel | Up/Down, Left/Right, X or R | d-pad, A, X | OK (sample data only) |
+| Tames: pick a creature | Up/Down | d-pad | OK (sample data only) |
 | Confirm / craft / unlock star | Enter | A | OK |
 | Equip / use | R | X | OK |
-| Choose a stat for a point | C, then Up/Down, Enter | Left stick click, then d-pad, A | OK (`verify_stats_play`) |
+| Choose a stat for a point | C, then Up/Down, Enter | Left stick click or RT, then d-pad, A | OK (`verify_stats_play`) |
 | Skill tree: move among stars | Arrows or hover | d-pad | OK (`verify_skills_play`) |
 | Journal: next / previous page | Up / Down | d-pad up / down | OK |
 | Close | I / Escape | B | OK |

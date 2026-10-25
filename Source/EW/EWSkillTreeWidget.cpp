@@ -14,6 +14,7 @@
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/SizeBox.h"
+#include "Components/ScaleBox.h"
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
@@ -32,8 +33,10 @@ TSharedRef<SWidget> UEWSkillTreeWidget::RebuildWidget()
         WidgetTree->RootWidget = Row;
         // The night sky with its stars.
         auto* SkyBorder = WidgetTree->ConstructWidget<UBorder>(); SkyBorder->SetBrushColor(FLinearColor(.012f, .02f, .05f, .95f)); SkyBorder->SetPadding(FMargin(8));
-        auto* SkySlot = Row->AddChildToHorizontalBox(SkyBorder); SkySlot->SetPadding(FMargin(0, 12, 12, 0)); SkySlot->SetSize(FSlateChildSize(ESlateSizeRule::Automatic)); SkySlot->SetVerticalAlignment(VAlign_Top);
-        auto* SkySize = WidgetTree->ConstructWidget<USizeBox>(); SkySize->SetWidthOverride(SkyWidth); SkySize->SetHeightOverride(SkyHeight); SkyBorder->SetContent(SkySize);
+        // The sky fills the whole panel under the tabs (owner, October 25): the constellation scales to fit it.
+        auto* SkySlot = Row->AddChildToHorizontalBox(SkyBorder); SkySlot->SetPadding(FMargin(0, 0, 12, 0)); { auto S = FSlateChildSize(ESlateSizeRule::Fill); S.Value = 2.4f; SkySlot->SetSize(S); }
+        auto* SkyScale = WidgetTree->ConstructWidget<UScaleBox>(); SkyScale->SetStretch(EStretch::ScaleToFit); SkyBorder->SetContent(SkyScale);
+        auto* SkySize = WidgetTree->ConstructWidget<USizeBox>(); SkySize->SetWidthOverride(SkyWidth); SkySize->SetHeightOverride(SkyHeight); SkyScale->SetContent(SkySize);
         Sky = WidgetTree->ConstructWidget<UCanvasPanel>(); SkySize->SetContent(Sky);
         const TArray<FEWSkillNode>& Nodes = FEWSkillTree::Nodes();
         // Lines first, so the stars sit on top of them.
@@ -74,7 +77,7 @@ TSharedRef<SWidget> UEWSkillTreeWidget::RebuildWidget()
         }
         // The panel for the star under the mouse or picked with the arrows.
         auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>(); DetailBorder->SetBrushColor(FLinearColor(.035f, .045f, .055f, .95f)); DetailBorder->SetPadding(FMargin(16));
-        auto* DetailSlot = Row->AddChildToHorizontalBox(DetailBorder); DetailSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); DetailSlot->SetPadding(FMargin(0, 12, 12, 0));
+        auto* DetailSlot = Row->AddChildToHorizontalBox(DetailBorder); DetailSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); DetailSlot->SetPadding(FMargin(0));
         auto* Column = WidgetTree->ConstructWidget<UVerticalBox>(); DetailBorder->SetContent(Column);
         auto Text = [this, Column](int32 Size, const FLinearColor& Colour, float Below)
         {
@@ -163,7 +166,7 @@ void UEWSkillTreeWidget::Refresh()
         const bool bLit = Progress->IsSkillUnlocked(Nodes[i].Id), bReady = Progress->CanUnlockSkill(Nodes[i].Id);
         const FLinearColor Glow = bLit ? FLinearColor(1.f, .82f, .3f) : bReady ? FLinearColor(.75f, .9f, 1.f) : FLinearColor(.28f, .32f, .4f);
         StarGlyphs[i]->SetColorAndOpacity(FSlateColor(Glow));
-        Stars[i]->SetBrushColor(i == Selected ? FLinearColor(.5f, .6f, .8f, .35f) : FLinearColor(0.f, 0.f, 0.f, 0.f));
+        Stars[i]->SetBrushColor(i == Selected ? FLinearColor(1.f, .85f, .35f, .45f) : FLinearColor(0.f, 0.f, 0.f, 0.f));
     }
     for (int32 i = 0; i < Lines.Num(); ++i)
     {

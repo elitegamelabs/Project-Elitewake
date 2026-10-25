@@ -373,3 +373,8 @@ Published delivery 6966de2: 77 additional PNG references (88 cumulative), 53 res
 - A full audit sweep of every Play check started 2026-10-25; results go to `Saved/Sweep_Results.csv` and the manager log.
 - Open for anyone: PR #8 still needs the owner's Merge; resource six-view references (2 of 54 folders have a concept sheet, none have six views; Scenario credits needed); compass/map/region direction decision (owner).
 - Needs from others: nothing; no locks held.
+
+### 2026-10-25 Claude — status: new menu layout
+- What: pause menu has Options as its own tab; inventory menu rebuilt (tabs Inventory, Skills, Company, Tames, Journal; inventory + crafting left, character panel centre, viewer right; Building/Crafting tabs removed; controller cursor ring). Company is a front-end prototype and Tames a sample list; both use sample data with no server effect. Trees and rocks show no interact prompt.
+- Verified: `verify_menu_layout_play` (new) and the updated menu checks pass; native tests 40/40.
+- Needs from others: nothing; no locks held.

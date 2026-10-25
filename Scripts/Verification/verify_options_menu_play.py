@@ -84,7 +84,7 @@ def menu_up():
     assert paused(), 'the world did not pause in single player'
     assert c.get_editor_property('bShowMouseCursor'), 'no mouse cursor'
     assert menu.is_save_shown(), 'SAVE GAME is missing in single player'
-    assert menu.get_selected() == 0
+    assert menu.get_tab() == 0 and menu.get_selected() == 3, 'the menu does not open on the PAUSE tab at SAVE GAME'
     if 'initial_user_settings' not in state['memo']:
         state['memo']['initial_user_settings'] = (
             c.get_user_brightness(), c.get_mouse_look_sensitivity(), c.get_controller_look_sensitivity())
@@ -94,6 +94,8 @@ def menu_up():
 def adjust_settings():
     menu = pc().get_options_widget()
     before = (pc().get_user_brightness(), pc().get_mouse_look_sensitivity(), pc().get_controller_look_sensitivity())
+    assert lib.send_verification_ui_key(pc(), 'Gamepad_RightShoulder')
+    assert menu.get_tab() == 1 and menu.get_selected() == 0, 'RB did not open the OPTIONS tab'
     assert lib.send_verification_ui_key(pc(), 'Right')
     after_brightness = pc().get_user_brightness()
     assert after_brightness > before[0], f'brightness did not apply live: {before[0]} -> {after_brightness}'
@@ -105,8 +107,8 @@ def adjust_settings():
     assert lib.send_verification_ui_key(pc(), 'Right')
     after_controller = pc().get_controller_look_sensitivity()
     assert after_controller > before[2], f'controller sensitivity did not apply live: {before[2]} -> {after_controller}'
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert menu.get_selected() == 3, 'Down did not select SAVE GAME after settings'
+    assert lib.send_verification_ui_key(pc(), 'Tab')
+    assert menu.get_tab() == 0 and menu.get_selected() == 3, 'Tab did not return to SAVE GAME on the PAUSE tab'
     state['memo']['settings'] = (after_brightness, after_mouse, after_controller)
     checks.append('Brightness and separate look sensitivities adjust live; settings write to the user settings file')
 
@@ -214,8 +216,7 @@ def to_main_menu():
 def main_menu_chosen():
     if not pc().is_options_menu_open() or time.monotonic() - state['memo']['t'] < .3:
         return False
-    for _ in range(4):
-        assert lib.send_verification_ui_key(pc(), 'Down')
+    assert lib.send_verification_ui_key(pc(), 'Down')
     assert pc().get_options_widget().get_selected() == 4, 'Down navigation did not move to MAIN MENU'
     assert lib.send_verification_ui_key(pc(), 'Enter')
     return True
@@ -254,7 +255,7 @@ STEPS = [
     ('Escape again returns to the game and the world runs', ui_key('Escape'), menu_gone, 4),
     ('Hurt, hungry and thirsty with stone, the Hatchet in hand and the Pickaxe on the hotbar, Escape', prepare, prepared, 6),
     ('', lambda: None, menu_up, 4),
-    ('Change brightness/mouse/controller settings and move to SAVE GAME', adjust_settings, lambda: pc().get_options_widget().get_selected() == 3, 4),
+    ('RB opens the OPTIONS tab; change brightness/mouse/controller settings; Tab returns to SAVE GAME', adjust_settings, lambda: pc().get_options_widget().get_selected() == 3, 4),
     ('Enter on SAVE GAME saves the survivor as they are; the menu stays up', save_game, saved, 4),
     ('The save, put back on a survivor who has since changed, restores them exactly, tools not doubled', restore, restored, 4),
     ('Escape, Down, Enter on MAIN MENU', to_main_menu, main_menu_chosen, 4),

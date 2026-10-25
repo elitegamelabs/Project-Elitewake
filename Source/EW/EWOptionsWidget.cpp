@@ -62,12 +62,32 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             Body->AddChildToVerticalBox(Label)->SetPadding(FMargin(0, 0, 0, 10));
             return Label;
         };
-        Text(NSLOCTEXT("Elitewake", "OptionsTitle", "OPTIONS"), 34, FLinearColor(.93f, .86f, .7f));
+        Text(NSLOCTEXT("Elitewake", "OptionsTitle", "PAUSED"), 34, FLinearColor(.93f, .86f, .7f));
+        auto* TabRow = WidgetTree->ConstructWidget<UHorizontalBox>();
+        Body->AddChildToVerticalBox(TabRow)->SetPadding(FMargin(0, 0, 0, 14));
+        for (int32 Index = 0; Index < 2; ++Index)
+        {
+            auto* TabButton = WidgetTree->ConstructWidget<UButton>();
+            auto* TabLabel = WidgetTree->ConstructWidget<UTextBlock>();
+            TabLabel->SetText(Index == 0 ? NSLOCTEXT("Elitewake", "PauseTab", "PAUSE") : NSLOCTEXT("Elitewake", "OptionsTab", "OPTIONS"));
+            TabLabel->SetJustification(ETextJustify::Center);
+            auto TabFont = TabLabel->GetFont(); TabFont.Size = 16; TabFont.LetterSpacing = 160; TabLabel->SetFont(TabFont);
+            TabButton->SetContent(TabLabel);
+            if (Index == 0) TabButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::ShowPauseTab);
+            else TabButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::ShowOptionsTab);
+            auto* TabSlot = TabRow->AddChildToHorizontalBox(TabButton);
+            TabSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); TabSlot->SetPadding(FMargin(0, 0, Index == 0 ? 4 : 0, 0));
+            TabButtons.Add(TabButton);
+        }
+        OptionsPage = WidgetTree->ConstructWidget<UVerticalBox>();
+        Body->AddChildToVerticalBox(OptionsPage);
+        PausePage = WidgetTree->ConstructWidget<UVerticalBox>();
+        Body->AddChildToVerticalBox(PausePage);
 
         auto AddSetting = [&](const FText& Name, float InitialValue) -> USlider*
         {
             auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
-            Body->AddChildToVerticalBox(Row)->SetPadding(FMargin(4, 4));
+            OptionsPage->AddChildToVerticalBox(Row)->SetPadding(FMargin(4, 4));
             auto* NameText = WidgetTree->ConstructWidget<UTextBlock>();
             NameText->SetText(Name);
             auto Font = NameText->GetFont(); Font.Size = 16; NameText->SetFont(Font);
@@ -106,7 +126,7 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             Label->SetText(Value); Label->SetJustification(ETextJustify::Center);
             auto Font = Label->GetFont(); Font.Size = 19; Font.LetterSpacing = 120; Label->SetFont(Font);
             Control->SetContent(Label);
-            Body->AddChildToVerticalBox(Control)->SetPadding(FMargin(0, 5));
+            PausePage->AddChildToVerticalBox(Control)->SetPadding(FMargin(0, 5));
             return Control;
         };
         SaveButton = Button(NSLOCTEXT("Elitewake", "OptionsSave", "SAVE GAME"));
@@ -116,27 +136,38 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
         MenuButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::MainMenu);
         MenuButton->OnHovered.AddDynamic(this, &UEWOptionsWidget::HoverMenu);
         Status = Text(FText::GetEmpty(), 13, FLinearColor(.75f, .82f, .84f));
-        Text(NSLOCTEXT("Elitewake", "OptionsHint", "Use Up/Down to select · Left/Right to adjust · Enter to choose"), 11, FLinearColor(.5f, .58f, .6f));
+        Text(NSLOCTEXT("Elitewake", "OptionsHint", "Tab / RB / LB switch tabs · Up/Down select · Left/Right adjust · Enter choose"), 11, FLinearColor(.5f, .58f, .6f));
 
         if (!IsSaveShown())
         {
             SaveButton->SetVisibility(ESlateVisibility::Collapsed);
-            Selected = 0;
+            Selected = 4;
             Status->SetText(NSLOCTEXT("Elitewake", "OptionsServerSaves", "Your host keeps multiplayer progress. Leaving for the main menu ends this session."));
         }
         Status->SetAutoWrapText(true);
+        SetTab(0);
     }
     RefreshSettingLabels();
     return Super::RebuildWidget();
 }
 
+void UEWOptionsWidget::SetTab(int32 NewTab)
+{
+    Tab = FMath::Clamp(NewTab, 0, 1);
+    Selected = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
+    if (PausePage) PausePage->SetVisibility(Tab == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    if (OptionsPage) OptionsPage->SetVisibility(Tab == 1 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    for (int32 Index = 0; Index < TabButtons.Num(); ++Index)
+        TabButtons[Index]->SetBackgroundColor(Index == Tab ? FLinearColor(.5f, .52f, .55f) : FLinearColor(.055f, .065f, .075f));
+}
+
 void UEWOptionsWidget::NativeTick(const FGeometry& Geometry, float Delta)
 {
     Super::NativeTick(Geometry, Delta);
-    if (SaveButton) SaveButton->SetBackgroundColor(Selected == 3 ? Lit : Idle);
-    if (MenuButton) MenuButton->SetBackgroundColor(Selected == 4 ? Lit : Idle);
+    if (SaveButton) SaveButton->SetBackgroundColor(Tab == 0 && Selected == 3 ? Lit : Idle);
+    if (MenuButton) MenuButton->SetBackgroundColor(Tab == 0 && Selected == 4 ? Lit : Idle);
     for (int32 Index = 0; Index < SettingLabels.Num(); ++Index)
-        SettingLabels[Index]->SetColorAndOpacity(Selected == Index ? FLinearColor(.25f,.88f,1.f) : FLinearColor::White);
+        SettingLabels[Index]->SetColorAndOpacity(Tab == 1 && Selected == Index ? FLinearColor(.25f,.88f,1.f) : FLinearColor::White);
 }
 
 void UEWOptionsWidget::RefreshSettingLabels()
@@ -186,14 +217,19 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
         if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetOptionsMenuOpen(false);
         return FReply::Handled();
     }
+    if (Key == EKeys::Tab || Key == EKeys::PageDown || Key == EKeys::PageUp || Key == EKeys::Gamepad_RightShoulder || Key == EKeys::Gamepad_LeftShoulder || Key == EKeys::Gamepad_LeftTrigger)
+    {
+        if (!Event.IsRepeat()) SetTab(1 - Tab);
+        return FReply::Handled();
+    }
     const bool bUp = Key == EKeys::Up || Key == EKeys::W || Key == EKeys::Gamepad_DPad_Up || Key == EKeys::Gamepad_LeftStick_Up;
     const bool bDown = Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down;
     if (bUp || bDown)
     {
-        const int32 MaxSelection = IsSaveShown() ? 4 : 4;
-        int32 Next = FMath::Clamp(Selected + (bUp ? -1 : 1), 0, MaxSelection);
-        if (!IsSaveShown() && Next == 3) Next = bUp ? 2 : 4;
-        Selected = Next;
+        // The PAUSE tab holds SAVE GAME (3) and MAIN MENU (4); the OPTIONS tab the three sliders (0 to 2).
+        const int32 First = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
+        const int32 Last = Tab == 1 ? 2 : 4;
+        Selected = FMath::Clamp(Selected + (bUp ? -1 : 1), First, Last);
         return FReply::Handled();
     }
     if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left || Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right)

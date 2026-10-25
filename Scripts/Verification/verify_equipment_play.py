@@ -64,8 +64,8 @@ def run_equipment_verification():
             assert other.get_inventory_component().get_item_count(alternate)==1 and not other.get_equipment_component().get_equipment_entries(),label+': foreign pawn changed'
     def select(index):
         widget=ui();assert widget and widget.has_user_focus(controller)
-        while widget.get_selected_index()<index:key('Down')
-        while widget.get_selected_index()>index:key('Up')
+        while widget.get_selected_index()<index:key('Right')
+        while widget.get_selected_index()>index:key('Left')
         key('Enter')
     def client_reject():
         if not controller.has_authority():

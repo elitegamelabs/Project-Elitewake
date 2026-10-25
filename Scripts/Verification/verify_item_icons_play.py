@@ -33,7 +33,7 @@ def tick(delta):
         elif phase==1:
             assert menu().get_displayed_inventory_icon(material)==texture
             checks.append('Inventory renders the assigned item texture')
-            assert lib.send_verification_ui_key(client,'Tab')
+            menu().focus_crafting()
         elif phase==2:
             assert menu().get_displayed_material_icon(material)==texture
             checks.append('Crafting material uses identical authored texture')
@@ -41,7 +41,7 @@ def tick(delta):
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==3:
             assert inv.get_item_count(output)==1 and inv.get_item_count(material)==0
-            assert lib.send_verification_ui_key(client,'PageUp')
+            menu().focus_inventory()
         elif phase==4:
             assert menu().get_displayed_inventory_icon(output)==texture
             assert menu().get_displayed_inventory_icon(material) is None

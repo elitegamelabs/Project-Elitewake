@@ -154,7 +154,7 @@ def run_hotbar_verification():
         panel=ui();assert panel,'Y quick-assign needs the inventory open'
         for _ in range(32):
             if panel.get_selected_item_definition()==item:return
-            key('Down')
+            key('Right')
         assert panel.get_selected_item_definition()==item,'Could not select quick-assign item'
     index=0;next_time=unreal.GameplayStatics.get_time_seconds(world)+1;handle=None
     def finish():

@@ -5,14 +5,18 @@
 class UButton;
 class UTextBlock;
 class USlider;
+class UVerticalBox;
 
-/** Escape's in-game OPTIONS menu: SAVE GAME (single player only) and MAIN MENU (back to the ELITEWAKE title). */
+/** Escape's pause menu, in two tabs (owner, October 25): PAUSE (SAVE GAME in single player, MAIN MENU) and OPTIONS (brightness and the look sensitivities). Tab, RB/LB, PageUp/PageDown or a click switch tabs. */
 UCLASS()
 class EW_API UEWOptionsWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintPure, Category="Options") int32 GetSelected() const { return Selected; }
+    /** 0 = PAUSE, 1 = OPTIONS. */
+    UFUNCTION(BlueprintPure, Category="Options") int32 GetTab() const { return Tab; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetTab(int32 NewTab);
     UFUNCTION(BlueprintPure, Category="Options") bool IsSaveShown() const;
     UFUNCTION(BlueprintPure, Category="Options") FText GetStatus() const;
 protected:
@@ -22,6 +26,8 @@ protected:
 private:
     UFUNCTION() void SaveGame();
     UFUNCTION() void MainMenu();
+    UFUNCTION() void ShowPauseTab() { SetTab(0); }
+    UFUNCTION() void ShowOptionsTab() { SetTab(1); }
     UFUNCTION() void HoverSave() { Selected = 3; }
     UFUNCTION() void HoverMenu() { Selected = 4; }
     UFUNCTION() void OnBrightnessChanged(float Value);
@@ -37,5 +43,9 @@ private:
     UPROPERTY(Transient) TObjectPtr<USlider> ControllerSensitivitySlider;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingLabels;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingValues;
-    int32 Selected = 0;
+    UPROPERTY(Transient) TArray<TObjectPtr<UButton>> TabButtons;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> PausePage;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> OptionsPage;
+    int32 Selected = 3;
+    int32 Tab = 0;
 };

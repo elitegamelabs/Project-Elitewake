@@ -63,7 +63,7 @@ def tick(delta):
         if phase == 0:
             assert remote.get_available_recipes() == [recipe]
             client.set_inventory_open(True)
-            assert lib.send_verification_ui_key(client, 'Tab')
+            menu().focus_crafting()
         elif phase == 1:
             counts(19, 19, 0)
             assert not menu().is_craft_action_enabled()

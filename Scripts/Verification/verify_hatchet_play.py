@@ -88,12 +88,12 @@ def compete():
 def compete_requests():
     for c,w in zip(controllers,worlds): assert lib.send_verification_attack(c,peer(w))
 
-step(spawn); step(request); step(lambda:check('Bare hands gated',0,0,12,4,'Equip a hatchet'))
+step(spawn); step(request); step(lambda:check('Bare hands gated',0,0,12,4,''))
 step(lambda:inventory.add_item(hatchet,1)); step(request); step(lambda:check('Inventory-only hatchet rejected',0,0,12,4))
-step(equip); step(lambda:check('Equipped hatchet enables Attack hint',0,0,12,4,'Left Mouse: Chop tree'))
+step(equip); step(lambda:check('Equipped hatchet enables Attack hint',0,0,12,4,''))
 step(lambda:tap('E')); step(lambda:check('E cannot harvest',0,0,12,4))
 step(lambda:tap('LeftMouseButton')); step(lambda:check('Mouse Attack grants wood and thatch',3,1,9,3))
-step(lambda:tap('Gamepad_RightTrigger')); step(lambda:check('RT Attack and device hint',6,2,6,2,'RT: Chop tree'))
+step(lambda:tap('Gamepad_RightTrigger')); step(lambda:check('RT Attack and device hint',6,2,6,2,''))
 step(request,.05); step(request,1.3); step(lambda:check('Rapid duplicate request rejected',9,3,3,1))
 step(lambda:tap('I')); step(request); step(lambda:check('Menu blocks forged Attack',9,3,3,1,'')); step(lambda:tap('I')); step(lambda:turn(0))
 step(lambda:turn(90)); step(request); step(lambda:check('Aim rejects Attack',9,3,3,1,'')); step(lambda:turn(0))

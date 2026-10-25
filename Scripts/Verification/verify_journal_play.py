@@ -44,7 +44,7 @@ def tick(delta):
         elif step == 1:
             m = menu()
             assert m, 'the menu did not open'
-            m.open_section(6)
+            m.open_section(4)
         elif step == 2:
             journal = menu().get_journal_panel()
             assert journal and journal.is_visible(), 'the Journal panel is not showing'
