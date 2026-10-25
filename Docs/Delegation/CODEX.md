@@ -44,7 +44,7 @@ C-WORLD40 and C-WILDLIFE40 below are paused until the owner says otherwise.** An
 - **Why:** owner decisions 2 and 8 (100-point needs; hunger empties in about 45 min and thirst in about 25 min; zero hunger or thirst drains health gradually; raw fish 15% and raw meat 25% sickness for 3 min, -30% stamina regen, +50% thirst depletion; cooking 5 to 12 s via `UEWCraftingRecipe::CraftSeconds`).
 - **Done when:** configurable data, a Play check for each rule, and the food table values from the owner's document.
 
-### C11. Edge-of-the-world teleports that move outward as the map grows — DONE by Claude (owner chose wrap-around, 2026-10-22; `verify_world_edge_play`). Open follow-ups: sync the grown edge to clients and save it (C9)
+### C11. Edge-of-the-world teleports that move outward as the map grows — DONE by Claude (owner chose wrap-around, 2026-10-22; `verify_world_edge_play`). Follow-up closed Oct 25: the edge lives on the server only (game mode), so clients need no copy; it is rebuilt from the saved explored square on load (`GrowToCover`), native test `Elitewake.World.EdgeGrowsAndWraps`
 - **Owner, October 22:** "I want the teleports on the edges of the map to expand outwards as you add to the map." Working interpretation (reversible): the world square the map covers (`UEWExplorationComponent` bounds) has an edge;
   a survivor or ship that reaches the edge is teleported to the opposite side (or turned back; the owner chooses), and the edge moves outward as exploration reaches it. Claude may implement this himself;
   check the inbox first. Ask the owner which behaviour (wrap or turn back) when you reach that choice.

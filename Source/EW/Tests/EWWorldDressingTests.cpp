@@ -1,5 +1,6 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "EWCobweb.h"
+#include "EWExplorationComponent.h"
 #include "Wildlife/EWWildlifeRest.h"
 #include "EWCharacter.h"
 #include "GameFramework/PlayerController.h"
@@ -66,5 +67,27 @@ bool FEWCobwebTest::RunTest(const FString& Parameters)
     Web->Tick(AEWCobweb::RegrowSeconds);
     TestFalse(TEXT("Spun again after ten minutes"),Web->IsTorn());
     GEngine->DestroyWorldContext(World); World->DestroyWorld(false); return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWWorldEdgeGrowthTest, "Elitewake.World.EdgeGrowsAndWraps",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWWorldEdgeGrowthTest::RunTest(const FString& Parameters)
+{
+    auto* Edge=NewObject<UEWExplorationComponent>(GetTransientPackage());
+    Edge->SetBounds(FVector2D(-1000.f,-1000.f),2000.f);
+    TestEqual(TEXT("Starts at its set size"),Edge->GetBoundsSize(),2000.f);
+    Edge->GrowToCover(1000.f);
+    TestEqual(TEXT("Already wide enough: unchanged"),Edge->GetBoundsSize(),2000.f);
+    Edge->GrowToCover(5000.f);
+    TestTrue(TEXT("Grows to cover a wider explored square"),Edge->GetBoundsSize()>=5000.f*.999f);
+    const float Size=Edge->GetBoundsSize(); const FVector2D Min=Edge->GetBoundsMin();
+    TestTrue(TEXT("Grows by steps, centred, not past what it needs by a whole step"),Size<5000.f*Edge->ExpandFactor*1.01f);
+    TestTrue(TEXT("Centred: the old square stays inside"),Min.X<=-1000.f && Min.X+Size>=1000.f);
+    const FVector Past(Min.X+Size+10.f,0.f,50.f);
+    const FVector Wrapped=Edge->WrapLocation(Past);
+    TestTrue(TEXT("Past the east edge comes out on the west"),FMath::IsNearlyEqual(Wrapped.X,Min.X+10.f,.01f));
+    TestTrue(TEXT("Height is kept"),FMath::IsNearlyEqual(Wrapped.Z,50.0));
+    const FVector Inside(0.f,0.f,0.f);
+    TestTrue(TEXT("Inside is unchanged"),Edge->WrapLocation(Inside).Equals(Inside));
+    return true;
 }
 #endif
