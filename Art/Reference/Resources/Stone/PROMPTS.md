@@ -15,3 +15,9 @@ One small isolated harvested stone material sample, matching existing approved s
 
 ## Production check
 Inspect against the selected source specimen, not six independent variants. Flat/transparent material views require the carrier/sample convention stated above. No environment textures or scenery composition. All counts, IDs and harvesting behavior remain separate code/data work.
+
+## Pilot sheet (Claude, 2026-10-25) — proposal only, not an approved reference
+- File: `SixView-Sheet-v1.png` (2400x1600, one 3x2 sheet). Model `model_openai-gpt-image-2-5-flare`, quality high, 2 CU, Scenario asset `asset_Q7Pby6optQ3VK5ZnF7NUkMX2`. Prompt: the shared identity above plus "six strict orthographic views of the SAME stone in a 3x2 grid: front, back, left, right, top, underside".
+- What it shows: six photoreal views of rough gray granite-like stone, speckled dark gray and pale grain with tan staining, chipped edges, a few hairline cracks, on mid-gray ground. Surface quality is good for a material reference.
+- Defects: the six cells are NOT one exact stone seen from six sides. Outlines differ per cell (blocky, rounded, tall and narrow), and the views are three-quarter, not orthographic. Do not use it as a modeling turnaround. Use only as a surface/colour reference.
+- Status: concept proposal; not imported, no gameplay or icon change.
