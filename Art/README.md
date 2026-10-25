@@ -4,6 +4,12 @@ Original source images for the team and Claude. The catalog distinguishes refere
 
 [Machine-readable catalog](CATALOG.json) includes dimensions, alpha ranges, hashes, classifications, atlas names and row/column UV regions. It also lists selected generated Unreal folders with draft status and asset counts. Adjacent JSON files preserve generation prompts. Run `python Scripts/Art/build_art_catalog.py` from the repository to rebuild it.
 
+## Text-only design references
+
+Every new visual design must include the detailed text description required by [AGENTS.md](../AGENTS.md), so the asset remains actionable when the image cannot be viewed.
+
+- [Text-only visual build guide for Claude](TEXT_ONLY_VISUAL_BUILD_GUIDE_FOR_CLAUDE_2026-10-25.md): detailed written descriptions of key berry, resource, food, ship, animal, and foliage references for workflows where images cannot be viewed.
+
 ## Start here
 
 - [Latest owner decisions](../Docs/WORLD_STRUCTURE_OWNER_DECISIONS_2026-10-14.md)

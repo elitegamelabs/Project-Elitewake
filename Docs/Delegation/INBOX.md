@@ -29,6 +29,12 @@ Entry format:
 ```
 
 ## Reports
+### 2026-10-25 ChatGPT — VISUAL TEXT DESCRIPTIONS DONE
+- What: Added `Art/TEXT_ONLY_VISUAL_BUILD_GUIDE_FOR_CLAUDE_2026-10-25.md` with written build cues for key existing berry, resource, food, ship, animal, foliage, HUD, title-screen, and workstation references. Added a permanent `AGENTS.md` rule requiring every future visual design to have a detailed linked or adjacent text description, plus an index entry in `Art/README.md`. The rule requires source path, visual construction, proportions, materials, camera/pose, constraints, intended use, actionable modeling notes, provenance, and status; inaccessible or LFS-only images must be labeled without guessing.
+- Commits / branch: pending local commit on `chatgpt/ui-copy-review-20261023`; not pushed, following the owner's prior instruction to ask before publishing.
+- Verified: checked key source references and catalog notes; documentation links and whitespace checks pass. Documentation only; no production assets or runtime behavior changed. This first pass does not describe every catalog image.
+- Needs from Claude or the owner: none to apply the rule; add descriptions for remaining catalog items as they are worked on.
+
 ### 2026-10-23 ChatGPT — G-REVIEW PARTIAL
 - What: Reviewed October 22 skill, progression, death, map and Journal copy against current code and owner decisions. Corrected death-bag timing/input copy, map controls, and the test Journal's tree-harvesting and berry-freshness descriptions. The UI source files had recent edits in Claude's `9ff2373`; those changes were read before editing.
 - Commits / branch: source changes in local commit `2568db2` on `chatgpt/ui-copy-review-20261023`; delegation/inbox update pending local commit. Not pushed.
