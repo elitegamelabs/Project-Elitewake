@@ -47,7 +47,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Skills") bool IsUnlockEnabled() const;
     UFUNCTION(BlueprintCallable, Category="Skills") void SelectNode(int32 Index);
     /** Picks the nearest star in that direction (screen directions: right +X, down +Y). */
-    UFUNCTION(BlueprintCallable, Category="Skills") void MoveSelection(FVector2D Direction);
+    UFUNCTION(BlueprintCallable, Category="Skills") bool MoveSelection(FVector2D Direction);
     UFUNCTION(BlueprintCallable, Category="Skills") bool UnlockSelected();
 private:
     UFUNCTION() void StarClicked(int32 Index) { SelectNode(Index); }

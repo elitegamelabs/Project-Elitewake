@@ -73,6 +73,16 @@ def s3():
     shot('2_skills')
 
 
+def s3t():
+    m = menu()
+    for _ in range(12):                           # Up through the stars to the top, then on to the tab bar
+        if m.is_tab_focused():
+            break
+        key('Up')
+    assert m.is_tab_focused() and m.get_tab_cursor() == 1, 'Up from the top of Skills did not reach the tab bar'
+    checks.append('Skills: Up past the top star reaches the tab bar')
+
+
 def s3b():
     menu().open_section(2)
 
@@ -238,7 +248,7 @@ def s12():
     finish()
 
 
-STEPS = [(s1, 1.5), (s2, 1.2), (s2b, 1.2), (s3, 1.2), (s3b, 1.2), (s4, 1.2), (s4b, 1.2), (s5, 1.5), (s6, 1.0), (s7, 1.5), (s8, 0.5), (s9, 1.2), (s10, 0.8), (s11, 1.2), (s11b, 1.2), (s11c, 1.2), (s11d, 1.2), (s12, 0.5)]
+STEPS = [(s1, 1.5), (s2, 1.2), (s2b, 1.2), (s3, 1.2), (s3t, 0.5), (s3b, 1.2), (s4, 1.2), (s4b, 1.2), (s5, 1.5), (s6, 1.0), (s7, 1.5), (s8, 0.5), (s9, 1.2), (s10, 0.8), (s11, 1.2), (s11b, 1.2), (s11c, 1.2), (s11d, 1.2), (s12, 0.5)]
 
 
 def tick(delta):

@@ -1128,7 +1128,7 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
         // Skills, Company, Tames and Journal have no item list: each takes the arrows or d-pad its own way, and the rest of the keys only close the menu.
         if (SelectedSection==1 && SkillsPanel)
         {
-            if (bUpKey) SkillsPanel->MoveSelection(FVector2D(0, -1));
+            if (bUpKey) { if (!SkillsPanel->MoveSelection(FVector2D(0, -1))) { SetTabFocus(true); return FReply::Handled(); } }
             else if (bDownKey) SkillsPanel->MoveSelection(FVector2D(0, 1));
             else if (bLeftKey) SkillsPanel->MoveSelection(FVector2D(-1, 0));
             else if (bRightKey) SkillsPanel->MoveSelection(FVector2D(1, 0));
@@ -1286,7 +1286,7 @@ void UEWInventoryWidget::NavigateStep(int32 Dx, int32 Dy)
         if (HotbarPick != INDEX_NONE) { const int32 Count = UEWHotbarComponent::SlotCount; SetHotbarPick((HotbarPick + ((Dx + Dy) > 0 ? 1 : Count - 1)) % Count); }
         else MoveCursor(Dx, Dy);
         break;
-    case 1: if (SkillsPanel) SkillsPanel->MoveSelection(FVector2D(Dx, Dy)); break;
+    case 1: if (SkillsPanel && !SkillsPanel->MoveSelection(FVector2D(Dx, Dy)) && Dy < 0 && !Dx) SetTabFocus(true); break;   // nothing further up: on to the tab bar
     case 2:
         if (CompanyPanel)
         {

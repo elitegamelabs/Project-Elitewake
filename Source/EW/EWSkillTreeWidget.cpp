@@ -118,10 +118,10 @@ void UEWSkillTreeWidget::SelectNode(int32 Index)
     Refresh();
 }
 
-void UEWSkillTreeWidget::MoveSelection(FVector2D Direction)
+bool UEWSkillTreeWidget::MoveSelection(FVector2D Direction)
 {
     const TArray<FEWSkillNode>& Nodes = FEWSkillTree::Nodes();
-    if (!Nodes.IsValidIndex(Selected) || Direction.IsNearlyZero()) return;
+    if (!Nodes.IsValidIndex(Selected) || Direction.IsNearlyZero()) return false;
     Direction.Normalize();
     int32 Best = INDEX_NONE; float BestScore = TNumericLimits<float>::Max();
     for (int32 i = 0; i < Nodes.Num(); ++i)
@@ -135,7 +135,9 @@ void UEWSkillTreeWidget::MoveSelection(FVector2D Direction)
         const float Score = Distance * (2.f - Along);        // near and straight on wins
         if (Score < BestScore) { BestScore = Score; Best = i; }
     }
-    if (Best != INDEX_NONE) SelectNode(Best);
+    if (Best == INDEX_NONE) return false;
+    SelectNode(Best);
+    return true;
 }
 
 bool UEWSkillTreeWidget::UnlockSelected()
