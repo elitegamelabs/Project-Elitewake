@@ -3,7 +3,7 @@
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the animals from
 Scripts/Setup/build_animals.py. Run unattended with run_play_check.py.
 
-  1. The client has every animal the server has, of all six kinds, on the island and the second island, each
+  1. The client has every animal the server has, of all ten kinds, on the island and the second island, each
      standing on the ground.
   2. Left alone they wander: several walk off from where they stood; on the client their legs move with them (the
      stride advances while the copy walks) and each copy near the survivor stays close to the server's.
@@ -41,7 +41,7 @@ animals = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unre
 copies = {a.get_name(): a for a in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWAnimal)}
 raw_meat = unreal.load_asset('/Game/Elitewake/Items/Food/DA_RawMeat')
 BEACH = unreal.Vector(150, 0, 150)
-KINDS = {'American Alligator', 'Flamingo', 'Brown Pelican', 'Cottonmouth', 'Tortoise', 'Squirrel Monkey'}
+KINDS = {'American Alligator', 'Flamingo', 'Brown Pelican', 'Cottonmouth', 'Tortoise', 'Squirrel Monkey', 'Black Bear', 'Lion', 'Giant Crocodile', 'Elephant'}
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -283,7 +283,7 @@ def harvested():
 
 
 STEPS = [
-    ('The client has every animal the server has, all six kinds, across the islands of the world, each standing on the ground',
+    ('The client has every animal the server has, all ten kinds, across the islands of the world, each standing on the ground',
      begin_count, all_present, 4),
     ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', to_animals, wandered, 20),
     ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),

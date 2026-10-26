@@ -375,6 +375,124 @@ def squirrel_monkey():
     return b
 
 
+def quadruped(b, fur, spec):
+    """A four-legged body from one spec (sizes in cm): the torso loft, then a leg and flat paw at each corner."""
+    path, radii = stations(spec['torso'], 4)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: fur(q, n), BODY, lambda q, k: 0.0, 22)
+    hip, knee = spec['hip_z'], spec['knee_z']
+    for x, y, part in spec['legs']:
+        sx = spec['spread'] * y
+        bend = spec['bend'] * (1 if x > 0 else -1)
+        limb(b, [(x, sx, hip), (x + bend, sx, knee), (x, sx, 1.5)], spec['thigh'], spec['paw'], lambda q, n: fur(q, n), part, hip)
+        limb(b, [(x, sx, 1.4), (x + spec['reach'], sx, 1.0)], (spec['paw'] * 1.05, 1.3), (spec['paw'] * .8, 1.0),
+             lambda q, n: spec['pad'], part, hip)
+    return b
+
+
+def bear():
+    b = Builder()
+    fur_c, belly, muzzle = (.012, .01, .009), (.02, .016, .012), (.2, .14, .08)
+    fur = lambda q, n: mix(fur_c, belly, max(0.0, -n[2]))   # noqa: E731
+    spec = dict(torso=[(88, 0, 58, 22, 24), (70, 0, 70, 30, 34), (40, 0, 74, 36, 38), (0, 0, 70, 36, 36), (-40, 0, 66, 34, 34),
+                       (-75, 0, 58, 28, 28), (-92, 0, 52, 10, 10)], hip_z=56, knee_z=30, spread=22, bend=6,
+                thigh=14, paw=10, reach=10, pad=(.004, .004, .003), legs=[(58, 1, FL), (58, -1, FR), (-52, 1, BL), (-52, -1, BR)])
+    quadruped(b, fur, spec)
+    path, _ = stations([(86, 0, 66, 0, 0), (110, 0, 72, 0, 0)], 3)
+    tube(b, path, lambda k: 22 - 4 * k / len(path), lambda q, n, k: fur(q, n), HEAD, lambda q, k: .6 + .4 * k / len(path), 14)
+    ball(b, (122, 0, 70), (20, 16, 16), lambda q, n: muzzle if n[0] > .5 and n[2] < .6 else fur(q, n), HEAD, 1.0)
+    ball(b, (142, 0, 66), (10, 7, 6), lambda q, n: muzzle, HEAD, 1.0, 10)
+    ball(b, (151, 0, 67), (2.5, 3.5, 2.5), lambda q, n: (0.0, 0.0, 0.0), HEAD, 1.0, 8)
+    for y in (1, -1):
+        ball(b, (126, 9 * y, 76), (2.2, 1.2, 1.8), lambda q, n: (.04, .02, .01), HEAD, 1.0, 8)
+        ball(b, (110, 12 * y, 86), (4, 5, 6), lambda q, n: fur(q, n), HEAD, 1.0, 10)
+    body(b, [(-90, 0, 54, 4, 4), (-100, 0, 52, 3, 3)], lambda q, n: fur(q, n), TAIL, lambda q, k: .5, 8, steps=1)
+    return b
+
+
+def lion():
+    b = Builder()
+    tawny, belly, mane, tuft = (.28, .16, .06), (.45, .34, .2), (.1, .045, .018), (.03, .02, .012)
+    fur = lambda q, n: mix(tawny, belly, max(0.0, -n[2] * 1.4))   # noqa: E731
+    spec = dict(torso=[(70, 0, 66, 20, 26), (52, 0, 82, 26, 32), (20, 0, 84, 28, 34), (-20, 0, 78, 24, 28), (-55, 0, 74, 22, 25),
+                       (-78, 0, 72, 10, 12)], hip_z=64, knee_z=34, spread=14, bend=7, thigh=11, paw=8, reach=11,
+                pad=(.12, .08, .04), legs=[(48, 1, FL), (48, -1, FR), (-52, 1, BL), (-52, -1, BR)])
+    quadruped(b, fur, spec)
+    path, _ = stations([(66, 0, 76, 0, 0), (88, 0, 90, 0, 0)], 3)
+    tube(b, path, lambda k: 17 - 3 * k / len(path), lambda q, n, k: mane if n[0] < .6 else fur(q, n), HEAD, lambda q, k: .6 + .4 * k / len(path), 14)
+    ball(b, (84, 0, 90), (26, 25, 26), lambda q, n: mane, HEAD, 1.0, 16)   # the mane
+    ball(b, (102, 0, 88), (13, 11, 11), lambda q, n: fur(q, n), HEAD, 1.0)
+    ball(b, (114, 0, 85), (7, 6, 5), lambda q, n: (.5, .38, .26), HEAD, 1.0, 10)
+    ball(b, (120, 0, 87), (2, 3, 2), lambda q, n: (.02, .01, .01), HEAD, 1.0, 8)
+    for y in (1, -1):
+        ball(b, (108, 8 * y, 92), (2, 1.2, 1.5), lambda q, n: (.5, .32, .05), HEAD, 1.0, 8)
+        ball(b, (92, 14 * y, 106), (4, 3, 5), lambda q, n: fur(q, n), HEAD, 1.0, 8)
+    tail = [(-76, 0, 72), (-100, 0, 64), (-122, 0, 52), (-136, 0, 42)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 4)
+    tube(b, path, lambda k: 3.2 + (3.0 if k > len(path) * .85 else 0), lambda q, n, k: tuft if k > len(path) * .85 else fur(q, n), TAIL,
+         lambda q, k: k / (len(path) - 1), 10)
+    return b
+
+
+def giant_crocodile():
+    b = Builder()
+    top, side, belly = (.03, .028, .016), (.07, .06, .03), (.42, .38, .24)
+
+    def skin(q, n):
+        c = shade(n, top, side, belly)
+        if q[0] < -100 and n[2] > -.3 and math.sin(q[0] * .14) > .5:
+            c = mix(c, (.015, .014, .01), .6)
+        if q[0] > 150 and abs(n[2]) < .35:
+            c = mix(c, (.55, .5, .38), .5 if math.sin(q[0] * .9) > .3 else .15)
+        return c
+
+    def scutes(q, n, k):
+        ridge = max(0.0, n[2] - .55) * 2.2
+        return ridge * 4.5 * max(0.0, math.sin(q[0] * .35)) * (1.0 if -260 < q[0] < 150 else .3)
+
+    tail = lambda q, k: min(1.0, max(0.0, (-60 - q[0]) / 240))   # noqa: E731
+    pts = [(300, 0, 26, 8, 6), (280, 0, 28, 15, 9), (240, 0, 30, 24, 15), (190, 0, 34, 30, 20), (150, 0, 38, 36, 24),
+           (100, 0, 42, 48, 32), (40, 0, 44, 58, 36), (-30, 0, 44, 62, 38), (-90, 0, 42, 54, 34), (-150, 0, 38, 40, 28),
+           (-210, 0, 32, 26, 22), (-270, 0, 24, 14, 15), (-330, 0, 16, 7, 9), (-380, 0, 12, 1.5, 3)]
+    path, radii = stations(pts, 4)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: skin(q, n), lambda q, k: TAIL if q[0] < -60 else BODY, tail, 24, shape=scutes)
+    for y in (1, -1):
+        ball(b, (176, 17 * y, 56), (7, 6, 6), lambda q, n: (.14, .1, .02) if n[0] > .2 else top)
+        ball(b, (296, 6 * y, 33), (3, 2.4, 2.4), lambda q, n: top)
+    leg = lambda q, n: shade(n, top, side, mix(side, belly, .4))   # noqa: E731
+    for x, y, part in ((100, 1, FL), (100, -1, FR), (-60, 1, BL), (-60, -1, BR)):
+        reach = 62 if x > 0 else 68
+        limb(b, [(x, 34 * y, 36), (x - 6, reach * y, 22), (x + 8, (reach + 3) * y, 4)], 15, 9, leg, part, 36)
+        limb(b, [(x + 6, (reach + 3) * y, 3), (x + 32, (reach + 8) * y, 2)], (11, 3), (7, 2), leg, part, 36)
+    return b
+
+
+def elephant():
+    b = Builder()
+    hide, dark, ivory = (.07, .062, .052), (.045, .04, .034), (.55, .5, .38)
+    fur = lambda q, n: mix(hide, dark, max(0.0, -n[2]) * .8)   # noqa: E731
+    spec = dict(torso=[(150, 0, 190, 60, 60), (120, 0, 205, 80, 78), (60, 0, 215, 92, 88), (0, 0, 212, 94, 88),
+                       (-70, 0, 205, 90, 84), (-130, 0, 195, 76, 76), (-160, 0, 185, 36, 36)],
+                hip_z=175, knee_z=95, spread=52, bend=6, thigh=30, paw=24, reach=6, pad=(.09, .08, .07),
+                legs=[(100, 1, FL), (100, -1, FR), (-105, 1, BL), (-105, -1, BR)])
+    quadruped(b, fur, spec)
+    path, _ = stations([(140, 0, 200, 0, 0), (175, 0, 204, 0, 0)], 3)
+    tube(b, path, lambda k: 52 - 8 * k / len(path), lambda q, n, k: fur(q, n), HEAD, lambda q, k: .5 + .5 * k / len(path), 16)
+    ball(b, (188, 0, 205), (46, 40, 50), lambda q, n: fur(q, n), HEAD, 1.0, 18)
+    trunk = [(222, 0, 185), (238, 0, 150), (244, 0, 110), (240, 0, 70), (252, 0, 36), (266, 0, 40)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in trunk], 4)
+    tube(b, path, lambda k: 22 - 12 * k / len(path), lambda q, n, k: fur(q, n), HEAD, lambda q, k: .7 + .3 * k / len(path), 14)
+    for y in (1, -1):
+        ball(b, (212, 38 * y, 210), (2.5, 2, 3), lambda q, n: (.02, .015, .01), HEAD, 1.0, 8)
+        ball(b, (160, 66 * y, 225), (6, 42, 50), lambda q, n: fur(q, n), HEAD, 1.0, 14)   # the fan ears
+        tusk = [(226, 24 * y, 170), (254, 28 * y, 142), (284, 26 * y, 144), (306, 22 * y, 162)]
+        tp, _ = stations([(x, yy, z, 0, 0) for x, yy, z in tusk], 3)
+        tube(b, tp, lambda k: 7 - 5.5 * k / len(tp), lambda q, n, k: ivory, HEAD, lambda q, k: 1.0, 10)
+    tail = [(-158, 0, 190), (-170, 0, 140), (-168, 0, 90)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 4)
+    tube(b, path, lambda k: 4.0 + (4 if k > len(path) * .85 else 0), lambda q, n, k: dark, TAIL, lambda q, k: k / (len(path) - 1), 8)
+    return b
+
+
 # Name, display, builder, size (length, height), stride, gait (0 four legs, 1 two legs, 2 snake), animation
 # (swing, lift, bob, tail sway, nod, snake amplitude, wave), surface (scales, scale size, fur, mottle, roughness),
 # behaviour (aggressive, walk, run, turn, roam, wade, notice, damage, interval, reach, attack name, health), yield
@@ -395,6 +513,18 @@ ANIMALS = {
     'Tortoise': dict(display='Tortoise', build=tortoise, size=(118, 62), stride=26, gait=0,
                      anim=(6, 3, .3, 0, 1.5, 0, 1), surface=(.3, 1.6, 0, .2, .7),
                      behave=(False, 14, 32, 40, 400, 0, 0, 0, 1, 0, '', 150), yield_=(6, 10), live=('inland', 2, 1)),
+    'Bear': dict(display='Black Bear', build=bear, size=(190, 100), stride=90, gait=0,
+                 anim=(16, 5, 1.2, 3, 2, 0, 1), surface=(0, 1, .55, .12, .9),
+                 behave=(True, 80, 520, 90, 1100, 0, 700, 24, 1.6, 90, 'swipe', 350), yield_=(8, 12), live=('inland', 0, 0)),
+    'Lion': dict(display='Lion', build=lion, size=(260, 110), stride=95, gait=0,
+                 anim=(17, 6, 1.0, 5, 1.5, 0, 1), surface=(0, 1, .4, .14, .85),
+                 behave=(True, 90, 700, 110, 1200, 0, 800, 20, 1.4, 85, 'bite', 300), yield_=(8, 12), live=('inland', 0, 0)),
+    'GiantCrocodile': dict(display='Giant Crocodile', build=giant_crocodile, size=(680, 90), stride=150, gait=0,
+                           anim=(24, 7, .8, 9, 0, 0, 1), surface=(.3, 5.0, 0, .25, .55),
+                           behave=(True, 80, 420, 60, 1200, 90, 900, 45, 2.2, 150, 'bite', 900), yield_=(14, 20), live=('water', 0, 0)),
+    'Elephant': dict(display='Elephant', build=elephant, size=(430, 290), stride=170, gait=0,
+                     anim=(26, 7, 1.5, 6, 5, 0, 1), surface=(0, 1, .25, .18, .9),
+                     behave=(False, 70, 380, 45, 1500, 0, 0, 0, 1, 0, '', 1500), yield_=(20, 30), live=('inland', 0, 0)),
     'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
                            anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
                            behave=(False, 90, 480, 220, 900, 0, 0, 0, 1, 0, '', 35), yield_=(2, 5), live=('trees', 3, 3)),
