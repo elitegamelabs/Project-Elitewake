@@ -20,6 +20,15 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
     TSoftObjectPtr<UStaticMesh> Mesh;
     /** Length and height of the body, in cm: its reach for blows and how big it is to aim at. */
+    // For a mesh made outside the game (a generated model): its facing, scale, and how far its pivot sits above its feet
+    // (cm, after scaling). The built-in models face +X with their feet at the origin, so they leave these alone.
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
+    FRotator MeshRotation = FRotator::ZeroRotator;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
+    float MeshScale = 1.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
+    float MeshFootLift = 0.f;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
     FVector2D Size = FVector2D(80, 50);
     /** Ground covered by one full stride, in cm, so its legs keep pace with its speed. */

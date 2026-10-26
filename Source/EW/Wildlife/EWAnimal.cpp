@@ -57,7 +57,9 @@ void AEWAnimal::ApplyDefinition()
     // The actor stands on its feet; the aiming sphere sits on the body, big enough to hit anywhere along it.
     const float Radius = FMath::Max3(float(Definition->Size.Y * .5f), float(Definition->Size.X * .3f), 15.f);
     Body->SetSphereRadius(Radius);
-    Visual->SetRelativeLocation(FVector(0, 0, -Radius));
+    Visual->SetRelativeLocation(FVector(0, 0, -Radius + Definition->MeshFootLift));
+    Visual->SetRelativeScale3D(FVector(Definition->MeshScale));
+    Visual->SetRelativeRotation(Definition->MeshRotation);
 }
 
 void AEWAnimal::BeginPlay()
@@ -78,7 +80,7 @@ void AEWAnimal::OnRep_State()
     Body->SetCollisionEnabled(bHarvested ? ECollisionEnabled::NoCollision : ECollisionEnabled::QueryOnly);
     Visual->SetCustomPrimitiveDataFloat(2, bDead ? 1.f : 0.f);
     // Dead, it lies on its side.
-    Visual->SetRelativeRotation(FRotator(0, 0, bDead ? 80.f : 0.f));
+    Visual->SetRelativeRotation(FQuat(FRotator(0, 0, bDead ? 80.f : 0.f)) * FQuat(Definition ? Definition->MeshRotation : FRotator::ZeroRotator));
 }
 
 void AEWAnimal::PostNetReceiveLocationAndRotation()
@@ -126,7 +128,7 @@ void AEWAnimal::Animate(float DeltaSeconds)
     Visual->SetCustomPrimitiveDataFloat(1, FMath::Clamp(ShownSpeed / FMath::Max(Definition->WalkSpeed * .6f, 1.f), 0.f, 1.f));
     // A struck animal shudders.
     FlinchSeconds = FMath::Max(0.f, FlinchSeconds - DeltaSeconds);
-    if (!bDead) Visual->SetRelativeRotation(FRotator(0, FlinchSeconds > 0.f ? FMath::Sin(FlinchSeconds * 60.f) * 10.f : 0.f, 0));
+    if (!bDead) Visual->SetRelativeRotation(FQuat(FRotator(0, FlinchSeconds > 0.f ? FMath::Sin(FlinchSeconds * 60.f) * 10.f : 0.f, 0)) * FQuat(Definition->MeshRotation));
 }
 
 bool AEWAnimal::IsAshore(const AEWCharacter* Survivor) const

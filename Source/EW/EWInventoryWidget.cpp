@@ -1098,7 +1098,7 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     }
     if (Key==EKeys::M || Key==EKeys::Gamepad_Special_Left) { if (!Event.IsRepeat()) if (auto* PC=Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMapOpen(true); return FReply::Handled(); }
     // Stat points: C, a left-stick press or RT starts choosing; Up/Down or the d-pad pick; Enter or A spends; Escape, B or C again stops.
-    if (Key==EKeys::C || Key==EKeys::Gamepad_LeftThumbstick || Key==EKeys::Gamepad_RightTrigger)
+    if (Key==EKeys::C || Key==EKeys::Gamepad_RightTrigger)
     { if (!Event.IsRepeat() && SelectedSection==0) SetStatFocus(StatFocus==INDEX_NONE ? 0 : INDEX_NONE); return FReply::Handled(); }
     const bool bSectionKey = Key==EKeys::Tab || Key==EKeys::PageUp || Key==EKeys::PageDown || Key==EKeys::Gamepad_RightShoulder || Key==EKeys::Gamepad_LeftTrigger;
     if (StatFocus != INDEX_NONE && !bSectionKey)

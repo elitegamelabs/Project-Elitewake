@@ -8,7 +8,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 |---|---|---|---|
 | Move / look | WASD / mouse | Left stick / right stick | OK |
 | Jump, swim up | Space | (project Enhanced Input default) | PARTIAL: verify |
-| Sprint | Left Shift | Left stick click is used for stats in menus; sprint per `IA_Sprint` | PARTIAL |
+| Sprint | Left Shift | sprint per `IA_Sprint` | PARTIAL |
 | Stance (crouch/prone) | per `IA_Stance` | per `IA_Stance` | PARTIAL |
 | Attack | Left mouse | Right trigger | OK |
 | Interact / gather | E (hold) | X (west face button) | OK |
@@ -34,7 +34,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Tames: pick a creature | Up/Down | d-pad | OK (sample data only) |
 | Confirm / craft / unlock star | Enter | A | OK |
 | Equip / use | R | X | OK |
-| Choose a stat for a point | C, then Up/Down, Enter | Left stick click or RT, then d-pad, A | OK (`verify_stats_play`) |
+| Choose a stat for a point | C, then Up/Down, Enter | RT, then d-pad, A | OK (`verify_stats_play`) |
 | Skill tree: move among stars | Arrows or hover | d-pad | OK (`verify_skills_play`) |
 | Journal: next / previous page | Up / Down | d-pad up / down | OK |
 | Close | I / Escape | B | OK |
