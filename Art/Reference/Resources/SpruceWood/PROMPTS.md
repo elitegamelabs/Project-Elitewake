@@ -15,3 +15,7 @@ Short spruce timber section, pale straight grain, small resin marks and thin gre
 
 ## Production check
 Inspect against the selected source specimen, not six independent variants. Flat/transparent material views require the carrier/sample convention stated above. No environment textures or scenery composition. All counts, IDs and harvesting behavior remain separate code/data work.
+
+## Code-built six views (Claude, 2026-10-25) — proposal
+- Files: `front.png back.png left.png right.png top.png underside.png` (768 px) and `SixView-Sheet-v2.png`. Built by `python Scripts/Art/render_timber_sixview.py spruce <folder> 768` (numpy + Pillow, no AI service): one short round timber section (bark on the side, sawn ends with the species' end grain: rings, checks, pores or fibre dots), ray-marched from six exact orthographic directions, so every view is the same piece. Left and right are the two sawn ends; front/back/top/underside show the bark.
+- Reads stylised, not photographic; the bark relief is subtle. Concept reference only: not a mesh, texture or icon replacement; generic Wood stays one inventory identity.
