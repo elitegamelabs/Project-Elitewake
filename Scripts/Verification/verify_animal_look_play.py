@@ -30,6 +30,7 @@ def go(display):
     far = {'Elephant': 1000, 'Giant Crocodile': 900}.get(display, 520)
     spot = unreal.Vector(at.x + side.x * far, at.y + side.y * far, at.z + 60)
     pawn.set_actor_location(spot, False, True)
+    pawn.get_survival_component().set_health(100.0) if hasattr(pawn.get_survival_component(), 'set_health') else None
     eye = pawn.get_actor_location() + unreal.Vector(0, 0, pawn.get_editor_property('base_eye_height'))
     pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, at))
 

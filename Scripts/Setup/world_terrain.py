@@ -138,7 +138,7 @@ def shapes_height(i, lx, ly):
             if d < r:
                 f = d / r
                 spur = 1 + .35 * f * math.sin(spurs * math.atan2(y - v, x - u) + phase + 2.5 * f)
-                crag = .1 * (1 - f) * abs(math.sin(x / 640 + phase) * math.sin(y / 560 - phase))
+                crag = .06 * (1 - f) * (.5 + .5 * math.sin(x / 1500 + phase)) * (.5 + .5 * math.sin(y / 1300 - phase))   # smooth: creases here sawed the peaks (owner, Oct 26)
                 h += height * ((1 - f) ** 1.4 * spur + crag)
         elif kind == 'ridge':
             _, u, v, a, half, width, height, phase = shape
@@ -225,9 +225,13 @@ def island_land(i, x, y, inland):
     elif i.region == 'Desert':
         h += rise * dunes(lx, ly)
     elif i.region == 'Winter':
-        h += rise * (420 * abs(math.sin(lx / 520 + .7) * math.sin(ly / 430 + 1.9)) + 180 * abs(math.sin((lx - ly) / 300)))
+        # Owner, October 26: the hills looked unreal, a sawtooth of creases. Creases (abs of a sine) and features under a
+        # few grid steps wide alias on the 300 cm mesh, so these are smooth, broad swells with a little noise.
+        h += rise * (420 * (.5 + .5 * math.sin(lx / 900 + .7)) * (.5 + .5 * math.sin(ly / 760 + 1.9))
+                     + 120 * math.sin((lx - ly) / 1500) + 140 * (noise(lx, ly, 1300.0, 7) - .5))
     elif i.region == 'Jungle':
-        h += rise * (200 * abs(math.sin(lx / 640) * math.cos(ly / 560 + .3)) + 80 * math.sin(lx / 260) * math.sin(ly / 310))
+        h += rise * (200 * (.5 + .5 * math.sin(lx / 1100)) * (.5 + .5 * math.cos(ly / 950 + .3)) + 90 * (noise(lx, ly, 1200.0, 11) - .5)
+                     + 40 * math.sin(lx / 480) * math.sin(ly / 520))
     if i.region != 'Swamp' and i.key in TERRAIN_PLANS:
         # The island's own plan; a valley floor stays above the sea (a little over the beach's top).
         h = max(h + rise * shapes_height(i, lx, ly), min(h, SEA + 120.0))

@@ -20,6 +20,7 @@ GENERATED = {
     'Bear': (-90.0, 190.0),
     'GiantCrocodile': (-90.0, 600.0),
     'Elephant': (-90.0, 380.0),
+    'Alligator': (-90.0, 300.0),
 }
 
 
