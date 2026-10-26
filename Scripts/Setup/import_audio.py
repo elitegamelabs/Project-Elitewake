@@ -36,6 +36,11 @@ SOUNDS = {
     'Fauna/SFX_AlligatorHiss-v1b.wav': ('S_AlligatorHiss_v1b', .7, 'world'),
     'Fauna/SFX_FlamingoCall-v1.wav': ('S_FlamingoCall_v1', .7, 'world'),
     'Fauna/SFX_PelicanCall-v1.wav': ('S_PelicanCall_v1', 1.0, 'world'),
+    # The four regional animals (October 26): their main calls; the other calls in SCENARIO.md's queue are still to make.
+    'Fauna/SFX_BearGrowl-v1.wav': ('S_BearGrowl_v1', .9, 'world'),
+    'Fauna/SFX_LionRoar-v1.wav': ('S_LionRoar_v1', 1.0, 'far'),
+    'Fauna/SFX_CrocodileBellow-v1.wav': ('S_CrocodileBellow_v1', .9, 'world'),
+    'Fauna/SFX_ElephantTrumpet-v1.wav': ('S_ElephantTrumpet_v1', 1.0, 'far'),
     # The second batch (October 15 night): ships, decks, swimming, night and caves.
     'Ships/SFX_CannonFire-v1.wav': ('S_CannonFire_v1', .9, 'far'),
     'Ships/SFX_HullHit-v1.wav': ('S_HullHit_v1', .8, 'far'),
@@ -65,6 +70,10 @@ CALLS = {
     'Alligator': (['S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b'], (0, 0)),
     'Flamingo': (['S_FlamingoCall_v1'], (20, 45)),
     'Pelican': (['S_PelicanCall_v1'], (30, 60)),
+    'Bear': (['S_BearGrowl_v1'], (0, 0)),
+    'Lion': (['S_LionRoar_v1'], (40, 90)),
+    'GiantCrocodile': (['S_CrocodileBellow_v1'], (0, 0)),
+    'Elephant': (['S_ElephantTrumpet_v1'], (45, 100)),
 }
 # Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m.
 FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0)}
