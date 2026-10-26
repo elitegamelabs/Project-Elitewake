@@ -23,7 +23,7 @@ Inspect against the selected source specimen, not six independent variants. Flat
 - Status: concept proposal; not imported, no gameplay or icon change.
 
 ## Code-built six views (Claude, 2026-10-25) — proposal, replaces the pilot sheet above
-- Files: `front.png back.png left.png right.png top.png underside.png` (1024 px each) and `SixView-Sheet-v2.png` (3x2 contact sheet). Built by `Scripts/Art/render_stone_sixview.py` (numpy + Pillow, no AI service, free, repeatable): one signed-distance rock ray-marched from six exact orthographic directions, so all views are the same object.
+- Files: `front.png back.png left.png right.png top.png underside.png` (1024 px each) and `SixView-Sheet-v2.png` (3x2 contact sheet). Built by `Scripts/Art/render_rock_sixview.py <preset>` (numpy + Pillow, no AI service, free, repeatable): one signed-distance rock ray-marched from six exact orthographic directions, so all views are the same object.
 - Shape: a long, low pebble (about 1 : 0.74 : 0.55) with nine flat chip facets and slightly rounded edges, plus low-frequency lumps. Surface: speckled gray granite grain (pale and dark flecks), faint warm tan staining, mid-gray background, light from the camera's upper left in every view.
 - Limits: reads smoother and more stylised than a photograph; no cracks or fine pitting yet. Concept reference only, not a mesh, texture or icon replacement.
 - The two Scenario pilot images (hero front and back, 4 CU extra, `asset_QubWoezEYKzsbQHebeb2GRKM`, `asset_iedJ9vcEh4Br8syoiKcNJ66i`) were not used.

@@ -15,3 +15,7 @@ One mineable irregular grey rock ore sample with visible natural yellow sulfur m
 
 ## Production check
 Inspect against the selected source specimen, not six independent variants. Flat/transparent material views require the carrier/sample convention stated above. No environment textures or scenery composition. All counts, IDs and harvesting behavior remain separate code/data work.
+
+## Code-built six views (Claude, 2026-10-25) — proposal
+- Files: `front.png back.png left.png right.png top.png underside.png` (768 px) and `SixView-Sheet-v2.png`. Built by `python Scripts/Art/render_rock_sixview.py sulfur_ore <folder> 768` (numpy + Pillow, no AI service): one chipped rock shape ray-marched from six exact orthographic directions, so every view is the same specimen. Mid-gray background, light from the camera's upper left.
+- Colouring follows the shared identity above (preset `sulfur_ore` in the script). Reads stylised rather than photographic; no fine cracks or pitting. Concept reference only: not a mesh, texture or icon replacement, and no gameplay rule is implied.
