@@ -146,6 +146,9 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AEWCharacter::StopSprint);
 		}
 
+		// Controller: a single click of the left stick latches sprint (see ToggleSprintLatch).
+		PlayerInputComponent->BindKey(EKeys::Gamepad_LeftThumbstick, IE_Pressed, this, &AEWCharacter::ToggleSprintLatch);
+
 		// Crouching and prone
 		if (StanceAction)
 		{
@@ -496,6 +499,13 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	}
 
 	if (IsLocallyControlled()) UpdateNauseaLook(DeltaSeconds);
+
+	if (bSprintLatched && IsLocallyControlled())
+	{
+		// Let go of the latch once the survivor stops moving or can no longer sprint.
+		SprintLatchIdle = GetLastMovementInputVector().IsNearlyZero() ? SprintLatchIdle + DeltaSeconds : 0.f;
+		if (SprintLatchIdle > .3f || !bIsSprinting) { bSprintLatched = false; SprintLatchIdle = 0.f; bSprintInputHeld = false; SetSprinting(false); }
+	}
 
 	if (HasAuthority() && SurvivalComponent)
 	{
@@ -857,9 +867,24 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
 
+void AEWCharacter::ToggleSprintLatch()
+{
+	if (HelmShip) return;
+	if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
+	SprintLatchIdle = 0.f;
+	if (bSprintLatched) { bSprintLatched = false; bSprintInputHeld = false; SetSprinting(false); return; }
+	if (bIsProne) SetProne(false);
+	if (bIsCrouched) UnCrouch();
+	bSprintInputHeld = true;
+	SetSprinting(true);
+	bSprintLatched = bIsSprinting;
+}
+
 void AEWCharacter::StartSprint()
 {
     if (HelmShip) { bHelmTrimHeld = true; return; }
+	// A click of the left stick is handled by ToggleSprintLatch, whatever the input asset maps to it.
+	if (const auto* Pad = Cast<APlayerController>(GetController()); Pad && Pad->IsInputKeyDown(EKeys::Gamepad_LeftThumbstick)) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bSprintInputHeld = true;
 	if (bIsProne)
@@ -878,6 +903,7 @@ void AEWCharacter::StartSprint()
 void AEWCharacter::StopSprint()
 {
     bHelmTrimHeld = false;
+	if (bSprintLatched) return;
 	bSprintInputHeld = false;
 	SetSprinting(false);
 }
@@ -888,6 +914,7 @@ void AEWCharacter::StartStanceInput()
 	if (GetCharacterMovement()->IsSwimming()) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bStanceInputHeld = true;
+	bSprintLatched = false;
 	bSprintInputHeld = false;
 	SetSprinting(false);
 

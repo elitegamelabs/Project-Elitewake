@@ -128,7 +128,21 @@ void AEWAnimal::Animate(float DeltaSeconds)
     Visual->SetCustomPrimitiveDataFloat(1, FMath::Clamp(ShownSpeed / FMath::Max(Definition->WalkSpeed * .6f, 1.f), 0.f, 1.f));
     // A struck animal shudders.
     FlinchSeconds = FMath::Max(0.f, FlinchSeconds - DeltaSeconds);
-    if (!bDead) Visual->SetRelativeRotation(FQuat(FRotator(0, FlinchSeconds > 0.f ? FMath::Sin(FlinchSeconds * 60.f) * 10.f : 0.f, 0)) * FQuat(Definition->MeshRotation));
+    if (!bDead)
+    {
+        // A generated model is one rigid mesh with no legs to move: it rocks and bobs in time with its stride instead.
+        const bool bRigid = Definition->MeshFootLift > 0.f;
+        const float Walking = bRigid ? FMath::Clamp(ShownSpeed / FMath::Max(Definition->WalkSpeed * .6f, 1.f), 0.f, 1.f) : 0.f;
+        const float Roll = FMath::Sin(StridePhase) * 2.6f * Walking;
+        const float Pitch = FMath::Sin(StridePhase * 2.f) * 1.4f * Walking;
+        const float Shudder = FlinchSeconds > 0.f ? FMath::Sin(FlinchSeconds * 60.f) * 10.f : 0.f;
+        Visual->SetRelativeRotation(FQuat(FRotator(Pitch, Shudder, Roll)) * FQuat(Definition->MeshRotation));
+        if (bRigid)
+        {
+            const float Radius = FMath::Max3(float(Definition->Size.Y * .5f), float(Definition->Size.X * .3f), 15.f);
+            Visual->SetRelativeLocation(FVector(0, 0, -Radius + Definition->MeshFootLift + FMath::Abs(FMath::Sin(StridePhase)) * 1.8f * Walking));
+        }
+    }
 }
 
 bool AEWAnimal::IsAshore(const AEWCharacter* Survivor) const

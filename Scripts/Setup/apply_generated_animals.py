@@ -21,6 +21,10 @@ GENERATED = {
     'GiantCrocodile': (-90.0, 600.0),
     'Elephant': (-90.0, 380.0),
     'Alligator': (-90.0, 300.0),
+    'SquirrelMonkey': (-90.0, 60.0),
+    'Tortoise': (-90.0, 110.0),
+    'Flamingo': (-90.0, 90.0),
+    'Pelican': (-90.0, 90.0),
 }
 
 

@@ -170,6 +170,9 @@ protected:
 	bool bStanceInputHeld = false;
 
     bool bSprintInputHeld = false;
+    /** Controller sprint: one click of the left stick starts it and it runs until the stick is clicked again, movement stops or stamina runs out. */
+    bool bSprintLatched = false;
+    float SprintLatchIdle = 0.f;
     /** Local swim ascent intent; movement acceleration uses the standard saved-move path. */
     bool bSwimAscendInputHeld = false;
 
@@ -185,7 +188,7 @@ protected:
 	FTimerHandle StanceHoldTimer;
 
 public:
-    void CancelRestrictedActions() { StopSprint(); CancelStanceInput(); }
+    void CancelRestrictedActions() { bSprintLatched=false; StopSprint(); CancelStanceInput(); }
 
     /** True once health has run out and until the server brings the survivor back (owner, October 22). */
     UFUNCTION(BlueprintPure, Category="Death")
@@ -340,6 +343,9 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	/** One click of the left stick (L3) latches sprint on or off. */
+	void ToggleSprintLatch();
 
 	/** Begin sprint input. */
 	void StartSprint();

@@ -254,8 +254,8 @@ def monkey_killed():
     if not (monkey.is_dead() and copy_of(monkey).is_dead()):
         return False
     state['follow'] = None
-    roll = abs(copy_of(monkey).get_editor_property('visual').get_editor_property('relative_rotation').roll)
-    assert roll > 60, f'the dead monkey is not on its side on the client (roll {roll:.0f})'
+    up = copy_of(monkey).get_editor_property('visual').get_up_vector().z   # a model turned to face +X lies down as pitch, not roll
+    assert up < .5, f'the dead monkey is not on its side on the client (up.z {up:.2f})'
     at = monkey.get_actor_location()
     place(unreal.Vector(at.x - 140, at.y, feet(monkey) + 100), at)
     state['memo'].update(meat_before=owner.get_inventory_component().get_item_count(raw_meat), pressed=0.0)

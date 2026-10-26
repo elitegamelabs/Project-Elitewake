@@ -211,8 +211,8 @@ void UEWExplorationComponent::BuildFog(int32 Size, float TimeSeconds, TArray<FCo
                 + FMath::PerlinNoise2D(FVector2D(U * 38.f + TimeSeconds * .05f, V * 38.f)) * .15f;
             const float Puff = FMath::Clamp(Cloud * .9f + .5f, 0.f, 1.f);                 // 0 gap .. 1 cloud
             const float Grey = FMath::Lerp(.40f, .84f, Puff * Puff * (3.f - 2.f * Puff));
-            const float Clear = FMath::SmoothStep(.2f, .8f, Seen[Y * Size + X]);
-            const float Alpha = (1.f - Clear) * FMath::Lerp(.97f, 1.f, Puff);
+            const float Revealed = FMath::SmoothStep(.2f, .8f, Seen[Y * Size + X]);
+            const float Alpha = (1.f - Revealed) * FMath::Lerp(.97f, 1.f, Puff);
             OutPixels[Y * Size + X] = FLinearColor(Grey * .96f, Grey * .98f, Grey, Alpha).ToFColor(true);
         }
 }

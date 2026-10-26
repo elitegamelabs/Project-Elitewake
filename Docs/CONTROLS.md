@@ -8,7 +8,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 |---|---|---|---|
 | Move / look | WASD / mouse | Left stick / right stick | OK |
 | Jump, swim up | Space | (project Enhanced Input default) | PARTIAL: verify |
-| Sprint | Left Shift | sprint per `IA_Sprint` | PARTIAL |
+| Sprint | Left Shift (hold) | click the left stick (L3) once to start; click again, stop moving or run out of stamina to end | PARTIAL |
 | Stance (crouch/prone) | per `IA_Stance` | per `IA_Stance` | PARTIAL |
 | Attack | Left mouse | Right trigger | OK |
 | Interact / gather | E (hold) | X (west face button) | OK |

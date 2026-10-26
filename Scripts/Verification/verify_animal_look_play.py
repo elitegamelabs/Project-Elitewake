@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 import unreal
 
-KINDS = ['Lion', 'Black Bear', 'Giant Crocodile', 'Elephant']
+KINDS = ['Lion', 'Black Bear', 'Giant Crocodile', 'Elephant', 'American Alligator', 'Squirrel Monkey', 'Tortoise', 'Flamingo', 'Brown Pelican']
 lib = unreal.EWEditorVerificationLibrary
 saved = Path(unreal.Paths.project_saved_dir())
 world = lib.get_play_worlds()[0]
@@ -27,10 +27,9 @@ def go(display):
     a = next(x for x in animals if kind(x) == display)
     at = a.get_actor_location()
     side = a.get_actor_right_vector()
-    far = {'Elephant': 1000, 'Giant Crocodile': 900}.get(display, 520)
+    far = {'Elephant': 1000, 'Giant Crocodile': 900, 'Squirrel Monkey': 200, 'Tortoise': 250, 'Flamingo': 350, 'Brown Pelican': 350}.get(display, 520)
     spot = unreal.Vector(at.x + side.x * far, at.y + side.y * far, at.z + 60)
     pawn.set_actor_location(spot, False, True)
-    pawn.get_survival_component().set_health(100.0) if hasattr(pawn.get_survival_component(), 'set_health') else None
     eye = pawn.get_actor_location() + unreal.Vector(0, 0, pawn.get_editor_property('base_eye_height'))
     pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, at))
 
@@ -53,6 +52,10 @@ STEPS.append((finish, 0.1))
 
 
 def tick(delta):
+    try:
+        pawn.get_survival_component().restore_health(1000.0)   # the animals are hostile; this check is about looks
+    except Exception:
+        pass
     if time.monotonic() < state['at']:
         return
     try:

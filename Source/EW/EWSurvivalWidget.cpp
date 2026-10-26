@@ -26,6 +26,11 @@ namespace
         TEXT("/Game/Elitewake/UI/HUD/T_Hunger_Matte_v2.T_Hunger_Matte_v2"),
         TEXT("/Game/Elitewake/UI/HUD/T_Hydration_Matte_v2.T_Hydration_Matte_v2"),
         TEXT("/Game/Elitewake/UI/HUD/T_Weight_Matte_v2.T_Weight_Matte_v2")};
+
+    /** Empty space under and over the painted icon in its texture (fraction of the height), so the fill runs over the icon
+        itself: a small loss of health then shows, and an empty stat shows nothing. Health, stamina, food, hydration, weight. */
+    const float ArtBottom[]={.110f,.061f,.147f,.038f,.065f};
+    const float ArtTop[]={.135f,.066f,.169f,.042f,.065f};
 }
 
 TSharedRef<SWidget> UEWSurvivalWidget::RebuildWidget()
@@ -168,7 +173,9 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         const float Fraction=Maxima[i]>0.f ? Values[i]/Maxima[i] : 0.f;
         Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%.0f%%"),Fraction*100.f)));
         Bars[i]->SetToolTipText(FText::FromString(Text));
-        Bars[i]->SetPercent(Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f);
+        const float Level=Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f;
+        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
+        Bars[i]->SetPercent(Floor+Level*Span);
         Bars[i]->SetFillColorAndOpacity(bHasArt[i] ? FLinearColor::White : Colors[i]);
     }
     const int32 Indices[]={2,3,1};
@@ -256,7 +263,11 @@ FText UEWSurvivalWidget::GetDisplayedSummary() const
 TArray<float> UEWSurvivalWidget::GetDisplayedFillFractions() const
 {
     TArray<float> Result;
-    for (const auto& Bar : Bars) Result.Add(Bar->GetPercent());
+    for (int32 i=0;i<Bars.Num();++i)
+    {
+        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
+        Result.Add(FMath::Clamp((Bars[i]->GetPercent()-Floor)/Span,0.f,1.f));
+    }
     return Result;
 }
 FText UEWSurvivalWidget::GetDisplayedWarnings() const
