@@ -1,6 +1,6 @@
 """Builds the six orthographic reference views of the Stone resource in code (no AI image service).
 One signed-distance rock (chipped, faceted, granular) is ray-marched from six exact directions, so every view is the same stone.
-Usage: python render_rock_sixview.py <preset> <output folder> [size]    Presets: stone flint coal iron_ore copper_ore sulfur_ore sandstone bog_iron. Writes front/back/left/right/top/underside.png and SixView-Sheet-v2.png."""
+Usage: python render_rock_sixview.py <preset> <output folder> [size]    Presets: stone flint coal iron_ore copper_ore sulfur_ore sandstone bog_iron clay salt ice amber dark_gem green_gem peat. Writes front/back/left/right/top/underside.png and SixView-Sheet-v2.png."""
 import sys
 from pathlib import Path
 import numpy as np
@@ -15,6 +15,13 @@ PRESETS = {
     'copper_ore': dict(seed=53, radii=(1.0, .78, .6),  chips=10, depth=(.72, .90), k=.025, lump=.06, pit=0.0,  tone=.38, fleck=.2, tint=(0, 0, 0), gloss=.0, patches=((.20, .48, .40), (.46, .28, .12))),
     'sulfur_ore': dict(seed=67, radii=(1.0, .8, .62),  chips=10, depth=(.72, .90), k=.022, lump=.06, pit=0.0,  tone=.40, fleck=.2, tint=(0, 0, 0), gloss=.0, veins=(.86, .74, .12)),
     'sandstone':  dict(seed=79, radii=(1.0, .8, .6),   chips=7,  depth=(.80, .93), k=.05, lump=.035, pit=0.0, tone=.62, fleck=.12, tint=(.07, .0, -.07), gloss=0.0, strata=((.74, .60, .40), (.52, .38, .24), 11.0)),
+    'clay':       dict(seed=101, radii=(.95, .72, .6), chips=3, depth=(.86, .95), k=.10, lump=.11, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.12, color=(.62, .36, .24), mottle=.14, cracks=(.30, .16, .10)),
+    'salt':       dict(seed=103, radii=(.9, .75, .65), chips=14, depth=(.70, .88), k=.014, lump=.04, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.3, color=(.90, .89, .86), mottle=.07),
+    'ice':        dict(seed=107, radii=(.9, .8, .7), chips=15, depth=(.70, .88), k=.012, lump=.025, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.8, color=(.74, .88, .97), mottle=.06),
+    'amber':      dict(seed=109, radii=(.85, .72, .6), chips=12, depth=(.74, .90), k=.012, lump=.03, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.7, color=(.86, .50, .08), mottle=.16),
+    'dark_gem':   dict(seed=113, radii=(.8, .7, .62), chips=13, depth=(.70, .88), k=.010, lump=.02, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.6, color=(.17, .15, .22), mottle=.22),
+    'green_gem':  dict(seed=127, radii=(.8, .68, .62), chips=13, depth=(.70, .88), k=.010, lump=.02, pit=0.0, tone=.5, fleck=0, tint=(0, 0, 0), gloss=.65, color=(.16, .50, .30), mottle=.2),
+    'peat':       dict(seed=131, radii=(.95, .78, .62), chips=3, depth=(.86, .95), k=.10, lump=.12, pit=.02, tone=.5, fleck=0, tint=(0, 0, 0), gloss=0.0, color=(.20, .13, .08), mottle=.30, fibres=True),
     'bog_iron':   dict(seed=97, radii=(.9, .8, .7),    chips=4,  depth=(.86, .95), k=.09, lump=.10, pit=.055, tone=.20, fleck=.1, tint=(.05, .0, -.03), gloss=0.0, rust=((.42, .22, .10), (.24, .13, .07))),
 }
 PRESET_NAME = sys.argv[1] if len(sys.argv) > 1 else 'stone'
@@ -74,6 +81,17 @@ def normal(p, e=0.006):
 
 
 def albedo(p):
+    if 'color' in P:                                      # plain coloured materials (clay, salt, ice, gems, peat): mottled colour, optional cracks and fibres
+        m = 1 + P['mottle'] * 2.2 * fbm(p * 4.0, 3)
+        rgb = np.array(P['color']) * m[..., None]
+        if 'cracks' in P:
+            c = np.clip(1 - np.abs(fbm(p * 3.2 + 5, 3)) / 0.02, 0, 1)[..., None]
+            rgb = rgb * (1 - c) + np.array(P['cracks']) * c
+        if P.get('fibres'):
+            f = np.clip(vnoise(np.stack([p[..., 0] * 40, p[..., 1] * 6, p[..., 2] * 40], -1)) - 0.5, 0, 1)[..., None] * 1.2
+            rgb = rgb * (1 - 0.5 * f) + np.array([.34, .24, .14]) * 0.5 * f
+        rgb = rgb * (0.85 + 0.3 * vnoise(p * 30))[..., None]
+        return np.clip(rgb, 0, 1)
     base = P['tone'] + 0.12 * fbm(p * 2.6, 3) * (P['tone'] / 0.5) ** 0.5
     grain = fbm(p * 34.0, 2) + 0.5 * (vnoise(p * 80.0) - 0.5)
     pale = np.clip((grain - 0.10) * 5, 0, 1); dark = np.clip((-0.12 - grain) * 5, 0, 1)

@@ -15,3 +15,7 @@ One small isolated harvested ice material sample, matching existing approved sou
 
 ## Production check
 Inspect against the selected source specimen, not six independent variants. Flat/transparent material views require the carrier/sample convention stated above. No environment textures or scenery composition. All counts, IDs and harvesting behavior remain separate code/data work.
+
+## Code-built six views (Claude, 2026-10-25) — proposal
+- Files: `front.png back.png left.png right.png top.png underside.png` (768 px) and `SixView-Sheet-v2.png`. Built by `python Scripts/Art/render_rock_sixview.py ice <folder> 768` (numpy + Pillow, no AI service): one specimen ray-marched from six exact orthographic directions, so every view is the same object. Mid-gray background, light from the camera's upper left.
+- Colour and surface follow the shared identity above (preset `ice`). Stylised, not photographic; translucency and fine surface detail are not modelled. Concept reference only: not a mesh, texture or icon replacement; no item or gameplay rule is implied.
