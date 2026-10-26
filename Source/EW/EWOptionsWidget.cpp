@@ -153,7 +153,7 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
 
 void UEWOptionsWidget::SetTab(int32 NewTab)
 {
-    Tab = FMath::Clamp(NewTab, 0, 1);
+    Tab = FMath::Clamp(NewTab, 0, 1); TabCursor = Tab;
     Selected = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
     if (PausePage) PausePage->SetVisibility(Tab == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     if (OptionsPage) OptionsPage->SetVisibility(Tab == 1 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
@@ -164,6 +164,8 @@ void UEWOptionsWidget::SetTab(int32 NewTab)
 void UEWOptionsWidget::NativeTick(const FGeometry& Geometry, float Delta)
 {
     Super::NativeTick(Geometry, Delta);
+    for (int32 Index = 0; Index < TabButtons.Num(); ++Index)
+        TabButtons[Index]->SetBackgroundColor(Selected == -1 && Index == TabCursor ? FLinearColor(1.f, .85f, .35f) : Index == Tab ? FLinearColor(.5f, .52f, .55f) : FLinearColor(.055f, .065f, .075f));
     if (SaveButton) SaveButton->SetBackgroundColor(Tab == 0 && Selected == 3 ? Lit : Idle);
     if (MenuButton) MenuButton->SetBackgroundColor(Tab == 0 && Selected == 4 ? Lit : Idle);
     for (int32 Index = 0; Index < SettingLabels.Num(); ++Index)
@@ -222,6 +224,16 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
         if (!Event.IsRepeat()) SetTab(1 - Tab);
         return FReply::Handled();
     }
+    const bool bTabsLeft = Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left || Key == EKeys::Gamepad_LeftStick_Left;
+    const bool bTabsRight = Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right || Key == EKeys::Gamepad_LeftStick_Right;
+    if (Selected == -1)
+    {
+        // The tab bar holds the highlight: Left/Right move along it, A opens the tab, Down returns to the page.
+        if (bTabsLeft || bTabsRight) TabCursor = FMath::Clamp(TabCursor + (bTabsRight ? 1 : -1), 0, 1);
+        else if (Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) SetTab(TabCursor); }
+        else if (Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down) Selected = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
+        return FReply::Handled();
+    }
     const bool bUp = Key == EKeys::Up || Key == EKeys::W || Key == EKeys::Gamepad_DPad_Up || Key == EKeys::Gamepad_LeftStick_Up;
     const bool bDown = Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down;
     if (bUp || bDown)
@@ -229,12 +241,13 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
         // The PAUSE tab holds SAVE GAME (3) and MAIN MENU (4); the OPTIONS tab the three sliders (0 to 2).
         const int32 First = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
         const int32 Last = Tab == 1 ? 2 : 4;
+        if (bUp && Selected <= First) { Selected = -1; TabCursor = Tab; return FReply::Handled(); }
         Selected = FMath::Clamp(Selected + (bUp ? -1 : 1), First, Last);
         return FReply::Handled();
     }
-    if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left || Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right)
+    if (bTabsLeft || bTabsRight)
     {
-        AdjustSelectedSetting((Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left) ? -1.f : 1.f);
+        AdjustSelectedSetting(bTabsLeft ? -1.f : 1.f);
         return FReply::Handled();
     }
     if (Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom)

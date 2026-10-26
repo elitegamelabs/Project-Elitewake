@@ -16,6 +16,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Options") int32 GetSelected() const { return Selected; }
     /** 0 = PAUSE, 1 = OPTIONS. */
     UFUNCTION(BlueprintPure, Category="Options") int32 GetTab() const { return Tab; }
+    UFUNCTION(BlueprintPure, Category="Options") int32 GetTabCursor() const { return TabCursor; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetTab(int32 NewTab);
     UFUNCTION(BlueprintPure, Category="Options") bool IsSaveShown() const;
     UFUNCTION(BlueprintPure, Category="Options") FText GetStatus() const;
@@ -48,4 +49,5 @@ private:
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> OptionsPage;
     int32 Selected = 3;
     int32 Tab = 0;
+    int32 TabCursor = 0;             // the tab bar's highlight while Selected is -1 (Up from the first setting)
 };

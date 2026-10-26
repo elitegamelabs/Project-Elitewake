@@ -28,6 +28,8 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 |---|---|---|---|
 | Next / previous section (Inventory, Skills, Company, Tames, Journal; the menu always opens on Inventory) | Tab / Shift+Tab, PageDown / PageUp, click a tab | RB / LT, or tap LB | OK (`verify_menu_sections_play`, `verify_menu_layout_play`) |
 | Move selection (a gold ring marks it; Down past the last item row enters the crafting list, Up returns) | Arrows | d-pad / left stick | OK (`verify_menu_layout_play`) |
+| Tab bar: Up from the top of any tab (or the pause menu) highlights the tabs; Left/Right move, A opens | Up, Left/Right, Enter | d-pad or left stick, A | OK (`verify_menu_layout_play`) |
+| Ship's hold: pick a stack, move it across | Arrows, Enter, or click | d-pad or left stick, A | OK (`verify_ship_cargo_play`) |
 | Company (front-end prototype): pick member / action, next lower panel | Up/Down, Left/Right, X or R | d-pad, A, X | OK (sample data only) |
 | Tames: pick a creature | Up/Down | d-pad | OK (sample data only) |
 | Confirm / craft / unlock star | Enter | A | OK |

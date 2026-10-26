@@ -149,7 +149,7 @@ void UEWInventoryWidget::NativeDestruct()
     BoundEquipment = nullptr;
     if (BoundHotbar) BoundHotbar->OnHotbarChanged.RemoveDynamic(this, &UEWInventoryWidget::RefreshHotbarAssignments);
     BoundHotbar = nullptr;
-    AnalogDirection = 0;
+    AnalogDirection = 0; AnalogHorizontal = 0;
 	Super::NativeDestruct();
 }
 
@@ -602,7 +602,7 @@ void UEWInventoryWidget::FocusInventory()
 void UEWInventoryWidget::SelectSection(int32 Index)
 {
     if (!SectionButtons.IsValidIndex(Index)) return;
-    SelectedSection = Index; bCraftingOpen = false; bShowingDetails = false; StatFocus = INDEX_NONE; HotbarPick = INDEX_NONE;
+    SelectedSection = Index; TabCursor = Index; bTabFocus = false; bCraftingOpen = false; bShowingDetails = false; StatFocus = INDEX_NONE; HotbarPick = INDEX_NONE;
     RefreshCrafting(); SetUserFocus(GetOwningPlayer());
 }
 void UEWInventoryWidget::SelectRecipe(int32 Index)
@@ -635,7 +635,7 @@ void UEWInventoryWidget::MoveCursor(int32 Dx, int32 Dy)
         return;
     }
     const int32 ItemCount = DisplayedEntries.Num();
-    if (SelectionCount() == 0) { if (Dy > 0) FocusCrafting(); return; }
+    if (SelectionCount() == 0) { if (Dy > 0) FocusCrafting(); else if (Dy < 0) SetTabFocus(true); return; }
     if (SelectedIndex == INDEX_NONE) { Select(0); return; }
     if (SelectedIndex >= ItemCount)
     {
@@ -652,7 +652,7 @@ void UEWInventoryWidget::MoveCursor(int32 Dx, int32 Dy)
         else Select(ItemCount - 1);
         return;
     }
-    if (Dy < 0 && SelectedIndex < Columns) return;      // the top row has nothing above it
+    if (Dy < 0 && SelectedIndex < Columns) { SetTabFocus(true); return; }      // off the top row: up to the tab bar
     Select(SelectedIndex + Dx + Dy * Columns);
 }
 
@@ -661,8 +661,9 @@ void UEWInventoryWidget::ApplySectionVisibility()
     for (int32 Index = 0; Index < SectionButtons.Num(); ++Index)
     {
         const bool bActive = Index == SelectedSection;
-        SectionButtons[Index]->SetBackgroundColor(bActive ? FLinearColor(.82f, .84f, .86f) : FLinearColor(.07f, .08f, .09f, .85f));
-        if (SectionLabels.IsValidIndex(Index)) SectionLabels[Index]->SetColorAndOpacity(FSlateColor(bActive ? FLinearColor(.05f, .06f, .07f) : FLinearColor(.82f, .84f, .86f)));
+        const bool bCursor = bTabFocus && Index == TabCursor;
+        SectionButtons[Index]->SetBackgroundColor(bCursor ? FLinearColor(1.f, .85f, .35f) : bActive ? FLinearColor(.82f, .84f, .86f) : FLinearColor(.07f, .08f, .09f, .85f));
+        if (SectionLabels.IsValidIndex(Index)) SectionLabels[Index]->SetColorAndOpacity(FSlateColor(bActive || bCursor ? FLinearColor(.05f, .06f, .07f) : FLinearColor(.82f, .84f, .86f)));
     }
     const ESlateVisibility InventoryPage = SelectedSection == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
     BrowserHost->SetVisibility(InventoryPage); SurvivorPanel->SetVisibility(InventoryPage); RightHost->SetVisibility(InventoryPage);
@@ -1115,6 +1116,13 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     { if (!Event.IsRepeat()) CycleSection(bNextSection ? 1 : -1); return FReply::Handled(); }
     const bool bUpKey = Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up, bDownKey = Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down;
     const bool bLeftKey = Key==EKeys::Left || Key==EKeys::Gamepad_DPad_Left, bRightKey = Key==EKeys::Right || Key==EKeys::Gamepad_DPad_Right;
+    if (bTabFocus)
+    {
+        const bool bAccept = Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom, bBack = Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right;
+        if (!Event.IsRepeat() || bLeftKey || bRightKey) TabFocusInput(bLeftKey ? -1 : bRightKey ? 1 : 0, bDownKey ? 1 : 0, bAccept && !Event.IsRepeat(), bBack && !Event.IsRepeat());
+        return FReply::Handled();
+    }
+    if (bUpKey && AtTopOfSection()) { SetTabFocus(true); return FReply::Handled(); }
     if (SelectedSection >= 1)
     {
         // Skills, Company, Tames and Journal have no item list: each takes the arrows or d-pad its own way, and the rest of the keys only close the menu.
@@ -1238,14 +1246,76 @@ FReply UEWInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry, const FKeyEv
     return FReply::Handled();
 }
 
+void UEWInventoryWidget::SetTabFocus(bool bFocus)
+{
+    bTabFocus = bFocus; TabCursor = SelectedSection; StatFocus = INDEX_NONE;
+    ApplySectionVisibility();
+}
+
+bool UEWInventoryWidget::AtTopOfSection() const
+{
+    switch (SelectedSection)
+    {
+    case 2: return CompanyPanel && !CompanyPanel->IsConfirmOpen() && CompanyPanel->IsAtFirstMember();
+    case 3: return TamesPanel && TamesPanel->GetSelectedTame() <= 0;
+    case 4: return JournalPanel && JournalPanel->GetSelectedPage() <= 0;
+    default: return false;
+    }
+}
+
+void UEWInventoryWidget::TabFocusInput(int32 Dx, int32 Dy, bool bAccept, bool bBack)
+{
+    if (bAccept) { SelectSection(TabCursor); return; }
+    if (bBack || Dy > 0) { SetTabFocus(false); return; }
+    if (Dx) { TabCursor = FMath::Clamp(TabCursor + Dx, 0, GetSectionCount() - 1); ApplySectionVisibility(); }
+}
+
+void UEWInventoryWidget::NavigateStep(int32 Dx, int32 Dy)
+{
+    if (!Dx && !Dy) return;
+    if (bTabFocus) { TabFocusInput(Dx, Dy, false, false); return; }
+    if (Dy < 0 && AtTopOfSection()) { SetTabFocus(true); return; }
+    if (StatFocus != INDEX_NONE)
+    {
+        if (Dy) SetStatFocus((StatFocus + (Dy > 0 ? 1 : UEWProgressionComponent::StatCount - 1)) % UEWProgressionComponent::StatCount);
+        return;
+    }
+    switch (SelectedSection)
+    {
+    case 0:
+        if (HotbarPick != INDEX_NONE) { const int32 Count = UEWHotbarComponent::SlotCount; SetHotbarPick((HotbarPick + ((Dx + Dy) > 0 ? 1 : Count - 1)) % Count); }
+        else MoveCursor(Dx, Dy);
+        break;
+    case 1: if (SkillsPanel) SkillsPanel->MoveSelection(FVector2D(Dx, Dy)); break;
+    case 2:
+        if (CompanyPanel)
+        {
+            if (Dy) CompanyPanel->HandleMenuKey(Dy < 0 ? EKeys::Up : EKeys::Down);
+            if (Dx) CompanyPanel->HandleMenuKey(Dx < 0 ? EKeys::Left : EKeys::Right);
+        }
+        break;
+    case 3: if (TamesPanel && Dy) TamesPanel->MoveSelection(Dy); break;
+    case 4:
+        if (JournalPanel && Dy) JournalPanel->ShowPage(FMath::Clamp(JournalPanel->GetSelectedPage() + Dy, 0, FMath::Max(0, JournalPanel->GetPageCount() - 1)));
+        break;
+    default: break;
+    }
+}
+
 FReply UEWInventoryWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event)
 {
     if (FMath::Abs(Event.GetAnalogValue()) > .2f)
         if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RecordInputDevice(Event.GetKey());
+    // The left stick steps the highlight on every tab, the way the d-pad does: both axes, repeating while held.
     if (Event.GetKey() == EKeys::Gamepad_LeftY)
     {
         const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? -1 : 1) : 0;
-        if (Direction != AnalogDirection) { AnalogDirection = Direction; AnalogRepeatRemaining = .35f; if (Direction) MoveCursor(0, Direction); }
+        if (Direction != AnalogDirection) { AnalogDirection = Direction; AnalogRepeatRemaining = .35f; if (Direction) NavigateStep(0, Direction); }
+    }
+    else if (Event.GetKey() == EKeys::Gamepad_LeftX)
+    {
+        const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? 1 : -1) : 0;
+        if (Direction != AnalogHorizontal) { AnalogHorizontal = Direction; AnalogRepeatRemaining = .35f; if (Direction) NavigateStep(Direction, 0); }
     }
     return FReply::Handled();
 }
@@ -1336,11 +1406,11 @@ void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         if (SelectedIndex == Rows.Num()-1) ItemsScroll->ScrollToEnd();
         else ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], false);
     }
-    if (!HasUserFocus(GetOwningPlayer())) AnalogDirection = 0;
-    if (AnalogDirection)
+    if (!HasUserFocus(GetOwningPlayer()) || IsTypingText()) { AnalogDirection = 0; AnalogHorizontal = 0; }
+    if (AnalogDirection || AnalogHorizontal)
     {
         AnalogRepeatRemaining -= DeltaTime;
-        if (AnalogRepeatRemaining <= 0) { MoveCursor(0, AnalogDirection); AnalogRepeatRemaining = .18f; }
+        if (AnalogRepeatRemaining <= 0) { NavigateStep(AnalogHorizontal, AnalogDirection); AnalogRepeatRemaining = .18f; }
     }
 }
 

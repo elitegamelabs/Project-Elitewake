@@ -81,6 +81,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") UEWJournalWidget* GetJournalPanel() const { return JournalPanel; }
     /** Opens a menu section by its tab: 0 inventory (with crafting beneath it), 1 skills, 2 company, 3 tames, 4 journal. */
     UFUNCTION(BlueprintCallable, Category="Menu") void OpenSection(int32 Index) { SelectSection(Index); }
+    UFUNCTION(BlueprintPure, Category="Menu") bool IsTabFocused() const { return bTabFocus; }
+    UFUNCTION(BlueprintPure, Category="Menu") int32 GetTabCursor() const { return TabCursor; }
     /** The open menu section (0 inventory ... 4 journal). */
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetSelectedSection() const { return SelectedSection; }
     UFUNCTION(BlueprintPure, Category="Menu") static int32 GetSectionCount() { return 5; }
@@ -273,7 +275,16 @@ private:
     void RefreshSummary();
     int32 SelectedIndex = INDEX_NONE;
     bool bShowingDetails = false;
-    int32 AnalogDirection = 0;
+    int32 AnalogDirection = 0;   // left stick up/down: -1 up, 1 down
+    int32 AnalogHorizontal = 0;  // left stick left/right: -1 left, 1 right
+    /** One step of the left stick or d-pad on whichever tab is showing (the same moves the arrow keys make). */
+    void NavigateStep(int32 Dx, int32 Dy);
+    /** The tab bar can hold the controller highlight: Up from the top of any tab goes there, Left/Right move along it, A opens the tab, Down or B goes back. */
+    bool bTabFocus = false;
+    int32 TabCursor = 0;
+    void SetTabFocus(bool bFocus);
+    bool AtTopOfSection() const;
+    void TabFocusInput(int32 Dx, int32 Dy, bool bAccept, bool bBack);
     float AnalogRepeatRemaining = 0.f;
     int32 RevealSelectionAfterFrames = 0;
     UPROPERTY(Transient)

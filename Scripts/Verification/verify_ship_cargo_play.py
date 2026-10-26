@@ -95,6 +95,30 @@ def host_takes():
     assert index >= 0, 'host sees no wood in the hold'
     assert lib.send_verification_container_transfer(host_pc, ship, False, index, 15)
 
+def hold_screen():
+    return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world, unreal.EWContainerWidget, False) if w.is_in_viewport())
+
+def stick_takes():
+    # Controller: the left stick (and the d-pad) pick a stack in either list and A moves it across.
+    screen = hold_screen()
+    state['memo']['before_carried'] = carried(crew)
+    lib.send_verification_ui_analog_x(client, 1); lib.send_verification_ui_analog_x(client, 0)   # stick right: onto the hold list
+    state['memo']['column'] = screen.get_cursor_column()
+    for _ in range(entry_index(ship.get_cargo(), wood)):                                            # stick down to the Wood stack (the hold lists other stacks too)
+        lib.send_verification_ui_analog(client, -1); lib.send_verification_ui_analog(client, 0)
+    state['memo']['row'] = screen.get_cursor_row()
+    assert lib.send_verification_ui_key(client, 'Gamepad_FaceButton_Bottom')                        # A: take the picked stack
+
+def stick_took():
+    state['memo']['dbg'] = (state['memo'].get('column'), state['memo'].get('row'), hold_count(ship), carried(crew), state['memo']['before_carried'])
+    if state['memo'].get('column') != 1 or hold_count(ship) != 0 or carried(crew) != state['memo']['before_carried'] + 25:
+        return False
+    # put the 25 back (the later steps expect them in the hold)
+    index = entry_index(pawn.get_inventory_component(), wood)
+    assert index >= 0
+    assert lib.send_verification_container_transfer(client, peer, True, index, 25)
+    return True
+
 def walk_away():
     beach = unreal.Vector(3000, 0, 300)
     for p in (crew, pawn):
@@ -121,6 +145,8 @@ STEPS = [
      and ship.get_load() > 0 and abs(peer.get_load() - ship.get_load()) < 0.01, 6),
     ('Host aboard sees the stack and takes 15 out; the hold is shared', host_takes,
      lambda: carried(host) == state['memo']['host_wood'] + 15 and hold_count(ship) == 25 and hold_count(peer) == 25, 6),
+    ('Controller: the left stick picks the hold list and A moves the stack across', stick_takes, stick_took, 6),
+    ('The 25 Wood go back into the hold', lambda: None, lambda: hold_count(ship) == 25 and hold_count(peer) == 25, 6),
     ('Client leaves the ship; its hold screen closes by itself', walk_away,
      lambda: client.get_open_container() is None and not client.is_inventory_open(), 6),
     ('A transfer request from out of reach is refused', far_request, far_refused, 6),
@@ -134,7 +160,7 @@ def finish(error=None):
         'state': {'hold_server': hold_count(ship), 'hold_client': hold_count(peer),
                   'crew_wood': crew.get_inventory_component().get_item_count(wood),
                   'host_wood': host.get_inventory_component().get_item_count(wood),
-                  'client_screen': str(client.get_open_container())},
+                  'client_screen': str(client.get_open_container()), 'dbg': str(state['memo'].get('dbg'))},
     }, indent=2), encoding='utf-8')
     unreal.log(f'EWPLAYCHECK ShipCargo success={error is None} error={error}')
 

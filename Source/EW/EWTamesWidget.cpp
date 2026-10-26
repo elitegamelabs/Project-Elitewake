@@ -16,7 +16,7 @@
 namespace
 {
     const FLinearColor Gold(1.f, .85f, .35f, 1.f);
-    const FLinearColor Panel(.03f, .036f, .042f, .78f);
+    const FLinearColor PanelColor(.03f, .036f, .042f, .78f);
 
     UTextBlock* Label(UWidgetTree* Tree, UVerticalBox* Into, const FString& Value, int32 Size, const FLinearColor& Colour, float Below)
     {
@@ -46,7 +46,7 @@ TSharedRef<SWidget> UEWTamesWidget::RebuildWidget()
 
         auto* Root = WidgetTree->ConstructWidget<UHorizontalBox>(); WidgetTree->RootWidget = Root;
         // Left: the list of creatures.
-        auto* ListBorder = WidgetTree->ConstructWidget<UBorder>(); ListBorder->SetPadding(FMargin(14)); ListBorder->SetBrushColor(Panel);
+        auto* ListBorder = WidgetTree->ConstructWidget<UBorder>(); ListBorder->SetPadding(FMargin(14)); ListBorder->SetBrushColor(PanelColor);
         auto* ListSlot = Root->AddChildToHorizontalBox(ListBorder); { auto S = FSlateChildSize(ESlateSizeRule::Fill); S.Value = 1.f; ListSlot->SetSize(S); }
         ListSlot->SetPadding(FMargin(0, 0, 12, 0));
         auto* ListColumn = WidgetTree->ConstructWidget<UVerticalBox>(); ListBorder->SetContent(ListColumn);
@@ -68,7 +68,7 @@ TSharedRef<SWidget> UEWTamesWidget::RebuildWidget()
             Rings.Add(Ring);
         }
         // Right: the picked creature.
-        auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>(); DetailBorder->SetPadding(FMargin(18)); DetailBorder->SetBrushColor(Panel);
+        auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>(); DetailBorder->SetPadding(FMargin(18)); DetailBorder->SetBrushColor(PanelColor);
         auto* DetailSlot = Root->AddChildToHorizontalBox(DetailBorder); { auto S = FSlateChildSize(ESlateSizeRule::Fill); S.Value = 2.2f; DetailSlot->SetSize(S); }
         auto* DetailScroll = WidgetTree->ConstructWidget<UScrollBox>(); DetailBorder->SetContent(DetailScroll);
         auto* Column = WidgetTree->ConstructWidget<UVerticalBox>(); DetailScroll->AddChild(Column);

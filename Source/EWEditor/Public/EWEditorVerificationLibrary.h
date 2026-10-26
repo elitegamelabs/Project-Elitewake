@@ -98,6 +98,9 @@ UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIKey(APlayerController* Controller, FName KeyName);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIAnalog(APlayerController* Controller, float Value);
+    /** The left stick's horizontal axis (Value > 0 is right). */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationUIAnalogX(APlayerController* Controller, float Value);
     /** PIE authority-only pickup fixture; not part of game targets. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor Verification")
     static AEWPickup* SpawnVerificationPickup(UWorld* World, FVector Location, UEWItemDefinition* Item, int32 Quantity);

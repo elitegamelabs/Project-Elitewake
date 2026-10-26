@@ -86,6 +86,9 @@ private:
     void AddLog(const FString& Glyph, const FString& Text);
     void SetViewerRank(EEWSampleRank Rank);
     const FEWSampleMember* SelectedMember() const;
+public:
+    bool IsAtFirstMember() const { return Shown.IsEmpty() || Shown[0] == Selected; }
+private:
     int32 YouIndex() const;
     int32 IndexOfName(const FString& Name) const;
     static FString RankName(EEWSampleRank Rank);

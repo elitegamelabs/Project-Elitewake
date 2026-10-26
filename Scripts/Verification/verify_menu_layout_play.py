@@ -101,6 +101,21 @@ def s5():
     assert tames.get_selected_tame() == 3 and 'Gator Jack' in str(tames.get_shown_name())
     key('Gamepad_DPad_Up')
     assert tames.get_selected_tame() == 2
+    lib.send_verification_ui_analog(pc, -1)       # the left stick pushed down steps the highlight, as the d-pad does
+    lib.send_verification_ui_analog(pc, 0)
+    assert tames.get_selected_tame() == 3, 'the left stick did not move the Tames highlight'
+    lib.send_verification_ui_analog(pc, 1)
+    lib.send_verification_ui_analog(pc, 0)
+    assert tames.get_selected_tame() == 2
+    key('Up'); key('Up'); key('Up')                # Up off the first creature goes to the tab bar
+    assert m.is_tab_focused() and m.get_tab_cursor() == 3, 'Up from the top of Tames did not reach the tab bar'
+    lib.send_verification_ui_analog_x(pc, 1); lib.send_verification_ui_analog_x(pc, 0)
+    assert m.get_tab_cursor() == 4 and m.get_selected_section() == 3, 'the stick moved the tab highlight but should not open the tab until A'
+    key('Gamepad_FaceButton_Bottom')               # A opens the highlighted tab
+    assert m.get_selected_section() == 4 and not m.is_tab_focused(), 'A did not open the highlighted tab'
+    m.open_section(3)
+    checks.append('Up from the top of a tab reaches the tab bar; the stick moves along it and A opens the highlighted tab')
+    checks.append('The left stick moves the highlight on the Tames tab')
     checks.append('Tames lists the creatures; the arrows pick one and show its name, level and lineage')
     shot('4_tames')
 
@@ -136,6 +151,13 @@ def s9():
     assert m.is_crafting_focused() and m.get_selected_recipe() == 0, 'Down off the last item row did not enter the crafting list'
     key('Right')
     assert m.get_selected_recipe() == 1
+    lib.send_verification_ui_analog_x(pc, -1)     # left stick left: back to the first recipe tile
+    lib.send_verification_ui_analog_x(pc, 0)
+    assert m.get_selected_recipe() == 0, 'the left stick (horizontal) did not move the crafting highlight'
+    lib.send_verification_ui_analog_x(pc, 1)
+    lib.send_verification_ui_analog_x(pc, 0)
+    assert m.get_selected_recipe() == 1
+    checks.append('The left stick moves the highlight sideways and down through the inventory and crafting list')
     key('Up')                                     # the second tile is on the first row of the list: Up returns to the inventory
     assert not m.is_crafting_focused() and m.get_selected_index() == last
     checks.append('Down past the last item row enters the crafting list; Up on its first row returns to the inventory')

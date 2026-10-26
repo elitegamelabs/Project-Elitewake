@@ -73,7 +73,7 @@ TSharedRef<SWidget> UEWContainerWidget::RebuildWidget()
         return T;
     };
     Title = MakeText(TEXT("SHIP'S HOLD"), 22, Body);
-    MakeText(TEXT("Click a stack to move it across.   Esc / Tab / I to close."), 14, Body);
+    MakeText(TEXT("Click a stack, or pick it with the d-pad or left stick and press A, to move it across.   Esc / Tab / I / B to close."), 14, Body);
     auto* Columns = WidgetTree->ConstructWidget<UHorizontalBox>();
     Body->AddChild(Columns);
     auto MakeColumn = [&](const FString& Heading, TObjectPtr<UTextBlock>& Summary, TObjectPtr<UVerticalBox>& List)
@@ -115,6 +115,11 @@ void UEWContainerWidget::NativeTick(const FGeometry& Geometry, float Delta)
     const auto* Survivor = GetOwningPlayer() ? Cast<AEWCharacter>(GetOwningPlayer()->GetPawn()) : nullptr;
     OutOfReachSeconds = Survivor && FEWContainerAccess::CanAccess(Container.Get(), Survivor) ? 0.f : OutOfReachSeconds + Delta;
     if (OutOfReachSeconds > 1.f) { Close(); return; }
+    if (StickX || StickY)
+    {
+        StickRepeat -= Delta;
+        if (StickRepeat <= 0.f) { StepCursor(StickX, StickY); StickRepeat = .18f; }
+    }
     RefreshRemaining -= Delta;
     if (RefreshRemaining <= 0.f) { RefreshRemaining = .2f; Refresh(); }
 }
@@ -143,6 +148,8 @@ void UEWContainerWidget::Refresh()
     Signature = Next;
     auto Fill = [this](UVerticalBox* List, const UEWInventoryComponent* Inventory, int32 Offset)
     {
+        TArray<TObjectPtr<UEWRecipeButton>>& Rows = Offset == 0 ? CarriedRows : HoldRows;
+        Rows.Reset();
         List->ClearChildren();
         if (!Inventory) return;
         const TArray<FEWInventoryEntry> Entries = Inventory->GetInventoryEntries();
@@ -156,11 +163,67 @@ void UEWContainerWidget::Refresh()
             Label->SetText(FText::FromString(Describe(Entries[i])));
             auto Font = Label->GetFont(); Font.Size = 16; Label->SetFont(Font);
             Row->SetContent(Label);
-            List->AddChild(Row);
+            List->AddChild(Row); Rows.Add(Row);
         }
     };
     Fill(CarriedList, Carried, 0);
     Fill(HoldList, Hold, HoldOffset);
+    ShowCursor();
+}
+
+void UEWContainerWidget::ShowCursor()
+{
+    auto& Own = CursorColumn == 0 ? CarriedRows : HoldRows;
+    if (Own.IsEmpty())
+    {
+        // an empty list cannot hold the highlight: use the other one
+        CursorColumn = 1 - CursorColumn;
+    }
+    auto& Active = CursorColumn == 0 ? CarriedRows : HoldRows;
+    CursorRow = Active.IsEmpty() ? 0 : FMath::Clamp(CursorRow, 0, Active.Num() - 1);
+    for (int32 Column = 0; Column < 2; ++Column)
+    {
+        auto& Rows = Column == 0 ? CarriedRows : HoldRows;
+        for (int32 i = 0; i < Rows.Num(); ++i)
+            Rows[i]->SetBackgroundColor(Column == CursorColumn && i == CursorRow ? FLinearColor(.62f, .5f, .16f) : FLinearColor(.09f, .12f, .15f));
+    }
+}
+
+void UEWContainerWidget::StepCursor(int32 Dx, int32 Dy)
+{
+    if (Dx)
+    {
+        const int32 Other = Dx > 0 ? 1 : 0;
+        auto& Rows = Other == 0 ? CarriedRows : HoldRows;
+        if (Other != CursorColumn && !Rows.IsEmpty()) { CursorColumn = Other; CursorRow = FMath::Min(CursorRow, Rows.Num() - 1); }
+    }
+    if (Dy)
+    {
+        auto& Rows = CursorColumn == 0 ? CarriedRows : HoldRows;
+        if (!Rows.IsEmpty()) CursorRow = FMath::Clamp(CursorRow + Dy, 0, Rows.Num() - 1);
+    }
+    ShowCursor();
+}
+
+void UEWContainerWidget::MoveAtCursor()
+{
+    const auto& Rows = CursorColumn == 0 ? CarriedRows : HoldRows;
+    if (Rows.IsValidIndex(CursorRow)) Move((CursorColumn == 0 ? 0 : HoldOffset) + CursorRow);
+}
+
+FReply UEWContainerWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event)
+{
+    if (Event.GetKey() == EKeys::Gamepad_LeftY)
+    {
+        const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? -1 : 1) : 0;
+        if (Direction != StickY) { StickY = Direction; StickRepeat = .35f; if (Direction) StepCursor(0, Direction); }
+    }
+    else if (Event.GetKey() == EKeys::Gamepad_LeftX)
+    {
+        const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? 1 : -1) : 0;
+        if (Direction != StickX) { StickX = Direction; StickRepeat = .35f; if (Direction) StepCursor(Direction, 0); }
+    }
+    return FReply::Handled();
 }
 
 void UEWContainerWidget::Move(int32 Code)
@@ -187,5 +250,10 @@ FReply UEWContainerWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
         Close();
         return FReply::Handled();
     }
+    if (Key == EKeys::Up || Key == EKeys::Gamepad_DPad_Up) { StepCursor(0, -1); return FReply::Handled(); }
+    if (Key == EKeys::Down || Key == EKeys::Gamepad_DPad_Down) { StepCursor(0, 1); return FReply::Handled(); }
+    if (Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left) { StepCursor(-1, 0); return FReply::Handled(); }
+    if (Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right) { StepCursor(1, 0); return FReply::Handled(); }
+    if ((Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) && !Event.IsRepeat()) { MoveAtCursor(); return FReply::Handled(); }
     return Super::NativeOnKeyDown(Geometry, Event);
 }
