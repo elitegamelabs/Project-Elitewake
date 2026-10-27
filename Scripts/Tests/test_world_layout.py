@@ -87,14 +87,52 @@ class WorldTerrainHeightTests(unittest.TestCase):
         self.assertAlmostEqual(got, expected_cm, delta=tolerance_cm,
                                 msg=f'height({x}, {y}) = {got:.2f} cm, expected ~{expected_cm} cm')
 
+    # Owner, October 26: beaches slope naturally into the water, so the spawn and dock landing, which are on the old beach,
+    # moved by a few centimetres (spawn 67.2 -> 81.4 cm, dock landing -27.2 -> -47.8 cm).
     def test_spawn_height(self):
-        self.assertHeightNear(150.0, 0.0, 67.2)
+        self.assertHeightNear(150.0, 0.0, 81.4)
 
     def test_dock_landing_height(self):
-        self.assertHeightNear(4000.0, 900.0, -27.2)
+        self.assertHeightNear(4000.0, 900.0, -47.8)
 
     def test_spring_height(self):
         self.assertHeightNear(-1700.0, 1500.0, -265.0)
+
+
+class BeachAndMountainTests(unittest.TestCase):
+    """Owner, October 26: beaches that slope naturally down into the water and level out into the sea; Winter's mountains
+    real mountains with realistic hills, not points."""
+
+    def test_beach_slopes_gently_into_the_water_and_levels_out(self):
+        depths = [T.SEA - T.seabed(d) for d in range(0, 20001, 500)]
+        self.assertEqual(depths[0], 0.0)
+        self.assertTrue(all(b >= a for a, b in zip(depths, depths[1:])), 'the sea floor never rises going out')
+        self.assertLessEqual(max(b - a for a, b in zip(depths[:25], depths[1:25])) / 500.0, .13, 'no steeper than about 7 degrees across the beach and shelf')
+        self.assertTrue(500 < depths[24] < 800, 'the shelf levels out at some 5-8 m by 120 m offshore')
+        self.assertGreater(depths[-1], 5000, 'the shelf break reaches the deep floor')
+
+    def test_beach_rises_gently_inland(self):
+        heights = [T.land(d) for d in range(0, 4001, 100)]
+        self.assertTrue(all(b >= a for a, b in zip(heights, heights[1:])))
+        self.assertLessEqual(max(b - a for a, b in zip(heights, heights[1:])) / 100.0, .08)
+
+    def test_winter_mountains_are_massifs_not_points(self):
+        import math
+        import random
+        island = W.island('Winter1')
+        rng = random.Random(2)
+        heights, slopes = [], []
+        while len(heights) < 1500:
+            x, y = island.cx + rng.uniform(-.9, .9) * island.rx, island.cy + rng.uniform(-.9, .9) * island.ry
+            if island.distance(x, y) > -3000:
+                continue
+            h = T.height(x, y)
+            heights.append(h)
+            slopes.append(math.degrees(math.atan(math.hypot(T.height(x + 300, y) - h, T.height(x, y + 300) - h) / 300)))
+        heights.sort(), slopes.sort()
+        self.assertGreater(heights[-1], 20000, 'real mountains, over 200 m')
+        self.assertLess(slopes[int(len(slopes) * .9)], 45, 'nine tenths of the ground is walkable-looking, not spikes')
+        self.assertLess(slopes[len(slopes) // 2], 25)
 
 
 class CaveRuleTests(unittest.TestCase):

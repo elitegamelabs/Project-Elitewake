@@ -23,6 +23,7 @@ class UEWProgressionComponent;
 class UEWInventoryComponent;
 class UEWEquipmentComponent;
 class UEWHotbarComponent;
+class UEWFootprintComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
@@ -107,6 +108,8 @@ class EW_API AEWCharacter : public ACharacter
     UEWEquipmentComponent* EquipmentComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
     UEWHotbarComponent* HotbarComponent;
+    /** Footprints in the ground, by surface. */
+    UPROPERTY(VisibleAnywhere, Category="Footprints") UEWFootprintComponent* FootprintComponent;
 	
 protected:
 
