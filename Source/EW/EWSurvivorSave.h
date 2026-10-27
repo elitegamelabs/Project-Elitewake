@@ -4,6 +4,7 @@
 #include "GameFramework/SaveGame.h"
 #include "EWEquipmentComponent.h"
 #include "EWInventoryComponent.h"
+#include "World/EWBuildPiece.h"
 #include "EWSurvivorSave.generated.h"
 
 class AEWCharacter;
@@ -12,8 +13,8 @@ class UEWItemDefinition;
 /**
  * Single player's SAVE GAME (Options menu): the survivor as they were, kept for the next Single Player.
  * Kept: the map, where they stand and look, health, hunger and thirst, the inventory (with food ages), what is
- * equipped and the hotbar. Not kept yet (M7): the world itself (felled trees, mined rocks, dropped items, fish,
- * ships, structures), so the island comes back fresh around a resumed survivor.
+ * equipped and the hotbar. Structures built with Build Mode are kept too. Not kept yet (M7): the rest of the world (felled trees, mined rocks, dropped items, fish,
+ * ships), so the island comes back fresh around a resumed survivor.
  */
 UCLASS(BlueprintType)
 class EW_API UEWSurvivorSave : public USaveGame
@@ -50,6 +51,8 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<int32> StatPoints;
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 SkillPoints = 0;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> UnlockedSkills;
+    /** Everything built with Build Mode (October 27), bases before what stands on them. Older saves have none. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedPiece> BuiltPieces;
     /** What the survivor has explored: the map's cleared cells, a bit each, and the square they cover. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<uint8> ExploredBits;
     UPROPERTY(BlueprintReadOnly, Category="Save") FVector2D ExploredMin = FVector2D::ZeroVector;

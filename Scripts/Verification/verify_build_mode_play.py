@@ -651,6 +651,50 @@ def upper_foundation_checked():
     build.select_slot(11)
 
 
+def piece_sig(p):
+    q = p.get_actor_location()
+    return (kind(p), round(q.x), round(q.y), round(q.z), p.get_design(), p.get_material_index(), round(p.get_piece_size().x), round(p.get_piece_size().z))
+
+
+def save_world():
+    # everything built so far goes into the Save Game; the door is left open to see that persist too
+    door = state['door']
+    f = second_foundation()
+    assert pawn.teleport(local_point(f, 280, 0, f.get_top_z() + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw + 180)), 'could not stand outside the door'
+    door.interact(pawn)
+    state['sig_before'] = sorted(piece_sig(p) for p in pieces())
+    state['door_open_before'] = door.is_open()
+    note('saving', pieces=len(pieces()), door_open=door.is_open())
+    assert door.is_open(), 'could not open the door before saving'
+    assert unreal.EWSurvivorSave.save_survivor(pawn, 'BuildSaveTest'), 'save failed'
+    for p in list(pieces()):
+        p.destroy_actor()
+
+
+def restore_world():
+    left = len(pieces())
+    assert left == 0, f'{left} pieces still standing after they were removed'
+    save = unreal.EWSurvivorSave.load_save('BuildSaveTest')
+    assert save, 'the save could not be read back'
+    assert save.apply_to(pawn), 'the save did not apply'
+    unreal.GameplayStatics.delete_game_in_slot('BuildSaveTest', 0)
+
+
+def world_restored():
+    after = sorted(piece_sig(p) for p in pieces())
+    note('restored', pieces=len(after), same=after == state['sig_before'])
+    assert after == state['sig_before'], f'rebuilt pieces differ from what was saved: {len(after)} vs {len(state["sig_before"])}'
+    doors = [p for p in pieces() if 'DOOR' in kind(p)]
+    assert len(doors) == 1 and doors[0].is_open() and doors[0].get_base().get_design() == 1, 'the door did not come back open in its doorway'
+    stairs = [p for p in pieces() if 'STAIRCASE' in kind(p)]
+    ceilings = [p for p in pieces() if 'CEILING' in kind(p)]
+    assert len(stairs) == 1 and len(ceilings) == 1 and stairs[0].get_base() == ceilings[0].get_base(), 'stairs and ceiling are not on the same cell again'
+    f = second_foundation()
+    top = f.get_top_z()
+    assert clear_through(local_point(f, -125, -100, top + 400), local_point(f, -125, -100, top + 290)), 'the ceiling lost its cut-out'
+    assert not clear_through(local_point(f, -100, 100, top + 400), local_point(f, -100, 100, top + 290)), 'the ceiling lost its solid part'
+
+
 def to_demolish():
     key('X')
     assert 'DEMOLISH' in mode(), mode()
@@ -738,7 +782,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
-         (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (door_use_prepare, 1.5), (door_open, 1.2), (door_opened, 1.0), (door_close, 1.2), (door_closed, .3), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (door_use_prepare, 1.5), (door_open, 1.2), (door_opened, 1.0), (door_close, 1.2), (door_closed, .3), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (save_world, 1.0), (restore_world, 2.0), (world_restored, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 

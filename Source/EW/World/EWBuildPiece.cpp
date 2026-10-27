@@ -411,3 +411,66 @@ void AEWBuildPiece::ApplyShape()
         for (UStaticMeshComponent* Box : Extras) if (Box) Box->SetMaterial(0, Tint);
     }
 }
+
+void AEWBuildPiece::SetOpenImmediate(bool bInOpen)
+{
+    bOpen = bInOpen;
+    OpenAlpha = bInOpen ? 1.f : 0.f;
+    ApplyDoorSwing();
+    ForceNetUpdate();
+}
+
+void AEWBuildPiece::CaptureAll(UWorld* World, TArray<FEWSavedPiece>& Out)
+{
+    Out.Reset();
+    if (!World) return;
+    TArray<AEWBuildPiece*> Ordered;
+    TArray<AEWBuildPiece*> Waiting;
+    for (TActorIterator<AEWBuildPiece> It(World); It; ++It) if (!It->IsActorBeingDestroyed()) Waiting.Add(*It);
+    // Bases first: a piece is taken once what it stands on has been.
+    while (Waiting.Num() > 0)
+    {
+        const int32 Before = Waiting.Num();
+        for (int32 I = 0; I < Waiting.Num();)
+        {
+            if (!Waiting[I]->Base || Ordered.Contains(Waiting[I]->Base)) { Ordered.Add(Waiting[I]); Waiting.RemoveAtSwap(I); }
+            else ++I;
+        }
+        if (Waiting.Num() == Before) break;      // a piece whose base is gone: left out
+    }
+    for (AEWBuildPiece* Piece : Ordered)
+    {
+        FEWSavedPiece Saved;
+        Saved.Type = Piece->PieceType;
+        Saved.Location = Piece->GetActorLocation();
+        Saved.Yaw = Piece->GetActorRotation().Yaw;
+        Saved.Size = Piece->Size;
+        Saved.TopZ = Piece->TopZ;
+        Saved.BottomZ = Piece->BottomZ;
+        Saved.Material = Piece->MaterialIndex;
+        Saved.Design = Piece->Design;
+        Saved.BaseIndex = Piece->Base ? Ordered.IndexOfByKey(Piece->Base) : -1;
+        Saved.bOpen = Piece->bOpen;
+        Out.Add(Saved);
+    }
+}
+
+int32 AEWBuildPiece::RestoreAll(UWorld* World, const TArray<FEWSavedPiece>& Pieces)
+{
+    if (!World) return 0;
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    TArray<AEWBuildPiece*> Made;
+    for (const FEWSavedPiece& Saved : Pieces)
+    {
+        AEWBuildPiece* Piece = World->SpawnActor<AEWBuildPiece>(StaticClass(), FTransform(FRotator(0.f, Saved.Yaw, 0.f), Saved.Location), Params);
+        if (Piece)
+        {
+            if (Saved.Type == EEWBuildPieceType::Foundation) { Piece->Configure(Saved.TopZ, Saved.BottomZ); Piece->SetMaterialIndex(Saved.Material); }
+            else Piece->ConfigureAttached(Saved.Type, Saved.Size, Saved.Material, Saved.Design, Made.IsValidIndex(Saved.BaseIndex) ? Made[Saved.BaseIndex] : nullptr);
+            if (Saved.bOpen) Piece->SetOpenImmediate(true);
+        }
+        Made.Add(Piece);
+    }
+    return Made.Num();
+}

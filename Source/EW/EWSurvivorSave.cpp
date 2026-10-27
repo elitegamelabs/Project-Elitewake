@@ -55,6 +55,7 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
                 for (int32 i = 0; i < Cells.Num(); ++i) if (Cells[i]) Save->ExploredBits[i >> 3] |= uint8(1 << (i & 7));
                 Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
             }
+    AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
@@ -113,6 +114,13 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
                 if (const AEWGameMode* Mode = Survivor->GetWorld() ? Survivor->GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr)
                     if (Mode->WorldEdge) Mode->WorldEdge->GrowToCover(ExploredSize);
             }
+    // What was built comes back (a map loaded fresh has none; pieces already standing are left alone).
+    if (BuiltPieces.Num() > 0 && Survivor->GetWorld())
+    {
+        bool bAny = false;
+        for (TActorIterator<AEWBuildPiece> It(Survivor->GetWorld()); It; ++It) { bAny = true; break; }
+        if (!bAny) AEWBuildPiece::RestoreAll(Survivor->GetWorld(), BuiltPieces);
+    }
     Survivor->TeleportTo(Location, FRotator(0.f, Facing.Yaw, 0.f), false, true);
     if (AController* Controller = Survivor->GetController()) Controller->SetControlRotation(Facing);
     return true;

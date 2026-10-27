@@ -18,6 +18,23 @@ enum class EEWBuildPieceType : uint8
     Door, Window
 };
 
+/** One built piece as saved (single player Save Game): everything needed to rebuild it, with its Base as an index into the same list (-1 none). */
+USTRUCT(BlueprintType)
+struct EW_API FEWSavedPiece
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadWrite) EEWBuildPieceType Type = EEWBuildPieceType::Foundation;
+    UPROPERTY(BlueprintReadWrite) FVector Location = FVector::ZeroVector;
+    UPROPERTY(BlueprintReadWrite) float Yaw = 0.f;
+    UPROPERTY(BlueprintReadWrite) FVector Size = FVector::ZeroVector;
+    UPROPERTY(BlueprintReadWrite) float TopZ = 0.f;
+    UPROPERTY(BlueprintReadWrite) float BottomZ = 0.f;
+    UPROPERTY(BlueprintReadWrite) int32 Material = 0;
+    UPROPERTY(BlueprintReadWrite) int32 Design = 0;
+    UPROPERTY(BlueprintReadWrite) int32 BaseIndex = -1;
+    UPROPERTY(BlueprintReadWrite) bool bOpen = false;
+};
+
 /**
  * A piece the player built with Build Mode (design: Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md).
  * The foundation is a 4 m square slab whose top is just above the ground and whose underside reaches down to the lowest ground
@@ -80,6 +97,12 @@ public:
     static constexpr float StairRise = WallHeight + 20.f;   // the ceiling's top above the cell's top; eight risers of 40 cm
     static void StairSteps(EEWBuildPieceType Type, TArray<FStairStep>& Out);
 
+    /** Single player save: every piece in the world, bases before what stands on them; and building them again from that list. */
+    static void CaptureAll(UWorld* World, TArray<FEWSavedPiece>& Out);
+    static int32 RestoreAll(UWorld* World, const TArray<FEWSavedPiece>& Pieces);
+    /** Put a door straight into its open or closed state (no swing). */
+    void SetOpenImmediate(bool bInOpen);
+
     /** Size the foundation slab: its top and underside heights in world space. Set by the server right after spawning. */
     void Configure(float InTopZ, float InBottomZ);
     /** Make this an attached piece (server, right after spawning at its transform). */
@@ -92,6 +115,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Build") AEWBuildPiece* GetBase() const { return Base; }
     UFUNCTION(BlueprintPure, Category="Build") int32 GetDesign() const { return Design; }
     UFUNCTION(BlueprintPure, Category="Build") FVector GetPieceSize() const { return Size; }
+    UFUNCTION(BlueprintPure, Category="Build") float GetBottomZ() const { return BottomZ; }
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build") TObjectPtr<UStaticMeshComponent> Slab;
     /** Extra boxes for a doorway wall (the other jamb and the lintel). */
