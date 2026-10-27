@@ -65,7 +65,7 @@ Open question for the owner: the request says "every island that doesn't have an
 ## Owner direction, 2026-10-27: radial piece dial (replaces the earlier piece-picker idea)
 Owner's words, kept as given: a circular design with a radial dial pointer to select the object; the A button on the controller or a mouse left click confirms the piece to lay down; the (left) analog stick works as the selector/cursor and the right analog stick works like the mouse to select the item; RB and LB change the material and the design; the format stays the same in Build Mode: top wall, top corner, half wall, right ceiling, right lower corner, roof, bottom spiral staircase, bottom left corner, L-shape staircase, left-side U-shaped staircase, left top corner, foundation; plus a buildable, scalable scroll wheel like Ark's Build Mode.
 
-Recorded slots (13 named, around the dial as the owner listed them; exact clockwise order, the "scalable scroll wheel" slot and what "design" means (piece variant vs shape) are to confirm):
+Recorded slots (12 named, around the dial as the owner listed them; exact clockwise order, the scalable scroll wheel is an input (mouse wheel steps slots), not a slot, and what "design" means (piece variant vs shape) are to confirm):
 top wall, top corner, half wall, right ceiling, right lower corner, roof, bottom spiral staircase, bottom left corner, L-shape staircase, left U-shaped staircase, left top corner, foundation, and the scalable scroll wheel.
 
 Conflict to resolve (proposal, tuning): RB/LB currently turn the foundation a quarter (milestone 2). Under this direction they change material/design, so rotation moves to Q/E (keyboard, unchanged) and d-pad left/right (controller); keyboard material/design on Z/C.
