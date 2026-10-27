@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "EWInteractable.h"
 #include "EWBuildPiece.generated.h"
 
 class UStaticMeshComponent;
@@ -26,7 +27,7 @@ enum class EEWBuildPieceType : uint8
  * meshes come with the art milestone.
  */
 UCLASS()
-class EW_API AEWBuildPiece : public AActor
+class EW_API AEWBuildPiece : public AActor, public IEWInteractable
 {
     GENERATED_BODY()
 public:
@@ -34,6 +35,16 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+    virtual void Tick(float DeltaSeconds) override;
+
+    /** A door opens and closes on Interact (E / X); every other piece is not interactable. */
+    virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
+    virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
+    virtual bool Interact_Implementation(AEWCharacter* Character) override;
+    UFUNCTION(BlueprintPure, Category="Build") bool IsOpen() const { return bOpen; }
+    /** 0 closed .. 1 fully swung open. */
+    UFUNCTION(BlueprintPure, Category="Build") float GetOpenAlpha() const { return OpenAlpha; }
+    static constexpr float DoorSwingSeconds = .6f;      // tuning
 
     /** The foundation's footprint half sizes (cm) and slab thickness above its ground. Tuning. */
     static constexpr float HalfSize = 200.f;
@@ -98,6 +109,10 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> Extras;     // more boxes for steps and a cut-out ceiling
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> Tint;
     UFUNCTION() void OnRep_Shape();
+    UPROPERTY(ReplicatedUsing=OnRep_Open) bool bOpen = false;
+    float OpenAlpha = 0.f;
+    UFUNCTION() void OnRep_Open();
+    void ApplyDoorSwing();
     void ApplyShape();
     UStaticMeshComponent* ExtraBox(int32 Index);
     /** A ceiling is cut away over the staircases standing on the same cell; this re-shapes the ceilings of that cell. */

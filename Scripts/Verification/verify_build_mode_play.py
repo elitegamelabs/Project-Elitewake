@@ -413,6 +413,7 @@ def door_placed():
     note('door placed', doors=len(doors))
     assert len(doors) == 1, f'expected one door, found {len(doors)}'
     assert doors[0].get_base().get_design() == 1, 'the door is not in the doorway wall'
+    state['door'] = doors[0]
     loc = doors[0].get_actor_location()
     through = clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z), unreal.Vector(loc.x + 150, loc.y, loc.z))
     assert not through, 'the doorway is still open with a door in it'
@@ -421,6 +422,48 @@ def door_placed():
     assert build.is_dial_open()
     key('Escape')       # Escape closes the wheel first
     assert not build.is_dial_open() and 'PLACE' in mode()
+    build.select_slot(0)
+
+
+def door_use_prepare():
+    key('B')                                   # out of Build Mode: E / X is Interact there
+    assert 'OFF' in mode(), mode()
+    f = second_foundation()
+    top = f.get_top_z()
+    d = state['door'].get_actor_location()
+    assert pawn.teleport(local_point(f, 60, 0, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw)), 'could not stand at the door'
+    state['aim'] = d
+
+
+def door_open():
+    assert not state['door'].is_open(), 'the door started open'
+    key('E')
+
+
+def door_opened():
+    d = state['door']
+    loc = d.get_base().get_actor_location()
+    note('door opened', is_open=d.is_open(), alpha=round(d.get_open_alpha(), 2))
+    assert d.is_open() and d.get_open_alpha() > .99, 'E did not open the door'
+    through = clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z - 50), unreal.Vector(loc.x + 150, loc.y, loc.z - 50))
+    assert through, 'the doorway is still blocked with the door open'
+    # the open leaf lies along the jamb inside the cell: look at it to close it
+    state['aim'] = local_point(second_foundation(), 130, -60, d.get_actor_location().z)
+    state['close_wait'] = time.monotonic() + .6
+
+
+def door_close():
+    key('E')
+
+
+def door_closed():
+    d = state['door']
+    loc = d.get_base().get_actor_location()
+    note('door closed', is_open=d.is_open(), alpha=round(d.get_open_alpha(), 2))
+    assert not d.is_open() and d.get_open_alpha() < .01, 'E did not close the door'
+    assert not clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z - 50), unreal.Vector(loc.x + 150, loc.y, loc.z - 50)), 'the closed door does not block'
+    key('B')
+    assert 'PLACE' in mode(), mode()
     build.select_slot(0)
 
 
@@ -695,7 +738,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
-         (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (door_use_prepare, 1.5), (door_open, 1.2), (door_opened, 1.0), (door_close, 1.2), (door_closed, .3), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 

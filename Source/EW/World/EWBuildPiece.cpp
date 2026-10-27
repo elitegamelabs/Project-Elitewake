@@ -2,6 +2,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "EWCharacter.h"
 #include "EngineUtils.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
@@ -10,7 +11,8 @@ AEWBuildPiece::AEWBuildPiece()
 {
     bReplicates = true;
     SetReplicateMovement(false);
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = false;
     USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     SetRootComponent(Root);
     Root->SetMobility(EComponentMobility::Movable);
@@ -39,6 +41,7 @@ void AEWBuildPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(AEWBuildPiece, MaterialIndex);
     DOREPLIFETIME(AEWBuildPiece, Design);
     DOREPLIFETIME(AEWBuildPiece, Base);
+    DOREPLIFETIME(AEWBuildPiece, bOpen);
 }
 
 const TCHAR* AEWBuildPiece::TypeName(EEWBuildPieceType Type)
@@ -197,6 +200,45 @@ void AEWBuildPiece::SetMaterialIndex(int32 InMaterial)
 
 void AEWBuildPiece::OnRep_Shape() { ApplyShape(); }
 
+void AEWBuildPiece::OnRep_Open() { SetActorTickEnabled(true); }
+
+void AEWBuildPiece::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    const float Target = bOpen ? 1.f : 0.f;
+    OpenAlpha = FMath::FInterpConstantTo(OpenAlpha, Target, DeltaSeconds, 1.f / DoorSwingSeconds);
+    ApplyDoorSwing();
+    if (OpenAlpha == Target) SetActorTickEnabled(false);
+}
+
+void AEWBuildPiece::ApplyDoorSwing()
+{
+    if (PieceType != EEWBuildPieceType::Door || Size.IsZero()) return;
+    // The leaf hinges on its -y edge and swings 90 degrees into the cell.
+    const float Angle = 90.f * OpenAlpha, Radians = FMath::DegreesToRadians(Angle), Half = Size.Y * .5f;
+    Slab->SetRelativeLocation(FVector(-Half * FMath::Sin(Radians), -Half + Half * FMath::Cos(Radians), 0.f));
+    Slab->SetRelativeRotation(FRotator(0.f, Angle, 0.f));
+}
+
+bool AEWBuildPiece::CanInteract_Implementation(AEWCharacter* Character) const
+{
+    return PieceType == EEWBuildPieceType::Door && IsValid(Character) && FVector::Dist(Character->GetActorLocation(), GetActorLocation()) <= 400.f;
+}
+
+FText AEWBuildPiece::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
+{
+    return PieceType == EEWBuildPieceType::Door ? FText::FromString(bOpen ? TEXT("Close the door") : TEXT("Open the door")) : FText::GetEmpty();
+}
+
+bool AEWBuildPiece::Interact_Implementation(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !CanInteract_Implementation(Character)) return false;
+    bOpen = !bOpen;
+    OnRep_Open();
+    ForceNetUpdate();
+    return true;
+}
+
 UStaticMeshComponent* AEWBuildPiece::ExtraBox(int32 Index)
 {
     while (Extras.Num() <= Index)
@@ -351,6 +393,7 @@ void AEWBuildPiece::ApplyShape()
             Use(ExtraBox(ExtrasUsed++), FVector(0.f, 0.f, Bottom + WindowSill * .5f), FVector(Size.X, WindowWidth, WindowSill));
         }
     }
+    ApplyDoorSwing();
     for (int32 I = ExtrasUsed; I < Extras.Num(); ++I)
     {
         Extras[I]->SetVisibility(false);
