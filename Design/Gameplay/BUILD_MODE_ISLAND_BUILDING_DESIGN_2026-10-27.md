@@ -61,3 +61,12 @@ Open question for the owner: the request says "every island that doesn't have an
 - Unit tests `BuildZoneTests` in `Scripts/Tests/test_world_layout.py`; Play check `Scripts/Verification/verify_build_zones_play.py` passes: zones loaded, game and layout agree at 387 of 400 sample points (the rest sit within the built ground's 1.5 m tolerance of a limit, mostly the dock-beach height and the Swamp waterline), every Port middle and waterfront and open water refused, every island has a place a 4 m footprint may be built.
 - Not packaged: the JSON lives in Content but is not yet listed as a staged non-asset file; packaging needs that (milestone 4).
 - Zone values (spawn 8 m, spring 12 m, dock 22 m rings, caves/landmarks margins) are tuning.
+
+## Owner direction, 2026-10-27: radial piece dial (replaces the earlier piece-picker idea)
+Owner's words, kept as given: a circular design with a radial dial pointer to select the object; the A button on the controller or a mouse left click confirms the piece to lay down; the (left) analog stick works as the selector/cursor and the right analog stick works like the mouse to select the item; RB and LB change the material and the design; the format stays the same in Build Mode: top wall, top corner, half wall, right ceiling, right lower corner, roof, bottom spiral staircase, bottom left corner, L-shape staircase, left-side U-shaped staircase, left top corner, foundation; plus a buildable, scalable scroll wheel like Ark's Build Mode.
+
+Recorded slots (13 named, around the dial as the owner listed them; exact clockwise order, the "scalable scroll wheel" slot and what "design" means (piece variant vs shape) are to confirm):
+top wall, top corner, half wall, right ceiling, right lower corner, roof, bottom spiral staircase, bottom left corner, L-shape staircase, left U-shaped staircase, left top corner, foundation, and the scalable scroll wheel.
+
+Conflict to resolve (proposal, tuning): RB/LB currently turn the foundation a quarter (milestone 2). Under this direction they change material/design, so rotation moves to Q/E (keyboard, unchanged) and d-pad left/right (controller); keyboard material/design on Z/C.
+Milestone 3 becomes: radial dial UI (stick/mouse pointer, confirm with A / left click), the slot pieces as placeholder shapes with snapping, material/design cycling, Play check with keyboard and controller. Art, costs, saving stay later milestones.
