@@ -146,7 +146,7 @@ action(1.5, begin_walk)
 action(.2, end_walk)
 action(3.0, equip_and_chop)
 for hits in range(1, 5):
-    action(.1 if hits < 4 else 5.0, request_strike)      # the felled log lies a few seconds (RemoveDelay) before it goes
+    action(.1 if hits < 4 else 9.0, request_strike)      # the felled log lies a few seconds (RemoveDelay) and fades (FadeSeconds) before it goes
     action(1.6, lambda n=hits: retry_if_missing(n))      # strikes need their swing cooldown between them
     action(1.2, lambda n=hits: check_strike(n))
 
