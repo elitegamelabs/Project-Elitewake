@@ -122,13 +122,13 @@ def check_strike(expected):
         check('Empty log follows the existing actor cleanup',
               not any(a.get_name() == tree_name for a in unreal.GameplayStatics.get_all_actors_of_class(server, tree_cls)))
 
-action(2.5, fell)
+action(7.0, fell)      # the fall now takes 2 to 5 s depending on the tree height
 action(2.5, replicated_fall)
 action(1.5, begin_walk)
 action(.2, end_walk)
 action(2.0, equip_and_chop)
 for hits in range(1, 5):
-    action(.1, request_strike)
+    action(.1 if hits < 4 else 5.0, request_strike)      # the felled log lies a few seconds (RemoveDelay) before it goes
     action(1.2, lambda n=hits: check_strike(n))
 
 index = 0

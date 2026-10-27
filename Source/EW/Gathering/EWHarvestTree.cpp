@@ -44,6 +44,13 @@ bool AEWHarvestTree::Fell(FVector Direction)
 
     bFelled = true;
     FallElapsed = 0.f;
+    FallSeconds = FallDuration;
+    if (const UStaticMesh* StaticMesh = Mesh->GetStaticMesh())
+    {
+        // Taller trunks take longer to come down (tuning: 6 m is the base time, up to 2.5 times it).
+        const float Height = StaticMesh->GetBoundingBox().GetSize().Z * Mesh->GetComponentScale().GetAbs().Z;
+        FallSeconds = FallDuration * FMath::Clamp(Height / 600.f, 1.f, 2.5f);
+    }
     FallStartRotation = GetActorQuat();
     FallTargetRotation = (FQuat(TipAxis, HALF_PI) * FallStartRotation).GetNormalized();
     ConfigureFelledCollision();
@@ -63,10 +70,15 @@ void AEWHarvestTree::Tick(float DeltaSeconds)
 
     if (!HasAuthority()) return; // Clients receive the authoritative actor transform through movement replication.
 
-    FallElapsed = FMath::Min(FallDuration, FallElapsed + FMath::Max(DeltaSeconds, 0.f));
-    const float Alpha = FallDuration > 0.f ? FMath::Clamp(FallElapsed / FallDuration, 0.f, 1.f) : 1.f;
+    FallElapsed = FMath::Min(FallSeconds, FallElapsed + FMath::Max(DeltaSeconds, 0.f));
+    const float Time = FallSeconds > 0.f ? FMath::Clamp(FallElapsed / FallSeconds, 0.f, 1.f) : 1.f;
+    // A cut tree leans slowly and then drops faster as it goes over (gravity), so ease in.
+    const float Alpha = Time * Time;
     SetActorRotation(FQuat::Slerp(FallStartRotation, FallTargetRotation, Alpha).GetNormalized());
-    if (Alpha >= 1.f) SetActorTickEnabled(false);
+    if (Time < 1.f) return;
+    if (!bRemoveAfterFall) { SetActorTickEnabled(false); return; }
+    RemoveElapsed += FMath::Max(DeltaSeconds, 0.f);
+    if (RemoveElapsed >= RemoveDelay) Destroy();
 }
 
 void AEWHarvestTree::OnRep_Felled()
@@ -116,6 +128,25 @@ bool AEWHarvestTree::CanHarvest(AEWCharacter* Survivor) const
     return IsValid(Tool) && Tool->Category == EEWItemCategory::Tool && Tool->GatheringTool == EEWGatheringTool::Hatchet;
 }
 
+bool AEWHarvestTree::CutDown(AEWCharacter* Survivor)
+{
+    if (!HasAuthority()) return false;
+    if (bFelled)
+    {
+        // Already down (knocked over earlier): it now lies a moment, then goes.
+        bRemoveAfterFall = true;
+        RemoveElapsed = 0.f;
+        SetActorTickEnabled(true);
+        return true;
+    }
+    const FVector Away = IsValid(Survivor) ? GetActorLocation() - Survivor->GetActorLocation() : GetActorForwardVector();
+    bRemoveAfterFall = true;
+    RemoveElapsed = 0.f;
+    if (Fell(Away)) return true;
+    Destroy();      // no direction to fall in (or nothing to tip): remove it as before
+    return false;
+}
+
 int32 AEWHarvestTree::TryHarvest(AEWCharacter* Survivor)
 {
     if (!HasAuthority() || !IsValid(Survivor) || !Survivor->HasAuthority() || !CanHarvest(Survivor)
@@ -127,7 +158,7 @@ int32 AEWHarvestTree::TryHarvest(AEWCharacter* Survivor)
     const int32 AddedThatch = Inventory->AddItem(Thatch, FMath::Min(ThatchRemaining, ThatchPerStrike));
     ThatchRemaining -= AddedThatch;
     if (AddedWood + AddedThatch > 0) if (auto* Progress = Survivor->GetProgressionComponent()) Progress->Award(EEWExperienceSource::Gather);
-    if (WoodRemaining == 0 && ThatchRemaining == 0) Destroy();
+    if (WoodRemaining == 0 && ThatchRemaining == 0) CutDown(Survivor);
     else if (AddedWood > 0 || AddedThatch > 0) ForceNetUpdate();
     return AddedWood + AddedThatch;
 }

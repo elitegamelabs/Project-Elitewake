@@ -46,7 +46,10 @@ bool FEWHarvestTreeTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Partial stock conserves rejected wood"),Tree->WoodRemaining,8); TestEqual(TEXT("Rejected thatch remains"),Tree->ThatchRemaining,3);
     TestEqual(TEXT("Full inventory rejects without stock loss"),Tree->TryHarvest(Pawn),0);
     Inventory->RemoveItem(Wood,100000);
-    while(!Tree->IsActorBeingDestroyed()) Tree->TryHarvest(Pawn);
+    while(!Tree->IsFelled() && !Tree->IsActorBeingDestroyed()) Tree->TryHarvest(Pawn);
+    TestTrue(TEXT("Cutting the last wood tips the tree over instead of removing it at once"),Tree->IsFelled() && !Tree->IsActorBeingDestroyed());
+    Tree->Tick(Tree->FallDuration*3.f);
+    Tree->Tick(Tree->RemoveDelay+.1f);
     TestEqual(TEXT("All remaining wood conserved"),Inventory->GetItemCount(Wood),8); TestEqual(TEXT("All remaining thatch conserved"),Inventory->GetItemCount(Thatch),3);
     TestEqual(TEXT("Destroyed tree cannot replay"),Tree->TryHarvest(Pawn),0);
 

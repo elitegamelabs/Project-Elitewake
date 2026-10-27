@@ -29,6 +29,11 @@ public:
     /** Authority-only environmental knockdown. The stump pivot stays at the ground while the tree tips over. */
     UFUNCTION(BlueprintCallable, Category="Harvest") bool Fell(FVector Direction);
     UFUNCTION(BlueprintPure, Category="Harvest") bool IsFelled() const { return bFelled; }
+    /** The last strike of a hatchet: the tree tips over away from the survivor, then lies a moment and disappears. Authority only.
+     *  Hits that leave wood in the tree only shake it. */
+    UFUNCTION(BlueprintCallable, Category="Harvest") bool CutDown(AEWCharacter* Survivor);
+    /** Tuning: seconds a tree lies on the ground after it lands, before it is removed. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest|Tuning", meta=(ClampMin="0")) float RemoveDelay = 3.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest|Tuning", meta=(ClampMin="0.1")) float FallDuration = 2.f;
     virtual void PlayHitShake(const FVector& Direction, float Degrees) override;
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override { return false; }
@@ -39,6 +44,9 @@ private:
     FQuat FallStartRotation = FQuat::Identity;
     FQuat FallTargetRotation = FQuat::Identity;
     float FallElapsed = 0.f;
+    float FallSeconds = 2.f;          // this tree's own fall time: taller trees fall slower
+    float RemoveElapsed = 0.f;
+    bool bRemoveAfterFall = false;
     UFUNCTION() void OnRep_Felled();
     void ConfigureFelledCollision();
 };
