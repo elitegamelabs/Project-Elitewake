@@ -103,3 +103,7 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 - Screenshots: Winter is now one broad snow mountain, Jungle a real hill. Beach sand shows a visible flat shelf edge from the sea in places (look at it next).
 - First Play after a rebuild is slow (distance field builds), so footprint check now waits 12 s before starting.
 - Not done: building on every island (no Build Mode exists; needs an owner design).
+
+### Oct 27 - beach shelf edge
+- The sand slab edge seen from the sea was the old flat shelf (8 m down, then a steep break). `world_terrain.seabed` is now one smooth curve (about 8 degrees at the water, deepening to the 60 m floor with no flat step); unit test rewritten to forbid flat steps and slope breaks. Partial rebuild (terrain, reefs, seabed life, fish, ports, sloop) done; ports, sailing, footprints, island terrain checks pass.
+- Sea-level shots of Starter, Desert, Swamp, Jungle show the edge gone. New Scripts/Verification/capture_beaches.py (look-only) works for the port-side shots but the swimming shots from far offshore are not useful; beaches away from the ports were reviewed from the sea-level terrain shots only.

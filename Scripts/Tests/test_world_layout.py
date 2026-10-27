@@ -107,9 +107,12 @@ class BeachAndMountainTests(unittest.TestCase):
         depths = [T.SEA - T.seabed(d) for d in range(0, 20001, 500)]
         self.assertEqual(depths[0], 0.0)
         self.assertTrue(all(b >= a for a, b in zip(depths, depths[1:])), 'the sea floor never rises going out')
-        self.assertLessEqual(max(b - a for a, b in zip(depths[:25], depths[1:25])) / 500.0, .13, 'no steeper than about 7 degrees across the beach and shelf')
-        self.assertTrue(500 < depths[24] < 800, 'the shelf levels out at some 5-8 m by 120 m offshore')
-        self.assertGreater(depths[-1], 5000, 'the shelf break reaches the deep floor')
+        steps = [(b - a) / 500.0 for a, b in zip(depths, depths[1:])]
+        self.assertLessEqual(max(steps[:4]), .16, 'no steeper than about 9 degrees across the beach itself')
+        self.assertLessEqual(max(steps), .5, 'no steeper than about 27 degrees anywhere, and that only far down at the shelf foot')
+        self.assertGreaterEqual(min(steps), .03, 'no flat step: the sea floor keeps deepening, so no visible shelf edge')
+        self.assertLessEqual(max(b - a for a, b in zip(steps, steps[1:])), .05, 'the slope changes smoothly, no sudden break')
+        self.assertGreater(depths[-1], 5500, 'the shelf reaches the deep floor')
 
     def test_beach_rises_gently_inland(self):
         heights = [T.land(d) for d in range(0, 4001, 100)]

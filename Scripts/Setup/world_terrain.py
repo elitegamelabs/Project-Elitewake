@@ -40,11 +40,11 @@ POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 260.0
 
 def seabed(d):
     """Depth below the waterline at d cm offshore (owner, October 26: beaches that slope naturally into the water and level
-    out into the sea). A gentle foreshore about 12 % at the waterline easing off into a broad sandy shelf, 8 m down by
-    its outer edge, then the shelf break falling away to the floor at SHELF."""
-    shelf = 800.0 * (1 - math.exp(-d / 6500.0))
-    if d > 12000:
-        shelf += ((d - 12000.0) / 8000.0) ** 2 * 5500.0
+    out into the sea). A gentle foreshore at the waterline deepening smoothly to the floor at SHELF."""
+    # One unbroken curve: a gentle foreshore (about 8 degrees at the water) that keeps deepening without a flat step or a
+    # sudden shelf break, reaching the 60 m floor at SHELF where the open sea floor takes over.
+    d = min(d, SHELF)
+    shelf = 450.0 * (1 - math.exp(-d / 3000.0)) + (SEA - FLOOR - 450.0) * (d / SHELF) ** 1.8
     return SEA - shelf
 
 
