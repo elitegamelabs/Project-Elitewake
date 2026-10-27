@@ -56,6 +56,8 @@ const TCHAR* AEWBuildPiece::TypeName(EEWBuildPieceType Type)
     case EEWBuildPieceType::LShapeStaircase: return TEXT("L-shape staircase");
     case EEWBuildPieceType::LeftUShapeStaircase: return TEXT("Left U-shaped staircase");
     case EEWBuildPieceType::LeftTopCorner: return TEXT("Left top corner");
+    case EEWBuildPieceType::Door: return TEXT("Door");
+    case EEWBuildPieceType::Window: return TEXT("Window");
     default: return TEXT("Foundation");
     }
 }
@@ -129,6 +131,14 @@ void AEWBuildPiece::AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceTy
     FVector Offset; float Lift;
     Spec(Type, OutSize, Offset, Lift);
     OutRotation = BaseRotation;
+    if (IsFitting(Type))
+    {
+        // A fitting fills the opening of the wall it is in, facing as the wall does.
+        const float WallBottom = B.Z - Base->GetPieceSize().Z * .5f;
+        if (Type == EEWBuildPieceType::Door) { OutSize = FVector(10.f, DoorWidth, DoorHeight); OutLocation = FVector(B.X, B.Y, WallBottom + DoorHeight * .5f); }
+        else { OutSize = FVector(10.f, WindowWidth, WindowHeight); OutLocation = FVector(B.X, B.Y, WallBottom + WindowSill + WindowHeight * .5f); }
+        return;
+    }
     if (Base->GetPieceType() == EEWBuildPieceType::TopWall)
     {
         // Stacked on a wall: straight above it, same facing.
@@ -169,7 +179,7 @@ void AEWBuildPiece::Configure(float InTopZ, float InBottomZ)
 
 void AEWBuildPiece::ConfigureAttached(EEWBuildPieceType InType, const FVector& InSize, int32 InMaterial, int32 InDesign, AEWBuildPiece* InBase)
 {
-    Design = IsWall(InType) ? FMath::Clamp(InDesign, 0, DesignCount - 1) : 0;
+    Design = InType == EEWBuildPieceType::TopWall ? FMath::Clamp(InDesign, 0, DesignCount - 1) : 0;
     PieceType = InType;
     Size = InSize;
     MaterialIndex = InMaterial;
@@ -322,6 +332,24 @@ void AEWBuildPiece::ApplyShape()
                 Part->SetCollisionProfileName(TEXT("BlockAll"));
             }
         }
+        else if (PieceType == EEWBuildPieceType::TopWall && Design == 2)
+        {
+            // Window frame: two jambs, a sill under the opening and a lintel over it.
+            const float Jamb = (Size.Y - WindowWidth) * .5f, Over = Size.Z - WindowSill - WindowHeight;
+            const float Bottom = -Size.Z * .5f;
+            Slab->SetRelativeScale3D(FVector(Size.X, Jamb, Size.Z) / 100.f);
+            Slab->SetRelativeLocation(FVector(0.f, -(WindowWidth + Jamb) * .5f, 0.f));
+            Part1->SetRelativeScale3D(FVector(Size.X, Jamb, Size.Z) / 100.f);
+            Part1->SetRelativeLocation(FVector(0.f, (WindowWidth + Jamb) * .5f, 0.f));
+            Part2->SetRelativeScale3D(FVector(Size.X, WindowWidth, Over) / 100.f);
+            Part2->SetRelativeLocation(FVector(0.f, 0.f, Size.Z * .5f - Over * .5f));
+            for (UStaticMeshComponent* Part : {Part1.Get(), Part2.Get()})
+            {
+                Part->SetVisibility(true);
+                Part->SetCollisionProfileName(TEXT("BlockAll"));
+            }
+            Use(ExtraBox(ExtrasUsed++), FVector(0.f, 0.f, Bottom + WindowSill * .5f), FVector(Size.X, WindowWidth, WindowSill));
+        }
     }
     for (int32 I = ExtrasUsed; I < Extras.Num(); ++I)
     {
@@ -336,7 +364,7 @@ void AEWBuildPiece::ApplyShape()
     }
     if (Tint)
     {
-        Tint->SetVectorParameterValue(TEXT("Color"), MaterialTint(MaterialIndex));
+        Tint->SetVectorParameterValue(TEXT("Color"), PieceType == EEWBuildPieceType::Window ? FLinearColor(.45f, .65f, .8f, 1.f) : MaterialTint(MaterialIndex));
         for (UStaticMeshComponent* Box : Extras) if (Box) Box->SetMaterial(0, Tint);
     }
 }

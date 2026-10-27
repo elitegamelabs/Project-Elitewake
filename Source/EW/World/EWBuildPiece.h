@@ -7,12 +7,14 @@
 class UStaticMeshComponent;
 class UMaterialInstanceDynamic;
 
-/** The twelve dial slots, clockwise from the top (owner's list, October 27). */
+/** The twelve dial slots, clockwise from the top (owner's list, October 27), then the fittings of the second wheel. */
 UENUM(BlueprintType)
 enum class EEWBuildPieceType : uint8
 {
     TopWall, TopCorner, HalfWall, RightCeiling, RightLowerCorner, Roof,
-    BottomSpiralStaircase, BottomLeftCorner, LShapeStaircase, LeftUShapeStaircase, LeftTopCorner, Foundation
+    BottomSpiralStaircase, BottomLeftCorner, LShapeStaircase, LeftUShapeStaircase, LeftTopCorner, Foundation,
+    /** Fittings (second wheel, owner October 27): a door leaf fills a door frame (a wall with a doorway), a window pane a window frame. */
+    Door, Window
 };
 
 /**
@@ -49,8 +51,12 @@ public:
     static void Spec(EEWBuildPieceType Type, FVector& Size, FVector& LocalOffset, float& Lift);
     /** Where an attached piece of this type goes on this foundation, facing Yaw. */
     static void AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceType Type, FVector& OutLocation, FVector& OutSize, FRotator& OutRotation);
-    /** Wall designs: 0 solid, 1 doorway (placeholder; more designs TBD, owner). */
-    static constexpr int32 DesignCount = 2;
+    /** Wall designs: 0 solid, 1 doorway (door frame), 2 window (window frame). Placeholder sizes; more designs TBD, owner. */
+    static constexpr int32 DesignCount = 3;
+    static constexpr float WindowWidth = 120.f;     // tuning
+    static constexpr float WindowHeight = 120.f;
+    static constexpr float WindowSill = 90.f;
+    static bool IsFitting(EEWBuildPieceType Type) { return Type == EEWBuildPieceType::Door || Type == EEWBuildPieceType::Window; }
     static constexpr float DoorWidth = 120.f;    // tuning
     static constexpr float DoorHeight = 230.f;   // tuning
     static bool IsWall(EEWBuildPieceType Type) { return Type == EEWBuildPieceType::TopWall || Type == EEWBuildPieceType::HalfWall; }

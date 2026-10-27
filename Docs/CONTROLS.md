@@ -44,6 +44,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 |---|---|---|---|
 | Enter / leave Build Mode | B (Escape also leaves) | click right stick | OK (`verify_build_mode_play`) |
 | Open / close the piece dial | Tab | Y | OK (`verify_build_mode_play`) |
+| Open / close the doors and windows wheel (door frame, door, window frame, window; F again goes back to pieces) | F | X (left face button) | OK (`verify_build_mode_play`) |
 | Point at a dial slot | mouse | right or left stick | Pointer maths OK (injected values); real stick and mouse deltas not injectable in Play checks |
 | Pick the slot / place the piece / remove the piece you look at (demolish) | Left mouse | A or RT | OK (`verify_build_mode_play`) |
 | Step through slots with the dial closed | mouse wheel | none | code only, not Play-checked |

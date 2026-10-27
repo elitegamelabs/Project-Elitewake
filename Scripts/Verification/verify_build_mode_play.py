@@ -343,6 +343,8 @@ def doorway_placed():
     note('doorway openness', opening_clear=through_opening, jamb_clear=through_jamb)
     assert through_opening and not through_jamb, 'a doorway should let a ray through the opening and block it at the jamb'
     key('R')
+    assert build.get_design() == 2, 'R after the doorway should be the window design'
+    key('R')
     assert build.get_design() == 0
 
 
@@ -367,6 +369,65 @@ def stacked():
     assert abs(rise - 300) < 1, f'stacked wall is {rise} cm above the first, not 300'
     assert walls[1].get_base() == walls[0], 'stacked wall is not attached to the wall below'
     build.select_slot(0)
+
+
+def pick_fitting(index, name):
+    key('F')
+    assert build.is_dial_open() and build.is_fittings_wheel_open(), 'F did not open the doors and windows wheel'
+    build.set_dial_pointer(*((0, 1), (1, 0), (0, -1), (-1, 0))[index])
+    assert build.get_hovered_slot() == index, f'pointer picked {build.get_hovered_slot()} not {index}'
+    key('LeftMouseButton')
+    sel = str(build.get_selected_type()).upper().replace('_', '')
+    note('fitting picked', index=index, selected=sel, design=build.get_design())
+    assert not build.is_dial_open() and name in sel, f'fitting {index} gave {sel}'
+
+
+def fittings_wheel_shot():
+    key('F')
+    assert build.is_fittings_wheel_open(), 'F did not open the doors and windows wheel'
+    build.set_dial_pointer(1, 0)
+    shot('Fittings')
+
+
+def fittings_wheel_close():
+    key('F')
+    assert not build.is_dial_open(), 'F did not close the wheel again'
+
+
+def door_pick():
+    pick_fitting(1, 'DOOR')
+    f = second_foundation()
+    top = f.get_top_z()
+    assert pawn.teleport(local_point(f, 0, 0, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw)), 'could not stand in the cell'
+    state['aim'] = local_point(f, 190, 100, top + 100)       # a jamb of the doorway wall on the cell's +x edge
+
+
+def door_place():
+    note('door aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'door refused in a doorway: {build.get_aim_reason()}'
+    key('LeftMouseButton')
+
+
+def door_placed():
+    doors = [p for p in pieces() if 'DOOR' in kind(p)]
+    note('door placed', doors=len(doors))
+    assert len(doors) == 1, f'expected one door, found {len(doors)}'
+    assert doors[0].get_base().get_design() == 1, 'the door is not in the doorway wall'
+    loc = doors[0].get_actor_location()
+    through = clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z), unreal.Vector(loc.x + 150, loc.y, loc.z))
+    assert not through, 'the doorway is still open with a door in it'
+    build.select_slot(0)
+    key('F')
+    assert build.is_dial_open()
+    key('Escape')       # Escape closes the wheel first
+    assert not build.is_dial_open() and 'PLACE' in mode()
+    build.select_slot(0)
+
+
+def door_refused():
+    # a second door in the same doorway is refused, and a door on a solid wall is refused
+    note('second door aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    build.select_slot(11)
 
 
 def stair_aim():
@@ -465,16 +526,26 @@ def ceiling_placed():
     build.select_slot(0)
 
 
-def on_ceiling():
+def on_ceiling(at_wall=False):
     # stand on the part of the ceiling that is not cut away and look along its top toward the cell's +x side
     f = second_foundation()
     top = state['ceiling'].get_top_z()
-    assert pawn.teleport(local_point(f, -150, 150, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw)), 'could not stand on the ceiling'
-    state['aim'] = local_point(f, 100, 150, top)
+    if not state.get('trees_cleared'):
+        # tree crowns over the cell would hold the third-person camera: clear the trees near it for this check
+        state['trees_cleared'] = True
+        loc = f.get_actor_location()
+        for tree in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.load_class(None, '/Script/EW.EWHarvestTree')):
+            if math.hypot(tree.get_actor_location().x - loc.x, tree.get_actor_location().y - loc.y) < 1800:
+                tree.destroy_actor()
+    # a tree crown stands over the middle of the cell: for the wall, stand near it so the camera is not inside the crown
+    stand = (150, 170) if at_wall else (-150, 150)
+    assert pawn.teleport(local_point(f, stand[0], stand[1], top + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw - (90 if at_wall else 0))), 'could not stand on the ceiling'
+    state['aim'] = local_point(f, 190, 100, top + 100) if at_wall else local_point(f, 100, 150, top)     # the wall's jamb, or the ceiling
 
 
 def upper_wall_aim():
-    build.select_slot(0)
+    pick_fitting(2, 'TOPWALL')          # window frame: a wall with a window opening
+    assert build.get_design() == 2, build.get_design()
     on_ceiling()
 
 
@@ -490,6 +561,36 @@ def upper_wall_placed():
     note('upper wall', walls=len(upper))
     assert len(upper) == 1, f'expected one wall standing on the ceiling, found {len(upper)}'
     assert upper[0].get_actor_location().z > c.get_top_z() - 5, 'the upper wall is not above the ceiling'
+    assert upper[0].get_design() == 2, f'the wall on the ceiling is design {upper[0].get_design()}, not a window frame'
+    state['window_wall'] = upper[0]
+    # a window pane goes in the window frame, and a door does not
+    pick_fitting(1, 'DOOR')
+    on_ceiling(True)
+
+
+def upper_door_refused():
+    note('door in a window frame', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert not build.is_aim_placeable(), 'a door was allowed in a window frame'
+    pick_fitting(3, 'WINDOW')
+    on_ceiling(True)
+
+
+def upper_window_place():
+    cam = unreal.GameplayStatics.get_player_camera_manager(world, 0)
+    cl, cr = cam.get_camera_location(), cam.get_camera_rotation()
+    end = cl + unreal.MathLibrary.get_forward_vector(cr) * 1600
+    res = unreal.SystemLibrary.line_trace_single(world, cl, end, unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [pawn], unreal.DrawDebugTrace.NONE, True)
+    hit = res.to_tuple() if res else None
+    note('window ray', cam=str(cl), hit_actor=str(hit[9]) if hit else None, hit_at=str(hit[4]) if hit else None, aim=str(state['aim']), wall=str(state['window_wall'].get_actor_location()))
+    note('window aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'window refused in a window frame: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def upper_window_placed():
+    windows = [p for p in pieces() if 'WINDOW' in kind(p)]
+    note('window placed', windows=len(windows))
+    assert len(windows) == 1 and windows[0].get_base() == state['window_wall'], 'the window is not in the window frame'
     build.select_slot(11)
 
 
@@ -594,7 +695,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
-         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 

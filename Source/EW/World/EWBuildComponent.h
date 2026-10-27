@@ -49,6 +49,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="Build") void ToggleDial();
     UFUNCTION(BlueprintCallable, Category="Build") void SetDialPointer(float X, float Y);
     UFUNCTION(BlueprintCallable, Category="Build") void SelectSlot(int32 Slot);
+    /** The second wheel: door frame, door, window frame, window (F / X button opens it). */
+    UFUNCTION(BlueprintCallable, Category="Build") void ToggleFittings();
+    UFUNCTION(BlueprintCallable, Category="Build") void SelectFitting(int32 Index);
+    UFUNCTION(BlueprintPure, Category="Build") bool IsFittingsWheelOpen() const { return bDialOpen && bFittingsWheel; }
     UFUNCTION(BlueprintCallable, Category="Build") void CycleMaterial(int32 Direction);
     UFUNCTION(BlueprintCallable, Category="Build") void CycleDesign(int32 Direction);
     UFUNCTION(BlueprintCallable, Category="Build") void StepSlot(int32 Direction);
@@ -71,6 +75,7 @@ public:
     static constexpr float SnapGrid = 50.f;         // cm, free placement
     static constexpr float SnapPieceRange = 250.f;  // cm: how near an edge slot must be to the aim to snap to it
     static constexpr int32 SlotCount = 12;
+    static constexpr int32 FittingCount = 4;
 
     UFUNCTION(Server, Reliable) void ServerPlace(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, int32 InDesign, AEWBuildPiece* BasePiece);
     UFUNCTION(Server, Reliable) void ServerDemolish(AEWBuildPiece* Piece);
@@ -90,6 +95,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> Glow;
 
     bool bDialOpen = false;
+    bool bFittingsWheel = false;
     bool bLookLocked = false;
     int32 HoveredSlot = 11;
     FVector2D DialPointer = FVector2D::ZeroVector;     // -1..1, x right, y up

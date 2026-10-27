@@ -28,6 +28,14 @@ namespace
 
     // Clockwise from the top, the owner's list.
     EEWBuildPieceType SlotType(int32 Slot) { return static_cast<EEWBuildPieceType>(FMath::Clamp(Slot, 0, UEWBuildComponent::SlotCount - 1)); }
+
+    // The second wheel (owner, October 27: doors, frames, windows): a frame is a wall with an opening, a leaf fills it. Placeholder set, TBD.
+    struct FFitting { const TCHAR* Label; EEWBuildPieceType Type; int32 Design; };
+    const FFitting Fittings[UEWBuildComponent::FittingCount] = {
+        {TEXT("Door frame"), EEWBuildPieceType::TopWall, 1}, {TEXT("Door"), EEWBuildPieceType::Door, 0},
+        {TEXT("Window frame"), EEWBuildPieceType::TopWall, 2}, {TEXT("Window"), EEWBuildPieceType::Window, 0}};
+    // Option backgrounds are semi-transparent (owner, October 27).
+    const FLinearColor OptionIdle(.02f, .03f, .05f, .38f), OptionHot(1.f, .75f, .15f, .6f);
 }
 
 UEWBuildComponent::UEWBuildComponent()
@@ -126,9 +134,9 @@ void UEWBuildComponent::CycleDesign(int32 Direction)
 
 void UEWBuildComponent::StepSlot(int32 Direction)
 {
-    const int32 Now = static_cast<int32>(SelectedType);
+    const int32 Now = FMath::Min(static_cast<int32>(SelectedType), SlotCount - 1);
     SelectedType = SlotType((Now + (Direction >= 0 ? 1 : -1) + SlotCount) % SlotCount);
-    HoveredSlot = static_cast<int32>(SelectedType);
+    HoveredSlot = FMath::Min(static_cast<int32>(SelectedType), SlotCount - 1);
 }
 
 void UEWBuildComponent::SelectSlot(int32 Slot)
@@ -138,10 +146,28 @@ void UEWBuildComponent::SelectSlot(int32 Slot)
     ShowDial(false);
 }
 
+void UEWBuildComponent::SelectFitting(int32 Index)
+{
+    const FFitting& Fitting = Fittings[FMath::Clamp(Index, 0, FittingCount - 1)];
+    SelectedType = Fitting.Type;
+    DesignIndex = Fitting.Design;
+    ShowDial(false);
+}
+
 void UEWBuildComponent::ToggleDial()
 {
     if (Mode != EEWBuildMode::Place) return;
-    ShowDial(!bDialOpen);
+    const bool bClose = bDialOpen;
+    if (bDialOpen) ShowDial(false);
+    if (!bClose) { bFittingsWheel = false; ShowDial(true); }
+}
+
+void UEWBuildComponent::ToggleFittings()
+{
+    if (Mode != EEWBuildMode::Place) return;
+    const bool bClose = bDialOpen && bFittingsWheel;
+    if (bDialOpen) ShowDial(false);
+    if (!bClose) { bFittingsWheel = true; ShowDial(true); }
 }
 
 void UEWBuildComponent::SetDialPointer(float X, float Y)
@@ -150,7 +176,8 @@ void UEWBuildComponent::SetDialPointer(float X, float Y)
     if (DialPointer.Size() < DialDeadZone) return;
     float Degrees = FMath::RadiansToDegrees(FMath::Atan2(DialPointer.X, DialPointer.Y));
     if (Degrees < 0.f) Degrees += 360.f;
-    HoveredSlot = FMath::RoundToInt(Degrees / (360.f / SlotCount)) % SlotCount;
+    const int32 Count = bFittingsWheel ? FittingCount : SlotCount;
+    HoveredSlot = FMath::RoundToInt(Degrees / (360.f / Count)) % Count;
 }
 
 void UEWBuildComponent::ShowDial(bool bShow)
@@ -166,36 +193,40 @@ void UEWBuildComponent::ShowDial(bool bShow)
     if (!GEngine || !GEngine->GameViewport || !PC || !PC->IsLocalController()) return;
     if (!bShow)
     {
+        bFittingsWheel = false;
         if (DialWidget.IsValid()) GEngine->GameViewport->RemoveViewportWidgetContent(DialWidget.ToSharedRef());
         DialWidget.Reset();
         return;
     }
     DialPointer = FVector2D::ZeroVector;
-    HoveredSlot = static_cast<int32>(SelectedType);
+    const int32 Count = bFittingsWheel ? FittingCount : SlotCount;
+    HoveredSlot = bFittingsWheel ? 0 : FMath::Min(static_cast<int32>(SelectedType), SlotCount - 1);
     const FSlateBrush* White = FAppStyle::GetBrush("WhiteBrush");
     TSharedRef<SCanvas> Canvas = SNew(SCanvas);
     const FVector2D Middle(420.f, 290.f);
-    for (int32 Slot = 0; Slot < SlotCount; ++Slot)
+    const bool bFittings = bFittingsWheel;
+    for (int32 Slot = 0; Slot < Count; ++Slot)
     {
-        const float A = FMath::DegreesToRadians(Slot * (360.f / SlotCount));
+        const float A = FMath::DegreesToRadians(Slot * (360.f / Count));
         const FVector2D At = Middle + FVector2D(FMath::Sin(A), -FMath::Cos(A)) * FVector2D(DialRadius * 1.9f, DialRadius) - FVector2D(75.f, 18.f);
-        const FText Label = FText::FromString(AEWBuildPiece::TypeName(SlotType(Slot)));
+        const FText Label = FText::FromString(bFittings ? Fittings[Slot].Label : AEWBuildPiece::TypeName(SlotType(Slot)));
         Canvas->AddSlot().Position(At).Size(FVector2D(150.f, 36.f))
         [
             SNew(SBorder).BorderImage(White).Padding(4.f)
-            .BorderBackgroundColor_Lambda([this, Slot]() { return Slot == HoveredSlot ? FLinearColor(1.f, .75f, .15f, .95f) : FLinearColor(.02f, .03f, .05f, .8f); })
+            .BorderBackgroundColor_Lambda([this, Slot]() { return Slot == HoveredSlot ? OptionHot : OptionIdle; })
             [
                 SNew(STextBlock).Text(Label).Justification(ETextJustify::Center).AutoWrapText(true)
                 .ColorAndOpacity_Lambda([this, Slot]() { return Slot == HoveredSlot ? FSlateColor(FLinearColor::Black) : FSlateColor(FLinearColor::White); })
             ]
         ];
     }
-    Canvas->AddSlot().Position(Middle - FVector2D(110.f, 22.f)).Size(FVector2D(220.f, 44.f))
+    Canvas->AddSlot().Position(Middle - FVector2D(110.f, 33.f)).Size(FVector2D(220.f, 66.f))
     [
         SNew(STextBlock).Justification(ETextJustify::Center).ColorAndOpacity(FLinearColor::White)
-        .Text_Lambda([this]()
+        .Text_Lambda([this, bFittings]()
         {
-            return FText::FromString(FString::Printf(TEXT("%s\n%s (LB / RB)"), AEWBuildPiece::TypeName(SlotType(HoveredSlot)), AEWBuildPiece::MaterialName(MaterialIndex)));
+            return FText::FromString(FString::Printf(TEXT("%s\n%s (LB / RB)\n%s"), bFittings ? Fittings[FMath::Clamp(HoveredSlot, 0, FittingCount - 1)].Label : AEWBuildPiece::TypeName(SlotType(HoveredSlot)),
+                AEWBuildPiece::MaterialName(MaterialIndex), bFittings ? TEXT("F / X: back to pieces") : TEXT("F / X: doors and windows")));
         })
     ];
     Canvas->AddSlot()
@@ -239,6 +270,7 @@ bool UEWBuildComponent::HandleKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (Key == EKeys::Tab || Key == EKeys::Gamepad_FaceButton_Top) { if (bPressed) ToggleDial(); return true; }
+    if (Key == EKeys::F || Key == EKeys::Gamepad_FaceButton_Left) { if (bPressed) ToggleFittings(); return true; }
     if (Key == EKeys::Q || Key == EKeys::Gamepad_DPad_Left) { if (bPressed) RotateStep(-1); return true; }
     if (Key == EKeys::E || Key == EKeys::Gamepad_DPad_Right) { if (bPressed) RotateStep(1); return true; }
     if (Key == EKeys::Z || Key == EKeys::Gamepad_LeftShoulder) { if (bPressed) CycleMaterial(-1); return true; }
@@ -280,7 +312,13 @@ bool UEWBuildComponent::AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBui
     // (a ceiling's Base is the cell under it), so you may build off a ceiling as long as everything below stands on a foundation.
     // A full wall can also carry another wall straight above it, one high.
     auto IsCell = [](const AEWBuildPiece* P) { return P && (P->GetPieceType() == EEWBuildPieceType::Foundation || P->GetPieceType() == EEWBuildPieceType::RightCeiling); };
-    if (Base && Base->GetPieceType() == EEWBuildPieceType::TopWall)
+    if (AEWBuildPiece::IsFitting(Type))
+    {
+        const bool bDoor = Type == EEWBuildPieceType::Door;
+        if (!Base || Base->GetPieceType() != EEWBuildPieceType::TopWall || Base->GetDesign() != (bDoor ? 1 : 2))
+        { Reason = bDoor ? TEXT("A door goes in a door frame: build a wall with a doorway first.") : TEXT("A window goes in a window frame: build a wall with a window first."); return false; }
+    }
+    else if (Base && Base->GetPieceType() == EEWBuildPieceType::TopWall)
     {
         if (!AEWBuildPiece::IsWall(Type)) { Reason = TEXT("Only a wall stands on a wall."); return false; }
         if (!IsCell(Base->GetBase())) { Reason = TEXT("Walls stack one high."); return false; }
@@ -345,7 +383,7 @@ void UEWBuildComponent::UpdateAim()
     {
         // Attached pieces: the foundation looked at (or the one under the piece looked at, or the nearest to where the aim lands).
         AEWBuildPiece* Base = Cast<AEWBuildPiece>(Hit.GetActor());
-        const bool bStacking = Base && Base->GetPieceType() == EEWBuildPieceType::TopWall && AEWBuildPiece::IsWall(SelectedType);
+        const bool bStacking = Base && Base->GetPieceType() == EEWBuildPieceType::TopWall && (AEWBuildPiece::IsWall(SelectedType) || AEWBuildPiece::IsFitting(SelectedType));
         if (Base && !bStacking && Base->GetPieceType() != EEWBuildPieceType::Foundation && Base->GetPieceType() != EEWBuildPieceType::RightCeiling) Base = Base->GetBase();
         if (!Base)
         {
@@ -420,7 +458,7 @@ void UEWBuildComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, F
     if (GEngine)
     {
         const FString Line = bDialOpen
-            ? FString::Printf(TEXT("BUILD MODE  PIECE DIAL  point at a piece: mouse or either stick   Pick: left mouse / A / RT   Close: Tab / Y / Esc"))
+            ? FString::Printf(TEXT("BUILD MODE  %s  point at one: mouse or either stick   Pick: left mouse / A / RT   Other wheel: F / X   Close: Tab / Y / Esc"), bFittingsWheel ? TEXT("DOORS AND WINDOWS") : TEXT("PIECE DIAL"))
             : FString::Printf(TEXT("BUILD MODE  %s [%s]  [%s]  Rotate: Q/E or d-pad L/R   Material: Z/C or LB/RB   Design: R or d-pad U   Dial: Tab or Y   %s: X or B button   Leave: B or right stick"),
                 Mode == EEWBuildMode::Demolish ? TEXT("DEMOLISH") : AEWBuildPiece::TypeName(SelectedType), AEWBuildPiece::MaterialName(MaterialIndex),
                 bAimOk ? TEXT("OK") : *AimReason, Mode == EEWBuildMode::Demolish ? TEXT("Place") : TEXT("Demolish"));
@@ -431,7 +469,7 @@ void UEWBuildComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, F
 
 void UEWBuildComponent::Confirm()
 {
-    if (bDialOpen) { SelectSlot(HoveredSlot); return; }
+    if (bDialOpen) { if (bFittingsWheel) SelectFitting(HoveredSlot); else SelectSlot(HoveredSlot); return; }
     if (Mode == EEWBuildMode::Place && bAimOk) ServerPlace(SelectedType, AimLocation, YawDegrees, MaterialIndex, DesignIndex, AimBase);
     else if (Mode == EEWBuildMode::Demolish && bAimOk && AimedPiece) ServerDemolish(AimedPiece);
 }
