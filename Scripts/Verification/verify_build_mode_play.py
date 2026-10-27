@@ -415,6 +415,60 @@ def stair_walked():
     assert 'PLACE' in mode(), mode()
 
 
+def ceiling_aim():
+    build.select_slot(3)      # right ceiling: over the second foundation, whose doorway wall is its supporting wall
+    fx, fy = state['f2']
+    face(fx, fy, T.height(fx, fy), back=300.0, yaw=90.0)
+
+
+def ceiling_place():
+    note('ceiling aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()), loc=str(build.get_aim_location()))
+    assert build.is_aim_placeable(), f'ceiling refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def ceiling_placed():
+    ceilings = [p for p in pieces() if 'CEILING' in kind(p)]
+    note('ceiling placed', ceilings=len(ceilings), pieces=len(pieces()))
+    assert len(ceilings) == 1, f'expected one ceiling, found {len(ceilings)}'
+    state['ceiling'] = ceilings[0]
+    build.select_slot(0)
+
+
+def upper_wall_aim():
+    c = state['ceiling'].get_actor_location()
+    face(c.x, c.y, 0.0, back=300.0, yaw=90.0, lift=state['ceiling'].get_top_z() - T.height(c.x, c.y))
+
+
+def upper_wall_place():
+    note('upper wall aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()), loc=str(build.get_aim_location()))
+    assert build.is_aim_placeable(), f'wall on a ceiling refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def upper_wall_placed():
+    c = state['ceiling']
+    upper = [p for p in pieces() if 'TOPWALL' in kind(p) and p.get_base() == c]
+    note('upper wall', walls=len(upper))
+    assert len(upper) == 1, f'expected one wall standing on the ceiling, found {len(upper)}'
+    assert upper[0].get_actor_location().z > c.get_top_z() - 5, 'the upper wall is not above the ceiling'
+    build.select_slot(11)
+
+
+def upper_foundation_refused():
+    # a foundation is never built on a ceiling: aiming at the ceiling with the foundation selected must not offer it there
+    c = state['ceiling'].get_actor_location()
+    face(c.x, c.y, 0.0, back=300.0, yaw=90.0, lift=state['ceiling'].get_top_z() - T.height(c.x, c.y))
+
+
+def upper_foundation_checked():
+    loc = build.get_aim_location()
+    note('foundation aimed at ceiling', placeable=build.is_aim_placeable(), loc=str(loc))
+    if build.is_aim_placeable():
+        assert loc.z < state['ceiling'].get_top_z() - 100, 'a foundation was offered on top of a ceiling'
+    build.select_slot(11)
+
+
 def to_demolish():
     key('X')
     assert 'DEMOLISH' in mode(), mode()
@@ -502,7 +556,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
-         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, 1.6), (stair_mid, 2.2), (stair_walked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, 1.6), (stair_mid, 2.2), (stair_walked, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 
