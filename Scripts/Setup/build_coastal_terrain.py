@@ -104,7 +104,8 @@ def make_material():
     regions = (' float w = saturate(1 - abs(A - .1) * 8), pl = saturate(1 - abs(A - .3) * 8), j = saturate(1 - abs(A - .5) * 8),'
                ' sw = saturate(1 - abs(A - .7) * 8), d = saturate(1 - abs(A - .9) * 8);')
     snowy = custom('struct G { ' + noise + ' }; G g;'
-                   ' float up = saturate((P.z + 45.0) / 60.0);'
+                   ' float up = saturate(P.z / 100.0);'   # soil and grass start 65 cm above the waterline, full by 1 m: a beach strip of sand some 15-30 m wide (owner, October 27)
+                   
                    ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.n2(P.xy / 6.0), speck = g.n2(P.xy / 1.7);'
                    ' float flat = saturate((N.z - .72) * 5.0);' + regions +
                    # Grass: lush on the Plains, deep and saturated in the Jungle, olive moss in the Swamp.
@@ -156,7 +157,8 @@ def make_material():
                    ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'A', 'P', 'N', 'T'))
     # Roughness: the Swamp's mud glistens, with glossy puddles in its hollows; the Desert is bone dry.
     snow_rough = custom('struct G { ' + noise + ' }; G g;'
-                        ' float up = saturate((P.z + 45.0) / 60.0);' + regions +
+                        ' float up = saturate(P.z / 100.0);'   # soil and grass start 65 cm above the waterline, full by 1 m: a beach strip of sand some 15-30 m wide (owner, October 27)
+                    + regions +
                         ' float r = lerp(lerp(lerp(R, .95, V.g * up), .45, V.b), .62, V.r * up);'
                         ' float puddle = smoothstep(.62, .7, g.n2(P.xy / 260.0)) * sw * up;'
                         ' r = lerp(r, .35, sw * up * .7); r = lerp(r, .08, puddle);'

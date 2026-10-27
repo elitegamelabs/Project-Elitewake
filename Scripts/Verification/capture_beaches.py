@@ -14,12 +14,12 @@ for old in SHOTS.glob('*.png'):
     old.unlink()
 steps = []
 for isle in W.ISLANDS:
-    ang = math.atan2(-isle.cy, -isle.cx) if (isle.cx or isle.cy) else math.pi
+    ang = (math.atan2(-isle.cy, -isle.cx) if (isle.cx or isle.cy) else math.pi) + 1.2   # away from the Port's waterfront
     # The shoreline along that ray: out from the island's middle until the outline is passed.
     r = 0.0
     while isle.distance(isle.cx + r * math.cos(ang), isle.cy + r * math.sin(ang)) < 0 and r < 600000:
         r += 100.0
-    for tag, off, z, pitch in (('far', 12000, 2500.0, -5), ('near', 3500, 1800.0, -6), ('onshore', -1500, 400.0, -3)):
+    for tag, off, z, pitch in (('far', 9000, 1500.0, -5), ('near', 3000, 700.0, -8), ('onshore', -800, 400.0, -3)):
         x, y = isle.cx + (r + off) * math.cos(ang), isle.cy + (r + off) * math.sin(ang)
         # offshore looks in at the beach; onshore stands on the sand looking out to sea
         yaw = math.degrees(ang + math.pi) if off > 0 else math.degrees(ang)
