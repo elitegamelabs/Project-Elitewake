@@ -96,18 +96,36 @@ def equip_and_chop():
         if owner.teleport(unreal.Vector(location.x - 70, location.y, location.z + lift), unreal.Rotator()):
             break
     eye, _ = owner.get_actor_eyes_view_point()
-    aim = unreal.Vector(location.x + 40, location.y, location.z + 30)      # the log's near end, which can sit well below the eye on a slope
+    aim = unreal.Vector(location.x + 70, location.y, location.z)      # the lying trunk's axis runs through its pivot, so aim at the pivot height
     pitch = -math.degrees(math.atan2(eye.z - aim.z, aim.x - eye.x))
     for c in (client, owner.get_controller()):
         c.set_control_rotation(unreal.Rotator(0, pitch, 0))
     report['aim_pitch'] = pitch
+    o, e = tree.get_actor_bounds(True)
+    report['tree_bounds'] = [str(o), str(e), str(tree.get_actor_location()), str(tree.get_actor_rotation())]
+    mesh = tree.get_editor_property('Mesh')
+    report['mesh'] = [str(mesh.get_world_location()), str(mesh.get_collision_enabled()), str(mesh.get_collision_response_to_channel(unreal.CollisionChannel.ECC_VISIBILITY))]
     inventory.add_item(hatchet, 1)
     check('Client equips the hatchet', lib.send_verification_equipment_request(
         client, hatchet, unreal.EWEquipmentSlot.MAIN_HAND))
 
 def request_strike():
+    eye, rot = owner.get_actor_eyes_view_point()
+    end = eye + unreal.MathLibrary.get_forward_vector(rot) * 400
+    res = unreal.SystemLibrary.line_trace_single(server, eye, end, unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [owner],
+                                                 unreal.DrawDebugTrace.NONE, True)
+    hit = res
+    got = bool(res)
+    report.setdefault('strike_trace', []).append([str(eye), str(rot), str(hit.to_tuple()[4]) if got else 'no hit',
+                                                  hit.to_tuple()[9].get_name() if got else ''])
     report.setdefault('strike_from', []).append([str(owner.get_actor_location()), str(client_pawn.get_actor_location())])
     check('Client attack input accepted', lib.send_verification_attack(client, peer(tree)))
+
+def retry_if_missing(expected):
+    if inventory.get_item_count(wood) < expected * 3:
+        report['strike_retries'] = report.get('strike_retries', 0) + 1
+        request_strike()
+
 
 def check_strike(expected):
     wood_count = inventory.get_item_count(wood)
@@ -126,9 +144,10 @@ action(7.0, fell)      # the fall now takes 2 to 5 s depending on the tree heigh
 action(2.5, replicated_fall)
 action(1.5, begin_walk)
 action(.2, end_walk)
-action(2.0, equip_and_chop)
+action(3.0, equip_and_chop)
 for hits in range(1, 5):
     action(.1 if hits < 4 else 5.0, request_strike)      # the felled log lies a few seconds (RemoveDelay) before it goes
+    action(1.6, lambda n=hits: retry_if_missing(n))      # strikes need their swing cooldown between them
     action(1.2, lambda n=hits: check_strike(n))
 
 index = 0
