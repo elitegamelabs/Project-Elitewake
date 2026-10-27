@@ -47,20 +47,32 @@ public:
     /** Shape of an attached piece in its foundation's frame: size, middle offset from the foundation's middle, height above its top. */
     static void Spec(EEWBuildPieceType Type, FVector& Size, FVector& LocalOffset, float& Lift);
     /** Where an attached piece of this type goes on this foundation, facing Yaw. */
-    static void AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceType Type, float Yaw, FVector& OutLocation, FVector& OutSize);
+    static void AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceType Type, FVector& OutLocation, FVector& OutSize, FRotator& OutRotation);
+    /** Wall designs: 0 solid, 1 doorway (placeholder; more designs TBD, owner). */
+    static constexpr int32 DesignCount = 2;
+    static constexpr float DoorWidth = 120.f;    // tuning
+    static constexpr float DoorHeight = 230.f;   // tuning
+    static bool IsWall(EEWBuildPieceType Type) { return Type == EEWBuildPieceType::TopWall || Type == EEWBuildPieceType::HalfWall; }
+    static bool IsStair(EEWBuildPieceType Type)
+    { return Type == EEWBuildPieceType::BottomSpiralStaircase || Type == EEWBuildPieceType::LShapeStaircase || Type == EEWBuildPieceType::LeftUShapeStaircase; }
 
     /** Size the foundation slab: its top and underside heights in world space. Set by the server right after spawning. */
     void Configure(float InTopZ, float InBottomZ);
     /** Make this an attached piece (server, right after spawning at its transform). */
-    void ConfigureAttached(EEWBuildPieceType InType, const FVector& InSize, int32 InMaterial, AEWBuildPiece* InBase);
+    void ConfigureAttached(EEWBuildPieceType InType, const FVector& InSize, int32 InMaterial, int32 InDesign, AEWBuildPiece* InBase);
     void SetMaterialIndex(int32 InMaterial);
 
     UFUNCTION(BlueprintPure, Category="Build") float GetTopZ() const { return TopZ; }
     UFUNCTION(BlueprintPure, Category="Build") EEWBuildPieceType GetPieceType() const { return PieceType; }
     UFUNCTION(BlueprintPure, Category="Build") int32 GetMaterialIndex() const { return MaterialIndex; }
     UFUNCTION(BlueprintPure, Category="Build") AEWBuildPiece* GetBase() const { return Base; }
+    UFUNCTION(BlueprintPure, Category="Build") int32 GetDesign() const { return Design; }
+    UFUNCTION(BlueprintPure, Category="Build") FVector GetPieceSize() const { return Size; }
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build") TObjectPtr<UStaticMeshComponent> Slab;
+    /** Extra boxes for a doorway wall (the other jamb and the lintel). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build") TObjectPtr<UStaticMeshComponent> Part1;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build") TObjectPtr<UStaticMeshComponent> Part2;
 
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Shape) float TopZ = 0.f;
@@ -68,6 +80,7 @@ private:
     UPROPERTY(ReplicatedUsing=OnRep_Shape) EEWBuildPieceType PieceType = EEWBuildPieceType::Foundation;
     UPROPERTY(ReplicatedUsing=OnRep_Shape) FVector Size = FVector::ZeroVector;
     UPROPERTY(ReplicatedUsing=OnRep_Shape) int32 MaterialIndex = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_Shape) int32 Design = 0;
     UPROPERTY(Replicated) TObjectPtr<AEWBuildPiece> Base;
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> Tint;
     UFUNCTION() void OnRep_Shape();

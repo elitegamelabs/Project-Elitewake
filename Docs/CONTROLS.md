@@ -49,6 +49,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Step through slots with the dial closed | mouse wheel | none | code only, not Play-checked |
 | Turn a foundation a quarter | Q / E | d-pad left / right | OK (`verify_build_mode_play`) |
 | Change material (placeholder: Thatch, Wood, Stone, Metal) | Z / C | LB / RB | OK (`verify_build_mode_play`) |
+| Change wall design (solid / doorway, placeholder) | R | d-pad up / down | OK (`verify_build_mode_play`) |
 | Switch place / demolish | X | B button | OK (`verify_build_mode_play`) |
 Ghost is blue where it may go, red with a reason where it may not. Other pieces go at fixed places on a foundation (or ceiling): top wall on the top edge, corners where walls meet, ceiling and roof need a wall under them. A and the dial's keys replace jump while Build Mode is on. Hint text is an on-screen debug line.
 

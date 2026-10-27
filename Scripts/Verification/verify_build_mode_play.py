@@ -56,14 +56,14 @@ def shot(name):
     unreal.SystemLibrary.execute_console_command(world, f'Shot showui filename="{shots / name}.png"')
 
 
-def face(site_x, site_y, ground, back=300.0, yaw=0.0):
+def face(site_x, site_y, ground, back=300.0, yaw=0.0, lift=0.0):
     """Stand `back` cm behind the site (along -yaw) and look at the ground there: the view is tracked toward it every frame
     from the real camera (the survivor's third-person camera sits behind and above)."""
     rad = math.radians(yaw)
     px, py = site_x - back * math.cos(rad), site_y - back * math.sin(rad)
     survival.restore_health(1000.0)
     pawn.teleport(unreal.Vector(px, py, T.height(px, py) + 130), unreal.Rotator(roll=0, pitch=0, yaw=yaw))
-    state['aim'] = unreal.Vector(site_x, site_y, T.height(site_x, site_y))
+    state['aim'] = unreal.Vector(site_x, site_y, T.height(site_x, site_y) + lift)
 
 
 def flat(x, y, within=40.0):
@@ -304,6 +304,117 @@ def corner_placed():
     build.select_slot(11)
 
 
+def kind(p):
+    return str(p.get_piece_type()).upper().replace('_', '')
+
+
+def second_foundation():
+    return max((p for p in pieces() if 'FOUNDATION' in kind(p)), key=lambda p: p.get_actor_location().x)
+
+
+def clear_through(a, b):
+    res = unreal.SystemLibrary.line_trace_single(world, a, b, unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [pawn],
+                                                 unreal.DrawDebugTrace.NONE, True)
+    return not (res[0] if isinstance(res, tuple) else res)
+
+
+def doorway_aim():
+    build.select_slot(0)
+    f = second_foundation().get_actor_location()
+    state['f2'] = (f.x, f.y)
+    face(f.x, f.y, T.height(f.x, f.y), back=300.0, yaw=90.0)   # from the south: the first foundation's wall is on the west side
+
+
+def doorway_place():
+    key('R')
+    assert build.get_design() == 1, 'R did not pick the doorway design'
+    note('doorway aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'doorway refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def doorway_placed():
+    doors = [p for p in pieces() if 'TOPWALL' in kind(p) and p.get_design() == 1]
+    note('doorway placed', doors=len(doors), pieces=len(pieces()))
+    assert len(doors) == 1, f'expected one doorway wall, found {len(doors)}'
+    loc = doors[0].get_actor_location()
+    through_opening = clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z - 50), unreal.Vector(loc.x + 150, loc.y, loc.z - 50))
+    through_jamb = clear_through(unreal.Vector(loc.x - 150, loc.y + 150, loc.z - 50), unreal.Vector(loc.x + 150, loc.y + 150, loc.z - 50))
+    note('doorway openness', opening_clear=through_opening, jamb_clear=through_jamb)
+    assert through_opening and not through_jamb, 'a doorway should let a ray through the opening and block it at the jamb'
+    key('R')
+    assert build.get_design() == 0
+
+
+def stack_aim():
+    build.select_slot(0)
+    x, y = state['site']
+    face(x + 190, y, T.height(x, y), back=300.0, lift=170.0)
+
+
+def stack_place():
+    note('pieces', all=[(kind(q), round(q.get_actor_location().x), round(q.get_actor_location().y), round(q.get_actor_location().z)) for q in pieces()])
+    note('stack aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()), loc=str(build.get_aim_location()))
+    assert build.is_aim_placeable(), f'wall on a wall refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def stacked():
+    walls = sorted((p for p in pieces() if 'TOPWALL' in kind(p) and p.get_design() == 0), key=lambda p: p.get_actor_location().z)
+    note('stacked', walls=[round(w.get_actor_location().z, 1) for w in walls])
+    assert len(walls) == 2, f'expected two solid walls (one on the other), found {len(walls)}'
+    rise = walls[1].get_actor_location().z - walls[0].get_actor_location().z
+    assert abs(rise - 300) < 1, f'stacked wall is {rise} cm above the first, not 300'
+    assert walls[1].get_base() == walls[0], 'stacked wall is not attached to the wall below'
+    build.select_slot(0)
+
+
+def stair_aim():
+    build.select_slot(8)      # L-shape staircase
+    fx, fy = state['f2']
+    face(fx, fy, T.height(fx, fy), back=300.0, yaw=90.0)
+
+
+def stair_place():
+    note('stair aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'stairs refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def stair_placed():
+    stairs = [p for p in pieces() if 'STAIRCASE' in kind(p)]
+    assert len(stairs) == 1, f'expected one staircase, found {len(stairs)}'
+    build.select_slot(11)
+    key('B')                                   # out of Build Mode so the survivor can walk
+    assert 'OFF' in mode(), mode()
+    f = second_foundation()
+    top = f.get_top_z()
+    state['aim'] = None
+    state['stair_top'] = top
+    fx, fy = state['f2']
+    pawn.teleport(unreal.Vector(fx - 100, fy - 300, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=90))
+    state['walk_until'] = time.monotonic() + 3.5
+    state['walk_from'] = pawn.get_actor_location().z
+    state['walk_start_xy'] = (round(fx - 100), round(fy - 300))
+
+
+def stair_mid():
+    q = pawn.get_actor_location()
+    note('stair mid', pawn=(round(q.x), round(q.y), round(q.z)))
+    shot('Walk')
+
+
+def stair_walked():
+    z = state['walk_max']
+    q = pawn.get_actor_location()
+    stairs = [p for p in pieces() if 'STAIRCASE' in kind(p)][0]
+    note('stair walk detail', pawn=(round(q.x), round(q.y)), start=state['walk_start_xy'], stairs=str(stairs.get_actor_location()), rot=str(stairs.get_actor_rotation()), size=str(stairs.get_piece_size()))
+    note('stair walk (highest point reached)', start_z=round(state['walk_from'], 1), end_z=round(z, 1), foundation_top=round(state['stair_top'], 1))
+    assert z - state['stair_top'] > 180, f'survivor did not climb the stairs (z {z}, foundation top {state["stair_top"]})'
+    key('B')
+    assert 'PLACE' in mode(), mode()
+
+
 def to_demolish():
     key('X')
     assert 'DEMOLISH' in mode(), mode()
@@ -312,6 +423,10 @@ def to_demolish():
 
 
 def demolish_first():
+    x, y = state['site']
+    mine = [p for p in pieces() if math.hypot(p.get_actor_location().x - x, p.get_actor_location().y - y) < 260]
+    state['expect_after'] = len(pieces()) - len(mine)
+    note('first foundation family', pieces=len(mine), total=len(pieces()))
     aimed = build.get_aimed_piece()
     note('demolish aim', aimed=bool(aimed), placeable=build.is_aim_placeable())
     assert aimed, 'looking at a piece in demolish mode finds nothing'
@@ -321,7 +436,7 @@ def demolish_first():
 def after_demolish():
     n = len(pieces())
     note('demolished', pieces=n)
-    assert n == 1, f'expected 1 piece after demolishing one, found {n}'
+    assert n == state['expect_after'], f'expected {state["expect_after"]} pieces after demolishing a foundation and what stood on it, found {n}'
 
 
 def clean_up():
@@ -386,7 +501,8 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (place_on_piece, 1.2), (still_two, .2), (materials, .2), (dial_open_keyboard, 1.0), (dial_shot, .2), (dial_pick_keyboard, .5),
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
-         (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
+         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, 1.6), (stair_mid, 2.2), (stair_walked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 
@@ -398,6 +514,9 @@ def tick(delta):
     if state['aim'] is not None:
         cam = unreal.GameplayStatics.get_player_camera_manager(world, 0).get_camera_location()
         pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(cam, state['aim']))
+    if state.get('walk_until') and time.monotonic() < state['walk_until']:
+        pawn.add_movement_input(unreal.Vector(0, 1, 0), 1.0)
+        state['walk_max'] = max(state.get('walk_max', -1e9), pawn.get_actor_location().z)
     if time.monotonic() < state['at']:
         return
     try:

@@ -50,6 +50,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="Build") void SetDialPointer(float X, float Y);
     UFUNCTION(BlueprintCallable, Category="Build") void SelectSlot(int32 Slot);
     UFUNCTION(BlueprintCallable, Category="Build") void CycleMaterial(int32 Direction);
+    UFUNCTION(BlueprintCallable, Category="Build") void CycleDesign(int32 Direction);
     UFUNCTION(BlueprintCallable, Category="Build") void StepSlot(int32 Direction);
 
     UFUNCTION(BlueprintPure, Category="Build") EEWBuildMode GetMode() const { return Mode; }
@@ -63,6 +64,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Build") int32 GetHoveredSlot() const { return HoveredSlot; }
     UFUNCTION(BlueprintPure, Category="Build") EEWBuildPieceType GetSelectedType() const { return SelectedType; }
     UFUNCTION(BlueprintPure, Category="Build") int32 GetMaterial() const { return MaterialIndex; }
+    UFUNCTION(BlueprintPure, Category="Build") int32 GetDesign() const { return DesignIndex; }
 
     /** Tuning. */
     static constexpr float Reach = 1000.f;          // cm from the survivor to a piece
@@ -70,13 +72,14 @@ public:
     static constexpr float SnapPieceRange = 250.f;  // cm: how near an edge slot must be to the aim to snap to it
     static constexpr int32 SlotCount = 12;
 
-    UFUNCTION(Server, Reliable) void ServerPlace(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, AEWBuildPiece* BasePiece);
+    UFUNCTION(Server, Reliable) void ServerPlace(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, int32 InDesign, AEWBuildPiece* BasePiece);
     UFUNCTION(Server, Reliable) void ServerDemolish(AEWBuildPiece* Piece);
 
 private:
     EEWBuildMode Mode = EEWBuildMode::Off;
     EEWBuildPieceType SelectedType = EEWBuildPieceType::Foundation;
     int32 MaterialIndex = 0;
+    int32 DesignIndex = 0;
     float YawDegrees = 0.f;
     bool bAimOk = false;
     FString AimReason;
@@ -96,8 +99,8 @@ private:
     void UpdateAim();
     void UpdateDial(float DeltaSeconds);
     void ShowDial(bool bShow);
-    void ShowGhost(const FVector& Centre, float Yaw, const FVector& Size, bool bOk);
+    void ShowGhost(const FVector& Centre, const FRotator& Rotation, const FVector& Size, bool bOk);
     class AEWCharacter* GetSurvivor() const;
     static bool PlacementAllowed(UWorld* World, const FVector& Location, float Yaw, float& OutTop, float& OutBottom, FString& Reason);
-    static bool AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBuildPieceType Type, float Yaw, FVector& OutLocation, FVector& OutSize, FString& Reason);
+    static bool AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBuildPieceType Type, FVector& OutLocation, FVector& OutSize, FRotator& OutRotation, FString& Reason);
 };

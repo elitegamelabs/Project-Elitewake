@@ -119,6 +119,11 @@ void UEWBuildComponent::CycleMaterial(int32 Direction)
     MaterialIndex = (MaterialIndex + (Direction >= 0 ? 1 : -1) + AEWBuildPiece::MaterialCount) % AEWBuildPiece::MaterialCount;
 }
 
+void UEWBuildComponent::CycleDesign(int32 Direction)
+{
+    DesignIndex = (DesignIndex + (Direction >= 0 ? 1 : -1) + AEWBuildPiece::DesignCount) % AEWBuildPiece::DesignCount;
+}
+
 void UEWBuildComponent::StepSlot(int32 Direction)
 {
     const int32 Now = static_cast<int32>(SelectedType);
@@ -238,6 +243,8 @@ bool UEWBuildComponent::HandleKey(const FInputKeyEventArgs& Params)
     if (Key == EKeys::E || Key == EKeys::Gamepad_DPad_Right) { if (bPressed) RotateStep(1); return true; }
     if (Key == EKeys::Z || Key == EKeys::Gamepad_LeftShoulder) { if (bPressed) CycleMaterial(-1); return true; }
     if (Key == EKeys::C || Key == EKeys::Gamepad_RightShoulder) { if (bPressed) CycleMaterial(1); return true; }
+    if (Key == EKeys::R || Key == EKeys::Gamepad_DPad_Up) { if (bPressed) CycleDesign(1); return true; }
+    if (Key == EKeys::Gamepad_DPad_Down) { if (bPressed) CycleDesign(-1); return true; }
     if (Key == EKeys::X || Key == EKeys::Gamepad_FaceButton_Right) { if (bPressed) ToggleDemolish(); return true; }
     if (Key == EKeys::MouseScrollUp || Key == EKeys::MouseScrollDown)
     {
@@ -266,14 +273,20 @@ bool UEWBuildComponent::PlacementAllowed(UWorld* World, const FVector& Location,
     return Reason.IsEmpty();
 }
 
-bool UEWBuildComponent::AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBuildPieceType Type, float Yaw, FVector& OutLocation, FVector& OutSize, FString& Reason)
+bool UEWBuildComponent::AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBuildPieceType Type, FVector& OutLocation, FVector& OutSize, FRotator& OutRotation, FString& Reason)
 {
     Reason.Reset();
     // A "cell" is a foundation or a ceiling: pieces stand on the top of one, and every chain of cells ends on a foundation
     // (a ceiling's Base is the cell under it), so you may build off a ceiling as long as everything below stands on a foundation.
-    const bool bCell = Base && (Base->GetPieceType() == EEWBuildPieceType::Foundation || Base->GetPieceType() == EEWBuildPieceType::RightCeiling);
-    if (!bCell) { Reason = TEXT("Needs a foundation (or a ceiling on one) to attach to."); return false; }
-    AEWBuildPiece::AttachedTransform(Base, Type, Yaw, OutLocation, OutSize);
+    // A full wall can also carry another wall straight above it, one high.
+    auto IsCell = [](const AEWBuildPiece* P) { return P && (P->GetPieceType() == EEWBuildPieceType::Foundation || P->GetPieceType() == EEWBuildPieceType::RightCeiling); };
+    if (Base && Base->GetPieceType() == EEWBuildPieceType::TopWall)
+    {
+        if (!AEWBuildPiece::IsWall(Type)) { Reason = TEXT("Only a wall stands on a wall."); return false; }
+        if (!IsCell(Base->GetBase())) { Reason = TEXT("Walls stack one high."); return false; }
+    }
+    else if (!IsCell(Base)) { Reason = TEXT("Needs a foundation (or a ceiling on one) to attach to."); return false; }
+    AEWBuildPiece::AttachedTransform(Base, Type, OutLocation, OutSize, OutRotation);
     const bool bPillar = Type == EEWBuildPieceType::TopCorner || Type == EEWBuildPieceType::RightLowerCorner
         || Type == EEWBuildPieceType::BottomLeftCorner || Type == EEWBuildPieceType::LeftTopCorner;
     const bool bRoofing = Type == EEWBuildPieceType::RightCeiling || Type == EEWBuildPieceType::Roof;
@@ -287,7 +300,7 @@ bool UEWBuildComponent::AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBui
             return false;
         }
         if (It->GetBase() != Base) continue;
-        const bool bWall = It->GetPieceType() == EEWBuildPieceType::TopWall || It->GetPieceType() == EEWBuildPieceType::HalfWall;
+        const bool bWall = AEWBuildPiece::IsWall(It->GetPieceType());
         if (It->GetPieceType() == EEWBuildPieceType::TopWall) bWallOnCell = true;
         if (bWall && FVector::Dist2D(It->GetActorLocation(), OutLocation) < 250.f) bWallBesidePillar = true;
     }
@@ -323,7 +336,7 @@ void UEWBuildComponent::UpdateAim()
         bAimOk = AimedPiece && FVector::Dist(Survivor->GetActorLocation(), AimedPiece->GetActorLocation()) <= Reach + Half;
         AimReason = !AimedPiece ? TEXT("Look at a piece to remove it.") : bAimOk ? FString() : TEXT("Too far away.");
         if (AimedPiece)
-            ShowGhost(AimedPiece->GetActorLocation(), AimedPiece->GetActorRotation().Yaw, AimedPiece->Slab->GetComponentScale() * 100.f + FVector(10.f), false);
+            ShowGhost(AimedPiece->GetActorLocation(), AimedPiece->GetActorRotation(), (AimedPiece->GetPieceType() == EEWBuildPieceType::Foundation ? AimedPiece->Slab->GetComponentScale() * 100.f : AimedPiece->GetPieceSize()) + FVector(10.f), false);
         else if (GhostActor) GhostActor->GetStaticMeshComponent()->SetVisibility(false);
         return;
     }
@@ -331,7 +344,8 @@ void UEWBuildComponent::UpdateAim()
     {
         // Attached pieces: the foundation looked at (or the one under the piece looked at, or the nearest to where the aim lands).
         AEWBuildPiece* Base = Cast<AEWBuildPiece>(Hit.GetActor());
-        if (Base && Base->GetPieceType() != EEWBuildPieceType::Foundation && Base->GetPieceType() != EEWBuildPieceType::RightCeiling) Base = Base->GetBase();
+        const bool bStacking = Base && Base->GetPieceType() == EEWBuildPieceType::TopWall && AEWBuildPiece::IsWall(SelectedType);
+        if (Base && !bStacking && Base->GetPieceType() != EEWBuildPieceType::Foundation && Base->GetPieceType() != EEWBuildPieceType::RightCeiling) Base = Base->GetBase();
         if (!Base)
         {
             float Best = Half * 1.5f;
@@ -343,13 +357,14 @@ void UEWBuildComponent::UpdateAim()
         }
         AimBase = Base;
         FVector Location, Size;
+        FRotator Rotation;
         FString Why;
-        bAimOk = AttachAllowed(World, Base, SelectedType, YawDegrees, Location, Size, Why);
+        bAimOk = AttachAllowed(World, Base, SelectedType, Location, Size, Rotation, Why);
         if (bAimOk && FVector::Dist2D(Survivor->GetActorLocation(), Location) > Reach) { bAimOk = false; Why = TEXT("Too far away."); }
         AimReason = Why;
         if (!Base) { if (GhostActor) GhostActor->GetStaticMeshComponent()->SetVisibility(false); return; }
         AimLocation = Location;
-        ShowGhost(Location, Base->GetActorRotation().Yaw, Size, bAimOk);
+        ShowGhost(Location, Rotation, Size, bAimOk);
         return;
     }
     // Where the foundation would stand: on a grid, or edge to edge with the nearest piece if one is close.
@@ -379,15 +394,15 @@ void UEWBuildComponent::UpdateAim()
     if (bAimOk && FVector::Dist2D(Survivor->GetActorLocation(), Centre) > Reach) { bAimOk = false; Why = TEXT("Too far away."); }
     AimReason = Why;
     AimLocation.Z = (Top + Bottom) * .5f;
-    ShowGhost(FVector(Centre.X, Centre.Y, (Top + Bottom) * .5f), Yaw, FVector(Half * 2.f, Half * 2.f, FMath::Max(Top - Bottom, 5.f)), bAimOk);
+    ShowGhost(FVector(Centre.X, Centre.Y, (Top + Bottom) * .5f), FRotator(0.f, Yaw, 0.f), FVector(Half * 2.f, Half * 2.f, FMath::Max(Top - Bottom, 5.f)), bAimOk);
 }
 
-void UEWBuildComponent::ShowGhost(const FVector& Centre, float Yaw, const FVector& Size, bool bOk)
+void UEWBuildComponent::ShowGhost(const FVector& Centre, const FRotator& Rotation, const FVector& Size, bool bOk)
 {
     if (!GhostActor) return;
     UStaticMeshComponent* Mesh = GhostActor->GetStaticMeshComponent();
     Mesh->SetWorldScale3D(Size / 100.f);
-    Mesh->SetWorldLocationAndRotation(Centre, FRotator(0.f, Yaw, 0.f));
+    Mesh->SetWorldLocationAndRotation(Centre, Rotation);
     Glow->SetVectorParameterValue(TEXT("Colour"), bOk ? Blue : Red);
     Mesh->SetVisibility(true);
 }
@@ -405,7 +420,7 @@ void UEWBuildComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, F
     {
         const FString Line = bDialOpen
             ? FString::Printf(TEXT("BUILD MODE  PIECE DIAL  point at a piece: mouse or either stick   Pick: left mouse / A / RT   Close: Tab / Y / Esc"))
-            : FString::Printf(TEXT("BUILD MODE  %s [%s]  [%s]  Rotate: Q/E or d-pad   Material: Z/C or LB/RB   Dial: Tab or Y   %s: X or B button   Leave: B or right stick"),
+            : FString::Printf(TEXT("BUILD MODE  %s [%s]  [%s]  Rotate: Q/E or d-pad L/R   Material: Z/C or LB/RB   Design: R or d-pad U   Dial: Tab or Y   %s: X or B button   Leave: B or right stick"),
                 Mode == EEWBuildMode::Demolish ? TEXT("DEMOLISH") : AEWBuildPiece::TypeName(SelectedType), AEWBuildPiece::MaterialName(MaterialIndex),
                 bAimOk ? TEXT("OK") : *AimReason, Mode == EEWBuildMode::Demolish ? TEXT("Place") : TEXT("Demolish"));
         GEngine->AddOnScreenDebugMessage(7701, .2f, bAimOk || bDialOpen ? FColor::Cyan : FColor::Orange, Line);
@@ -416,11 +431,11 @@ void UEWBuildComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, F
 void UEWBuildComponent::Confirm()
 {
     if (bDialOpen) { SelectSlot(HoveredSlot); return; }
-    if (Mode == EEWBuildMode::Place && bAimOk) ServerPlace(SelectedType, AimLocation, YawDegrees, MaterialIndex, AimBase);
+    if (Mode == EEWBuildMode::Place && bAimOk) ServerPlace(SelectedType, AimLocation, YawDegrees, MaterialIndex, DesignIndex, AimBase);
     else if (Mode == EEWBuildMode::Demolish && bAimOk && AimedPiece) ServerDemolish(AimedPiece);
 }
 
-void UEWBuildComponent::ServerPlace_Implementation(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, AEWBuildPiece* BasePiece)
+void UEWBuildComponent::ServerPlace_Implementation(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, int32 InDesign, AEWBuildPiece* BasePiece)
 {
     const AEWCharacter* Survivor = GetSurvivor();
     UWorld* World = GetWorld();
@@ -444,11 +459,12 @@ void UEWBuildComponent::ServerPlace_Implementation(EEWBuildPieceType Type, FVect
         return;
     }
     FVector Placed, Size;
+    FRotator Rotation;
     FString Why;
-    if (!AttachAllowed(World, BasePiece, Type, InYawDegrees, Placed, Size, Why)) return;
+    if (!AttachAllowed(World, BasePiece, Type, Placed, Size, Rotation, Why)) return;
     if (FVector::Dist2D(Survivor->GetActorLocation(), Placed) > Reach + 300.f) return;
-    if (AEWBuildPiece* Piece = World->SpawnActor<AEWBuildPiece>(AEWBuildPiece::StaticClass(), FTransform(FRotator(0.f, BasePiece->GetActorRotation().Yaw, 0.f), Placed), Params))
-        Piece->ConfigureAttached(Type, Size, Material, BasePiece);
+    if (AEWBuildPiece* Piece = World->SpawnActor<AEWBuildPiece>(AEWBuildPiece::StaticClass(), FTransform(Rotation, Placed), Params))
+        Piece->ConfigureAttached(Type, Size, Material, InDesign, BasePiece);
 }
 
 void UEWBuildComponent::ServerDemolish_Implementation(AEWBuildPiece* Piece)

@@ -10,12 +10,22 @@ AEWBuildPiece::AEWBuildPiece()
     bReplicates = true;
     SetReplicateMovement(false);
     PrimaryActorTick.bCanEverTick = false;
-    Slab = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Slab"));
-    SetRootComponent(Slab);
+    USceneComponent* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    SetRootComponent(Root);
+    Root->SetMobility(EComponentMobility::Movable);
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
-    if (Cube.Succeeded()) Slab->SetStaticMesh(Cube.Object);
-    Slab->SetCollisionProfileName(TEXT("BlockAll"));
-    Slab->SetMobility(EComponentMobility::Movable);
+    auto MakeBox = [&](const TCHAR* Name)
+    {
+        UStaticMeshComponent* Box = CreateDefaultSubobject<UStaticMeshComponent>(Name);
+        Box->SetupAttachment(Root);
+        if (Cube.Succeeded()) Box->SetStaticMesh(Cube.Object);
+        Box->SetCollisionProfileName(TEXT("BlockAll"));
+        Box->SetMobility(EComponentMobility::Movable);
+        return Box;
+    };
+    Slab = MakeBox(TEXT("Slab"));
+    Part1 = MakeBox(TEXT("Part1"));
+    Part2 = MakeBox(TEXT("Part2"));
 }
 
 void AEWBuildPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -26,6 +36,7 @@ void AEWBuildPiece::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
     DOREPLIFETIME(AEWBuildPiece, PieceType);
     DOREPLIFETIME(AEWBuildPiece, Size);
     DOREPLIFETIME(AEWBuildPiece, MaterialIndex);
+    DOREPLIFETIME(AEWBuildPiece, Design);
     DOREPLIFETIME(AEWBuildPiece, Base);
 }
 
@@ -81,13 +92,36 @@ void AEWBuildPiece::Spec(EEWBuildPieceType Type, FVector& Size, FVector& LocalOf
     }
 }
 
-void AEWBuildPiece::AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceType Type, float Yaw, FVector& OutLocation, FVector& OutSize)
+void AEWBuildPiece::AttachedTransform(const AEWBuildPiece* Base, EEWBuildPieceType Type, FVector& OutLocation, FVector& OutSize, FRotator& OutRotation)
 {
+    const FRotator BaseRotation(0.f, Base->GetActorRotation().Yaw, 0.f);
+    const FVector B = Base->GetActorLocation();
     FVector Offset; float Lift;
     Spec(Type, OutSize, Offset, Lift);
+    OutRotation = BaseRotation;
+    if (Base->GetPieceType() == EEWBuildPieceType::TopWall)
+    {
+        // Stacked on a wall: straight above it, same facing.
+        OutLocation = FVector(B.X, B.Y, B.Z + Base->GetPieceSize().Z * .5f + OutSize.Z * .5f);
+        return;
+    }
+    if (IsStair(Type))
+    {
+        // A walkable ramp from the cell's top up to the height of a ceiling's top (placeholder for the real stair shapes, TBD).
+        constexpr float Run = HalfSize * 2.f, Rise = WallHeight + 20.f, Thick = 20.f, Width = HalfSize;
+        const float Pitch = FMath::RadiansToDegrees(FMath::Atan2(Rise, Run));
+        OutSize = FVector(FMath::Sqrt(Run * Run + Rise * Rise), Width, Thick);
+        float YawOffset = 0.f;
+        if (Type == EEWBuildPieceType::LShapeStaircase) { YawOffset = 90.f; Offset = FVector(-Width * .5f, 0.f, 0.f); }
+        else if (Type == EEWBuildPieceType::LeftUShapeStaircase) { YawOffset = 180.f; Offset = FVector(0.f, -Width * .5f, 0.f); }
+        else Offset = FVector::ZeroVector;
+        OutRotation = FRotator(Pitch, BaseRotation.Yaw + YawOffset, 0.f);
+        const FVector Rotated = BaseRotation.RotateVector(Offset);
+        OutLocation = FVector(B.X + Rotated.X, B.Y + Rotated.Y, Base->GetTopZ() + Rise * .5f - Thick * .5f);
+        return;
+    }
     // The slot is a fixed place on the foundation (top edge, right-lower corner, ...), so it follows the foundation's own facing, not the player's.
-    const FVector Rotated = FRotator(0.f, Base->GetActorRotation().Yaw, 0.f).RotateVector(Offset);
-    const FVector B = Base->GetActorLocation();
+    const FVector Rotated = BaseRotation.RotateVector(Offset);
     OutLocation = FVector(B.X + Rotated.X, B.Y + Rotated.Y, Base->GetTopZ() + Lift + OutSize.Z * .5f);
 }
 
@@ -105,8 +139,9 @@ void AEWBuildPiece::Configure(float InTopZ, float InBottomZ)
     ApplyShape();
 }
 
-void AEWBuildPiece::ConfigureAttached(EEWBuildPieceType InType, const FVector& InSize, int32 InMaterial, AEWBuildPiece* InBase)
+void AEWBuildPiece::ConfigureAttached(EEWBuildPieceType InType, const FVector& InSize, int32 InMaterial, int32 InDesign, AEWBuildPiece* InBase)
 {
+    Design = IsWall(InType) ? FMath::Clamp(InDesign, 0, DesignCount - 1) : 0;
     PieceType = InType;
     Size = InSize;
     MaterialIndex = InMaterial;
@@ -126,25 +161,46 @@ void AEWBuildPiece::OnRep_Shape() { ApplyShape(); }
 
 void AEWBuildPiece::ApplyShape()
 {
-    // The engine cube is 100 cm a side, centred: scale it to the piece, and for the foundation move it to the middle of its height.
+    // The engine cube is 100 cm a side, centred: scale it to the piece. The foundation also moves to the middle of its height.
+    Part1->SetVisibility(false);
+    Part2->SetVisibility(false);
+    Part1->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Part2->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     if (PieceType == EEWBuildPieceType::Foundation)
     {
         if (TopZ <= BottomZ) return;     // not configured yet (OnConstruction at spawn): leave the spawn transform alone
         const float Height = FMath::Max(TopZ - BottomZ, 5.f);
-        Slab->SetWorldScale3D(FVector(HalfSize * 2.f / 100.f, HalfSize * 2.f / 100.f, Height / 100.f));
+        Slab->SetRelativeScale3D(FVector(HalfSize * 2.f / 100.f, HalfSize * 2.f / 100.f, Height / 100.f));
         FVector Location = GetActorLocation();
         Location.Z = (TopZ + BottomZ) * .5f;
         SetActorLocation(Location);
     }
     else if (!Size.IsZero())
     {
-        Slab->SetWorldScale3D(Size / 100.f);
+        Slab->SetRelativeScale3D(Size / 100.f);
+        Slab->SetRelativeLocation(FVector::ZeroVector);
+        if (PieceType == EEWBuildPieceType::TopWall && Design == 1)
+        {
+            // Doorway: two jambs either side of the opening and a lintel over it (wall length runs along local Y).
+            const float Jamb = (Size.Y - DoorWidth) * .5f, Over = Size.Z - DoorHeight;
+            Slab->SetRelativeScale3D(FVector(Size.X, Jamb, Size.Z) / 100.f);
+            Slab->SetRelativeLocation(FVector(0.f, -(DoorWidth + Jamb) * .5f, 0.f));
+            Part1->SetRelativeScale3D(FVector(Size.X, Jamb, Size.Z) / 100.f);
+            Part1->SetRelativeLocation(FVector(0.f, (DoorWidth + Jamb) * .5f, 0.f));
+            Part2->SetRelativeScale3D(FVector(Size.X, DoorWidth, Over) / 100.f);
+            Part2->SetRelativeLocation(FVector(0.f, 0.f, (Size.Z - Over) * .5f));
+            for (UStaticMeshComponent* Part : {Part1.Get(), Part2.Get()})
+            {
+                Part->SetVisibility(true);
+                Part->SetCollisionProfileName(TEXT("BlockAll"));
+            }
+        }
     }
     if (!Tint)
     {
         if (UMaterialInterface* Basic = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"), nullptr, LOAD_Quiet | LOAD_NoWarn))
             Tint = UMaterialInstanceDynamic::Create(Basic, this);
-        if (Tint) Slab->SetMaterial(0, Tint);
+        if (Tint) { Slab->SetMaterial(0, Tint); Part1->SetMaterial(0, Tint); Part2->SetMaterial(0, Tint); }
     }
     if (Tint) Tint->SetVectorParameterValue(TEXT("Color"), MaterialTint(MaterialIndex));
 }
