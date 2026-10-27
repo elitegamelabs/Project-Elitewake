@@ -622,7 +622,7 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False, fade=Fa
         add_fade(material, node, custom, mask=art)
         # Translucent leaves cannot be lit through from behind, so add that glow back as emission (tuning): without it the
         # fading crown looks darker and flatter than the solid one.
-        glow = custom('return C * 0.12;', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C',))
+        glow = custom('return C * 0.04;', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C',))
         assert mel.connect_material_expressions(through, '', glow, 'C')
         assert mel.connect_material_property(glow, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
     else:
