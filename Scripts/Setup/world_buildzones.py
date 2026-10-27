@@ -18,9 +18,9 @@ SEA = T.SEA
 GROUND_ABOVE_SEA = 40.0        # cm: ground must stand at least this far above the waterline
 PORT_MARGIN = 1500.0           # cm: keep clear of a Port's site (the layout's own near_port margin)
 PORT_STRIP_MARGIN = 500.0      # cm beyond the Port's waterfront strip
-CAVE_MARGIN = 600.0
+CAVE_MARGIN = 300.0           # tuning (was 600): the cave zone was ~17 km2 on the starter island
 LANDMARK_MARGIN = 300.0
-DOCK_BEACH_RADIUS = 5000.0     # cm round every dock: its beach is not buildable
+DOCK_BEACH_RADIUS = 3000.0     # cm round every dock: its beach is not buildable
 DOCK_BEACH_TOP = 150.0         # cm above the waterline: the 'beach' part of the dock zone
 MAX_SLOPE_RISE = 250.0         # cm: the ground under one footprint may differ by no more than this (the foundation's slab reaches down to the lowest ground, so it stands level)
 STARTER_DOCK = (4000.0, 900.0)
@@ -44,7 +44,7 @@ def zones():
                 'reason': 'the starter dock beach'})
     for key, c in T.CAVES.items():
         if c:
-            out.append({'kind': 'box', 'x': c.mx, 'y': c.my, 'yaw': c.heading, 'u0': -CAVE_MARGIN - 600.0, 'u1': c.depth + CAVE_MARGIN,
+            out.append({'kind': 'box', 'x': c.mx, 'y': c.my, 'yaw': c.heading, 'u0': -CAVE_MARGIN - 300.0, 'u1': c.depth + CAVE_MARGIN,
                         'half_v': c.half + CAVE_MARGIN, 'reason': f'the {key} cave'})
     for group in (L.LANDMARKS, L.PILLARS):
         for key, m in group.items():

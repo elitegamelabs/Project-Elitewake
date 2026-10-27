@@ -114,3 +114,6 @@ The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-isl
 
 ## 2026-10-27 Build Mode milestone 2
 Done: UEWBuildComponent + AEWBuildPiece, controller hook, Play check passes on the starter island (two foundations exactly 4 m apart, placing on a piece refused, demolish, Port refused). Regression: verify_build_zones_play, verify_ports_play PASS; 25 unit tests OK. Note for owner: starter island has little buildable land under current zone sizes (cave zone half 1700 + 600 margin, dock beach r 5000); tuning decision. Open: item and cost TBD, JSON not yet staged for packaging, no multiplayer test.
+
+## 2026-10-27 Build zone tuning
+Cave margin 600->300 cm and dock-beach radius 5000->3000 cm (tuning, owner to confirm). Re-exported BuildZones.json; unit tests and verify_build_zones_play, verify_build_mode_play, verify_ports_play PASS.
