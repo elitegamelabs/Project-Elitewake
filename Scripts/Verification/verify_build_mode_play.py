@@ -1,7 +1,8 @@
 """Build Mode, milestone 2 (single-player Play session). Owner, October 27: build on every island outside Ports and obstruction
 zones. Drives Build Mode through the controller's own key handler, with the keyboard keys and then the controller buttons:
   1. B opens Build Mode; looking at open ground shows the blue ghost (placeable, no reason);
-  2. E and Q turn the foundation a quarter each way (Q/E on keyboard, RB/LB on a controller);
+  2. E and Q turn the foundation a quarter each way (Q/E on keyboard, d-pad right/left on a controller); C/Z and RB/LB change
+     the material;
   3. the place key (left mouse) puts a foundation there; the right trigger puts a second edge to edge with the first
      (the ghost snaps: exactly 4 m between their middles, same facing);
   4. looking at a piece and placing again is refused (something in the way) and builds nothing;
@@ -128,13 +129,13 @@ def rotate_keys():
     yaw1 = build.get_aim_yaw()
     key('Q')
     yaw2 = build.get_aim_yaw()
-    key('Gamepad_RightShoulder')
+    key('Gamepad_DPad_Right')
     yaw3 = build.get_aim_yaw()
-    key('Gamepad_LeftShoulder')
+    key('Gamepad_DPad_Left')
     yaw4 = build.get_aim_yaw()
     note('rotate', yaws=[yaw0, yaw1, yaw2, yaw3, yaw4])
     assert (yaw1 - yaw0) % 360 == 90 and yaw2 % 360 == yaw0 % 360, 'E/Q did not turn the foundation a quarter each way'
-    assert (yaw3 - yaw0) % 360 == 90 and yaw4 % 360 == yaw0 % 360, 'RB/LB did not turn the foundation a quarter each way'
+    assert (yaw3 - yaw0) % 360 == 90 and yaw4 % 360 == yaw0 % 360, 'd-pad did not turn the foundation a quarter each way'
 
 
 def place_first():
@@ -193,6 +194,114 @@ def still_two():
     note('placing on a piece', pieces=n)
     assert n == 2, f'placing on a piece built something ({n})'
     shot('GhostRed')
+
+
+def materials():
+    m0 = build.get_material()
+    key('C'); m1 = build.get_material()
+    key('Gamepad_RightShoulder'); m2 = build.get_material()
+    key('Z'); m3 = build.get_material()
+    key('Gamepad_LeftShoulder'); m4 = build.get_material()
+    note('materials', values=[m0, m1, m2, m3, m4])
+    assert [m1 - m0, m2 - m0, m3 - m0, m4 - m0] == [1, 2, 1, 0], 'C/Z and RB/LB did not cycle the material'
+
+
+def dial_open_keyboard():
+    key('Tab')
+    assert build.is_dial_open(), 'Tab did not open the piece dial'
+    for x, y, slot in ((0, 1, 0), (1, 0, 3), (0, -1, 6), (-1, 0, 9), (.5, -.866, 5), (0, -.1, 5)):
+        build.set_dial_pointer(x, y)
+        assert build.get_hovered_slot() == slot, f'pointer ({x},{y}) hovers slot {build.get_hovered_slot()}, expected {slot}'
+    build.set_dial_pointer(0, 1)
+    note('dial', hovered=build.get_hovered_slot())
+
+
+def dial_shot():
+    shot('Dial')
+
+
+def dial_pick_keyboard():
+    key('LeftMouseButton')
+    assert not build.is_dial_open(), 'picking a slot did not close the dial'
+    sel = str(build.get_selected_type()).upper().replace('_', '')
+    note('dial pick', selected=sel)
+    assert 'TOPWALL' in sel, f'top slot picked {sel}'
+
+
+def aim_first_again():
+    x, y = state['site']
+    face(x, y, T.height(x, y), back=300.0)
+
+
+def place_wall():
+    note('wall aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'wall refused: {build.get_aim_reason()}'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def wall_placed():
+    ps = pieces()
+    kinds = sorted(str(p.get_piece_type()).upper().replace('_', '') for p in ps)
+    note('wall placed', pieces=len(ps), kinds=kinds)
+    assert len(ps) == 3 and any('TOPWALL' in k for k in kinds), f'expected a wall as a third piece: {kinds}'
+
+
+def wall_again():
+    note('wall again aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert not build.is_aim_placeable(), 'a second wall on the same edge should be refused'
+    key('Gamepad_FaceButton_Bottom')
+
+
+def still_three():
+    n = len(pieces())
+    assert n == 3, f'duplicate wall was built ({n})'
+    key('Gamepad_FaceButton_Top')
+    assert build.is_dial_open(), 'Y did not open the piece dial'
+    build.set_dial_pointer(.5, -.866)
+
+
+def dial_pick_pad():
+    key('Gamepad_RightTrigger')
+    sel = str(build.get_selected_type()).upper().replace('_', '')
+    assert not build.is_dial_open() and 'ROOF' in sel, f'roof slot picked {sel}'
+
+
+def place_roof():
+    note('roof aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'roof refused: {build.get_aim_reason()}'
+    key('LeftMouseButton')
+
+
+def roof_placed():
+    ps = pieces()
+    kinds = sorted(str(p.get_piece_type()).upper().replace('_', '') for p in ps)
+    note('roof placed', pieces=len(ps), kinds=kinds)
+    assert len(ps) == 4 and any('ROOF' in k for k in kinds), f'expected a roof as a fourth piece: {kinds}'
+    shot('Built')
+
+
+def corner_rules():
+    build.select_slot(7)      # bottom left corner: far from the wall on the +x edge
+    x, y = state['site']
+    face(x, y, T.height(x, y), back=300.0)
+
+
+def corner_refused_then_pick():
+    note('corner far', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert not build.is_aim_placeable() and 'wall' in str(build.get_aim_reason()).lower(), 'a corner away from every wall should be refused'
+    build.select_slot(1)      # top corner: where the wall's end is
+
+
+def corner_place():
+    note('corner by wall', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+    assert build.is_aim_placeable(), f'corner at the wall refused: {build.get_aim_reason()}'
+    key('LeftMouseButton')
+
+
+def corner_placed():
+    n = len(pieces())
+    assert n == 5, f'expected 5 pieces with the corner, found {n}'
+    build.select_slot(11)
 
 
 def to_demolish():
@@ -274,7 +383,10 @@ def finish(error=None):
 
 STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2), (place_first, 1.2), (place_first_press, 1.5),
          (first_placed, .2), (aim_second, 1.5), (place_second_press, 1.5), (second_placed, .2), (aim_on_piece, 1.5),
-         (place_on_piece, 1.2), (still_two, .2), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (place_on_piece, 1.2), (still_two, .2), (materials, .2), (dial_open_keyboard, 1.0), (dial_shot, .2), (dial_pick_keyboard, .5),
+         (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
+         (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
+         (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 

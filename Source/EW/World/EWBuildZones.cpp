@@ -24,7 +24,7 @@ namespace
     };
 
     TArray<FZone> Zones;
-    float SeaZ = -65.f, GroundAboveSea = 40.f, MaxSlopeRise = 120.f;
+    float ZoneSeaZ = -65.f, GroundAboveSea = 40.f, MaxSlopeRise = 120.f;
     bool bLoaded = false;
 
     void Load()
@@ -35,7 +35,7 @@ namespace
         if (!FFileHelper::LoadFileToString(Text, *(FPaths::ProjectContentDir() / TEXT("Elitewake/Data/BuildZones.json")))) return;
         TSharedPtr<FJsonObject> Root;
         if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Root) || !Root.IsValid()) return;
-        SeaZ = Root->GetNumberField(TEXT("sea_z"));
+        ZoneSeaZ = Root->GetNumberField(TEXT("sea_z"));
         GroundAboveSea = Root->GetNumberField(TEXT("ground_above_sea"));
         MaxSlopeRise = Root->GetNumberField(TEXT("max_slope_rise"));
         for (const TSharedPtr<FJsonValue>& Value : Root->GetArrayField(TEXT("shapes")))
@@ -93,7 +93,7 @@ int32 UEWBuildZones::GetZoneCount() { Load(); return Zones.Num(); }
 FString UEWBuildZones::CheckZones(float X, float Y, float GroundZ)
 {
     Load();
-    if (GroundZ < SeaZ + GroundAboveSea) return TEXT("Not on island ground (water or too low).");
+    if (GroundZ < ZoneSeaZ + GroundAboveSea) return TEXT("Not on island ground (water or too low).");
     for (const FZone& Z : Zones)
     {
         if (GroundZ >= Z.MaxZ) continue;

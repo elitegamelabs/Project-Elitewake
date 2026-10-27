@@ -117,3 +117,6 @@ Done: UEWBuildComponent + AEWBuildPiece, controller hook, Play check passes on t
 
 ## 2026-10-27 Build zone tuning
 Cave margin 600->300 cm and dock-beach radius 5000->3000 cm (tuning, owner to confirm). Re-exported BuildZones.json; unit tests and verify_build_zones_play, verify_build_mode_play, verify_ports_play PASS.
+
+## 2026-10-27 Build Mode milestone 3 first pass
+Radial dial, 12 piece types as placeholder boxes, fixed placement slots per the owner's 'same structure as Ark, Rust, Atlas' direction, material cycling, cascade demolish. Bugs fixed on the way: pieces were moved to Z 0 at spawn (OnConstruction ran before configuration); unity-build name clash (SeaZ). Open: build off a ceiling not Play-checked; stairs, wall stacking, doorways, real meshes, costs, saving, multiplayer.

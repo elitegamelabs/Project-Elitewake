@@ -39,14 +39,18 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Journal: next / previous page | Up / Down | d-pad up / down | OK |
 | Close | I / Escape | B | OK |
 
-## Build Mode (milestone 2, test access: no Builder's Plan item yet; foundation cost TBD)
+## Build Mode (milestones 2 and 3; test access: no Builder's Plan item yet; costs TBD)
 | Action | Keyboard / mouse | Controller | Status |
 |---|---|---|---|
 | Enter / leave Build Mode | B (Escape also leaves) | click right stick | OK (`verify_build_mode_play`) |
-| Turn the foundation a quarter | Q / E | LB / RB | OK (`verify_build_mode_play`) |
-| Place a foundation (blue ghost) / remove the piece you look at (demolish) | Left mouse | RT | OK (`verify_build_mode_play`) |
+| Open / close the piece dial | Tab | Y | OK (`verify_build_mode_play`) |
+| Point at a dial slot | mouse | right or left stick | Pointer maths OK (injected values); real stick and mouse deltas not injectable in Play checks |
+| Pick the slot / place the piece / remove the piece you look at (demolish) | Left mouse | A or RT | OK (`verify_build_mode_play`) |
+| Step through slots with the dial closed | mouse wheel | none | code only, not Play-checked |
+| Turn a foundation a quarter | Q / E | d-pad left / right | OK (`verify_build_mode_play`) |
+| Change material (placeholder: Thatch, Wood, Stone, Metal) | Z / C | LB / RB | OK (`verify_build_mode_play`) |
 | Switch place / demolish | X | B button | OK (`verify_build_mode_play`) |
-Ghost is blue where it may go, red with a reason where it may not (Ports, caves, landmarks, docks and their beaches, water, steep ground, in the way, out of reach). Near a piece it snaps edge to edge. Hint text is an on-screen debug line only; no HUD widget yet.
+Ghost is blue where it may go, red with a reason where it may not. Other pieces go at fixed places on a foundation (or ceiling): top wall on the top edge, corners where walls meet, ceiling and roof need a wall under them. A and the dial's keys replace jump while Build Mode is on. Hint text is an on-screen debug line.
 
 ## On the map
 Pan: drag / right stick. Zoom: wheel / triggers. Close: M or Escape / Back or B.
