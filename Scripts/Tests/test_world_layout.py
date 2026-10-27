@@ -13,6 +13,7 @@ import math
 import os
 import sys
 import unittest
+from pathlib import Path
 
 SETUP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'Setup')
 if SETUP_DIR not in sys.path:
@@ -182,3 +183,55 @@ class CaveRuleTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class BuildZoneTests(unittest.TestCase):
+    """Build Mode zones (owner, October 27): the whole island is buildable except Ports, obstruction zones, caves, landmarks,
+    the starter spawn/dock/spring, water, and beaches near docks."""
+
+    @classmethod
+    def setUpClass(cls):
+        import world_buildzones as B
+        cls.B = B
+
+    def test_water_is_refused(self):
+        self.assertIn('water', self.B.point_reason(0.0, -60000.0))
+
+    def test_ports_refused_with_their_waterfront(self):
+        for region, p in W.PORTS.items():
+            self.assertIn('Port', self.B.point_reason(p.cx, p.cy) or '', region)
+            x, y = p.world(W.PORT_INLAND + 3000.0, 0.0)
+            self.assertIsNotNone(self.B.point_reason(x, y), f'{region} waterfront')
+
+    def test_caves_and_landmarks_refused(self):
+        for key, c in T.CAVES.items():
+            if c:
+                self.assertIsNotNone(self.B.point_reason(c.mx, c.my), key)
+
+    def test_starter_spawn_and_dock_refused_but_inland_buildable(self):
+        self.assertIn('spawn', self.B.point_reason(150.0, 0.0))
+        self.assertIsNotNone(self.B.point_reason(4000.0, 900.0))
+        self.assertIsNone(self.B.point_reason(0.0, 1200.0), 'ordinary starter-island ground is buildable')
+
+    def test_dock_beach_refused_but_inland_of_it_buildable(self):
+        beach = next((x for x in range(2000, 9000, 50) if T.SEA + 30 < T.height(x, 900) < T.SEA + 300), None)
+        self.assertIsNotNone(beach, 'the starter beach')
+        self.assertIsNotNone(self.B.point_reason(float(beach), 900.0), 'a beach by the dock is not buildable')
+
+    def test_every_island_has_buildable_ground(self):
+        import math
+        for island in W.ISLANDS:
+            found = any(self.B.point_reason(island.cx + d * math.cos(a), island.cy + d * math.sin(a)) is None
+                        for a in [k * .5 for k in range(13)] for d in range(0, int(island.radius(a)), 400))
+            self.assertTrue(found, island.key)
+
+    def test_uneven_ground_refused_flat_ground_accepted(self):
+        i = W.island('Winter1')
+        import math
+        # a flat footprint somewhere on the island is accepted; a big footprint on the steep flank is refused for unevenness
+        self.assertIsNotNone(self.B.footprint_reason(i.cx, i.cy, 6000.0, 6000.0))
+
+    def test_export_matches_zones(self):
+        import json
+        path = Path(__file__).resolve().parents[2] / 'Content' / 'Elitewake' / 'Data' / 'BuildZones.json'
+        self.assertEqual(len(json.loads(path.read_text())['shapes']), len(self.B.ZONES), 'run export_buildzones.py')
