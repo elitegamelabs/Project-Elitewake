@@ -74,6 +74,7 @@ bool AEWHarvestTree::Fell(FVector Direction)
     if (TipAxis.IsNearlyZero()) return false;
 
     bFelled = true;
+    LoadFadeTwins();
     FallElapsed = 0.f;
     FallSeconds = FallDuration;
     const FFallStyle& Style = StyleFor(Mesh->GetStaticMesh());
@@ -105,13 +106,36 @@ void AEWHarvestTree::StartFade()
     ForceNetUpdate();
 }
 
+void AEWHarvestTree::LoadFadeTwins()
+{
+    // Each tree material has a translucent twin named <material>_Fade (Scripts/Setup/refresh_tree_materials.py).
+    if (!Mesh || FadeTwins.Num() > 0) return;
+    for (int32 Slot = 0; Slot < Mesh->GetNumMaterials(); ++Slot)
+    {
+        UMaterialInterface* Original = Mesh->GetMaterial(Slot);
+        UMaterialInterface* Twin = nullptr;
+        if (Original)
+            Twin = LoadObject<UMaterialInterface>(nullptr, *FString::Printf(TEXT("%s_Fade.%s_Fade"), *Original->GetOutermost()->GetName(), *Original->GetName()), nullptr, LOAD_Quiet | LOAD_NoWarn);
+        FadeTwins.Add(Twin);
+    }
+}
+
 void AEWHarvestTree::OnRep_Fading()
 {
     if (!bFading || !Mesh) return;
-    // The tree's own copies of its materials, so only this tree fades; materials without a Fade parameter are unaffected.
+    // The tree's own copies of its materials, so only this tree fades; a slot without a twin keeps its material and stays solid.
+    LoadFadeTwins();
     FadeMaterials.Reset();
     for (int32 Slot = 0; Slot < Mesh->GetNumMaterials(); ++Slot)
-        if (UMaterialInstanceDynamic* Copy = Mesh->CreateDynamicMaterialInstance(Slot)) FadeMaterials.Add(Copy);
+    {
+        UMaterialInterface* Source = FadeTwins.IsValidIndex(Slot) && FadeTwins[Slot] ? FadeTwins[Slot].Get() : Mesh->GetMaterial(Slot);
+        if (!Source) continue;
+        if (UMaterialInstanceDynamic* Copy = UMaterialInstanceDynamic::Create(Source, this))
+        {
+            Mesh->SetMaterial(Slot, Copy);
+            FadeMaterials.Add(Copy);
+        }
+    }
     SetActorTickEnabled(true);
 }
 
@@ -166,7 +190,7 @@ void AEWHarvestTree::Tick(float DeltaSeconds)
 
 void AEWHarvestTree::OnRep_Felled()
 {
-    if (bFelled) ConfigureFelledCollision();
+    if (bFelled) { ConfigureFelledCollision(); LoadFadeTwins(); }
 }
 
 void AEWHarvestTree::ConfigureFelledCollision()

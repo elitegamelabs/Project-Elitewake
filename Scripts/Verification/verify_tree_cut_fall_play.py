@@ -57,10 +57,10 @@ def tick(delta):
             pc.set_control_rotation(unreal.Rotator(roll=0, pitch=-8, yaw=0))
             assert tree.cut_down(pawn), 'CutDown refused'
             assert exists(), 'cut tree was removed at once instead of falling'
-            state['cut_at'] = now
+            state['cut_at'] = unreal.GameplayStatics.get_time_seconds(world)      # game time: a hitch must not lengthen the measured fade
             state['phase'] = 2
         elif state['phase'] == 2:
-            t = now - state['cut_at']
+            t = unreal.GameplayStatics.get_time_seconds(world) - state['cut_at']
             if exists():
                 up = tree.get_actor_up_vector().z
                 fade = tree.get_fade()

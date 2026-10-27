@@ -5,6 +5,7 @@
 
 class UEWItemDefinition;
 class UMaterialInstanceDynamic;
+class UMaterialInterface;
 
 /** Finite tool-harvested tree. Interact never grants yields; Attack uses server equipment.
  * Bare-hand punching is disabled pending the separate injury/treatment system.
@@ -63,6 +64,8 @@ private:
     float FadeElapsed = 0.f;
     float FadeAlpha = 1.f;
     UPROPERTY(Transient) TArray<TObjectPtr<UMaterialInstanceDynamic>> FadeMaterials;
+    UPROPERTY(Transient) TArray<TObjectPtr<UMaterialInterface>> FadeTwins;      // loaded when the tree goes over, so the fade itself does not stall
+    void LoadFadeTwins();
     UFUNCTION() void OnRep_Fading();
     void StartFade();
     void UpdateFade(float DeltaSeconds);

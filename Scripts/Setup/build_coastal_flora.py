@@ -404,32 +404,27 @@ def write_tree_mesh(make, shape, path, materials):
 
 
 def add_fade(material, node, custom, mask=None):
-    """Fade-out for a felled tree (owner, October 27: it lies a few seconds, then fades over 3 s). A scalar parameter Fade
-    (1 = solid, 0 = gone) dithers the surface away with a screen-space pattern; the game sets it on the tree's own material
-    copies. `mask` is the leaf art's alpha where there is one; opaque bark becomes masked so it can dither too."""
+    """Fade-out copy of a tree material (owner, October 27: a felled tree lies a few seconds, then fades over 3 s, smoothly).
+    The copy is translucent: opacity is the leaf art's alpha (`mask`; none for bark) times a scalar parameter Fade (1 = solid,
+    0 = gone) that the game sets on the tree's own material copy. Lit with the ordinary shading model (translucent materials
+    cannot use two-sided foliage)."""
     mel = unreal.MaterialEditingLibrary
+    material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_TRANSLUCENT)
+    material.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
     fade = node(unreal.MaterialExpressionScalarParameter, parameter_name='Fade', default_value=1.0)
-    screen = node(unreal.MaterialExpressionScreenPosition)
-    dither = custom('float2 p = UV * float2(1920.0, 1080.0);'
-                    ' float n = frac(52.9829189 * frac(dot(p, float2(0.06711056, 0.00583715))));'
-                    ' return (F >= 0.999 || F > n) ? 1.0 : 0.0;',
-                    unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('UV', 'F'))
-    assert mel.connect_material_expressions(screen, '', dither, 'UV')
-    assert mel.connect_material_expressions(fade, '', dither, 'F')
     if mask is None:
-        material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
-        assert mel.connect_material_property(dither, '', unreal.MaterialProperty.MP_OPACITY_MASK)
+        assert mel.connect_material_property(fade, '', unreal.MaterialProperty.MP_OPACITY)
     else:
-        both = custom('return A * M;', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('A', 'M'))
+        both = custom('return A * F;', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('A', 'F'))
         assert mel.connect_material_expressions(mask, 'A', both, 'A')
-        assert mel.connect_material_expressions(dither, '', both, 'M')
-        assert mel.connect_material_property(both, '', unreal.MaterialProperty.MP_OPACITY_MASK)
+        assert mel.connect_material_expressions(fade, '', both, 'F')
+        assert mel.connect_material_property(both, '', unreal.MaterialProperty.MP_OPACITY)
 
 
-def birch_bark_material():
+def birch_bark_material(fade=False):
     """White birch bark marked with dark horizontal streaks (lenticels) and black patches, in world space."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_BirchBark_v1')
+    material, node, custom = material_builder(f'{FOLDER}/M_BirchBark_v1' + ('_Fade' if fade else ''))
     colour = custom(
         'float3 q = P * float3(.32, .32, 2.6); float3 i = floor(q), f = frac(q);'
         ' float h = frac(sin(dot(i, float3(12.9898, 78.233, 37.719))) * 43758.5453);'
@@ -444,7 +439,10 @@ def birch_bark_material():
     assert mel.connect_material_expressions(node(unreal.MaterialExpressionWorldPosition), '', colour, 'P')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.8), '', unreal.MaterialProperty.MP_ROUGHNESS)
-    add_fade(material, node, custom)
+    if fade:
+        add_fade(material, node, custom)
+    else:
+        material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_OPAQUE)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -540,17 +538,20 @@ def import_texture(name, source):
     return texture
 
 
-def bark_material():
+def bark_material(fade=False):
     """Grey-brown palm bark from the timber texture, darker in the leaf-scar rings' shadow."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_PalmBark_v1')
+    material, node, custom = material_builder(f'{FOLDER}/M_PalmBark_v1' + ('_Fade' if fade else ''))
     wood = node(unreal.MaterialExpressionTextureSample, texture=unreal.load_asset(TIMBER))
     colour = custom('float g = dot(W, float3(0.3, 0.59, 0.11)); return lerp(W * float3(0.9, 0.78, 0.62), g * float3(0.86, 0.8, 0.72), 0.55) * 0.85;',
                     unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('W',))
     assert mel.connect_material_expressions(wood, 'RGB', colour, 'W')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.9), '', unreal.MaterialProperty.MP_ROUGHNESS)
-    add_fade(material, node, custom)
+    if fade:
+        add_fade(material, node, custom)
+    else:
+        material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_OPAQUE)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -568,11 +569,11 @@ def berry_material():
     return material
 
 
-def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
+def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False, fade=False):
     """Leaves: the art, cut out by its alpha, lit through from behind; dry fronds turn straw brown. Each tree takes
     its own shade of green, from blue-green to yellow-green, picked by where it stands."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(path)
+    material, node, custom = material_builder(path + ('_Fade' if fade else ''))
     material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
     material.set_editor_property('two_sided', True)
     material.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE)
@@ -617,8 +618,11 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
             assert mel.connect_material_expressions(pivot, '', target, 'O')
         colour, through = snowy, lit
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
-    assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
-    add_fade(material, node, custom, mask=art)
+    if fade:
+        add_fade(material, node, custom, mask=art)
+    else:
+        assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
+        assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.65), '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
