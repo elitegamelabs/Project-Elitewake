@@ -23,7 +23,7 @@ prints = pawn.get_editor_property('footprint_component')
 survival = pawn.get_survival_component()
 shots = saved / 'Screenshots' / 'Footprints'
 shots.mkdir(parents=True, exist_ok=True)
-state = {'step': 0, 'at': time.monotonic() + 3, 'handle': None, 'walk_until': 0.0, 'direction': unreal.Vector(1, 0, 0)}
+state = {'step': 0, 'at': time.monotonic() + 12, 'handle': None, 'walk_until': 0.0, 'direction': unreal.Vector(1, 0, 0)}
 report = {'checks': []}
 SURFACES = {}
 
@@ -58,7 +58,8 @@ def plains_start():
 
 def plains_walked():
     made = prints.get_prints_made()
-    note('plains: walking made prints', made=made, showing=prints.get_print_count(), lasting=prints.get_lasting_print_count(), surface=surface())
+    loc = pawn.get_actor_location()
+    note('plains: walking made prints', x=round(loc.x), y=round(loc.y), z=round(loc.z), mode=str(pawn.character_movement.movement_mode), tick=prints.is_component_tick_enabled(), made=made, showing=prints.get_print_count(), lasting=prints.get_lasting_print_count(), surface=surface())
     assert made >= 3, 'no footprints on the plains'
     assert prints.get_lasting_print_count() == 0 and 'FIRM' in surface().upper(), 'plains prints should not last'
     shot('Plains')
