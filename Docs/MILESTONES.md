@@ -133,6 +133,8 @@ Goal: the design's "simple two-cannon fight before the deeper systems". Cannons 
 
 ## M3 — Builder's Plan, Loom and Tanner ⛔
 
+Build Mode for building on every island outside Ports and obstruction zones: design drafted October 27 in [Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md](../Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md); not implemented; open owner questions listed there.
+
 The ship section of the Builder's Plan as the fitting screen; sails at the Loom, helm and cannons at the Smithy; Tanner. Blocked on fitting recipes and costs (open question 1).
 
 ## M4 — Prologue and the Port ⛔ partly
