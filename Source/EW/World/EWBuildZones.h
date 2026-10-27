@@ -27,6 +27,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="Build", meta=(WorldContext="WorldContext"))
     static FString CheckFootprint(const UObject* WorldContext, float X, float Y, float HalfX, float HalfY, float YawDegrees);
 
+    /** The lowest and highest ground under a footprint (pieces already built are ignored, so a neighbour's slab is not ground).
+     *  False if any of its nine sample points has no ground. */
+    UFUNCTION(BlueprintCallable, Category="Build", meta=(WorldContext="WorldContext"))
+    static bool GetFootprintGround(const UObject* WorldContext, float X, float Y, float HalfX, float HalfY, float YawDegrees, float& LowZ, float& HighZ);
+
     /** How many zones were loaded (0 means the data file is missing). */
     UFUNCTION(BlueprintPure, Category="Build")
     static int32 GetZoneCount();

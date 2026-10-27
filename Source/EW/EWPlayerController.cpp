@@ -10,6 +10,7 @@
 #include "EWObjectiveComponent.h"
 #include "EWSoundscapeComponent.h"
 #include "EWPlacementPreviewComponent.h"
+#include "World/EWBuildComponent.h"
 #include "EWCompanyComponent.h"
 #include "EWContainerWidget.h"
 #include "Ships/EWShip.h"
@@ -60,6 +61,7 @@ AEWPlayerController::AEWPlayerController()
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
     SoundscapeComponent = CreateDefaultSubobject<UEWSoundscapeComponent>(TEXT("Soundscape"));
     PlacementPreview = CreateDefaultSubobject<UEWPlacementPreviewComponent>(TEXT("PlacementPreview"));
+    BuildComponent = CreateDefaultSubobject<UEWBuildComponent>(TEXT("Build"));
     ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
 }
 
@@ -424,6 +426,9 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
+    // Build Mode takes B / the right stick to enter; while it is on, Q E LB RB, X / B, Escape and the place key too.
+    if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
+        && BuildComponent->HandleKey(Params)) return true;
 #if !UE_BUILD_SHIPPING
     // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24). Compiled out of shipping builds.
     if (Params.Event==IE_Pressed && (IsInputKeyDown(EKeys::LeftShift) || IsInputKeyDown(EKeys::RightShift)))

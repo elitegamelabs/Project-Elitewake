@@ -1,7 +1,13 @@
 #include "World/EWBuildZones.h"
+#include "Components/PrimitiveComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Dom/JsonObject.h"
+#include "Engine/StaticMesh.h"
+#include "Engine/OverlapResult.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
+#include "World/EWBuildPiece.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -53,13 +59,32 @@ namespace
         }
     }
 
-    /** The ground height under a point (the terrain and anything static on it): -1e9 if there is none. */
+    /** True for the island, sea-floor and seamount ground meshes; trees, rocks, buildings and pieces are not ground. */
+    bool IsTerrain(const UPrimitiveComponent* Component)
+    {
+        const UStaticMeshComponent* Mesh = Cast<UStaticMeshComponent>(Component);
+        const UStaticMesh* Asset = Mesh ? Mesh->GetStaticMesh() : nullptr;
+        if (!Asset) return false;
+        const FString Name = Asset->GetName();
+        return Name.StartsWith(TEXT("SM_Island_")) || Name.StartsWith(TEXT("SM_SeaFloor")) || Name.StartsWith(TEXT("SM_Seamount"));
+    }
+
+    /** The ground height under a point: the terrain mesh's surface, whatever stands on it. */
     bool GroundAt(UWorld* World, float X, float Y, float& OutZ)
     {
-        FHitResult Hit;
-        if (!World->LineTraceSingleByChannel(Hit, FVector(X, Y, 200000.f), FVector(X, Y, -400000.f), ECC_Visibility)) return false;
-        OutZ = Hit.ImpactPoint.Z;
-        return true;
+        // A trace stops at the first thing that blocks it (a treetop, a roof), so go down through whatever is not terrain.
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(BuildGround), false);
+        FVector From(X, Y, 200000.f);
+        for (int32 Try = 0; Try < 12; ++Try)
+        {
+            FHitResult Hit;
+            if (!World->LineTraceSingleByChannel(Hit, From, FVector(X, Y, -400000.f), ECC_Visibility, Params)) return false;
+            if (IsTerrain(Hit.GetComponent())) { OutZ = Hit.ImpactPoint.Z; return true; }
+            if (Hit.GetComponent()) Params.AddIgnoredComponent(Hit.GetComponent());
+            else if (Hit.GetActor()) Params.AddIgnoredActor(Hit.GetActor());
+            else return false;
+        }
+        return false;
     }
 }
 
@@ -94,6 +119,25 @@ FString UEWBuildZones::CheckPoint(const UObject* WorldContext, float X, float Y)
     return CheckZones(X, Y, Z);
 }
 
+bool UEWBuildZones::GetFootprintGround(const UObject* WorldContext, float X, float Y, float HalfX, float HalfY, float YawDegrees, float& LowZ, float& HighZ)
+{
+    UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull) : nullptr;
+    if (!World) return false;
+    const float Yaw = FMath::DegreesToRadians(YawDegrees), C = FMath::Cos(Yaw), S = FMath::Sin(Yaw);
+    LowZ = TNumericLimits<float>::Max();
+    HighZ = TNumericLimits<float>::Lowest();
+    for (int32 Sx = -1; Sx <= 1; ++Sx)
+        for (int32 Sy = -1; Sy <= 1; ++Sy)
+        {
+            const float U = Sx * HalfX, V = Sy * HalfY;
+            float Z;
+            if (!GroundAt(World, X + U * C - V * S, Y + U * S + V * C, Z)) return false;
+            LowZ = FMath::Min(LowZ, Z);
+            HighZ = FMath::Max(HighZ, Z);
+        }
+    return true;
+}
+
 FString UEWBuildZones::CheckFootprint(const UObject* WorldContext, float X, float Y, float HalfX, float HalfY, float YawDegrees)
 {
     Load();
@@ -114,13 +158,17 @@ FString UEWBuildZones::CheckFootprint(const UObject* WorldContext, float X, floa
             HighZ = FMath::Max(HighZ, Z);
         }
     if (HighZ - LowZ > MaxSlopeRise) return TEXT("The ground is too uneven.");
-    // Nothing solid standing on the footprint: a box from just above the highest ground up a body's height.
+    // Nothing solid standing on the footprint (trees, rocks, buildings, pieces, survivors): a box from just above the highest
+    // ground up a body's height. The terrain itself does not count.
     FCollisionQueryParams Params(SCENE_QUERY_STAT(BuildCheck), false);
     const FVector Middle(X, Y, HighZ + 20.f + 100.f);
-    if (World->OverlapBlockingTestByChannel(Middle, FQuat(FVector::UpVector, Yaw), ECC_Pawn,
-        FCollisionShape::MakeBox(FVector(HalfX, HalfY, 100.f)), Params)
-        || World->OverlapBlockingTestByChannel(Middle, FQuat(FVector::UpVector, Yaw), ECC_WorldStatic,
-        FCollisionShape::MakeBox(FVector(HalfX, HalfY, 100.f)), Params))
-        return TEXT("Something is in the way.");
+    const FCollisionShape Box = FCollisionShape::MakeBox(FVector(HalfX - 3.f, HalfY - 3.f, 100.f));
+    for (ECollisionChannel Channel : {ECC_Pawn, ECC_WorldStatic})
+    {
+        TArray<FOverlapResult> Overlaps;
+        World->OverlapMultiByChannel(Overlaps, Middle, FQuat(FVector::UpVector, Yaw), Channel, Box, Params);
+        for (const FOverlapResult& Overlap : Overlaps)
+            if (Overlap.bBlockingHit && !IsTerrain(Overlap.GetComponent())) return TEXT("Something is in the way.");
+    }
     return FString();
 }

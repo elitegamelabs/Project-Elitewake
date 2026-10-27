@@ -22,7 +22,7 @@ CAVE_MARGIN = 600.0
 LANDMARK_MARGIN = 300.0
 DOCK_BEACH_RADIUS = 5000.0     # cm round every dock: its beach is not buildable
 DOCK_BEACH_TOP = 150.0         # cm above the waterline: the 'beach' part of the dock zone
-MAX_SLOPE_RISE = 120.0         # cm: the ground under one footprint may differ by no more than this (visible supports level it)
+MAX_SLOPE_RISE = 250.0         # cm: the ground under one footprint may differ by no more than this (the foundation's slab reaches down to the lowest ground, so it stands level)
 STARTER_DOCK = (4000.0, 900.0)
 SLOPE_LIMIT_DEG = 35.0
 

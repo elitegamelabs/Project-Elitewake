@@ -2,7 +2,7 @@
  "version": 1,
  "sea_z": -65.0,
  "ground_above_sea": 40.0,
- "max_slope_rise": 120.0,
+ "max_slope_rise": 250.0,
  "shapes": [
   {
    "kind": "circle",

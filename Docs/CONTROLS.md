@@ -39,6 +39,15 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Journal: next / previous page | Up / Down | d-pad up / down | OK |
 | Close | I / Escape | B | OK |
 
+## Build Mode (milestone 2, test access: no Builder's Plan item yet; foundation cost TBD)
+| Action | Keyboard / mouse | Controller | Status |
+|---|---|---|---|
+| Enter / leave Build Mode | B (Escape also leaves) | click right stick | OK (`verify_build_mode_play`) |
+| Turn the foundation a quarter | Q / E | LB / RB | OK (`verify_build_mode_play`) |
+| Place a foundation (blue ghost) / remove the piece you look at (demolish) | Left mouse | RT | OK (`verify_build_mode_play`) |
+| Switch place / demolish | X | B button | OK (`verify_build_mode_play`) |
+Ghost is blue where it may go, red with a reason where it may not (Ports, caves, landmarks, docks and their beaches, water, steep ground, in the way, out of reach). Near a piece it snaps edge to edge. Hint text is an on-screen debug line only; no HUD widget yet.
+
 ## On the map
 Pan: drag / right stick. Zoom: wheel / triggers. Close: M or Escape / Back or B.
 

@@ -35,6 +35,7 @@ class UEWCompanyComponent;
 class UEWContainerWidget;
 class UEWSoundscapeComponent;
 class UEWPlacementPreviewComponent;
+class UEWBuildComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -95,6 +96,10 @@ public:
     TObjectPtr<UEWSoundscapeComponent> SoundscapeComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Placement")
     TObjectPtr<UEWPlacementPreviewComponent> PlacementPreview;
+    /** Build Mode: the foundation ghost, placing and demolishing (owner, October 27). */
+    UFUNCTION(BlueprintPure, Category="Build") UEWBuildComponent* GetBuildComponent() const { return BuildComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build")
+    TObjectPtr<UEWBuildComponent> BuildComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWObjectiveWidget> ObjectiveWidget;
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")

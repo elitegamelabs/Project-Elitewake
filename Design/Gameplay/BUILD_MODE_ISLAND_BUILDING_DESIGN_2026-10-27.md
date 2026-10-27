@@ -11,7 +11,7 @@ Status: **owner confirmed October 27 (zones only carve out parts of an island, t
 A piece is valid (blue) only if **all** hold; otherwise red with the first failing reason shown as one line of text:
 1. **On an island's ground:** the ground under every corner of the piece's footprint is above the waterline (+ a small margin) and is island terrain (not ship deck, not sea floor).
 2. **Not in an obstruction zone** (below).
-3. **Slope:** ground slope under the footprint no steeper than a limit (starting value 35 degrees; foundations may level up to a height difference limit, starting 120 cm, by showing visible supports).
+3. **Slope:** ground slope under the footprint no steeper than a limit (the foundation's slab reaches down to the lowest ground under it, so uneven ground up to 250 cm is allowed).
 4. **No overlap:** nothing solid (rock, tree, other structure, ship, animal, player) intersects the footprint.
 5. **Reach:** within the player's build reach (starting 8 m) and in line of sight.
 6. **Claim permission:** multiplayer only. Single player skips this check entirely.
