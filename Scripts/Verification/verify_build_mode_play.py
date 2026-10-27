@@ -384,6 +384,33 @@ def stair_place():
 def stair_placed():
     stairs = [p for p in pieces() if 'STAIRCASE' in kind(p)]
     assert len(stairs) == 1, f'expected one staircase, found {len(stairs)}'
+    state['stairs'] = stairs[0]
+    note('stair placed', size=str(stairs[0].get_piece_size()), rot=str(stairs[0].get_actor_rotation()))
+    # a second staircase on the same cell is refused
+    note('second stair aim', placeable=build.is_aim_placeable(), reason=str(build.get_aim_reason()))
+
+
+def local_point(f, x, y, z):
+    loc, fwd, right = f.get_actor_location(), f.get_actor_forward_vector(), f.get_actor_right_vector()
+    return unreal.Vector(loc.x + fwd.x * x + right.x * y, loc.y + fwd.y * x + right.y * y, z)
+
+
+def cutout_check():
+    f = second_foundation()
+    top = f.get_top_z()
+    hole_down = clear_through(local_point(f, -125, -100, top + 400), local_point(f, -125, -100, top + 290))
+    solid_down = clear_through(local_point(f, -100, 100, top + 400), local_point(f, -100, 100, top + 290))
+    note('ceiling cut-out', hole_clear=hole_down, ceiling_clear=solid_down)
+    for lx, ly in ((-125, -100), (-75, -100), (25, -100), (100, -100), (100, 25), (100, 75)):
+        res = unreal.SystemLibrary.line_trace_single(world, local_point(f, lx, ly, top + 400), local_point(f, lx, ly, top - 10), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [pawn], unreal.DrawDebugTrace.NONE, True)
+        note('step height at', x=lx, y=ly, hit_above_cell=round(res.to_tuple()[4].z - top, 1) if res else None)
+    assert hole_down, 'the ceiling is not cut away over the staircase'
+    assert not solid_down, 'the ceiling is missing where the staircase does not climb'
+    steps = [p for p in pieces() if 'STAIRCASE' in kind(p)]
+    assert len(steps) == 1
+
+
+def stair_walk_start():
     build.select_slot(11)
     key('B')                                   # out of Build Mode so the survivor can walk
     assert 'OFF' in mode(), mode()
@@ -391,11 +418,13 @@ def stair_placed():
     top = f.get_top_z()
     state['aim'] = None
     state['stair_top'] = top
-    fx, fy = state['f2']
-    pawn.teleport(unreal.Vector(fx - 100, fy - 300, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=90))
-    state['walk_until'] = time.monotonic() + 3.5
+    state['walk_f'] = f
+    # the first foundation's wall stands on this cell's west edge, so start on the first step instead of walking in from outside
+    start = local_point(f, -160, -100, top + 80 + 110)
+    assert pawn.teleport(start, unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw)), 'could not place the survivor on the stairs'
+    state['walk_until'] = time.monotonic() + 9.0
     state['walk_from'] = pawn.get_actor_location().z
-    state['walk_start_xy'] = (round(fx - 100), round(fy - 300))
+    note('walker', max_step=pawn.character_movement.get_editor_property('max_step_height'), walkable=pawn.character_movement.get_editor_property('walkable_floor_angle'))
 
 
 def stair_mid():
@@ -407,10 +436,11 @@ def stair_mid():
 def stair_walked():
     z = state['walk_max']
     q = pawn.get_actor_location()
-    stairs = [p for p in pieces() if 'STAIRCASE' in kind(p)][0]
-    note('stair walk detail', pawn=(round(q.x), round(q.y)), start=state['walk_start_xy'], stairs=str(stairs.get_actor_location()), rot=str(stairs.get_actor_rotation()), size=str(stairs.get_piece_size()))
-    note('stair walk (highest point reached)', start_z=round(state['walk_from'], 1), end_z=round(z, 1), foundation_top=round(state['stair_top'], 1))
-    assert z - state['stair_top'] > 180, f'survivor did not climb the stairs (z {z}, foundation top {state["stair_top"]})'
+    note('walk path (local x, y, z above cell top)', path=state.get('walk_log'))
+    note('stair walk (highest point reached)', start_z=round(state['walk_from'], 1), end_z=round(z, 1), foundation_top=round(state['stair_top'], 1), pawn=(round(q.x), round(q.y)))
+    # up the L-shape's flight, across its landing, up the turn and onto the ceiling's top (320 cm above the cell, plus the capsule)
+    assert z - state['stair_top'] > 370, f'survivor did not climb the staircase onto the ceiling (z {z}, foundation top {state["stair_top"]})'
+    state['walk_f'] = None
     key('B')
     assert 'PLACE' in mode(), mode()
 
@@ -435,9 +465,17 @@ def ceiling_placed():
     build.select_slot(0)
 
 
+def on_ceiling():
+    # stand on the part of the ceiling that is not cut away and look along its top toward the cell's +x side
+    f = second_foundation()
+    top = state['ceiling'].get_top_z()
+    assert pawn.teleport(local_point(f, -150, 150, top + 110), unreal.Rotator(roll=0, pitch=0, yaw=f.get_actor_rotation().yaw)), 'could not stand on the ceiling'
+    state['aim'] = local_point(f, 100, 150, top)
+
+
 def upper_wall_aim():
-    c = state['ceiling'].get_actor_location()
-    face(c.x, c.y, 0.0, back=300.0, yaw=90.0, lift=state['ceiling'].get_top_z() - T.height(c.x, c.y))
+    build.select_slot(0)
+    on_ceiling()
 
 
 def upper_wall_place():
@@ -458,7 +496,7 @@ def upper_wall_placed():
 def upper_foundation_refused():
     # a foundation is never built on a ceiling: aiming at the ceiling with the foundation selected must not offer it there
     c = state['ceiling'].get_actor_location()
-    face(c.x, c.y, 0.0, back=300.0, yaw=90.0, lift=state['ceiling'].get_top_z() - T.height(c.x, c.y))
+    on_ceiling()
 
 
 def upper_foundation_checked():
@@ -556,7 +594,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (aim_first_again, 1.5), (place_wall, 1.5), (wall_placed, .2), (wall_again, 1.2), (still_three, 1.0), (dial_pick_pad, .5),
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
-         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, 1.6), (stair_mid, 2.2), (stair_walked, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
+         (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
          (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 
@@ -569,7 +607,20 @@ def tick(delta):
         cam = unreal.GameplayStatics.get_player_camera_manager(world, 0).get_camera_location()
         pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(cam, state['aim']))
     if state.get('walk_until') and time.monotonic() < state['walk_until']:
-        pawn.add_movement_input(unreal.Vector(0, 1, 0), 1.0)
+        f = state.get('walk_f')
+        if f is None:
+            pawn.add_movement_input(unreal.Vector(0, 1, 0), 1.0)
+        else:
+            # up the first flight along the cell's x, then turn right (cell +y) at the landing
+            p, loc = pawn.get_actor_location(), f.get_actor_location()
+            fwd, right = f.get_actor_forward_vector(), f.get_actor_right_vector()
+            lx = (p.x - loc.x) * fwd.x + (p.y - loc.y) * fwd.y
+            d = fwd if lx < 100 else right
+            pawn.add_movement_input(d, 1.0)
+            ly = (p.x - loc.x) * right.x + (p.y - loc.y) * right.y
+            if time.monotonic() - state.get('walk_log_at', 0) > .4:
+                state['walk_log_at'] = time.monotonic()
+                state.setdefault('walk_log', []).append((round(lx), round(ly), round(p.z - state['stair_top'])))
         state['walk_max'] = max(state.get('walk_max', -1e9), pawn.get_actor_location().z)
     if time.monotonic() < state['at']:
         return

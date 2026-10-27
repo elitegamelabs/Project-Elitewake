@@ -31,6 +31,7 @@ public:
     AEWBuildPiece();
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
     /** The foundation's footprint half sizes (cm) and slab thickness above its ground. Tuning. */
     static constexpr float HalfSize = 200.f;
@@ -55,6 +56,12 @@ public:
     static bool IsWall(EEWBuildPieceType Type) { return Type == EEWBuildPieceType::TopWall || Type == EEWBuildPieceType::HalfWall; }
     static bool IsStair(EEWBuildPieceType Type)
     { return Type == EEWBuildPieceType::BottomSpiralStaircase || Type == EEWBuildPieceType::LShapeStaircase || Type == EEWBuildPieceType::LeftUShapeStaircase; }
+
+    /** One block of a staircase in its cell's frame (cm): footprint, and Top = height of its top above the cell's top.
+     *  The last riser up to the ceiling's top is not a block: the ceiling itself is the top step. */
+    struct FStairStep { float X0, X1, Y0, Y1, Top; };
+    static constexpr float StairRise = WallHeight + 20.f;   // the ceiling's top above the cell's top; eight risers of 40 cm
+    static void StairSteps(EEWBuildPieceType Type, TArray<FStairStep>& Out);
 
     /** Size the foundation slab: its top and underside heights in world space. Set by the server right after spawning. */
     void Configure(float InTopZ, float InBottomZ);
@@ -81,8 +88,12 @@ private:
     UPROPERTY(ReplicatedUsing=OnRep_Shape) FVector Size = FVector::ZeroVector;
     UPROPERTY(ReplicatedUsing=OnRep_Shape) int32 MaterialIndex = 0;
     UPROPERTY(ReplicatedUsing=OnRep_Shape) int32 Design = 0;
-    UPROPERTY(Replicated) TObjectPtr<AEWBuildPiece> Base;
+    UPROPERTY(ReplicatedUsing=OnRep_Shape) TObjectPtr<AEWBuildPiece> Base;
+    UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> Extras;     // more boxes for steps and a cut-out ceiling
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> Tint;
     UFUNCTION() void OnRep_Shape();
     void ApplyShape();
+    UStaticMeshComponent* ExtraBox(int32 Index);
+    /** A ceiling is cut away over the staircases standing on the same cell; this re-shapes the ceilings of that cell. */
+    void RefreshCeilingsOver();
 };

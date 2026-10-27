@@ -300,6 +300,7 @@ bool UEWBuildComponent::AttachAllowed(UWorld* World, AEWBuildPiece* Base, EEWBui
             return false;
         }
         if (It->GetBase() != Base) continue;
+        if (AEWBuildPiece::IsStair(Type) && AEWBuildPiece::IsStair(It->GetPieceType())) { Reason = TEXT("This cell already has a staircase."); return false; }
         const bool bWall = AEWBuildPiece::IsWall(It->GetPieceType());
         if (It->GetPieceType() == EEWBuildPieceType::TopWall) bWallOnCell = true;
         if (bWall && FVector::Dist2D(It->GetActorLocation(), OutLocation) < 250.f) bWallBesidePillar = true;
