@@ -77,6 +77,8 @@ public:
     static constexpr int32 SlotCount = 12;
     static constexpr int32 FittingCount = 4;
 
+    /** Ask the server to place a piece (what Confirm does after the ghost's checks); the server checks it again. */
+    UFUNCTION(BlueprintCallable, Category="Build") void RequestPlace(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, int32 InDesign, AEWBuildPiece* BasePiece) { ServerPlace(Type, Location, InYawDegrees, Material, InDesign, BasePiece); }
     UFUNCTION(Server, Reliable) void ServerPlace(EEWBuildPieceType Type, FVector Location, float InYawDegrees, int32 Material, int32 InDesign, AEWBuildPiece* BasePiece);
     UFUNCTION(Server, Reliable) void ServerDemolish(AEWBuildPiece* Piece);
 

@@ -215,8 +215,8 @@ void AEWBuildPiece::ApplyDoorSwing()
 {
     if (PieceType != EEWBuildPieceType::Door || Size.IsZero()) return;
     // The leaf hinges on its -y edge and swings 90 degrees into the cell.
-    const float Angle = 90.f * OpenAlpha, Radians = FMath::DegreesToRadians(Angle), Half = Size.Y * .5f;
-    Slab->SetRelativeLocation(FVector(-Half * FMath::Sin(Radians), -Half + Half * FMath::Cos(Radians), 0.f));
+    const float Angle = 90.f * OpenAlpha, Radians = FMath::DegreesToRadians(Angle), LeafHalf = Size.Y * .5f;
+    Slab->SetRelativeLocation(FVector(-LeafHalf * FMath::Sin(Radians), -LeafHalf + LeafHalf * FMath::Cos(Radians), 0.f));
     Slab->SetRelativeRotation(FRotator(0.f, Angle, 0.f));
 }
 
