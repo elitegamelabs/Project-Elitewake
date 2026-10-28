@@ -79,6 +79,8 @@ private:
     float LookYaw = 0.f;
     /** Authority: after a walk it stands and does something: graze, look about, or lie down. */
     void ChooseIdle();
+    void PushTrees(float DeltaSeconds);
+    float TreePushCooldown = 5.f;
     FVector Repulsion() const;
     UPROPERTY(ReplicatedUsing=OnRep_State)
     bool bDead = false;

@@ -67,6 +67,14 @@ public:
     FVector2D LookSeconds = FVector2D(2.f, 5.f);
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     FVector2D LieSeconds = FVector2D(14.f, 30.f);
+    /** Elephants (owner, October 16): pushes destructible trees over as it walks. It knocks one down within TreePushReach (cm, from
+     *  its nose) every TreePushSeconds (a number in the range). The tree stays on the ground and can still be chopped for wood. Tuning. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    bool bPushesTrees = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float TreePushReach = 350.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    FVector2D TreePushSeconds = FVector2D(8.f, 20.f);
     /** How deep into the sea it will wade, in cm below the surface (0 keeps it ashore). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float WadeDepth = 0.f;

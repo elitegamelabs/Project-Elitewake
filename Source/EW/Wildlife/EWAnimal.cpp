@@ -6,6 +6,7 @@
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
 #include "EWSound.h"
+#include "Gathering/EWHarvestTree.h"
 #include "Sound/SoundBase.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -288,6 +289,7 @@ void AEWAnimal::Think(float DeltaSeconds)
         if (RestSeconds > 0.f) return;
     }
     if (Action != EEWAnimalAction::Wander) Action = EEWAnimalAction::Wander;
+    if (Definition->bPushesTrees) PushTrees(DeltaSeconds);
     RoamSeconds -= DeltaSeconds;
     const bool bArrived = FVector::Dist2D(RoamPoint, GetActorLocation()) < FMath::Max(60.f, Definition->Size.X * .4f);
     if (bArrived || RoamSeconds <= 0.f || !WalkToward(RoamPoint, Definition->WalkSpeed, DeltaSeconds))
@@ -296,6 +298,28 @@ void AEWAnimal::Think(float DeltaSeconds)
         RoamSeconds = 20.f;
         if (bArrived) ChooseIdle();
     }
+}
+
+void AEWAnimal::PushTrees(float DeltaSeconds)
+{
+    if ((TreePushCooldown -= DeltaSeconds) > 0.f) return;
+    const FVector Nose = GetActorLocation() + GetActorForwardVector() * Definition->Size.X * .5f;
+    AEWHarvestTree* Best = nullptr;
+    float BestDistance = Definition->TreePushReach;
+    for (TActorIterator<AEWHarvestTree> It(GetWorld()); It; ++It)
+    {
+        if (It->IsFelled() || It->IsActorBeingDestroyed()) continue;
+        const FVector To = It->GetActorLocation() - Nose;
+        const float Distance = To.Size2D();
+        if (Distance < BestDistance && FVector::DotProduct(To.GetSafeNormal2D(), GetActorForwardVector()) > .2f) { Best = *It; BestDistance = Distance; }
+    }
+    if (!Best) { TreePushCooldown = 1.f; return; }      // nothing in front: look again soon
+    if (Best->Fell(Best->GetActorLocation() - GetActorLocation()))      // stays down (not removed) so it can be chopped for wood
+    {
+        Call();
+        TreePushCooldown = FMath::FRandRange(Definition->TreePushSeconds.X, Definition->TreePushSeconds.Y);
+    }
+    else TreePushCooldown = 1.f;
 }
 
 void AEWAnimal::ChooseIdle()
