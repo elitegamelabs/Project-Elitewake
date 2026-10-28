@@ -88,6 +88,16 @@ All entries below are **pending implementation and Unreal Play verification**; d
 
 Supporting requirements: [animal attacks and regional suggestions](ANIMAL_ATTACK_AUDIO_AND_REGIONAL_WILDLIFE_PROPOSAL_2026-10-16.md), [four approved additions](APPROVED_BEAR_ELEPHANT_GIANT_CROCODILE_LION_WILDLIFE_2026-10-16.md), [tropical elephant correction](ELEPHANT_TROPICAL_ISLAND_HABITAT_CORRECTION_2026-10-16.md), [roaming and spiders](ELEPHANT_DESTRUCTION_WILDLIFE_ROAMING_AND_SPIDER_MILESTONES_2026-10-16.md), [harvestable fallen trees](ELEPHANT_FELLED_TREES_HARVESTABLE_2026-10-16.md).
 
+## Taken over from Grok, October 28 (owner: Claude works alone now; all open)
+
+| Task | What |
+|---|---|
+| GR1 | Review the October 22 gameplay branch code (survival, progression, skill tree, death, exploration, map, respawn) for multiplayer bugs and edge cases; list by severity. |
+| GR2 | Skill-tree expansion: three more constellations (Hunter, Cook, Builder), 8-10 stars each; proposal in `Design/Progression/SKILL_TREE_PROPOSAL_2026-10-22.md`; numbers are tuning, the owner approves. |
+| GR3 | The five islands as shapes: already built in code as the five-island world; write the proposal doc only if the owner wants it. |
+| GR4 | Food chains and wildlife tables per island (`Design/World/WILDLIFE_FOOD_CHAINS_PROPOSAL_2026-10-22.md`), from the existing animal catalog. |
+| GR5 | Draft 12 explorer's-journal entries (`Design/Journal/EXPLORER_JOURNAL_DRAFT_2026-10-22.md`), marked DRAFT for owner approval. |
+
 ## M0 — Foundations ✅
 
 Server-authoritative survivor (movement, stances, swimming, survival needs), inventory, equipment, hotbar, crafting, objectives, Company, private multiplayer with recovery; the coastal map with terrain, ocean, palms, boulders and plants; ships (sloop, raft, dinghy) with fittings, sailing, crew on deck, ladders, anchor, cargo and weight; melee; the Journal guides. See the VERIFICATION table for every check.

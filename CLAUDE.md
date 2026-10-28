@@ -2,6 +2,8 @@
 
 **Handoff rule (owner, October 22): before you run out of usage, close out everything you have open, push your work, write a `HANDOFF` entry in `Docs/Delegation/INBOX.md`, and at the start of each session continue any unclaimed `HANDOFF` first. Details: `Docs/TEAM_CHARTER.md` section 7.**
 
+**Solo rule (owner, October 28, 2026): Claude is working alone on the game design and build. Codex and Grok are at their limits and Grok (via Cursor) is gone from the repo. Do not hand tasks to other models or wait on them; do the work yourself, and treat any open task in `Docs/Delegation/` or `Docs/DELEGATED_TASKS.md` as yours. Grok's five open tasks (GR1 to GR5) are now in `Docs/MILESTONES.md`.**
+
 **Team rule (owner, October 22, 2026): we are one team and everybody works freely. Nobody places, keeps or honours any lock, claim or ownership on any file, system, task or branch; see [Docs/TEAM_CHARTER.md](Docs/TEAM_CHARTER.md). Anything below that says an agent "owns" or "reserves" something, or that you must not edit another agent's files, is superseded: edit what the work needs, tell the team in the inbox, and Claude reviews pushed work.**
 
 These instructions apply to every AI coding, design, art, and implementation assistant working in this repository. Read `Docs/DESIGN_REFERENCE.md` and the latest owner decisions before changing project behavior. The owner's latest explicit direction takes precedence over older documentation. Do not claim a design requirement is implemented unless code/assets and verification confirm it.
