@@ -32,7 +32,7 @@ Every "tested" below means a Play check or native test run in the Unreal project
 - **Native tests:** 31 of 32 pass on this branch; `Elitewake.Title.RoutedKeyboardMouseAndWheel` fails under `-nullrhi` ("Title widget did not receive full-screen geometry"), a headless limitation, not a regression from today's work.
 
 ## Tasks written for the team today
-Codex: C8 (controller and hotbar), C9 (save progression/discoveries), C10 (hunger, sickness, cooking), C11 (edge teleports). ChatGPT: G-RES, G-EDGE, G-REVIEW. Grok: GR1 to GR5 (see `Docs/Delegation/GROK.md`).
+Codex: C8 (controller and hotbar), C9 (save progression/discoveries), C10 (hunger, sickness, cooking), C11 (edge teleports). ChatGPT: G-RES, G-EDGE, G-REVIEW. Grok: GR1 to GR5 (October 28: Grok left the project; those five tasks are now Claude's, see `Docs/MILESTONES.md`).
 The 40-island tasks (C-WORLD40, C-WILDLIFE40) are paused by the owner's five-island directive.
 
 ## Open decisions for the owner (Claude's working choices, all reversible)

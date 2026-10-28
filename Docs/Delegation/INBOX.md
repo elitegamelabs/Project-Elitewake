@@ -51,7 +51,7 @@ Entry format:
 - Every model: before your credits run out, close out all open work (editors, builds, lock notes, jobs), push, and write a `HANDOFF (<you>, <date>)` entry here. At the start of every session read this file first and continue any `HANDOFF` not yet marked `PICKED UP (<who>, <date>)`. See `Docs/TEAM_CHARTER.md` section 7.
 
 ### 2026-10-22 Claude - team charter, Grok joins, gameplay branch NOTE
-- What: owner asked for no locks or claims on anything, Grok added to the team, detailed logs, tasks and review. Added `Docs/TEAM_CHARTER.md`, `GROK.md`, `Docs/Delegation/GROK.md`, tasks C8 to C11 (CODEX.md) and G-RES/G-EDGE/G-REVIEW (CHATGPT.md); replaced every "owns/reserves/claims" rule with the team rule in AGENTS.md, CLAUDE.md, GEMINI.md and the task files. Claude holds no locks or claims.
+- What: owner asked for no locks or claims on anything, a new teammate added (Grok; it has since left, October 28), detailed logs, tasks and review. Added `Docs/TEAM_CHARTER.md`, tasks C8 to C11 (CODEX.md) and G-RES/G-EDGE/G-REVIEW (CHATGPT.md); replaced every "owns/reserves/claims" rule with the team rule in AGENTS.md, CLAUDE.md, GEMINI.md and the task files. Claude holds no locks or claims.
 - Commits / branch: `claude/gameplay-fixes-20261022` (menus, death/respawn, stats, skills, timed crafting, map fog, journal, 1,500 m ocean, manatee removed). Not merged: owner approves merges. Full status per owner item: `Docs/REPORTS/2026-10-22_Claude_Manager_Log.md`.
 - Verified: Play checks listed in the manager log pass; 31 of 32 native tests pass (headless title-geometry test fails under -nullrhi).
 - Needs from Claude or the owner: everyone read the charter. Owner: wrap or turn back at the world edge (C11)? Approve merging the branch to `main`?

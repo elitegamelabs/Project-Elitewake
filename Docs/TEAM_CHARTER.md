@@ -1,6 +1,6 @@
 # ELITEWAKE team charter (owner, October 22, 2026)
 
-**We are one team: the owner, Claude, Codex, ChatGPT, Grok and Scenario. Everybody works on the project freely.** This charter is the shared rulebook. The owner's
+**We are one team: the owner, Claude, Codex, ChatGPT and Scenario. Everybody works on the project freely.** This charter is the shared rulebook. The owner's
 latest message always wins over anything here.
 
 ## 1. No locks, no claims, no ownership
@@ -21,7 +21,7 @@ latest message always wins over anything here.
 - Record owner decisions in `Docs/OwnerDecisions/` the moment they arrive, in the owner's words, with the date.
 
 ## 3. Tasks: write them down, pick them up, hand them on
-- Open work lives in the task files: `Docs/DELEGATED_TASKS.md` (shared), and a per-agent list in `Docs/Delegation/` (`CODEX.md`, `CHATGPT.md`, `GROK.md`, `SCENARIO.md`).
+- Open work lives in the task files: `Docs/DELEGATED_TASKS.md` (shared), and a per-agent list in `Docs/Delegation/` (`CODEX.md`, `CHATGPT.md`, `SCENARIO.md`).
   Claude writes new tasks there; **any teammate may add a task** for anyone, including themselves.
 - A task says what to do, why (the owner's words), what done looks like (the check that proves it) and where to look. Status words: `OPEN`, `IN PROGRESS (who, date)`,
   `DONE <commit>`, `BLOCKED (why)`.
@@ -47,7 +47,6 @@ latest message always wins over anything here.
 | Claude | Unreal C++ and editor automation, Play checks, UI systems, review and management |
 | Codex | Code, native tests, Python verification, packaging, build and CI work |
 | ChatGPT | Design write-ups, reference sheets, research, catalogues, reviewing |
-| Grok | Research, design analysis, balance and lore drafts, second-opinion review of code and plans (see `Docs/Delegation/GROK.md`) |
 | Scenario | Image, audio and 3D generation, run by Claude from the queue |
 Anyone can do anything on this list; it only says where to look first.
 
