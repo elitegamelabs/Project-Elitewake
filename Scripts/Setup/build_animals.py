@@ -375,6 +375,33 @@ def squirrel_monkey():
     return b
 
 
+def spider():
+    """A big cave spider (about 1 m across with its legs): dark brown, a pale mark on the abdomen, banded legs, eight eyes.
+    Its legs step in two groups (parts FL and FR): left 1, right 2, left 3, right 4 against the other four."""
+    b = Builder()
+    dark, tan, pale, black = (.07, .045, .03), (.32, .22, .1), (.38, .3, .18), (.02, .02, .02)
+
+    def abdomen(q, n):
+        mark = n[2] > .35 and abs(q[1]) < 5 and q[0] < -14
+        return pale if mark else mix(dark, (.12, .08, .05), max(0.0, n[2]))
+
+    ball(b, (-20, 0, 22), (21, 15, 15), abdomen, BODY, 0.0, 16)
+    ball(b, (6, 0, 22), (14, 11, 9), lambda q, n: mix(dark, (.14, .1, .06), max(0.0, n[2])), BODY, 0.0, 14)
+    for y in (1, -1):
+        for x, z, r in ((17, 27, 1.6), (17.5, 24, 1.1), (15, 29, 1.2)):
+            ball(b, (x, 3.2 * y, z), (r, r, r), lambda q, n: black, BODY, 0.0, 6)
+        ball(b, (19, 2.2 * y, 18), (3.4, 1.8, 5), lambda q, n: tan, HEAD, 0.0, 8)      # the fangs
+    banded = lambda q, n: dark if int(abs(q[1]) // 8 + abs(q[0]) // 9) % 2 == 0 else tan    # noqa: E731
+    for index, x in enumerate((13.0, 6.0, -2.0, -10.0)):
+        for y in (1, -1):
+            part = FL if (index + (0 if y > 0 else 1)) % 2 == 0 else FR
+            reach = 40 + 5 * (1 if index in (0, 3) else 0)
+            lean = (7 - 5 * index) / 3.0
+            limb(b, [(x, 8 * y, 24), (x + lean, 26 * y, 46), (x + lean * 2.4, (26 + reach * .6) * y, 24), (x + lean * 3, (26 + reach) * y, 1)],
+                 2.1, .8, banded, part, 46)
+    return b
+
+
 def quadruped(b, fur, spec):
     """A four-legged body from one spec (sizes in cm): the torso loft, then a leg and flat paw at each corner."""
     path, radii = stations(spec['torso'], 4)
@@ -525,6 +552,9 @@ ANIMALS = {
     'Elephant': dict(display='Elephant', build=elephant, size=(430, 290), stride=170, gait=0,
                      anim=(26, 7, 1.5, 6, 5, 0, 1), surface=(0, 1, .25, .18, .9),
                      behave=(False, 70, 380, 45, 1500, 0, 0, 0, 1, 0, '', 1500), yield_=(20, 30), live=('inland', 0, 0)),
+    'Spider': dict(display='Cave Spider', build=spider, size=(86, 46), stride=34, gait=0,
+                   anim=(14, 9, .6, 0, 0, 0, 1), surface=(0, 1, .2, .12, .8),
+                   behave=(True, 110, 360, 220, 450, 0, 700, 12, 1.2, 45, 'bite', 35), yield_=(1, 3), live=('cave', 0, 0)),
     'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
                            anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
                            behave=(False, 90, 480, 220, 900, 0, 0, 0, 1, 0, '', 35), yield_=(2, 5), live=('trees', 3, 3)),
@@ -684,6 +714,8 @@ def place(actors, defs, ground, trees):
     taken, placed = [], []
     for name, a in ANIMALS.items():
         kind, *counts = a['live']
+        if kind == 'cave':
+            continue      # cave and swamp spiders are placed by add_spiders.py
         aggressive = a['behave'][0]
         radius = max(a['size'][1] * .5, a['size'][0] * .3, 15.0)
         for island, count in zip(ISLANDS, counts):
