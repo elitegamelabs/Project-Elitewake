@@ -8,6 +8,10 @@ class UEWItemDefinition;
 class UStaticMesh;
 class USoundBase;
 
+/** What an animal is doing, shown on every screen (October 27, natural roaming). */
+UENUM(BlueprintType)
+enum class EEWAnimalAction : uint8 { Wander, Graze, Rest, Look, Flee, Chase };
+
 /** One kind of land animal: how it looks and moves, how it behaves and what it yields. Numbers are tuning. */
 UCLASS(BlueprintType)
 class EW_API UEWAnimalDefinition : public UPrimaryDataAsset
@@ -48,6 +52,21 @@ public:
     /** How far from its home it wanders, in cm; between walks it stands a while. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float RoamRadius = 1200.f;
+    /** What it does when it stops (owner, October 16: roam naturally with idle, foraging, rest). Relative odds, tuning: grazing
+     *  (head down, a plant eater only: not for an aggressive kind), looking about (turns to a new heading), and lying down (only when
+     *  no survivor is near). Durations in seconds, a number in each range. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float GrazeOdds = 5.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float LookOdds = 3.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float RestOdds = 2.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    FVector2D GrazeSeconds = FVector2D(5.f, 12.f);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    FVector2D LookSeconds = FVector2D(2.f, 5.f);
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    FVector2D LieSeconds = FVector2D(14.f, 30.f);
     /** How deep into the sea it will wade, in cm below the surface (0 keeps it ashore). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float WadeDepth = 0.f;

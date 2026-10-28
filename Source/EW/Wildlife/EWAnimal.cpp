@@ -40,6 +40,7 @@ void AEWAnimal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AEWAnimal, Definition);
     DOREPLIFETIME(AEWAnimal, Health);
+    DOREPLIFETIME(AEWAnimal, Action);
     DOREPLIFETIME(AEWAnimal, bDead);
     DOREPLIFETIME(AEWAnimal, bHarvested);
 }
@@ -133,15 +134,17 @@ void AEWAnimal::Animate(float DeltaSeconds)
         // A generated model is one rigid mesh with no legs to move: it rocks and bobs in time with its stride instead.
         const bool bRigid = Definition->MeshFootLift > 0.f;
         const float Walking = bRigid ? FMath::Clamp(ShownSpeed / FMath::Max(Definition->WalkSpeed * .6f, 1.f), 0.f, 1.f) : 0.f;
+        // Postures ease in and out: head bowed to graze, body lowered to lie down.
+        GrazeShown = FMath::FInterpTo(GrazeShown, Action == EEWAnimalAction::Graze ? 1.f : 0.f, DeltaSeconds, 2.5f);
+        LieShown = FMath::FInterpTo(LieShown, Action == EEWAnimalAction::Rest ? 1.f : 0.f, DeltaSeconds, 1.5f);
+        const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
         const float Roll = FMath::Sin(StridePhase) * 2.6f * Walking;
-        const float Pitch = FMath::Sin(StridePhase * 2.f) * 1.4f * Walking;
+        const float Pitch = FMath::Sin(StridePhase * 2.f) * 1.4f * Walking - GrazeShown * (20.f + FMath::Sin(float(Now) * 2.2f) * 4.f);     // nose down, bobbing (tuning)
         const float Shudder = FlinchSeconds > 0.f ? FMath::Sin(FlinchSeconds * 60.f) * 10.f : 0.f;
         Visual->SetRelativeRotation(FQuat(FRotator(Pitch, Shudder, Roll)) * FQuat(Definition->MeshRotation));
-        if (bRigid)
-        {
-            const float Radius = FMath::Max3(float(Definition->Size.Y * .5f), float(Definition->Size.X * .3f), 15.f);
-            Visual->SetRelativeLocation(FVector(0, 0, -Radius + Definition->MeshFootLift + FMath::Abs(FMath::Sin(StridePhase)) * 1.8f * Walking));
-        }
+        const float Radius = FMath::Max3(float(Definition->Size.Y * .5f), float(Definition->Size.X * .3f), 15.f);
+        const float Bob = bRigid ? FMath::Abs(FMath::Sin(StridePhase)) * 1.8f * Walking : 0.f;
+        Visual->SetRelativeLocation(FVector(0, 0, -Radius + Definition->MeshFootLift + Bob - LieShown * Definition->Size.Y * .28f));
     }
 }
 
@@ -175,16 +178,33 @@ FVector AEWAnimal::PickRoamPoint() const
     return Home;
 }
 
+FVector AEWAnimal::Repulsion() const
+{
+    // Animals give each other room: push away from any other live animal inside twice their lengths.
+    FVector Push = FVector::ZeroVector;
+    const float Room = Definition->Size.X * 1.6f;
+    for (TActorIterator<AEWAnimal> It(GetWorld()); It; ++It)
+    {
+        if (*It == this || It->bDead) continue;
+        const FVector Away = GetActorLocation() - It->GetActorLocation();
+        const float Distance = Away.Size2D();
+        if (Distance < Room && Distance > 1.f) Push += Away.GetSafeNormal2D() * (1.f - Distance / Room);
+    }
+    return Push;
+}
+
 bool AEWAnimal::WalkToward(const FVector& Target, float Speed, float DeltaSeconds)
 {
     const float Radius = Body->GetUnscaledSphereRadius();
     const FVector Feet = GetActorLocation() - FVector(0, 0, Radius);
-    const FRotator Want = (Target - Feet).Rotation();
+    FVector Heading = (Target - Feet).GetSafeNormal2D();
+    if (Action != EEWAnimalAction::Chase) Heading = (Heading + Repulsion() * .8f).GetSafeNormal2D();
+    const FRotator Want = Heading.Rotation();
     FRotator Facing = GetActorRotation();
     Facing.Yaw = FMath::FixedTurn(Facing.Yaw, Want.Yaw, Definition->TurnRate * DeltaSeconds);
     Facing.Pitch = Facing.Roll = 0.f;
     // Slow while turning hard, so it turns on the spot rather than circling.
-    const float Ahead = FVector::DotProduct(Facing.Vector(), (Target - Feet).GetSafeNormal2D());
+    const float Ahead = FVector::DotProduct(Facing.Vector(), Heading);
     const FVector Step = Facing.Vector() * Speed * FMath::Clamp(Ahead, .15f, 1.f) * DeltaSeconds;
     float Z;
     if (!GroundAt(Feet + Step, Z) || FMath::Abs(Z - Feet.Z) > FMath::Max(60.f, Step.Size() * 3.f))
@@ -231,6 +251,7 @@ void AEWAnimal::Think(float DeltaSeconds)
         Quarry = Target;
         if (Target)
         {
+            Action = EEWAnimalAction::Chase;
             const FVector Nose = GetActorLocation() + GetActorForwardVector() * Definition->Size.X * .5f;
             if (FVector::Dist2D(Nose, Target->GetActorLocation()) > Definition->AttackReach * .6f)
                 WalkToward(Target->GetActorLocation(), Definition->RunSpeed, DeltaSeconds);
@@ -245,21 +266,56 @@ void AEWAnimal::Think(float DeltaSeconds)
     }
     if (FleeSeconds > 0.f && FleeFrom.IsValid())
     {
+        Action = EEWAnimalAction::Flee;
         const FVector Away = (GetActorLocation() - FleeFrom->GetActorLocation()).GetSafeNormal2D();
         if (!WalkToward(GetActorLocation() + Away * 800.f, Definition->RunSpeed, DeltaSeconds))
             WalkToward(GetActorLocation() + FVector(-Away.Y, Away.X, 0.f) * 800.f, Definition->RunSpeed, DeltaSeconds);
         return;
     }
-    // Wander: walk to a spot, stand a while, walk on.
-    if (RestSeconds > 0.f) { RestSeconds -= DeltaSeconds; return; }
+    // Wander: walk to a spot, stand a while (graze, look about, lie down), walk on.
+    if (RestSeconds > 0.f)
+    {
+        RestSeconds -= DeltaSeconds;
+        if (Action == EEWAnimalAction::Rest)
+            for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+                if (FVector::Dist(It->GetActorLocation(), GetActorLocation()) < 500.f) { RestSeconds = 0.f; break; }      // someone comes close: it gets up
+        if (Action == EEWAnimalAction::Look)
+        {
+            FRotator Facing = GetActorRotation();
+            Facing.Yaw = FMath::FixedTurn(Facing.Yaw, LookYaw, Definition->TurnRate * .5f * DeltaSeconds);
+            SetActorRotation(Facing);
+        }
+        if (RestSeconds > 0.f) return;
+    }
+    if (Action != EEWAnimalAction::Wander) Action = EEWAnimalAction::Wander;
     RoamSeconds -= DeltaSeconds;
     const bool bArrived = FVector::Dist2D(RoamPoint, GetActorLocation()) < FMath::Max(60.f, Definition->Size.X * .4f);
     if (bArrived || RoamSeconds <= 0.f || !WalkToward(RoamPoint, Definition->WalkSpeed, DeltaSeconds))
     {
         RoamPoint = PickRoamPoint();
         RoamSeconds = 20.f;
-        if (bArrived) RestSeconds = FMath::FRandRange(2.f, 8.f);
+        if (bArrived) ChooseIdle();
     }
+}
+
+void AEWAnimal::ChooseIdle()
+{
+    const float Graze = Definition->bAggressive ? 0.f : Definition->GrazeOdds;
+    bool bSurvivorNear = false;
+    for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+        if (FVector::Dist(It->GetActorLocation(), GetActorLocation()) < 1500.f) { bSurvivorNear = true; break; }
+    const float LieOdds = bSurvivorNear ? 0.f : Definition->RestOdds;
+    const float Look = Definition->LookOdds;
+    float Roll = FMath::FRandRange(0.f, FMath::Max(Graze + Look + LieOdds, .01f));
+    if ((Roll -= Graze) < 0.f) { Action = EEWAnimalAction::Graze; RestSeconds = FMath::FRandRange(Definition->GrazeSeconds.X, Definition->GrazeSeconds.Y); }
+    else if ((Roll -= Look) < 0.f)
+    {
+        Action = EEWAnimalAction::Look;
+        LookYaw = GetActorRotation().Yaw + FMath::FRandRange(-120.f, 120.f);
+        RestSeconds = FMath::FRandRange(Definition->LookSeconds.X, Definition->LookSeconds.Y);
+    }
+    else if (LieOdds > 0.f) { Action = EEWAnimalAction::Rest; RestSeconds = FMath::FRandRange(Definition->LieSeconds.X, Definition->LieSeconds.Y); }
+    else { Action = EEWAnimalAction::Look; LookYaw = GetActorRotation().Yaw + FMath::FRandRange(-90.f, 90.f); RestSeconds = FMath::FRandRange(2.f, 5.f); }
 }
 
 AEWAnimal* AEWAnimal::FindStruck(const AEWCharacter* Striker, float Reach)
@@ -303,6 +359,7 @@ bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
         FleeFrom = Striker;
         FleeSeconds = 6.f;
         RestSeconds = 0.f;
+        Action = EEWAnimalAction::Flee;
     }
     return true;
 }
@@ -331,6 +388,8 @@ void AEWAnimal::Die()
 {
     bDead = true;
     Health = 0.f;
+    Action = EEWAnimalAction::Wander;
+    LieShown = GrazeShown = 0.f;
     YieldLeft = FMath::RandRange(Definition->YieldMin, FMath::Max(Definition->YieldMin, Definition->YieldMax));
     Quarry = nullptr;
     DeadSeconds = 0.f;
@@ -345,6 +404,7 @@ void AEWAnimal::Respawn()
     YieldLeft = 0;
     FleeSeconds = 0.f;
     RoamPoint = Home;
+    Action = EEWAnimalAction::Wander;
     SetActorLocationAndRotation(Home, FRotator(0, FMath::FRandRange(-180.f, 180.f), 0));
     OnRep_State();
     ForceNetUpdate();

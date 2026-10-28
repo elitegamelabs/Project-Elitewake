@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
 #include "Wildlife/EWWildlifeRest.h"
+#include "Wildlife/EWAnimalDefinition.h"
 #include "EWAnimal.generated.h"
 
 class AEWCharacter;
@@ -49,6 +50,11 @@ public:
     /** This screen's walking speed, cm/s, as its legs show it. */
     UFUNCTION(BlueprintPure, Category="Animal") float GetShownSpeed() const { return ShownSpeed; }
     UFUNCTION(BlueprintPure, Category="Animal") float GetStridePhase() const { return StridePhase; }
+    /** What it is doing now (wandering, grazing, lying down, looking about, fleeing, chasing). */
+    UFUNCTION(BlueprintPure, Category="Animal") EEWAnimalAction GetAction() const { return Action; }
+    /** How far its body is lowered (lying down, 0..1) and its head bowed (grazing, 0..1), as shown. */
+    UFUNCTION(BlueprintPure, Category="Animal") float GetLieShown() const { return LieShown; }
+    UFUNCTION(BlueprintPure, Category="Animal") float GetGrazeShown() const { return GrazeShown; }
 
     /** Authority only: a survivor's blow. Returns true if it landed. */
     bool TakeStrike(AEWCharacter* Striker, float Damage);
@@ -66,6 +72,14 @@ public:
 private:
     UPROPERTY(Replicated)
     float Health = 1.f;
+    UPROPERTY(Replicated)
+    EEWAnimalAction Action = EEWAnimalAction::Wander;
+    float LieShown = 0.f;
+    float GrazeShown = 0.f;
+    float LookYaw = 0.f;
+    /** Authority: after a walk it stands and does something: graze, look about, or lie down. */
+    void ChooseIdle();
+    FVector Repulsion() const;
     UPROPERTY(ReplicatedUsing=OnRep_State)
     bool bDead = false;
     UPROPERTY(ReplicatedUsing=OnRep_State)
