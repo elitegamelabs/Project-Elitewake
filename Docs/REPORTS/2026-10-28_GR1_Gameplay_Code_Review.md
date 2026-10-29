@@ -16,7 +16,7 @@ authority-only and finite-checked, and the owner-only replicated counters (damag
    ladder, at a cannon or (new) on a spider, that is the vehicle's world position, and ships are not part of the save. Resuming puts
    the survivor where the ship was, which can be open water. Fix: refuse to save (with a message) while attached to anything, or
    save the last grounded location.
-2. **Equipped items can vanish on resume when the pack is full.** `ApplyTo` puts equipped items back through `AddToEntries` with
+2. **(Fixed Oct 28; the options save/resume check still passes, no test for a shrunken pack.)** **Equipped items can vanish on resume when the pack is full.** `ApplyTo` puts equipped items back through `AddToEntries` with
    `Pack->MaxSlots` and ignores the leftover; an item that does not fit is lost before `EquipItem` runs. Fix: check the result and
    keep the item equipped directly, or report it.
 3. **Death bags open to any living survivor within reach.** `CanAccess` checks only "alive and near". In multiplayer another player

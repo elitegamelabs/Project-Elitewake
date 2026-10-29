@@ -86,12 +86,19 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
     // An item that no longer exists in the game is left out. Equipped items go back through the inventory so
     // they are equipped the ordinary way.
     TArray<FEWInventoryEntry> Entries = Inventory.FilterByPredicate([](const FEWInventoryEntry& E) { return E.ItemDefinition && E.Quantity > 0; });
+    // Room is made for the equipped items even if the pack has shrunk since the save, so none is lost; the pack's own size is put back
+    // once they are worn (they leave it again, so it fits).
+    const int32 PackSlots = Pack->MaxSlots;
+    int32 Worn_ = 0;
+    for (const FEWEquipmentEntry& Entry : Equipment) if (Entry.ItemDefinition) ++Worn_;
+    Pack->MaxSlots = PackSlots + Worn_;
     for (const FEWEquipmentEntry& Entry : Equipment)
         if (Entry.ItemDefinition) UEWInventoryComponent::AddToEntries(Entries, Pack->MaxSlots, Entry.ItemDefinition, 1);
     Pack->Entries = MoveTemp(Entries);
     Pack->HandleInventoryChanged();
     for (const FEWEquipmentEntry& Entry : Equipment)
         if (Entry.ItemDefinition) Worn->EquipItem(Entry.ItemDefinition, Entry.Slot);
+    Pack->MaxSlots = PackSlots;
     if (auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Bar->BindItem(i, Hotbar.IsValidIndex(i) ? Hotbar[i].Get() : nullptr);
     // Levels first: their health bonus raises the maximum before the saved health is put back.
