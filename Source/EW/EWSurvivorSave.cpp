@@ -25,6 +25,9 @@ namespace
 bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName)
 {
     if (!Survivor || !Survivor->HasAuthority()) return false;
+    // Not while dead (it would resume dead), nor while carried by something that is not in the save (a ship, a ladder, a mount):
+    // its position would put the survivor in the air or the sea on resume.
+    if (Survivor->IsDead() || Survivor->GetAttachParentActor() || Survivor->IsOnLadder() || Survivor->IsMounted()) return false;
     auto* Save = Cast<UEWSurvivorSave>(UGameplayStatics::CreateSaveGameObject(StaticClass()));
     if (!Save) return false;
     Save->MapPath = MapOf(Survivor);

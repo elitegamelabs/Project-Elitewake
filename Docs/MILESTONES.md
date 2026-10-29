@@ -98,7 +98,7 @@ Supporting requirements: [animal attacks and regional suggestions](ANIMAL_ATTACK
 
 | Task | What |
 |---|---|
-| GR1 | Review the October 22 gameplay branch code (survival, progression, skill tree, death, exploration, map, respawn) for multiplayer bugs and edge cases; list by severity. |
+| GR1 | Review the October 22 gameplay branch code (survival, progression, skill tree, death, exploration, map, respawn) for multiplayer bugs and edge cases; list by severity. **Done Oct 28:** [review](REPORTS/2026-10-28_GR1_Gameplay_Code_Review.md) (reading only); findings 1 and 4 fixed in `SaveSurvivor`; 2 and 3 await a fix and an owner decision. |
 | GR2 | Skill-tree expansion: three more constellations (Hunter, Cook, Builder), 8-10 stars each; proposal in `Design/Progression/SKILL_TREE_PROPOSAL_2026-10-22.md`; numbers are tuning, the owner approves. |
 | GR3 | The five islands as shapes: already built in code as the five-island world; write the proposal doc only if the owner wants it. |
 | GR4 | Food chains and wildlife tables per island (`Design/World/WILDLIFE_FOOD_CHAINS_PROPOSAL_2026-10-22.md`), from the existing animal catalog. |
