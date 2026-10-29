@@ -26,5 +26,12 @@ Working alone on the game (owner: Grok removed from the repository, Codex at its
 
 ## Open
 - Spider audio, bite/hit/death/web animations; the seated rider pose; re-fit of the ride seat when the generated model arrives.
-- Elephant tree-push multiplayer check; Winter mountain crystal nodes not seen in Play.
+- Cave crystal lighting tuning (blue wash from the sapphire lights). Elephant tree-push two-player check and Winter crystal nodes are done (see below).
 - Visual tuning of cave lighting for the crystals (the caves are dark).
+
+## Later today
+- **Crystals redone as chunky clusters (owner request):** one fat tall crystal, a thick ring around it and stubby ones at the foot on a wide
+  rock base, roughly twice the size (node scale 1.8 to 2.4, decor 1.2 to 2.4; sizes are tuning). Seen in Play; single-player and two-player
+  crystal checks pass. The pale blue wash on the emerald is the sapphire cave lights; light colour and intensity still need tuning.
+- **Elephant tree push, two players:** `verify_elephant_tree_push_multiplayer_play` passes (the client sees the felled tree, which stays
+  down and does not fade).

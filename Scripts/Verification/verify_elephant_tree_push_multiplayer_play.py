@@ -50,6 +50,9 @@ def stand():
     ang = math.radians(state['side'])
     state['elephant'].set_actor_location_and_rotation(unreal.Vector(t.x - math.cos(ang) * 430, t.y - math.sin(ang) * 430, t.z + 40),
                                                       unreal.Rotator(roll=0, pitch=0, yaw=math.degrees(ang)), False, True)
+    # keep both players close, as in the single-player check, so the animal stays awake and the client has the tree relevant
+    state['host'].teleport(unreal.Vector(t.x + 900, t.y + 900, t.z + 400), unreal.Rotator())
+    state['guest'].teleport(unreal.Vector(t.x + 900, t.y - 900, t.z + 400), unreal.Rotator())
 
 
 def tick(delta):
@@ -65,7 +68,9 @@ def tick(delta):
             home = elephant.get_actor_location()
             standing = [t for t in trees(server_world) if not t.is_felled()]
             tree = min(standing, key=lambda t: math.hypot(t.get_actor_location().x - home.x, t.get_actor_location().y - home.y))
-            state.update(elephant=elephant, tree=tree, name=tree.get_name())
+            host_pc = next(c for c in pcs if c.has_authority())
+            state.update(elephant=elephant, tree=tree, name=tree.get_name(), host=host_pc.get_controlled_pawn(), guest=next(
+                c for c in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if c != host_pc.get_controlled_pawn()))
             check('the client has the same tree, standing', mirror(state['name']) is not None and not mirror(state['name']).is_felled())
             stand()
             unreal.SystemLibrary.execute_console_command(server_world, 'slomo 3')
