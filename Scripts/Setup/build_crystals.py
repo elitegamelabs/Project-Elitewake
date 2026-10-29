@@ -27,6 +27,7 @@ FOLDER = '/Game/Elitewake/World/Crystals'
 ITEM_FOLDER = '/Game/Elitewake/Items/Resources'
 LEVEL_FOLDER = 'Coast/Resources/Crystals'
 CAVE_NODES = ('Ruby', 'Ruby', 'Sapphire', 'Sapphire', 'Emerald', 'Emerald', 'Obsidian', 'Obsidian')      # per cave (tuning)
+CAVE_DECOR = 30                                                                                             # decorative clusters per cave (tuning)
 WINTER_EMERALD, WINTER_COAL = 8, 14                                                                         # per winter island (tuning)
 # colour (linear), glow, roughness
 GEMS = {'Ruby': ((.5, .01, .02), .5, .1), 'Sapphire': ((.015, .09, .6), .45, .1), 'Emerald': ((.015, .45, .1), .4, .1),
@@ -283,6 +284,51 @@ def main():
             if n.x * inward.x + n.y * inward.y + n.z * inward.z < 0:
                 n = unreal.Vector(-n.x, -n.y, -n.z)          # the normal points into the chamber
             spawn(kind, f'{key} cave', point, n, meshes['Obsidian'] if kind == 'Obsidian' else meshes['Crystal'])
+
+        # Decoration (owner, October 28: crystals throughout every cave): many more clusters, not mineable, over the roof, walls and
+        # floor edges, in all four colours, with a few coloured lights so the cave glows. Solid to nothing: they cannot snag a survivor.
+        palette = ['Ruby', 'Sapphire', 'Emerald']
+        made = 0
+        for attempt in range(400):
+            if made >= CAVE_DECOR:
+                break
+            phi = math.radians(rng.uniform(-165, 165))
+            theta = math.acos(rng.uniform(-.8, 1.0))                 # from the roof (1.0) down to a hand above the floor (-.8)
+            point = wall(theta, phi)
+            dt = .02
+            tu, tv = wall(theta + dt, phi) - point, wall(theta, phi + dt) - point
+            n = unreal.Vector(tu.y * tv.z - tu.z * tv.y, tu.z * tv.x - tu.x * tv.z, tu.x * tv.y - tu.y * tv.x)
+            length = math.sqrt(n.x ** 2 + n.y ** 2 + n.z ** 2) or 1
+            n = unreal.Vector(n.x / length, n.y / length, n.z / length)
+            inward = unreal.Vector(*cave.world(cave.chamber_u, 0.0), cave.floor + cave.chamber_z) - point
+            if n.x * inward.x + n.y * inward.y + n.z * inward.z < 0:
+                n = unreal.Vector(-n.x, -n.y, -n.z)
+            if any(math.hypot(point.x - p_[2], point.y - p_[3]) < 170 and abs(point.z - p_[4]) < 170 for p_ in placed):
+                continue                                              # not on top of a mineable node or another cluster
+            kind = rng.choice(palette)
+            rot = unreal.MathLibrary.make_rot_from_x(n)
+            rot.roll = rng.uniform(0, 360)
+            decor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(point.x - n.x * 8, point.y - n.y * 8, point.z - n.z * 8), rot)
+            decor.set_actor_label(f'Crystal Decor {key} cave {made + 1}')
+            decor.set_folder_path(LEVEL_FOLDER)
+            comp = decor.static_mesh_component
+            comp.set_static_mesh(rng.choice(meshes['Crystal']))
+            comp.set_material(1, looks[kind])
+            size = rng.uniform(.9, 2.8)
+            comp.set_relative_scale3d(unreal.Vector(size, size, size))
+            comp.set_collision_profile_name('NoCollision')
+            comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+            placed.append(['Decor', f'{key} cave', round(point.x), round(point.y), round(point.z)])
+            if made % 7 == 0:
+                light = actors.spawn_actor_from_class(unreal.PointLight, unreal.Vector(point.x + n.x * 90, point.y + n.y * 90, point.z + n.z * 90))
+                light.set_actor_label(f'Crystal Light {key} cave {made + 1}')
+                light.set_folder_path(LEVEL_FOLDER)
+                lc = light.get_component_by_class(unreal.PointLightComponent)
+                lc.set_editor_property('intensity', 900.0)
+                lc.set_editor_property('attenuation_radius', 650.0)
+                lc.set_editor_property('light_color', unreal.Color(*{'Ruby': (255, 40, 60), 'Sapphire': (50, 100, 255), 'Emerald': (40, 255, 110)}[kind], 255))
+                lc.set_editor_property('cast_shadows', False)
+            made += 1
 
     # Winter mountains: exposed deposits on the slopes, high and low, not only the peaks.
     for island in W.ISLANDS:

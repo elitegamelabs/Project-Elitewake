@@ -175,6 +175,24 @@ def tick(delta):
                     face(n, 200)
                 state['at'] = now() + 1.2
                 return
+            decor = [a for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.StaticMeshActor) if 'Crystal Decor' in str(a.get_actor_label())]
+            by_cave = {}
+            for a in decor:
+                by_cave[str(a.get_actor_label()).split(' cave')[0]] = by_cave.get(str(a.get_actor_label()).split(' cave')[0], 0) + 1
+            report['decor'] = by_cave
+            check('every cave is hung with decorative crystals', len(by_cave) == 5 and all(v >= 20 for v in by_cave.values()), by_cave=by_cave)
+            mid = cave.world(cave.chamber_u - 250, 0.0)
+            assert pawn.teleport(unreal.Vector(mid[0], mid[1], cave.floor + 120), unreal.Rotator())
+            pc.set_control_rotation(unreal.Rotator(10, math.degrees(cave.heading) if hasattr(cave, 'heading') else 0, 0))
+            state.update(phase=8, at=now() + 1.5)
+        elif p == 8:
+            if now() < state['at']:
+                return
+            shot('CaveOverview')
+            state.update(phase=9, at=now() + .5)
+        elif p == 9:
+            if now() < state['at']:
+                return
             finish()
     except Exception as error:
         finish(repr(error))
