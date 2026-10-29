@@ -18,8 +18,9 @@ public:
 
     static constexpr int64 CopperPerSilver = 500;
     static constexpr int64 SilverPerGold = 30;
-    /** Placeholder (tuning): the design gives 250 Copper when the inn introduction completes; until that exists a new survivor starts with it. */
-    static constexpr int64 StartingCopper = 250;
+    /** A new survivor starts with no Copper (design reference, prologue step 7); the 250 Copper of the inn introduction is not built yet,
+     *  so for now money comes from selling to a Port merchant. */
+    static constexpr int64 StartingCopper = 0;
 
     UFUNCTION(BlueprintPure, Category="Wallet") int64 GetCopper() const { return Copper; }
     /** Server only. Sets the purse outright (restoring a save). */

@@ -78,8 +78,9 @@ def tick(delta):
             state['owner'] = owner
             state['surgeon'] = with_deck[0].get_surgeon()
             state['mine'] = next(s for s in surgeons(client_world) if s.get_name() == state['surgeon'].get_name())
-            check('a new survivor holds the 250 Copper starting purse', owner.get_wallet_component().get_copper() == 250, copper=owner.get_wallet_component().get_copper())
-            check('the client\'s own copy of the purse agrees', client.get_controlled_pawn().get_wallet_component().get_copper() == 250)
+            check('a new survivor starts with an empty purse', owner.get_wallet_component().get_copper() == 0, copper=owner.get_wallet_component().get_copper())
+            owner.get_wallet_component().set_copper(250)
+            state['funded'] = time.monotonic() + 1.0
             owner.get_survival_component().apply_damage(40.0)
             state['health0'] = owner.get_survival_component().get_health()
             state['max'] = owner.get_survival_component().get_max_health()

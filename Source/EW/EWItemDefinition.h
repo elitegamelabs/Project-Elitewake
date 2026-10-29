@@ -104,6 +104,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="0.0", Units="kg"))
 	float UnitWeight = 0.0f;
 
+	/** What a Port merchant pays for one unit, in Copper; 0 means they will not buy it (design reference: vendor prices are data-driven,
+	 *  values TBD: every value here is a placeholder for tuning). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Economy", meta=(ClampMin="0"))
+	int32 SellValueCopper = 0;
+
 	/** Worn clothing's warmth: 0 for none; 1 keeps a survivor warm in the Winter region's working cold. It also
 	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
