@@ -328,14 +328,14 @@ def main():
             comp.set_collision_profile_name('NoCollision')
             comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
             placed.append(['Decor', f'{key} cave', round(point.x), round(point.y), round(point.z)])
-            if made % 7 == 0:
+            if made % 7 == 0 and (kind != 'Sapphire' or made % 14 == 0):
                 light = actors.spawn_actor_from_class(unreal.PointLight, unreal.Vector(point.x + n.x * 90, point.y + n.y * 90, point.z + n.z * 90))
                 light.set_actor_label(f'Crystal Light {key} cave {made + 1}')
                 light.set_folder_path(LEVEL_FOLDER)
                 lc = light.get_component_by_class(unreal.PointLightComponent)
-                lc.set_editor_property('intensity', 900.0)
+                lc.set_editor_property('intensity', 450.0)
                 lc.set_editor_property('attenuation_radius', 650.0)
-                lc.set_editor_property('light_color', unreal.Color(*{'Ruby': (255, 40, 60), 'Sapphire': (50, 100, 255), 'Emerald': (40, 255, 110)}[kind], 255))
+                lc.set_editor_property('light_color', unreal.Color(*{'Ruby': (255, 40, 60), 'Sapphire': (60, 110, 255), 'Emerald': (40, 255, 110)}[kind], 255))
                 lc.set_editor_property('cast_shadows', False)
             made += 1
 
