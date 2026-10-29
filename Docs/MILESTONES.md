@@ -88,6 +88,12 @@ All entries below are **pending implementation and Unreal Play verification**; d
 
 Supporting requirements: [animal attacks and regional suggestions](ANIMAL_ATTACK_AUDIO_AND_REGIONAL_WILDLIFE_PROPOSAL_2026-10-16.md), [four approved additions](APPROVED_BEAR_ELEPHANT_GIANT_CROCODILE_LION_WILDLIFE_2026-10-16.md), [tropical elephant correction](ELEPHANT_TROPICAL_ISLAND_HABITAT_CORRECTION_2026-10-16.md), [roaming and spiders](ELEPHANT_DESTRUCTION_WILDLIFE_ROAMING_AND_SPIDER_MILESTONES_2026-10-16.md), [harvestable fallen trees](ELEPHANT_FELLED_TREES_HARVESTABLE_2026-10-16.md).
 
+## Crystals (owner, October 28)
+
+| Milestone | Status | Evidence |
+|---|---|---|
+| **Crystals, obsidian and coal (owner rules Oct 18, asked again Oct 28)** — ruby, sapphire, emerald, obsidian in every cave; emerald and coal on Winter mountainsides; metal pickaxe, 4-8 per node, 60-minute respawn | 🟡 | **October 28:** built (`Scripts/Setup/build_crystals.py`): 5 items, faceted crystal-cluster meshes with a glowing gem material, obsidian and coal meshes, and 62 mineable nodes (8 per cave in all 5 caves, 8 emerald and 14 coal on Winter's mountainsides), all using the existing mining system (Metal pickaxe minimum, 4-8 random stock, 3600 s respawn). Play check `verify_crystals_play` PASS (placement, wooden pickaxe refused, metal pickaxe empties a node for 6, a node comes back after its respawn time). **Not done:** inventory icons for the five new items (they have none yet), recipes that use them, mining sounds specific to crystal, multiplayer check, a look at the Winter mountain nodes in Play, tuning of counts/sizes/glow (all tuning values). |
+
 ## Taken over from Grok, October 28 (owner: Claude works alone now; all open)
 
 | Task | What |
