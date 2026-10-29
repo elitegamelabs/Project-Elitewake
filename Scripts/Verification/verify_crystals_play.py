@@ -193,7 +193,26 @@ def tick(delta):
         elif p == 9:
             if now() < state['at']:
                 return
+            # a look at a Winter mountainside emerald and a coal outcrop
+            state['winter'] = [next(n for n in nodes if kind(n) == 'Emerald' and 'mountain' in label(n)), next(n for n in nodes if kind(n) == 'Coal' and 'mountain' in label(n))]
+            state.update(phase=10, at=now() + .2, wi=0)
+        elif p == 10:
+            if now() < state['at']:
+                return
+            if state['wi'] < 2:
+                n = state['winter'][state['wi']]
+                loc, fwd = n.get_actor_location(), n.get_actor_forward_vector()
+                assert pawn.teleport(unreal.Vector(loc.x + fwd.x * 220, loc.y + fwd.y * 220, loc.z + fwd.z * 220 + 90), unreal.Rotator())
+                eye, _ = pawn.get_actor_eyes_view_point()
+                pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, loc))
+                state.update(phase=11, at=now() + 2.0)
+                return
             finish()
+        elif p == 11:
+            if now() < state['at']:
+                return
+            shot(['WinterEmerald', 'WinterCoal'][state['wi']])
+            state.update(phase=10, at=now() + .8, wi=state['wi'] + 1)
     except Exception as error:
         finish(repr(error))
 
