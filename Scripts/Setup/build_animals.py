@@ -376,29 +376,85 @@ def squirrel_monkey():
 
 
 def spider():
-    """A big cave spider (about 1 m across with its legs): dark brown, a pale mark on the abdomen, banded legs, eight eyes.
-    Its legs step in two groups (parts FL and FR): left 1, right 2, left 3, right 4 against the other four."""
+    """A giant cave spider (about 1.7 m long, over 3 m across its legs; owner, October 28: bigger and properly 3D). A broad hairy abdomen with a
+    pale chevron pattern, a ridged armoured cephalothorax, eight glowing red eyes, curved fangs between two palps, and eight jointed legs: a thick
+    femur rising to a knee, a long tibia down to the ground, banded dark and tan, with a knuckle at each knee and bristles along them. Its legs
+    step in two groups (parts FL and FR): left 1, right 2, left 3, right 4 against the other four. Sizes are tuning."""
+    rng = random.Random(8)
     b = Builder()
-    dark, tan, pale, black = (.07, .045, .03), (.32, .22, .1), (.38, .3, .18), (.02, .02, .02)
+    dark, brown, tan, pale, black, eye = (.06, .038, .024), (.14, .085, .045), (.36, .22, .09), (.5, .36, .17), (.025, .02, .015), (.85, .04, .03)
 
     def abdomen(q, n):
-        mark = n[2] > .35 and abs(q[1]) < 5 and q[0] < -14
-        return pale if mark else mix(dark, (.12, .08, .05), max(0.0, n[2]))
+        if n[2] > .2:
+            chevron = abs(q[1]) * .9 + (q[0] + 52) * .25
+            if (chevron % 17) < 4.5 and q[0] < -30:
+                return pale if (chevron % 17) < 2.2 else tan
+            if abs(q[1]) < 6 and q[0] < -20:
+                return (.02, .014, .01)
+        return mix(dark, brown, max(0.0, n[2] * .9) + .15 * math.sin(q[0] * .3 + q[1] * .4))
 
-    ball(b, (-20, 0, 22), (21, 15, 15), abdomen, BODY, 0.0, 16)
-    ball(b, (6, 0, 22), (14, 11, 9), lambda q, n: mix(dark, (.14, .1, .06), max(0.0, n[2])), BODY, 0.0, 14)
+    # the abdomen (broad, hairy) and the cephalothorax in front of it, with a raised ridge and a darker carapace
+    body(b, [(-102, 0, 56, 3, 3), (-88, 0, 62, 24, 24), (-62, 0, 66, 41, 40), (-34, 0, 64, 36, 34), (-14, 0, 58, 12, 12)], abdomen, BODY, sides=22)
+    carapace = lambda q, n: mix((.1, .065, .04), (.3, .2, .1), max(0.0, n[2]) * (.6 + .4 * math.sin(q[0] * .35)))   # noqa: E731
+    body(b, [(-12, 0, 56, 6, 6), (0, 0, 60, 24, 21), (22, 0, 62, 29, 25), (44, 0, 60, 22, 18), (54, 0, 56, 9, 9)], carapace, BODY, sides=20)
+    ball(b, (24, 0, 80), (20, 9, 7), lambda q, n: (.1, .065, .04), BODY, 0.0, 12)          # the raised ridge along its back
+    # eight eyes in two rows, the middle pair big, glowing red; the fangs and palps
     for y in (1, -1):
-        for x, z, r in ((17, 27, 1.6), (17.5, 24, 1.1), (15, 29, 1.2)):
-            ball(b, (x, 3.2 * y, z), (r, r, r), lambda q, n: black, BODY, 0.0, 6)
-        ball(b, (19, 2.2 * y, 18), (3.4, 1.8, 5), lambda q, n: tan, HEAD, 0.0, 8)      # the fangs
-    banded = lambda q, n: dark if int(abs(q[1]) // 8 + abs(q[0]) // 9) % 2 == 0 else tan    # noqa: E731
-    for index, x in enumerate((13.0, 6.0, -2.0, -10.0)):
+        for x, yy, z, r in ((53, 7, 66, 3.6), (50, 15, 63, 2.4), (47, 20, 66, 2.2), (44, 11, 71, 1.9)):
+            ball(b, (x, yy * y, z), (r, r, r), lambda q, n: eye, BODY, 0.0, 8)
+        limb(b, [(50, 8 * y, 52), (63, 9 * y, 44), (70, 7 * y, 28), (68, 5 * y, 15)], 6.0, 1.2, lambda q, n: mix(tan, black, (60 - q[2]) / 45), BODY, 80, 12)   # a fang
+        limb(b, [(46, 17 * y, 50), (58, 24 * y, 46), (66, 26 * y, 33)], 3.0, 1.6, lambda q, n: brown, BODY, 80, 10)                                # a palp
+    banded = lambda q, n: tan if int((abs(q[0]) * .6 + abs(q[1]) * .7 + q[2]) // 13) % 4 == 0 else (brown if int((abs(q[0]) + abs(q[1])) // 7) % 2 else dark)   # noqa: E731
+
+    def seg_colour(a, b2):
+        """A leg part's colour by how far along it a point lies: dark brown with a few hairy tan rings, and tan at both joints."""
+        ax = sub(b2, a)
+        length2 = ax[0] ** 2 + ax[1] ** 2 + ax[2] ** 2 or 1.0
+
+        def colour(q, n):
+            t = ((q[0] - a[0]) * ax[0] + (q[1] - a[1]) * ax[1] + (q[2] - a[2]) * ax[2]) / length2
+            if t < .07 or t > .93:
+                return tan
+            return mix(dark, brown, .5 + .5 * math.sin(t * 38)) if int(t * 9) % 3 else tan if int(t * 40) % 7 == 0 else brown
+        return colour
+
+    def bristles(centre, radii, count, length, part=BODY, top_z=1.0):
+        for _ in range(count):
+            d = norm((rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1) * .8))
+            if d[2] < -.45:
+                continue
+            base = tuple(centre[c] + d[c] * radii[c] * .96 for c in range(3))
+            tip = tuple(base[c] + d[c] * length * rng.uniform(.6, 1.3) for c in range(3))
+            limb(b, [base, tip], 1.5, .15, lambda q, n: black if rng.random() < .55 else brown, part, top_z, 5)
+
+    bristles((-62, 0, 64), (42, 40, 39), 150, 9)
+    bristles((22, 0, 62), (29, 25, 21), 60, 7)
+    attach = (36.0, 20.0, -4.0, -26.0)
+    spread = (38.0, 72.0, 108.0, 144.0)      # each leg's heading in the plan, degrees from the nose
+    reach = (150.0, 168.0, 168.0, 152.0)
+    for index in range(4):
         for y in (1, -1):
             part = FL if (index + (0 if y > 0 else 1)) % 2 == 0 else FR
-            reach = 40 + 5 * (1 if index in (0, 3) else 0)
-            lean = (7 - 5 * index) / 3.0
-            limb(b, [(x, 8 * y, 24), (x + lean, 26 * y, 46), (x + lean * 2.4, (26 + reach * .6) * y, 24), (x + lean * 3, (26 + reach) * y, 1)],
-                 2.1, .8, banded, part, 46)
+            phi = math.radians(spread[index])
+            d = (math.cos(phi), y * math.sin(phi))
+            x0 = attach[index]
+            R = reach[index]
+
+            def at(f, z):
+                return (x0 + d[0] * R * f, 14 * y + d[1] * R * f, z)
+            hip, knee, ankle, foot = at(0, 58), at(.34, 118), at(.7, 62), at(1.0, 0)
+            limb(b, [hip, knee], 9.0, 6.5, seg_colour(hip, knee), part, 118, 12)                                       # the thick femur up to the knee
+            ball(b, knee, (9.5, 9.5, 9.5), lambda q, n: tan, part, .3, 10)                            # the knee knuckle
+            limb(b, [knee, ankle], 6.5, 3.6, seg_colour(knee, ankle), part, 118, 10)
+            limb(b, [ankle, foot], 3.6, 1.6, seg_colour(ankle, foot), part, 118, 10)                               # the tibia and its tip down to the ground
+            for seg in ((hip, knee), (knee, ankle), (ankle, foot)):          # bristles round each part of the leg
+                for k in range(9):
+                    u = rng.uniform(.05, .95)
+                    base = tuple(seg[0][c] * (1 - u) + seg[1][c] * u for c in range(3))
+                    side = norm((rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1) + .6))
+                    tip = tuple(base[c] + side[c] * rng.uniform(6, 13) for c in range(3))
+                    limb(b, [base, tip], 1.3, .12, lambda q, n: black, part, 118, 5)
+    b.colours = [tuple(c ** 2.2 for c in col) for col in b.colours]   # vertex colours are read back as sRGB bytes, so a linear palette must be darkened to show as intended
     return b
 
 
@@ -552,9 +608,9 @@ ANIMALS = {
     'Elephant': dict(display='Elephant', build=elephant, size=(430, 290), stride=170, gait=0,
                      anim=(26, 7, 1.5, 6, 5, 0, 1), surface=(0, 1, .25, .18, .9),
                      behave=(False, 70, 380, 45, 1500, 0, 0, 0, 1, 0, '', 1500), yield_=(20, 30), live=('inland', 0, 0)),
-    'Spider': dict(display='Cave Spider', build=spider, size=(86, 46), stride=34, gait=0,
-                   anim=(14, 9, .6, 0, 0, 0, 1), surface=(0, 1, .2, .12, .8),
-                   behave=(True, 110, 360, 220, 450, 0, 700, 12, 1.2, 45, 'bite', 35), yield_=(1, 3), live=('cave', 0, 0)),
+    'Spider': dict(display='Cave Spider', build=spider, size=(180, 120), stride=95, gait=0,
+                   anim=(30, 18, 1.5, 0, 0, 0, 1), surface=(0, 1, .6, .3, .75),
+                   behave=(True, 130, 430, 200, 450, 0, 800, 18, 1.2, 90, 'bite', 90), yield_=(2, 5), live=('cave', 0, 0)),
     'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
                            anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
                            behave=(False, 90, 480, 220, 900, 0, 0, 0, 1, 0, '', 35), yield_=(2, 5), live=('trees', 3, 3)),

@@ -47,6 +47,16 @@ def finish(error=None):
     unreal.log(f'EWPLAYCHECK Spiders success={error is None} error={error}')
 
 
+def shot(name):
+    unreal.SystemLibrary.execute_console_command(world, 'Shot showui filename="' + str(saved / 'Screenshots' / 'Spiders' / f'{name}.png') + '"')
+
+
+def aim_at_spider(up):
+    cam = unreal.GameplayStatics.get_player_camera_manager(world, 0).get_camera_location()
+    loc = state['shot_spider'].get_actor_location()
+    pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(cam, unreal.Vector(loc.x, loc.y, loc.z + up)))
+
+
 def tick(delta):
     if time.monotonic() < state['t0']:
         return
@@ -91,17 +101,36 @@ def tick(delta):
             check('spiders stay in the chamber', all(near(s, chamber[0], chamber[1], 1100) for s in spiders if near(s, chamber[0], chamber[1], 2500)))
             survival.restore_health(1000.0)
             s = state['shot_spider']
-            loc = s.get_actor_location()
-            yaw = math.degrees(s.get_actor_rotation().yaw * math.pi / 180) if False else s.get_actor_rotation().yaw
-            fwd = unreal.MathLibrary.get_forward_vector(unreal.Rotator(roll=0, pitch=0, yaw=yaw + 35))
-            cam = unreal.Vector(loc.x + fwd.x * 170, loc.y + fwd.y * 170, loc.z + 60)
-            pawn.teleport(cam, unreal.Rotator())
-            pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(cam, unreal.Vector(loc.x, loc.y, loc.z + 20)))
-            state.update(phase=3, at=now() + 1.2)
+            s.set_actor_tick_enabled(False)      # hold it still for the picture, and carry it out into daylight at the cave mouth
+            mx, my = cave.world(-650, 0.0)
+            s.set_actor_location_and_rotation(unreal.Vector(mx, my, cave.floor + 90), unreal.Rotator(roll=0, pitch=0, yaw=math.degrees(cave.heading) + 90), False, True)
+            ux, uy = cave.world(-1450, 0.0)
+            pawn.teleport(unreal.Vector(ux, uy, cave.floor + 330), unreal.Rotator())
+            state.update(phase=3, at=now() + .8)
         elif p == 3:
             if now() < state['at']:
                 return
-            unreal.SystemLibrary.execute_console_command(world, 'Shot showui filename="' + str(saved / 'Screenshots' / 'Spiders' / 'Spider.png') + '"')
+            aim_at_spider(70)
+            state.update(phase=5, at=now() + 1.0)
+        elif p == 5:
+            if now() < state['at']:
+                return
+            shot('Spider_side')
+            # from in front and above, looking down at its face
+            h = cave.heading
+            nose = (-math.sin(h), math.cos(h))
+            loc = state['shot_spider'].get_actor_location()
+            pawn.teleport(unreal.Vector(loc.x + nose[0] * 520, loc.y + nose[1] * 520, loc.z + 330), unreal.Rotator())
+            state.update(phase=6, at=now() + .8)
+        elif p == 6:
+            if now() < state['at']:
+                return
+            aim_at_spider(60)
+            state.update(phase=7, at=now() + 1.0)
+        elif p == 7:
+            if now() < state['at']:
+                return
+            shot('Spider_front')
             state.update(phase=4, at=now() + 2)
         elif p == 4:
             if now() < state['at']:
