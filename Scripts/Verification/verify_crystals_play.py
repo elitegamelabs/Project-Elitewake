@@ -95,7 +95,7 @@ def tick(delta):
             state['ruby'], state['ruby2'] = rubies[0], rubies[1]
             state['ruby_item'] = state['ruby'].get_editor_property('resource')
             inventory.remove_item(state['ruby_item'], 100000)
-            face(state['ruby'], 190)
+            face(state["ruby"], 300)
             state.update(phase=1, at=now() + 1.5)
         elif p == 1:
             if now() < state['at']:
@@ -160,7 +160,7 @@ def tick(delta):
             check('the node came back after its respawn time', 4 <= back <= 8 and node.get_editor_property('mesh').is_visible(), remaining=back)
             # a look at each gem in the starter cave
             emerald = next(n for n in nodes if kind(n) == 'Emerald' and 'Starter cave' in label(n))
-            face(emerald, 200)
+            face(emerald, 300)
             state.update(phase=7, at=now() + 1.2, look=['Emerald', 'Sapphire', 'Obsidian'], seen=0)
         elif p == 7:
             if now() < state['at']:
@@ -172,7 +172,7 @@ def tick(delta):
                 state['seen'] += 1
                 if state['seen'] < len(names):
                     n = next(x for x in nodes if kind(x) == names[state['seen']] and 'Starter cave' in label(x))
-                    face(n, 200)
+                    face(n, 300)
                 state['at'] = now() + 1.2
                 return
             decor = [a for a in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.StaticMeshActor) if 'Crystal Decor' in str(a.get_actor_label())]

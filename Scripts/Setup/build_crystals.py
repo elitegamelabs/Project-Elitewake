@@ -87,15 +87,24 @@ def cluster(seed, count, big=1.0):
     """A node: a rock base and crystals growing out along +x (out of the wall)."""
     rng = random.Random(seed)
     b = Builder()
-    lump(b, (-14, 0, 0), (34, 46, 40), rng, rough=.3, rows=8, cols=12, slot=0)
+    # A chunky gem cluster (owner, October 28: "more cluster like and less pokey ball", like Ark): a broad rock base, one fat tall
+    # crystal, a ring of thick medium ones tightly around it, and low stubby ones at the foot. Thick (radius to length about 1:4),
+    # mostly parallel, not radiating spikes.
+    lump(b, (-16, 0, 0), (30, 70, 62), rng, rough=.28, rows=8, cols=12, slot=0)
     b.slot = 1
-    crystal(b, (0, 0, 0), norm((1, rng.uniform(-.12, .12), rng.uniform(-.12, .12))), 12 * big, 85 * big, rng)
+    crystal(b, (0, 0, 0), norm((1, rng.uniform(-.08, .08), rng.uniform(-.08, .08))), 22 * big, 100 * big, rng)
     for k in range(count):
         a = 2 * math.pi * k / count + rng.uniform(-.3, .3)
-        lean = rng.uniform(.35, .9)
+        lean = rng.uniform(.18, .42)
+        axis = norm((1 - lean * .4, lean * math.cos(a), lean * math.sin(a)))
+        reach = rng.uniform(26, 38)
+        crystal(b, (-6, reach * math.cos(a), reach * math.sin(a)), axis, rng.uniform(14, 19) * big, rng.uniform(60, 100) * big, rng)
+    for k in range(count + 2):
+        a = 2 * math.pi * (k + .5) / (count + 2) + rng.uniform(-.25, .25)
+        lean = rng.uniform(.5, .8)
         axis = norm((1 - lean * .5, lean * math.cos(a), lean * math.sin(a)))
-        reach = rng.uniform(14, 30)
-        crystal(b, (-4, reach * math.cos(a), reach * math.sin(a)), axis, rng.uniform(7, 11) * big, rng.uniform(34, 70) * big, rng)
+        reach = rng.uniform(46, 62)
+        crystal(b, (-10, reach * math.cos(a), reach * math.sin(a)), axis, rng.uniform(8, 12) * big, rng.uniform(26, 48) * big, rng)
     return b
 
 
@@ -239,7 +248,7 @@ def main():
         mesh.set_static_mesh(mesh_asset)
         if kind in looks:
             mesh.set_material(1, looks[kind])
-        scale = rng.uniform(1.4, 2.1)
+        scale = rng.uniform(1.8, 2.4)                      # much larger (owner, October 28)
         mesh.set_relative_scale3d(unreal.Vector(scale, scale, scale))
         node.set_editor_property('resource', items[kind])
         node.set_editor_property('minimum_pickaxe_tier', unreal.EWPickaxeTier.METAL)
@@ -314,7 +323,7 @@ def main():
             comp = decor.static_mesh_component
             comp.set_static_mesh(rng.choice(meshes['Crystal']))
             comp.set_material(1, looks[kind])
-            size = rng.uniform(.9, 2.8)
+            size = rng.uniform(1.2, 2.4)
             comp.set_relative_scale3d(unreal.Vector(size, size, size))
             comp.set_collision_profile_name('NoCollision')
             comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
