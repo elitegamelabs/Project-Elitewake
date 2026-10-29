@@ -117,6 +117,8 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
         ControllerSensitivitySlider = AddSetting(NSLOCTEXT("Elitewake", "ControllerSensitivityLabel", "Controller look sensitivity"),
             Normalize(PC ? PC->GetControllerLookSensitivity() : 1.f, MinSensitivity, MaxSensitivity));
         ControllerSensitivitySlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnControllerSensitivityChanged);
+        VolumeSlider = AddSetting(NSLOCTEXT("Elitewake", "VolumeLabel", "Master volume"), PC ? PC->GetMasterVolume() : 1.f);
+        VolumeSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnVolumeChanged);
 
         auto Button = [&](const FText& Value)
         {
@@ -141,7 +143,7 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
         if (!IsSaveShown())
         {
             SaveButton->SetVisibility(ESlateVisibility::Collapsed);
-            Selected = 4;
+            Selected = 5;
             Status->SetText(NSLOCTEXT("Elitewake", "OptionsServerSaves", "Your host keeps multiplayer progress. Leaving for the main menu ends this session."));
         }
         Status->SetAutoWrapText(true);
@@ -154,7 +156,7 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
 void UEWOptionsWidget::SetTab(int32 NewTab)
 {
     Tab = FMath::Clamp(NewTab, 0, 1); TabCursor = Tab;
-    Selected = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
+    Selected = Tab == 1 ? 0 : (IsSaveShown() ? 4 : 5);
     if (PausePage) PausePage->SetVisibility(Tab == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     if (OptionsPage) OptionsPage->SetVisibility(Tab == 1 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     for (int32 Index = 0; Index < TabButtons.Num(); ++Index)
@@ -166,15 +168,15 @@ void UEWOptionsWidget::NativeTick(const FGeometry& Geometry, float Delta)
     Super::NativeTick(Geometry, Delta);
     for (int32 Index = 0; Index < TabButtons.Num(); ++Index)
         TabButtons[Index]->SetBackgroundColor(Selected == -1 && Index == TabCursor ? FLinearColor(1.f, .85f, .35f) : Index == Tab ? FLinearColor(.5f, .52f, .55f) : FLinearColor(.055f, .065f, .075f));
-    if (SaveButton) SaveButton->SetBackgroundColor(Tab == 0 && Selected == 3 ? Lit : Idle);
-    if (MenuButton) MenuButton->SetBackgroundColor(Tab == 0 && Selected == 4 ? Lit : Idle);
+    if (SaveButton) SaveButton->SetBackgroundColor(Tab == 0 && Selected == 4 ? Lit : Idle);
+    if (MenuButton) MenuButton->SetBackgroundColor(Tab == 0 && Selected == 5 ? Lit : Idle);
     for (int32 Index = 0; Index < SettingLabels.Num(); ++Index)
         SettingLabels[Index]->SetColorAndOpacity(Tab == 1 && Selected == Index ? FLinearColor(.25f,.88f,1.f) : FLinearColor::White);
 }
 
 void UEWOptionsWidget::RefreshSettingLabels()
 {
-    if (SettingValues.Num() < 3) return;
+    if (SettingValues.Num() < 4) return;
     const auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
     const float Brightness = PC ? PC->GetUserBrightness() : 0.f;
     const float Mouse = PC ? PC->GetMouseLookSensitivity() : 1.f;
@@ -182,6 +184,7 @@ void UEWOptionsWidget::RefreshSettingLabels()
     SettingValues[0]->SetText(FText::AsNumber(FMath::RoundToInt((Brightness - MinBrightness) / (MaxBrightness - MinBrightness) * 100.f)));
     SettingValues[1]->SetText(FText::AsNumber(FMath::RoundToInt(Mouse * 100.f)));
     SettingValues[2]->SetText(FText::AsNumber(FMath::RoundToInt(Controller * 100.f)));
+    SettingValues[3]->SetText(FText::AsNumber(FMath::RoundToInt((PC ? PC->GetMasterVolume() : 1.f) * 100.f)));
 }
 
 void UEWOptionsWidget::OnBrightnessChanged(float Value)
@@ -205,9 +208,16 @@ void UEWOptionsWidget::OnControllerSensitivityChanged(float Value)
     RefreshSettingLabels();
 }
 
+void UEWOptionsWidget::OnVolumeChanged(float Value)
+{
+    Selected = 3;
+    if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMasterVolume(Value);
+    RefreshSettingLabels();
+}
+
 void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 {
-    USlider* Slider = Selected == 0 ? BrightnessSlider : Selected == 1 ? MouseSensitivitySlider : Selected == 2 ? ControllerSensitivitySlider : nullptr;
+    USlider* Slider = Selected == 0 ? BrightnessSlider : Selected == 1 ? MouseSensitivitySlider : Selected == 2 ? ControllerSensitivitySlider : Selected == 3 ? VolumeSlider : nullptr;
     if (Slider) Slider->SetValue(FMath::Clamp(Slider->GetValue() + Direction * .02f, 0.f, 1.f));
 }
 
@@ -231,16 +241,16 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
         // The tab bar holds the highlight: Left/Right move along it, A opens the tab, Down returns to the page.
         if (bTabsLeft || bTabsRight) TabCursor = FMath::Clamp(TabCursor + (bTabsRight ? 1 : -1), 0, 1);
         else if (Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) SetTab(TabCursor); }
-        else if (Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down) Selected = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
+        else if (Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down) Selected = Tab == 1 ? 0 : (IsSaveShown() ? 4 : 5);
         return FReply::Handled();
     }
     const bool bUp = Key == EKeys::Up || Key == EKeys::W || Key == EKeys::Gamepad_DPad_Up || Key == EKeys::Gamepad_LeftStick_Up;
     const bool bDown = Key == EKeys::Down || Key == EKeys::S || Key == EKeys::Gamepad_DPad_Down || Key == EKeys::Gamepad_LeftStick_Down;
     if (bUp || bDown)
     {
-        // The PAUSE tab holds SAVE GAME (3) and MAIN MENU (4); the OPTIONS tab the three sliders (0 to 2).
-        const int32 First = Tab == 1 ? 0 : (IsSaveShown() ? 3 : 4);
-        const int32 Last = Tab == 1 ? 2 : 4;
+        // The PAUSE tab holds SAVE GAME (4) and MAIN MENU (5); the OPTIONS tab the four sliders (0 to 3).
+        const int32 First = Tab == 1 ? 0 : (IsSaveShown() ? 4 : 5);
+        const int32 Last = Tab == 1 ? 3 : 5;
         if (bUp && Selected <= First) { Selected = -1; TabCursor = Tab; return FReply::Handled(); }
         Selected = FMath::Clamp(Selected + (bUp ? -1 : 1), First, Last);
         return FReply::Handled();
@@ -252,8 +262,8 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
     }
     if (Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom)
     {
-        if (Selected == 3) SaveGame();
-        else if (Selected == 4) MainMenu();
+        if (Selected == 4) SaveGame();
+        else if (Selected == 5) MainMenu();
         return FReply::Handled();
     }
     return Super::NativeOnKeyDown(Geometry, Event);
@@ -261,7 +271,7 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
 
 void UEWOptionsWidget::SaveGame()
 {
-    Selected = 3;
+    Selected = 4;
     auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
     if (!PC || !IsSaveShown() || !Status) return;
     Status->SetText(PC->SaveSurvivorGame()
@@ -271,6 +281,6 @@ void UEWOptionsWidget::SaveGame()
 
 void UEWOptionsWidget::MainMenu()
 {
-    Selected = 4;
+    Selected = 5;
     if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->ReturnToMainMenu();
 }

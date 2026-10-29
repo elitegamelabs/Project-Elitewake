@@ -69,6 +69,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="Options") void SetMouseLookSensitivity(float Value);
     UFUNCTION(BlueprintPure, Category="Options") float GetControllerLookSensitivity() const { return ControllerLookSensitivity; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetControllerLookSensitivity(float Value);
+    /** Master volume, 0 to 1 (everything this machine plays); saved with the other user settings. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetMasterVolume() const { return MasterVolume; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetMasterVolume(float Value);
     float GetActiveLookSensitivity() const { return bControllerPrompts ? ControllerLookSensitivity : MouseLookSensitivity; }
     UFUNCTION(BlueprintPure, Category="Options") bool IsOptionsMenuOpen() const { return bOptionsMenuOpen; }
     UFUNCTION(BlueprintPure, Category="Options") UEWOptionsWidget* GetOptionsWidget() const { return OptionsWidget; }
@@ -235,6 +238,7 @@ protected:
     float UserBrightness = 0.f;
     float MouseLookSensitivity = 1.f;
     float ControllerLookSensitivity = 1.f;
+    float MasterVolume = 1.f;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;

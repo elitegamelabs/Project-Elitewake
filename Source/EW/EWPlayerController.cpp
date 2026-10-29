@@ -2,6 +2,7 @@
 
 
 #include "EWPlayerController.h"
+#include "Misc/App.h"
 #include "WaterBodyActor.h"
 #include "EngineUtils.h"
 #include "Ships/EWWreckCrate.h"
@@ -80,6 +81,9 @@ void AEWPlayerController::BeginPlay()
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
+        MasterVolume = FMath::Clamp(MasterVolume, 0.f, 1.f);
+        if (IsLocalPlayerController()) FApp::SetVolumeMultiplier(MasterVolume);
         UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
         MouseLookSensitivity = FMath::Clamp(MouseLookSensitivity, .1f, 3.f);
         ControllerLookSensitivity = FMath::Clamp(ControllerLookSensitivity, .1f, 3.f);
@@ -145,6 +149,18 @@ void AEWPlayerController::SetMouseLookSensitivity(float Value)
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
+        GConfig->Flush(false, GGameUserSettingsIni);
+    }
+}
+
+void AEWPlayerController::SetMasterVolume(float Value)
+{
+    if (!IsLocalPlayerController()) return;
+    MasterVolume = FMath::Clamp(Value, 0.f, 1.f);
+    FApp::SetVolumeMultiplier(MasterVolume);
+    if (GConfig)
+    {
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }
