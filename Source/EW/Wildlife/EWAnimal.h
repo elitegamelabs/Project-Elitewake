@@ -56,6 +56,15 @@ public:
     UFUNCTION(BlueprintPure, Category="Animal") float GetLieShown() const { return LieShown; }
     UFUNCTION(BlueprintPure, Category="Animal") float GetGrazeShown() const { return GrazeShown; }
 
+    UFUNCTION(BlueprintPure, Category="Animal") AEWCharacter* GetRider() const { return Rider; }
+    /** Where a rider's centre sits, relative to this actor, for a capsule of the given half height. */
+    FVector GetRideSeatLocal(float RiderHalfHeight) const;
+    /** Authority: the rider's steering, a world-space direction on the ground (length 0 to 1; 0 stands still). */
+    void SetRideSteer(AEWCharacter* Who, FVector2D Direction);
+    /** Authority: the rider gets off, onto the ground beside it. */
+    void Dismount();
+    bool CanRide(const AEWCharacter* Character) const;
+
     /** Authority only: a survivor's blow. Returns true if it landed. */
     bool TakeStrike(AEWCharacter* Striker, float Damage);
     /** The live animal a survivor's swing would hit: in front of them, within reach of their arm. */
@@ -70,6 +79,11 @@ public:
     static constexpr float HarvestReach = 250.f;
 
 private:
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWCharacter> Rider;
+    FVector2D RideDirection = FVector2D::ZeroVector;
+    float RideSteerAge = 0.f;
+    void ThinkRidden(float DeltaSeconds);
     UPROPERTY(Replicated)
     float Health = 1.f;
     UPROPERTY(Replicated)

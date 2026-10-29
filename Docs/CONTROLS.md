@@ -12,6 +12,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Stance (crouch/prone) | per `IA_Stance` | per `IA_Stance` | PARTIAL |
 | Attack | Left mouse | Right trigger | OK |
 | Interact / gather | E (hold) | X (west face button) | OK |
+| Ride a spider (climb on) | E (press, within reach of a live spider) | X | OK, October 28. Steer with the move input (along the camera heading); Jump / A gets off. Sprint, crouch and attacks are off while riding. Seat height is tuning |
 | Inventory | I | Y (north face button) | OK |
 | Map | M | Back / View button (added Oct 22) | OK (this change; needs a Play check) |
 | Options menu | Escape | Start | OK |

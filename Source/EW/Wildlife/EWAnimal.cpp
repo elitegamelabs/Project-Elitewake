@@ -1,6 +1,7 @@
 #include "Wildlife/EWAnimal.h"
 #include "Wildlife/EWAnimalDefinition.h"
 #include "EWCharacter.h"
+#include "Ships/EWShip.h"
 #include "EWProgressionComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
@@ -8,6 +9,7 @@
 #include "EWSound.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Sound/SoundBase.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -41,6 +43,7 @@ void AEWAnimal::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetim
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AEWAnimal, Definition);
     DOREPLIFETIME(AEWAnimal, Health);
+    DOREPLIFETIME(AEWAnimal, Rider);
     DOREPLIFETIME(AEWAnimal, Action);
     DOREPLIFETIME(AEWAnimal, bDead);
     DOREPLIFETIME(AEWAnimal, bHarvested);
@@ -226,6 +229,7 @@ void AEWAnimal::Think(float DeltaSeconds)
         if (DeadSeconds >= Definition->RespawnSeconds) Respawn();
         return;
     }
+    if (IsValid(Rider)) { ThinkRidden(DeltaSeconds); return; }
     AttackCooldown -= DeltaSeconds;
     FleeSeconds -= DeltaSeconds;
     if (Definition->CallInterval.Y > 0.f && (CallSeconds -= DeltaSeconds) <= 0.f)
@@ -298,6 +302,61 @@ void AEWAnimal::Think(float DeltaSeconds)
         RoamSeconds = 20.f;
         if (bArrived) ChooseIdle();
     }
+}
+
+FVector AEWAnimal::GetRideSeatLocal(float RiderHalfHeight) const
+{
+    const float Radius = Body->GetUnscaledSphereRadius();
+    return FVector(Definition ? Definition->RideSeatForward : 0.f, 0.f, (Definition ? Definition->RideSeatHeight : 100.f) - Radius + RiderHalfHeight);
+}
+
+bool AEWAnimal::CanRide(const AEWCharacter* Character) const
+{
+    return IsValid(Character) && Definition && Definition->bRideable && !bDead && !IsValid(Rider) && !Character->IsMounted()
+        && !IsValid(Character->GetHelmShip()) && !IsValid(Character->GetGunShip()) && !Character->IsOnLadder()
+        && Character->GetSurvivalComponent() && Character->GetSurvivalComponent()->GetHealth() > 0.f
+        && FVector::Dist(Character->GetActorLocation(), GetActorLocation()) < Definition->RideReach + Definition->Size.X * .5f;
+}
+
+void AEWAnimal::SetRideSteer(AEWCharacter* Who, FVector2D Direction)
+{
+    if (!HasAuthority() || Who != Rider) return;
+    RideDirection = Direction.GetClampedToMaxSize(1.f);
+    RideSteerAge = 0.f;
+}
+
+void AEWAnimal::ThinkRidden(float DeltaSeconds)
+{
+    if (Rider->IsDead()) { Dismount(); return; }
+    Quarry = nullptr;
+    FleeSeconds = 0.f;
+    // A steering order the rider stopped sending (a lost packet) lapses after half a second, so it never runs away with them.
+    if ((RideSteerAge += DeltaSeconds) > .5f) RideDirection = FVector2D::ZeroVector;
+    const float Power = RideDirection.Size();
+    if (Power < .05f) { Action = EEWAnimalAction::Wander; return; }
+    Action = EEWAnimalAction::Chase;
+    const FVector Feet = GetActorLocation() - FVector(0, 0, Body->GetUnscaledSphereRadius());
+    WalkToward(Feet + FVector(RideDirection.X, RideDirection.Y, 0.f).GetSafeNormal() * 400.f, Definition->RunSpeed * Power, DeltaSeconds);
+}
+
+void AEWAnimal::Dismount()
+{
+    if (!HasAuthority()) return;
+    AEWCharacter* Who = Rider;
+    Rider = nullptr;
+    RideDirection = FVector2D::ZeroVector;
+    ForceNetUpdate();
+    if (!IsValid(Who)) return;
+    Who->SetMount(nullptr);
+    // Off to its side, on the ground.
+    const float Radius = Body->GetUnscaledSphereRadius();
+    const FVector Side = GetActorRightVector() * (Definition ? Definition->Size.Y * .5f + 110.f : 150.f);
+    FVector Where = GetActorLocation() + Side;
+    float Z;
+    if (GroundAt(Where, Z)) Where.Z = Z + Who->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() + 5.f;
+    else Where = GetActorLocation() + FVector(0, 0, Radius + 150.f);
+    Who->TeleportTo(Where, FRotator(0.f, GetActorRotation().Yaw, 0.f));
+    Who->GetCharacterMovement()->SetMovementMode(MOVE_Falling);
 }
 
 void AEWAnimal::PushTrees(float DeltaSeconds)
@@ -417,6 +476,7 @@ void AEWAnimal::Die()
     YieldLeft = FMath::RandRange(Definition->YieldMin, FMath::Max(Definition->YieldMin, Definition->YieldMax));
     Quarry = nullptr;
     DeadSeconds = 0.f;
+    Dismount();
     OnRep_State();
     ForceNetUpdate();
 }
@@ -436,18 +496,31 @@ void AEWAnimal::Respawn()
 
 bool AEWAnimal::CanInteract_Implementation(AEWCharacter* Character) const
 {
+    if (CanRide(Character)) return true;
     return IsValid(Character) && bDead && !bHarvested && Definition && Definition->Yield
         && FVector::Dist(Character->GetActorLocation(), GetActorLocation()) < HarvestReach + Definition->Size.X * .5f;
 }
 
 FText AEWAnimal::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
-    return Definition ? FText::Format(NSLOCTEXT("Elitewake", "HarvestAnimal", "Harvest the {0}"), Definition->DisplayName) : FText::GetEmpty();
+    if (!Definition) return FText::GetEmpty();
+    if (!bDead) return FText::Format(NSLOCTEXT("Elitewake", "RideAnimal", "Ride the {0}"), Definition->DisplayName);
+    return FText::Format(NSLOCTEXT("Elitewake", "HarvestAnimal", "Harvest the {0}"), Definition->DisplayName);
 }
 
 bool AEWAnimal::Interact_Implementation(AEWCharacter* Character)
 {
-    if (!HasAuthority() || !CanInteract_Implementation(Character) || !Character->GetInventoryComponent()) return false;
+    if (!HasAuthority() || !CanInteract_Implementation(Character)) return false;
+    if (CanRide(Character))
+    {
+        Rider = Character;
+        Quarry = nullptr;
+        RideDirection = FVector2D::ZeroVector;
+        Character->SetMount(this);
+        ForceNetUpdate();
+        return true;
+    }
+    if (!Character->GetInventoryComponent()) return false;
     // Nothing is lost: whatever does not fit stays on the body for later.
     const int32 Taken = Character->GetInventoryComponent()->AddItem(Definition->Yield, YieldLeft);
     if (Taken <= 0) return false;

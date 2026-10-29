@@ -742,7 +742,7 @@ def build_definitions(meat):
                      'run_speed': float(run), 'turn_rate': float(turn), 'roam_radius': float(roam), 'wade_depth': float(wade),
                      'notice_range': float(notice), 'attack_damage': float(damage), 'attack_interval': float(interval),
                      'attack_reach': float(reach), 'attack_name': attack, 'max_health': float(health), 'yield': meat,
-                     'pushes_trees': name == 'Elephant', 'yield_min': a['yield_'][0], 'yield_max': a['yield_'][1], 'respawn_seconds': 300.0}.items():
+                     'pushes_trees': name == 'Elephant', 'rideable': name == 'Spider', 'ride_seat_height': 100.0, 'ride_seat_forward': -30.0, 'yield_min': a['yield_'][0], 'yield_max': a['yield_'][1], 'respawn_seconds': 300.0}.items():
             definition.set_editor_property(k, v)
         assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
         defs[name] = definition

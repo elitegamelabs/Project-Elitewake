@@ -29,6 +29,7 @@ class FLifetimeProperty;
 class AEWShip;
 class UEWItemDefinition;
 class AEWFish;
+class AEWAnimal;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -225,6 +226,18 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship")
     bool IsTrimmingSails() const { return bHelmTrimHeld; }
 
+    /** The animal this survivor rides, if any (a rideable animal: the spider). */
+    UFUNCTION(BlueprintPure, Category="Animal")
+    AEWAnimal* GetMount() const { return Mount; }
+    bool IsMounted() const { return Mount != nullptr; }
+    /** Authority only; called by the animal when it is mounted (or with null when its rider gets off). */
+    void SetMount(AEWAnimal* Animal);
+    /** The rider's steering as a world-space direction on the ground (length 0 to 1). */
+    UFUNCTION(Server, Unreliable)
+    void ServerRideSteer(FVector2D Direction);
+    UFUNCTION(Server, Reliable)
+    void ServerDismount();
+
     /** The dead fish this survivor carries, if any. */
     UFUNCTION(BlueprintPure, Category="Fish")
     AEWFish* GetCarriedFish() const { return CarriedFish; }
@@ -267,6 +280,13 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerLetGoOfLadder();
 private:
+    UPROPERTY(ReplicatedUsing=OnRep_Mount)
+    TObjectPtr<AEWAnimal> Mount;
+    UFUNCTION()
+    void OnRep_Mount();
+    FVector2D PendingRide = FVector2D::ZeroVector;
+    FVector2D SentRide = FVector2D::ZeroVector;
+    double SentRideAt = 0.0;
     /** Authority: leave the ladder, onto the deck at its head or into the water. */
     void ReleaseLadder(bool bOntoDeck);
     void ApplyLadderPose();

@@ -75,6 +75,16 @@ public:
     float TreePushReach = 350.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     FVector2D TreePushSeconds = FVector2D(8.f, 20.f);
+    /** Rideable (owner, October 28: the spider): a survivor presses Interact within RideReach of its body to climb on, steers it with the
+     *  move input and lets go with Jump. The seat is RideSeatHeight above its feet and RideSeatForward along its body (cm, tuning). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Riding")
+    bool bRideable = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Riding")
+    float RideSeatHeight = 100.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Riding")
+    float RideSeatForward = 0.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Riding")
+    float RideReach = 250.f;
     /** How deep into the sea it will wade, in cm below the surface (0 keeps it ashore). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float WadeDepth = 0.f;
