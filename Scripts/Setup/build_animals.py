@@ -415,23 +415,29 @@ def spider():
             t = ((q[0] - a[0]) * ax[0] + (q[1] - a[1]) * ax[1] + (q[2] - a[2]) * ax[2]) / length2
             if t < .07 or t > .93:
                 return tan
-            return mix(dark, brown, .5 + .5 * math.sin(t * 38)) if int(t * 9) % 3 else tan if int(t * 40) % 7 == 0 else brown
+            return mix(black, dark, .5 + .5 * math.sin(t * 38)) if int(t * 9) % 3 else tan if int(t * 40) % 9 == 0 else dark
         return colour
 
-    def bristles(centre, radii, count, length, part=BODY, top_z=1.0):
+    hair = lambda: rng.choice((black, dark, brown, brown, tan))   # noqa: E731
+
+    def bristles(centre, radii, count, length, part=BODY, sweep=-.55):
+        """Fine hair over the body (owner, October 29): many thin short hairs, each leaning back along the body (sweep) like a real spider's setae."""
         for _ in range(count):
             d = norm((rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1) * .8))
-            if d[2] < -.45:
+            if d[2] < -.3:
                 continue
-            base = tuple(centre[c] + d[c] * radii[c] * .96 for c in range(3))
-            tip = tuple(base[c] + d[c] * length * rng.uniform(.6, 1.3) for c in range(3))
-            limb(b, [base, tip], 1.5, .15, lambda q, n: black if rng.random() < .55 else brown, part, top_z, 5)
+            base = tuple(centre[c] + d[c] * radii[c] * .95 for c in range(3))
+            lean = norm((d[0] + sweep, d[1], d[2] + .15))
+            tip = tuple(base[c] + lean[c] * length * rng.uniform(.6, 1.4) for c in range(3))
+            colour = hair()
+            limb(b, [base, tip], 1.1, .1, lambda q, n, colour=colour: colour, part, 1.0, 4)
 
-    bristles((-62, 0, 64), (42, 40, 39), 150, 9)
-    bristles((22, 0, 62), (29, 25, 21), 60, 7)
+    bristles((-62, 0, 64), (42, 40, 39), 520, 12)              # the abdomen is the hairiest
+    bristles((22, 0, 62), (29, 25, 21), 170, 8)                # the carapace
+    bristles((48, 0, 56), (10, 14, 10), 40, 7, sweep=.3)       # a mat of hair round the mouthparts
     attach = (36.0, 20.0, -4.0, -26.0)
     spread = (38.0, 72.0, 108.0, 144.0)      # each leg's heading in the plan, degrees from the nose
-    reach = (150.0, 168.0, 168.0, 152.0)
+    reach = (160.0, 176.0, 176.0, 160.0)
     for index in range(4):
         for y in (1, -1):
             part = FL if (index + (0 if y > 0 else 1)) % 2 == 0 else FR
@@ -442,18 +448,25 @@ def spider():
 
             def at(f, z):
                 return (x0 + d[0] * R * f, 14 * y + d[1] * R * f, z)
-            hip, knee, ankle, foot = at(0, 58), at(.34, 118), at(.7, 62), at(1.0, 0)
-            limb(b, [hip, knee], 9.0, 6.5, seg_colour(hip, knee), part, 118, 12)                                       # the thick femur up to the knee
-            ball(b, knee, (9.5, 9.5, 9.5), lambda q, n: tan, part, .3, 10)                            # the knee knuckle
-            limb(b, [knee, ankle], 6.5, 3.6, seg_colour(knee, ankle), part, 118, 10)
-            limb(b, [ankle, foot], 3.6, 1.6, seg_colour(ankle, foot), part, 118, 10)                               # the tibia and its tip down to the ground
-            for seg in ((hip, knee), (knee, ankle), (ankle, foot)):          # bristles round each part of the leg
-                for k in range(9):
+            # femur up to the knee, tibia down and out, metatarsus nearly upright, a short tarsus whose tip rests on the ground (owner, October 29:
+            # realistic legs that touch the ground)
+            hip, knee, tib, meta, foot = at(0, 58), at(.3, 114), at(.62, 70), at(.86, 24), at(1.0, 1.4)
+            limb(b, [hip, knee], 9.0, 7.0, seg_colour(hip, knee), part, 118, 12)                                       # the thick femur up to the knee
+            ball(b, knee, (10, 10, 10), lambda q, n: tan, part, .3, 10)                                                # the knee
+            limb(b, [knee, tib], 7.0, 5.0, seg_colour(knee, tib), part, 118, 10)                                       # tibia
+            limb(b, [tib, meta], 5.0, 3.6, seg_colour(tib, meta), part, 118, 10)                                       # metatarsus
+            limb(b, [meta, foot], 3.6, 2.4, seg_colour(meta, foot), part, 118, 10)                                     # tarsus
+            ball(b, foot, (3.4, 3.4, 1.6), lambda q, n: black, part, 1.0, 8)                                           # the foot pad on the ground
+            for seg, count in (((hip, knee), 22), ((knee, tib), 36), ((tib, meta), 30), ((meta, foot), 16)):           # hair along each part of the leg
+                for k in range(count):
                     u = rng.uniform(.05, .95)
                     base = tuple(seg[0][c] * (1 - u) + seg[1][c] * u for c in range(3))
-                    side = norm((rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1) + .6))
-                    tip = tuple(base[c] + side[c] * rng.uniform(6, 13) for c in range(3))
-                    limb(b, [base, tip], 1.3, .12, lambda q, n: black, part, 118, 5)
+                    side = norm((rng.gauss(0, 1), rng.gauss(0, 1), rng.gauss(0, 1) + .3))
+                    along = norm(sub(seg[1], seg[0]))
+                    lean = norm(tuple(side[c] + along[c] * .8 for c in range(3)))                       # swept toward the foot
+                    tip = tuple(base[c] + lean[c] * rng.uniform(9, 18) for c in range(3))
+                    colour = hair()
+                    limb(b, [base, tip], 1.5, .1, lambda q, n, colour=colour: colour, part, 118, 4)
     b.colours = [tuple(c ** 2.2 for c in col) for col in b.colours]   # vertex colours are read back as sRGB bytes, so a linear palette must be darkened to show as intended
     return b
 
@@ -608,8 +621,8 @@ ANIMALS = {
     'Elephant': dict(display='Elephant', build=elephant, size=(430, 290), stride=170, gait=0,
                      anim=(26, 7, 1.5, 6, 5, 0, 1), surface=(0, 1, .25, .18, .9),
                      behave=(False, 70, 380, 45, 1500, 0, 0, 0, 1, 0, '', 1500), yield_=(20, 30), live=('inland', 0, 0)),
-    'Spider': dict(display='Cave Spider', build=spider, size=(180, 120), stride=95, gait=0,
-                   anim=(30, 18, 1.5, 0, 0, 0, 1), surface=(0, 1, .6, .3, .75),
+    'Spider': dict(display='Cave Spider', build=spider, size=(180, 120), stride=60, gait=3,
+                   anim=(26, 22, 1.2, 0, 0, 0, 1), surface=(0, 1, .6, .3, .75),
                    behave=(True, 130, 430, 200, 450, 0, 800, 18, 1.2, 90, 'bite', 90), yield_=(2, 5), live=('cave', 0, 0)),
     'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
                            anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
@@ -641,6 +654,20 @@ if (Gait < .5) {
 } else if (Gait < 1.5) {
   if (abs(part - 8) < .5) lp = 0;
   if (abs(part - 9) < .5) lp = 3.14159;
+}
+if (Gait > 2.5) {
+  // a spider's alternating-tetrapod crawl (owner, October 29): the two leg groups step in turn, each leg a little behind the one in front
+  // (a wave along the body), the foot sweeping forward while lifted and pushing back while planted, with a sideways scuttle
+  float side = P.y >= 0 ? 1 : -1;
+  float lag = (P.x - 10) * -.012;
+  float s = Phase + lag + (abs(part - 1) < .5 ? 0 : 3.14159);
+  if (abs(part - 1) < .5 || abs(part - 2) < .5) {
+    float step = sin(s), up = max(0, cos(s));
+    o.x += step * Swing * w * moving;
+    o.y += side * (up - .35) * Swing * .45 * w * moving;
+    o.z += up * Lift * w * moving;
+  }
+  lp = -1;
 }
 if (lp >= 0) { float s = Phase + lp; o.x += sin(s) * Swing * w * moving; o.z += max(0, cos(s)) * Lift * w * moving; }
 bool trunk = part < .5 || abs(part - 5) < .5 || abs(part - 6) < .5;
