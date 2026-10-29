@@ -68,6 +68,14 @@ public:
      *  shows every ship's rooms lantern-lit). Each gets a warm light on every machine that draws (AEWShip). */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Interior")
     TArray<FVector> LanternLights;
+    /** The permanent surgeon (design reference), standing by the operating table in the first deck below the weather deck,
+     *  relative to the ship. Off on a hull with no deck below. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Interior")
+    bool bHasSurgeon = false;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Interior", meta=(EditCondition="bHasSurgeon"))
+    FVector SurgeonPoint = FVector::ZeroVector;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ship|Interior", meta=(EditCondition="bHasSurgeon"))
+    float SurgeonYaw = 0.f;
     /** Built-in anchor capstan on deck, relative to the ship. Hold Interact there to raise or drop the anchor. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Hull")
     FVector AnchorPoint = FVector(350, -90, 130);

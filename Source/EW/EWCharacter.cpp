@@ -2,6 +2,7 @@
 
 #include "EWCharacter.h"
 #include "World/EWFootprintComponent.h"
+#include "EWWalletComponent.h"
 #include "AnimationRuntime.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
@@ -52,6 +53,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
     FootprintComponent = CreateDefaultSubobject<UEWFootprintComponent>(TEXT("FootprintComponent"));
+    WalletComponent = CreateDefaultSubobject<UEWWalletComponent>(TEXT("WalletComponent"));
     BodyRoster = TSoftObjectPtr<UEWBodyRoster>(FSoftObjectPath(TEXT("/Game/Elitewake/Characters/DA_BodyRoster.DA_BodyRoster")));
     HeldItem = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldItem"));
     HeldItem->SetupAttachment(GetMesh(), TEXT("hand_r"));

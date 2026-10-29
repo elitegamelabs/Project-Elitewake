@@ -16,6 +16,7 @@ class UMaterialInstanceDynamic;
 class UEWShipSoundComponent;
 class UEWWakeTrailComponent;
 class UEWBowWaveComponent;
+class AEWShipSurgeon;
 
 /** One cannon on its mount: who mans it, where it is aimed (degrees from its rest, up is positive pitch) and
  *  whether it is loaded or being loaded. Replicated with the ship. */
@@ -461,7 +462,11 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Hull")
     FVector GetBucketWorld() const;
 
+public:
+    /** The permanent surgeon aboard (server side; null where the hull has no deck below). */
+    UFUNCTION(BlueprintPure, Category="Ship|Interior") AEWShipSurgeon* GetSurgeon() const { return Surgeon; }
 private:
+    UPROPERTY() TObjectPtr<AEWShipSurgeon> Surgeon;
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
     TArray<FEWInstalledFitting> Fittings;
     /** Local query boxes, one per mount, rebuilt from the definition on every machine. */

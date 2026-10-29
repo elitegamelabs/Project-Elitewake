@@ -1,6 +1,7 @@
 #include "EWSurvivalWidget.h"
 #include "EWCharacter.h"
 #include "EWSurvivalComponent.h"
+#include "EWWalletComponent.h"
 #include "EWHudIcon.h"
 #include "GameFramework/GameStateBase.h"
 #include "Components/SizeBox.h"
@@ -202,6 +203,8 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         FString Line = FString::Printf(TEXT("%s   %.0f°C"), *AEWClimateRegion::RegionName(C.Region).ToString().ToUpper(), Survival->GetFeltTemperature());
         if (bRegionIsHumid || C.Humidity >= 70.f) Line += FString::Printf(TEXT("   Humidity %.0f%%"), C.Humidity);
         Line += FString::Printf(TEXT("   Body %.1f°C"), Body);
+        if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
+            if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("   Purse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
         ClimateLine->SetText(FText::FromString(Line));
         // Blue as the body cools, white when comfortable, orange as it heats.
         const FLinearColor Cold(.45f,.75f,1.f), Hot(1.f,.55f,.2f);

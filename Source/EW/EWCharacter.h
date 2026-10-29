@@ -24,6 +24,7 @@ class UEWInventoryComponent;
 class UEWEquipmentComponent;
 class UEWHotbarComponent;
 class UEWFootprintComponent;
+class UEWWalletComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
@@ -111,6 +112,7 @@ class EW_API AEWCharacter : public ACharacter
     UEWHotbarComponent* HotbarComponent;
     /** Footprints in the ground, by surface. */
     UPROPERTY(VisibleAnywhere, Category="Footprints") UEWFootprintComponent* FootprintComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Wallet", meta=(AllowPrivateAccess="true")) UEWWalletComponent* WalletComponent;
 	
 protected:
 
@@ -504,6 +506,8 @@ public:
 	/** Returns the character inventory component. */
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+    UFUNCTION(BlueprintPure, Category="Wallet")
+    UEWWalletComponent* GetWalletComponent() const { return WalletComponent; }
     UFUNCTION(BlueprintPure, Category="Equipment")
     UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
     UFUNCTION(BlueprintPure, Category="Hotbar")

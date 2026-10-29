@@ -8,6 +8,7 @@
 #include "EWSurvivalComponent.h"
 #include "EWProgressionComponent.h"
 #include "EWSurvivorSave.h"
+#include "EWWalletComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
@@ -62,6 +63,7 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     Progress->GrantExperience(Progress->GetExperienceForNextLevel());
     TestTrue(TEXT("A stat point is spent"), Progress->SpendPoint(EEWStat::Vitality));
     TestTrue(TEXT("A star is lit"), Progress->UnlockSkill(TEXT("Gatherer")));
+    Original->GetWalletComponent()->SetCopper(1234);
     TestTrue(TEXT("Save writes to isolated test slot"), UEWSurvivorSave::SaveSurvivor(Original, SlotName));
     TestTrue(TEXT("Test slot exists"), UEWSurvivorSave::HasSave(SlotName));
     Original->GetSurvivalComponent()->ApplyDamage(50.f);
@@ -93,6 +95,7 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("First hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(2), Axe);
     TestEqual(TEXT("Second hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(5), Berry);
     UEWProgressionComponent* Back = Resumed->GetProgressionComponent();
+    TestEqual(TEXT("Purse restored"), Resumed->GetWalletComponent()->GetCopper(), int64(1234));
     TestEqual(TEXT("Level restored"), Back->GetLevel(), 3);
     TestEqual(TEXT("Unspent stat point restored"), Back->GetUnspentPoints(), 1);
     TestEqual(TEXT("Spent stat point restored"), Back->GetStatPoints(EEWStat::Vitality), 1);

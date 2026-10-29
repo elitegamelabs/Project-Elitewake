@@ -26,6 +26,7 @@
 #include "Ships/EWShipSoundComponent.h"
 #include "Ships/EWWakeTrailComponent.h"
 #include "Ships/EWBowWaveComponent.h"
+#include "Ships/EWShipSurgeon.h"
 
 namespace
 {
@@ -165,6 +166,16 @@ void AEWShip::BeginPlay()
     PlaceWake();
     // A ship that starts at anchor has her anchor down already, chain out below her bow.
     if (HasAuthority() && bAnchored && ChainReach <= 0.f) LayAnchor();
+    // The permanent surgeon, aboard from the start on every hull with a deck below (only in a running game, never in the editor).
+    if (HasAuthority() && Definition && Definition->bHasSurgeon && GetWorld() && GetWorld()->IsGameWorld() && !Surgeon)
+    {
+        FActorSpawnParameters Params;
+        Params.Owner = this;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Surgeon = GetWorld()->SpawnActor<AEWShipSurgeon>(AEWShipSurgeon::StaticClass(), GetActorTransform().TransformPosition(Definition->SurgeonPoint),
+            GetActorRotation() + FRotator(0.f, Definition->SurgeonYaw, 0.f), Params);
+        if (Surgeon) Surgeon->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+    }
     // Water bodies answer swimming and wave queries; their collision boxes must never stop a hull.
     for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
@@ -1928,5 +1939,6 @@ void AEWShip::Tick(float DeltaSeconds)
 void AEWShip::EndPlay(const EEndPlayReason::Type Reason)
 {
     if (HasAuthority() && IsValid(Helmsman)) LeaveHelm(Helmsman, true);
+    if (HasAuthority() && IsValid(Surgeon)) Surgeon->Destroy();
     Super::EndPlay(Reason);
 }

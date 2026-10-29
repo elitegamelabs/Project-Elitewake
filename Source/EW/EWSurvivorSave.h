@@ -49,6 +49,8 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 Experience = 0;
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 UnspentStatPoints = 0;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<int32> StatPoints;
+    /** The purse in Copper (October 29). -1 in an older save: the survivor then keeps the starting purse. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int64 Copper = -1;
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 SkillPoints = 0;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> UnlockedSkills;
     /** Everything built with Build Mode (October 27), bases before what stands on them. Older saves have none. */
