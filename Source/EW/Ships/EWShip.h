@@ -41,6 +41,12 @@ struct FEWCannonState
      *  with the volley whenever a survivor fires a cannon of this ship (owner, October 18). */
     UPROPERTY(BlueprintReadOnly, Category="Cannon")
     bool bCrewed = false;
+    /** Shots fired from this cannon (wraps); every machine plays the recoil when it changes. */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    uint8 Shots = 0;
+    /** When loading began, on the server's clock, so every machine can tell the step (swab, powder, shot, ram). */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    float LoadStartedAt = -1.f;
 };
 
 /** Where round shot holed the hull, in the ship's space, and which way the planking faced there. */
@@ -492,6 +498,24 @@ public:
     /** Tuning: how far ahead of the muzzle the volley's mark is sought, and the slack a hired gunner's aim allows
      *  beyond its cannon's swing before it holds fire (degrees). */
     static constexpr float VolleyRange = 20000.f;
+    /** The step a loading cannon is at (owner, October 18: powder, ball and ramming): Swab, Powder, Shot or Ram, each a quarter of
+     *  CannonLoadSeconds; None when it is not loading. Only the round shot is taken from a stock (there is no powder item yet). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    FName GetCannonLoadStep(FName MountId) const;
+    /** How far the cannon is thrown back by its last shot now, cm (0 at rest). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    float GetCannonRecoil(FName MountId) const;
+    /** Tuning: how far a shot throws the cannon back (cm), how fast (s), and how long it takes to run out again (s). */
+    static constexpr float RecoilDistance = 55.f;
+    static constexpr float RecoilKickSeconds = .08f;
+    static constexpr float RecoilReturnSeconds = 1.6f;
+    /** Authority: the survivor at a cannon marks the ship their cannon is laid on as the target, for the hired gunners to lay their
+     *  cannons on (owner, October 18: NPCs aim at the player's targeted enemy); laid on open water, the mark is cleared. True when a
+     *  ship is marked. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    bool MarkTarget(AEWCharacter* Character);
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    AEWShip* GetMarkedShip() const { return MarkedShip; }
     static constexpr float VolleyAimSlack = 3.f;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     AEWCharacter* GetCannonGunner(FName MountId) const;
@@ -669,6 +693,14 @@ private:
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> CoverVisuals;
     void ShowGunports(float DeltaSeconds);
+    /** Every machine: start a cannon's recoil when its shot count changes, and draw it thrown back and running out again. */
+    void ShowRecoil(float DeltaSeconds);
+    TMap<FName, uint8> ShownShots;
+    TMap<FName, float> RecoilClock;
+    void PlaceCannonVisual(const FEWShipMount& Mount);
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWShip> MarkedShip;
+    float ServerNow() const;
     /** A cannon mount's transform with its cannon run in as far as its port is shut. */
     FTransform GunMountTransform(const FEWShipMount& Mount) const;
     UPROPERTY(ReplicatedUsing=OnRep_Holes)

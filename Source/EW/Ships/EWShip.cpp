@@ -27,6 +27,8 @@
 #include "Ships/EWWakeTrailComponent.h"
 #include "Ships/EWBowWaveComponent.h"
 #include "Ships/EWShipSurgeon.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/Volume.h"
 
 namespace
 {
@@ -135,6 +137,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bChainTaut);
     DOREPLIFETIME(AEWShip, CapstanWorker);
     DOREPLIFETIME(AEWShip, Cannons);
+    DOREPLIFETIME(AEWShip, MarkedShip);
     DOREPLIFETIME(AEWShip, HullHealth);
     DOREPLIFETIME(AEWShip, Holes);
     DOREPLIFETIME(AEWShip, OpenGunports);
@@ -1235,9 +1238,18 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     if (IsGunnerHere(Character))
     {
         const FName Mount = Character->GetGunMount();
-        const FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
+        const FName Step = GetCannonLoadStep(Mount);
+        FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
+            : Step == FName(TEXT("Swab")) ? NSLOCTEXT("Elitewake", "CannonSwab", "Loading: sponging out the barrel")
+            : Step == FName(TEXT("Powder")) ? NSLOCTEXT("Elitewake", "CannonPowder", "Loading: powder charge in")
+            : Step == FName(TEXT("Shot")) ? NSLOCTEXT("Elitewake", "CannonShot", "Loading: round shot in")
+            : Step == FName(TEXT("Ram")) ? NSLOCTEXT("Elitewake", "CannonRam", "Loading: ramming home")
             : IsCannonLoading(Mount) ? NSLOCTEXT("Elitewake", "CannonLoading", "Loading...")
             : NSLOCTEXT("Elitewake", "CannonEmpty", "Empty: carry round shot to load it");
+        // The target the hired gunners lay on, or how to mark one.
+        State = IsValid(MarkedShip)
+            ? FText::Format(NSLOCTEXT("Elitewake", "CannonTarget", "{0}  -  Target marked (Right Mouse on open water clears it)"), State)
+            : FText::Format(NSLOCTEXT("Elitewake", "CannonNoTarget", "{0}  -  Right Mouse marks the ship you are laid on"), State);
         if (const FEWShipMount* Port = Definition ? Definition->FindMount(Mount) : nullptr; Port && Port->bGunport)
         {
             const FText PortState = !IsGunportOpen(Mount) ? NSLOCTEXT("Elitewake", "PortShut", "Port shut: Up opens it")
@@ -1405,9 +1417,78 @@ bool AEWShip::GetCannonFrame(FName MountId, FTransform& Frame) const
 
 FTransform AEWShip::GunMountTransform(const FEWShipMount& Mount) const
 {
-    if (!Mount.bGunport) return Mount.Transform;
+    // A shot throws the cannon back on its carriage; it runs out again.
+    const float Recoil = GetCannonRecoil(Mount.MountId);
+    if (!Mount.bGunport) return FTransform(FVector(-Recoil, 0.f, 0.f)) * Mount.Transform;
     // As built, the cannon stands run out at its port, the muzzle in the opening; shut, it is run in behind it.
-    return FTransform(FVector(-CannonRunIn * (1.f - GetGunportOpening(Mount.MountId)), 0.f, 0.f)) * Mount.Transform;
+    return FTransform(FVector(-CannonRunIn * (1.f - GetGunportOpening(Mount.MountId)) - Recoil, 0.f, 0.f)) * Mount.Transform;
+}
+
+float AEWShip::ServerNow() const
+{
+    const AGameStateBase* State = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+    return State ? float(State->GetServerWorldTimeSeconds()) : (GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
+}
+
+FName AEWShip::GetCannonLoadStep(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    if (!Cannon || !Cannon->bLoading || Cannon->LoadStartedAt < 0.f) return NAME_None;
+    const float Done = (ServerNow() - Cannon->LoadStartedAt) / CannonLoadSeconds;
+    static const FName Steps[] = {FName(TEXT("Swab")), FName(TEXT("Powder")), FName(TEXT("Shot")), FName(TEXT("Ram"))};
+    return Steps[FMath::Clamp(int32(Done * 4.f), 0, 3)];
+}
+
+float AEWShip::GetCannonRecoil(FName MountId) const
+{
+    const float* Clock = RecoilClock.Find(MountId);
+    if (!Clock) return 0.f;
+    if (*Clock < RecoilKickSeconds) return RecoilDistance * (*Clock / RecoilKickSeconds);
+    const float Back = FMath::Clamp((*Clock - RecoilKickSeconds) / RecoilReturnSeconds, 0.f, 1.f);
+    return RecoilDistance * (1.f - Back * Back * (3.f - 2.f * Back));
+}
+
+void AEWShip::PlaceCannonVisual(const FEWShipMount& Mount)
+{
+    const UEWItemDefinition* Item = GetFitting(Mount.MountId);
+    if (!Item || Item->FittingMountType != EEWShipMountType::Cannon) return;
+    if (const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Mount.MountId); Visual && *Visual)
+        (*Visual)->SetRelativeTransform(Item->FittingMeshTransform * GunMountTransform(Mount));
+    if (TurningRest.Contains(Mount.MountId))
+        TurningRest.Add(Mount.MountId, Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(Mount));
+}
+
+void AEWShip::ShowRecoil(float DeltaSeconds)
+{
+    if (!Definition) return;
+    for (const FEWCannonState& Cannon : Cannons)
+    {
+        uint8* Shown = ShownShots.Find(Cannon.MountId);
+        if (!Shown) { ShownShots.Add(Cannon.MountId, Cannon.Shots); continue; }
+        if (*Shown != Cannon.Shots) { *Shown = Cannon.Shots; RecoilClock.Add(Cannon.MountId, 0.f); }
+    }
+    for (auto It = RecoilClock.CreateIterator(); It; ++It)
+    {
+        It.Value() += DeltaSeconds;
+        const bool bDone = It.Value() >= RecoilKickSeconds + RecoilReturnSeconds;
+        if (bDone) It.Value() = RecoilKickSeconds + RecoilReturnSeconds;
+        if (const FEWShipMount* Mount = Definition->FindMount(It.Key())) PlaceCannonVisual(*Mount);
+        if (bDone) It.RemoveCurrent();
+    }
+}
+
+bool AEWShip::MarkTarget(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !IsGunnerHere(Character)) return false;
+    const FTransform Aimed = GetCannonMuzzleWorld(Character->GetGunMount());
+    FHitResult Hit;
+    AEWShip* Target = nullptr;
+    if (TraceVolleyLine(Hit, Aimed.GetLocation(), Aimed.GetLocation() + Aimed.GetRotation().GetForwardVector() * VolleyRange))
+        // Something aboard her (her surgeon, a fitting) counts as the ship.
+        for (AActor* Part = Hit.GetActor(); Part && !Target; Part = Part->GetAttachParentActor()) Target = Cast<AEWShip>(Part);
+    MarkedShip = Target && Target != this && !Target->IsSinking() ? Target : nullptr;
+    ForceNetUpdate();
+    return MarkedShip != nullptr;
 }
 
 bool AEWShip::IsGunportOpen(FName MountId) const
@@ -1458,13 +1539,7 @@ void AEWShip::ShowGunports(float DeltaSeconds)
         if (Opening == Was) continue;
         // The cover slides aside along the hull and the cannon runs out behind it, together.
         if (Cover) Cover->SetRelativeTransform(FTransform(Mount.CoverSlide * Opening) * Mount.CoverTransform * Mount.Transform);
-        if (const UEWItemDefinition* Item = GetFitting(Mount.MountId); Item && Item->FittingMountType == EEWShipMountType::Cannon)
-        {
-            if (const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Mount.MountId); Visual && *Visual)
-                (*Visual)->SetRelativeTransform(Item->FittingMeshTransform * GunMountTransform(Mount));
-            if (TurningRest.Contains(Mount.MountId))
-                TurningRest.Add(Mount.MountId, Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(Mount));
-        }
+        PlaceCannonVisual(Mount);
     }
 }
 
@@ -1572,6 +1647,13 @@ bool AEWShip::FireCannon(AEWCharacter* Character)
         FHitResult Hit;
         if (TraceVolleyLine(Hit, Aimed.GetLocation(), Mark)) { Mark = Hit.ImpactPoint; MarkActor = Hit.GetActor(); }
     }
+    // A marked target: the hired gunners lay on her (amidships, half way up her side) instead of where this cannon points.
+    if (IsValid(MarkedShip) && !MarkedShip->IsSinking() && FVector::Dist(MarkedShip->GetActorLocation(), GetActorLocation()) <= VolleyRange)
+    {
+        Mark = MarkedShip->GetActorLocation() + FVector(0.f, 0.f, MarkedShip->GetDeckHeight() * .5f);
+        MarkActor = MarkedShip;
+    }
+    else if (MarkedShip) MarkedShip = nullptr;
     if (!LaunchShot(MountId, Character)) return false;
     LastVolley = FireVolley(Mark, MarkActor, MountId, Character);
     return true;
@@ -1594,6 +1676,7 @@ bool AEWShip::LaunchShot(FName MountId, AEWCharacter* Shooter)
     // The shot keeps the ship's own way through the water.
     Shot->Launch(this, Character, Muzzle.GetRotation().GetForwardVector() * CannonMuzzleSpeed + GetActorForwardVector() * Speed);
     Cannon->bLoaded = false;
+    ++Cannon->Shots;
     ForceNetUpdate();
     return true;
 }
@@ -1604,6 +1687,8 @@ bool AEWShip::TraceVolleyLine(FHitResult& Hit, const FVector& From, const FVecto
     FCollisionQueryParams Query(SCENE_QUERY_STAT(EWVolleyLine), false, this);
     for (TActorIterator<AEWCannonBall> Ball(GetWorld()); Ball; ++Ball) Query.AddIgnoredActor(*Ball);
     for (TActorIterator<AWaterBody> Water(GetWorld()); Water; ++Water) Query.AddIgnoredActor(*Water);
+    // Volumes (the sea's swimming volume, physics and audio volumes) are not solid: a line runs through them.
+    for (TActorIterator<AVolume> Volume(GetWorld()); Volume; ++Volume) Query.AddIgnoredActor(*Volume);
     FCollisionObjectQueryParams Objects;
     Objects.AddObjectTypesToQuery(ECC_WorldStatic);
     Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
@@ -1738,6 +1823,7 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
         if (Ammo && Carried && Carried->GetItemCount(Ammo) > 0 && Carried->RemoveItem(Ammo, 1) == 1)
         {
             Cannon.bLoading = true;
+            Cannon.LoadStartedAt = ServerNow();
             CannonLoadLeft.Add(Cannon.MountId, CannonLoadSeconds);
             bChanged = true;
         }
@@ -2466,6 +2552,7 @@ void AEWShip::Tick(float DeltaSeconds)
     if (SailLines.Num()) UpdateSailLines(DeltaSeconds);
     if (Cannons.Num() && GetNetMode() != NM_DedicatedServer) ShowHiredGunners();
     ShowGunports(DeltaSeconds);
+    if (GetNetMode() != NM_DedicatedServer) ShowRecoil(DeltaSeconds);
     ShowChain(DeltaSeconds);
     if (!HasAuthority())
     {

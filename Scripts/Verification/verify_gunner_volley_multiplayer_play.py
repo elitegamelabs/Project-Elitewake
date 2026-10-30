@@ -3,7 +3,9 @@ ready), with a second player (listen server plus one client, EW_PLAY_PLAYERS=2).
 On the schooner, four starboard hull cannons and one port cannon are fitted for the check and round shot is put in the hold. The
 client is given Gunner Articles (hiring is checked in verify_sail_crew_multiplayer_play) and signs a gunner on at a starboard cannon (a real interaction request); three more gunners are signed on
 directly. Hired gunners load from the hold and open their ports. The client mans the first starboard cannon and fires: the three
-starboard gunners that bear fire with it, the port-side gunner holds fire, and they reload from the hold. Writes
+starboard gunners that bear fire with it, the port-side gunner holds fire, and they reload from the hold (sponge, powder, shot,
+ram); both screens see the cannons recoil. Target lock: a ship is set straight out from the broadside, the client marks it with Right
+Mouse (a real key event), lays their own cannon 25 degrees away and fires: the gunners lay on the marked ship and fire at her. Writes
 Saved/GunnerVolleyMultiplayerPlayResult.json."""
 import json
 import time
@@ -137,10 +139,70 @@ def tick(delta):
             state.update(phase=6, at=time.monotonic() + .5)
         elif p == 6:
             check('the client sees the shot', shots(client_world) >= 1, client=shots(client_world))
-            ship.leave_cannon(owner, True)
-            state.update(phase=7, at=time.monotonic() + 7.0)
+            recoil = [peer.get_cannon_recoil(n) for n in state['star']]
+            report['recoil_client'] = recoil
+            check('the client sees the cannons thrown back by their shots', all(r > 10 for r in recoil), recoil=recoil)
+            steps = [str(ship.get_cannon_load_step(n)) for n in state['star'][1:]]
+            check('the gunners start reloading at the first step, sponging out', steps == ['Swab'] * 3, steps=steps)
+            check('the client sees the step', str(peer.get_cannon_load_step(state['star'][1])) == 'Swab')
+            state.update(phase=65, at=time.monotonic() + 2.0)
+        elif p == 65:
+            check('the cannons have run out again', all(peer.get_cannon_recoil(n) == 0 for n in state['star']))
+            steps = [str(ship.get_cannon_load_step(n)) for n in state['star'][1:]]
+            report['steps_later'] = steps
+            check('then the powder goes in', all(st in ('Powder', 'Shot') for st in steps), steps=steps)
+            state.update(phase=7, at=time.monotonic() + 4.0)
         elif p == 7:
             check('the hired gunners reload from the hold', all(ship.is_cannon_loaded(n) for n in state['star'][1:]), hold=count(ship.get_cargo(), SHOT))
+            # A target 35 m straight out from the first starboard cannon.
+            first = state['star'][0]
+            muzzle = ship.get_cannon_muzzle_world(first)
+            out = unreal.MathLibrary.get_forward_vector(muzzle.rotation.rotator())
+            spot = unreal.Vector(muzzle.translation.x + out.x * 3500, muzzle.translation.y + out.y * 3500, -65)
+            target = lib.spawn_verification_ship(server_world, unreal.load_asset('/Game/Elitewake/Ships/DA_Ship_Sloop'), spot,
+                                                 unreal.Rotator(0, 0, ship.get_actor_rotation().yaw))
+            check('a target ship lies off the broadside', target is not None)
+            state['target'] = target
+            owner.get_inventory_component().add_item(SHOT, 2)
+            behind(first)
+            state.update(phase=75, at=time.monotonic() + 1.5)
+        elif p == 75:
+            first = state['star'][0]
+            report['man_again_prompt'] = str(ship.get_interaction_prompt(owner))
+            check('the client is at the first cannon', ship.get_cannon_gunner(first) == owner or ship.man_cannon(owner, first))
+            # Laid on her: the client looks at her side (a gunner's view lays the cannon).
+            aim_at = state['target'].get_actor_location()
+            muzzle = ship.get_cannon_muzzle_world(first).translation
+            client.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(muzzle, unreal.Vector(aim_at.x, aim_at.y, aim_at.z + 60)))
+            state.update(phase=8, at=time.monotonic() + 6.5)
+        elif p == 8:
+            check('the client marks the ship with Right Mouse', lib.send_verification_gameplay_key(client, 'RightMouseButton'))
+            state.update(phase=9, at=time.monotonic() + 1.0)
+        elif p == 9:
+            first = state['star'][0]
+            m = ship.get_cannon_muzzle_world(first)
+            fwd = unreal.MathLibrary.get_forward_vector(m.rotation.rotator())
+            end = unreal.Vector(m.translation.x + fwd.x * 20000, m.translation.y + fwd.y * 20000, m.translation.z + fwd.z * 20000)
+            hit = unreal.SystemLibrary.line_trace_single_for_objects(server_world, m.translation, end,
+                [unreal.ObjectTypeQuery.OBJECT_TYPE_QUERY1, unreal.ObjectTypeQuery.OBJECT_TYPE_QUERY2], False, [ship], unreal.DrawDebugTrace.NONE, True)
+            t = hit.to_tuple() if hit else None
+            report['mark_diag'] = {'aim': str(ship.get_cannon_aim(first)), 'hit': str(t[9].get_name()) if t and t[9] else None,
+                                   'target': state['target'].get_name(), 'target_at': str(state['target'].get_actor_location()), 'muzzle': str(m.translation)}
+            check('she is the marked target, on both screens', ship.get_marked_ship() == state['target'] and peer.get_marked_ship() is not None)
+            report['target_prompt'] = str(ship.get_interaction_prompt(state['owner']))
+            # The client's own cannon is laid well away from her: they look 25 degrees aft of her.
+            rot = client.get_control_rotation()
+            client.set_control_rotation(unreal.Rotator(roll=0, pitch=rot.pitch, yaw=rot.yaw - 25))
+            state.update(phase=10, at=time.monotonic() + 1.5)
+        elif p == 10:
+            first = state['star'][0]
+            check('the survivor cannon is loaded again', ship.is_cannon_loaded(first))
+            check('the client fires', ship.fire_cannon(state['owner']))
+            report['locked_volley'] = ship.get_last_volley()
+            aims = {n: ship.get_cannon_aim(n).yaw for n in state['star'][1:]}
+            report['locked_aims'] = {k: round(v, 1) for k, v in aims.items()}
+            check('the gunners fire at the marked ship, not where the client is laid', ship.get_last_volley() == 3
+                  and all(abs(a) < 12 for a in aims.values()), volley=ship.get_last_volley(), aims=aims, own=ship.get_cannon_aim(first).yaw)
             finish()
     except Exception as error:
         import traceback

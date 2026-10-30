@@ -22,6 +22,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Region teleport (testing phase only) | Shift + 1 to 5 | not bound | 1 Plains starter island, 2 Jungle, 3 Desert, 4 Swamp, 5 Winter; carries the survivor to dry ground near the island centre. Compiled out of shipping builds (`verify_region_teleport_play`) |
 | Port teleport (testing phase only) | Shift + 6 | not bound | carries the survivor to the nearest Port plaza, in front of its general merchant (use Shift + 1 to 5 first for another region's Port). Compiled out of shipping builds (`verify_port_teleport_play`) |
 | Talk to a townsperson | E (press) | X | opens their dialogue window; choose with 1 to 9 or a click, Up/Down (or W/S) and Enter, D-pad and A; leave with Escape, E or Tab, or B (`verify_freeport_multiplayer_play`) |
+| Mark a target for hired gunners (at a cannon) | Right mouse | LB | marks the ship your cannon is laid on; on open water it clears the mark (`verify_gunner_volley_multiplayer_play`) |
 | Climb ladder | Up / Down arrows | d-pad up / down | OK |
 | Sail trim left / right | Left / Right arrows | LB / RB | OK |
 | Respawn after death | Enter / Space / click | A | OK (`verify_death_respawn_play`) |

@@ -263,6 +263,9 @@ public:
     void ServerCannonAim(float Yaw, float Pitch);
     UFUNCTION(Server, Reliable)
     void ServerFireCannon();
+    /** At a cannon: mark the ship it is laid on as the hired gunners' target, or clear the mark (AEWShip::MarkTarget). */
+    UFUNCTION(Server, Reliable)
+    void ServerMarkTarget();
     /** The gunner opens (true) or shuts their cannon's hull gunport (AEWShip::SetGunportOpen). */
     UFUNCTION(Server, Reliable)
     void ServerSetGunport(bool bOpen);

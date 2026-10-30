@@ -16,6 +16,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 | **Ships are saved (M7)**: the single-player Save Game and the server's world save keep every ship afloat (place, fittings, hold, hull and holes, anchor, sail settings and hired crew, cannons, ports); ships bought in play come back, lost ones stay lost | `verify_ship_save_play` PASS (both saves); build multiplayer, Freeport, cannon fight, Ships and Save automation PASS | 🟡 no ship owners yet; wrecks not kept |
 | **World resources are saved (M7)**: cut trees, picked plants and taken items stay gone after loading; partly used trees and deposits (and a deposit's respawn wait) and knocked-over trees lying come back as left; both the Save Game and the server's world save | `verify_world_save_a/b_play` PASS (save in one Play session, load in a fresh one); trees, crystals, ship save, build multiplayer and all 40 automation tests PASS | 🟡 animals and fish not kept |
 | **Death bags and wreck crates are saved**: their place, goods (food keeps its age) and the time they had left | `verify_world_save_a/b_play` PASS (extended); death and respawn check, all 40 automation tests PASS | ✅ |
+| **Cannon operation**: loading in four steps (sponge, powder, shot, ram), recoil on every shot, and target lock (Right Mouse / LB marks a ship; hired gunners lay on her); aim lines no longer stop at the sea's invisible swimming volume | `verify_gunner_volley_multiplayer_play` PASS (extended: steps and recoil on both screens, a marked ship fired on while the survivor's own cannon is laid 15 degrees off); cannon fight, brigantine, ship save, Freeport and 40 automation tests PASS | 🟡 no powder item, no lead on moving targets |
 | **Port teleport (testing only)**: Shift + 6 carries you to the nearest Port, in front of its merchant (owner request); compiled out of shipping builds | `verify_port_teleport_play` PASS (all five Ports) | ✅ |
 | **Hired gunners and volleys**: Port gunnery master hires a gunner (150 Copper, Gunner Articles; tuning); signed on at a cannon, they load from the hold and fire with the survivor's shot when their cannon bears and the line is clear | `verify_gunner_volley_multiplayer_play` PASS (2 players, ships test map) | 🟡 see Milestones row |
 
@@ -37,7 +38,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 
 ## Not done
 
-- There are no wages or crew limits. Gunners have no separate powder, ball and ramming steps, and there is no target lock.
+- There are no wages or crew limits. Gunners use no powder item (only round shot), and do not lead a moving target.
 - The Freeport stands on the Plains Port's site; palms stand in it although the starter island's trees are oaks (the owner's October 30 request asks for palms). Ships have no owner, so the shipwright and harbor master act on the ship nearest you.
 - Merchant stock is not saved, and every Port sells the same goods at the same prices.
 - All figures are placeholder shapes.

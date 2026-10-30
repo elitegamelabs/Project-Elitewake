@@ -448,6 +448,9 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
     // Build Mode takes B / the right stick to enter; while it is on, Q E LB RB, X / B, Escape and the place key too.
     if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
         && BuildComponent->HandleKey(Params)) return true;
+    // At a cannon, Right Mouse (or LB) marks the ship it is laid on for the hired gunners, or clears the mark (owner, October 18).
+    if (Params.Event == IE_Pressed && (Params.Key == EKeys::RightMouseButton || Params.Key == EKeys::Gamepad_LeftShoulder) && !bMapOpen)
+        if (auto* Gunner = Cast<AEWCharacter>(GetPawn()); Gunner && Gunner->GetGunShip()) { Gunner->ServerMarkTarget(); return true; }
 #if !UE_BUILD_SHIPPING
     // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24), Shift + 6 to the nearest Port (owner, October 30).
     // Compiled out of shipping builds.

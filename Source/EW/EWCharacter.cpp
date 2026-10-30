@@ -770,6 +770,11 @@ void AEWCharacter::ServerFireCannon_Implementation()
     if (IsValid(GunShip)) GunShip->FireCannon(this);
 }
 
+void AEWCharacter::ServerMarkTarget_Implementation()
+{
+    if (IsValid(GunShip)) GunShip->MarkTarget(this);
+}
+
 void AEWCharacter::ServerSetGunport_Implementation(bool bOpen)
 {
     if (IsValid(GunShip)) GunShip->SetGunportOpen(this, bOpen);
