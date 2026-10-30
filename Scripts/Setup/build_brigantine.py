@@ -230,7 +230,7 @@ def update_definition(hull, rig, looks, capstan):
         'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         'lantern_lights': [unreal.Vector(*p) for p in LIGHTS],
         # Crew up to 25 (confirmed). Speed, turning and hold are tuning: bigger and slower to turn than the schooner.
-        'hull_health': 4000.0, 'crew_capacity': 25, 'top_speed': 750.0, 'turn_rate': 16.0, 'cargo_slots': 60, 'weight_capacity': 8000.0,
+        'hull_health': 4000.0, 'crew_capacity': 25, 'top_speed': 12 * 51.4444, 'turn_rate': 16.0, 'cargo_slots': 60, 'weight_capacity': 8000.0,
         'mounts': mounts,
     }
     for k, v in values.items():

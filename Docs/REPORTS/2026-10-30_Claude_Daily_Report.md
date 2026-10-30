@@ -17,6 +17,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 | **World resources are saved (M7)**: cut trees, picked plants and taken items stay gone after loading; partly used trees and deposits (and a deposit's respawn wait) and knocked-over trees lying come back as left; both the Save Game and the server's world save | `verify_world_save_a/b_play` PASS (save in one Play session, load in a fresh one); trees, crystals, ship save, build multiplayer and all 40 automation tests PASS | 🟡 animals and fish not kept |
 | **Death bags and wreck crates are saved**: their place, goods (food keeps its age) and the time they had left | `verify_world_save_a/b_play` PASS (extended); death and respawn check, all 40 automation tests PASS | ✅ |
 | **Cannon operation**: loading in four steps (sponge, powder, shot, ram), recoil on every shot, and target lock (Right Mouse / LB marks a ship; hired gunners lay on her); aim lines no longer stop at the sea's invisible swimming volume | `verify_gunner_volley_multiplayer_play` PASS (extended: steps and recoil on both screens, a marked ship fired on while the survivor's own cannon is laid 15 degrees off); cannon fight, brigantine, ship save, Freeport and 40 automation tests PASS | 🟡 no powder item, no lead on moving targets |
+| **Sailing rules and six sails (owner, October 18)**: class base speeds (raft 3, dinghy 5, sloop 8, schooner 10, brigantine 12 knots); the best drawing sail raises it (standard 1.30/1.50/1.80, weighted 1.25/1.40/1.70), never stacked; every sail down stops a ship dead and holds her; weighted sails steady her 10%; three weighted sails made; the raft has a Small sail hardpoint | `verify_sail_rules_play` PASS; ship regressions below | 🟡 weighted sails share the rig's look; no sail recipes |
 | **Port teleport (testing only)**: Shift + 6 carries you to the nearest Port, in front of its merchant (owner request); compiled out of shipping builds | `verify_port_teleport_play` PASS (all five Ports) | ✅ |
 | **Hired gunners and volleys**: Port gunnery master hires a gunner (150 Copper, Gunner Articles; tuning); signed on at a cannon, they load from the hold and fire with the survivor's shot when their cannon bears and the line is clear | `verify_gunner_volley_multiplayer_play` PASS (2 players, ships test map) | 🟡 see Milestones row |
 
@@ -29,6 +30,9 @@ Owner direction: keep building the game's structure with placeholder art and fre
 - `EWWalletComponent.cpp` stopped compiling in a new unity grouping (`Gold` hid a global); renamed the locals.
 
 ## Decisions I made (owner may change)
+
+- **Ships are slower now.** The October 18 base speeds replace the October 16 pace-up (1.6x): a fully rigged sloop running before the wind tops out near 12 knots instead of about 22. If crossings feel too long again, the base speeds (or a pace multiplier) are one number per class.
+- The dinghy's base speed is 5 knots (it is not in the owner's table).
 
 - Sailhand fee 100 Copper; sell prices per item; crew master and merchant stand on each Port plaza. All tuning.
 - With no sailhand aboard, the helm does nothing to the sails (owner rule: unassigned sails cannot be operated from the helm). A lone sailor works the sails by hand at the mast or hires crew.

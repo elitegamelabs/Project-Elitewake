@@ -82,7 +82,8 @@ def steps_for(ship_id):
         assert ship.get_fitting('Sail') is None and ship.is_anchored()
         mounts = [str(m.get_editor_property('mount_id')) for m in ship.get_editor_property('definition').get_editor_property('mounts')]
         if paddled:
-            assert mounts == ['Helm'], f'a paddled raft has no sail mount: {mounts}'
+            # Owner, October 18: the raft has one functional Small sail hardpoint (empty, as every hull's are).
+            assert mounts == ['Helm', 'Sail'], f'a paddled raft has its paddles and one sail hardpoint: {mounts}'
         else:
             assert owner.get_inventory_component().add_item(sail, 1) == 1
 
@@ -118,7 +119,7 @@ def steps_for(ship_id):
         assert lib.send_verification_interaction_request(client, peer)
 
     if paddled:
-        rigging = [(f'{ship_id}: its paddles are fitted on server and client, and it has no mast or sail mount', prepare, lambda: True, 2)]
+        rigging = [(f'{ship_id}: its paddles are fitted on server and client, and its one Small sail hardpoint is empty', prepare, lambda: True, 2)]
     else:
         rigging = [(f'{ship_id}: built-in steering is fitted on server and client; Small sail granted in Play only', prepare, lambda: True, 2),
                    (f'{ship_id}: client installs the Small sail on its own mast', go('Sail'),

@@ -2342,6 +2342,8 @@ float AEWShip::GetWindFactor() const
     // Badly trimmed sails lose the heading's advantage, down to the least any sail gives, so a ship always makes
     // some headway.
     const float Heading = Wind->GetHeadingFactor(GetActorForwardVector());
+    // A raft's sail is not trimmed from her paddles: it swings itself to the wind.
+    if (!HasTrimmableSails()) return Heading;
     return UEWWindSubsystem::MinUpwindFactor + (Heading - UEWWindSubsystem::MinUpwindFactor) * GetTrimQuality();
 }
 
@@ -2358,14 +2360,43 @@ float AEWShip::GetFittedSailFraction() const
     return Capacity > 0.f ? Fitted / Capacity : 0.f;
 }
 
+float AEWShip::GetSailSpeedCap() const
+{
+    if (!Definition) return 0.f;
+    float Best = 0.f;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        const UEWItemDefinition* Sail = Mount.Type == EEWShipMountType::Sail ? GetFitting(Mount.MountId) : nullptr;
+        if (!Sail) continue;
+        Best = FMath::Max(Best, SailFractionForState(GetMountSailState(Mount.MountId)) * FMath::Max(Sail->SailSpeedMultiplier, 0.f));
+    }
+    return Best;
+}
+
+bool AEWShip::IsWeightedSailDrawing() const
+{
+    if (!Definition) return false;
+    float Best = 0.f;
+    bool bWeighted = false;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        const UEWItemDefinition* Sail = Mount.Type == EEWShipMountType::Sail ? GetFitting(Mount.MountId) : nullptr;
+        if (!Sail) continue;
+        const float Cap = SailFractionForState(GetMountSailState(Mount.MountId)) * Sail->SailSpeedMultiplier;
+        if (Cap > Best) { Best = Cap; bWeighted = Sail->bWeightedSail; }
+    }
+    return Best > 0.f && bWeighted;
+}
+
 float AEWShip::ComputeTargetSpeed() const
 {
     // At anchor the sails still drive her: the chain, not the anchor, stops her (StepSimulation).
-    if (!Definition || bSwamped || GetSailFraction() <= 0.f) return 0.f;
-    const float SailSet = GetSailFraction();
-    // Paddlers set their own pace whatever the wind, with no sails to fill.
-    if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
-    return Definition->TopSpeed * SailingPace * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
+    if (!Definition || bSwamped) return 0.f;
+    // Under sail: the class base speed, raised by the best drawing sail (owner, October 18), as the wind allows.
+    const float UnderSail = Definition->TopSpeed * GetSailSpeedCap() * GetWindFactor() * GetLoadSpeedFactor();
+    // Paddlers set their own pace whatever the wind; a raft with a sail set goes as fast as either.
+    if (Definition->bPaddled) return FMath::Max(Definition->TopSpeed * SailFractionForState(SailState) * GetLoadSpeedFactor(), UnderSail);
+    return UnderSail;
 }
 
 void AEWShip::SimulateSailing(float DeltaSeconds)
@@ -2465,6 +2496,8 @@ void AEWShip::StepSimulation(float Step)
     RudderAngle = FMath::FInterpConstantTo(RudderAngle, Rudder, Step, RudderRate);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
+    // Owner, October 18: with every sail down (and no paddle stroke) she stops at once and holds her place: no drift, no coasting.
+    if (GetSailSpeedCap() <= 0.f && (!Definition->bPaddled || SailState == EEWSailState::Furled)) Speed = 0.f;
     if (bAnchored && ChainReach > 0.f)
     {
         // The chain's pull: free while there is slack, slowing her over the last of it, holding her once taut.
@@ -2495,9 +2528,13 @@ void AEWShip::StepSimulation(float Step)
     const float SailSet = GetSailFraction();
     const float WantedHeel = HasTrimmableSails() && !bAnchored
         ? MaxHeel * SwayScale() * SailSet * GetFittedSailFraction() * GetWindFactor() * (SailAngle >= 0.f ? 1.f : -1.f) : 0.f;
-    Heel = FMath::FInterpConstantTo(Heel, WantedHeel, Step, 2.f);
+    // A drawing weighted sail steadies her (delegated tuning).
+    const float Steady = IsWeightedSailDrawing() ? 1.f - WeightedSailDamping : 1.f;
+    Heel = FMath::FInterpConstantTo(Heel, WantedHeel * Steady, Step, 2.f);
     float Roll, Pitch, Rise;
     GetSwayAt(SwayTime, Roll, Pitch, Rise);
+    Roll = Heel + (Roll - Heel) * Steady;
+    Pitch *= Steady;
     Pitch -= 1.5f * ChainJerk * FMath::Sin(ChainJerk * PI);   // the bow dips as the chain snubs her up
     const float Yaw = GetActorRotation().Yaw;
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.

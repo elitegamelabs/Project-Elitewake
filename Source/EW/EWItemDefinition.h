@@ -157,6 +157,13 @@ public:
     /** Sails only: the mount size this sail fits. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     EEWSailSize FittingSailSize = EEWSailSize::None;
+    /** Sails only (owner, October 18): the whole-ship speed multiplier this sail gives at full deployment while it draws: small 1.30,
+     *  medium 1.50, large 1.80; weighted small 1.25, medium 1.40, large 1.70. Sails do not stack: the best one counts. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
+    float SailSpeedMultiplier = 1.f;
+    /** Sails only: a weighted sail (a weighted hem) steadies the ship in the wind (delegated, October 18: 10% more roll and pitch damping). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    bool bWeightedSail = false;
     /** Railing modules only: how many cannon places the module opens behind it (0 plain or dinghy, 2 two-cannon). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
     int32 FittingCannonSlots = 0;

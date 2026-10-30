@@ -227,6 +227,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Anchor")
     FVector GetAnchorPointWorld() const;
     /** Authority only. Raises or drops the anchor; anyone able to act may work the capstan. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
     bool SetAnchored(AEWCharacter* Character, bool bNewAnchored);
     /** Tuning: how hard a dropped anchor slows the ship, in cm/s per second. */
     static constexpr float AnchorDrag = 500.f;
@@ -424,9 +425,17 @@ public:
 
     /** Simulation and handling tuning. */
     static constexpr float SimulationStep = .05f;
-    /** Owner, October 16: sailing from island to island took too long, so every sailing ship goes this much faster
-     *  than its definition's top speed (the paddled raft keeps its pace). Tuning. */
-    static constexpr float SailingPace = 1.6f;
+    /** Owner, October 18 (superseding the October 16 pace-up): a ship's definition TopSpeed is its class base speed (raft 3, sloop 8,
+     *  schooner 10, brigantine 12, Cavalier 14 knots; the dinghy 5 is a delegated choice). The sails raise it by the best drawing sail's
+     *  deployment times its multiplier (UEWItemDefinition::SailSpeedMultiplier): a cap, not stacked per hardpoint. */
+    static constexpr float CmPerSecondPerKnot = 51.4444f;
+    /** The best drawing sail's deployment times its multiplier (0 with every sail down), and whether that sail is weighted. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSailSpeedCap() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    bool IsWeightedSailDrawing() const;
+    /** Delegated tuning (October 18): a drawing weighted sail damps roll and pitch by this share. */
+    static constexpr float WeightedSailDamping = .1f;
     static constexpr float MaxCatchUpSeconds = .5f;
     static constexpr float Acceleration = 240.f;   // was 150 before the faster crossings (owner, October 16)
     static constexpr float Deceleration = 250.f;

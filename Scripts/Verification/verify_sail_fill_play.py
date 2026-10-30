@@ -19,6 +19,9 @@ RESULT = Path(unreal.Paths.project_saved_dir(), 'SailFillPlayResult.json')
 SHOTS = Path(unreal.Paths.project_saved_dir(), 'Screenshots', 'SailFill')
 SHOTS.mkdir(parents=True, exist_ok=True)
 world = next(w for w in lib.get_play_worlds())
+# Crew dependency (owner, October 18): the helm sets only sails with a hired sailhand, so every ship here is crewed first.
+for _s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip):
+    _s.crew_every_sail()
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
 owner = pc.get_controlled_pawn()
 ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)

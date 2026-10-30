@@ -226,7 +226,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
     TestTrue(TEXT("Full sails load against the anchor chain"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * (2.f / 3.f)
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * MediumSail->SailSpeedMultiplier
             * UEWWindSubsystem::MinUpwindFactor, 1.f));
     // Trim: the sails swing with the helmsman's held direction, at a fixed rate, within their limits.
     TestFalse(TEXT("Others cannot trim"), A->SetSailTrim(Other, 1));
@@ -270,8 +270,8 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Raise anchor on A"), A->SetAnchored(C, false));
     TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
     TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
-    TestTrue(TEXT("Downwind target includes the crossing pace and fitted sail"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * 2.f / 3.f, 1.f));
+    TestTrue(TEXT("Downwind target is the base speed times the best sail's multiplier (owner, October 18)"),
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * MediumSail->SailSpeedMultiplier, 1.f));
 
     // Leaving the helm keeps the sails set; the ship sails on.
     TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));

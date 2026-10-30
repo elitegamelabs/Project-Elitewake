@@ -309,7 +309,7 @@ def update_definition(hull, rig, looks, capstan):
         'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         'lantern_lights': [unreal.Vector(*p) for p in LIGHTS],
         # Crew: the twelve cannons' crews plus the player and the Surgeon. Speed, turning and hold are tuning.
-        'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 800.0, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
+        'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 10 * 51.4444, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
         'mounts': mounts,
     }
     for k, v in values.items():
