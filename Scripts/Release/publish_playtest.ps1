@@ -37,7 +37,8 @@ $revision = $info.sourceRevision
 Private test build for friends of the developer. Not a release: placeholder art, sounds and balance; things will break.
 
 ## Install
-1. Download every file of this release (one zip, or numbered parts: download them all and open the .001 part with 7-Zip).
+1. Download every file of this release. If it comes in numbered parts (.001, .002...), put them in one folder and double-click
+   **Combine-parts.bat** (or open the .001 part with 7-Zip) to get the zip.
 2. Unzip into a folder of its own (keep everything together).
 3. If Windows says a runtime is missing, run ``Windows\Engine\Extras\Redist\en-us\vc_redist.x64.exe`` once.
 4. Start the game with **Play Elitewake.bat** (or ``Windows\EW.exe``). Windows may warn that the program is unsigned: More info, Run anyway.
@@ -97,6 +98,20 @@ else {
         }
     } finally { $stream.Dispose() }
     Remove-Item -LiteralPath $zip
+    # A one-click way to put the parts back together, for anyone without 7-Zip.
+    $leaf = Split-Path -Leaf $zip
+    $joined = ($assets | ForEach-Object { '"' + (Split-Path -Leaf $_) + '"' }) -join '+'
+    $combine = Join-Path $outDir 'Combine-parts.bat'
+    Set-Content -LiteralPath $combine -Encoding ascii -Value @"
+@echo off
+rem Puts the downloaded parts back into one zip (keep this file beside them), then unzip $leaf.
+cd /d "%~dp0"
+copy /b $joined "$leaf"
+echo.
+echo Done: $leaf - now right-click it, Extract All.
+pause
+"@
+    $assets += $combine
 }
 
 # Notes: what changed since the last published build.
