@@ -31,7 +31,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 
 ## Decisions I made (owner may change)
 
-- **Ships are slower now.** The October 18 base speeds replace the October 16 pace-up (1.6x): a fully rigged sloop running before the wind tops out near 12 knots instead of about 22. If crossings feel too long again, the base speeds (or a pace multiplier) are one number per class.
+- **Ship speed:** the October 18 class base speeds and sail multipliers, times a crossing pace of 1.6 (owner, October 30: "bring back faster" after the plain October 18 speeds; `AEWShip::CrossingPace`, one number). A fully rigged sloop running before the wind tops out near 19 knots (about 22 before October 30); the raft paddles at 250 cm/s as before.
 - The dinghy's base speed is 5 knots (it is not in the owner's table).
 
 - Sailhand fee 100 Copper; sell prices per item; crew master and merchant stand on each Port plaza. All tuning.

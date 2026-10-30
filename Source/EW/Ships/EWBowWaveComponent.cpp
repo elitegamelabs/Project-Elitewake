@@ -68,7 +68,7 @@ void UEWBowWaveComponent::TickComponent(float DeltaSeconds, ELevelTick TickType,
     LastYaw = Yaw;
     bHasYaw = true;
     TurnRate = FMath::FInterpTo(TurnRate, Turn, DeltaSeconds, Follow);
-    const float Top = S->Definition && S->Definition->TopSpeed > 0.f ? S->Definition->TopSpeed * 1.8f : 1000.f;   // the best sail's multiplier
+    const float Top = S->Definition && S->Definition->TopSpeed > 0.f ? S->Definition->TopSpeed * AEWShip::CrossingPace * 1.8f : 1000.f;   // the pace and the best sail's multiplier
     const float Way = S->IsSinking() ? 0.f : FMath::Clamp(S->GetSpeed() / Top, 0.f, 1.f);
     // Turning to starboard throws the wash out to port, the outside of the turn, and the other way about.
     const float Lean = FMath::Clamp(TurnRate / HardTurn, -1.f, 1.f) * TurnShift;

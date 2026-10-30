@@ -2393,9 +2393,9 @@ float AEWShip::ComputeTargetSpeed() const
     // At anchor the sails still drive her: the chain, not the anchor, stops her (StepSimulation).
     if (!Definition || bSwamped) return 0.f;
     // Under sail: the class base speed, raised by the best drawing sail (owner, October 18), as the wind allows.
-    const float UnderSail = Definition->TopSpeed * GetSailSpeedCap() * GetWindFactor() * GetLoadSpeedFactor();
+    const float UnderSail = Definition->TopSpeed * CrossingPace * GetSailSpeedCap() * GetWindFactor() * GetLoadSpeedFactor();
     // Paddlers set their own pace whatever the wind; a raft with a sail set goes as fast as either.
-    if (Definition->bPaddled) return FMath::Max(Definition->TopSpeed * SailFractionForState(SailState) * GetLoadSpeedFactor(), UnderSail);
+    if (Definition->bPaddled) return FMath::Max(Definition->TopSpeed * CrossingPace * SailFractionForState(SailState) * GetLoadSpeedFactor(), UnderSail);
     return UnderSail;
 }
 

@@ -429,6 +429,9 @@ public:
      *  schooner 10, brigantine 12, Cavalier 14 knots; the dinghy 5 is a delegated choice). The sails raise it by the best drawing sail's
      *  deployment times its multiplier (UEWItemDefinition::SailSpeedMultiplier): a cap, not stacked per hardpoint. */
     static constexpr float CmPerSecondPerKnot = 51.4444f;
+    /** Owner, October 30 ("bring back faster"): crossings at the October 18 speeds were too slow, so every ship, under sail or paddles,
+     *  goes this much faster than its class base speed, as the October 16 pace-up did. The class ratios and sail multipliers stand. */
+    static constexpr float CrossingPace = 1.6f;
     /** The best drawing sail's deployment times its multiplier (0 with every sail down), and whether that sail is weighted. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
     float GetSailSpeedCap() const;

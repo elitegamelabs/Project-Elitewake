@@ -226,7 +226,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
     TestTrue(TEXT("Full sails load against the anchor chain"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * MediumSail->SailSpeedMultiplier
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * MediumSail->SailSpeedMultiplier
             * UEWWindSubsystem::MinUpwindFactor, 1.f));
     // Trim: the sails swing with the helmsman's held direction, at a fixed rate, within their limits.
     TestFalse(TEXT("Others cannot trim"), A->SetSailTrim(Other, 1));
@@ -271,7 +271,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
     TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
     TestTrue(TEXT("Downwind target is the base speed times the best sail's multiplier (owner, October 18)"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * MediumSail->SailSpeedMultiplier, 1.f));
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * MediumSail->SailSpeedMultiplier, 1.f));
 
     // Leaving the helm keeps the sails set; the ship sails on.
     TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));
@@ -600,9 +600,9 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Raise the anchor"), Ship->SetAnchored(C, false));
     TestEqual(TEXT("Resting paddles do not move the raft"), Ship->ComputeTargetSpeed(), 0.f);
     TestTrue(TEXT("Easy stroke"), Ship->StepSails(C, 1));
-    TestEqual(TEXT("An easy stroke is half speed without any sail"), Ship->ComputeTargetSpeed(), Def->TopSpeed * .5f);
+    TestTrue(TEXT("An easy stroke is half speed without any sail (at the crossing pace)"), FMath::IsNearlyEqual(Ship->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * .5f, .01f));
     TestTrue(TEXT("Hard stroke"), Ship->StepSails(C, 1));
-    TestEqual(TEXT("A hard stroke is full speed"), Ship->ComputeTargetSpeed(), Def->TopSpeed);
+    TestTrue(TEXT("A hard stroke is full speed (at the crossing pace)"), FMath::IsNearlyEqual(Ship->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace, .01f));
     const FVector Start = Ship->GetActorLocation();
     for (int32 i = 0; i < 20; ++i) Ship->SimulateSailing(.1f);
     TestTrue(TEXT("Paddling moves the raft"), FVector::Dist(Start, Ship->GetActorLocation()) > 50.f);

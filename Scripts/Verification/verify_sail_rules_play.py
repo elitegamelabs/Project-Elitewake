@@ -6,7 +6,7 @@ choices). One player, /Game/Elitewake/Maps/Test/Lvl_ShipsTest:
   - with every sail lowered she stops at once and holds her place;
   - the dinghy under a full weighted small sail heads for 5 x 1.25, and the weighted sail steadies her;
   - the raft, paddled, takes a Small sail at its hardpoint and goes as fast as the better of her sail and her paddles.
-Speeds are the ship's own target, with the wind's share and the load as they are at the time. Writes Saved/SailRulesPlayResult.json."""
+Every speed is the class base x the crossing pace (1.6, owner October 30). Speeds are the ship's own target, with the wind's share and the load as they are at the time. Writes Saved/SailRulesPlayResult.json."""
 import json
 import time
 from pathlib import Path
@@ -18,6 +18,7 @@ world = lib.get_play_worlds()[0]
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
 pawn = pc.get_controlled_pawn()
 KNOT = 51.4444
+PACE = 1.6   # AEWShip::CrossingPace (owner, October 30: bring back faster)
 ITEMS = '/Game/Elitewake/Items'
 report = {'checks': [], 'speeds': {}}
 state = {'phase': 'start', 'at': time.monotonic() + 12, 'handle': None}
@@ -45,7 +46,7 @@ def item(path):
 
 
 def expect(ship, knots, cap):
-    return knots * KNOT * cap * ship.get_wind_factor() * ship.get_load_speed_factor()
+    return knots * KNOT * PACE * cap * ship.get_wind_factor() * ship.get_load_speed_factor()
 
 
 def near(a, b, tol=2.0):
@@ -135,7 +136,7 @@ def tick(delta):
             for _ in range(4):
                 raft.step_sails(pawn, 1)
             paddling = raft.compute_target_speed()
-            want = 3 * KNOT * raft.get_load_speed_factor()
+            want = 3 * KNOT * PACE * raft.get_load_speed_factor()
             report['speeds']['raft, hard stroke, sail down'] = paddling
             check('a hard stroke with the sail down: 3 knots', near(paddling, want), target=paddling, want=want)
             raft.leave_helm(pawn, True)
