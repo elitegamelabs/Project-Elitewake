@@ -4,9 +4,11 @@ client exe for multiplayer to that repo so I can add my friends to it and they c
   1. Packages a Windows Development build with Scripts/Verification/build_private_windows.ps1 (title screen, character creator, the
      coastal world; F10 hosts or joins a game over UDP port 7777), unless -ArchiveDirectory names one already built.
   2. Adds PLAYTEST_README.md (install, host, join, router port) to the build.
-  3. Zips it; a zip over GitHub's 2 GB asset limit is split into numbered parts.
-  4. Creates a release on the playtest repository (private), tagged with the build label, its notes the source revision and the
-     commits since the last published build. The newest release is marked latest, so friends always download from the top.
+  3. Zips the game only: no source code ever goes to the playtest repository (owner, October 30), and the zip leaves out the debug
+     symbols (*.pdb) and the build's internal reports (asset listings, build info, test notes). A zip over GitHub's 2 GB asset limit is
+     split into numbered parts with Combine-parts.bat beside them.
+  4. Creates a release on the playtest repository (private), tagged with the build label, with plain notes (no commits, no code
+     references). The newest release is marked latest, so friends always download from the top.
 
 Needs: gh signed in with access to the repository; Unreal Editor and EW closed while packaging; 15 GB free.
     powershell -NoProfile -File Scripts/Release/publish_playtest.ps1
@@ -64,8 +66,6 @@ Progress in a hosted game is not saved yet. When the host leaves, everyone is di
 WASD move, Space jump, Left Shift sprint, C crouch/prone, E interact (press to talk, hold for fittings and the anchor), Left Mouse attack,
 1-8 hotbar, I inventory and journal, M map, F10 host/join. At a cannon: mouse aims, Left Mouse fires, Right Mouse marks a target.
 Testing keys: Shift+1..5 jump to a region, Shift+6 to the nearest Port (Saltreach Freeport is the starting hub).
-
-Source revision: $revision
 "@ | Set-Content -LiteralPath (Join-Path $archive 'PLAYTEST_README.md') -Encoding utf8
 
 # Zip the whole build (bsdtar writes zip); split it if it is over GitHub's per-file limit.
@@ -74,7 +74,10 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $zip = Join-Path $outDir "Elitewake-Playtest-$label.zip"
 if (Test-Path -LiteralPath $zip) { throw "$zip already exists; publish a new build instead of overwriting one." }
 # Windows' own tar (bsdtar, which writes zip), not a Unix tar that may come first on the PATH.
-& (Join-Path $env:SystemRoot 'System32/tar.exe') -a -c -f $zip -C $archive .
+# The game only: no debug symbols, no internal build reports (owner: no source code or code details in the playtest repository).
+$exclude = @('*.pdb', 'StarterContainerListing.csv', 'CookedStarterContentResult.json', 'PrivateBuildInfo.json', 'PrerequisitesResult.json', 'TEST_NOTES.md')
+$excludeArgs = @($exclude | ForEach-Object { '--exclude'; $_ })
+& (Join-Path $env:SystemRoot 'System32/tar.exe') -a -c -f $zip @excludeArgs -C $archive .
 if ($LASTEXITCODE -ne 0) { throw 'Zipping the build failed; nothing was published.' }
 $limit = 1900MB
 $assets = @()
@@ -114,22 +117,13 @@ pause
     $assets += $combine
 }
 
-# Notes: what changed since the last published build.
-$previous = (& gh release list --repo $Repo --limit 1 --json tagName --jq '.[0].tagName' 2>$null)
-$since = ''
-if ($previous) {
-    $prevRev = (& gh release view $previous --repo $Repo --json body --jq '.body' 2>$null | Select-String -Pattern 'Source revision: ([0-9a-f]{40})').Matches.Groups[1].Value
-    if ($prevRev) { $since = "$prevRev..$revision" }
-}
-$log = if ($since) { & git -C $projectRoot log --format='- %s' $since } else { & git -C $projectRoot log --format='- %s' -15 $revision }
+# Plain notes: no commit list, no code references (owner, October 30).
 $notesFile = Join-Path $outDir 'notes.md'
 @"
-Playtest build **$label** (Windows, Development). Download every file, unzip, read PLAYTEST_README.md inside: install, host (forward UDP 7777), join (F10).
+Playtest build **$label** (Windows). Download every file, combine the parts if there are several (Combine-parts.bat), unzip, and read
+PLAYTEST_README.md inside: install, hosting (forward UDP 7777) and joining (F10, Join Game with the host's address).
 
-What changed:
-$($log -join "`n")
-
-Source revision: $revision
+Everyone in a game needs this same build. This release replaces the earlier ones.
 "@ | Set-Content -LiteralPath $notesFile -Encoding utf8
 
 & gh release create $label @assets --repo $Repo --title "Playtest $label" --notes-file $notesFile --latest
