@@ -1,4 +1,5 @@
 #include "EWGameInstance.h"
+#include "Misc/SecureHash.h"
 #include "EWPlayerController.h"
 #include "Characters/EWAppearanceSave.h"
 #include "EWCharacter.h"
@@ -55,6 +56,11 @@ bool UEWGameInstance::NormalizePrivateAddress(const FString& Input, FString& Out
     Output=FString::Printf(TEXT("%d.%d.%d.%d:%d"),Values[0],Values[1],Values[2],Values[3],GamePort);
     return true;
 }
+FString UEWGameInstance::StablePlayerId()
+{
+    return FMD5::HashAnsiString(*(FPlatformMisc::GetLoginId() + TEXT("|") + FPlatformProcess::UserName()));
+}
+
 void UEWGameInstance::SetChosenAppearance(const FEWAppearance& Appearance)
 {
     ChosenAppearance = Appearance;
@@ -129,7 +135,8 @@ bool UEWGameInstance::JoinLocalGame(const FString& Address)
     bJoinedHost=false;
     bHasConnectionError=false; bPending=true; bShowMenuOnArrival=true;
     Status=NSLOCTEXT("Elitewake","SessionJoining","Connecting... Use Leave / Cancel to return to local play.");
-    Controller->ClientTravel(Target,TRAVEL_Absolute); return true;
+    // Who this is, so the host gives back this player's survivor when they come again.
+    Controller->ClientTravel(Target+TEXT("?EWId=")+StablePlayerId(),TRAVEL_Absolute); return true;
 }
 bool UEWGameInstance::LeaveLocalGame()
 {

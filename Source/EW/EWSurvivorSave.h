@@ -25,9 +25,10 @@ class EW_API UEWSurvivorSave : public USaveGame
 public:
     static inline const TCHAR* Slot = TEXT("Survivor");
 
-    /** Authority only: writes Survivor to the save slot. */
+    /** Authority only: writes Survivor to the save slot; without the world (a hosted game's player: the server keeps the world itself),
+     *  only the survivor. */
     UFUNCTION(BlueprintCallable, Category="Save")
-    static bool SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName = TEXT("Survivor"));
+    static bool SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName = TEXT("Survivor"), bool bWithWorld = true);
     UFUNCTION(BlueprintPure, Category="Save")
     static bool HasSave(const FString& SlotName = TEXT("Survivor"));
     UFUNCTION(BlueprintCallable, Category="Save")

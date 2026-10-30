@@ -23,7 +23,7 @@ namespace
     }
 }
 
-bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName)
+bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName, bool bWithWorld)
 {
     if (!Survivor || !Survivor->HasAuthority()) return false;
     // Not while dead (it would resume dead), nor while carried by something that is not in the save (a ship, a ladder, a mount):
@@ -60,11 +60,14 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
                 for (int32 i = 0; i < Cells.Num(); ++i) if (Cells[i]) Save->ExploredBits[i >> 3] |= uint8(1 << (i & 7));
                 Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
             }
-    AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
-    AEWShip::CaptureAll(Survivor->GetWorld(), Save->Ships);
-    Save->bHasShips = true;
-    UEWWorldStateSubsystem::Capture(Survivor->GetWorld(), Save->WorldState);
-    Save->bHasWorldState = true;
+    if (bWithWorld)
+    {
+        AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
+        AEWShip::CaptureAll(Survivor->GetWorld(), Save->Ships);
+        Save->bHasShips = true;
+        UEWWorldStateSubsystem::Capture(Survivor->GetWorld(), Save->WorldState);
+        Save->bHasWorldState = true;
+    }
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
