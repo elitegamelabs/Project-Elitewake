@@ -27,7 +27,10 @@ struct FEWDialogueOption
  * The choices are worked out from replicated state on each side; choosing one asks the server, which checks it again, acts and
  * answers with a line. Subclasses add their trade (merchant, crew recruiter, shipwright, tavern keeper, harbor master).
  * The figure is the engine's mannequin playing a looping idle or walk until the owner's character art; a person with stroll
- * points walks them in a loop, pausing at each, worked out from the server's clock so every screen agrees without replication.
+ * points walks them in a loop, pausing at each, worked out from the server's clock so every screen agrees. A walker stops while a
+ * survivor stands in the way (never walking through them) and while being talked to; anyone talked to turns to face the survivor.
+ * The server keeps how long a walker has been held up (StrollDelay, and when the current hold began), replicated, so every screen
+ * stops and starts them at the same moments.
  */
 UCLASS()
 class EW_API AEWTownsfolk : public AActor, public IEWInteractable
@@ -69,6 +72,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Townsfolk|Stroll", meta=(ClampMin="0")) float StrollPause = 5.f;
 
     UFUNCTION(BlueprintPure, Category="Townsfolk") bool IsWalking() const { return bWalking; }
+    /** Stopped on their round: someone in the way, or being talked to. */
+    UFUNCTION(BlueprintPure, Category="Townsfolk") bool IsHeld() const { return HoldStartedAt >= 0.0; }
+    /** The survivor they are talking with (they face them), or none. */
+    UFUNCTION(BlueprintPure, Category="Townsfolk") AEWCharacter* GetTalkingWith() const { return TalkingWith; }
+    /** Tuning: how near ahead (cm) a survivor stops a walker; how long (s) a conversation holds them after the last choice. */
+    static constexpr float BlockReach = 140.f;
+    static constexpr float TalkHoldSeconds = 20.f;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     static constexpr float TalkReach = 450.f;
 
 protected:
@@ -86,6 +97,14 @@ protected:
 
 private:
     void PlayFigure(bool bWalk);
+    double ServerNow() const;
+    void StartTalk(AEWCharacter* Character);
+    /** Seconds the stroll has been held up so far (finished holds), and when the current hold began (-1: walking). */
+    UPROPERTY(Replicated) float StrollDelay = 0.f;
+    UPROPERTY(Replicated) double HoldStartedAt = -1.0;
+    UPROPERTY(Replicated) TObjectPtr<AEWCharacter> TalkingWith;
+    double TalkUntil = 0.0;
+    float HomeYaw = 0.f;
     bool bWalking = false;
     bool bFigureStarted = false;
     int32 NextSmallTalk = 0;

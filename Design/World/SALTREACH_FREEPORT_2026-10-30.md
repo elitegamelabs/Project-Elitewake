@@ -51,12 +51,15 @@ are placeholders for the owner to edit.
 | Elias Thorne | Master Shipwright | Head of the slipway | Sells a raft (120), dinghy (400) and sloop (2,500), launched fitted out at the slipway; repairs the nearest damaged ship in the harbor (hull, holes, water) priced by damage. |
 | Captain Ines Calder | Harbor Master | Harbor office porch | Brings your ship to a free berth that takes her length; clears her for departure to the harbor mouth with you aboard; tells the harbor rules. |
 | notice board | — | Town square | The posted jobs and directions to every service. |
+| (everyone named) | | | Turns to face whoever talks to them; walkers stop while talked to. |
 | Pell, Hask, Ondine, Wat, Rosa, Abe, Corrie | dock workers, fisher, townsfolk, shipwright's hand, watchwoman | Walking rounds (piers, wharf, jetty, square, market, yard) | A word when spoken to. |
 | Silas, Nan, Ibbie, Mack | patrons, sailor | Tavern, veranda, wharf | A word when spoken to. |
 
 Prices (Copper) and stock are tuning. Hats and the flag are the existing test items.
 
 ## Safe harbor (`AEWSafeZone`)
+
+The HUD announces it under the region banner on the way in ("Saltreach Freeport · a free port: no fighting, no building, no beasts") and on the way out.
 
 Inside the zone: no survivor can hurt another (fists; round shot strikes and splashes but holes no ship); Build Mode refuses every
 spot ("A free port: nobody may build here."); no hostile creature lives there (one placed inside is removed when play starts) and a
@@ -74,10 +77,9 @@ hunting creature drops the chase at the edge. The boundary is invisible to playe
 
 - All art is placeholder: buildings, props and boats are editor-built shapes on the project's timber texture; townsfolk are the
   engine mannequin painted with plain clothes (no faces, hair or real clothing); no NPC sounds, no ambient town audio.
-- Townsfolk walk fixed loops with no avoidance (a survivor standing in the way is walked through); nobody sits.
+- Townsfolk walk fixed loops; they stop for a survivor in the way (and walk on when the way is clear) but do not step round them; nobody sits.
 - Quests are delivery jobs only; no quest log, chains or story quests. Rumours are fixed text.
 - Ships have no owner, so services act on the nearest ship; towing is instant (no pilot boats).
 - No buying in quantity, no regional prices, merchant stock is not saved.
 - Hired sailors' names do not go aboard with them; crew are not saved (ships are not saved).
 - The terrain was not reshaped; the slipway's top crosses the terrace's seawall.
-- The safe zone has no on-screen notice when entering or leaving it.

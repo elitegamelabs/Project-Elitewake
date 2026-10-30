@@ -14,12 +14,12 @@
 namespace
 {
 // Dark weathered timber with brass lettering: a waterfront signboard, not a menu.
-const FLinearColor Panel(.055f, .04f, .028f, .94f);
-const FLinearColor Brass(.93f, .74f, .38f);
-const FLinearColor Speech(.92f, .88f, .8f);
-const FLinearColor Faded(.5f, .46f, .4f);
+const FLinearColor DialoguePanel(.055f, .04f, .028f, .94f);
+const FLinearColor DialogueBrass(.93f, .74f, .38f);
+const FLinearColor DialogueSpeech(.92f, .88f, .8f);
+const FLinearColor DialogueFaded(.5f, .46f, .4f);
 
-UTextBlock* MakeText(UWidgetTree* Tree, const FText& Value, int32 Size, const FLinearColor& Colour, bool bBold = false)
+UTextBlock* MakeDialogueText(UWidgetTree* Tree, const FText& Value, int32 Size, const FLinearColor& Colour, bool bBold = false)
 {
     auto* T = Tree->ConstructWidget<UTextBlock>();
     T->SetText(Value); T->SetAutoWrapText(true); T->SetColorAndOpacity(FSlateColor(Colour));
@@ -37,7 +37,7 @@ TSharedRef<SWidget> UEWDialogueWidget::RebuildWidget()
     auto* Canvas = WidgetTree->ConstructWidget<UCanvasPanel>();
     WidgetTree->RootWidget = Canvas;
     auto* Frame = WidgetTree->ConstructWidget<UBorder>();
-    Frame->SetBrushColor(Panel);
+    Frame->SetBrushColor(DialoguePanel);
     Frame->SetPadding(FMargin(34, 24, 34, 24));
     auto* FrameSlot = Canvas->AddChildToCanvas(Frame);
     // Low and centred, clear of the crosshair, wide enough for a long line of goods.
@@ -47,19 +47,19 @@ TSharedRef<SWidget> UEWDialogueWidget::RebuildWidget()
     FrameSlot->SetAutoSize(true);
     auto* Column = WidgetTree->ConstructWidget<UVerticalBox>();
     Frame->SetContent(Column);
-    NameText = MakeText(WidgetTree, FText::GetEmpty(), 22, Brass, true);
+    NameText = MakeDialogueText(WidgetTree, FText::GetEmpty(), 22, DialogueBrass, true);
     NameText->SetAutoWrapText(false);
     Column->AddChildToVerticalBox(NameText)->SetPadding(FMargin(0, 0, 0, 6));
     auto* Rule = WidgetTree->ConstructWidget<UBorder>();
-    Rule->SetBrushColor(FLinearColor(Brass.R, Brass.G, Brass.B, .4f));
+    Rule->SetBrushColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .4f));
     Rule->SetPadding(FMargin(380, 1));
     Column->AddChildToVerticalBox(Rule)->SetPadding(FMargin(0, 0, 0, 12));
-    LineText = MakeText(WidgetTree, FText::GetEmpty(), 17, Speech);
+    LineText = MakeDialogueText(WidgetTree, FText::GetEmpty(), 17, DialogueSpeech);
     LineText->SetWrapTextAt(760.f);
     Column->AddChildToVerticalBox(LineText)->SetPadding(FMargin(0, 0, 0, 16));
     OptionList = WidgetTree->ConstructWidget<UVerticalBox>();
     Column->AddChildToVerticalBox(OptionList);
-    Column->AddChildToVerticalBox(MakeText(WidgetTree, NSLOCTEXT("Elitewake", "DialogueLeave", "Leave: Esc / E / B"), 12, Faded))->SetPadding(FMargin(0, 12, 0, 0));
+    Column->AddChildToVerticalBox(MakeDialogueText(WidgetTree, NSLOCTEXT("Elitewake", "DialogueLeave", "Leave: Esc / E / B"), 12, DialogueFaded))->SetPadding(FMargin(0, 12, 0, 0));
     return Super::RebuildWidget();
 }
 
@@ -111,11 +111,11 @@ void UEWDialogueWidget::RefreshOptions()
         Button->OnRecipePressed.AddDynamic(this, &UEWDialogueWidget::OnOptionPressed);
         FButtonStyle Flat = Button->GetStyle();
         Flat.Normal.TintColor = FSlateColor(FLinearColor(0.f, 0.f, 0.f, 0.f));
-        Flat.Hovered.TintColor = FSlateColor(FLinearColor(Brass.R, Brass.G, Brass.B, .16f));
-        Flat.Pressed.TintColor = FSlateColor(FLinearColor(Brass.R, Brass.G, Brass.B, .3f));
+        Flat.Hovered.TintColor = FSlateColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .16f));
+        Flat.Pressed.TintColor = FSlateColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .3f));
         Flat.Disabled.TintColor = Flat.Normal.TintColor;
         Button->SetStyle(Flat);
-        Button->SetContent(MakeText(WidgetTree, FText::FromString(Labels[Index]), 16, Options[Index].bEnabled ? Speech : Faded));
+        Button->SetContent(MakeDialogueText(WidgetTree, FText::FromString(Labels[Index]), 16, Options[Index].bEnabled ? DialogueSpeech : DialogueFaded));
         Button->SetIsEnabled(Options[Index].bEnabled);
         OptionList->AddChildToVerticalBox(Button)->SetPadding(FMargin(0, 1));
         Buttons.Add(Button);

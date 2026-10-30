@@ -52,8 +52,15 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> RegionBanner;
     float BannerSeconds = 0.f;
     int32 ShownRegion = -1;
+    /** Entering or leaving a free port (AEWSafeZone): its name and rules under the region banner, fading. */
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> ZoneBanner;
+    float ZoneSeconds = 0.f;
+    float ZoneCheck = 0.f;
+    FString ShownZone;
+    bool bZoneKnown = false;
 public:
     /** The climate line and the region last announced, as shown, for the checks. */
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedClimate() const;
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedRegionBanner() const;
+    UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedZoneBanner() const;
 };

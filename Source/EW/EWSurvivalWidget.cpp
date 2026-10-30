@@ -17,6 +17,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "World/EWClimateRegion.h"
+#include "World/EWSafeZone.h"
 
 namespace
 {
@@ -107,6 +108,17 @@ void UEWSurvivalWidget::BuildWidgetTree()
         auto* BannerSlot = Canvas->AddChildToCanvas(RegionBanner);
         BannerSlot->SetAnchors(FAnchors(.5f,0.f)); BannerSlot->SetAlignment(FVector2D(.5f,0.f)); BannerSlot->SetAutoSize(true);
         BannerSlot->SetOffsets(FMargin(0,90,0,0));
+    }
+    ZoneBanner = WidgetTree->ConstructWidget<UTextBlock>();
+    {
+        auto Font = ZoneBanner->GetFont(); Font.Size = 18; Font.LetterSpacing = 120; ZoneBanner->SetFont(Font);
+        ZoneBanner->SetJustification(ETextJustify::Center);
+        ZoneBanner->SetColorAndOpacity(FSlateColor(FLinearColor(.95f, .82f, .5f)));
+        ZoneBanner->SetShadowOffset(FVector2D(2,2)); ZoneBanner->SetShadowColorAndOpacity(FLinearColor(0,0,0,.7f));
+        auto* ZoneSlot = Canvas->AddChildToCanvas(ZoneBanner);
+        ZoneSlot->SetAnchors(FAnchors(.5f,0.f)); ZoneSlot->SetAlignment(FVector2D(.5f,0.f)); ZoneSlot->SetAutoSize(true);
+        ZoneSlot->SetOffsets(FMargin(0,142,0,0));
+        ZoneBanner->SetRenderOpacity(0.f);
     }
     auto* Notices = WidgetTree->ConstructWidget<UVerticalBox>();
     NoticePanel=Notices;
@@ -220,6 +232,36 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         }
         BannerSeconds = FMath::Max(0.f, BannerSeconds - DeltaTime);
         RegionBanner->SetRenderOpacity(FMath::Clamp(BannerSeconds / 1.2f, 0.f, 1.f));
+        // A free port's bounds, checked twice a second: announced on the way in and on the way out.
+        if ((ZoneCheck -= DeltaTime) <= 0.f)
+        {
+            ZoneCheck = .5f;
+            const APawn* Me = GetOwningPlayerPawn();
+            const AEWSafeZone* Zone = Me ? AEWSafeZone::FindAt(this, Me->GetActorLocation()) : nullptr;
+            const FString Name = Zone ? Zone->ZoneName.ToString() : FString();
+            if (Me && (!bZoneKnown || Name != ShownZone))
+            {
+                if (Zone)
+                {
+                    TArray<FString> Rules;
+                    if (Zone->bNoPvP) Rules.Add(TEXT("no fighting"));
+                    if (Zone->bNoBuilding) Rules.Add(TEXT("no building"));
+                    if (Zone->bNoHostiles) Rules.Add(TEXT("no beasts"));
+                    ZoneBanner->SetText(FText::Format(NSLOCTEXT("Elitewake", "ZoneEnter", "{0}  ·  a free port: {1}"), Zone->ZoneName,
+                        FText::FromString(FString::Join(Rules, TEXT(", ")))));
+                    ZoneSeconds = 6.f;
+                }
+                else if (bZoneKnown)
+                {
+                    ZoneBanner->SetText(FText::Format(NSLOCTEXT("Elitewake", "ZoneLeave", "Leaving {0}  ·  the open sea's rules"), FText::FromString(ShownZone)));
+                    ZoneSeconds = 4.f;
+                }
+                ShownZone = Name;
+                bZoneKnown = true;
+            }
+        }
+        ZoneSeconds = FMath::Max(0.f, ZoneSeconds - DeltaTime);
+        ZoneBanner->SetRenderOpacity(FMath::Clamp(ZoneSeconds / 1.2f, 0.f, 1.f));
     }
     const bool Overweight=Survival->GetCarriedWeight()>Survival->GetMaxCarryWeight();
     Warnings[3]->SetText(Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
@@ -255,6 +297,11 @@ FText UEWSurvivalWidget::GetDisplayedClimate() const
 {
     return ClimateLine ? ClimateLine->GetText() : FText::GetEmpty();
 }
+FText UEWSurvivalWidget::GetDisplayedZoneBanner() const
+{
+    return ZoneBanner && ZoneSeconds > 0.f ? ZoneBanner->GetText() : FText::GetEmpty();
+}
+
 FText UEWSurvivalWidget::GetDisplayedRegionBanner() const
 {
     return RegionBanner && BannerSeconds > 0.f ? RegionBanner->GetText() : FText::GetEmpty();

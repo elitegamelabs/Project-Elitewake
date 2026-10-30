@@ -8,6 +8,8 @@
 #include "Engine/World.h"
 #include "GameFramework/GameStateBase.h"
 #include "Materials/MaterialInterface.h"
+#include "EngineUtils.h"
+#include "Net/UnrealNetwork.h"
 
 AEWTownsfolk::AEWTownsfolk()
 {
@@ -35,9 +37,32 @@ AEWTownsfolk::AEWTownsfolk()
     Figure->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
 }
 
+void AEWTownsfolk::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AEWTownsfolk, StrollDelay);
+    DOREPLIFETIME(AEWTownsfolk, HoldStartedAt);
+    DOREPLIFETIME(AEWTownsfolk, TalkingWith);
+}
+
+double AEWTownsfolk::ServerNow() const
+{
+    const AGameStateBase* State = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+    return State ? State->GetServerWorldTimeSeconds() : (GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0);
+}
+
+void AEWTownsfolk::StartTalk(AEWCharacter* Character)
+{
+    if (!HasAuthority()) return;
+    TalkingWith = Character;
+    TalkUntil = ServerNow() + TalkHoldSeconds;
+    ForceNetUpdate();
+}
+
 void AEWTownsfolk::BeginPlay()
 {
     Super::BeginPlay();
+    HomeYaw = GetActorRotation().Yaw;
     if (FigureMesh)
     {
         Figure->SetSkeletalMesh(FigureMesh);
@@ -55,8 +80,9 @@ void AEWTownsfolk::BeginPlay()
             LegStart.Add(LoopSeconds);
             LoopSeconds += StrollPause + FVector::Dist(StrollPoints[Index], StrollPoints[(Index + 1) % StrollPoints.Num()]) / StrollSpeed;
         }
-        SetActorTickEnabled(true);
     }
+    // Walkers walk; anyone who talks turns to face whoever talks to them.
+    SetActorTickEnabled(StrollPoints.Num() >= 2 || HasDialogue());
 }
 
 bool AEWTownsfolk::StrollPose(double Time, FVector& OutWhere, float& OutYaw) const
@@ -84,11 +110,57 @@ bool AEWTownsfolk::StrollPose(double Time, FVector& OutWhere, float& OutYaw) con
 void AEWTownsfolk::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    const AGameStateBase* State = GetWorld() ? GetWorld()->GetGameState() : nullptr;
-    const double Now = State ? State->GetServerWorldTimeSeconds() : GetWorld()->GetTimeSeconds();
-    FVector Where; float Yaw = 0.f;
-    const bool bNowWalking = StrollPose(Now, Where, Yaw);
-    SetActorLocationAndRotation(Where, FRotator(0.f, FMath::FixedTurn(GetActorRotation().Yaw, Yaw, 240.f * DeltaSeconds), 0.f));
+    const double Now = ServerNow();
+    const bool bStrolls = !LegStart.IsEmpty() && LoopSeconds > 0.f;
+    if (HasAuthority())
+    {
+        // A conversation ends when the survivor walks off, falls, or has said nothing for a while.
+        if (TalkingWith && (!IsValid(TalkingWith) || TalkingWith->IsDead() || Now > TalkUntil
+            || FVector::Dist(TalkingWith->GetActorLocation(), GetActorLocation()) > TalkReach + 150.f))
+        {
+            TalkingWith = nullptr;
+            ForceNetUpdate();
+        }
+        bool bHold = TalkingWith != nullptr;
+        if (!bHold && bStrolls)
+        {
+            // Someone just ahead on the way: wait for them to move rather than walk through them.
+            FVector Next; float NextYaw = 0.f;
+            const double Ahead = Now - StrollDelay - (IsHeld() ? Now - HoldStartedAt : 0.0) + .4;
+            if (StrollPose(Ahead, Next, NextYaw))
+            {
+                const FVector Heading = (Next - GetActorLocation()).GetSafeNormal2D();
+                for (TActorIterator<AEWCharacter> It(GetWorld()); It && !bHold; ++It)
+                {
+                    const FVector To = It->GetActorLocation() - GetActorLocation();
+                    bHold = !It->IsDead() && FMath::Abs(To.Z) < 200.f && To.Size2D() < BlockReach && FVector::DotProduct(To.GetSafeNormal2D(), Heading) > .3f;
+                }
+            }
+        }
+        if (bHold && !IsHeld())
+        {
+            HoldStartedAt = Now;
+            ForceNetUpdate();
+        }
+        else if (!bHold && IsHeld())
+        {
+            StrollDelay += float(Now - HoldStartedAt);
+            HoldStartedAt = -1.0;
+            ForceNetUpdate();
+        }
+    }
+    // Every screen works out the same pose from the server's clock less the time held up.
+    bool bNowWalking = false;
+    float Yaw = HomeYaw;
+    if (bStrolls)
+    {
+        FVector Where;
+        const double StrollTime = IsHeld() ? HoldStartedAt - StrollDelay : Now - StrollDelay;
+        bNowWalking = StrollPose(StrollTime, Where, Yaw) && !IsHeld();
+        SetActorLocation(Where);
+    }
+    if (IsValid(TalkingWith) && FigureMesh) Yaw = (TalkingWith->GetActorLocation() - GetActorLocation()).GetSafeNormal2D().Rotation().Yaw;
+    SetActorRotation(FRotator(0.f, FMath::FixedTurn(GetActorRotation().Yaw, Yaw, 240.f * DeltaSeconds), 0.f));
     if (bNowWalking != bWalking || !bFigureStarted) PlayFigure(bNowWalking);
 }
 
@@ -125,6 +197,7 @@ bool AEWTownsfolk::Interact_Implementation(AEWCharacter* Character)
     if (!HasAuthority() || !HasDialogue() || !IsInReach(Character)) return false;
     auto* Controller = Cast<AEWPlayerController>(Character->GetController());
     if (!Controller) return false;
+    StartTalk(Character);
     Controller->ClientOpenDialogue(this);
     return true;
 }
@@ -150,6 +223,7 @@ FText AEWTownsfolk::ChooseDialogue(AEWCharacter* Character, FName Key)
     if (!IsInReach(Character)) return NSLOCTEXT("Elitewake", "TownsfolkFar", "You are too far away.");
     const FEWDialogueOption* Option = GetDialogueOptionsFor(Character).FindByPredicate([Key](const FEWDialogueOption& O) { return O.Key == Key; });
     if (!Option) return FText::GetEmpty();
+    StartTalk(Character);
     if (!Option->bEnabled) return NSLOCTEXT("Elitewake", "TownsfolkNotNow", "That is not open to you now.");
     if (Key == FName(TEXT("Chat")))
     {

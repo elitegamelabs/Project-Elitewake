@@ -7,8 +7,10 @@ choices through the window's server request:
   - The notice board: the posted jobs.
   - Elias Thorne, shipwright: buys a raft, launched at the slipway; holed, she is repaired whole.
   - Captain Ines Calder, harbor master: brings the raft in to a berth, then clears her for departure with the client set aboard.
+  - Whoever is talked to faces the client (seen on both sides); a walker on the long pier stops while the client stands in the way,
+    and walks on when they step aside.
   - The safe zone: a punch between the two players does nothing inside the town and hurts outside it; Build Mode refuses a spot in
-    the town; no hostile creature lives inside it.
+    the town; no hostile creature lives inside it; the client's HUD announces leaving the Freeport and entering it again.
 Writes Saved/FreeportMultiplayerPlayResult.json."""
 import json
 import math
@@ -88,6 +90,17 @@ def choose(npc, key):
     assert lib.send_verification_dialogue_choice(client, peer(npc), key)
 
 
+def hud():
+    return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world, unreal.EWSurvivalWidget, False)
+                if w.get_owning_player() == client)
+
+
+def faces(npc, who):
+    to = who.get_actor_location() - npc.get_actor_location()
+    yaw = unreal.MathLibrary.make_rot_from_x(unreal.Vector(to.x, to.y, 0)).yaw
+    return abs(((npc.get_actor_rotation().yaw - yaw) + 180) % 360 - 180)
+
+
 def at(a, c, z):
     x, y = port.world(a, c)
     return unreal.Vector(x, y, z)
@@ -98,6 +111,9 @@ def talks():
     shot0 = {}
     return [
         ('Marta Vell', 230, [
+            (None, lambda: check('Marta knows who she is talking to, on both sides, and faces them',
+                                 person('Marta Vell').get_talking_with() == state['owner'] and peer(person('Marta Vell')).get_talking_with() == client.get_controlled_pawn()
+                                 and faces(person('Marta Vell'), state['owner']) < 30, yaw_off=faces(person('Marta Vell'), state['owner']))),
             ('Buy0', lambda: check('Marta sells a bundle of five round shot for 50 Copper', count('Testing/DA_TestRoundShot') == 5 and copper() == 950,
                                    shot=count('Testing/DA_TestRoundShot'), copper=copper()))]),
         ('Oskar Brann', 230, [
@@ -171,7 +187,7 @@ def tick(delta):
             state.update(phase='next', at=time.monotonic() + .5)
         elif p == 'next':
             if not state['queue']:
-                state.update(phase='safe', at=time.monotonic() + .5)
+                state.update(phase='walker', at=time.monotonic() + .5, tries=0)
                 return
             name, dist, steps = state['queue'].pop(0)
             state.update(npc=person(name), dist=dist, steps=steps, tries=0)
@@ -216,6 +232,38 @@ def tick(delta):
             if after:
                 after()
             state['at'] = time.monotonic() + .3
+        elif p == 'walker':
+            if client.is_dialogue_open():
+                lib.send_verification_ui_key(client, 'Escape')
+            pell = person('Pell')
+            state['pell'] = pell
+            if not pell.is_walking() and state['tries'] < 60:
+                state['tries'] += 1
+                state['at'] = time.monotonic() + .5
+                return
+            check('Pell walks his round on the long pier', pell.is_walking())
+            loc, fwd = pell.get_actor_location(), pell.get_actor_forward_vector()
+            state['owner'].teleport(unreal.Vector(loc.x + fwd.x * 110, loc.y + fwd.y * 110, loc.z + 100), unreal.Rotator())
+            state.update(phase='walker_blocked', at=time.monotonic() + 2.5, pell_at=None)
+        elif p == 'walker_blocked':
+            pell = state['pell']
+            if state['pell_at'] is None:
+                state.update(pell_at=pell.get_actor_location(), at=time.monotonic() + 1.5)
+                return
+            moved = (pell.get_actor_location() - state['pell_at']).length()
+            check('a survivor in the way stops him (no walking through them)', pell.is_held() and not pell.is_walking() and moved < 5, moved=moved,
+                  gap=(pell.get_actor_location() - state['owner'].get_actor_location()).length())
+            check('the client sees him stopped', peer(pell).is_held())
+            x, y = port.world(2000, 0)
+            state['owner'].teleport(unreal.Vector(x, y, T.PORT_LEVEL + 110), unreal.Rotator())
+            state.update(phase='walker_free', at=time.monotonic() + 3.0, pell_at=pell.get_actor_location())
+        elif p == 'walker_free':
+            pell = state['pell']
+            moved = (pell.get_actor_location() - state['pell_at']).length()
+            check('with the way clear he walks on', not pell.is_held() and moved > 100, moved=moved)
+            check('the client sees him walk on', not peer(pell).is_held() and (peer(pell).get_actor_location() - pell.get_actor_location()).length() < 60,
+                  apart=(peer(pell).get_actor_location() - pell.get_actor_location()).length())
+            state.update(phase='safe', at=time.monotonic() + .5)
         elif p == 'safe':
             if client.is_dialogue_open():
                 lib.send_verification_ui_key(client, 'Escape')
@@ -260,6 +308,14 @@ def tick(delta):
                        if a.get_editor_property('definition') and a.get_editor_property('definition').get_editor_property('aggressive')
                        and unreal.EWSafeZone.keeps_hostiles_out(server_world, a.get_actor_location())]
             check('no hostile creature lives inside the Freeport', not hostile, found=[a.get_name() for a in hostile])
+            report['leave_banner'] = str(hud().get_displayed_zone_banner())
+            check('the HUD tells the client they have left the Freeport', 'Leaving Saltreach Freeport' in report['leave_banner'], banner=report['leave_banner'])
+            state['owner'].teleport(at(-600, 1200, T.PORT_LEVEL + 110), unreal.Rotator())
+            state.update(phase='back_in', at=time.monotonic() + 2.0)
+        elif p == 'back_in':
+            report['enter_banner'] = str(hud().get_displayed_zone_banner())
+            check('and that they are back in it, with its rules', 'Saltreach Freeport' in report['enter_banner'] and 'no fighting' in report['enter_banner'],
+                  banner=report['enter_banner'])
             finish()
     except Exception as error:
         import traceback
