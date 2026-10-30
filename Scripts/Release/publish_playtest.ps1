@@ -60,7 +60,8 @@ Everyone needs the **same build** (the label above; F10 shows it in game).
 3. **Leave / Cancel** in the same menu goes back to playing alone.
 
 On the same home network use the host's LAN address (like ``192.168.1.20``) instead; on the same PC, ``127.0.0.1``.
-Progress in a hosted game is not saved yet. When the host leaves, everyone is disconnected.
+The host keeps each player's survivor (pack, purse, where they stood) and gives it back when they join again from the same PC.
+When the host leaves, everyone is disconnected.
 
 ## Controls
 WASD move, Space jump, Left Shift sprint, C crouch/prone, E interact (press to talk, hold for fittings and the anchor), Left Mouse attack,
@@ -75,7 +76,7 @@ $zip = Join-Path $outDir "Elitewake-Playtest-$label.zip"
 if (Test-Path -LiteralPath $zip) { throw "$zip already exists; publish a new build instead of overwriting one." }
 # Windows' own tar (bsdtar, which writes zip), not a Unix tar that may come first on the PATH.
 # The game only: no debug symbols, no internal build reports (owner: no source code or code details in the playtest repository).
-$exclude = @('*.pdb', 'StarterContainerListing.csv', 'CookedStarterContentResult.json', 'PrivateBuildInfo.json', 'PrerequisitesResult.json', 'TEST_NOTES.md')
+$exclude = @('*.pdb', 'Manifest_DebugFiles_*.txt', 'StarterContainerListing.csv', 'CookedStarterContentResult.json', 'PrivateBuildInfo.json', 'PrerequisitesResult.json', 'TEST_NOTES.md')
 $excludeArgs = @($exclude | ForEach-Object { '--exclude'; $_ })
 & (Join-Path $env:SystemRoot 'System32/tar.exe') -a -c -f $zip @excludeArgs -C $archive .
 if ($LASTEXITCODE -ne 0) { throw 'Zipping the build failed; nothing was published.' }
