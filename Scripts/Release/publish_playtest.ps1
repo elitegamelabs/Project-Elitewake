@@ -72,7 +72,8 @@ $outDir = Join-Path $projectRoot "Saved/PlaytestReleases/$label"
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 $zip = Join-Path $outDir "Elitewake-Playtest-$label.zip"
 if (Test-Path -LiteralPath $zip) { throw "$zip already exists; publish a new build instead of overwriting one." }
-& tar.exe -a -c -f $zip -C $archive .
+# Windows' own tar (bsdtar, which writes zip), not a Unix tar that may come first on the PATH.
+& (Join-Path $env:SystemRoot 'System32/tar.exe') -a -c -f $zip -C $archive .
 if ($LASTEXITCODE -ne 0) { throw 'Zipping the build failed; nothing was published.' }
 $limit = 1900MB
 $assets = @()
