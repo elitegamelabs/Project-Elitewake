@@ -2,6 +2,7 @@
 
 
 #include "EWPlayerController.h"
+#include "EWCrewMaster.h"
 #include "Misc/App.h"
 #include "WaterBodyActor.h"
 #include "EngineUtils.h"
@@ -446,11 +447,13 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
     if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
         && BuildComponent->HandleKey(Params)) return true;
 #if !UE_BUILD_SHIPPING
-    // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24). Compiled out of shipping builds.
+    // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24), Shift + 6 to the nearest Port (owner, October 30).
+    // Compiled out of shipping builds.
     if (Params.Event==IE_Pressed && (IsInputKeyDown(EKeys::LeftShift) || IsInputKeyDown(EKeys::RightShift)))
     {
         static const FKey RegionKeys[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five};
         for (int32 i=0; i<5; ++i) if (Params.Key==RegionKeys[i]) { ServerDebugTeleportToRegion(i); return true; }
+        if (Params.Key==EKeys::Six) { ServerDebugTeleportToPort(); return true; }
     }
 #endif
     if (bMapOpen)
@@ -614,6 +617,28 @@ void AEWPlayerController::ServerDebugTeleportToRegion_Implementation(int32 Regio
         if (bFound) break;
     }
     Survivor->TeleportTo(Spot, Survivor->GetActorRotation(), false, true);
+#endif
+}
+
+void AEWPlayerController::ServerDebugTeleportToPort_Implementation()
+{
+#if !UE_BUILD_SHIPPING
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || Survivor->IsDead() || !GetWorld()) return;
+    // The nearest Port's general merchant (not a crew master): stand on the plaza in front of them, facing them.
+    const AEWMerchant* Nearest = nullptr;
+    for (TActorIterator<AEWMerchant> It(GetWorld()); It; ++It)
+    {
+        if (It->IsA<AEWCrewMaster>()) continue;
+        if (!Nearest || FVector::DistSquared(It->GetActorLocation(), Survivor->GetActorLocation())
+            < FVector::DistSquared(Nearest->GetActorLocation(), Survivor->GetActorLocation())) Nearest = *It;
+    }
+    if (!Nearest) return;
+    const FVector Spot = Nearest->GetActorLocation() + Nearest->GetActorForwardVector() * 220.f + FVector(0.f, 0.f, 110.f);
+    const FRotator Facing(0.f, (-Nearest->GetActorForwardVector()).Rotation().Yaw, 0.f);
+    Survivor->TeleportTo(Spot, Facing, false, true);
+    SetControlRotation(Facing);
+    ClientSetRotation(Facing);
 #endif
 }
 

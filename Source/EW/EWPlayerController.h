@@ -114,6 +114,9 @@ public:
     /** Testing only (owner, October 24): Shift + 1 to 5 carries the survivor to Plains, Jungle, Desert, Swamp or Winter. Does nothing in a shipping build. */
     UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToRegion(int32 RegionIndex) { ServerDebugTeleportToRegion(RegionIndex); }
     UFUNCTION(Server, Reliable) void ServerDebugTeleportToRegion(int32 RegionIndex);
+    /** Testing only (owner, October 30): Shift + 6 carries the survivor to the nearest Port, in front of its merchant. Does nothing in a shipping build. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToPort() { ServerDebugTeleportToPort(); }
+    UFUNCTION(Server, Reliable) void ServerDebugTeleportToPort();
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
     UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
