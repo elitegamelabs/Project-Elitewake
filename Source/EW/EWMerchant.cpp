@@ -254,6 +254,7 @@ void AEWMerchant::GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDi
                 FText::FromString(UEWWalletComponent::Format(Price)), FText::AsNumber(GetStockLeft(Index)));
         Out.Add({FName(*FString::Printf(TEXT("Buy%d"), Index)), Label, GetStockLeft(Index) > 0 && Purse && Purse->CanAfford(Price)});
     }
+    if (!bBuysPack) return;
     int32 Items = 0; int64 Copper = 0;
     Appraise(Character, Items, Copper);
     Out.Add({FName(TEXT("SellAll")), Items > 0
@@ -263,7 +264,7 @@ void AEWMerchant::GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDi
 
 FText AEWMerchant::ActOnDialogue(AEWCharacter* Character, FName Key)
 {
-    if (Key == FName(TEXT("SellAll")))
+    if (Key == FName(TEXT("SellAll")) && bBuysPack)
     {
         const int64 Earned = SellAll(Character);
         return Earned > 0 ? FText::Format(NSLOCTEXT("Elitewake", "MerchantSold", "A fair lot. {0} for the lot."), FText::FromString(UEWWalletComponent::Format(Earned)))

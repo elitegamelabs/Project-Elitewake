@@ -5,7 +5,8 @@ choices through the window's server request:
   - Gideon Rusk, recruiter: the roster of named sailors is seen on both sides; signing the first puts their articles in the pack.
   - Bess Harrow, tavern keeper: a rumour, a drink that slakes thirst, and a delivery job paid on handing in raw fish.
   - The notice board: the posted jobs.
-  - Elias Thorne, shipwright: buys a raft, launched at the slipway; holed, she is repaired whole.
+  - Elias Thorne, shipwright: sells a weighted small sail, then a raft launched at the slipway with paddles and a small sail; holed, she
+    is repaired whole.
   - Captain Ines Calder, harbor master: brings the raft in to a berth, then clears her for departure with the client set aboard.
   - Whoever is talked to faces the client (seen on both sides); a walker on the long pier stops while the client stands in the way,
     and walks on when they step aside.
@@ -114,11 +115,11 @@ def talks():
             (None, lambda: check('Marta knows who she is talking to, on both sides, and faces them',
                                  person('Marta Vell').get_talking_with() == state['owner'] and peer(person('Marta Vell')).get_talking_with() == client.get_controlled_pawn()
                                  and faces(person('Marta Vell'), state['owner']) < 30, yaw_off=faces(person('Marta Vell'), state['owner']))),
-            ('Buy0', lambda: check('Marta sells a bundle of five round shot for 50 Copper', count('Testing/DA_TestRoundShot') == 5 and copper() == 950,
+            ('Buy0', lambda: check('Marta sells a bundle of five round shot for 50 Copper', count('Testing/DA_TestRoundShot') == 5 and copper() == 1150,
                                    shot=count('Testing/DA_TestRoundShot'), copper=copper()))]),
         ('Oskar Brann', 230, [
             (None, lambda: state['owner'].get_inventory_component().add_item(item('Testing/DA_TestWood'), 10)),
-            ('SellAll', lambda: check('Oskar buys the wood', count('Testing/DA_TestWood') == 0 and copper() == 950 + 10 * item('Testing/DA_TestWood').get_editor_property('sell_value_copper'),
+            ('SellAll', lambda: check('Oskar buys the wood', count('Testing/DA_TestWood') == 0 and copper() == 1150 + 10 * item('Testing/DA_TestWood').get_editor_property('sell_value_copper'),
                                       copper=copper()))]),
         ('Lucia Fane', 230, [
             (None, lambda: shot0.update(c=copper())),
@@ -142,8 +143,11 @@ def talks():
                                    reply=client.get_last_dialogue_reply()))]),
         ('Elias Thorne', 220, [
             (None, lambda: shot0.update(ships=len(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)), c=copper())),
-            ('Ship0', lambda: check('Elias launches a raft at the slipway for 120 Copper',
-                                    len(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)) == shot0['ships'] + 1 and copper() == shot0['c'] - 120,
+            ('Buy3', lambda: check('Elias sells a weighted small sail for 180 Copper', count('Ships/DA_SailSmallWeighted') == 1 and copper() == shot0['c'] - 180,
+                                   copper=copper())),
+            (None, lambda: shot0.update(c=copper())),
+            ('Ship0', lambda: check('Elias launches a raft at the slipway for 180 Copper',
+                                    len(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)) == shot0['ships'] + 1 and copper() == shot0['c'] - 180,
                                     copper=copper(), reply=client.get_last_dialogue_reply())),
             (None, lambda: hole_the_raft()),
             ('Repair', lambda: check('Elias repairs the holed raft', state['raft'].get_hull_health() >= state['raft'].get_max_hull_health() - .01
@@ -163,7 +167,7 @@ def hole_the_raft():
     raft = min(ships, key=lambda s: (s.get_actor_location() - launch).length())
     state['raft'] = raft
     check('the new raft lies at the slipway', (raft.get_actor_location() - launch).length() < 300 and str(raft.get_editor_property('definition').get_editor_property('ship_id')) == 'Raft')
-    check('she is fitted out', bool(raft.get_fitting('Helm')))
+    check('she is fitted out, paddles and a small sail', bool(raft.get_fitting('Helm')) and bool(raft.get_fitting('Sail')))
     loc = raft.get_actor_location()
     raft.take_round_shot(unreal.Vector(loc.x, loc.y, loc.z + 30), unreal.Vector(0, 0, 1), None)
     check('a round shot holes her', raft.get_hole_count() == 1 and raft.get_hull_health() < raft.get_max_hull_health())
@@ -178,7 +182,7 @@ def tick(delta):
             owner = next(c for c in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if pid(c) == pid(client.get_controlled_pawn()))
             state['owner'] = owner
             state['other'] = host.get_controlled_pawn()
-            owner.get_wallet_component().set_copper(1000)
+            owner.get_wallet_component().set_copper(1200)
             names = [str(a.get_editor_property('npc_name')) for a in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWTownsfolk) if str(a.get_editor_property('npc_name'))]
             report['people'] = names
             for name in ('Marta Vell', 'Oskar Brann', 'Lucia Fane', 'Gideon Rusk', 'Bess Harrow', 'Elias Thorne', 'Captain Ines Calder', 'notice board'):

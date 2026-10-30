@@ -526,7 +526,7 @@ def build_people(stalls, placed, ship_class):
                     ('Oak for the frames, pine for the planks, pitch for everything.', 'Never trust a ship that does not creak.'),
                     'm', clothes('Shipwright', SKIN[5], (.5, .45, .34), (.22, .17, .11), hair=(.35, .3, .26), sash=(.3, .2, .1)))
     sales = []
-    for ship, price, fit in (('Raft', 120, ('Ships/DA_RaftPaddles', 'Ships/DA_RaftSteeringOar')),
+    for ship, price, fit in (('Raft', 180, ('Ships/DA_RaftPaddles', 'Testing/DA_TestSailSmall')),
                              ('Dinghy', 400, ('Ships/DA_DinghyTiller', 'Testing/DA_TestSailSmall')),
                              ('Sloop', 2500, ('Testing/DA_TestShipHelm', 'Testing/DA_TestSailMedium', 'Testing/DA_TestSailSmall'))):
         definition = unreal.load_asset(f'/Game/Elitewake/Ships/DA_Ship_{ship}')
@@ -549,6 +549,14 @@ def build_people(stalls, placed, ship_class):
         sales.append(sale)
         report.setdefault('ships_for_sale', []).append({ship: [str(x) for x in mounts]})
     wright.set_editor_property('ships_for_sale', sales)
+    # His fittings: the six sail assemblies (owner, October 18: standard and weighted, small to large) and cannons. Prices are tuning.
+    wright.set_editor_property('goods', [goods('Testing/DA_TestSailSmall', 1, 150, 3), goods('Testing/DA_TestSailMedium', 1, 300, 2),
+                                         goods('Testing/DA_TestSailLarge', 1, 500, 2), goods('Ships/DA_SailSmallWeighted', 1, 180, 3),
+                                         goods('Ships/DA_SailMediumWeighted', 1, 350, 2), goods('Ships/DA_SailLargeWeighted', 1, 600, 2),
+                                         goods('Testing/DA_TestCannon', 1, 250, 4)])
+    wright.set_editor_property('build_stall', False)
+    wright.set_editor_property('buys_pack', False)
+    wright.set_editor_property('restock_seconds', 600.0)
     wright.set_editor_property('ship_class', ship_class)
     wright.set_editor_property('launch_point', transform(7500, -1500, SEA, 0))
     # The tavern keeper behind the bar.

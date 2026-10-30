@@ -48,7 +48,7 @@ are placeholders for the owner to edit.
 | Lucia Fane | Outfitter (cosmetics) | Outfitter stall | Sells two hats and white colours. |
 | Gideon Rusk | Crew Recruiter | Hiring office porch | A roster of six named sailors and gunners (fee, a word about each); signing one gives their articles. One more arrives every 4 minutes. |
 | Bess Harrow | Keeper of the Salt Lantern | Behind the bar | Rumours (one after another), a drink (5 Copper, slakes thirst), five repeatable delivery jobs paid on hand-in. |
-| Elias Thorne | Master Shipwright | Head of the slipway | Sells a raft (120), dinghy (400) and sloop (2,500), launched fitted out at the slipway; repairs the nearest damaged ship in the harbor (hull, holes, water) priced by damage. |
+| Elias Thorne | Master Shipwright | Head of the slipway | Sells the six sail assemblies (standard 150/300/500, weighted 180/350/600) and cannons (250); sells a raft (180, with a small sail), dinghy (400) and sloop (2,500), launched fitted out at the slipway; repairs the nearest damaged ship in the harbor (hull, holes, water) priced by damage. |
 | Captain Ines Calder | Harbor Master | Harbor office porch | Brings your ship to a free berth that takes her length; clears her for departure to the harbor mouth with you aboard; tells the harbor rules. |
 | notice board | — | Town square | The posted jobs and directions to every service. |
 | (everyone named) | | | Turns to face whoever talks to them; walkers stop while talked to. |

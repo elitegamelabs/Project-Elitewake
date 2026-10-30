@@ -86,6 +86,8 @@ bool AEWShipwright::RepairShip(AEWCharacter* Character)
 
 void AEWShipwright::GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const
 {
+    // His fittings for sale first (as a merchant's goods), then the ships and the repair.
+    Super::GetDialogueOptions(Character, Out);
     const UEWWalletComponent* Purse = IsValid(Character) ? Character->GetWalletComponent() : nullptr;
     const bool bSlip = IsSlipClear();
     for (int32 Index = 0; Index < ShipsForSale.Num(); ++Index)
@@ -108,6 +110,7 @@ void AEWShipwright::GetDialogueOptions(const AEWCharacter* Character, TArray<FEW
 
 FText AEWShipwright::ActOnDialogue(AEWCharacter* Character, FName Key)
 {
+    if (const FText Sold = Super::ActOnDialogue(Character, Key); !Sold.IsEmpty()) return Sold;
     if (Key == FName(TEXT("Repair")))
         return RepairShip(Character) ? NSLOCTEXT("Elitewake", "ShipwrightRepaired", "Caulked, patched and pumped dry. She is sound again.")
                                      : NSLOCTEXT("Elitewake", "ShipwrightNoRepair", "Nothing my yard can do for you just now.");

@@ -1,6 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "EWTownsfolk.h"
+#include "EWMerchant.h"
 #include "EWFreeportServices.generated.h"
 
 class AEWShip;
@@ -21,11 +21,12 @@ struct FEWShipForSale
 /**
  * The Freeport's shipwright (owner, October 30: purchase, repair and prepare ships). In the dialogue window: buy a hull, launched at
  * the yard's slipway with its fittings, anchored and ready (refused while another ship blocks the slip); or repair the damaged ship
- * nearest the survivor in the harbor (full hull, holes patched, water out) for Copper by the hull health missing. Ships have no
- * owner yet, so "your ship" is the one nearest you. Prices and the repair rate are placeholders for tuning.
+ * nearest the survivor in the harbor (full hull, holes patched, water out) for Copper by the hull health missing. He also sells
+ * fittings like a merchant (Goods: the six sail assemblies and cannons at the Freeport), but buys nothing. Ships have no owner yet, so
+ * "your ship" is the one nearest you. Prices and the repair rate are placeholders for tuning.
  */
 UCLASS()
-class EW_API AEWShipwright : public AEWTownsfolk
+class EW_API AEWShipwright : public AEWMerchant
 {
     GENERATED_BODY()
 public:

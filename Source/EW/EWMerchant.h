@@ -60,6 +60,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="Merchant") void Restock();
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant") TArray<FEWMerchantGoods> Goods;
+    /** False for a trader who sells but does not buy the pack (the shipwright). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant") bool bBuysPack = true;
     /** False when the merchant stands in a built stall (the Freeport's) and needs no placeholder counter of crates. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant") bool bBuildStall = true;
     /** Tuning: seconds between restocks. */
