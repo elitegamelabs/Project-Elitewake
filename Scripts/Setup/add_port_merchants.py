@@ -1,4 +1,4 @@
-"""Port general merchants, crew masters and placeholder sell values (design reference, Economy; Milestones "Port general merchant",
+"""Port general merchants (with goods to buy), crew masters and placeholder sell values (design reference, Economy; Milestones "Port general merchant",
 "Sail control and crew dependency"). Sets SellValueCopper on the pack resources (every number is TUNING, TBD owner), makes the
 Sailhand's Articles item, and places one AEWMerchant and one AEWCrewMaster on each Port's plaza.
 Safe to run again. Run in the editor outside Play:
@@ -21,8 +21,24 @@ SELL = {  # placeholder prices in Copper per unit (500 Copper = 1 Silver)
     'Resources/DA_Coal': 6, 'Resources/DA_Ruby': 60, 'Resources/DA_Sapphire': 60, 'Resources/DA_Emerald': 60, 'Resources/DA_Obsidian': 30,
     'Food/DA_RawMeat': 5, 'Food/DA_RawFish': 4, 'Food/DA_CookedMeat': 8, 'Food/DA_CookedFish': 7, 'Food/DA_MedicinalHerb': 10,
 }
+GOODS = [  # what every Port merchant stocks: (item, units per purchase, Copper per purchase, purchases held); all TUNING, TBD owner
+    ('Testing/DA_TestRoundShot', 5, 50, 6),
+    ('Testing/DA_TestRepairKit', 1, 60, 4),
+    ('Food/DA_CookedFish', 1, 15, 8),
+    ('Food/DA_MedicinalHerb', 1, 25, 5),
+    ('Testing/DA_TestHideWaterFlask', 1, 40, 3),
+]
 
 
+def goods(path, bundle, price, stock):
+    line = unreal.EWMerchantGoods()
+    item = unreal.load_asset(f'{ITEMS}/{path}')
+    assert item, path
+    line.set_editor_property('item', item)
+    line.set_editor_property('bundle', bundle)
+    line.set_editor_property('price_copper', price)
+    line.set_editor_property('max_stock', stock)
+    return line
 
 
 def make_articles(name, flag, text):
@@ -65,6 +81,8 @@ def main():
         merchant = actors.spawn_actor_from_class(unreal.EWMerchant, unreal.Vector(x, y, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))
         merchant.set_actor_label(f'Port Merchant {region}')
         merchant.set_folder_path('World/Ports')
+        merchant.set_editor_property('goods', [goods(path, bundle, price, stock) for path, bundle, price, stock in GOODS])
+        merchant.set_editor_property('restock_seconds', 300.0)   # tuning
         cx, cy = port.world(400, -250)
         crew = actors.spawn_actor_from_class(unreal.EWCrewMaster, unreal.Vector(cx, cy, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))
         crew.set_actor_label(f'Port Crew Master {region}')

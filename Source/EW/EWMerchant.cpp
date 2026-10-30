@@ -5,6 +5,8 @@
 #include "EWWalletComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "EWInteractable.h"
+#include "TimerManager.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -47,6 +49,117 @@ void AEWMerchant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AEWMerchant, SalesMade);
+    DOREPLIFETIME(AEWMerchant, StockLeft);
+}
+
+void AEWMerchant::BeginPlay()
+{
+    Super::BeginPlay();
+    BuildStall();
+    if (!HasAuthority() || Goods.IsEmpty()) return;
+    StockLeft.SetNum(Goods.Num());
+    for (int32 Index = 0; Index < Goods.Num(); ++Index) StockLeft[Index] = FMath::Max(1, Goods[Index].MaxStock);
+    GetWorldTimerManager().SetTimer(RestockTimer, this, &AEWMerchant::Restock, FMath::Max(1.f, RestockSeconds), true);
+}
+
+void AEWMerchant::BuildStall()
+{
+    if (Goods.IsEmpty() || Counter) return;
+    UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+    if (!Cube) return;
+    // A plain counter at the merchant's right hand, one crate per goods line on it (placeholders). Crates take aim, so a survivor
+    // picks goods by looking at them; the counter stands clear of the line to the merchant, so selling is aimed as before.
+    constexpr float Spacing = 45.f, Start = 95.f;
+    const float Length = Goods.Num() * Spacing + 20.f;
+    auto MakePart = [&](const TCHAR* Name, const FVector& Location, const FVector& Scale, UStaticMesh* Mesh) {
+        auto* Part = NewObject<UStaticMeshComponent>(this, Name);
+        Part->SetupAttachment(GetRootComponent());
+        Part->SetStaticMesh(Mesh);
+        Part->SetRelativeLocation(Location);
+        Part->SetRelativeScale3D(Scale);
+        Part->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        Part->SetCollisionObjectType(ECC_WorldDynamic);
+        Part->SetCollisionResponseToAllChannels(ECR_Ignore);
+        Part->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+        Part->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+        Part->RegisterComponent();
+        return Part;
+    };
+    Counter = MakePart(TEXT("Counter"), FVector(40, Start - 10.f + Length * .5f, 40), FVector(.55f, Length / 100.f, .8f), Cube);
+    for (int32 Index = 0; Index < Goods.Num(); ++Index)
+    {
+        const FVector Spot(40, Start + Spacing * (Index + .5f), 80 + 16);
+        Crates.Add(MakePart(*FString::Printf(TEXT("GoodsCrate%d"), Index), Spot, FVector(.34f, .34f, .32f), Cube));
+        // The goods themselves on top when the item has a model, shrunk to sit on the crate; looks only.
+        const UEWItemDefinition* Item = Goods[Index].Item;
+        if (UStaticMesh* Model = Item ? Item->HeldMesh.LoadSynchronous() : nullptr)
+        {
+            auto* Show = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("GoodsShow%d"), Index));
+            Show->SetupAttachment(GetRootComponent());
+            Show->SetStaticMesh(Model);
+            const float Extent = FMath::Max(1.f, Model->GetBounds().BoxExtent.GetMax());
+            Show->SetRelativeScale3D(FVector(FMath::Min(1.f, 15.f / Extent)));
+            Show->SetRelativeLocation(Spot + FVector(0, 0, 32));
+            Show->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Show->RegisterComponent();
+        }
+    }
+}
+
+int64 AEWMerchant::GetGoodsPrice(int32 Index) const
+{
+    if (!Goods.IsValidIndex(Index) || !Goods[Index].Item) return 0;
+    const FEWMerchantGoods& Line = Goods[Index];
+    const int64 SellsBackFor = int64(Line.Item->SellValueCopper) * Line.Bundle;
+    return FMath::Max<int64>(Line.PriceCopper, SellsBackFor + 1);
+}
+
+int32 AEWMerchant::FindAimedGoods(const AEWCharacter* Character) const
+{
+    if (Crates.IsEmpty() || !IsValid(Character) || !GetWorld() || !Character->GetController()
+        || Character->GetController()->GetPawn() != Character) return INDEX_NONE;
+    FVector Eye; FRotator Rotation;
+    Character->GetActorEyesViewPoint(Eye, Rotation);
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWMerchantAim), false, Character);
+    FHitResult Hit;
+    if (!GetWorld()->LineTraceSingleByChannel(Hit, Eye, Eye + Rotation.Vector() * FEWInteractionTargeting::Range, ECC_Visibility, Query)
+        || Hit.GetActor() != this) return INDEX_NONE;
+    return Crates.IndexOfByKey(Hit.GetComponent());
+}
+
+FVector AEWMerchant::GetGoodsLocation(int32 Index) const
+{
+    return Crates.IsValidIndex(Index) && Crates[Index] ? Crates[Index]->GetComponentLocation() : GetActorLocation();
+}
+
+bool AEWMerchant::Buy(AEWCharacter* Character, int32 Index)
+{
+    if (!HasAuthority() || !CanInteract_Implementation(Character) || !Goods.IsValidIndex(Index) || !Goods[Index].Item
+        || GetStockLeft(Index) <= 0 || FVector::Dist(Character->GetActorLocation(), GetActorLocation()) > TradeReach) return false;
+    UEWInventoryComponent* Pack = Character->GetInventoryComponent();
+    UEWWalletComponent* Purse = Character->GetWalletComponent();
+    const int64 Price = GetGoodsPrice(Index);
+    if (!Pack || !Purse || !Purse->CanAfford(Price)) return false;
+    const FEWMerchantGoods& Line = Goods[Index];
+    const int32 Added = Pack->AddItem(Line.Item, Line.Bundle);
+    if (Added < Line.Bundle || !Purse->TrySpend(Price))
+    {
+        // Not all of it fits, or the purse came up short: nothing is sold.
+        if (Added > 0) Pack->RemoveItem(Line.Item, Added);
+        return false;
+    }
+    --StockLeft[Index];
+    ForceNetUpdate();
+    return true;
+}
+
+void AEWMerchant::Restock()
+{
+    if (!HasAuthority()) return;
+    bool bChanged = false;
+    for (int32 Index = 0; Index < StockLeft.Num() && Index < Goods.Num(); ++Index)
+        if (StockLeft[Index] < Goods[Index].MaxStock) { ++StockLeft[Index]; bChanged = true; }
+    if (bChanged) ForceNetUpdate();
 }
 
 void AEWMerchant::Appraise(const AEWCharacter* Character, int32& OutItems, int64& OutCopper)
@@ -69,6 +182,19 @@ bool AEWMerchant::CanInteract_Implementation(AEWCharacter* Character) const
 
 FText AEWMerchant::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
+    if (const int32 Index = FindAimedGoods(Character); Goods.IsValidIndex(Index) && Goods[Index].Item)
+    {
+        const FEWMerchantGoods& Line = Goods[Index];
+        const FText Name = Line.Bundle > 1
+            ? FText::Format(NSLOCTEXT("Elitewake", "MerchantBundle", "{0} x{1}"), Line.Item->DisplayName, FText::AsNumber(Line.Bundle))
+            : Line.Item->DisplayName;
+        const FText Price = FText::FromString(UEWWalletComponent::Format(GetGoodsPrice(Index)));
+        if (GetStockLeft(Index) <= 0) return FText::Format(NSLOCTEXT("Elitewake", "MerchantSoldOut", "{0}: sold out"), Name);
+        const UEWWalletComponent* Purse = IsValid(Character) ? Character->GetWalletComponent() : nullptr;
+        if (!Purse || !Purse->CanAfford(GetGoodsPrice(Index)))
+            return FText::Format(NSLOCTEXT("Elitewake", "MerchantTooDear", "{0} costs {1}"), Name, Price);
+        return FText::Format(NSLOCTEXT("Elitewake", "MerchantBuy", "Buy {0} for {1} ({2} left)"), Name, Price, FText::AsNumber(GetStockLeft(Index)));
+    }
     int32 Items = 0; int64 Copper = 0;
     Appraise(Character, Items, Copper);
     if (Items <= 0) return NSLOCTEXT("Elitewake", "MerchantNothing", "Merchant: nothing here I would buy");
@@ -78,6 +204,7 @@ FText AEWMerchant::GetInteractionPrompt_Implementation(AEWCharacter* Character) 
 bool AEWMerchant::Interact_Implementation(AEWCharacter* Character)
 {
     if (!HasAuthority() || !CanInteract_Implementation(Character) || FVector::Dist(Character->GetActorLocation(), GetActorLocation()) > TradeReach) return false;
+    if (const int32 Index = FindAimedGoods(Character); Index != INDEX_NONE) return Buy(Character, Index);
     UEWInventoryComponent* Pack = Character->GetInventoryComponent();
     UEWWalletComponent* Purse = Character->GetWalletComponent();
     if (!Pack || !Purse) return false;
