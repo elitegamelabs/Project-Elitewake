@@ -12,11 +12,7 @@
 
 AEWMerchant::AEWMerchant()
 {
-    PrimaryActorTick.bCanEverTick = false;
-    bReplicates = true;
-    SetNetUpdateFrequency(2.f);
-    auto* Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-    SetRootComponent(Root);
+    USceneComponent* Root = GetRootComponent();
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cylinder(TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
     static ConstructorHelpers::FObjectFinder<UStaticMesh> Cone(TEXT("/Engine/BasicShapes/Cone.Cone"));
@@ -55,6 +51,12 @@ void AEWMerchant::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 void AEWMerchant::BeginPlay()
 {
     Super::BeginPlay();
+    // With a person's figure the placeholder shapes go (the figure's capsule takes aim and blocks instead).
+    if (FigureMesh)
+    {
+        for (UStaticMeshComponent* Part : {Body.Get(), Head.Get(), Hat.Get()}) Part->SetVisibility(false);
+        Body->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
     BuildStall();
     if (!HasAuthority() || Goods.IsEmpty()) return;
     StockLeft.SetNum(Goods.Num());
@@ -64,7 +66,7 @@ void AEWMerchant::BeginPlay()
 
 void AEWMerchant::BuildStall()
 {
-    if (Goods.IsEmpty() || Counter) return;
+    if (!bBuildStall || Goods.IsEmpty() || Counter) return;
     UStaticMesh* Cube = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
     if (!Cube) return;
     // A plain counter at the merchant's right hand, one crate per goods line on it (placeholders). Crates take aim, so a survivor
@@ -195,6 +197,7 @@ FText AEWMerchant::GetInteractionPrompt_Implementation(AEWCharacter* Character) 
             return FText::Format(NSLOCTEXT("Elitewake", "MerchantTooDear", "{0} costs {1}"), Name, Price);
         return FText::Format(NSLOCTEXT("Elitewake", "MerchantBuy", "Buy {0} for {1} ({2} left)"), Name, Price, FText::AsNumber(GetStockLeft(Index)));
     }
+    if (HasDialogue()) return Super::GetInteractionPrompt_Implementation(Character);
     int32 Items = 0; int64 Copper = 0;
     Appraise(Character, Items, Copper);
     if (Items <= 0) return NSLOCTEXT("Elitewake", "MerchantNothing", "Merchant: nothing here I would buy");
@@ -205,9 +208,16 @@ bool AEWMerchant::Interact_Implementation(AEWCharacter* Character)
 {
     if (!HasAuthority() || !CanInteract_Implementation(Character) || FVector::Dist(Character->GetActorLocation(), GetActorLocation()) > TradeReach) return false;
     if (const int32 Index = FindAimedGoods(Character); Index != INDEX_NONE) return Buy(Character, Index);
+    if (HasDialogue()) return Super::Interact_Implementation(Character);
+    return SellAll(Character) > 0;
+}
+
+int64 AEWMerchant::SellAll(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !IsValid(Character) || Character->IsDead() || FVector::Dist(Character->GetActorLocation(), GetActorLocation()) > TradeReach) return 0;
     UEWInventoryComponent* Pack = Character->GetInventoryComponent();
     UEWWalletComponent* Purse = Character->GetWalletComponent();
-    if (!Pack || !Purse) return false;
+    if (!Pack || !Purse) return 0;
     int64 Earned = 0;
     for (const FEWInventoryEntry& Entry : Pack->GetInventoryEntries())          // a copy: removing changes the pack
     {
@@ -215,9 +225,57 @@ bool AEWMerchant::Interact_Implementation(AEWCharacter* Character)
         const int32 Taken = Pack->RemoveItem(Entry.ItemDefinition, Entry.Quantity);
         Earned += int64(Entry.ItemDefinition->SellValueCopper) * Taken;
     }
-    if (Earned <= 0) return false;
+    if (Earned <= 0) return 0;
     Purse->AddCopper(Earned);
     ++SalesMade;
     ForceNetUpdate();
-    return true;
+    return Earned;
+}
+
+FText AEWMerchant::GoodsName(int32 Index) const
+{
+    if (!Goods.IsValidIndex(Index) || !Goods[Index].Item) return FText::GetEmpty();
+    const FEWMerchantGoods& Line = Goods[Index];
+    return Line.Bundle > 1
+        ? FText::Format(NSLOCTEXT("Elitewake", "MerchantBundle", "{0} x{1}"), Line.Item->DisplayName, FText::AsNumber(Line.Bundle))
+        : Line.Item->DisplayName;
+}
+
+void AEWMerchant::GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const
+{
+    const UEWWalletComponent* Purse = IsValid(Character) ? Character->GetWalletComponent() : nullptr;
+    for (int32 Index = 0; Index < Goods.Num(); ++Index)
+    {
+        if (!Goods[Index].Item) continue;
+        const int64 Price = GetGoodsPrice(Index);
+        const FText Label = GetStockLeft(Index) <= 0
+            ? FText::Format(NSLOCTEXT("Elitewake", "MerchantOptionSoldOut", "{0}: sold out"), GoodsName(Index))
+            : FText::Format(NSLOCTEXT("Elitewake", "MerchantOptionBuy", "Buy {0} for {1} ({2} left)"), GoodsName(Index),
+                FText::FromString(UEWWalletComponent::Format(Price)), FText::AsNumber(GetStockLeft(Index)));
+        Out.Add({FName(*FString::Printf(TEXT("Buy%d"), Index)), Label, GetStockLeft(Index) > 0 && Purse && Purse->CanAfford(Price)});
+    }
+    int32 Items = 0; int64 Copper = 0;
+    Appraise(Character, Items, Copper);
+    Out.Add({FName(TEXT("SellAll")), Items > 0
+        ? FText::Format(NSLOCTEXT("Elitewake", "MerchantOptionSell", "Sell everything I would buy: {0} items for {1}"), FText::AsNumber(Items), FText::FromString(UEWWalletComponent::Format(Copper)))
+        : NSLOCTEXT("Elitewake", "MerchantOptionSellNone", "Sell: you carry nothing I would buy"), Items > 0});
+}
+
+FText AEWMerchant::ActOnDialogue(AEWCharacter* Character, FName Key)
+{
+    if (Key == FName(TEXT("SellAll")))
+    {
+        const int64 Earned = SellAll(Character);
+        return Earned > 0 ? FText::Format(NSLOCTEXT("Elitewake", "MerchantSold", "A fair lot. {0} for the lot."), FText::FromString(UEWWalletComponent::Format(Earned)))
+                          : NSLOCTEXT("Elitewake", "MerchantNothingSold", "Nothing there I would buy.");
+    }
+    const FString Name = Key.ToString();
+    if (Name.StartsWith(TEXT("Buy")))
+    {
+        const int32 Index = FCString::Atoi(*Name.RightChop(3));
+        if (Buy(Character, Index))
+            return FText::Format(NSLOCTEXT("Elitewake", "MerchantBought", "{0}, yours. That is {1}."), GoodsName(Index), FText::FromString(UEWWalletComponent::Format(GetGoodsPrice(Index))));
+        return NSLOCTEXT("Elitewake", "MerchantNoSale", "Your pack is too full for that, friend.");
+    }
+    return FText::GetEmpty();
 }

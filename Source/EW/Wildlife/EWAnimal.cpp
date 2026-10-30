@@ -18,6 +18,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "WaterBodyActor.h"
+#include "World/EWSafeZone.h"
 
 AEWAnimal::AEWAnimal()
 {
@@ -72,6 +73,12 @@ void AEWAnimal::BeginPlay()
     Super::BeginPlay();
     ApplyDefinition();
     Home = RoamPoint = GetActorLocation();
+    // No hostile creature lives inside a free port.
+    if (HasAuthority() && Definition && Definition->bAggressive && AEWSafeZone::KeepsHostilesOut(this, Home))
+    {
+        Destroy();
+        return;
+    }
     LastShown = GetActorLocation();
     if (HasAuthority() && Definition) Health = Definition->MaxHealth;
     RestSeconds = FMath::FRandRange(0.f, 4.f);
@@ -240,7 +247,9 @@ void AEWAnimal::Think(float DeltaSeconds)
     if (Definition->bAggressive)
     {
         AEWCharacter* Target = Quarry.Get();
-        if (Target && (!IsAshore(Target) || FVector::Dist(Target->GetActorLocation(), GetActorLocation()) > Definition->NoticeRange * 1.6f))
+        // A free port's bounds end the hunt: nobody inside is quarry, and the hunter turns back at the edge.
+        if (Target && (!IsAshore(Target) || FVector::Dist(Target->GetActorLocation(), GetActorLocation()) > Definition->NoticeRange * 1.6f
+            || AEWSafeZone::KeepsHostilesOut(this, Target->GetActorLocation())))
             Target = nullptr;
         if (!Target)
         {
@@ -248,7 +257,7 @@ void AEWAnimal::Think(float DeltaSeconds)
             for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
             {
                 const float Distance = FVector::Dist(It->GetActorLocation(), GetActorLocation());
-                if (Distance < Best && IsAshore(*It)) { Best = Distance; Target = *It; }
+                if (Distance < Best && IsAshore(*It) && !AEWSafeZone::KeepsHostilesOut(this, It->GetActorLocation())) { Best = Distance; Target = *It; }
             }
         }
         // Going for someone, it warns them first.

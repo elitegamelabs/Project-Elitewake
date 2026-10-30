@@ -25,6 +25,8 @@ class AEWHandGatherable;
 class AEWHarvestTree;
 class AEWMineable;
 
+class AEWTownsfolk;
+
 UCLASS()
 class EWEDITOR_API UEWEditorVerificationLibrary : public UBlueprintFunctionLibrary
 {
@@ -120,6 +122,14 @@ UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     /** Temporary blocking geometry in a Play world; never saves or edits a map. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AActor* SpawnVerificationBox(UWorld* World, FVector Location, FVector Extent, FRotator Rotation);
+
+    /** Sends a dialogue choice through the controller's server request, as the dialogue window's buttons do. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationDialogueChoice(AEWPlayerController* Controller, AEWTownsfolk* Speaker, FName Key);
+
+    /** A camera in a Play world for look checks: placed, aimed and made the controller's view; never saves or edits a map. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AActor* SpawnVerificationCamera(APlayerController* Controller, FVector Location, FRotator Rotation, float FieldOfView = 75.f);
 
     UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
     static FIntPoint GetVerificationNetworkSettings(UWorld* World);

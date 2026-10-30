@@ -79,13 +79,16 @@ def tick(delta):
     try:
         p = state['phase']
         if p == 0:
-            merchants = [m for m in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMerchant) if not isinstance(m, unreal.EWCrewMaster)]
-            check('a merchant waits at each of the five Ports', len(merchants) == 5, found=len(merchants))
-            check('the client sees them too', len([m for m in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWMerchant) if not isinstance(m, unreal.EWCrewMaster)]) == 5)
+            # The regional Ports' general merchants (Saltreach Freeport's named traders are checked in verify_freeport_multiplayer_play).
+            regional = lambda w: [m for m in unreal.GameplayStatics.get_all_actors_of_class(w, unreal.EWMerchant)
+                                  if not isinstance(m, unreal.EWCrewMaster) and not str(m.get_editor_property('npc_name'))]
+            merchants = regional(server_world)
+            check('a merchant waits at each of the four regional Ports', len(merchants) == 4, found=len(merchants))
+            check('the client sees them too', len(regional(client_world)) == 4)
             owner = next(c for c in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if pid(c) == pid(client.get_controlled_pawn()))
             state['owner'] = owner
             state['merchant'] = merchants[0]
-            state['mine'] = next(m for m in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWMerchant) if m.get_name() == merchants[0].get_name())
+            state['mine'] = next(m for m in regional(client_world) if m.get_name() == merchants[0].get_name())
             pack = owner.get_inventory_component()
             pack.add_item(unreal.load_asset(WOOD), 10)
             pack.add_item(unreal.load_asset(ORE), 3)

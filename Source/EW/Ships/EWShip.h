@@ -511,6 +511,17 @@ public:
     /** Authority only: round shot struck the hull at Where (world), the planking facing Normal there. */
     UFUNCTION(BlueprintCallable, Category="Ship|Hull")
     void TakeRoundShot(const FVector& Where, const FVector& Normal, AEWCharacter* Gunner);
+    /** Authority: a shipyard makes her whole (owner, October 30: the Freeport shipwright repairs ships): full hull health, every
+     *  hole patched and the water pumped out. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Hull")
+    void RepairAtShipyard();
+    /** Authority: a harbor's pilots bring her to Where (a berth, or the harbor mouth for departure): her anchor comes up, she is moved
+     *  (kept at her own height on the water) and the anchor goes down there. Survivors standing aboard come with her; anyone at
+     *  the helm, a cannon or the lines lets go first. False while she is sinking. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
+    bool TowTo(const FTransform& Where);
+    /** Authority: a shipyard fits an item at a mount of a new hull (the same rule as fitting one by hand). */
+    bool FitAtShipyard(FName MountId, UEWItemDefinition* Item) { return VerificationInstallFitting(MountId, Item); }
 
     /** Tuning: water each hole below the waterline lets in, kg (litres) a second. */
     static constexpr float LeakPerHole = 6.f;

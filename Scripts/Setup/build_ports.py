@@ -435,11 +435,13 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()).startswith('World/Ports'):
+        if str(actor.get_folder_path()).startswith('World/Ports') and not str(actor.get_folder_path()).startswith('World/Ports/Plains'):
             actors.destroy_actor(actor)
     ground = Ground()
     report = {}
     for region, port in W.PORTS.items():
+        if region == 'Plains':
+            continue   # Saltreach Freeport stands on the Plains Port's site (owner, October 30; build_freeport.py)
         style = STYLES[region]
         mats = {'stone': instance(stone_parent, f'MI_PortStone_{region}_v1', {'Dark': style['stone'][0], 'Light': style['stone'][1],
                                                                                'Snow': style['snow'], 'Moss': style['moss']}),

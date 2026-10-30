@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "EWInteractable.h"
+#include "EWTownsfolk.h"
 #include "EWMerchant.generated.h"
 
 class UStaticMeshComponent;
@@ -28,9 +27,10 @@ struct FEWMerchantGoods
  * Scripts/Setup/add_port_merchants.py): aim at a crate and press Interact to buy one bundle. Each stall holds a few bundles of each line and
  * restocks one bundle of each every RestockSeconds. Stock and prices are placeholders for tuning (vendor data is TBD). The figure, counter and
  * crates are placeholders (engine shapes) until the owner's art.
+ * A merchant with a name (a Freeport merchant) opens a dialogue window instead when spoken to: buy any line, or sell the pack.
  */
 UCLASS()
-class EW_API AEWMerchant : public AActor, public IEWInteractable
+class EW_API AEWMerchant : public AEWTownsfolk
 {
     GENERATED_BODY()
 public:
@@ -38,9 +38,10 @@ public:
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
-    virtual EEWInteractionMode GetInteractionMode_Implementation() const override { return EEWInteractionMode::Press; }
     virtual bool Interact_Implementation(AEWCharacter* Character) override;
 
+    /** Authority: sells every valued item in the pack; returns the Copper paid (0 when nothing was sold). */
+    int64 SellAll(AEWCharacter* Character);
     /** How many items and how much Copper selling the whole pack would bring. */
     static void Appraise(const AEWCharacter* Character, int32& OutItems, int64& OutCopper);
 
@@ -59,12 +60,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="Merchant") void Restock();
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant") TArray<FEWMerchantGoods> Goods;
+    /** False when the merchant stands in a built stall (the Freeport's) and needs no placeholder counter of crates. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant") bool bBuildStall = true;
     /** Tuning: seconds between restocks. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Merchant", meta=(ClampMin="1")) float RestockSeconds = 300.f;
     static constexpr float TradeReach = 450.f;
 
 protected:
     virtual void BeginPlay() override;
+    virtual void GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const override;
+    virtual FText ActOnDialogue(AEWCharacter* Character, FName Key) override;
+    FText GoodsName(int32 Index) const;
 
 private:
     void BuildStall();
@@ -76,5 +82,6 @@ private:
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Head;
     UPROPERTY() TObjectPtr<UStaticMeshComponent> Hat;
     UPROPERTY(Replicated) int32 SalesMade = 0;
+public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };

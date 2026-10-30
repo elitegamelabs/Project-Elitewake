@@ -1,8 +1,11 @@
 #include "EWEditorVerificationLibrary.h"
 #include "Editor.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
 #include "Settings/LevelEditorPlaySettings.h"
 #include "EWCompanyComponent.h"
 #include "EWPlayerController.h"
+#include "EWTownsfolk.h"
 #include "Engine/World.h"
 
 bool UEWEditorVerificationLibrary::SendVerificationCompanyCommand(AEWPlayerController* Controller, EEWCompanyAction Action, const FString& Text, int32 TargetPlayerId)
@@ -289,6 +292,26 @@ TArray<UWorld*> UEWEditorVerificationLibrary::GetPlayWorlds()
         }
     }
     return Worlds;
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationDialogueChoice(AEWPlayerController* Controller, AEWTownsfolk* Speaker, FName Key)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE || !Speaker) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Controller->ServerChooseDialogue(Speaker, Key);
+    return true;
+}
+
+AActor* UEWEditorVerificationLibrary::SpawnVerificationCamera(APlayerController* Controller, FVector Location, FRotator Rotation, float FieldOfView)
+{
+    UWorld* World = Controller ? Controller->GetWorld() : nullptr;
+    if (!World || World->WorldType != EWorldType::PIE) return nullptr;
+    ACameraActor* Camera = World->SpawnActor<ACameraActor>(Location, Rotation);
+    if (!Camera) return nullptr;
+    Camera->GetCameraComponent()->SetFieldOfView(FieldOfView);
+    Camera->GetCameraComponent()->bConstrainAspectRatio = false;
+    Controller->SetViewTargetWithBlend(Camera, 0.f);
+    return Camera;
 }
 
 AActor* UEWEditorVerificationLibrary::SpawnVerificationBox(UWorld* World, FVector Location, FVector Extent, FRotator Rotation)

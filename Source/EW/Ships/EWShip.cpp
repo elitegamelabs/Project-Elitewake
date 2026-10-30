@@ -1766,8 +1766,50 @@ void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWChar
     ForceNetUpdate();
 }
 
+void AEWShip::RepairAtShipyard()
+{
+    if (!HasAuthority() || bSinking) return;
+    HullHealth = GetMaxHullHealth();
+    Holes.Reset();
+    WaterAboard = 0.f;
+    OnRep_Holes();
+    ForceNetUpdate();
+}
+
+bool AEWShip::TowTo(const FTransform& Where)
+{
+    if (!HasAuthority() || bSinking || !GetWorld()) return false;
+    const FTransform From = GetActorTransform();
+    TArray<TPair<AEWCharacter*, FVector>> Aboard;
+    for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+    {
+        AEWCharacter* Survivor = *It;
+        if (IsAboard(Survivor)) Aboard.Add({Survivor, From.InverseTransformPosition(Survivor->GetActorLocation())});
+        if (Survivor->GetHelmShip() == this) LeaveHelm(Survivor, true);
+        if (Survivor->GetGunShip() == this) LeaveCannon(Survivor, true);
+        if (Survivor->GetLinesShip() == this) LeaveLines(Survivor);
+    }
+    Speed = 0.f;
+    Rudder = 0.f;
+    bAnchored = false;
+    const FVector Spot(Where.GetLocation().X, Where.GetLocation().Y, From.GetLocation().Z);
+    SetActorLocationAndRotation(Spot, FRotator(0.f, Where.Rotator().Yaw, 0.f), false, nullptr, ETeleportType::TeleportPhysics);
+    bAnchored = true;
+    LayAnchor();
+    bChainTaut = false;
+    for (const auto& Pair : Aboard)
+        Pair.Key->TeleportTo(GetActorTransform().TransformPosition(Pair.Value), Pair.Key->GetActorRotation(), false, true);
+    ForceNetUpdate();
+    return true;
+}
+
 void AEWShip::OnRep_Holes()
 {
+    // Patched at a shipyard: the drawn holes beyond those left go.
+    while (HoleVisuals.Num() > FMath::Min(Holes.Num(), MaxShownHoles))
+    {
+        if (UStaticMeshComponent* Gone = HoleVisuals.Pop()) Gone->DestroyComponent();
+    }
     static UStaticMesh* HoleMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Elitewake/World/Ships/SM_ShotHole_v1.SM_ShotHole_v1"));
     if (!HoleMesh) return;
     // Each hole is drawn where it struck, flat on the planking and a hair proud of it.

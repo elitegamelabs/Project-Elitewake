@@ -8,6 +8,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "World/EWBuildPiece.h"
+#include "World/EWSafeZone.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
@@ -116,6 +117,7 @@ FString UEWBuildZones::CheckPoint(const UObject* WorldContext, float X, float Y)
     UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull) : nullptr;
     float Z;
     if (!World || !GroundAt(World, X, Y, Z)) return TEXT("No ground here.");
+    if (AEWSafeZone::IsBuildingBlocked(World, FVector(X, Y, Z))) return TEXT("A free port: nobody may build here.");
     return CheckZones(X, Y, Z);
 }
 
@@ -143,6 +145,7 @@ FString UEWBuildZones::CheckFootprint(const UObject* WorldContext, float X, floa
     Load();
     UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContext, EGetWorldErrorMode::ReturnNull) : nullptr;
     if (!World) return TEXT("No world.");
+    if (AEWSafeZone::IsBuildingBlocked(World, FVector(X, Y, 0.f))) return TEXT("A free port: nobody may build here.");
     const float Yaw = FMath::DegreesToRadians(YawDegrees), C = FMath::Cos(Yaw), S = FMath::Sin(Yaw);
     float LowZ = TNumericLimits<float>::Max(), HighZ = TNumericLimits<float>::Lowest();
     for (int32 Sx = -1; Sx <= 1; ++Sx)

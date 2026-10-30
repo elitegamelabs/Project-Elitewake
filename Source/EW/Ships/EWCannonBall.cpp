@@ -1,4 +1,5 @@
 #include "Ships/EWCannonBall.h"
+#include "World/EWSafeZone.h"
 #include "Ships/EWShip.h"
 #include "EWCharacter.h"
 #include "Components/SphereComponent.h"
@@ -126,7 +127,8 @@ void AEWCannonBall::Land(const FVector& Where, const FVector& Normal, AActor* Hi
 {
     if (!HasAuthority() || bLanded) return;
     if (Cast<AWaterBody>(Hit)) Hit = nullptr;   // the sea's surface: a splash, not a strike
-    if (auto* Ship = Cast<AEWShip>(Hit)) Ship->TakeRoundShot(Where, Normal, Gunner.Get());
+    // Inside a free port round shot strikes and splashes but holes nothing.
+    if (auto* Ship = Cast<AEWShip>(Hit); Ship && !AEWSafeZone::IsPvPBlocked(this, Where)) Ship->TakeRoundShot(Where, Normal, Gunner.Get());
     bLanded = true;
     LandedAt = Where;
     LandedOn = !Hit ? 0 : Hit->IsA<AEWShip>() ? 1 : 2;

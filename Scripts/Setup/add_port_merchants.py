@@ -72,10 +72,12 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     for actor in actors.get_all_level_actors():
-        if isinstance(actor, unreal.EWMerchant):
+        if isinstance(actor, unreal.EWMerchant) and str(actor.get_folder_path()) == 'World/Ports':
             actors.destroy_actor(actor)
     placed = {}
     for region, port in W.PORTS.items():
+        if region == 'Plains':
+            continue   # Saltreach Freeport has its own named traders and recruiter (owner, October 30; build_freeport.py)
         x, y = port.world(400, 250)
         yaw = math.degrees(port.facing) + 180
         merchant = actors.spawn_actor_from_class(unreal.EWMerchant, unreal.Vector(x, y, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))

@@ -69,8 +69,10 @@ def tick(delta):
                     ship.verification_install_fitting(mount, unreal.load_asset(f'{TESTING}/{item}'))
             check('the sloop has her helm and both sails', all(ship.get_fitting(m) for m in ('Helm', 'Mainsail', 'Headsail')))
             check('no sailhand aboard yet', ship.get_crewed_sail_count() == 0)
-            masters = [m for m in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCrewMaster) if m.get_editor_property('crew_role') == 'sailhand']
-            check('a crew master waits at each of the five Ports', len(masters) == 5, found=len(masters))
+            # The regional Ports' crew masters (Saltreach Freeport's named recruiter is checked in verify_freeport_multiplayer_play).
+            masters = [m for m in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCrewMaster)
+                       if m.get_editor_property('crew_role') == 'sailhand' and not str(m.get_editor_property('npc_name'))]
+            check('a crew master waits at each of the four regional Ports', len(masters) == 4, found=len(masters))
             master = masters[0]
             owner.teleport(master.get_actor_location() + master.get_actor_forward_vector() * 150 + unreal.Vector(0, 0, 100), unreal.Rotator())
             owner.get_wallet_component().set_copper(250)
@@ -81,7 +83,7 @@ def tick(delta):
             check('the fee is 100 Copper', owner.get_wallet_component().get_copper() == 150, copper=owner.get_wallet_component().get_copper())
             check('the Sailhand Articles are in the pack', articles(owner) == 1)
             gunnery = [m for m in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCrewMaster) if m.get_editor_property('crew_role') == 'gunner']
-            check('a gunnery master waits at each of the five Ports', len(gunnery) == 5, found=len(gunnery))
+            check('a gunnery master waits at each of the four regional Ports', len(gunnery) == 4, found=len(gunnery))
             owner.teleport(gunnery[0].get_actor_location() + gunnery[0].get_actor_forward_vector() * 150 + unreal.Vector(0, 0, 100), unreal.Rotator())
             report['gunner_prompt'] = str(gunnery[0].get_interaction_prompt(owner))
             gunner_articles = unreal.load_asset('/Game/Elitewake/Items/Crew/DA_GunnerArticles')

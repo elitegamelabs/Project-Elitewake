@@ -33,6 +33,8 @@ class UEWOptionsWidget;
 class UEWHitMarkerWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
+class UEWDialogueWidget;
+class AEWTownsfolk;
 class UEWSoundscapeComponent;
 class UEWPlacementPreviewComponent;
 class UEWBuildComponent;
@@ -190,6 +192,17 @@ public:
     /** Local container screen (a ship's hold) beside the survivor's inventory. Null closes it. */
     UFUNCTION(BlueprintCallable, Category="Inventory|Container")
     void SetContainerOpen(AActor* Container);
+    /** A townsperson's dialogue window (owner, October 30): opened by the server when the survivor talks to them; choices go back to it. */
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void OpenDialogue(AEWTownsfolk* Speaker);
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void CloseDialogue();
+    UFUNCTION(BlueprintPure, Category="Dialogue") bool IsDialogueOpen() const;
+    UFUNCTION(BlueprintPure, Category="Dialogue") AEWTownsfolk* GetDialogueSpeaker() const { return DialogueSpeaker; }
+    /** The last answer the server gave this player (for the checks). */
+    UFUNCTION(BlueprintPure, Category="Dialogue") FText GetLastDialogueReply() const { return LastDialogueReply; }
+    UFUNCTION(BlueprintPure, Category="Dialogue") UEWDialogueWidget* GetDialogueWidget() const { return DialogueWidget; }
+    UFUNCTION(Client, Reliable) void ClientOpenDialogue(AEWTownsfolk* Speaker);
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category="Dialogue") void ServerChooseDialogue(AEWTownsfolk* Speaker, FName Key);
+    UFUNCTION(Client, Reliable) void ClientDialogueReply(AEWTownsfolk* Speaker, const FText& Reply);
     UFUNCTION(BlueprintPure, Category="Inventory|Container")
     AActor* GetOpenContainer() const { return OpenContainer; }
     /** Sent by the server once it has agreed this player may use the container. */
@@ -295,6 +308,11 @@ protected:
     TObjectPtr<UEWContainerWidget> ContainerWidget;
     UPROPERTY(Transient)
     TObjectPtr<AActor> OpenContainer;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWDialogueWidget> DialogueWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<AEWTownsfolk> DialogueSpeaker;
+    FText LastDialogueReply;
     /** Shared by the inventory and container screens: blocks gameplay input and tells the server a menu is up. */
     void SetMenuInputBlocked(bool bBlocked);
 

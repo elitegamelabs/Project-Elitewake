@@ -35,6 +35,8 @@
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "EWDeathWidget.h"
+#include "EWDialogueWidget.h"
+#include "EWTownsfolk.h"
 #include "EWExplorationComponent.h"
 #include "EWCraftingRecipe.h"
 #include "EWProgressionComponent.h"
@@ -810,6 +812,61 @@ void AEWPlayerController::SetContainerOpen(AActor* Container)
 void AEWPlayerController::ClientOpenContainer_Implementation(AActor* Container)
 {
     SetContainerOpen(Container);
+}
+
+void AEWPlayerController::OpenDialogue(AEWTownsfolk* Speaker)
+{
+    if (!IsLocalPlayerController() || !IsValid(Speaker) || IsMapOpen() || IsSessionMenuOpen()) return;
+    if (IsInventoryOpen()) SetInventoryOpen(false);
+    SetMenuInputBlocked(true);
+    DialogueSpeaker = Speaker;
+    if (!DialogueWidget) DialogueWidget = CreateWidget<UEWDialogueWidget>(this, UEWDialogueWidget::StaticClass());
+    if (!DialogueWidget) return;
+    if (!DialogueWidget->IsInViewport()) DialogueWidget->AddToPlayerScreen(25);
+    DialogueWidget->SetSpeaker(Speaker);
+    FInputModeUIOnly InputMode;
+    InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    SetShowMouseCursor(true);
+    DialogueWidget->SetUserFocus(this);
+}
+
+void AEWPlayerController::CloseDialogue()
+{
+    if (!IsLocalPlayerController()) return;
+    const bool bWasOpen = IsDialogueOpen();
+    DialogueSpeaker = nullptr;
+    if (DialogueWidget && DialogueWidget->IsInViewport()) DialogueWidget->RemoveFromParent();
+    if (!bWasOpen) return;
+    SetMenuInputBlocked(false);
+    SetInputMode(FInputModeGameOnly());
+    SetShowMouseCursor(false);
+}
+
+bool AEWPlayerController::IsDialogueOpen() const
+{
+    return DialogueWidget && DialogueWidget->IsInViewport();
+}
+
+void AEWPlayerController::ClientOpenDialogue_Implementation(AEWTownsfolk* Speaker)
+{
+    OpenDialogue(Speaker);
+}
+
+void AEWPlayerController::ServerChooseDialogue_Implementation(AEWTownsfolk* Speaker, FName Key)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || !IsValid(Speaker) || Speaker->GetWorld() != GetWorld()) return;
+    const FText Reply = Speaker->ChooseDialogue(Survivor, Key);
+    LastDialogueReply = Reply;
+    ClientDialogueReply(Speaker, Reply);
+}
+
+void AEWPlayerController::ClientDialogueReply_Implementation(AEWTownsfolk* Speaker, const FText& Reply)
+{
+    LastDialogueReply = Reply;
+    if (DialogueWidget && DialogueWidget->IsInViewport() && DialogueSpeaker == Speaker) DialogueWidget->ShowReply(Reply);
 }
 
 void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity)

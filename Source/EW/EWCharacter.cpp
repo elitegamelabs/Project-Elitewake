@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "World/EWSafeZone.h"
 #include "World/EWFootprintComponent.h"
 #include "EWWalletComponent.h"
 #include "AnimationRuntime.h"
@@ -1499,6 +1500,8 @@ AEWCharacter* AEWCharacter::MeleeStrike()
         return nullptr;
     }
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
+    // A free port: nobody hurts anybody inside its bounds (either of them inside is enough).
+    if (AEWSafeZone::IsPvPBlocked(this, GetActorLocation()) || AEWSafeZone::IsPvPBlocked(this, Victim->GetActorLocation())) return nullptr;
     Victim->SurvivalComponent->ApplyDamage(FistDamage);
     Victim->MulticastHitReact();
     return Victim;
