@@ -9,8 +9,8 @@ FText AEWCrewMaster::GetInteractionPrompt_Implementation(AEWCharacter* Character
     const FText Fee = FText::FromString(UEWWalletComponent::Format(HireCost));
     const UEWWalletComponent* Purse = IsValid(Character) ? Character->GetWalletComponent() : nullptr;
     if (!Purse || !Purse->CanAfford(HireCost))
-        return FText::Format(NSLOCTEXT("Elitewake", "CrewMasterPoor", "Crew master: a sailhand costs {0}"), Fee);
-    return FText::Format(NSLOCTEXT("Elitewake", "CrewMasterHire", "Hire a sailhand ({0})"), Fee);
+        return FText::Format(NSLOCTEXT("Elitewake", "CrewMasterPoor", "Crew master: a {0} costs {1}"), FText::FromString(CrewRole), Fee);
+    return FText::Format(NSLOCTEXT("Elitewake", "CrewMasterHire", "Hire a {0} ({1})"), FText::FromString(CrewRole), Fee);
 }
 
 bool AEWCrewMaster::Interact_Implementation(AEWCharacter* Character)

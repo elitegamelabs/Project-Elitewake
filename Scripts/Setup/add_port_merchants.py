@@ -23,21 +23,21 @@ SELL = {  # placeholder prices in Copper per unit (500 Copper = 1 Silver)
 }
 
 
-ARTICLES = '/Game/Elitewake/Items/Crew/DA_SailhandArticles'
 
 
-def make_articles():
-    item = unreal.load_asset(ARTICLES)
+def make_articles(name, flag, text):
+    path = f'/Game/Elitewake/Items/Crew/DA_{name}Articles'
+    item = unreal.load_asset(path)
     if not item:
-        item = unreal.AssetToolsHelpers.get_asset_tools().create_asset('DA_SailhandArticles', '/Game/Elitewake/Items/Crew',
+        item = unreal.AssetToolsHelpers.get_asset_tools().create_asset(f'DA_{name}Articles', '/Game/Elitewake/Items/Crew',
                                                                       unreal.EWItemDefinition, unreal.DataAssetFactory())
     kit = unreal.load_asset(f'{ITEMS}/Testing/DA_TestRepairKit')
-    item.set_editor_property('item_id', 'SailhandArticles')
-    item.set_editor_property('display_name', unreal.Text('Sailhand Articles'))
-    item.set_editor_property('description', unreal.Text('Signed articles for one hired sailhand. Use them at a sail lines aboard (the pin rail by the mast) and the hand works that sail on the helm orders.'))
+    item.set_editor_property('item_id', f'{name}Articles')
+    item.set_editor_property('display_name', unreal.Text(f'{name} Articles'))
+    item.set_editor_property('description', unreal.Text(text))
     item.set_editor_property('max_stack_size', 10)
     item.set_editor_property('unit_weight', 0.05)
-    item.set_editor_property('signs_on_sailhand', True)
+    item.set_editor_property(flag, True)
     item.set_editor_property('icon', kit.get_editor_property('icon'))
     assert unreal.EditorAssetLibrary.save_loaded_asset(item)
     return item
@@ -45,7 +45,8 @@ def make_articles():
 
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
-    articles = make_articles()
+    articles = make_articles('Sailhand', 'signs_on_sailhand', 'Signed articles for one hired sailhand. Use them at a sail lines aboard (the pin rail by the mast) and the hand works that sail on the helm orders.')
+    gunner_articles = make_articles('Gunner', 'signs_on_gunner', 'Signed articles for one hired gunner. Use them at an installed cannon aboard: the gunner loads it from the hold and fires with your shots when it bears.')
     for path, value in SELL.items():
         item = unreal.load_asset(f'{ITEMS}/{path}')
         assert item, path
@@ -69,6 +70,13 @@ def main():
         crew.set_actor_label(f'Port Crew Master {region}')
         crew.set_folder_path('World/Ports')
         crew.set_editor_property('articles', articles)
+        gx, gy = port.world(400, -500)
+        gunnery = actors.spawn_actor_from_class(unreal.EWCrewMaster, unreal.Vector(gx, gy, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))
+        gunnery.set_actor_label(f'Port Gunnery Master {region}')
+        gunnery.set_folder_path('World/Ports')
+        gunnery.set_editor_property('articles', gunner_articles)
+        gunnery.set_editor_property('crew_role', 'gunner')
+        gunnery.set_editor_property('hire_cost', 150)   # tuning
         placed[region] = [round(x), round(y), round(cx), round(cy)]
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'PortMerchantsResult.json').write_text(json.dumps({'success': True, 'merchants': placed}, indent=2))

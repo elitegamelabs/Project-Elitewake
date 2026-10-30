@@ -36,6 +36,10 @@ struct FEWCannonState
     bool bLoaded = false;
     UPROPERTY(BlueprintReadOnly, Category="Cannon")
     bool bLoading = false;
+    /** A hired gunner (a Port NPC signed on with Gunner Articles) serves this cannon: loads it from the hold and fires
+     *  with the volley whenever a survivor fires a cannon of this ship (owner, October 18). */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    bool bCrewed = false;
 };
 
 /** Where round shot holed the hull, in the ship's space, and which way the planking faced there. */
@@ -436,10 +440,32 @@ public:
     static constexpr float CannonMountHeight = 40.f;
     /** Authority only. A survivor mans an installed cannon from behind it, aims it with the view and fires it;
      *  while they man it, it loads itself from the round shot they carry. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool ManCannon(AEWCharacter* Character, FName MountId);
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool LeaveCannon(AEWCharacter* Character, bool bForce = false);
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool AimCannon(AEWCharacter* Character, float Yaw, float Pitch);
+    /** Authority only, from the cannon's gunner. Every hired gunner whose cannon is loaded, bears on the shot's mark and
+     *  has a clear line to it fires with it (the volley). */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool FireCannon(AEWCharacter* Character);
+    /** Hired gunners (owner, October 18: Port NPCs assigned to any deck's cannons). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    bool IsCannonCrewed(FName MountId) const;
+    /** Authority only: a gunner joins an installed cannon; false if it has one or there is no cannon there. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    bool SignOnGunner(FName MountId);
+    /** Authority only (checks and test setups): a gunner on every installed cannon. Returns how many joined. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    int32 CrewEveryCannon();
+    /** Server: how many hired gunners fired with the last shot a survivor fired from this ship. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    int32 GetLastVolley() const { return LastVolley; }
+    /** Tuning: how far ahead of the muzzle the volley's mark is sought, and the slack a hired gunner's aim allows
+     *  beyond its cannon's swing before it holds fire (degrees). */
+    static constexpr float VolleyRange = 20000.f;
+    static constexpr float VolleyAimSlack = 3.f;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     AEWCharacter* GetCannonGunner(FName MountId) const;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
@@ -456,6 +482,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     float GetGunportOpening(FName MountId) const;
     /** Authority only, from the gunner of that port's cannon. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool SetGunportOpen(AEWCharacter* Character, bool bOpen);
     /** Tuning: how fast a port opens or shuts (of the way a second), and how far its cannon runs in, cm. */
     static constexpr float GunportRate = .8f;
@@ -620,6 +647,17 @@ private:
     void OnRep_Holes();
     /** Server: seconds until each loading cannon is ready. */
     TMap<FName, float> CannonLoadLeft;
+    int32 LastVolley = 0;
+    /** Spawns a round shot from a cannon's muzzle as aimed; the cannon is then empty. */
+    bool LaunchShot(FName MountId, AEWCharacter* Shooter);
+    /** Hired gunners lay their cannons on Mark and fire where they can (not Except, the survivor's own cannon). */
+    int32 FireVolley(const FVector& Mark, const AActor* MarkActor, FName Except, AEWCharacter* Caller);
+    bool TraceVolleyLine(FHitResult& Hit, const FVector& From, const FVector& To) const;
+    /** The placeholder hired gunners standing behind their cannons, and when each last fired (for its lean). */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> GunnerVisuals;
+    void ShowHiredGunners();
+    static UEWItemDefinition* FindCarriedGunnerArticles(const AEWCharacter* Character);
     FEWCannonState* FindCannon(FName MountId) { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
     const FEWCannonState* FindCannon(FName MountId) const { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
     /** The installed cannon's barrel pivot at rest, in the ship's space; false if no cannon is fitted there. */

@@ -24,4 +24,7 @@ public:
     /** Tuning: the fee for one sailhand, in Copper. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Crew")
     int64 HireCost = 100;
+    /** Who is hired, as the prompt names them: "sailhand" or "gunner". */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Crew")
+    FString CrewRole = TEXT("sailhand");
 };

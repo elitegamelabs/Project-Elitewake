@@ -114,6 +114,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Economy")
     bool bSignsOnSailhand = false;
 
+    /** Gunner Articles: used at an installed cannon aboard, they sign a hired Port gunner on to serve it. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Economy")
+    bool bSignsOnGunner = false;
+
 	/** Worn clothing's warmth: 0 for none; 1 keeps a survivor warm in the Winter region's working cold. It also
 	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
