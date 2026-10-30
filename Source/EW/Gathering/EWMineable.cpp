@@ -1,4 +1,5 @@
 #include "EWMineable.h"
+#include "World/EWWorldState.h"
 #include "EWProgressionComponent.h"
 #include "EWCharacter.h"
 #include "EWEquipmentComponent.h"
@@ -68,6 +69,23 @@ void AEWMineable::Respawn()
     ForceNetUpdate();
 }
 
+float AEWMineable::GetRespawnLeft() const
+{
+    return GetWorld() && GetWorldTimerManager().IsTimerActive(RespawnTimer) ? GetWorldTimerManager().GetTimerRemaining(RespawnTimer) : -1.f;
+}
+
+void AEWMineable::RestoreSaved(int32 InRemaining, float RespawnLeft)
+{
+    if (!HasAuthority()) return;
+    InitializeMiningStock();
+    Remaining = FMath::Max(0, InRemaining);
+    RefreshNodeAvailability();
+    GetWorldTimerManager().ClearTimer(RespawnTimer);
+    if (Remaining == 0 && bRespawnWhenDepleted)
+        GetWorldTimerManager().SetTimer(RespawnTimer, this, &AEWMineable::Respawn, FMath::Max(0.01f, RespawnLeft >= 0.f ? RespawnLeft : RespawnSeconds), false);
+    ForceNetUpdate();
+}
+
 void AEWMineable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -103,6 +121,7 @@ int32 AEWMineable::TryMine(AEWCharacter* Survivor)
     TGuardValue<bool> Guard(bMining, true);
     const int32 Added = Survivor->GetInventoryComponent()->AddItem(Resource, FMath::Min(Remaining, PerStrike));
     Remaining -= Added;
+    UEWWorldStateSubsystem::Touch(this);
     if (Added > 0) if (auto* Progress = Survivor->GetProgressionComponent()) Progress->Award(EEWExperienceSource::Gather, 2);
     if (Remaining == 0)
     {

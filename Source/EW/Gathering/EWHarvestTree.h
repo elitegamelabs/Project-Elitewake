@@ -45,6 +45,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Harvest") float GetFade() const { return FadeAlpha; }
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest|Tuning", meta=(ClampMin="0.1")) float FallDuration = 2.f;
     virtual void PlayHitShake(const FVector& Direction, float Degrees) override;
+    /** Authority, loading a save (M7): what is left of the tree, and if it was lying where it fell, lay it there at once. */
+    void RestoreSaved(int32 InWood, int32 InThatch, bool bLying, const FTransform& Where);
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override { return false; }
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override { return false; }
 private:

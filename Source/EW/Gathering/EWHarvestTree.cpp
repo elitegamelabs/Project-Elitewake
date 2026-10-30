@@ -9,6 +9,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Net/UnrealNetwork.h"
+#include "World/EWWorldState.h"
 
 namespace
 {
@@ -65,6 +66,7 @@ void AEWHarvestTree::PlayHitShake(const FVector& Direction, float Degrees)
 bool AEWHarvestTree::Fell(FVector Direction)
 {
     if (!HasAuthority() || bFelled || !IsValid(Mesh) || Direction.IsNearlyZero()) return false;
+    UEWWorldStateSubsystem::Touch(this);
 
     Direction.Z = 0.f;
     Direction = Direction.GetSafeNormal();
@@ -95,6 +97,27 @@ bool AEWHarvestTree::Fell(FVector Direction)
     SetActorTickEnabled(true);
     ForceNetUpdate();
     return true;
+}
+
+void AEWHarvestTree::RestoreSaved(int32 InWood, int32 InThatch, bool bLying, const FTransform& Where)
+{
+    if (!HasAuthority()) return;
+    WoodRemaining = FMath::Max(0, InWood);
+    ThatchRemaining = FMath::Max(0, InThatch);
+    if (bLying && !bFelled)
+    {
+        // Down already: laid where it fell, no fall played, solid as a log; it stays until cut up.
+        bFelled = true;
+        SetActorTransform(Where, false, nullptr, ETeleportType::TeleportPhysics);
+        FallStartRotation = FallTargetRotation = GetActorQuat();
+        FallElapsed = FallSeconds;
+        LandElapsed = LandBounceSeconds;
+        bRemoveAfterFall = false;
+        ConfigureFelledCollision();
+        LoadFadeTwins();
+        SetReplicateMovement(true);
+    }
+    ForceNetUpdate();
 }
 
 void AEWHarvestTree::StartFade()
@@ -262,6 +285,7 @@ int32 AEWHarvestTree::TryHarvest(AEWCharacter* Survivor)
     auto* Inventory = Survivor->GetInventoryComponent();
     const int32 AddedWood = Inventory->AddItem(Wood, FMath::Min(WoodRemaining, WoodPerStrike));
     WoodRemaining -= AddedWood;
+    UEWWorldStateSubsystem::Touch(this);
     const int32 AddedThatch = Inventory->AddItem(Thatch, FMath::Min(ThatchRemaining, ThatchPerStrike));
     ThatchRemaining -= AddedThatch;
     if (AddedWood + AddedThatch > 0) if (auto* Progress = Survivor->GetProgressionComponent()) Progress->Award(EEWExperienceSource::Gather);

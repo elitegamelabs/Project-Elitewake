@@ -1,4 +1,5 @@
 #include "EWPickup.h"
+#include "World/EWWorldState.h"
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
@@ -54,6 +55,14 @@ bool AEWPickup::Interact_Implementation(AEWCharacter* Character)
     return TryPickup(Character) > 0;
 }
 
+void AEWPickup::RestoreSaved(int32 InQuantity)
+{
+    if (!HasAuthority()) return;
+    if (InQuantity <= 0) { Destroy(); return; }
+    Quantity = InQuantity;
+    ForceNetUpdate();
+}
+
 int32 AEWPickup::TryPickup(AEWCharacter* Character)
 {
     if (!HasAuthority() || IsActorBeingDestroyed() || bTransferInProgress || !IsValid(Character)
@@ -67,6 +76,7 @@ int32 AEWPickup::TryPickup(AEWCharacter* Character)
     TGuardValue<bool> TransferGuard(bTransferInProgress, true);
     const int32 Added = Inventory->AddItem(ItemDefinition, Quantity);
     Quantity -= Added;
+    if (Added > 0) UEWWorldStateSubsystem::Touch(this);
     if (Added > 0)
     {
         FEWGatherGain Gain;

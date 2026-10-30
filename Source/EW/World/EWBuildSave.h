@@ -4,6 +4,7 @@
 #include "GameFramework/SaveGame.h"
 #include "World/EWBuildPiece.h"
 #include "Ships/EWShip.h"
+#include "World/EWWorldState.h"
 #include "EWBuildSave.generated.h"
 
 /**
@@ -29,4 +30,7 @@ public:
     /** The ships afloat (October 30). An older save has none and leaves the map's ships as they are. */
     UPROPERTY(BlueprintReadOnly, Category="Save") bool bHasShips = false;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedShip> Ships;
+    /** The map's trees, rocks and pickups as play left them (October 30). An older save has none and leaves them fresh. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bHasWorldState = false;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FEWSavedWorldState WorldState;
 };

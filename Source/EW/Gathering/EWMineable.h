@@ -35,6 +35,10 @@ public:
     UFUNCTION(BlueprintPure, Category="Mining") bool CanMine(AEWCharacter* Survivor) const;
     /** Trusted native server entry; controller RPC supplies shared strike cadence. */
     int32 TryMine(AEWCharacter* Survivor);
+    /** Seconds until a depleted deposit comes back, or -1 if it is not waiting. */
+    float GetRespawnLeft() const;
+    /** Authority, loading a save (M7): what is left, and the wait before a depleted deposit comes back. */
+    void RestoreSaved(int32 InRemaining, float RespawnLeft);
     virtual bool CanInteract_Implementation(AEWCharacter* Survivor) const override { return false; }
     virtual bool Interact_Implementation(AEWCharacter* Survivor) override { return false; }
 private:

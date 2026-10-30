@@ -6,6 +6,7 @@
 #include "EWInventoryComponent.h"
 #include "World/EWBuildPiece.h"
 #include "Ships/EWShip.h"
+#include "World/EWWorldState.h"
 #include "EWSurvivorSave.generated.h"
 
 class AEWCharacter;
@@ -14,8 +15,8 @@ class UEWItemDefinition;
 /**
  * Single player's SAVE GAME (Options menu): the survivor as they were, kept for the next Single Player.
  * Kept: the map, where they stand and look, health, hunger and thirst, the inventory (with food ages), what is
- * equipped and the hotbar. Structures built with Build Mode are kept too, and the ships afloat (October 30). Not kept yet (M7): the rest of
- * the world (felled trees, mined rocks, dropped items, fish), so the island comes back fresh around a resumed survivor.
+ * equipped and the hotbar. Structures built with Build Mode are kept too, the ships afloat, and the map's trees, rocks and pickups as play
+ * left them (October 30). Not kept yet (M7): animals, fish, and items dropped in play (a death bag), which come back fresh.
  */
 UCLASS(BlueprintType)
 class EW_API UEWSurvivorSave : public USaveGame
@@ -59,6 +60,9 @@ public:
     /** Every ship afloat (October 30). An older save has none and leaves the map's ships as they are. */
     UPROPERTY(BlueprintReadOnly, Category="Save") bool bHasShips = false;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedShip> Ships;
+    /** The map's trees, rocks and pickups as play left them (October 30). An older save has none and leaves them fresh. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bHasWorldState = false;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FEWSavedWorldState WorldState;
     /** What the survivor has explored: the map's cleared cells, a bit each, and the square they cover. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<uint8> ExploredBits;
     UPROPERTY(BlueprintReadOnly, Category="Save") FVector2D ExploredMin = FVector2D::ZeroVector;
