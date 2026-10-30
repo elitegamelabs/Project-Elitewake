@@ -13,6 +13,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 | **Saltreach Freeport** (owner request): the Plains Port rebuilt as an explorable harbor town and starting hub — harbor, piers and berths, market, walk-in tavern, shipyard and slipway, hiring and harbor offices, square, lighthouse; 15 named people with dialogue windows and working services (trade, crew roster, rumours/drinks/jobs, buy and repair ships, berth and depart); safe zone (no PvP, building or hostile creatures). Details: Design/World/SALTREACH_FREEPORT_2026-10-30.md | `verify_freeport_multiplayer_play` PASS (2 players, every service and rule); `verify_freeport_look_play` screenshots, day and night | 🟡 placeholder art; see the design doc's Not done |
 | **Freeport polish**: HUD banner entering/leaving the safe zone; walkers stop for a survivor in their way and while talked to; the person talked to turns to face you | `verify_freeport_multiplayer_play` PASS (extended) | ✅ |
 | **Freeport sounds**: synthesized (free, original) tavern and market voices, shipyard mallets and saws, water at the piles, and a harbor bell, placed with the existing hull and rigging loops; day-only sounds fade out at night (`AEWTownSound`) | `verify_freeport_sounds_play` PASS; Freeport two-player check PASS | 🟡 placeholders, not judged by ear |
+| **Ships are saved (M7)**: the single-player Save Game and the server's world save keep every ship afloat (place, fittings, hold, hull and holes, anchor, sail settings and hired crew, cannons, ports); ships bought in play come back, lost ones stay lost | `verify_ship_save_play` PASS (both saves); build multiplayer, Freeport, cannon fight, Ships and Save automation PASS | 🟡 no ship owners yet; wrecks not kept |
 | **Port teleport (testing only)**: Shift + 6 carries you to the nearest Port, in front of its merchant (owner request); compiled out of shipping builds | `verify_port_teleport_play` PASS (all five Ports) | ✅ |
 | **Hired gunners and volleys**: Port gunnery master hires a gunner (150 Copper, Gunner Articles; tuning); signed on at a cannon, they load from the hold and fire with the survivor's shot when their cannon bears and the line is clear | `verify_gunner_volley_multiplayer_play` PASS (2 players, ships test map) | 🟡 see Milestones row |
 
@@ -34,7 +35,7 @@ Owner direction: keep building the game's structure with placeholder art and fre
 
 ## Not done
 
-- Crew are not saved, because ships are not saved yet. There are no wages or crew limits. Gunners have no separate powder, ball and ramming steps, and there is no target lock.
+- There are no wages or crew limits. Gunners have no separate powder, ball and ramming steps, and there is no target lock.
 - The Freeport stands on the Plains Port's site; palms stand in it although the starter island's trees are oaks (the owner's October 30 request asks for palms). Ships have no owner, so the shipwright and harbor master act on the ship nearest you.
 - Merchant stock is not saved, and every Port sells the same goods at the same prices.
 - All figures are placeholder shapes.

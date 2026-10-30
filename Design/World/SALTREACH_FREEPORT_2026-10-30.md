@@ -89,5 +89,5 @@ hunting creature drops the chase at the edge. The boundary is invisible to playe
 - Quests are delivery jobs only; no quest log, chains or story quests. Rumours are fixed text.
 - Ships have no owner, so services act on the nearest ship; towing is instant (no pilot boats).
 - No buying in quantity, no regional prices, merchant stock is not saved.
-- Hired sailors' names do not go aboard with them; crew are not saved (ships are not saved).
+- Hired sailors' names do not go aboard with them (crew are saved with their ship as anonymous hands).
 - The terrain was not reshaped; the slipway's top crosses the terrace's seawall.
