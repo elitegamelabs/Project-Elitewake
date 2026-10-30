@@ -28,6 +28,9 @@ pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
 client = next(c for c in pcs if not c.has_authority())
 server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
 client_world = worlds[pcs.index(client)]
+# Crew dependency (owner, October 18): the helm sets only sails with a hired sailhand, so every ship here is crewed first.
+for _s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip):
+    _s.crew_every_sail()
 pawn = client.get_controlled_pawn()
 
 
@@ -141,6 +144,8 @@ def ran():
         return False
     m['moved'] = (ship.get_actor_location() - m['start']).length()
     m['gap'] = (ship.get_actor_location() - peer.get_actor_location()).length()
+    m.update(crewed=ship.get_crewed_sail_count(), fore=str(ship.get_mount_sail_state('Foresail')), main=str(ship.get_mount_sail_state('Mainsail')),
+             fraction=ship.get_sail_fraction(), target=ship.compute_target_speed(), anchored=ship.is_anchored(), speed=ship.get_speed())
     assert m['moved'] > 100, f'moved only {m["moved"]:.0f} cm'
     assert m['gap'] < 300, f'client copy {m["gap"]:.0f} cm from server'
     return True

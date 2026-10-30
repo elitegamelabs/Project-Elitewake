@@ -109,6 +109,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Economy", meta=(ClampMin="0"))
 	int32 SellValueCopper = 0;
 
+    /** Sailhand's Articles: used at a sail's lines aboard, it signs a hired Port sailhand on for that sail, who then follows
+     *  the helm's orders (owner, October 18: crew dependency). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Economy")
+    bool bSignsOnSailhand = false;
+
 	/** Worn clothing's warmth: 0 for none; 1 keeps a survivor warm in the Winter region's working cold. It also
 	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))

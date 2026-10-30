@@ -215,6 +215,8 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     PC->GetInteractionComponent()->SetMenuBlocked(true);
     TestFalse(TEXT("An open menu blocks commands"), A->StepSails(C, 1));
     PC->GetInteractionComponent()->SetMenuBlocked(false);
+    TestFalse(TEXT("With no sailhand aboard the helm cannot set sail"), A->StepSails(C, 1));
+    TestTrue(TEXT("Sailhands sign on at the sails"), A->CrewEverySail() > 0 && A->IsSailCrewed(TEXT("Mainsail")));
     TestTrue(TEXT("Quarter sail"), A->StepSails(C, 1));
     TestEqual(TEXT("Quarter setting"), A->GetSailState(), EEWSailState::Quarter);
     TestTrue(TEXT("Half sail"), A->StepSails(C, 1));
@@ -282,6 +284,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     C->SetActorLocation(B->GetActorTransform().TransformPosition(FVector(-120, 0, 186)));
     Aim(PC, C, B, TEXT("Helm"));
     TestTrue(TEXT("Take the helm of ship B"), B->Interact_Implementation(C));
+    B->CrewEverySail();
     for (int32 Step = 0; Step < 4; ++Step) B->StepSails(C, 1);
     // Trimmed at anchor like A, so both start the comparison at rest.
     B->SetAnchored(C, true);

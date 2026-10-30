@@ -249,6 +249,12 @@ public:
     /** The ship and mount of the cannon this survivor mans, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
     AEWShip* GetGunShip() const { return GunShip; }
+    /** The ship whose sail lines this survivor is working by hand (AEWShip::TakeLines), if any. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    AEWShip* GetLinesShip() const { return LinesShip; }
+    FName GetLinesMount() const { return LinesMount; }
+    /** Authority only, from the ship. */
+    void SetLinesPost(AEWShip* Ship, FName MountId) { LinesShip = Ship; LinesMount = MountId; ForceNetUpdate(); }
     UFUNCTION(BlueprintPure, Category="Ship")
     FName GetGunMount() const { return GunMount; }
     /** Authority only; called by the ship when a cannon is manned or left. */
@@ -306,6 +312,10 @@ private:
     TObjectPtr<AEWShip> HelmShip;
     UPROPERTY(ReplicatedUsing=OnRep_GunPost)
     TObjectPtr<AEWShip> GunShip;
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWShip> LinesShip;
+    UPROPERTY(Replicated)
+    FName LinesMount;
     UPROPERTY(Replicated)
     TObjectPtr<AEWFish> CarriedFish;
     UPROPERTY(Replicated)

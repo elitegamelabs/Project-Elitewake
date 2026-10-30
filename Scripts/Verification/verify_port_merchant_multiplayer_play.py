@@ -67,9 +67,9 @@ def tick(delta):
     try:
         p = state['phase']
         if p == 0:
-            merchants = unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMerchant)
+            merchants = [m for m in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMerchant) if not isinstance(m, unreal.EWCrewMaster)]
             check('a merchant waits at each of the five Ports', len(merchants) == 5, found=len(merchants))
-            check('the client sees them too', len(unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWMerchant)) == 5)
+            check('the client sees them too', len([m for m in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWMerchant) if not isinstance(m, unreal.EWCrewMaster)]) == 5)
             owner = next(c for c in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if pid(c) == pid(client.get_controlled_pawn()))
             state['owner'] = owner
             state['merchant'] = merchants[0]

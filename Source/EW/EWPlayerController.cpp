@@ -284,8 +284,8 @@ void AEWPlayerController::SetClimbInput(float Direction)
         if (Direction != 0.f && !IsMapOpen() && !IsSessionMenuOpen()) Survivor->ServerSetGunport(Direction > 0.f);
         return;
     }
-    // At a helm, holding Up/Down (or the D-pad) raises/lowers sail one 25% step at a time.
-    if (Survivor->GetHelmShip())
+    // At a helm, or at a sail's lines, holding Up/Down (or the D-pad) raises/lowers sail one 25% step at a time.
+    if (Survivor->GetHelmShip() || Survivor->GetLinesShip())
     {
         Survivor->SetSailStepInput(IsMapOpen() || IsSessionMenuOpen() ? 0.f : Direction);
         return;

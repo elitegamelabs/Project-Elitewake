@@ -56,6 +56,24 @@ enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMo
 UENUM(BlueprintType)
 enum class EEWSailState : uint8 { Furled, Quarter, Half, ThreeQuarter, Full };
 
+/** One sail's own setting and who works it (owner, October 18: crew dependency). A sail with a hired sailhand follows the
+ *  helm's orders; any sail can be worked by hand at its lines (the pin rail at the foot of its mast). Replicated. */
+USTRUCT(BlueprintType)
+struct FEWSailLine
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    FName MountId;
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    EEWSailState State = EEWSailState::Furled;
+    /** A hired sailhand (a Port NPC signed on with Sailhand's Articles) stands at these lines. */
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    bool bCrewed = false;
+    /** A survivor working these lines by hand, if any. */
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    TObjectPtr<AEWCharacter> Worker;
+};
+
 /**
  * A vessel built from a ship definition: a complete hull with fixed mounts. Players install fittings
  * (helm, sails, cannons, utility attachments) carried in their inventory at matching empty mounts.
@@ -246,7 +264,7 @@ public:
     EEWSailState GetSailState() const { return SailState; }
     /** Fraction of available sail currently set, in 25% steps. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
-    float GetSailFraction() const { return SailFractionForState(SailState); }
+    float GetSailFraction() const;
     static constexpr float SailFractionForState(EEWSailState State) { return static_cast<uint8>(State) * .25f; }
     /** Forward speed in cm/s. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
@@ -312,16 +330,52 @@ public:
     FVector GetHelmSeatLocal(float CapsuleHalfHeight) const;
 
     /** Authority only. The survivor must be able to act and the helm must be installed and free. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool TakeHelm(AEWCharacter* Character);
     /** Authority only. Fails if the exit spot is blocked, unless forced. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool LeaveHelm(AEWCharacter* Character, bool bForce = false);
     /** Authority only, from the helmsman: -1 hard to port, +1 hard to starboard. Held until changed. */
     bool SetRudder(AEWCharacter* Character, float NewRudder);
     /** Authority only, from the helmsman: +1 sets more sail, -1 takes it in. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool StepSails(AEWCharacter* Character, int32 Direction);
     /** Authority only, from the helmsman: +1 swings the sails toward starboard, -1 toward port, 0 holds them.
      *  Held until changed. */
     bool SetSailTrim(AEWCharacter* Character, int32 Direction);
+    /** Each sail's own setting: the helm's order for a crewed sail, whatever was last set by hand otherwise. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    EEWSailState GetMountSailState(FName MountId) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    bool IsSailCrewed(FName MountId) const;
+    /** Sail mounts with a sailhand; the helm commands only these (owner, October 18). */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    int32 GetCrewedSailCount() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    AEWCharacter* GetLinesWorker(FName MountId) const;
+    /** Authority only: a sailhand joins this sail mount; false if it has one already or is no sail. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool SignOnSailhand(FName MountId);
+    /** Authority only (checks and test setups): a sailhand on every sail mount. Returns how many joined. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    int32 CrewEverySail();
+    /** Authority only: a survivor takes a sail's lines, then Up/Down raise or lower that sail a step at a time. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool TakeLines(AEWCharacter* Character, FName MountId);
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool LeaveLines(AEWCharacter* Character);
+    /** Authority only, from the survivor at the lines: +1 sets more of that sail, -1 takes it in. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool StepSailByHand(AEWCharacter* Character, int32 Direction);
+    /** Where a sail's lines are, in the ship's space: on a pin rail at the foot of its mast. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    FVector GetLinesLocal(FName MountId) const;
+    /** Authority only, for Play checks: fits an item at a mount without a survivor carrying it. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Verification")
+    bool VerificationInstallFitting(FName MountId, UEWItemDefinition* Item);
+    /** Tuning: how far from the lines a survivor may stray before letting go, and how long a sailhand hauls after an order. */
+    static constexpr float LinesReach = 300.f;
+    static constexpr float HaulSeconds = 1.5f;
     /** How far the sails swing either side of the centreline, and how fast, in degrees and degrees per second (tuning). */
     /** The sails swing 90 degrees to either side of square across the hull: 180 in all (owner, October 16). */
     static constexpr float MaxSailAngle = 90.f;
@@ -587,6 +641,29 @@ private:
     TObjectPtr<AEWCharacter> Helmsman;
     UPROPERTY(ReplicatedUsing=OnRep_SailState)
     EEWSailState SailState = EEWSailState::Furled;
+    UPROPERTY(ReplicatedUsing=OnRep_SailLines)
+    TArray<FEWSailLine> SailLines;
+    UFUNCTION()
+    void OnRep_SailLines();
+    FEWSailLine* FindLine(FName MountId) { return SailLines.FindByPredicate([MountId](const FEWSailLine& L) { return L.MountId == MountId; }); }
+    const FEWSailLine* FindLine(FName MountId) const { return SailLines.FindByPredicate([MountId](const FEWSailLine& L) { return L.MountId == MountId; }); }
+    FEWSailLine& FindOrAddLine(FName MountId);
+    FName FindAimedLines(const AEWCharacter* Character) const;
+    /** Sailhand's Articles in the pack (an item with bSignsOnSailhand), or none. */
+    static UEWItemDefinition* FindCarriedArticles(const AEWCharacter* Character);
+    /** Server: let go for survivors who walked off or can no longer work; everywhere: the sailhands haul. */
+    void UpdateSailLines(float DeltaSeconds);
+    void BuildLineVisuals();
+    /** The pin rail (aim target and stand-in look) and the placeholder sailhand at each sail's lines. */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UBoxComponent>> LineTargets;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> LineVisuals;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> SailhandVisuals;
+    /** Seconds each sailhand still hauls (shown), and the state last seen, to start hauling when it changes. */
+    TMap<FName, float> HaulLeft;
+    TMap<FName, EEWSailState> HaulSeen;
     UPROPERTY(Replicated)
     float Speed = 0.f;
     UPROPERTY(Replicated)

@@ -22,7 +22,12 @@ AEWShipSurgeon::AEWShipSurgeon()
     if (Cylinder.Succeeded()) Body->SetStaticMesh(Cylinder.Object);
     Body->SetRelativeLocation(FVector(0, 0, 55));
     Body->SetRelativeScale3D(FVector(.45f, .45f, 1.1f));
-    Body->SetCollisionProfileName(TEXT("BlockAllDynamic"));
+    // Solid to people and to aim only, so the hull she rides in never catches on her.
+    Body->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    Body->SetCollisionObjectType(ECC_WorldDynamic);
+    Body->SetCollisionResponseToAllChannels(ECR_Ignore);
+    Body->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+    Body->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
     Head = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Head"));
     Head->SetupAttachment(Body);
     if (Sphere.Succeeded()) Head->SetStaticMesh(Sphere.Object);

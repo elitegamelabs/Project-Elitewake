@@ -1,5 +1,6 @@
-"""Port general merchants and placeholder sell values (design reference, Economy; Milestones "Port general merchant").
-Sets SellValueCopper on the pack resources (every number is TUNING, TBD owner) and places one AEWMerchant on each Port's plaza.
+"""Port general merchants, crew masters and placeholder sell values (design reference, Economy; Milestones "Port general merchant",
+"Sail control and crew dependency"). Sets SellValueCopper on the pack resources (every number is TUNING, TBD owner), makes the
+Sailhand's Articles item, and places one AEWMerchant and one AEWCrewMaster on each Port's plaza.
 Safe to run again. Run in the editor outside Play:
     UnrealEditor-Cmd.exe EW.uproject -unattended -nosplash -nullrhi -run=pythonscript -script=<this file>"""
 import json
@@ -22,8 +23,29 @@ SELL = {  # placeholder prices in Copper per unit (500 Copper = 1 Silver)
 }
 
 
+ARTICLES = '/Game/Elitewake/Items/Crew/DA_SailhandArticles'
+
+
+def make_articles():
+    item = unreal.load_asset(ARTICLES)
+    if not item:
+        item = unreal.AssetToolsHelpers.get_asset_tools().create_asset('DA_SailhandArticles', '/Game/Elitewake/Items/Crew',
+                                                                      unreal.EWItemDefinition, unreal.DataAssetFactory())
+    kit = unreal.load_asset(f'{ITEMS}/Testing/DA_TestRepairKit')
+    item.set_editor_property('item_id', 'SailhandArticles')
+    item.set_editor_property('display_name', unreal.Text('Sailhand Articles'))
+    item.set_editor_property('description', unreal.Text('Signed articles for one hired sailhand. Use them at a sail lines aboard (the pin rail by the mast) and the hand works that sail on the helm orders.'))
+    item.set_editor_property('max_stack_size', 10)
+    item.set_editor_property('unit_weight', 0.05)
+    item.set_editor_property('signs_on_sailhand', True)
+    item.set_editor_property('icon', kit.get_editor_property('icon'))
+    assert unreal.EditorAssetLibrary.save_loaded_asset(item)
+    return item
+
+
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
+    articles = make_articles()
     for path, value in SELL.items():
         item = unreal.load_asset(f'{ITEMS}/{path}')
         assert item, path
@@ -42,7 +64,12 @@ def main():
         merchant = actors.spawn_actor_from_class(unreal.EWMerchant, unreal.Vector(x, y, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))
         merchant.set_actor_label(f'Port Merchant {region}')
         merchant.set_folder_path('World/Ports')
-        placed[region] = [round(x), round(y)]
+        cx, cy = port.world(400, -250)
+        crew = actors.spawn_actor_from_class(unreal.EWCrewMaster, unreal.Vector(cx, cy, T.PORT_LEVEL + 4), unreal.Rotator(0, 0, yaw))
+        crew.set_actor_label(f'Port Crew Master {region}')
+        crew.set_folder_path('World/Ports')
+        crew.set_editor_property('articles', articles)
+        placed[region] = [round(x), round(y), round(cx), round(cy)]
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'PortMerchantsResult.json').write_text(json.dumps({'success': True, 'merchants': placed}, indent=2))
     unreal.log(f'Port merchants: {placed}')

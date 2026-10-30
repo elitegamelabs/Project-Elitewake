@@ -1,0 +1,28 @@
+# Claude daily report — October 29–30, 2026
+
+Owner direction: keep building the game's structure with placeholder art and free sounds until paid art is possible; pick defaults and keep going (the owner edits later).
+
+## Done and Play-checked
+
+| Work | Evidence | Status |
+|---|---|---|
+| **Port general merchant** (`AEWMerchant`): one per Port plaza; E sells every pack item that has a `SellValueCopper` value; placeholder prices on 18 items | `verify_port_merchant_multiplayer_play` PASS (2 players) | 🟡 no buying/stock yet |
+| **Zero starting purse**: new survivors start with 0 Copper (the inn's 250 is not built); the surgeon check now funds its own purse | `verify_ship_surgeon_multiplayer_play` PASS (aim needed retries, as before) | ✅ |
+| **Sail control and crew dependency**: each sail keeps its own setting; Port crew master hires a sailhand for 100 Copper (Sailhand Articles); signing on happens at the sail's lines (pin rail by the mast); the helm sets only crewed sails; survivors can work any sail by hand with Up/Down; placeholder sailhands haul when their sail changes | `verify_sail_crew_multiplayer_play` PASS (2 players); Elitewake.Ships.* and Elitewake.Save PASS | 🟡 see Milestones row |
+
+## Fixed along the way
+
+- Ships near a Port stopped moving: the new merchant and crew master figures, and the ship's own surgeon, blocked everything, so a hull's swept move caught on them. They now block only people and aim traces, and the hull ignores its own surgeon. Schooner check moved 33 m again.
+- `EWWalletComponent.cpp` stopped compiling in a new unity grouping (`Gold` hid a global); renamed the locals.
+
+## Decisions I made (owner may change)
+
+- Sailhand fee 100 Copper; sell prices per item; crew master and merchant stand on each Port plaza. All tuning.
+- With no sailhand aboard, the helm does nothing to the sails (owner rule: unassigned sails cannot be operated from the helm). A lone sailor works the sails by hand at the mast or hires crew.
+- Signing on uses an item (Sailhand Articles) so the hire happens at the Port and the assignment happens aboard, sail by sail.
+
+## Not done
+
+- Crew are not saved, because ships are not saved yet. There are no wages or crew limits, and no NPC cannon crews.
+- There is no buying from the merchant.
+- All figures are placeholder shapes.

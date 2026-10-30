@@ -440,6 +440,18 @@ void AEWCharacter::Tick(float DeltaSeconds)
         HeldLight->SetIntensity(Base * (.9f + Waver));
     }
     if (bIsFirstPerson && IsLocallyControlled()) UpdateFirstPersonCamera(DeltaSeconds);
+    if (IsLocallyControlled() && IsValid(LinesShip) && !IsValid(HelmShip))
+    {
+        // At a sail's lines, holding Up/Down steps that one sail, a notch every SailStepInterval.
+        const int8 HeldStep = SailStepInput > .5f ? 1 : SailStepInput < -.5f ? -1 : 0;
+        const double Now = GetWorld()->GetTimeSeconds();
+        if (HeldStep != 0 && (HeldStep != ActiveSailStepSign || Now >= NextSailStepTime))
+        {
+            ServerSailStep(HeldStep);
+            NextSailStepTime = Now + SailStepInterval;
+        }
+        ActiveSailStepSign = HeldStep;
+    }
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -585,6 +597,8 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
     DOREPLIFETIME(AEWCharacter, HelmShip);
     DOREPLIFETIME(AEWCharacter, Mount);
     DOREPLIFETIME(AEWCharacter, GunShip);
+    DOREPLIFETIME(AEWCharacter, LinesShip);
+    DOREPLIFETIME(AEWCharacter, LinesMount);
     DOREPLIFETIME(AEWCharacter, GunMount);
     DOREPLIFETIME(AEWCharacter, bHeldItemLit);
     DOREPLIFETIME(AEWCharacter, CarriedFish);
@@ -901,6 +915,7 @@ void AEWCharacter::ServerSailTrim_Implementation(int8 Direction)
 void AEWCharacter::ServerSailStep_Implementation(int8 Direction)
 {
     if (IsValid(HelmShip)) HelmShip->StepSails(this, Direction);
+    else if (IsValid(LinesShip)) LinesShip->StepSailByHand(this, Direction);
 }
 
 void AEWCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)

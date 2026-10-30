@@ -39,11 +39,11 @@ bool UEWWalletComponent::TrySpend(int64 Amount)
 
 FString UEWWalletComponent::Format(int64 Amount)
 {
-    const int64 Gold = Amount / (CopperPerSilver * SilverPerGold);
+    const int64 Golds = Amount / (CopperPerSilver * SilverPerGold);
     const int64 Silver = (Amount / CopperPerSilver) % SilverPerGold;
     const int64 Rest = Amount % CopperPerSilver;
     TArray<FString> Parts;
-    if (Gold > 0) Parts.Add(FString::Printf(TEXT("%lld Gold"), Gold));
+    if (Golds > 0) Parts.Add(FString::Printf(TEXT("%lld Gold"), Golds));
     if (Silver > 0) Parts.Add(FString::Printf(TEXT("%lld Silver"), Silver));
     if (Rest > 0 || Parts.IsEmpty()) Parts.Add(FString::Printf(TEXT("%lld Copper"), Rest));
     return FString::Join(Parts, TEXT(" "));
@@ -51,11 +51,11 @@ FString UEWWalletComponent::Format(int64 Amount)
 
 FString UEWWalletComponent::FormatShort(int64 Amount)
 {
-    const int64 Gold = Amount / (CopperPerSilver * SilverPerGold);
+    const int64 Golds = Amount / (CopperPerSilver * SilverPerGold);
     const int64 Silver = (Amount / CopperPerSilver) % SilverPerGold;
     const int64 Rest = Amount % CopperPerSilver;
     TArray<FString> Parts;
-    if (Gold > 0) Parts.Add(FString::Printf(TEXT("%lldg"), Gold));
+    if (Golds > 0) Parts.Add(FString::Printf(TEXT("%lldg"), Golds));
     if (Silver > 0) Parts.Add(FString::Printf(TEXT("%llds"), Silver));
     if (Rest > 0 || Parts.IsEmpty()) Parts.Add(FString::Printf(TEXT("%lldc"), Rest));
     return FString::Join(Parts, TEXT(" "));

@@ -26,6 +26,9 @@ pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
 client = next(c for c in pcs if not c.has_authority())
 host_pc = next(c for c in pcs if c.has_authority())
 server_world, client_world = worlds[pcs.index(host_pc)], worlds[pcs.index(client)]
+# Crew dependency (owner, October 18): the helm sets only sails with a hired sailhand, so every ship here is crewed first.
+for _s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip):
+    _s.crew_every_sail()
 host = host_pc.get_controlled_pawn()
 pawn = client.get_controlled_pawn()
 
