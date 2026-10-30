@@ -1766,6 +1766,113 @@ void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWChar
     ForceNetUpdate();
 }
 
+FEWSavedShip AEWShip::CaptureForSave() const
+{
+    FEWSavedShip Saved;
+    // A ship that came with the map is known again by its name; one bought or spawned in play is launched anew on load.
+    if (IsNetStartupActor()) Saved.MapName = GetFName();
+    Saved.ShipClass = GetClass();
+    Saved.Definition = Definition;
+    Saved.Transform = GetActorTransform();
+    Saved.Fittings = Fittings;
+    if (Cargo) Saved.Cargo = Cargo->Entries;
+    Saved.HullHealth = HullHealth;
+    Saved.Holes = Holes;
+    Saved.WaterAboard = WaterAboard;
+    Saved.bAnchored = bAnchored;
+    Saved.SailState = SailState;
+    Saved.SailLines = SailLines;
+    for (FEWSailLine& Line : Saved.SailLines) Line.Worker = nullptr;
+    Saved.Cannons = Cannons;
+    for (FEWCannonState& Cannon : Saved.Cannons) { Cannon.Gunner = nullptr; Cannon.bLoading = false; }
+    Saved.OpenGunports = OpenGunports;
+    return Saved;
+}
+
+void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
+{
+    if (!HasAuthority()) return;
+    // Anyone at a station lets go; the ship is moved as she was saved, still on the water.
+    for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+    {
+        if (It->GetHelmShip() == this) LeaveHelm(*It, true);
+        if (It->GetGunShip() == this) LeaveCannon(*It, true);
+        if (It->GetLinesShip() == this) LeaveLines(*It);
+    }
+    Speed = 0.f;
+    Rudder = 0.f;
+    SetActorTransform(Saved.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+    Fittings = Saved.Fittings;
+    if (Cargo)
+    {
+        Cargo->Entries = Saved.Cargo.FilterByPredicate([](const FEWInventoryEntry& E) { return E.ItemDefinition && E.Quantity > 0; });
+        Cargo->HandleInventoryChanged();
+    }
+    if (Saved.HullHealth >= 0.f) HullHealth = FMath::Min(Saved.HullHealth, GetMaxHullHealth());
+    Holes = Saved.Holes;
+    WaterAboard = Saved.WaterAboard;
+    SailState = Saved.SailState;
+    SailLines = Saved.SailLines;
+    Cannons = Saved.Cannons;
+    CannonLoadLeft.Reset();
+    OpenGunports = Saved.OpenGunports;
+    bAnchored = Saved.bAnchored;
+    bChainTaut = false;
+    if (bAnchored) LayAnchor();
+    RefreshFittingVisuals();
+    OnRep_Holes();
+    ForceNetUpdate();
+}
+
+void AEWShip::CaptureAll(UWorld* World, TArray<FEWSavedShip>& Out)
+{
+    Out.Reset();
+    if (!World || World->GetNetMode() == NM_Client) return;
+    for (TActorIterator<AEWShip> It(World); It; ++It)
+        if (!It->IsSinking() && !It->IsActorBeingDestroyed() && It->Definition) Out.Add(It->CaptureForSave());
+}
+
+int32 AEWShip::RestoreAll(UWorld* World, const TArray<FEWSavedShip>& Ships)
+{
+    if (!World || World->GetNetMode() == NM_Client) return 0;
+    TMap<FName, AEWShip*> Placed;
+    TArray<AEWShip*> Spawned;
+    for (TActorIterator<AEWShip> It(World); It; ++It)
+    {
+        if (It->IsNetStartupActor()) Placed.Add(It->GetFName(), *It);
+        else Spawned.Add(*It);
+    }
+    // Ships launched in play before this load are not the save's: they go, and the save's own come back.
+    for (AEWShip* Ship : Spawned) Ship->Destroy();
+    int32 Restored = 0;
+    TSet<FName> Kept;
+    for (const FEWSavedShip& Saved : Ships)
+    {
+        if (!Saved.Definition) continue;
+        AEWShip* Ship = nullptr;
+        if (!Saved.MapName.IsNone())
+        {
+            if (AEWShip** Found = Placed.Find(Saved.MapName)) Ship = *Found;
+            if (!Ship) continue;     // the map no longer has that ship
+            Kept.Add(Saved.MapName);
+        }
+        else
+        {
+            const TSubclassOf<AEWShip> Class = Saved.ShipClass ? Saved.ShipClass : TSubclassOf<AEWShip>(AEWShip::StaticClass());
+            Ship = World->SpawnActorDeferred<AEWShip>(Class, Saved.Transform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+            if (!Ship) continue;
+            Ship->Definition = Saved.Definition;
+            Ship->FinishSpawning(Saved.Transform);
+        }
+        Ship->RestoreFromSave(Saved);
+        ++Restored;
+    }
+    // A ship of the map that the save does not have was lost (sunk) before it was made.
+    for (const auto& Pair : Placed)
+        if (!Kept.Contains(Pair.Key)) Pair.Value->Destroy();
+    return Restored;
+}
+
 void AEWShip::RepairAtShipyard()
 {
     if (!HasAuthority() || bSinking) return;

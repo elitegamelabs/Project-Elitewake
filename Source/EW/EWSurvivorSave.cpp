@@ -61,6 +61,8 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
                 Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
             }
     AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
+    AEWShip::CaptureAll(Survivor->GetWorld(), Save->Ships);
+    Save->bHasShips = true;
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
@@ -135,6 +137,8 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         for (TActorIterator<AEWBuildPiece> It(Survivor->GetWorld()); It; ++It) { bAny = true; break; }
         if (!bAny) AEWBuildPiece::RestoreAll(Survivor->GetWorld(), BuiltPieces);
     }
+    // The ships as they were (before the survivor is set down, so one saved standing on a deck lands on it).
+    if (bHasShips && Survivor->GetWorld()) AEWShip::RestoreAll(Survivor->GetWorld(), Ships);
     Survivor->TeleportTo(Location, FRotator(0.f, Facing.Yaw, 0.f), false, true);
     if (AController* Controller = Survivor->GetController()) Controller->SetControlRotation(Facing);
     return true;

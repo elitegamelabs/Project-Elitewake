@@ -16,6 +16,8 @@ bool UEWBuildSave::SaveWorld(UWorld* World, const FString& SlotName)
     Save->MapPath = MapOf(World);
     Save->SavedAt = FDateTime::Now();
     AEWBuildPiece::CaptureAll(World, Save->Pieces);
+    AEWShip::CaptureAll(World, Save->Ships);
+    Save->bHasShips = true;
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
@@ -24,6 +26,7 @@ int32 UEWBuildSave::RestoreWorld(UWorld* World, const FString& SlotName)
     if (!World || World->GetNetMode() == NM_Client || !UGameplayStatics::DoesSaveGameExist(SlotName, 0)) return 0;
     const auto* Save = Cast<UEWBuildSave>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
     if (!Save || Save->MapPath != MapOf(World)) return 0;
+    if (Save->bHasShips) AEWShip::RestoreAll(World, Save->Ships);
     for (TActorIterator<AEWBuildPiece> It(World); It; ++It) return 0;      // something already stands: leave it be
     return AEWBuildPiece::RestoreAll(World, Save->Pieces);
 }

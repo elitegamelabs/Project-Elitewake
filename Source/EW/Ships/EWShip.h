@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
 #include "EWShipTypes.h"
+#include "EWInventoryComponent.h"
 #include "EWShip.generated.h"
 
 class AEWCharacter;
@@ -76,6 +77,32 @@ struct FEWSailLine
     /** A survivor working these lines by hand, if any. */
     UPROPERTY(BlueprintReadOnly, Category="Sail")
     TObjectPtr<AEWCharacter> Worker;
+};
+
+/**
+ * A ship as a save keeps her (M7 persistence, October 30): where she lies, her class, what is fitted, her hold, her hull (health,
+ * holes, water aboard), her anchor, every sail's setting and hired hand, every cannon's hired gunner and charge, and which ports are
+ * open. Nobody aboard is kept here (survivors are saved on their own); a ship placed in the map is matched by its name.
+ */
+USTRUCT(BlueprintType)
+struct FEWSavedShip
+{
+    GENERATED_BODY()
+    /** The placed ship's name in the map; none for a ship bought or spawned in play. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") FName MapName;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TSubclassOf<class AEWShip> ShipClass;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TObjectPtr<UEWShipDefinition> Definition;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FTransform Transform;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInstalledFitting> Fittings;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Cargo;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float HullHealth = -1.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWHullHole> Holes;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float WaterAboard = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bAnchored = true;
+    UPROPERTY(BlueprintReadOnly, Category="Save") EEWSailState SailState = EEWSailState::Furled;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSailLine> SailLines;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWCannonState> Cannons;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> OpenGunports;
 };
 
 /**
@@ -520,6 +547,14 @@ public:
      *  the helm, a cannon or the lines lets go first. False while she is sinking. */
     UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
     bool TowTo(const FTransform& Where);
+    /** Saving (M7): this ship as a save keeps her, and putting a saved state back on her (authority). */
+    FEWSavedShip CaptureForSave() const;
+    void RestoreFromSave(const FEWSavedShip& Saved);
+    /** Authority: every ship afloat in World (none going down), for a save. */
+    static void CaptureAll(UWorld* World, TArray<FEWSavedShip>& Out);
+    /** Authority: puts the saved ships back: placed ones by name, the rest launched anew; a placed ship the save does not have was
+     *  lost and is taken away. Returns how many ships were put back. */
+    static int32 RestoreAll(UWorld* World, const TArray<FEWSavedShip>& Ships);
     /** Authority: a shipyard fits an item at a mount of a new hull (the same rule as fitting one by hand). */
     bool FitAtShipyard(FName MountId, UEWItemDefinition* Item) { return VerificationInstallFitting(MountId, Item); }
 

@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "World/EWBuildPiece.h"
+#include "Ships/EWShip.h"
 #include "EWBuildSave.generated.h"
 
 /**
- * The server's own save of what players built (MULTIPLAYER_RULES: the server persists buildings). Separate from the single-player
+ * The server's own save of what players built and the ships afloat (MULTIPLAYER_RULES: the server persists buildings; M7: ships). Separate from the single-player
  * Save Game, which keeps the pieces inside the survivor's save. AEWGameMode restores it when a hosted or dedicated server starts
  * and saves it every minute and when the world ends (not in the editor's Play, so test runs leave no structures behind).
  */
@@ -25,4 +26,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") FString MapPath;
     UPROPERTY(BlueprintReadOnly, Category="Save") FDateTime SavedAt;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedPiece> Pieces;
+    /** The ships afloat (October 30). An older save has none and leaves the map's ships as they are. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bHasShips = false;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedShip> Ships;
 };
