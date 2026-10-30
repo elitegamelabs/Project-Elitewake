@@ -611,6 +611,53 @@ def build_people(stalls, placed, ship_class):
                clothes(f'Stand{k}', SKIN[(k + 2) % len(SKIN)], ((.5, .2, .1), (.6, .55, .4), (.1, .3, .3), (.3, .3, .32))[k], (.2, .16, .12)), z=z)
 
 
+def town_attenuation(name, inner, falloff):
+    path = f'{FOLDER}/{name}'
+    asset = unreal.load_asset(path) or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
+        name, FOLDER, unreal.SoundAttenuation, unreal.SoundAttenuationFactory())
+    settings = asset.get_editor_property('attenuation')
+    settings.set_editor_property('attenuation_shape', unreal.AttenuationShape.SPHERE)
+    settings.set_editor_property('attenuation_shape_extents', unreal.Vector(inner, 0, 0))
+    settings.set_editor_property('falloff_distance', falloff)
+    settings.set_editor_property('distance_algorithm', unreal.AttenuationDistanceModel.NATURAL_SOUND)
+    asset.set_editor_property('attenuation', settings)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(asset)
+    return asset
+
+
+def build_sounds():
+    """The town heard: voices in the tavern (always) and the market (by day), the yard at work by day, water at the piles, hulls and
+    rigging creaking off the piers, and the harbor bell struck every few minutes (AEWTownSound; levels are tuning)."""
+    near = town_attenuation('SA_Town_v1', 300.0, 2200.0)
+    wide = town_attenuation('SA_TownWide_v1', 1200.0, 5000.0)
+    far = unreal.load_asset('/Game/Elitewake/Audio/SA_Far_v1')
+    audio = '/Game/Elitewake/Audio'
+    H = unreal.EWTownSoundHours
+    spots = [('tavern voices', 'Town/S_AmbTavernMurmur_v1', -2500, -200, TOWN + 200, H.ALWAYS, 1.0, near, (0, 0)),
+             ('market voices', 'Town/S_AmbMarketMurmur_v1', 2000, 200, TOWN + 170, H.DAY, .8, wide, (0, 0)),
+             ('shipyard at work', 'Town/S_AmbShipyardWork_v1', 2200, -2700, TOWN + 150, H.DAY, .9, wide, (0, 0)),
+             ('water at the wharf', 'Town/S_AmbPierLapping_v1', 3950, 1000, DECK - 150, H.ALWAYS, .6, near, (0, 0)),
+             ('water at the long pier', 'Town/S_AmbPierLapping_v1', 7000, 1800, DECK - 150, H.ALWAYS, .6, near, (0, 0)),
+             ('water at the jetty', 'Town/S_AmbPierLapping_v1', 300, 5600, DECK - 150, H.ALWAYS, .6, near, (0, 0)),
+             ('fishing boat creaking 1', 'Ships/S_AmbHullCreak_v2', 2900, 6700, SEA + 80, H.ALWAYS, .7, near, (0, 0)),
+             ('fishing boat creaking 2', 'Ships/S_AmbHullCreak_v2', 6600, 5600, SEA + 80, H.ALWAYS, .7, near, (0, 0)),
+             ('rigging at the pier head', 'Ships/S_AmbRigging_v2', 9500, 2300, DECK + 300, H.ALWAYS, .5, near, (0, 0)),
+             ('harbor bell', 'Town/S_HarborBell_v1', 3170, 2950, TOWN + 600, H.ALWAYS, .8, far, (120.0, 240.0))]
+    for label, path, a, c, z, hours, volume, attenuation, interval in spots:
+        sound = unreal.load_asset(f'{audio}/{path}')
+        assert sound, path
+        x, y = world(a, c)
+        actor = actors.spawn_actor_from_class(unreal.EWTownSound, unreal.Vector(x, y, z), unreal.Rotator(0, 0, 0))
+        actor.set_actor_label(f'{NAME}: sound, {label}')
+        actor.set_folder_path(OUT)
+        actor.set_editor_property('sound', sound)
+        actor.set_editor_property('attenuation', attenuation)
+        actor.set_editor_property('hours', hours)
+        actor.set_editor_property('volume', volume)
+        actor.set_editor_property('interval', unreal.Vector2D(*interval))
+        report.setdefault('sounds', []).append(label)
+
+
 def build_safe_zone():
     x, y = world(4000, 600)
     zone = actors.spawn_actor_from_class(unreal.EWSafeZone, unreal.Vector(x, y, LEVEL), unreal.Rotator(0, 0, 0))
@@ -640,6 +687,7 @@ def main():
     build_shipyard(MATS)
     build_palms(MATS)
     build_people(stalls, placed, ship_class)
+    build_sounds()
     build_safe_zone()
     assert level.save_current_level()
     report['success'] = True

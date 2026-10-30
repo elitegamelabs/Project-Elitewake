@@ -57,6 +57,14 @@ are placeholders for the owner to edit.
 
 Prices (Copper) and stock are tuning. Hats and the flag are the existing test items.
 
+## Sounds (`AEWTownSound`)
+
+Synthesized placeholders, original and free (`Scripts/Art/make_town_sounds.py`, WAVs in `Art/Audio/Town/`, imported by
+`Scripts/Setup/import_audio.py`): the tavern's voices and mug clinks (always), the market's voices and the shipyard's mallets and saws
+(by day, fading out at night), water slapping at the wharf, the long pier and the jetty, the fishing boats' creaking hulls and the pier
+head's rigging (the project's existing loops), and the harbor bell struck twice every two to four minutes. The voices are synthetic
+vowels and consonants, not words. Levels and intervals are tuning; whether they sound right has not been judged by ear.
+
 ## Safe harbor (`AEWSafeZone`)
 
 The HUD announces it under the region banner on the way in ("Saltreach Freeport · a free port: no fighting, no building, no beasts") and on the way out.
@@ -76,7 +84,7 @@ hunting creature drops the chase at the edge. The boundary is invisible to playe
 ## Not done
 
 - All art is placeholder: buildings, props and boats are editor-built shapes on the project's timber texture; townsfolk are the
-  engine mannequin painted with plain clothes (no faces, hair or real clothing); no NPC sounds, no ambient town audio.
+  engine mannequin painted with plain clothes (no faces, hair or real clothing); no NPC voices or footsteps; the town's ambient sounds are synthesized placeholders.
 - Townsfolk walk fixed loops; they stop for a survivor in the way (and walk on when the way is clear) but do not step round them; nobody sits.
 - Quests are delivery jobs only; no quest log, chains or story quests. Rumours are fixed text.
 - Ships have no owner, so services act on the nearest ship; towing is instant (no pilot boats).

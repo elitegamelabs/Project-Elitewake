@@ -64,6 +64,12 @@ SOUNDS = {
     'Ships/SFX_AnchorDrop-v1.wav': ('S_AnchorDrop_v1', .9, 'far'),
     'Ships/SFX_AnchorCatch-v1.wav': ('S_AnchorCatch_v1', .9, 'far'),
     'Ships/SFX_AnchorRaise-v1.wav': ('S_AnchorRaise_v1', .9, 'far'),
+    # Saltreach Freeport (October 30): synthesized placeholders, made by Scripts/Art/make_town_sounds.py (no credits, nothing sampled).
+    'Town/AMB_TavernMurmur-v1.wav': ('S_AmbTavernMurmur_v1', .8, 'worldloop'),
+    'Town/AMB_MarketMurmur-v1.wav': ('S_AmbMarketMurmur_v1', .7, 'worldloop'),
+    'Town/AMB_ShipyardWork-v1.wav': ('S_AmbShipyardWork_v1', 1.0, 'worldloop'),
+    'Town/AMB_PierLapping-v1.wav': ('S_AmbPierLapping_v1', .8, 'worldloop'),
+    'Town/SFX_HarborBell-v1.wav': ('S_HarborBell_v1', .8, 'far'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {
