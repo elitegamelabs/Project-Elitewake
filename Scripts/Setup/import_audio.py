@@ -70,6 +70,10 @@ SOUNDS = {
     'Town/AMB_ShipyardWork-v1.wav': ('S_AmbShipyardWork_v1', 1.0, 'worldloop'),
     'Town/AMB_PierLapping-v1.wav': ('S_AmbPierLapping_v1', .8, 'worldloop'),
     'Town/SFX_HarborBell-v1.wav': ('S_HarborBell_v1', .8, 'far'),
+    # The cave spider (October 30): synthesized by Scripts/Art/make_creature_sounds.py.
+    'Fauna/SFX_SpiderChitter-v1.wav': ('S_SpiderChitter_v1', .9, 'world'),
+    'Fauna/SFX_SpiderHiss-v1.wav': ('S_SpiderHiss_v1', 1.0, 'world'),
+    'Fauna/SFX_SpiderDeath-v1.wav': ('S_SpiderDeath_v1', .9, 'world'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {
@@ -80,7 +84,10 @@ CALLS = {
     'Lion': (['S_LionRoar_v1'], (40, 90)),
     'GiantCrocodile': (['S_CrocodileBellow_v1'], (0, 0)),
     'Elephant': (['S_ElephantTrumpet_v1'], (45, 100)),
+    'Spider': (['S_SpiderChitter_v1'], (25, 60)),
 }
+# Animal -> its attack and death sounds (October 30; species without their own are silent there for now).
+STRIKES = {'Spider': (['S_SpiderHiss_v1'], ['S_SpiderDeath_v1'])}
 # Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m.
 FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0)}
 
@@ -133,6 +140,12 @@ def main():
         definition.set_editor_property('call_interval', unreal.Vector2D(*interval))
         assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
         called[animal] = calls
+    for animal, (attacks, deaths) in STRIKES.items():
+        definition = unreal.load_asset(f'{ANIMALS}/DA_Animal_{animal}')
+        assert definition, animal
+        definition.set_editor_property('attack_sounds', [waves[c] for c in attacks])
+        definition.set_editor_property('death_sounds', [waves[c] for c in deaths])
+        assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
     result = {'success': True, 'sounds': {n: round(w.get_editor_property('duration'), 2) for n, w in waves.items()}, 'calls': called}
     (ROOT / 'Saved/AudioImportResult.json').write_text(json.dumps(result, indent=2))
     unreal.log(f'Imported {len(waves)} sounds and gave {len(called)} animals their calls')

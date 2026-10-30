@@ -108,6 +108,12 @@ public:
     /** Seconds between its calls while it goes about its day, a number in this range (zero: it calls only when provoked). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound")
     FVector2D CallInterval = FVector2D::ZeroVector;
+    /** What it sounds like when it strikes a survivor (a bite, a hiss and snap, a swipe), one picked at random; none: silent. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound")
+    TArray<TSoftObjectPtr<USoundBase>> AttackSounds;
+    /** What it sounds like as it dies, one picked at random; none: silent. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Sound")
+    TArray<TSoftObjectPtr<USoundBase>> DeathSounds;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     float MaxHealth = 50.f;

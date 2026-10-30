@@ -66,6 +66,7 @@ public:
     bool CanRide(const AEWCharacter* Character) const;
 
     /** Authority only: a survivor's blow. Returns true if it landed. */
+    UFUNCTION(BlueprintCallable, Category="Wildlife")
     bool TakeStrike(AEWCharacter* Striker, float Damage);
     /** The live animal a survivor's swing would hit: in front of them, within reach of their arm. */
     static AEWAnimal* FindStruck(const AEWCharacter* Striker, float Reach);
@@ -106,6 +107,12 @@ private:
     void MulticastFlinch();
     /** Authority: it calls out, heard on every screen near; never twice within a few seconds. */
     void Call();
+    /** Every machine: one of its attack (Kind 1) or death (Kind 2) sounds at the animal. */
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastCue(uint8 Kind);
+    /** For the checks: attack and death sounds played on this machine. */
+    UFUNCTION(BlueprintPure, Category="Wildlife") int32 GetCuesHeard() const { return CuesHeard; }
+    int32 CuesHeard = 0;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastCall();
     float CallSeconds = 0.f;

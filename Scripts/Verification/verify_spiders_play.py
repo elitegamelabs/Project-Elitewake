@@ -88,6 +88,8 @@ def tick(delta):
             if survival.get_health() < state['start_health'] - 1:
                 report['health_lost'] = round(state['start_health'] - survival.get_health(), 1)
                 check('a spider chased the survivor', 'CHASE' in state['seen'], seen=sorted(state['seen']))
+                # Its bite is heard: the hiss and snap (synthesized placeholder, October 30).
+                check('the bite is heard', any(sp.get_cues_heard() >= 1 for sp in local), cues=[sp.get_cues_heard() for sp in local])
                 # a close-up of the nearest spider
                 s = min(local, key=lambda a: unreal.Vector.distance(a.get_actor_location(), pawn.get_actor_location()))
                 loc = s.get_actor_location()
@@ -135,6 +137,11 @@ def tick(delta):
         elif p == 4:
             if now() < state['at']:
                 return
+            s = state['shot_spider']
+            before = s.get_cues_heard()
+            s.set_actor_tick_enabled(True)
+            s.take_strike(pawn, 10000.0)
+            check('it dies with its death rattle heard', s.is_dead() and s.get_cues_heard() == before + 1, cues=s.get_cues_heard(), before=before)
             finish()
     except Exception as error:
         finish(repr(error))

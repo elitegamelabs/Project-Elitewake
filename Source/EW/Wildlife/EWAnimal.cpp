@@ -274,6 +274,7 @@ void AEWAnimal::Think(float DeltaSeconds)
                 AttackCooldown = Definition->AttackInterval;
                 Target->GetSurvivalComponent()->ApplyDamage(Definition->AttackDamage);
                 Target->ReactToHit();
+                MulticastCue(1);
             }
             return;
         }
@@ -476,8 +477,19 @@ void AEWAnimal::MulticastCall_Implementation()
     UEWSoundLibrary::PlayAssetAt(this, Sound, GetActorLocation() + FVector(0, 0, Definition->Size.Y * .5f), 1.f, FMath::FRandRange(.95f, 1.05f));
 }
 
+void AEWAnimal::MulticastCue_Implementation(uint8 Kind)
+{
+    if (!Definition) return;
+    const TArray<TSoftObjectPtr<USoundBase>>& Sounds = Kind == 1 ? Definition->AttackSounds : Definition->DeathSounds;
+    if (Sounds.IsEmpty()) return;
+    USoundBase* Sound = Sounds[FMath::RandRange(0, Sounds.Num() - 1)].LoadSynchronous();
+    UEWSoundLibrary::PlayAssetAt(this, Sound, GetActorLocation() + FVector(0, 0, Definition->Size.Y * .5f), 1.f, FMath::FRandRange(.95f, 1.05f));
+    ++CuesHeard;
+}
+
 void AEWAnimal::Die()
 {
+    if (!bDead && HasAuthority()) MulticastCue(2);
     bDead = true;
     Health = 0.f;
     Action = EEWAnimalAction::Wander;
