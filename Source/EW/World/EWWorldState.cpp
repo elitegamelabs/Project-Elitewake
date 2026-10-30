@@ -1,5 +1,7 @@
 #include "World/EWWorldState.h"
 #include "EWPickup.h"
+#include "EWDeathBag.h"
+#include "Ships/EWWreckCrate.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Gathering/EWHarvestTree.h"
@@ -65,6 +67,10 @@ void UEWWorldStateSubsystem::Capture(UWorld* World, FEWSavedWorldState& Out)
         else if (const auto* Pickup = Cast<AEWPickup>(Actor)) Saved.First = Pickup->Quantity;
         Out.Resources.Add(Saved);
     }
+    for (TActorIterator<AEWDeathBag> It(World); It; ++It)
+        if (!It->IsActorBeingDestroyed() && It->GetContents() && It->GetContents()->GetUsedSlotCount() > 0) Out.Containers.Add(It->CaptureForSave());
+    for (TActorIterator<AEWWreckCrate> It(World); It; ++It)
+        if (!It->IsActorBeingDestroyed() && It->GetContents() && It->GetContents()->GetUsedSlotCount() > 0) Out.Containers.Add(It->CaptureForSave());
 }
 
 int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& State)
@@ -86,6 +92,20 @@ int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& S
         else if (auto* Pickup = Cast<AEWPickup>(*Found)) Pickup->RestoreSaved(Saved.First);
         Touch(*Found);
         ++Changed;
+    }
+    // Bags and crates from before this load are not the save's: they go, and the save's own come back.
+    for (TActorIterator<AEWDeathBag> It(World); It; ++It) It->Destroy();
+    for (TActorIterator<AEWWreckCrate> It(World); It; ++It) It->Destroy();
+    for (const FEWSavedContainer& Saved : State.Containers)
+    {
+        if (Saved.LifeLeft <= 0.f || Saved.Contents.IsEmpty()) continue;
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        if (Saved.bWreckCrate)
+        {
+            if (auto* Crate = World->SpawnActor<AEWWreckCrate>(AEWWreckCrate::StaticClass(), Saved.Transform, Params)) { Crate->RestoreSaved(Saved); ++Changed; }
+        }
+        else if (auto* Bag = World->SpawnActor<AEWDeathBag>(AEWDeathBag::StaticClass(), Saved.Transform, Params)) { Bag->RestoreSaved(Saved); ++Changed; }
     }
     return Changed;
 }

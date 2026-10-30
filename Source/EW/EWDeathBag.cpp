@@ -6,6 +6,7 @@
 #include "EWInventoryComponent.h"
 #include "EWPlayerController.h"
 #include "EWSurvivalComponent.h"
+#include "World/EWWorldState.h"
 #include "UObject/ConstructorHelpers.h"
 
 AEWDeathBag::AEWDeathBag()
@@ -54,6 +55,25 @@ bool AEWDeathBag::Interact_Implementation(AEWCharacter* Character)
     if (!PC) return false;
     PC->ClientOpenContainer(this);
     return true;
+}
+
+FEWSavedContainer AEWDeathBag::CaptureForSave() const
+{
+    FEWSavedContainer Saved;
+    Saved.Transform = GetActorTransform();
+    if (Contents) Saved.Contents = Contents->Entries;
+    Saved.LifeLeft = GetLifeSpan();
+    return Saved;
+}
+
+void AEWDeathBag::RestoreSaved(const FEWSavedContainer& Saved)
+{
+    if (!HasAuthority() || !Contents) return;
+    Contents->SetMaxSlots(FMath::Max(1, Saved.Contents.Num()));
+    Contents->Entries = Saved.Contents;
+    Contents->HandleInventoryChanged();
+    // The time it had left when the game was saved, not a fresh half hour.
+    SetLifeSpan(FMath::Max(1.f, Saved.LifeLeft));
 }
 
 AEWDeathBag* AEWDeathBag::DropInventoryOf(AEWCharacter* Dead, const FVector& Where)

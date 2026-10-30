@@ -1,4 +1,5 @@
 #include "Ships/EWWreckCrate.h"
+#include "World/EWWorldState.h"
 #include "EWDeathBag.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -37,6 +38,28 @@ void AEWWreckCrate::BeginPlay()
         Box->SetWorldScale3D(FVector::OneVector);
     }
     BobTime = float(GetTypeHash(GetFName()) % 100) * .07f;
+}
+
+FEWSavedContainer AEWWreckCrate::CaptureForSave() const
+{
+    FEWSavedContainer Saved;
+    Saved.bWreckCrate = true;
+    Saved.Transform = GetActorTransform();
+    if (Contents) Saved.Contents = Contents->Entries;
+    Saved.LifeLeft = GetLifeSpan();
+    Saved.SurfaceZ = SurfaceZ;
+    return Saved;
+}
+
+void AEWWreckCrate::RestoreSaved(const FEWSavedContainer& Saved)
+{
+    if (!HasAuthority() || !Contents) return;
+    SurfaceZ = Saved.SurfaceZ;
+    Contents->SetMaxSlots(FMath::Max(SlotsPerCrate, Saved.Contents.Num()));
+    Contents->Entries = Saved.Contents;
+    Contents->HandleInventoryChanged();
+    SetLifeSpan(FMath::Max(1.f, Saved.LifeLeft));
+    ForceNetUpdate();
 }
 
 void AEWWreckCrate::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

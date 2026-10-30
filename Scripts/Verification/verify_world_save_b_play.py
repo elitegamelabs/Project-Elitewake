@@ -1,7 +1,7 @@
 """Play, second half of the world-state save round trip (M7 persistence, October 30); run after verify_world_save_a_play. One player,
 a fresh Play session of the coastal map: the resources the first half changed are fresh again; loading the save (slot WorldSaveTest)
 puts the world back as it was left: the knocked-over tree lies where it fell, the cut tree and the picked plant are gone, and the
-deposit has what was left in it. The test slot is deleted afterwards. Writes Saved/WorldSaveBPlayResult.json."""
+deposit has what was left in it, and the death bag lies where it was dropped with the same goods and the time it had left. The test slot is deleted afterwards. Writes Saved/WorldSaveBPlayResult.json."""
 import json
 import time
 from pathlib import Path
@@ -46,6 +46,7 @@ def tick(delta):
             plant, rock = named(unreal.EWHandGatherable, want['gone_plant']), named(unreal.EWMineable, want['rock'])
             check('a fresh map: both trees stand, the plant grows, the deposit is whole',
                   lying and not lying.is_felled() and gone and plant and rock and rock.get_editor_property('remaining') >= 4)   # a fresh deposit holds 4 to 8
+            check('a fresh map has no death bag', not unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWDeathBag))
             check('the save loads', unreal.EWSurvivorSave.load_save('WorldSaveTest').apply_to(pawn))
             state.update(phase='verify', at=time.monotonic() + 1.0)
         elif p == 'verify':
@@ -58,6 +59,12 @@ def tick(delta):
             rock = named(unreal.EWMineable, want['rock'])
             check('the deposit has what was left in it', rock and rock.get_editor_property('remaining') == want['rock_left'],
                   left=rock.get_editor_property('remaining') if rock else None)
+            bags = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWDeathBag)
+            check('the death bag is back where it was dropped', len(bags) == 1 and (bags[0].get_actor_location() - unreal.Vector(*want['bag_at'])).length() < 5)
+            got = sorted([str(e.item_definition.get_name()), e.quantity] for e in bags[0].get_contents().get_inventory_entries())
+            check('with the same goods', got == want['bag'], got=got, want=want['bag'])
+            life = bags[0].get_life_span()
+            check('and the time it had left, not a fresh half hour', want['bag_life'] - 60 < life <= want['bag_life'] + 1, life=life, saved=want['bag_life'])
             finish()
     except Exception as error:
         import traceback

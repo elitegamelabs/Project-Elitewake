@@ -4,7 +4,8 @@ Saved/WorldSaveExpected.json for verify_world_save_b_play, which loads it in a f
   - a tree is knocked over (left lying, as an elephant leaves one);
   - another is cut down to nothing (it falls, fades and is gone);
   - a hand gatherable (fibre, sticks or berries) is picked clean through a real interaction request (gone);
-  - a ruby deposit in the starter island's cave is mined with a metal pickaxe through real swings (partly mined).
+  - a ruby deposit in the starter island's cave is mined with a metal pickaxe through real swings (partly mined);
+  - the survivor's pack (seven wood, two hide) is dropped in a death bag at the cave mouth, as a death leaves it.
 Writes Saved/WorldSaveAPlayResult.json."""
 import json
 import math
@@ -124,8 +125,21 @@ def tick(delta):
             expected['lying_at'] = [lying.get_actor_location().x, lying.get_actor_location().y, lying.get_actor_location().z]
             mx, my = cave.world(-1400, 0.0)
             pawn.teleport(unreal.Vector(mx, my, cave.floor + 200), unreal.Rotator())
-            state.update(phase='save', at=time.monotonic() + 1.5)
+            state.update(phase='bag', at=time.monotonic() + 1.5)
+        elif p == 'bag':
+            pack = pawn.get_inventory_component()
+            for e in list(pack.get_inventory_entries()):
+                pack.remove_item(e.item_definition, e.quantity)
+            pack.add_item(unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood'), 7)
+            pack.add_item(unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestHide'), 2)
+            at = pawn.get_actor_location()
+            bag = unreal.EWDeathBag.drop_inventory_of(pawn, unreal.Vector(at.x + 150, at.y, at.z - 80))
+            check('the pack drops into a death bag', bag is not None and pack.get_used_slot_count() == 0)
+            expected['bag_at'] = [bag.get_actor_location().x, bag.get_actor_location().y, bag.get_actor_location().z]
+            expected['bag'] = sorted([str(e.item_definition.get_name()), e.quantity] for e in bag.get_contents().get_inventory_entries())
+            state.update(bag=bag, phase='save', at=time.monotonic() + 1.0)
         elif p == 'save':
+            expected['bag_life'] = state['bag'].get_life_span()
             check('the game saves', unreal.EWSurvivorSave.save_survivor(pawn, 'WorldSaveTest'))
             (saved / 'WorldSaveExpected.json').write_text(json.dumps(expected, indent=2))
             report['expected'] = expected

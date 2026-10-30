@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
+#include "EWInventoryComponent.h"
 #include "EWWorldState.generated.h"
 
 /** One placed resource as a save keeps it: its name in the map and what is left of it (wood and thatch for a tree, ore for a rock,
@@ -17,6 +18,19 @@ struct FEWSavedResource
     UPROPERTY(BlueprintReadOnly, Category="Save") float RespawnLeft = -1.f;
 };
 
+/** A bag a survivor left where they died, or a crate floating from a wreck, as a save keeps it: where, what is in it, how long it
+ *  has left, and (a crate) the water it floats on. */
+USTRUCT(BlueprintType)
+struct FEWSavedContainer
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bWreckCrate = false;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FTransform Transform;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Contents;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float LifeLeft = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float SurfaceZ = 0.f;
+};
+
 /** What has changed in the world's resources since the map was made (M7 persistence, October 30). */
 USTRUCT(BlueprintType)
 struct FEWSavedWorldState
@@ -26,13 +40,15 @@ struct FEWSavedWorldState
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> Removed;
     /** Placed ones partly used, or knocked over and lying. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedResource> Resources;
+    /** Death bags and wreck crates lying about (October 30), each with the time it had left. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedContainer> Containers;
 };
 
 /**
  * The world's resources as play changes them (M7 persistence, October 30): which of the map's placed trees, rocks and pickups (hand
  * gatherables, items lying about) have gone, and which are partly used. The server keeps the list as play goes; the single-player
  * Save Game and the server's world save carry it, and loading puts the world back the same way: the gone stay gone, the used keep
- * what is left. Things spawned in play (not in the map) are not kept here.
+ * what is left. Of the things spawned in play, death bags and wreck crates are kept (with their contents and time left).
  */
 UCLASS()
 class EW_API UEWWorldStateSubsystem : public UWorldSubsystem

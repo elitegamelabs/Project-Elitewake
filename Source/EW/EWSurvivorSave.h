@@ -16,7 +16,7 @@ class UEWItemDefinition;
  * Single player's SAVE GAME (Options menu): the survivor as they were, kept for the next Single Player.
  * Kept: the map, where they stand and look, health, hunger and thirst, the inventory (with food ages), what is
  * equipped and the hotbar. Structures built with Build Mode are kept too, the ships afloat, and the map's trees, rocks and pickups as play
- * left them (October 30). Not kept yet (M7): animals, fish, and items dropped in play (a death bag), which come back fresh.
+ * left them (October 30). Death bags and wreck crates are kept with their goods. Not kept yet (M7): animals and fish, which come back fresh.
  */
 UCLASS(BlueprintType)
 class EW_API UEWSurvivorSave : public USaveGame
