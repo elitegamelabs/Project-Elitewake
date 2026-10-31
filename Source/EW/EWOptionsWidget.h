@@ -6,50 +6,75 @@ class UButton;
 class UTextBlock;
 class USlider;
 class UVerticalBox;
+class UEWVolumeDial;
 
-/** Escape's pause menu, in two tabs (owner, October 25): PAUSE (SAVE GAME in single player, MAIN MENU) and OPTIONS (brightness, the look sensitivities and master volume). Tab, RB/LB, PageUp/PageDown or a click switch tabs. */
+/** Escape's pause menu (owner, October 30): a column of buttons, RESUME GAME, SAVE GAME (single player), OPTIONS and MAIN MENU.
+ *  OPTIONS opens the settings page (brightness; mouse and controller look speed, each horizontal and vertical; master volume, with a
+ *  dial beside it) and BACK;
+ *  Escape or B there returns to the buttons. */
 UCLASS()
 class EW_API UEWOptionsWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
+    /** The highlighted entry: on the buttons page one of the Item* values, on the settings page 0..5 a setting and 6 BACK. */
     UFUNCTION(BlueprintPure, Category="Options") int32 GetSelected() const { return Selected; }
-    /** 0 = PAUSE, 1 = OPTIONS. */
+    /** 0 = the buttons, 1 = OPTIONS (the settings page). */
     UFUNCTION(BlueprintPure, Category="Options") int32 GetTab() const { return Tab; }
-    UFUNCTION(BlueprintPure, Category="Options") int32 GetTabCursor() const { return TabCursor; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetTab(int32 NewTab);
     UFUNCTION(BlueprintPure, Category="Options") bool IsSaveShown() const;
     UFUNCTION(BlueprintPure, Category="Options") FText GetStatus() const;
+    /** Where the volume dial points, 0 to 1. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetDialValue() const;
+
+    static constexpr int32 ItemResume = 10;
+    static constexpr int32 ItemSave = 11;
+    static constexpr int32 ItemOptions = 12;
+    static constexpr int32 ItemMainMenu = 13;
+    static constexpr int32 SettingBack = 6;
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float Delta) override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
 private:
+    UFUNCTION() void Resume();
     UFUNCTION() void SaveGame();
+    UFUNCTION() void OpenOptions() { SetTab(1); }
+    UFUNCTION() void BackToButtons() { SetTab(0); Selected = ItemOptions; }
     UFUNCTION() void MainMenu();
-    UFUNCTION() void ShowPauseTab() { SetTab(0); }
-    UFUNCTION() void ShowOptionsTab() { SetTab(1); }
-    UFUNCTION() void HoverSave() { Selected = 4; }
-    UFUNCTION() void HoverMenu() { Selected = 5; }
+    UFUNCTION() void HoverResume() { Selected = ItemResume; }
+    UFUNCTION() void HoverSave() { Selected = ItemSave; }
+    UFUNCTION() void HoverOptions() { Selected = ItemOptions; }
+    UFUNCTION() void HoverMenu() { Selected = ItemMainMenu; }
+    UFUNCTION() void HoverBack() { Selected = SettingBack; }
     UFUNCTION() void OnBrightnessChanged(float Value);
-    UFUNCTION() void OnMouseSensitivityChanged(float Value);
-    UFUNCTION() void OnControllerSensitivityChanged(float Value);
+    UFUNCTION() void OnMouseHorizontalChanged(float Value) { OnLookChanged(0, Value); }
+    UFUNCTION() void OnMouseVerticalChanged(float Value) { OnLookChanged(1, Value); }
+    UFUNCTION() void OnControllerHorizontalChanged(float Value) { OnLookChanged(2, Value); }
+    UFUNCTION() void OnControllerVerticalChanged(float Value) { OnLookChanged(3, Value); }
+    void OnLookChanged(int32 Which, float Value);
     UFUNCTION() void OnVolumeChanged(float Value);
     void AdjustSelectedSetting(float Direction);
     void RefreshSettingLabels();
+    /** The buttons page's entries in order (SAVE GAME only in single player). */
+    TArray<int32> ButtonItems() const;
+    UPROPERTY(Transient) TObjectPtr<UButton> ResumeButton;
     UPROPERTY(Transient) TObjectPtr<UButton> SaveButton;
+    UPROPERTY(Transient) TObjectPtr<UButton> OptionsButton;
     UPROPERTY(Transient) TObjectPtr<UButton> MenuButton;
+    UPROPERTY(Transient) TObjectPtr<UButton> BackButton;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> Title;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Status;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> Hint;
     UPROPERTY(Transient) TObjectPtr<USlider> BrightnessSlider;
-    UPROPERTY(Transient) TObjectPtr<USlider> MouseSensitivitySlider;
-    UPROPERTY(Transient) TObjectPtr<USlider> ControllerSensitivitySlider;
+    /** Mouse horizontal, mouse vertical, controller horizontal, controller vertical. */
+    UPROPERTY(Transient) TArray<TObjectPtr<USlider>> LookSliders;
     UPROPERTY(Transient) TObjectPtr<USlider> VolumeSlider;
+    UPROPERTY(Transient) TObjectPtr<UEWVolumeDial> VolumeDial;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingLabels;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingValues;
-    UPROPERTY(Transient) TArray<TObjectPtr<UButton>> TabButtons;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> PausePage;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> OptionsPage;
-    int32 Selected = 4;
+    int32 Selected = ItemResume;
     int32 Tab = 0;
-    int32 TabCursor = 0;             // the tab bar's highlight while Selected is -1 (Up from the first setting)
 };

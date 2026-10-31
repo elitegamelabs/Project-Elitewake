@@ -1291,27 +1291,10 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 	if (GetController() != nullptr)
 	{
 		const auto* PlayerController = Cast<AEWPlayerController>(GetController());
-		const float Sensitivity = PlayerController ? PlayerController->GetActiveLookSensitivity() : 1.f;
-		AddControllerYawInput(Yaw * Sensitivity);
-		AddControllerPitchInput(Pitch * Sensitivity);
+		// Left-right and up-down each at their own speed (owner, October 30).
+		AddControllerYawInput(Yaw * (PlayerController ? PlayerController->GetYawLookSensitivity() : 1.f));
+		AddControllerPitchInput(Pitch * (PlayerController ? PlayerController->GetPitchLookSensitivity() : 1.f));
 	}
-}
-
-void AEWCharacter::ApplyUserBrightness(float ExposureBias)
-{
-	const float ClampedBias = FMath::Clamp(ExposureBias, -.5f, .5f);
-	const float Gain = FMath::Exp2(ClampedBias);
-	const auto Apply = [ClampedBias, Gain](UCameraComponent* Camera)
-	{
-		if (!Camera) return;
-		Camera->PostProcessSettings.bOverride_AutoExposureBias = true;
-		Camera->PostProcessSettings.AutoExposureBias = ClampedBias;
-		Camera->PostProcessSettings.bOverride_ColorGain = true;
-		Camera->PostProcessSettings.ColorGain = FVector4(Gain, Gain, Gain, 1.f);
-		Camera->SetPostProcessBlendWeight(1.f);
-	};
-	Apply(FollowCamera);
-	Apply(FirstPersonCamera);
 }
 
 void AEWCharacter::DoJumpStart()

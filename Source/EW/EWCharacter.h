@@ -502,8 +502,6 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	/** The local screen's nausea, 0 to 1 (for the checks). */
 	UFUNCTION(BlueprintPure, Category="Survival") float GetNausea() const { return Nausea; }
-	/** Applies the local player's persistent exposure adjustment to the survivor cameras. */
-	void ApplyUserBrightness(float ExposureBias);
 
 	/** Returns FirstPersonCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }

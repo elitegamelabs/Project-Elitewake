@@ -69,11 +69,16 @@ AEWPlayerController::AEWPlayerController()
     ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
 }
 
+namespace
+{
+    const TCHAR* LookSensitivityKeys[4] = {TEXT("MouseHorizontalSensitivity"), TEXT("MouseVerticalSensitivity"),
+        TEXT("ControllerHorizontalSensitivity"), TEXT("ControllerVerticalSensitivity")};
+}
+
 void AEWPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
     if (ObjectiveComponent) ObjectiveComponent->ApplyCompletionRecipes();
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(InPawn)) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
 }
 
 void AEWPlayerController::BeginPlay()
@@ -82,16 +87,22 @@ void AEWPlayerController::BeginPlay()
     if (GConfig)
     {
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
-        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
-        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        // Each look speed falls back on the one setting it replaced (October 30: one mouse and one controller speed before).
+        float OldMouse = 1.f, OldController = 1.f;
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), OldMouse, GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), OldController, GGameUserSettingsIni);
+        for (int32 Which = 0; Which < 4; ++Which)
+        {
+            LookSensitivity[Which] = Which < 2 ? OldMouse : OldController;
+            GConfig->GetFloat(TEXT("Elitewake.UserControls"), LookSensitivityKeys[Which], LookSensitivity[Which], GGameUserSettingsIni);
+            LookSensitivity[Which] = FMath::Clamp(LookSensitivity[Which], .1f, 3.f);
+        }
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
         MasterVolume = FMath::Clamp(MasterVolume, 0.f, 1.f);
         if (IsLocalPlayerController()) FApp::SetVolumeMultiplier(MasterVolume);
         UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
-        MouseLookSensitivity = FMath::Clamp(MouseLookSensitivity, .1f, 3.f);
-        ControllerLookSensitivity = FMath::Clamp(ControllerLookSensitivity, .1f, 3.f);
     }
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
+    ApplyBrightness();
     if (IsLocalPlayerController())
     {
         ObjectiveWidget = CreateWidget<UEWObjectiveWidget>(this, UEWObjectiveWidget::StaticClass());
@@ -137,7 +148,7 @@ void AEWPlayerController::SetUserBrightness(float Value)
 {
     if (!IsLocalPlayerController()) return;
     UserBrightness = FMath::Clamp(Value, -.5f, .5f);
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
+    ApplyBrightness();
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
@@ -145,13 +156,22 @@ void AEWPlayerController::SetUserBrightness(float Value)
     }
 }
 
-void AEWPlayerController::SetMouseLookSensitivity(float Value)
+float AEWPlayerController::GetDisplayGamma() const { return GEngine ? GEngine->DisplayGamma : 2.2f; }
+
+void AEWPlayerController::ApplyBrightness() const
 {
-    if (!IsLocalPlayerController()) return;
-    MouseLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
+    // Display gamma brightens or darkens the final image of every view (survivor, helm, cannon, title) together:
+    // 50 on the slider is the engine's 2.2. Tuning: the ends are one stop of gamma either way.
+    if (GEngine && IsLocalPlayerController()) GEngine->DisplayGamma = 2.2f * FMath::Exp2(UserBrightness * 2.f);
+}
+
+void AEWPlayerController::SetLookSensitivity(int32 Which, float Value)
+{
+    if (!IsLocalPlayerController() || Which < 0 || Which > 3) return;
+    LookSensitivity[Which] = FMath::Clamp(Value, .1f, 3.f);
     if (GConfig)
     {
-        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), LookSensitivityKeys[Which], LookSensitivity[Which], GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }
@@ -164,17 +184,6 @@ void AEWPlayerController::SetMasterVolume(float Value)
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
-        GConfig->Flush(false, GGameUserSettingsIni);
-    }
-}
-
-void AEWPlayerController::SetControllerLookSensitivity(float Value)
-{
-    if (!IsLocalPlayerController()) return;
-    ControllerLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
-    if (GConfig)
-    {
-        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }

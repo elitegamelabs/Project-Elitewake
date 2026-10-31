@@ -1,10 +1,12 @@
-"""Escape's OPTIONS menu: live/persistent look and brightness settings plus SAVE GAME and MAIN MENU.
+"""Escape's pause menu (owner, October 30): RESUME GAME, SAVE GAME, OPTIONS and MAIN MENU as buttons; OPTIONS opens the settings
+(brightness for the whole picture, mouse and controller look speed each horizontal and vertical, master volume with a dial) and BACK.
 
 Needs single-player Play (EW_PLAY_STANDALONE=1, one player) in /Game/Elitewake/Maps/Lvl_CoastalPlayground. Run
 unattended with run_play_check.py. Through ordinary keys, the survivor:
-  1. presses Escape: OPTIONS comes up with brightness and separate mouse/controller look controls, the world pauses;
-  2. presses Escape again: back in the game, the world running;
-  3. change each setting from keyboard/controller navigation and confirm values persist after reopening;
+  1. presses Escape: the pause menu comes up on RESUME GAME, the world pauses;
+  2. Enter on RESUME GAME: back in the game, the world running;
+  3. OPTIONS (Down, Down, Enter): each setting changes live by keys, brightness moves the display gamma, the dial follows the
+     volume, mouse horizontal and vertical speeds turn the view by their own amounts; BACK returns to the buttons;
   4. hungry, thirsty, hurt, carrying stone, the Hatchet in hand and the Pickaxe on the hotbar, somewhere along the
      beach: Escape, select SAVE GAME, and verify it writes the survivor as they are;
   4. (the save put back on a survivor who has since changed restores them exactly, with no doubled tools);
@@ -84,46 +86,75 @@ def menu_up():
     assert paused(), 'the world did not pause in single player'
     assert c.get_editor_property('bShowMouseCursor'), 'no mouse cursor'
     assert menu.is_save_shown(), 'SAVE GAME is missing in single player'
-    assert menu.get_tab() == 0 and menu.get_selected() == 4, 'the menu does not open on the PAUSE tab at SAVE GAME'
+    assert menu.get_tab() == 0 and menu.get_selected() == 10, 'the menu does not open on its buttons at RESUME GAME'
     if 'initial_user_settings' not in state['memo']:
-        state['memo']['initial_user_settings'] = (
-            c.get_user_brightness(), c.get_mouse_look_sensitivity(), c.get_controller_look_sensitivity())
+        state['memo']['initial_user_settings'] = (c.get_user_brightness(), [c.get_look_sensitivity(i) for i in range(4)])
+    return True
+
+
+def look_start():
+    """The view turns with the game running: mouse horizontal 2.0 and vertical 0.5, one look of (2, 2)."""
+    c = pc()
+    state['memo']['looks_kept'] = (c.get_look_sensitivity(0), c.get_look_sensitivity(1))
+    c.set_look_sensitivity(0, 2.0)
+    c.set_look_sensitivity(1, 0.5)
+    c.set_control_rotation(unreal.Rotator(0, 0, 90))
+    state['memo']['look_from'] = c.get_control_rotation()
+    survivor().do_look(2.0, 2.0)
+    state['memo']['t'] = time.monotonic()
+
+
+def look_done():
+    if time.monotonic() - state['memo']['t'] < .3:
+        return False
+    c = pc()
+    before, after = state['memo']['look_from'], c.get_control_rotation()
+    yaw = abs(unreal.MathLibrary.normalize_axis(after.yaw - before.yaw))
+    pitch = abs(unreal.MathLibrary.normalize_axis(after.pitch - before.pitch))
+    kept = state['memo']['looks_kept']
+    c.set_look_sensitivity(0, kept[0])
+    c.set_look_sensitivity(1, kept[1])
+    assert yaw > 0.5 and yaw > 3.5 * pitch, f'mouse horizontal 2.0 and vertical 0.5 turned {yaw} and {pitch} degrees'
     return True
 
 
 def adjust_settings():
-    menu = pc().get_options_widget()
-    before = (pc().get_user_brightness(), pc().get_mouse_look_sensitivity(), pc().get_controller_look_sensitivity())
-    assert lib.send_verification_ui_key(pc(), 'Gamepad_RightShoulder')
-    assert menu.get_tab() == 1 and menu.get_selected() == 0, 'RB did not open the OPTIONS tab'
-    assert lib.send_verification_ui_key(pc(), 'Right')
-    after_brightness = pc().get_user_brightness()
+    c = pc()
+    menu = c.get_options_widget()
+    key = lambda name: lib.send_verification_ui_key(c, name)
+    before = (c.get_user_brightness(), [c.get_look_sensitivity(i) for i in range(4)])
+    assert key('Down') and key('Down') and menu.get_selected() == 12, f'Down, Down did not reach OPTIONS ({menu.get_selected()})'
+    assert key('Enter') and menu.get_tab() == 1 and menu.get_selected() == 0, 'Enter on OPTIONS did not open the settings at Brightness'
+    gamma = c.get_display_gamma()
+    assert key('Right')
+    after_brightness = c.get_user_brightness()
     assert after_brightness > before[0], f'brightness did not apply live: {before[0]} -> {after_brightness}'
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert lib.send_verification_ui_key(pc(), 'Right')
-    after_mouse = pc().get_mouse_look_sensitivity()
-    assert after_mouse > before[1], f'mouse sensitivity did not apply live: {before[1]} -> {after_mouse}'
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert lib.send_verification_ui_key(pc(), 'Right')
-    after_controller = pc().get_controller_look_sensitivity()
-    assert after_controller > before[2], f'controller sensitivity did not apply live: {before[2]} -> {after_controller}'
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert menu.get_selected() == 3, 'Down did not reach master volume'
-    pc().set_master_volume(1.0)      # the setting is saved between runs
+    assert c.get_display_gamma() > gamma, f'the display gamma did not rise: {gamma} -> {c.get_display_gamma()}'
+    looks = []
+    for which in range(4):
+        assert key('Down') and menu.get_selected() == 1 + which, f'Down did not reach look setting {which}'
+        assert key('Right')
+        assert c.get_look_sensitivity(which) > before[1][which], f'look setting {which} did not apply live'
+        looks.append(c.get_look_sensitivity(which))
+    assert key('Down') and menu.get_selected() == 5, 'Down did not reach master volume'
+    c.set_master_volume(1.0)      # the setting is saved between runs
     for _ in range(5):
-        assert lib.send_verification_ui_key(pc(), 'Left')
-    volume = pc().get_master_volume()
+        assert key('Left')
+    volume = c.get_master_volume()
     assert volume < .95, f'master volume did not apply live: 1.0 -> {volume}'
-    pc().set_master_volume(1.0)      # leave the saved setting as found
-    assert lib.send_verification_ui_key(pc(), 'Tab')
-    assert menu.get_tab() == 0 and menu.get_selected() == 4, 'Tab did not return to SAVE GAME on the PAUSE tab'
-    state['memo']['settings'] = (after_brightness, after_mouse, after_controller)
-    checks.append('Brightness and separate look sensitivities adjust live; settings write to the user settings file')
+    assert abs(menu.get_dial_value() - volume) < .001, f'the dial ({menu.get_dial_value()}) does not show the volume ({volume})'
+    c.set_master_volume(1.0)      # leave the saved setting as found
+    assert key('Down') and menu.get_selected() == 6, 'Down did not reach BACK'
+    assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
+    state['memo']['settings'] = (after_brightness, looks)
+    assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
+    checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
+                  'change live by keys; BACK returns to the buttons')
 
 
 def save_game():
     menu = pc().get_options_widget()
-    assert menu.get_selected() == 4, 'SAVE GAME is not selected'
+    assert menu.get_selected() == 11, 'SAVE GAME is not selected'
     assert lib.send_verification_ui_key(pc(), 'Enter')
 
 
@@ -167,8 +198,7 @@ def saved():
         return False
     assert 'Game saved' in str(menu.get_status()), str(menu.get_status())
     assert abs(pc().get_user_brightness() - state['memo']['settings'][0]) < .001
-    assert abs(pc().get_mouse_look_sensitivity() - state['memo']['settings'][1]) < .001
-    assert abs(pc().get_controller_look_sensitivity() - state['memo']['settings'][2]) < .001
+    assert all(abs(pc().get_look_sensitivity(i) - state['memo']['settings'][1][i]) < .001 for i in range(4))
     assert pc().is_options_menu_open(), 'saving closed the menu'
     s = unreal.EWSurvivorSave.load_save()
     where = state['memo']['where']
@@ -224,8 +254,9 @@ def to_main_menu():
 def main_menu_chosen():
     if not pc().is_options_menu_open() or time.monotonic() - state['memo']['t'] < .3:
         return False
-    assert lib.send_verification_ui_key(pc(), 'Down')
-    assert pc().get_options_widget().get_selected() == 5, 'Down navigation did not move to MAIN MENU'
+    for _ in range(3):
+        assert lib.send_verification_ui_key(pc(), 'Down')
+    assert pc().get_options_widget().get_selected() == 13, 'Down navigation did not move to MAIN MENU'
     assert lib.send_verification_ui_key(pc(), 'Enter')
     return True
 
@@ -259,14 +290,15 @@ def resumed():
 
 STEPS = [
     ('Single Player on the island with the four tools', lambda: None, ready, 30),
-    ('Escape brings up OPTIONS with controls and save/menu; the world pauses and the mouse shows', escape, menu_up, 4),
-    ('Escape again returns to the game and the world runs', ui_key('Escape'), menu_gone, 4),
+    ('Escape brings up the pause menu on RESUME GAME; the world pauses and the mouse shows', escape, menu_up, 4),
+    ('Enter on RESUME GAME returns to the game and the world runs', ui_key('Enter'), menu_gone, 4),
     ('Hurt, hungry and thirsty with stone, the Hatchet in hand and the Pickaxe on the hotbar, Escape', prepare, prepared, 6),
     ('', lambda: None, menu_up, 4),
-    ('RB opens the OPTIONS tab; change brightness/mouse/controller settings; Tab returns to SAVE GAME', adjust_settings, lambda: pc().get_options_widget().get_selected() == 4, 4),
+    ('', adjust_settings, lambda: pc().get_options_widget().get_selected() == 11, 4),
     ('Enter on SAVE GAME saves the survivor as they are; the menu stays up', save_game, saved, 4),
     ('The save, put back on a survivor who has since changed, restores them exactly, tools not doubled', restore, restored, 4),
-    ('Escape, Down, Enter on MAIN MENU', to_main_menu, main_menu_chosen, 4),
+    ('Mouse horizontal and vertical speeds turn the view left-right and up-down by their own amounts', look_start, look_done, 3),
+    ('Escape, Down to MAIN MENU, Enter', to_main_menu, main_menu_chosen, 4),
     ('MAIN MENU opens the ELITEWAKE title screen', lambda: None, at_title, 30),
     ('Single Player from the title resumes the saved survivor where and as they were, tools not doubled', single_player, resumed, 40),
 ]
@@ -278,8 +310,8 @@ def finish(error=None):
         initial = state['memo'].get('initial_user_settings')
         if initial and world() and pc():
             pc().set_user_brightness(initial[0])
-            pc().set_mouse_look_sensitivity(initial[1])
-            pc().set_controller_look_sensitivity(initial[2])
+            for i in range(4):
+                pc().set_look_sensitivity(i, initial[1][i])
     except Exception as e:  # noqa: BLE001
         error = error or f'could not restore the original user settings: {e!r}'
     try:

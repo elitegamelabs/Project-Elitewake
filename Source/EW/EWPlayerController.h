@@ -67,14 +67,18 @@ public:
     UFUNCTION(BlueprintCallable, Category="Options") void SetOptionsMenuOpen(bool bOpen);
     UFUNCTION(BlueprintPure, Category="Options") float GetUserBrightness() const { return UserBrightness; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetUserBrightness(float Value);
-    UFUNCTION(BlueprintPure, Category="Options") float GetMouseLookSensitivity() const { return MouseLookSensitivity; }
-    UFUNCTION(BlueprintCallable, Category="Options") void SetMouseLookSensitivity(float Value);
-    UFUNCTION(BlueprintPure, Category="Options") float GetControllerLookSensitivity() const { return ControllerLookSensitivity; }
-    UFUNCTION(BlueprintCallable, Category="Options") void SetControllerLookSensitivity(float Value);
+    /** The display gamma the brightness setting gives the whole picture. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetDisplayGamma() const;
+    /** Look speeds (owner, October 30: left-right and up-down apart, for the mouse and for the controller), 0.1 to 3:
+     *  0 mouse horizontal, 1 mouse vertical, 2 controller horizontal, 3 controller vertical. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetLookSensitivity(int32 Which) const { return LookSensitivity[FMath::Clamp(Which, 0, 3)]; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetLookSensitivity(int32 Which, float Value);
     /** Master volume, 0 to 1 (everything this machine plays); saved with the other user settings. */
     UFUNCTION(BlueprintPure, Category="Options") float GetMasterVolume() const { return MasterVolume; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetMasterVolume(float Value);
-    float GetActiveLookSensitivity() const { return bControllerPrompts ? ControllerLookSensitivity : MouseLookSensitivity; }
+    /** How fast the view turns left-right (yaw) and up-down (pitch) with the device in use. */
+    float GetYawLookSensitivity() const { return LookSensitivity[bControllerPrompts ? 2 : 0]; }
+    float GetPitchLookSensitivity() const { return LookSensitivity[bControllerPrompts ? 3 : 1]; }
     UFUNCTION(BlueprintPure, Category="Options") bool IsOptionsMenuOpen() const { return bOptionsMenuOpen; }
     UFUNCTION(BlueprintPure, Category="Options") UEWOptionsWidget* GetOptionsWidget() const { return OptionsWidget; }
     UFUNCTION(Server, Reliable) void ServerSetOptionsMenuOpen(bool bOpen);
@@ -252,8 +256,9 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UEWCompassWidget> CompassWidget;
     bool bControllerPrompts = false;
     float UserBrightness = 0.f;
-    float MouseLookSensitivity = 1.f;
-    float ControllerLookSensitivity = 1.f;
+    float LookSensitivity[4] = {1.f, 1.f, 1.f, 1.f};
+    /** The whole picture's brightness (owner, October 30): the display gamma, every camera and view alike. */
+    void ApplyBrightness() const;
     float MasterVolume = 1.f;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
