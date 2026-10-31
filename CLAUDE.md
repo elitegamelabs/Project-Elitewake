@@ -112,7 +112,7 @@ The advanced five-island branch is the source from which the cleaned project was
 
 | Area | Current truth | Important gap or caution |
 |---|---|---|
-| World | Five-island Coastal Playground, regional terrain/resources, caves, reefs, landmarks, wildlife, day/night, weather, and procedural setup scripts exist | Much of the presentation is placeholder or procedural; owner visual acceptance is not complete |
+| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. Run and verify the reef builder before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete |
 | Port | Saltreach Freeport has merchants, buying/selling, service spaces, a safe zone, HUD feedback, and placeholder sound | Other ports are blockouts; merchant stock does not yet have complete persistence |
 | Economy | Starting purse is zero; merchants and shipyard paths exist | Balance needs journey testing and duplicate-transaction protection |
 | Ships | Raft, dinghy tuning, sloop, schooner, brigantine, and Cavalier-related content exist; per-sail controls and crew-dependent helm control work | Visual quality, modularization, recipes, complete permissions, and persistence vary by system |
@@ -535,6 +535,8 @@ Turn the five-island test world into five distinct, navigable, performant region
 5. Add region weather, post-process limits, audio stems, and landmark sounds.
 6. Add decorative PCG using slope/height/moisture/shore/exposure masks; generate HLOD and profile.
 7. Capture the full evidence set, fix objective defects, obtain owner review, then proceed.
+
+The baseline map currently has no placed reefs. For each island, run the existing reef builder, save its actors into the canonical map, and pass `verify_reefs_play.py` with one listen server and one client: one reef per region clear of the port, at least 40 submerged corals of all four kinds per reef, solid coral collision, four glow colors, and the shark/ray pair visible on both machines. Do not count a generator script or reference image as placed world content.
 
 #### Exact visual cards
 
