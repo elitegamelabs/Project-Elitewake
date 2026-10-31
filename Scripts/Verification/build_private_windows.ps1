@@ -48,22 +48,17 @@ Set-Content -LiteralPath (Join-Path $runtimeRoot 'PrivateBuildLabel.txt') -Value
 @{label=$buildLabel;sourceRevision=$revision;sourceHasLocalChanges=$dirty;configuration='Development';platform='Win64';released=$false;
   maps=@('/Game/Elitewake/Maps/Lvl_Title','/Game/ThirdPerson/Lvl_ThirdPerson','/Game/Elitewake/Maps/Lvl_M5PickupTest','/Game/Elitewake/Maps/Lvl_CoastalPlayground');
   prerequisites='Engine-provided signed VC runtime installers bundled and hash-checked; not installed or clean-PC verified';
-  scope='Local diagnostic package; original editor settings and source documents preserved; no LAN/Internet/distribution acceptance'} |
+  scope='Local diagnostic package only; no LAN, Internet, Shipping, or distribution acceptance'} |
   ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'PrivateBuildInfo.json') -Encoding utf8
 @'
-# Local private test — unreleased
+ELITEWAKE LOCAL DEVELOPMENT BUILD — NOT A RELEASE
 
-Single-player testing: double-click Play Elitewake.bat. It opens the title screen: click START YOUR JOURNEY, make your survivor (body, colouring, height; drag to turn them), then SET SAIL for the coastal playground: the island and islet, ocean, swimming and sea creatures, the dock, and the raft, dinghy and sloop, with a test starter kit (tools on you, each ship's helm and sails in its own hold). F10 in the game hosts or joins a session.
+Double-click Play Elitewake.bat for the title screen, then use its single-player path to reach Coastal Playground. Keep the entire Windows folder together. F10 opens the diagnostic host/join UI.
 
-Controls: WASD move, Space jump, Left Shift sprint, tap C crouch / hold C prone, Z first or third person, E interact (hold for fittings and the anchor), Left Mouse attack or chop with the tool in hand, 1-8 hotbar, I inventory, crafting and Journal, M map, F10 host/join.
-Ships: raft, dinghy and sloop. Swim to a ship, press E at a side ladder and climb with the Up and Down arrows. Labels on screen mark each ship's ladders, mounts, anchor and hold. Each ship's helm and sails are in its own hold (hold E at the hatch). Fit them by looking at a mount and holding E, raise the anchor at the capstan, take the helm, then W/S set sail, A/D steer and Shift+A/D trim the sails to the wind shown on the compass. The Journal (I, then JOURNAL) has a guide to each.
-Latest: title screen and character creator; ladders climbed with the arrows; ship labels; ATLAS-style sail trim and a compass; sea creatures to fight and harvest (sharks, mantas and squid attack swimmers); tools held in the hand with a chop.
-Known issues: survivors are stand-in mannequins until the real characters arrive; freshwater fish wait for ponds; cannons are stand-in boxes; session progress is not saved; production prologue and starter recipe unlocks unresolved. Final animations, art and balance remain unfinished.
-Coverage: this folder is not a certified release. Consult Docs/VERIFICATION.md for acceptance of this exact label. Rendered gameplay, clean PC, two-PC LAN, Internet, Shipping and distribution require separate checks.
-Keep the entire Windows folder together. F10 shows the diagnostic build label; matching labels alone do not enforce network compatibility.
+This package is not certified for clean-PC, controller, LAN, Internet, Shipping, or distribution use. The project root CLAUDE.md is the sole source of current gameplay and visual requirements. Reef placement in Coastal Playground has not passed its two-player Play check. Do not treat generated content or prior test notes as accepted gameplay.
 
-Windows prerequisites: signed Microsoft VC runtime installers are bundled in Windows/Engine/Extras/Redist/en-us. On an x64 tester PC, run vc_redist.x64.exe interactively if the runtime is missing, then launch Windows/EW.exe. The engine also stages vc_redist.arm64.exe for ARM64 emulation; this does not certify native ARM64 support. These installers have not been run by the build script. PrerequisitesResult.json records signatures and matching engine/package hashes, not installation success or clean-PC portability. GameInput redistribution is not opted in by this project; physical controller support remains unverified.
-'@ | Set-Content -LiteralPath (Join-Path $archive 'TEST_NOTES.md') -Encoding utf8
+Engine-provided Windows prerequisites are bundled but not installed. See PrerequisitesResult.json for checks performed; it does not prove portability.
+'@ | Set-Content -LiteralPath (Join-Path $archive 'TEST_NOTES.txt') -Encoding utf8
 # Single-player testing starts on the title screen, which leads through the character creator to the coast.
 Set-Content -LiteralPath (Join-Path $archive 'Play Elitewake.bat') -Encoding ascii -Value @'
 @echo off
