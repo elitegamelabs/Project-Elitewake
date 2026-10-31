@@ -32,7 +32,7 @@ Do not start a broad rewrite because several systems touch the same class. Extra
 
 ### 1.3 Canonical local state
 
-The normal owner-facing project location is C:\UnrealProjects\EW and the normal branch is main after cleanup promotion. During an explicitly named cleanup or recovery operation, a temporary clean checkout may be used, but report its exact path and branch. The desktop test shortcut must ultimately open C:\UnrealProjects\EW\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground.
+The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout encountered a Windows file lock during retirement; do not use it for testing. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. Keep the retired fragments only until they can be safely removed; a future rename to C:\UnrealProjects\EW must update this guide and both project shortcuts in the same change.
 
 The following directories are generated and must never be edited or committed: Binaries, DerivedDataCache, Intermediate, and Saved. Saved contains mixed-use local data; never erase it wholesale without a specific, verified target and owner authorization.
 
@@ -446,9 +446,9 @@ Make the owner shortcut, normal checkout, GitHub main, verified backup, tests, a
 5. Resolve known text/config conflicts: exactly five islands, five reefs, five regions, canonical tree assignments, Coastal editor startup, solo workload, and one authority file.
 6. Remove obsolete high-island code paths, tests, images, model-agent instructions, redundant READMEs, exact duplicate source art, stale reports, and obsolete local generated builds only after the new backup is verified.
 7. Run Python tests, source/config searches, LFS checks, Unreal Editor build, game build, native automation, focused Play checks, package, and launch smoke test.
-8. Promote the tested checkout to C:\UnrealProjects\EW, update the owner shortcut, and test through the same shortcut the owner will use.
+8. Point both owner shortcuts at the tested C:\UnrealProjects\EW_CLEAN checkout and test through the same game shortcut the owner will use. Retire the locked old EW folder only when Windows releases it; do not treat that stale folder as a second project authority.
 9. Push the tested commit to GitHub main by fast-forward; never rewrite public history. Verify remote main, then remove obsolete agent branches. The bundle remains the recovery path.
-10. Delete the retired local project, old backup, quarantine, old packets/reports, and temporary cleanup checkout only after the promoted project launches and the remote is verified.
+10. Delete the retired local project, old backup, quarantine, old packets/reports, and temporary cleanup checkout only after the owner shortcut launches and the remote is verified. If Windows locks a retired folder, leave its exact path recorded and retry after the handle is closed; never delete the active EW_CLEAN checkout.
 
 #### Baseline visual evidence
 
@@ -800,11 +800,11 @@ Fast source/world gate from the repository root:
 
 Editor compile on the canonical Windows installation:
 
-    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EWEditor Win64 Development "C:\UnrealProjects\EW\EW.uproject" -WaitMutex -NoHotReloadFromIDE
+    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EWEditor Win64 Development "C:\UnrealProjects\EW_CLEAN\EW.uproject" -WaitMutex -NoHotReloadFromIDE
 
 Game compile:
 
-    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EW Win64 Development "C:\UnrealProjects\EW\EW.uproject" -WaitMutex -NoHotReloadFromIDE
+    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EW Win64 Development "C:\UnrealProjects\EW_CLEAN\EW.uproject" -WaitMutex -NoHotReloadFromIDE
 
 Use the focused scripts in Scripts/Verification only after reading what each changes, launches, captures, and leaves behind. Prefer the narrowest relevant Play check, then run integrated/title-to-coast/first-voyage/session lifecycle and package checks for phase gates. A script filename is not evidence that it passed; retain timestamped output tied to commit and map.
 
