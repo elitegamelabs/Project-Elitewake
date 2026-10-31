@@ -32,7 +32,18 @@ Do not start a broad rewrite because several systems touch the same class. Extra
 
 ### 1.3 Canonical local state
 
-The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout encountered a Windows file lock during retirement; do not use it for testing. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. Keep the retired fragments only until they can be safely removed; a future rename to C:\UnrealProjects\EW must update this guide and both project shortcuts in the same change.
+The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout encountered a Windows file lock during retirement; do not use it for testing. On October 31 only its locked .claude worktree remnant (about 1 MB) remained; the owner deleted C:\UnrealProjects\EW_RETIRED_20261031. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. Keep the retired fragments only until they can be safely removed; a future rename to C:\UnrealProjects\EW must update this guide and every project shortcut in the same change.
+
+Local folders outside the repository (each has a plain-English README.txt that is the detailed record):
+
+| Path | Purpose | Rule |
+|---|---|---|
+| C:\UnrealProjects\EW_CLEAN | The one game project, matching GitHub main | Work, build and test only here |
+| C:\ELITEWAKE | Storage beside the project: backup, quarantine, shortcuts | Not a project; never build or test here |
+| C:\ELITEWAKE\BACKUP_CURRENT | Verified recovery set: CleanedProjectSnapshot (f6a474e7), ProjectSnapshot (pre-cleanup dfc390f1, with BACKUP_MANIFEST.csv hashes), Cleaned_Main_20261031.bundle, Repository_All_Refs.bundle (every old ref), Old_Codex_Snapshots_20261030.bundle, six historical player saves, unused Marketplace packs | Never delete or overwrite; add beside. Bundles hold Git history only, not LFS contents. Restore beside EW_CLEAN, never over it |
+| C:\ELITEWAKE\QUARANTINE | Only copies moved from the owner's Desktop, Documents and Downloads remain | Delete only with explicit owner confirmation covering those personal copies |
+
+Shortcuts: the Desktop "Elitewake" and "ELITEWAKE - Open Game in Unreal" open the EW_CLEAN project on Coastal Playground; "ELITEWAKE - Project Folder" opens EW_CLEAN; copies of the game and folder shortcuts plus "ELITEWAKE - Recovery Backup" are in C:\ELITEWAKE. Update all of them and the READMEs whenever a path here changes.
 
 The following directories are generated and must never be edited or committed: Binaries, DerivedDataCache, Intermediate, and Saved. Saved contains mixed-use local data; never erase it wholesale without a specific, verified target and owner authorization.
 
