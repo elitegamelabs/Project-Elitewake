@@ -10,13 +10,17 @@ Close Unreal Editor and any running game, then:
     powershell -NoProfile -ExecutionPolicy Bypass -File Scripts/Release/publish_playtest.ps1
 
 It packages a Windows Development build (`Scripts/Verification/build_private_windows.ps1`: title screen, character creator, the coastal
-world), adds `PLAYTEST_README.md` (install, host, join), zips it (split into 1.9 GB parts if larger, for GitHub's 2 GB file limit) and
-creates a release tagged with the build label, its notes listing the commits since the last release. `-ArchiveDirectory <folder>`
-publishes an existing package without rebuilding.
+world), zips its `Windows` folder (split into 1.9 GB parts with Combine-parts.bat if larger, for GitHub's 2 GB file limit), creates a
+release tagged with the build label, deletes the older releases and their tags, and rewrites the repository's README.md.
+`-ArchiveDirectory <folder>` publishes an existing package without rebuilding.
 
-**No source code in the playtest repository** (owner, October 30): the repository holds only its README; the zip carries the game only,
-without debug symbols (`*.pdb`) or the build's internal reports; release notes are plain (no commit list, no code references). GitHub
-adds "Source code (zip / tar.gz)" links to every release by itself: those hold the playtest repository's README only, never the game's code.
+**Nothing but the client and a README** (owner, October 30: "i don't want anything in the second, test, repo except the client exe's
+and a readme on how to put them together"):
+- The repository's only file is README.md: download, combine the parts, unzip, run, host and join, controls.
+- The only release is the newest client: `EW.exe` and the files it runs from, without debug symbols (`*.pdb`), manifests, engine debug
+  tools, build reports or launch scripts. `NOTICES.txt` (the FreeType licence notice) stays with the engine files.
+- Release notes are one line; Issues, Projects and Wiki are off.
+- GitHub adds "Source code (zip / tar.gz)" links to every release and they cannot be removed; they hold the README only, never game code.
 
 ## Playing together
 - **Host:** forward **UDP 7777** on the router to the host PC, allow EW through Windows Firewall, then in game **F10 > Host Game**.
