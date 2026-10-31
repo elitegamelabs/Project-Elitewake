@@ -50,6 +50,8 @@ AEWShip* AEWShipwright::BuyShip(AEWCharacter* Character, int32 Index)
     }
     Ship->Definition = Sale.Definition;
     Ship->FinishSpawning(LaunchPoint);
+    // She is her buyer's.
+    Ship->SetShipOwner(Character->GetController());
     for (int32 Fit = 0; Fit < Sale.FittedMounts.Num() && Fit < Sale.FittedItems.Num(); ++Fit)
         if (Sale.FittedItems[Fit]) Ship->FitAtShipyard(Sale.FittedMounts[Fit], Sale.FittedItems[Fit]);
     return Ship;
@@ -65,7 +67,7 @@ AEWShip* AEWShipwright::FindShipToRepair(const AEWCharacter* Character, int64& O
     {
         AEWShip* Ship = *It;
         const bool bDamaged = Ship->GetHullHealth() < Ship->GetMaxHullHealth() - KINDA_SMALL_NUMBER || Ship->GetHoleCount() > 0 || Ship->GetWaterAboard() > 0.f;
-        if (Ship->IsSinking() || !bDamaged || FVector::Dist2D(Ship->GetActorLocation(), GetActorLocation()) > YardReach) continue;
+        if (Ship->IsSinking() || !bDamaged || !Ship->IsShipmate(Character) || FVector::Dist2D(Ship->GetActorLocation(), GetActorLocation()) > YardReach) continue;
         const float Distance = FVector::Dist(Ship->GetActorLocation(), Character->GetActorLocation());
         if (Distance < BestDistance) { BestDistance = Distance; Best = Ship; }
     }
@@ -203,7 +205,7 @@ AEWShip* AEWHarborMaster::FindShipFor(const AEWCharacter* Character) const
     float BestDistance = TNumericLimits<float>::Max();
     for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
     {
-        if (It->IsSinking() || FVector::Dist2D(It->GetActorLocation(), GetActorLocation()) > ApproachRadius) continue;
+        if (It->IsSinking() || !It->IsShipmate(Character) || FVector::Dist2D(It->GetActorLocation(), GetActorLocation()) > ApproachRadius) continue;
         const float Distance = FVector::Dist(It->GetActorLocation(), Character->GetActorLocation());
         if (Distance < BestDistance) { BestDistance = Distance; Best = *It; }
     }

@@ -73,6 +73,7 @@ Everyone needs the **same build** (the label above; F10 shows it in game).
 
 On the same home network use the host's LAN address (like ``192.168.1.20``) instead; on the same PC, ``127.0.0.1``.
 The host keeps each player's survivor (pack, purse, where they stood) and gives it back when they join again from the same PC.
+A ship belongs to whoever bought her or first took her helm; only they can sail her (sharing ships through a Company is coming).
 When the host leaves, everyone is disconnected.
 
 ## Controls

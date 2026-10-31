@@ -5,6 +5,9 @@
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
 #include "EWPlayerController.h"
+#include "EWCompanyComponent.h"
+#include "EWGameMode.h"
+#include "GameFramework/PlayerState.h"
 #include "EWInteractionComponent.h"
 #include "EWWindSubsystem.h"
 #include "EW.h"
@@ -147,6 +150,9 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, WaterAboard);
     DOREPLIFETIME(AEWShip, bSinking);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
+    DOREPLIFETIME(AEWShip, OwnerName);
+    DOREPLIFETIME(AEWShip, OwnerPlayerId);
+    DOREPLIFETIME(AEWShip, OwnerCompanyId);
 }
 
 void AEWShip::OnConstruction(const FTransform& Transform)
@@ -844,7 +850,7 @@ FVector AEWShip::GetCargoHatchWorld() const
 
 bool AEWShip::CanAccessCargo(const AEWCharacter* Character) const
 {
-    return Cargo && CanModifyFittings(Character)
+    return Cargo && CanCommand(Character)
         && (IsAboard(Character) || FVector::Dist(Character->GetActorLocation(), GetCargoHatchWorld()) <= CargoReach);
 }
 
@@ -901,7 +907,7 @@ FVector AEWShip::GetAnchorPointWorld() const
 
 bool AEWShip::SetAnchored(AEWCharacter* Character, bool bNewAnchored)
 {
-    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || bAnchored == bNewAnchored) return false;
+    if (!HasAuthority() || bChangingFittings || !CanCommand(Character) || bAnchored == bNewAnchored) return false;
     bAnchored = bNewAnchored;
     if (bAnchored) LayAnchor();
     bChainTaut = false;
@@ -1110,6 +1116,72 @@ bool AEWShip::StartClimb(AEWCharacter* Character, int32 BoardingIndex)
     return true;
 }
 
+bool AEWShip::IsShipmate(const AEWCharacter* Character) const
+{
+    // An unclaimed ship is anyone's; single player has no ownership gates.
+    if (!IsOwned() || GetNetMode() == NM_Standalone) return true;
+    if (!Character) return false;
+    const AController* Controller = Character->GetController();
+    if (HasAuthority())
+    {
+        // The server knows players by their stable key, so a returning owner is known at once.
+        const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+        if (Mode && Controller && !OwnerKey.IsEmpty() && Mode->PlayerKey(Controller) == OwnerKey) return true;
+    }
+    else if (const APlayerState* State = Character->GetPlayerState(); State && OwnerPlayerId != INDEX_NONE && State->GetPlayerId() == OwnerPlayerId)
+        return true;
+    // The owner's Company shares her unless its ship policy is Personal.
+    const auto* Player = Cast<AEWPlayerController>(Controller);
+    const UEWCompanyComponent* Company = Player ? Player->GetCompanyComponent() : nullptr;
+    if (!Company || !OwnerCompanyId.IsValid()) return false;
+    const FEWCompanySnapshot Snapshot = Company->GetCompany();
+    return Snapshot.Id == OwnerCompanyId && Snapshot.Ships != EEWCompanyOwnership::Personal;
+}
+
+void AEWShip::SetShipOwner(AController* NewOwner)
+{
+    if (!HasAuthority()) return;
+    const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+    const FString Key = Mode && NewOwner ? Mode->PlayerKey(NewOwner) : FString();
+    OwnerKey = Key;
+    OwnerName = Key.IsEmpty() ? FString() : NewOwner->PlayerState && !NewOwner->PlayerState->GetPlayerName().IsEmpty()
+        ? NewOwner->PlayerState->GetPlayerName() : TEXT("A captain");
+    OwnerPlayerId = INDEX_NONE;
+    OwnerCompanyId.Invalidate();
+    RefreshOwner();
+    ForceNetUpdate();
+}
+
+void AEWShip::RefreshOwner()
+{
+    const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+    if (!HasAuthority() || !Mode || OwnerKey.IsEmpty()) return;
+    int32 Id = INDEX_NONE;
+    FGuid Company = OwnerCompanyId;  // while the owner is away their Company keeps its share
+    FString Name = OwnerName;
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        const APlayerController* Player = It->Get();
+        if (!Player || !Player->PlayerState || Mode->PlayerKey(Player) != OwnerKey) continue;
+        Id = Player->PlayerState->GetPlayerId();
+        if (!Player->PlayerState->GetPlayerName().IsEmpty()) Name = Player->PlayerState->GetPlayerName();
+        const auto* EWPlayer = Cast<AEWPlayerController>(Player);
+        const UEWCompanyComponent* Membership = EWPlayer ? EWPlayer->GetCompanyComponent() : nullptr;
+        Company = Membership ? Membership->GetCompany().Id : FGuid();
+        break;
+    }
+    if (Id == OwnerPlayerId && Company == OwnerCompanyId && Name == OwnerName) return;
+    OwnerPlayerId = Id;
+    OwnerCompanyId = Company;
+    OwnerName = Name;
+    ForceNetUpdate();
+}
+
+FText AEWShip::CrewOnlyPrompt() const
+{
+    return FText::Format(NSLOCTEXT("Elitewake", "CrewOnly", "{0}'s ship: only her crew can use this"), FText::FromString(OwnerName));
+}
+
 bool AEWShip::CanModifyFittings(const AEWCharacter* Character) const
 {
     return Definition && IsValid(Character) && !Character->IsActorBeingDestroyed() && !IsActorBeingDestroyed()
@@ -1146,7 +1218,7 @@ UEWItemDefinition* AEWShip::FindCarriedFitting(const AEWCharacter* Character, co
 EEWFittingResult AEWShip::InstallFitting(AEWCharacter* Character, FName MountId)
 {
     if (!HasAuthority() || bChangingFittings) return EEWFittingResult::Busy;
-    if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
+    if (!CanCommand(Character)) return EEWFittingResult::NotAllowed;
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return EEWFittingResult::NoMount;
     if (!IsMountOpen(MountId)) return EEWFittingResult::NeedsRailing;
@@ -1165,7 +1237,7 @@ EEWFittingResult AEWShip::InstallFitting(AEWCharacter* Character, FName MountId)
 EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
 {
     if (!HasAuthority() || bChangingFittings) return EEWFittingResult::Busy;
-    if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
+    if (!CanCommand(Character)) return EEWFittingResult::NotAllowed;
     const int32 Index = Fittings.IndexOfByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
     if (Index == INDEX_NONE) return EEWFittingResult::NoMount;
     if (Definition && Definition->IsBuiltIn(MountId)) return EEWFittingResult::NotAllowed;
@@ -1193,10 +1265,11 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (IsGunnerHere(Character)) return true;  // Leave the cannon.
     if (IsAimingAtAnchor(Character)) return true;
     if (IsAimingAtBucket(Character)) return IsAboard(Character) && WaterAboard > 0.f;
-    if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
+    if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character) || !IsShipmate(Character);
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
     if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
     {
+        if (!IsShipmate(Character)) return true;
         if (GetLinesWorker(Lines) == Character) return true;
         if (!IsSailCrewed(Lines) && FindCarriedArticles(Character)) return true;
         return !GetLinesWorker(Lines) && !Character->GetHelmShip() && !Character->GetGunShip() && !Character->GetLinesShip();
@@ -1204,6 +1277,7 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount || !IsMountOpen(MountId)) return false;
+    if (!IsShipmate(Character)) return true;
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
     {
         // An installed helm is taken and a cannon manned, not removed; removing them is a Builder's Plan action.
@@ -1259,16 +1333,21 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         }
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveCannon", "Leave the cannon  (mouse aims, Left Mouse fires)  -  {0}"), State);
     }
+    if (IsAimingAtAnchor(Character) && !IsShipmate(Character)) return CrewOnlyPrompt();
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (IsAimingAtBucket(Character))
         return WaterAboard > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "BailWater", "Bail water  ({0} kg aboard)"), FText::AsNumber(FMath::RoundToInt(WaterAboard)))
             : NSLOCTEXT("Elitewake", "BucketDry", "Bucket  (no water aboard)");
-    if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
+    if (IsAimingAtCargoHatch(Character))
+        return IsShipmate(Character) ? NSLOCTEXT("Elitewake", "OpenHold", "Open the hold") : CrewOnlyPrompt();
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
-        return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
+        return IsAboard(Character) ? FText::GetEmpty()
+            : IsOwned() && !IsShipmate(Character) ? FText::Format(NSLOCTEXT("Elitewake", "GrabLadderOwned", "Climb the ladder  ({0}'s ship)"), FText::FromString(OwnerName))
+            : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
     if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
     {
+        if (!IsShipmate(Character)) return CrewOnlyPrompt();
         const FText Sail = FText::FromName(Lines);
         const FText Setting = FText::AsPercent(SailFractionForState(GetMountSailState(Lines)));
         if (GetLinesWorker(Lines) == Character)
@@ -1283,6 +1362,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Mount) return FText::GetEmpty();
+    if (!IsShipmate(Character)) return CrewOnlyPrompt();
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
         return Installed->FittingMountType == EEWShipMountType::Cannon
             ? (!IsCannonCrewed(MountId) && IsValid(Character) && FindCarriedGunnerArticles(Character) ? NSLOCTEXT("Elitewake", "SignOnGunner", "Sign on a gunner for this cannon")
@@ -1307,7 +1387,7 @@ float AEWShip::GetHoldDurationFor_Implementation(AEWCharacter* Character) const
 void AEWShip::HoldChanged_Implementation(AEWCharacter* Character, bool bHolding)
 {
     if (!HasAuthority()) return;
-    if (bHolding && Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character)) SetCapstanWorker(Character);
+    if (bHolding && Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character) && CanCommand(Character)) SetCapstanWorker(Character);
     else if (!bHolding && (!Character || CapstanWorker == Character)) SetCapstanWorker(nullptr);
 }
 
@@ -1333,6 +1413,8 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
     if (IsGunnerHere(Character)) return LeaveCannon(Character);
+    // Only climbing aboard and bailing are open to anyone.
+    if (!IsShipmate(Character) && !IsAimingAtBucket(Character) && FindAimedBoardingPoint(Character) == INDEX_NONE) return false;
     if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
     if (IsAimingAtBucket(Character))
     {
@@ -1592,7 +1674,7 @@ bool AEWShip::IsGunnerHere(const AEWCharacter* Character) const
 bool AEWShip::ManCannon(AEWCharacter* Character, FName MountId)
 {
     FTransform Frame;
-    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || !GetCannonFrame(MountId, Frame)
+    if (!HasAuthority() || bChangingFittings || !CanCommand(Character) || !GetCannonFrame(MountId, Frame)
         || GetCannonGunner(MountId) || Character->GetHelmShip() || Character->GetGunShip() || Character->IsOnLadder()
         || Character->bIsCrouched || Character->IsProne())
         return false;
@@ -1801,7 +1883,7 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
     {
         AEWCharacter* Gunner = Cannon.Gunner.Get();
         FTransform Frame;
-        if (Cannon.Gunner && (!IsValid(Gunner) || Gunner->GetGunShip() != this || !CanModifyFittings(Gunner) || !GetCannonFrame(Cannon.MountId, Frame)))
+        if (Cannon.Gunner && (!IsValid(Gunner) || Gunner->GetGunShip() != this || !CanCommand(Gunner) || !GetCannonFrame(Cannon.MountId, Frame)))
         {
             if (IsValid(Gunner)) LeaveCannon(Gunner, true);
             Cannon.Gunner = nullptr;
@@ -1872,6 +1954,8 @@ FEWSavedShip AEWShip::CaptureForSave() const
     Saved.Cannons = Cannons;
     for (FEWCannonState& Cannon : Saved.Cannons) { Cannon.Gunner = nullptr; Cannon.bLoading = false; }
     Saved.OpenGunports = OpenGunports;
+    Saved.OwnerKey = OwnerKey;
+    Saved.OwnerName = OwnerName;
     return Saved;
 }
 
@@ -1905,6 +1989,11 @@ void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
     bAnchored = Saved.bAnchored;
     bChainTaut = false;
     if (bAnchored) LayAnchor();
+    OwnerKey = Saved.OwnerKey;
+    OwnerName = Saved.OwnerKey.IsEmpty() ? FString() : Saved.OwnerName.IsEmpty() ? TEXT("A captain") : Saved.OwnerName;
+    OwnerPlayerId = INDEX_NONE;
+    OwnerCompanyId.Invalidate();
+    RefreshOwner();
     RefreshFittingVisuals();
     OnRep_Holes();
     ForceNetUpdate();
@@ -2022,14 +2111,16 @@ void AEWShip::OnRep_Holes()
 
 bool AEWShip::IsValidHelmsman(const AEWCharacter* Character) const
 {
-    return Character && Helmsman == Character && Character->GetHelmShip() == this && CanModifyFittings(Character);
+    return Character && Helmsman == Character && Character->GetHelmShip() == this && CanCommand(Character);
 }
 
 bool AEWShip::TakeHelm(AEWCharacter* Character)
 {
-    if (!HasAuthority() || bChangingFittings || Helmsman || !CanModifyFittings(Character)
+    if (!HasAuthority() || bChangingFittings || Helmsman || !CanCommand(Character)
         || Character->GetHelmShip() || Character->bIsCrouched || Character->IsProne() || !HasFittingOfType(EEWShipMountType::Helm))
         return false;
+    // An unclaimed ship is the first helmsman's.
+    if (!IsOwned()) SetShipOwner(Character->GetController());
     Helmsman = Character;
     Rudder = 0.f;
     SailTrimDirection = 0;
@@ -2188,7 +2279,7 @@ FName AEWShip::FindAimedLines(const AEWCharacter* Character) const
 bool AEWShip::TakeLines(AEWCharacter* Character, FName MountId)
 {
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
-    if (!HasAuthority() || !Mount || Mount->Type != EEWShipMountType::Sail || !CanModifyFittings(Character)
+    if (!HasAuthority() || !Mount || Mount->Type != EEWShipMountType::Sail || !CanCommand(Character)
         || Character->GetHelmShip() || Character->GetGunShip() || Character->GetLinesShip() || GetLinesWorker(MountId)) return false;
     FindOrAddLine(MountId).Worker = Character;
     Character->SetLinesPost(this, MountId);
@@ -2273,7 +2364,7 @@ void AEWShip::UpdateSailLines(float DeltaSeconds)
             if (!Line.Worker) continue;
             AEWCharacter* Worker = Line.Worker;
             const FVector Lines = GetActorTransform().TransformPosition(GetLinesLocal(Line.MountId));
-            if (!IsValid(Worker) || !CanModifyFittings(Worker) || FVector::Dist2D(Worker->GetActorLocation(), Lines) > LinesReach
+            if (!IsValid(Worker) || !CanCommand(Worker) || FVector::Dist2D(Worker->GetActorLocation(), Lines) > LinesReach
                 || Worker->GetLinesShip() != this)
             {
                 if (IsValid(Worker)) LeaveLines(Worker);
@@ -2595,6 +2686,12 @@ void AEWShip::Tick(float DeltaSeconds)
     {
         SmoothClientMotion(DeltaSeconds);
         return;
+    }
+    // Who her owner is this session (they come and go, join and leave Companies).
+    if (IsOwned() && (OwnerRefreshIn -= DeltaSeconds) <= 0.f)
+    {
+        OwnerRefreshIn = 1.f;  // tuning
+        RefreshOwner();
     }
     if (Helmsman && !IsValidHelmsman(Helmsman))
     {

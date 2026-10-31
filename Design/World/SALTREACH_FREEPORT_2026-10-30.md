@@ -17,7 +17,7 @@ are placeholders for the owner to edit.
 | Name: **Saltreach Freeport**; tavern **The Salt Lantern**. | Original names. | `NAME` and the NPC table in `build_freeport.py`. |
 | **Palms** stand through the town, though the starter island's trees are oaks (owner, October 16: palms belong to the Desert). | The October 30 request asks for a tropical harbor with palms; the latest direction wins. Oaks still stand round the town. | `build_palms` in `build_freeport.py` (swap the meshes for `SM_Oak_*` or remove the call). |
 | The island's terrain is not reshaped. | The site is already levelled; rebuilding the whole world's terrain risks every placed thing on it. The town's streets, seawall, wharf and piers are built on and over the existing ground. | — |
-| "Your ship" is the ship nearest you (for repair, berthing and departure). | Ships have no owner yet. | `AEWShipwright::FindShipToRepair`, `AEWHarborMaster::FindShipFor`. |
+| "Your ship" is the nearest ship you are a shipmate of (for repair, berthing and departure); a ship bought here is the buyer's. | Ship ownership (October 30, `AEWShip::IsShipmate`). | `AEWShipwright::FindShipToRepair`, `AEWHarborMaster::FindShipFor`. |
 | The harbor master's berthing and departure **tow** the ship (pilots), anchored at the berth or the harbor mouth. | A working docking service without an autopilot. | `AEWShip::TowTo`. |
 | The safe zone is a circle of 95 m over town and harbor. | Covers the terrace, the piers, the berths and the harbor mouth. | `build_safe_zone` (radius) in `build_freeport.py`. |
 
@@ -87,7 +87,7 @@ hunting creature drops the chase at the edge. The boundary is invisible to playe
   engine mannequin painted with plain clothes (no faces, hair or real clothing); no NPC voices or footsteps; the town's ambient sounds are synthesized placeholders.
 - Townsfolk walk fixed loops; they stop for a survivor in the way (and walk on when the way is clear) but do not step round them; nobody sits.
 - Quests are delivery jobs only; no quest log, chains or story quests. Rumours are fixed text.
-- Ships have no owner, so services act on the nearest ship; towing is instant (no pilot boats).
+- Towing is instant (no pilot boats).
 - No buying in quantity, no regional prices, merchant stock is not saved.
 - Hired sailors' names do not go aboard with them (crew are saved with their ship as anonymous hands).
 - The terrain was not reshaped; the slipway's top crosses the terrace's seawall.

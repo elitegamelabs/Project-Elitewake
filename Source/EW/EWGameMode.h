@@ -34,6 +34,9 @@ public:
 	/** The save slot a player's survivor is kept in on this host: by the stable id their game sent (EWId), else their online identity. */
 	UFUNCTION(BlueprintPure, Category="Save")
 	FString PlayerSlot(const APlayerController* Player) const;
+	/** A player's stable key on this host (what PlayerSlot hashes): the id their game sent, else their online identity, else their
+	 *  name. Ships keep their owner by it. */
+	FString PlayerKey(const AController* Player) const;
 
 	/** The world's edge and its growth (see UEWExplorationComponent). */
 	UPROPERTY(VisibleAnywhere, Category="World")

@@ -109,6 +109,9 @@ struct FEWSavedShip
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSailLine> SailLines;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWCannonState> Cannons;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> OpenGunports;
+    /** Her owner: the host's stable key for the player (none: unclaimed) and the name shown. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerKey;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerName;
 };
 
 /**
@@ -583,6 +586,21 @@ public:
      *  the helm, a cannon or the lines lets go first. False while she is sinking. */
     UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
     bool TowTo(const FTransform& Where);
+    /** Ownership (DECIDED, delegated, October 30): a bought ship is her buyer's; an unclaimed ship is claimed by the first survivor to
+     *  take her helm. Only her shipmates (the owner, or members of the owner's Company when its ship policy is not Personal) take the
+     *  helm, open the hold, work the anchor, sails and cannons, sign on crew and change fittings. Anyone may climb aboard and bail.
+     *  Single player has no gates (owner, October 14). */
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    bool IsOwned() const { return !OwnerName.IsEmpty(); }
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    FString GetOwnerName() const { return OwnerName; }
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    bool IsShipmate(const AEWCharacter* Character) const;
+    /** Authority: makes her this player's (null: unclaimed again). */
+    UFUNCTION(BlueprintCallable, Category="Ship|Owner")
+    void SetShipOwner(AController* NewOwner);
+    /** Alive, here, and one of her shipmates. */
+    bool CanCommand(const AEWCharacter* Character) const { return CanModifyFittings(Character) && IsShipmate(Character); }
     /** Saving (M7): this ship as a save keeps her, and putting a saved state back on her (authority). */
     FEWSavedShip CaptureForSave() const;
     void RestoreFromSave(const FEWSavedShip& Saved);
@@ -630,6 +648,16 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Interior") AEWShipSurgeon* GetSurgeon() const { return Surgeon; }
 private:
     UPROPERTY() TObjectPtr<AEWShipSurgeon> Surgeon;
+    /** The owner's stable key on this host (server only; saved), their name, their player id this session (none while away) and
+     *  the Company they were last seen in. */
+    FString OwnerKey;
+    UPROPERTY(Replicated) FString OwnerName;
+    UPROPERTY(Replicated) int32 OwnerPlayerId = INDEX_NONE;
+    UPROPERTY(Replicated) FGuid OwnerCompanyId;
+    float OwnerRefreshIn = 0.f;
+    /** Authority: finds the owner among the players here (their id, name and Company now). */
+    void RefreshOwner();
+    FText CrewOnlyPrompt() const;
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
     TArray<FEWInstalledFitting> Fittings;
     /** Local query boxes, one per mount, rebuilt from the definition on every machine. */

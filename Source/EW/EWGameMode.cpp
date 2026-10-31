@@ -48,14 +48,19 @@ FString AEWGameMode::InitNewPlayer(APlayerController* NewPlayerController, const
 	return Super::InitNewPlayer(NewPlayerController, UniqueId, Options, Portal);
 }
 
-FString AEWGameMode::PlayerSlot(const APlayerController* Player) const
+FString AEWGameMode::PlayerKey(const AController* Player) const
 {
 	const APlayerState* State = Player ? Player->PlayerState.Get() : nullptr;
 	if (!State) return FString();
-	// The stable id the player's game sent, else their online identity (which a direct-IP game changes every launch), else their name;
-	// hashed so any characters are safe in a file name.
-	const FString* Sent = PlayerIds.Find(const_cast<APlayerController*>(Player));
-	const FString Identity = Sent ? *Sent : State->GetUniqueId().IsValid() ? State->GetUniqueId()->ToString() : State->GetPlayerName();
+	// The stable id the player's game sent, else their online identity (which a direct-IP game changes every launch), else their name.
+	const FString* Sent = PlayerIds.Find(const_cast<APlayerController*>(Cast<APlayerController>(Player)));
+	return Sent ? *Sent : State->GetUniqueId().IsValid() ? State->GetUniqueId()->ToString() : State->GetPlayerName();
+}
+
+FString AEWGameMode::PlayerSlot(const APlayerController* Player) const
+{
+	// Hashed so any characters are safe in a file name.
+	const FString Identity = PlayerKey(Player);
 	return Identity.IsEmpty() ? FString() : TEXT("ServerSurvivor_") + FMD5::HashAnsiString(*Identity);
 }
 
