@@ -20,8 +20,8 @@
 
 namespace
 {
-    const FLinearColor Gold(1.f, .85f, .35f, 1.f);
-    const FLinearColor Clear(0.f, 0.f, 0.f, 0.f);
+    const FLinearColor SpawnerGold(1.f, .85f, .35f, 1.f);
+    const FLinearColor SpawnerClear(0.f, 0.f, 0.f, 0.f);
     const FLinearColor TileColour(.07f, .085f, .1f, 1.f);
 }
 
@@ -90,7 +90,7 @@ TSharedRef<SWidget> UEWItemSpawnerWidget::RebuildWidget()
             for (int32 Index = From; Index < To; ++Index)
             {
                 const UEWItemDefinition* Item = Items[Index];
-                auto* Ring = WidgetTree->ConstructWidget<UBorder>(); Ring->SetPadding(FMargin(2)); Ring->SetBrushColor(Clear);
+                auto* Ring = WidgetTree->ConstructWidget<UBorder>(); Ring->SetPadding(FMargin(2)); Ring->SetBrushColor(SpawnerClear);
                 auto* Tile = WidgetTree->ConstructWidget<UEWRecipeButton>(); Tile->Initialize(Index); Tile->EnableHover(); Tile->SetBackgroundColor(TileColour);
                 Tile->OnRecipePressed.AddDynamic(this, &UEWItemSpawnerWidget::TilePressed);
                 Tile->OnRecipeHovered.AddDynamic(this, &UEWItemSpawnerWidget::TileHovered);
@@ -140,7 +140,7 @@ void UEWItemSpawnerWidget::MoveCursor(int32 Index)
 {
     if (!Items.IsValidIndex(Index)) return;
     Cursor = Index;
-    for (int32 Place = 0; Place < Rings.Num(); ++Place) Rings[Place]->SetBrushColor(Place == Cursor ? Gold : Clear);
+    for (int32 Place = 0; Place < Rings.Num(); ++Place) Rings[Place]->SetBrushColor(Place == Cursor ? SpawnerGold : SpawnerClear);
     if (Scroll && Rings.IsValidIndex(Cursor)) Scroll->ScrollWidgetIntoView(Rings[Cursor], true);
 }
 
