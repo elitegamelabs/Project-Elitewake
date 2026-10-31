@@ -36,6 +36,11 @@ SOUNDS = {
     'Fauna/SFX_AlligatorHiss-v1b.wav': ('S_AlligatorHiss_v1b', .7, 'world'),
     'Fauna/SFX_FlamingoCall-v1.wav': ('S_FlamingoCall_v1', .7, 'world'),
     'Fauna/SFX_PelicanCall-v1.wav': ('S_PelicanCall_v1', 1.0, 'world'),
+    # The four regional animals (October 26): their main calls; the other calls in SCENARIO.md's queue are still to make.
+    'Fauna/SFX_BearGrowl-v1.wav': ('S_BearGrowl_v1', .9, 'world'),
+    'Fauna/SFX_LionRoar-v1.wav': ('S_LionRoar_v1', 1.0, 'far'),
+    'Fauna/SFX_CrocodileBellow-v1.wav': ('S_CrocodileBellow_v1', .9, 'world'),
+    'Fauna/SFX_ElephantTrumpet-v1.wav': ('S_ElephantTrumpet_v1', 1.0, 'far'),
     # The second batch (October 15 night): ships, decks, swimming, night and caves.
     'Ships/SFX_CannonFire-v1.wav': ('S_CannonFire_v1', .9, 'far'),
     'Ships/SFX_HullHit-v1.wav': ('S_HullHit_v1', .8, 'far'),
@@ -59,13 +64,30 @@ SOUNDS = {
     'Ships/SFX_AnchorDrop-v1.wav': ('S_AnchorDrop_v1', .9, 'far'),
     'Ships/SFX_AnchorCatch-v1.wav': ('S_AnchorCatch_v1', .9, 'far'),
     'Ships/SFX_AnchorRaise-v1.wav': ('S_AnchorRaise_v1', .9, 'far'),
+    # Saltreach Freeport (October 30): synthesized placeholders, made by Scripts/Art/make_town_sounds.py (no credits, nothing sampled).
+    'Town/AMB_TavernMurmur-v1.wav': ('S_AmbTavernMurmur_v1', .8, 'worldloop'),
+    'Town/AMB_MarketMurmur-v1.wav': ('S_AmbMarketMurmur_v1', .7, 'worldloop'),
+    'Town/AMB_ShipyardWork-v1.wav': ('S_AmbShipyardWork_v1', 1.0, 'worldloop'),
+    'Town/AMB_PierLapping-v1.wav': ('S_AmbPierLapping_v1', .8, 'worldloop'),
+    'Town/SFX_HarborBell-v1.wav': ('S_HarborBell_v1', .8, 'far'),
+    # The cave spider (October 30): synthesized by Scripts/Art/make_creature_sounds.py.
+    'Fauna/SFX_SpiderChitter-v1.wav': ('S_SpiderChitter_v1', .9, 'world'),
+    'Fauna/SFX_SpiderHiss-v1.wav': ('S_SpiderHiss_v1', 1.0, 'world'),
+    'Fauna/SFX_SpiderDeath-v1.wav': ('S_SpiderDeath_v1', .9, 'world'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {
     'Alligator': (['S_AlligatorHiss_v1', 'S_AlligatorHiss_v1b'], (0, 0)),
     'Flamingo': (['S_FlamingoCall_v1'], (20, 45)),
     'Pelican': (['S_PelicanCall_v1'], (30, 60)),
+    'Bear': (['S_BearGrowl_v1'], (0, 0)),
+    'Lion': (['S_LionRoar_v1'], (40, 90)),
+    'GiantCrocodile': (['S_CrocodileBellow_v1'], (0, 0)),
+    'Elephant': (['S_ElephantTrumpet_v1'], (45, 100)),
+    'Spider': (['S_SpiderChitter_v1'], (25, 60)),
 }
+# Animal -> its attack and death sounds (October 30; species without their own are silent there for now).
+STRIKES = {'Spider': (['S_SpiderHiss_v1'], ['S_SpiderDeath_v1'])}
 # Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m.
 FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0)}
 
@@ -118,6 +140,12 @@ def main():
         definition.set_editor_property('call_interval', unreal.Vector2D(*interval))
         assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
         called[animal] = calls
+    for animal, (attacks, deaths) in STRIKES.items():
+        definition = unreal.load_asset(f'{ANIMALS}/DA_Animal_{animal}')
+        assert definition, animal
+        definition.set_editor_property('attack_sounds', [waves[c] for c in attacks])
+        definition.set_editor_property('death_sounds', [waves[c] for c in deaths])
+        assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
     result = {'success': True, 'sounds': {n: round(w.get_editor_property('duration'), 2) for n, w in waves.items()}, 'calls': called}
     (ROOT / 'Saved/AudioImportResult.json').write_text(json.dumps(result, indent=2))
     unreal.log(f'Imported {len(waves)} sounds and gave {len(called)} animals their calls')

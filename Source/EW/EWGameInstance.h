@@ -33,6 +33,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Save") bool WillResumeSavedSurvivor() const { return bResumeSurvivor; }
     /** Accept only local/private IPv4 addresses, optional port, or localhost. Never arbitrary travel URLs. */
     static bool NormalizePrivateAddress(const FString& Input, FString& Output);
+    /** This PC's player, the same every time the game starts (a hash of the Windows login): a host keeps a joining player's survivor
+     *  under it (the online identity of a direct-IP game changes every launch). Sent with Join as the EWId option. */
+    static FString StablePlayerId();
 private:
     void NetworkFailed(UWorld* World, UNetDriver* Driver, ENetworkFailure::Type Type, const FString& Error);
     void TravelFailed(UWorld* World, ETravelFailure::Type Type, const FString& Error);

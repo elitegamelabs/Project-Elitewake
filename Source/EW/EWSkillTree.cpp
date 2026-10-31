@@ -24,8 +24,8 @@ const TArray<FEWSkillNode>& FEWSkillTree::Nodes()
     // The Wayfarer: a first constellation of eight stars rising from the root. Costs, bonuses and recipes are working values.
     static const TArray<FEWSkillNode> Tree = {
         Node(TEXT("FirstLight"), TEXT("First Light"), TEXT("Where every survivor begins: working with the hands. The stars above are lit one by one with skill points, one earned for each level."), .50, .90, 0, {}),
-        Node(TEXT("Gatherer"), TEXT("Gatherer"), TEXT("A trained eye for good timber and stone. Unlocks the Hatchet recipe and lets you carry 5 kg more."), .30, .68, 1, {TEXT("FirstLight")}, {TEXT("Hatchet")}, 0.f, 0.f, 5.f),
-        Node(TEXT("Torchbearer"), TEXT("Torchbearer"), TEXT("Light for the long night. Unlocks the Inn Torch recipe."), .70, .68, 1, {TEXT("FirstLight")}, {TEXT("InnTorch")}),
+        Node(TEXT("Gatherer"), TEXT("Gatherer"), TEXT("A trained eye for good timber, stone and healing plants. Unlocks the Hatchet and Herbal Remedy recipes and lets you carry 5 kg more."), .30, .68, 1, {TEXT("FirstLight")}, {TEXT("Hatchet"), TEXT("HerbalRemedy")}, 0.f, 0.f, 5.f),
+        Node(TEXT("Torchbearer"), TEXT("Torchbearer"), TEXT("Light for the long night, and a fire to cook by. Unlocks the Inn Torch, Cooked Fish and Cooked Meat recipes."), .70, .68, 1, {TEXT("FirstLight")}, {TEXT("InnTorch"), TEXT("CookedFish"), TEXT("CookedMeat")}),
         Node(TEXT("Hardy"), TEXT("Hardy"), TEXT("A body that shrugs off knocks. +10 maximum health."), .16, .44, 1, {TEXT("Gatherer")}, {}, 10.f),
         Node(TEXT("FieldRepair"), TEXT("Field Repair"), TEXT("Patch a hull with what you carry. Unlocks the Repair Kit recipe."), .40, .46, 1, {TEXT("Gatherer")}, {TEXT("PrologueRepairKit")}),
         Node(TEXT("StrongBack"), TEXT("Strong Back"), TEXT("Carry more for the same effort. +10 kg carrying capacity."), .84, .44, 1, {TEXT("Torchbearer")}, {}, 0.f, 0.f, 10.f),

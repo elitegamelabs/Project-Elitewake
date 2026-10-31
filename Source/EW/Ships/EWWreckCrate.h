@@ -7,6 +7,7 @@
 
 class UEWInventoryComponent;
 class UStaticMeshComponent;
+struct FEWSavedContainer;
 
 /**
  * A crate floating where a ship went down, holding part of what she carried (design reference: wreck loot floats in
@@ -37,6 +38,10 @@ public:
     /** The sea surface it floats on, world cm. */
     UPROPERTY(Replicated, BlueprintReadOnly, Category="Wreck")
     float SurfaceZ = -65.f;
+
+    /** Saving (M7): the crate as a save keeps it, and a new crate made as saved (authority). */
+    FEWSavedContainer CaptureForSave() const;
+    void RestoreSaved(const FEWSavedContainer& Saved);
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;

@@ -119,7 +119,7 @@ def generic_attack_did_not_mine():
     assert int(node.get_editor_property('remaining')) in range(4, 9), 'generic pickaxe mined a restricted node'
     assert inventory.get_item_count(stone) == 0, 'generic pickaxe yielded the restricted resource'
     prompt = str(widget.get_displayed_prompt())
-    assert 'Equip a pickaxe' in prompt, f'wrong-tier prompt was not shown: {prompt!r}'
+    assert not prompt, f'a rock shows no prompt, even for the wrong tool: {prompt!r}'
     report['checkpoints'].append({'name': 'generic pickaxe rejected', 'stock': int(node.get_editor_property('remaining'))})
 
 def equip_metal_pick():
@@ -130,7 +130,7 @@ def check_metal_pick():
     assert equipment.get_equipped_item(unreal.EWEquipmentSlot.MAIN_HAND) == metal_pick, 'Metal test pick did not equip'
     assert node.can_mine(owner), 'Metal pick did not satisfy the minimum tier'
     prompt = str(widget.get_displayed_prompt())
-    assert 'Left Mouse: Mine resource' in prompt, f'Metal mining prompt was not shown: {prompt!r}'
+    assert not prompt, f'a rock shows no prompt: {prompt!r}'
     report['checkpoints'].append({'name': 'Metal pick accepted'})
 
 def mine_deposit():

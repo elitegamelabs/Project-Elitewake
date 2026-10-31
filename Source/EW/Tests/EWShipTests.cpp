@@ -215,6 +215,8 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     PC->GetInteractionComponent()->SetMenuBlocked(true);
     TestFalse(TEXT("An open menu blocks commands"), A->StepSails(C, 1));
     PC->GetInteractionComponent()->SetMenuBlocked(false);
+    TestFalse(TEXT("With no sailhand aboard the helm cannot set sail"), A->StepSails(C, 1));
+    TestTrue(TEXT("Sailhands sign on at the sails"), A->CrewEverySail() > 0 && A->IsSailCrewed(TEXT("Mainsail")));
     TestTrue(TEXT("Quarter sail"), A->StepSails(C, 1));
     TestEqual(TEXT("Quarter setting"), A->GetSailState(), EEWSailState::Quarter);
     TestTrue(TEXT("Half sail"), A->StepSails(C, 1));
@@ -224,7 +226,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Full sail"), A->StepSails(C, 1));
     TestTrue(TEXT("Already full stays full"), A->StepSails(C, 1) && A->GetSailState() == EEWSailState::Full);
     TestTrue(TEXT("Full sails load against the anchor chain"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * (2.f / 3.f)
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * MediumSail->SailSpeedMultiplier
             * UEWWindSubsystem::MinUpwindFactor, 1.f));
     // Trim: the sails swing with the helmsman's held direction, at a fixed rate, within their limits.
     TestFalse(TEXT("Others cannot trim"), A->SetSailTrim(Other, 1));
@@ -268,8 +270,8 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Raise anchor on A"), A->SetAnchored(C, false));
     TestTrue(TEXT("Raise anchor on B"), B->SetAnchored(C, false));
     TestFalse(TEXT("Raising a raised anchor changes nothing"), A->SetAnchored(C, false));
-    TestTrue(TEXT("Downwind target includes the crossing pace and fitted sail"),
-        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::SailingPace * 2.f / 3.f, 1.f));
+    TestTrue(TEXT("Downwind target is the base speed times the best sail's multiplier (owner, October 18)"),
+        FMath::IsNearlyEqual(A->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * MediumSail->SailSpeedMultiplier, 1.f));
 
     // Leaving the helm keeps the sails set; the ship sails on.
     TestTrue(TEXT("Leave helm"), A->LeaveHelm(C));
@@ -282,6 +284,7 @@ bool FEWShipSailingTest::RunTest(const FString& Parameters)
     C->SetActorLocation(B->GetActorTransform().TransformPosition(FVector(-120, 0, 186)));
     Aim(PC, C, B, TEXT("Helm"));
     TestTrue(TEXT("Take the helm of ship B"), B->Interact_Implementation(C));
+    B->CrewEverySail();
     for (int32 Step = 0; Step < 4; ++Step) B->StepSails(C, 1);
     // Trimmed at anchor like A, so both start the comparison at rest.
     B->SetAnchored(C, true);
@@ -597,9 +600,9 @@ bool FEWShipBuiltInFittingTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Raise the anchor"), Ship->SetAnchored(C, false));
     TestEqual(TEXT("Resting paddles do not move the raft"), Ship->ComputeTargetSpeed(), 0.f);
     TestTrue(TEXT("Easy stroke"), Ship->StepSails(C, 1));
-    TestEqual(TEXT("An easy stroke is half speed without any sail"), Ship->ComputeTargetSpeed(), Def->TopSpeed * .5f);
+    TestTrue(TEXT("An easy stroke is half speed without any sail (at the crossing pace)"), FMath::IsNearlyEqual(Ship->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace * .5f, .01f));
     TestTrue(TEXT("Hard stroke"), Ship->StepSails(C, 1));
-    TestEqual(TEXT("A hard stroke is full speed"), Ship->ComputeTargetSpeed(), Def->TopSpeed);
+    TestTrue(TEXT("A hard stroke is full speed (at the crossing pace)"), FMath::IsNearlyEqual(Ship->ComputeTargetSpeed(), Def->TopSpeed * AEWShip::CrossingPace, .01f));
     const FVector Start = Ship->GetActorLocation();
     for (int32 i = 0; i < 20; ++i) Ship->SimulateSailing(.1f);
     TestTrue(TEXT("Paddling moves the raft"), FVector::Dist(Start, Ship->GetActorLocation()) > 50.f);

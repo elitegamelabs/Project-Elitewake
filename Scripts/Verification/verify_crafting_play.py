@@ -7,6 +7,8 @@ lib = unreal.EWEditorVerificationLibrary
 worlds = lib.get_play_worlds()
 client_world = next(w for w in worlds if not unreal.GameplayStatics.get_player_controller(w,0).has_authority())
 client = unreal.GameplayStatics.get_player_controller(client_world,0)
+def crafting_ui():
+    return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world,unreal.EWInventoryWidget,False) if w.get_owning_player()==client and w.is_in_viewport())
 server_world = next(w for w in worlds if unreal.GameplayStatics.get_player_controller(w,0).has_authority())
 def player_id(pawn):
     return json.loads(unreal.ToolsetLibrary.get_object_properties(pawn.get_editor_property('PlayerState'),['PlayerId']))['PlayerId']
@@ -49,7 +51,7 @@ def tick(delta):
             assert len(remote.get_available_recipes())==4
             checks.append('Client receives four unlocked recipes')
             client.set_inventory_open(True)
-            assert lib.send_verification_ui_key(client,'Tab')
+            crafting_ui().focus_crafting()
         elif phase==1:
             menu=next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world,unreal.EWInventoryWidget,False)
                       if w.get_owning_player()==client and w.is_in_viewport())
@@ -75,26 +77,26 @@ def tick(delta):
             assert inv.add_item(hide,1)==1
             assert inv.add_item(thatch,10)==10
         elif phase==5:
-            assert lib.send_verification_ui_key(client,'Down')
+            assert lib.send_verification_ui_key(client,'Right')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==6:
             assert inv.get_item_count(outputs[1])==base[1]+1 and remote.get_item_count(outputs[1])==base[1]+1
             assert inv.get_item_count(wood)==20 and remote.get_item_count(wood)==20
             checks.append('Wooden Axe consumes 20 Wood and replicates one output')
-            assert lib.send_verification_ui_key(client,'Down')
+            assert lib.send_verification_ui_key(client,'Right')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==7:
             assert inv.get_item_count(outputs[2])==base[2]+1 and remote.get_item_count(outputs[2])==base[2]+1
             assert inv.get_item_count(wood)==0 and remote.get_item_count(wood)==0
             checks.append('Wooden Pickaxe consumes 20 Wood and replicates one output')
-            assert lib.send_verification_ui_key(client,'Down')
+            assert lib.send_verification_ui_key(client,'Right')
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==8:
             assert inv.get_item_count(outputs[3])==base[3]+1 and remote.get_item_count(outputs[3])==base[3]+1
             assert inv.get_item_count(hide)==0 and remote.get_item_count(hide)==0
             assert inv.get_item_count(thatch)==0 and remote.get_item_count(thatch)==0
             checks.append('Hide Water Flask consumes 1 Hide and 10 Thatch and replicates one output')
-            assert lib.send_verification_ui_key(client,'PageUp')
+            crafting_ui().focus_inventory()
             checks.append('Returns to inventory')
             finish();return
         phase+=1

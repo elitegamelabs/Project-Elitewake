@@ -2,12 +2,20 @@
 
 
 #include "EWPlayerController.h"
+#include "EWItemSpawnerWidget.h"
+#include "EWItemDefinition.h"
+#include "Engine/AssetManager.h"
+#include "EWCrewMaster.h"
+#include "Misc/App.h"
+#include "WaterBodyActor.h"
+#include "EngineUtils.h"
 #include "Ships/EWWreckCrate.h"
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
 #include "EWObjectiveComponent.h"
 #include "EWSoundscapeComponent.h"
 #include "EWPlacementPreviewComponent.h"
+#include "World/EWBuildComponent.h"
 #include "EWCompanyComponent.h"
 #include "EWContainerWidget.h"
 #include "Ships/EWShip.h"
@@ -30,6 +38,8 @@
 #include "EWHotbarWidget.h"
 #include "EWSurvivalWidget.h"
 #include "EWDeathWidget.h"
+#include "EWDialogueWidget.h"
+#include "EWTownsfolk.h"
 #include "EWExplorationComponent.h"
 #include "EWCraftingRecipe.h"
 #include "EWProgressionComponent.h"
@@ -58,14 +68,20 @@ AEWPlayerController::AEWPlayerController()
     InteractionComponent = CreateDefaultSubobject<UEWInteractionComponent>(TEXT("Interaction"));
     SoundscapeComponent = CreateDefaultSubobject<UEWSoundscapeComponent>(TEXT("Soundscape"));
     PlacementPreview = CreateDefaultSubobject<UEWPlacementPreviewComponent>(TEXT("PlacementPreview"));
+    BuildComponent = CreateDefaultSubobject<UEWBuildComponent>(TEXT("Build"));
     ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
+}
+
+namespace
+{
+    const TCHAR* LookSensitivityKeys[4] = {TEXT("MouseHorizontalSensitivity"), TEXT("MouseVerticalSensitivity"),
+        TEXT("ControllerHorizontalSensitivity"), TEXT("ControllerVerticalSensitivity")};
 }
 
 void AEWPlayerController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
     if (ObjectiveComponent) ObjectiveComponent->ApplyCompletionRecipes();
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(InPawn)) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
 }
 
 void AEWPlayerController::BeginPlay()
@@ -74,13 +90,22 @@ void AEWPlayerController::BeginPlay()
     if (GConfig)
     {
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
-        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
-        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        // Each look speed falls back on the one setting it replaced (October 30: one mouse and one controller speed before).
+        float OldMouse = 1.f, OldController = 1.f;
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), OldMouse, GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), OldController, GGameUserSettingsIni);
+        for (int32 Which = 0; Which < 4; ++Which)
+        {
+            LookSensitivity[Which] = Which < 2 ? OldMouse : OldController;
+            GConfig->GetFloat(TEXT("Elitewake.UserControls"), LookSensitivityKeys[Which], LookSensitivity[Which], GGameUserSettingsIni);
+            LookSensitivity[Which] = FMath::Clamp(LookSensitivity[Which], .1f, 3.f);
+        }
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
+        MasterVolume = FMath::Clamp(MasterVolume, 0.f, 1.f);
+        if (IsLocalPlayerController()) FApp::SetVolumeMultiplier(MasterVolume);
         UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
-        MouseLookSensitivity = FMath::Clamp(MouseLookSensitivity, .1f, 3.f);
-        ControllerLookSensitivity = FMath::Clamp(ControllerLookSensitivity, .1f, 3.f);
     }
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
+    ApplyBrightness();
     if (IsLocalPlayerController())
     {
         ObjectiveWidget = CreateWidget<UEWObjectiveWidget>(this, UEWObjectiveWidget::StaticClass());
@@ -126,7 +151,7 @@ void AEWPlayerController::SetUserBrightness(float Value)
 {
     if (!IsLocalPlayerController()) return;
     UserBrightness = FMath::Clamp(Value, -.5f, .5f);
-    if (auto* SurvivorCharacter = Cast<AEWCharacter>(GetPawn())) SurvivorCharacter->ApplyUserBrightness(UserBrightness);
+    ApplyBrightness();
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("BrightnessGamma"), UserBrightness, GGameUserSettingsIni);
@@ -134,24 +159,34 @@ void AEWPlayerController::SetUserBrightness(float Value)
     }
 }
 
-void AEWPlayerController::SetMouseLookSensitivity(float Value)
+float AEWPlayerController::GetDisplayGamma() const { return GEngine ? GEngine->DisplayGamma : 2.2f; }
+
+void AEWPlayerController::ApplyBrightness() const
 {
-    if (!IsLocalPlayerController()) return;
-    MouseLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
+    // Display gamma brightens or darkens the final image of every view (survivor, helm, cannon, title) together:
+    // 50 on the slider is the engine's 2.2. Tuning: the ends are one stop of gamma either way.
+    if (GEngine && IsLocalPlayerController()) GEngine->DisplayGamma = 2.2f * FMath::Exp2(UserBrightness * 2.f);
+}
+
+void AEWPlayerController::SetLookSensitivity(int32 Which, float Value)
+{
+    if (!IsLocalPlayerController() || Which < 0 || Which > 3) return;
+    LookSensitivity[Which] = FMath::Clamp(Value, .1f, 3.f);
     if (GConfig)
     {
-        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MouseLookSensitivity"), MouseLookSensitivity, GGameUserSettingsIni);
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), LookSensitivityKeys[Which], LookSensitivity[Which], GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }
 
-void AEWPlayerController::SetControllerLookSensitivity(float Value)
+void AEWPlayerController::SetMasterVolume(float Value)
 {
     if (!IsLocalPlayerController()) return;
-    ControllerLookSensitivity = FMath::Clamp(Value, .1f, 3.f);
+    MasterVolume = FMath::Clamp(Value, 0.f, 1.f);
+    FApp::SetVolumeMultiplier(MasterVolume);
     if (GConfig)
     {
-        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("ControllerLookSensitivity"), ControllerLookSensitivity, GGameUserSettingsIni);
+        GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }
@@ -264,8 +299,8 @@ void AEWPlayerController::SetClimbInput(float Direction)
         if (Direction != 0.f && !IsMapOpen() && !IsSessionMenuOpen()) Survivor->ServerSetGunport(Direction > 0.f);
         return;
     }
-    // At a helm, holding Up/Down (or the D-pad) raises/lowers sail one 25% step at a time.
-    if (Survivor->GetHelmShip())
+    // At a helm, or at a sail's lines, holding Up/Down (or the D-pad) raises/lowers sail one 25% step at a time.
+    if (Survivor->GetHelmShip() || Survivor->GetLinesShip())
     {
         Survivor->SetSailStepInput(IsMapOpen() || IsSessionMenuOpen() ? 0.f : Direction);
         return;
@@ -397,8 +432,13 @@ void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bB
     InteractionComponent->SetMenuBlocked(bBlocked || IsMapOpen() || IsSessionMenuOpen());
 }
 
-int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
+int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier, bool bTriggerModifier)
 {
+    if (bTriggerModifier)
+    {
+        static const FKey Pad[] = {EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Right, EKeys::Gamepad_DPad_Down};
+        for (int32 i = 0; i < 4; ++i) if (Key == Pad[i]) return 4 + i;
+    }
     static const FKey Numbers[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight};
     static const FKey ControllerKeys[] = {EKeys::Gamepad_DPad_Left,EKeys::Gamepad_DPad_Up,
         EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,
@@ -417,6 +457,31 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
+#if !UE_BUILD_SHIPPING
+    // Testing phase only: F9 opens the item spawner (owner, October 30).
+    if (Params.Key == EKeys::F9)
+    {
+        if (Params.Event == IE_Pressed) SetItemSpawnerOpen(!IsItemSpawnerOpen());
+        return true;
+    }
+#endif
+    if (IsItemSpawnerOpen()) return true;
+    // Build Mode takes B / the right stick to enter; while it is on, Q E LB RB, X / B, Escape and the place key too.
+    if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
+        && BuildComponent->HandleKey(Params)) return true;
+    // At a cannon, Right Mouse (or LB) marks the ship it is laid on for the hired gunners, or clears the mark (owner, October 18).
+    if (Params.Event == IE_Pressed && (Params.Key == EKeys::RightMouseButton || Params.Key == EKeys::Gamepad_LeftShoulder) && !bMapOpen)
+        if (auto* Gunner = Cast<AEWCharacter>(GetPawn()); Gunner && Gunner->GetGunShip()) { Gunner->ServerMarkTarget(); return true; }
+#if !UE_BUILD_SHIPPING
+    // Testing phase only: Shift + 1 to 5 teleports to a region (owner, October 24), Shift + 6 to the nearest Port (owner, October 30).
+    // Compiled out of shipping builds.
+    if (Params.Event==IE_Pressed && (IsInputKeyDown(EKeys::LeftShift) || IsInputKeyDown(EKeys::RightShift)))
+    {
+        static const FKey RegionKeys[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five};
+        for (int32 i=0; i<5; ++i) if (Params.Key==RegionKeys[i]) { ServerDebugTeleportToRegion(i); return true; }
+        if (Params.Key==EKeys::Six) { ServerDebugTeleportToPort(); return true; }
+    }
+#endif
     if (bMapOpen)
     {
         // The map owns right-stick panning and trigger zoom while open, so those inputs
@@ -437,7 +502,8 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
             return true;
         }
     }
-    if (Params.Key == EKeys::M)
+    // M opens and closes the map; on a controller the Back / View button does, and B closes it.
+    if (Params.Key == EKeys::M || Params.Key == EKeys::Gamepad_Special_Left || (bMapOpen && Params.Key == EKeys::Gamepad_FaceButton_Right))
     {
         if (Params.Event == IE_Pressed) SetMapOpen(!bMapOpen);
         return true;
@@ -465,9 +531,16 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         if (Params.Event==IE_Released) bHotbarModifierHeld=false;
         return true;
     }
+    // The left trigger held turns the d-pad into slots 5 to 8 (the menu uses the same trigger to go back a section, so only in the world).
+    if (Params.Key==EKeys::Gamepad_LeftTrigger && (!InventoryWidget || !InventoryWidget->IsInViewport()) && !bMapOpen)
+    {
+        if (Params.Event==IE_Pressed) bHotbarTriggerHeld=true;
+        if (Params.Event==IE_Released) bHotbarTriggerHeld=false;
+        return true;
+    }
     if (!InventoryWidget || !InventoryWidget->IsInViewport())
     {
-        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld);
+        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld,bHotbarTriggerHeld);
         const AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
         const bool bClimbDirection = Survivor && Survivor->IsOnLadder()
             && (Params.Key == EKeys::Gamepad_DPad_Up || Params.Key == EKeys::Gamepad_DPad_Down);
@@ -487,7 +560,7 @@ void AEWPlayerController::FlushPressedKeys()
 {
     ReleaseInteraction();
     // The engine also flushes on viewport focus loss; custom chord state must follow it.
-    bHotbarModifierHeld=false;
+    bHotbarModifierHeld=false; bHotbarTriggerHeld=false;
     SuppressedHotbarKeys.Reset();
     Super::FlushPressedKeys();
 }
@@ -538,6 +611,93 @@ void AEWPlayerController::ServerSpendStatPoint_Implementation(EEWStat Stat)
 void AEWPlayerController::ServerRequestRespawn_Implementation()
 {
     if (auto* Survivor = Cast<AEWCharacter>(GetPawn())) Survivor->RespawnAfterDeath();
+}
+
+void AEWPlayerController::ServerDebugTeleportToRegion_Implementation(int32 RegionIndex)
+{
+#if !UE_BUILD_SHIPPING
+    // Island centres from Scripts/Setup/world_layout.py (cm): Starter (Plains), Jungle1, Desert1, Swamp1, Winter1.
+    static const FVector2D Centres[] = {FVector2D(-800.f, -100.f), FVector2D(-380000.f, 20000.f), FVector2D(280000.f, -30000.f), FVector2D(-30000.f, -270000.f), FVector2D(-60000.f, 280000.f)};
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || Survivor->IsDead() || RegionIndex < 0 || RegionIndex >= 5 || !GetWorld()) return;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWDebugTeleport), false, Survivor);
+    for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) Query.AddIgnoredActor(*It);
+    // Dry ground nearest the island's centre: the centre itself, then rings round it (a swamp's middle can lie under water).
+    static const float Radii[] = {0.f, 4000.f, 9000.f, 16000.f, 25000.f, 36000.f, 50000.f};
+    const FVector2D Centre = Centres[RegionIndex];
+    FVector Spot(Centre.X, Centre.Y, 500.f);
+    bool bFound = false;
+    for (const float Radius : Radii)
+    {
+        for (int32 Step = 0; Step < (Radius <= 0.f ? 1 : 12) && !bFound; ++Step)
+        {
+            const float Angle = Step * (PI / 6.f);
+            const FVector From(Centre.X + FMath::Cos(Angle) * Radius, Centre.Y + FMath::Sin(Angle) * Radius, 100000.f);
+            FHitResult Hit;
+            if (GetWorld()->LineTraceSingleByObjectType(Hit, From, From - FVector(0.f, 0.f, 300000.f), FCollisionObjectQueryParams(ECC_WorldStatic), Query) && Hit.ImpactPoint.Z > -40.f)
+            {
+                Spot = FVector(From.X, From.Y, Hit.ImpactPoint.Z + 120.f);
+                bFound = true;
+            }
+        }
+        if (bFound) break;
+    }
+    Survivor->TeleportTo(Spot, Survivor->GetActorRotation(), false, true);
+#endif
+}
+
+void AEWPlayerController::SetItemSpawnerOpen(bool bOpen)
+{
+#if !UE_BUILD_SHIPPING
+    if (!IsLocalPlayerController() || IsItemSpawnerOpen() == bOpen) return;
+    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); SetOptionsMenuOpen(false); SetSessionMenuOpen(false); }
+    FlushPressedKeys();
+    SetIgnoreMoveInput(bOpen); SetIgnoreLookInput(bOpen);
+    if (bOpen)
+    {
+        ItemSpawnerWidget = CreateWidget<UEWItemSpawnerWidget>(this, UEWItemSpawnerWidget::StaticClass());
+        if (ItemSpawnerWidget)
+        {
+            ItemSpawnerWidget->AddToPlayerScreen(105);
+            FInputModeUIOnly Mode; Mode.SetWidgetToFocus(ItemSpawnerWidget->TakeWidget()); SetInputMode(Mode);
+        }
+    }
+    else { if (ItemSpawnerWidget) ItemSpawnerWidget->RemoveFromParent(); ItemSpawnerWidget = nullptr; SetInputMode(FInputModeGameOnly()); }
+    bShowMouseCursor = bOpen;
+#endif
+}
+
+void AEWPlayerController::ServerDebugGiveItem_Implementation(UEWItemDefinition* Item)
+{
+#if !UE_BUILD_SHIPPING
+    // Only an item of the game's item list, to a living survivor; one at a time.
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Item || !Survivor || Survivor->IsDead() || !Survivor->GetInventoryComponent()) return;
+    if (!UAssetManager::Get().GetPrimaryAssetPath(Item->GetPrimaryAssetId()).IsValid()) return;
+    Survivor->GetInventoryComponent()->AddItem(Item, 1);
+#endif
+}
+
+void AEWPlayerController::ServerDebugTeleportToPort_Implementation()
+{
+#if !UE_BUILD_SHIPPING
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || Survivor->IsDead() || !GetWorld()) return;
+    // The nearest Port's general merchant (not a crew master): stand on the plaza in front of them, facing them.
+    const AEWMerchant* Nearest = nullptr;
+    for (TActorIterator<AEWMerchant> It(GetWorld()); It; ++It)
+    {
+        if (It->IsA<AEWCrewMaster>()) continue;
+        if (!Nearest || FVector::DistSquared(It->GetActorLocation(), Survivor->GetActorLocation())
+            < FVector::DistSquared(Nearest->GetActorLocation(), Survivor->GetActorLocation())) Nearest = *It;
+    }
+    if (!Nearest) return;
+    const FVector Spot = Nearest->GetActorLocation() + Nearest->GetActorForwardVector() * 220.f + FVector(0.f, 0.f, 110.f);
+    const FRotator Facing(0.f, (-Nearest->GetActorForwardVector()).Rotation().Yaw, 0.f);
+    Survivor->TeleportTo(Spot, Facing, false, true);
+    SetControlRotation(Facing);
+    ClientSetRotation(Facing);
+#endif
 }
 
 void AEWPlayerController::ServerCraft_Implementation(UEWCraftingRecipe* Recipe)
@@ -708,6 +868,61 @@ void AEWPlayerController::SetContainerOpen(AActor* Container)
 void AEWPlayerController::ClientOpenContainer_Implementation(AActor* Container)
 {
     SetContainerOpen(Container);
+}
+
+void AEWPlayerController::OpenDialogue(AEWTownsfolk* Speaker)
+{
+    if (!IsLocalPlayerController() || !IsValid(Speaker) || IsMapOpen() || IsSessionMenuOpen()) return;
+    if (IsInventoryOpen()) SetInventoryOpen(false);
+    SetMenuInputBlocked(true);
+    DialogueSpeaker = Speaker;
+    if (!DialogueWidget) DialogueWidget = CreateWidget<UEWDialogueWidget>(this, UEWDialogueWidget::StaticClass());
+    if (!DialogueWidget) return;
+    if (!DialogueWidget->IsInViewport()) DialogueWidget->AddToPlayerScreen(25);
+    DialogueWidget->SetSpeaker(Speaker);
+    FInputModeUIOnly InputMode;
+    InputMode.SetWidgetToFocus(DialogueWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    SetInputMode(InputMode);
+    SetShowMouseCursor(true);
+    DialogueWidget->SetUserFocus(this);
+}
+
+void AEWPlayerController::CloseDialogue()
+{
+    if (!IsLocalPlayerController()) return;
+    const bool bWasOpen = IsDialogueOpen();
+    DialogueSpeaker = nullptr;
+    if (DialogueWidget && DialogueWidget->IsInViewport()) DialogueWidget->RemoveFromParent();
+    if (!bWasOpen) return;
+    SetMenuInputBlocked(false);
+    SetInputMode(FInputModeGameOnly());
+    SetShowMouseCursor(false);
+}
+
+bool AEWPlayerController::IsDialogueOpen() const
+{
+    return DialogueWidget && DialogueWidget->IsInViewport();
+}
+
+void AEWPlayerController::ClientOpenDialogue_Implementation(AEWTownsfolk* Speaker)
+{
+    OpenDialogue(Speaker);
+}
+
+void AEWPlayerController::ServerChooseDialogue_Implementation(AEWTownsfolk* Speaker, FName Key)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || !IsValid(Speaker) || Speaker->GetWorld() != GetWorld()) return;
+    const FText Reply = Speaker->ChooseDialogue(Survivor, Key);
+    LastDialogueReply = Reply;
+    ClientDialogueReply(Speaker, Reply);
+}
+
+void AEWPlayerController::ClientDialogueReply_Implementation(AEWTownsfolk* Speaker, const FText& Reply)
+{
+    LastDialogueReply = Reply;
+    if (DialogueWidget && DialogueWidget->IsInViewport() && DialogueSpeaker == Speaker) DialogueWidget->ShowReply(Reply);
 }
 
 void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Container, bool bToContainer, int32 EntryIndex, int32 Quantity)

@@ -1,65 +1,835 @@
-# ELITEWAKE AI Agent Instructions
+# ELITEWAKE — Claude Production Guide and Canonical World Bible
 
-**Handoff rule (owner, October 22): before you run out of usage, close out everything you have open, push your work, write a `HANDOFF` entry in `Docs/Delegation/INBOX.md`, and at the start of each session continue any unclaimed `HANDOFF` first. Details: `Docs/TEAM_CHARTER.md` section 7.**
+Last consolidated: 2026-10-31
+Engine: Unreal Engine 5.8
+Project: EW.uproject
+Canonical playable map: /Game/Elitewake/Maps/Lvl_CoastalPlayground
+Title map: /Game/Elitewake/Maps/Lvl_Title
 
-**Team rule (owner, October 22, 2026): we are one team and everybody works freely. Nobody places, keeps or honours any lock, claim or ownership on any file, system, task or branch; see [Docs/TEAM_CHARTER.md](Docs/TEAM_CHARTER.md). Grok has joined ([GROK.md](GROK.md)). Anything below that says an agent "owns" or "reserves" something, or that you must not edit another agent's files, is superseded: edit what the work needs, tell the team in the inbox, and Claude reviews pushed work.**
+This is the only human-readable production authority in the repository. It replaces the previous READMEs, game bibles, agent charters, delegation files, owner-decision fragments, reports, prompt collections, and phase packets. Historical material remains recoverable in Git history and the verified offline repository bundle; it must not be reintroduced as a competing instruction set.
 
-These instructions apply to every AI coding, design, art, and implementation assistant working in this repository. Read `Docs/DESIGN_REFERENCE.md` and the latest owner decisions before changing project behavior. The owner's latest explicit direction takes precedence over older documentation. Do not claim a design requirement is implemented unless code/assets and verification confirm it.
+The document tells Claude what Elitewake is, what is already real, which older statements lost conflicts, how to work safely, how to judge evidence, and how to execute each production phase. A requirement in this file is not proof that it is implemented. Source, assets, automated tests, Play checks, screenshots, packaged builds, and human review are separate evidence.
 
-## Confirmed island and regional foliage requirements (owner, October 15, 2026)
+## 1. Authority, scope, and operating contract
 
-Canonical details: [Island Terrain and Regional Tree Assignments](Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md).
+### 1.1 Authority order
 
-- Every island must be deliberately terrain-oriented and individually recognizable. Vary island size, footprint, silhouette, coastlines, coves, cliffs, beaches, elevations, mountains, hills, ridges, valleys, plateaus, cavern entrances and cave layouts, landmarks, traversal routes, and tree placement. Do not create a world of cloned/resized/rotated island templates.
-- Make the terrain feel geographically plausible from sea and on foot. Integrate caves, slopes, mountains and routes into the terrain rather than placing features on a flat surface. Islands can have different combinations and amounts of features, but each needs a distinct identity.
-- Regional primary tree types are fixed as follows: **Winter = Birch; Jungle = Ash; Desert = Palm; Swamp = Spruce; Central Plains islands = Oak.** The latest correction is authoritative: Birch replaces the earlier Winter/Spruce mention; Spruce belongs to Swamp.
-- Put quite a few of the region's assigned trees on each island, forming substantial stands/forests where terrain allows—not just isolated token trees. Distribute trees in terrain-aware clusters with natural differences in density, spacing, clearings and forest edges.
-- Terrain and biome must influence vegetation placement. Preserve visual differences between islands while making each region's assigned tree identity clearly readable. These are primary species, not a blanket ban on other appropriate vegetation.
-- Apply these requirements to every existing and future island, including the starter island in Central Plains. Keep island layouts and foliage placement distinct. Prefer data-driven configurations where they fit existing architecture.
-- Preserve unrelated gameplay, asset IDs, inventory/crafting icons, and established systems. Do not invent new species or gameplay rules without owner direction.
-- When implementing, inspect the current world-generation scripts and asset catalog first; coordinate with the agent responsible for the world rebuild. Only one agent may run Unreal Editor/build/Play checks at a time; follow the repository's editor-lock instructions.
-- Distinguish status honestly: design requirements documented, code changed, assets generated, assets integrated, and in-game verification are separate milestones. Do not say terrain or tree placement is implemented merely because these instructions or a design document are committed.
+When instructions conflict, use this order:
 
-Claude-specific note: check `Docs/DELEGATED_TASKS.md` before choosing work.
+1. The owner's newest explicit instruction in the current conversation.
+2. This file, after checking its last-consolidated date.
+3. The current five-island implementation and its tests.
+4. Current source code, Data Assets, maps, and verified runtime behavior.
+5. Git history only as recovery evidence, never as current design authority.
 
-## Disk-space cleanup: mandatory safe procedure
+Do not revive a deleted document because it appears more detailed. Do not silently invent a compromise. If the first four sources cannot resolve a new conflict, record both statements, dates, affected files, and your proposed winner, then ask the owner.
 
-The owner wants AI assistance identifying unnecessary local files to reclaim storage. Follow `Docs/SAFE_STORAGE_CLEANUP_POLICY.md` before recommending or performing cleanup. Audit first, list exact candidate paths and estimated savings, preserve user changes and unique assets, and never use broad recursive deletion. Do not permanently delete uncertain files, tracked content, saves/backups, or files outside the project root without explicit owner approval. Treat Unreal `Saved/` as mixed-use; never delete the whole directory. Distinguish local generated cache/build files from shared source content. If the owner has not approved specific deletions, provide a ranked proposal and wait rather than deleting anything.
+### 1.2 Solo workload
 
-## Confirmed Cavalier ship-class requirement (owner, October 15, 2026)
+Claude works this project as one coherent workload. Do not create agent ownership tables, file locks, inboxes, delegated task files, handoff chains, model-specific workflows, or parallel branches for ChatGPT, Grok, Gemini, Codex, or Copilot. One coherent outcome belongs in one commit. Keep work small enough to verify and leave the branch clean.
 
-Canonical details: [Cavalier Legendary Capital Ship](Art/Ships/CAVALIER_LEGENDARY_CAPITAL_SHIP_2026-10-15.md).
+Do not start a broad rewrite because several systems touch the same class. Extract one tested boundary at a time. Preserve working gameplay while replacing placeholders.
 
-- The Cavalier is a distinct ship class and must be the **largest ship in ELITEWAKE, larger than the Brigantine**. Keep the Brigantine as its own class; do not replace it or simply scale its mesh.
-- Give the Cavalier a high-definition, class-specific design with a distinct silhouette, detailed hull and decks, convincing physically based materials, timber/metal/rope/rigging detail, and readability close up and at gameplay distance. This requires actual asset creation and integration, not concept art alone.
-- Follow the modular sail rule: base hulls have no permanently integrated sails; removable sail assemblies include masts/poles, flags mounted on poles, sail cloth, rigging, and attachment details.
-- Exact dimensions and gameplay stats (crew, cannons, cargo, speed, durability, draft, cost, unlock tier) remain TBD until approved. Do not invent balance values or assume the biggest ship must dominate every statistic.
-- Inspect existing ship assets, class data, shipyard recipes, module architecture, and shared design rules before implementation. Preserve existing gameplay and user assets. Track concept art, 3D asset creation, integration, and in-game verification as separate milestones; never claim completion without evidence.
+### 1.3 Canonical local state
 
-## Cavalier three-level deck requirement (owner-confirmed, October 15, 2026)
-The Cavalier must have **three traversable levels**, not two: (1) upper deck, (2) a separate deck directly below it, and (3) a lower interior deck/floor reached by ladder from the level above. The levels must be distinct in the reference design and actual 3D layout, with usable ladder openings, headroom, collision, structural supports, lighting, and character navigation. Exact room uses and weapon placements remain TBD unless approved. Canonical spec: `Art/Ships/CAVALIER_LEGENDARY_CAPITAL_SHIP_2026-10-15.md`.
+The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout encountered a Windows file lock during retirement; do not use it for testing. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. Keep the retired fragments only until they can be safely removed; a future rename to C:\UnrealProjects\EW must update this guide and both project shortcuts in the same change.
 
-## Regional resources, six-view reference sets, and sulfur ore (owner-confirmed, October 16, 2026)
+The following directories are generated and must never be edited or committed: Binaries, DerivedDataCache, Intermediate, and Saved. Saved contains mixed-use local data; never erase it wholesale without a specific, verified target and owner authorization.
 
-**Reference index and target paths:** `Art/Reference/README.md`. The index distinguishes required destinations from files that have actually been committed.
+The Game Default Map is the title map. The Editor Startup Map is Coastal Playground. UEWGameInstance still uses the ThirdPerson map as a temporary hosted-session recovery harness. Do not remove or redirect that harness until host, join, reconnect, survivor identity, save/load, and packaged multiplayer tests pass against the replacement.
 
-Canonical resource plan: `Design/World/RESOURCE_DISTRIBUTION_AND_SIX_VIEW_ASSET_PLAN_2026-10-16.md`.
+### 1.4 Mandatory start procedure
 
-- Apply the approved regional resource distributions and tiers in that document. Regional primary trees remain Winter = Birch, Jungle = Ash, Desert = Palm, Swamp = Spruce, Central Plains = Oak.
-- Critical correction: the desert resource is **sulfur ore**, not a generic sulfur deposit. It must be mineable with the existing **Metal Pick or a higher-tier pick**, not gated specifically behind an Iron Pick. Inspect the canonical tool/item catalog and reuse its exact item ID/tier logic; if no Metal Pick exists, report the gap rather than silently substituting another tool or inventing a duplicate.
-- Produce six reference views of the same exact resource asset (front, back, left, right, top, underside) for all resources/materials/harvestables in the approved plan and other resources explicitly discussed in the project conversation. Follow existing repository conventions; intended reference location is `Art/Reference/Resources/<ResourceAssetName>/`.
-- Preserve current inventory/crafting menu icons. Reference images do not by themselves implement meshes, textures, harvesting, recipes, or runtime behavior.
+Before changing anything:
 
-## Animal asset, animation, and audio requirements (owner-confirmed, October 16, 2026)
+1. Report the exact repository path, branch, HEAD commit, upstream, Unreal version, and requested outcome.
+2. Inspect status and all worktrees without modifying them. If unrelated changes exist, preserve them and work around them.
+3. Confirm Git LFS is installed. Report missing objects; do not replace pointer files with placeholders.
+4. Read this entire file, then inspect the code, assets, tests, and current runtime path related to the request.
+5. List the smallest useful slice, its dependencies, its tests, and what is deliberately out of scope.
+6. Do not run two Unreal Editor instances against the same project.
 
-Canonical requirements: `Art/Animals/ANIMAL_MODEL_ANIMATION_AUDIO_REQUIREMENTS_2026-10-16.md`.
+Never solve a branch mismatch with reset --hard, destructive checkout, force push, or removal of an unverified worktree. Never delete a source asset because a text search finds no reference; inspect Unreal hard references, soft references, Asset Registry use, Python generation, packaging, and runtime loads.
 
-- Claude must inspect the current animal catalog and follow the canonical animal document before changing or creating animal assets. Use the actual existing/approved species; do not invent an animal list or omit current species.
-- Create six consistent views per animal (front, back, left, right, top, underside). Intended reference location: `Art/Reference/Animals/<AnimalName>/`. Keep species anatomy, coloration, markings, proportions and silhouette consistent across all views and the production model.
-- Every animal needs a species-appropriate idle/standing animation, walk animation, sprint/run animation, and relevant attack/action animations such as pawing/swiping, biting, jumping/pouncing, charging, kicking or pecking as appropriate to that species. Include usable transitions and follow existing movement/rig conventions.
-- Every animal needs species-appropriate audio for idle/standing, walking, running/sprinting, and attacks/actions, with variation, sensible cooldowns, appropriate spatialization/attenuation, and licensing provenance for sourced sounds. Intended audio location: `Audio/Animals/<AnimalName>/`, unless the repository already has a canonical location.
-- Audit first and report existing versus missing references, models, animations, and audio. Do not claim files or integration exist until verified. Keep image references, production assets, Unreal import/integration, and in-game verification as separate milestones.
+### 1.5 Change and evidence rules
 
-## Latest ship/art authority — October 18, 2026
-The owner's newer [ship proportions and hardpoints](Docs/OwnerDecisions/SHIP_PROPORTIONS_AND_MODULAR_SAIL_HARDPOINTS_2026-10-18.md) and [queued sailing rules](Docs/OwnerDecisions/SAIL_SPEED_WIND_AND_CODEX_PRIORITY_2026-10-18.md) supersede older conflicting text above. Cavalier is comparable in overall size to Brigantine with three traversable levels; preserve a distinct design. Sloop has lower-deck access but no captain's quarters. Base hulls have empty sail hardpoints; removable sail assemblies include their masts/poles and carry no flags. Stern boarding ladders are centered. Preserve approved shipyard tiers, captain's-quarter and helm placements. No scenery art in this pass.
-The owner's current delegation authorizes ChatGPT to resolve remaining decisions, recorded as DECIDED (delegated) in [the decision record](Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md). These are reversible design choices, not in-engine implementation evidence. Preserve code ownership and the no-merge constraint.
+- One coherent outcome per commit.
+- Prefer Data Assets, data tables, profiles, material instances, and source-controlled generators over one-off level edits.
+- Keep balance values out of widgets and scattered literals.
+- The server awards inventory, currency, ownership, damage, progression, company state, and saved state. Clients request; the server validates.
+- Do not introduce a plugin, dependency, Fab pack, or generated asset without its version, purpose, license, source, and maintenance risk in ASSET_LEDGER.csv.
+- Do not move a large Unreal content tree without fixing redirectors and validating references.
+- Do not commit API keys, EOS credentials, Scenario credentials, signing keys, private server addresses, local connector files, or personal paths.
+- Never call a screenshot, generated image, test map, or design paragraph an implementation.
+
+Use only these status words:
+
+- Implemented: source or content exists, but every gate has not passed.
+- Verified: specified automated and manual functional checks passed.
+- Owner visual review pending: objective visual checks passed; artistic approval has not.
+- Owner audio audition pending: technical audio checks passed; the owner has not listened and approved.
+- Accepted: the owner approved the required human gate for the named version.
+- Deferred: intentionally outside the active phase, with a reason.
+- Blocked: progress cannot safely continue without a decision, access, or external dependency.
+
+### 1.6 Mandatory end report
+
+Every session ends with: outcome; branch and commit; exact changed files; tests with pass/fail/not-run; maps and builds exercised; screenshot paths and visual-review status; audio paths and audition status; asset-ledger rows; performance measurements when relevant; remaining risks; and one recommended next action inside the active phase.
+
+## 2. Product concept
+
+Elitewake is a cooperative age-of-sail survival, expedition, and maritime-combat game. The ship is not a disposable vehicle; it is the player's persistent home, cargo hold, workshop, social space, and largest source of risk. The intended period language is approximately 1740–1760, expressed as grounded stylized realism rather than strict simulation or high fantasy.
+
+The core loop is:
+
+Prepare at port → sail → discover → fight or explore → collect cargo → survive the return → trade and upgrade → sail farther.
+
+The project succeeds when a player can tell a story about a voyage: what they prepared, what weather or threat changed the plan, what they risked, what the ship suffered, what they brought home, and how that changed the next voyage.
+
+### 2.1 Design pillars
+
+1. The ship is home. Ownership, crew, cargo, fittings, damage, repairs, and persistence matter.
+2. Five regions create five survival and economic problems. A biome is not a ground-color swap.
+3. Preparation has consequences. Food, water, tools, powder, shot, repair materials, crew, and cargo capacity shape a voyage.
+4. Systems connect. Weather changes sailing; islands supply ship repairs; ship damage changes exploration; ports turn risk into progression.
+5. Cooperation is useful without making solo play helpless. A lone player can manually operate the ship; a crew makes it faster and safer.
+6. Readability precedes spectacle. Navigation, interaction, danger, damage, and ownership must be understandable without debug labels.
+7. Complete loops precede content volume. One accepted voyage is worth more than many unfinished islands, ships, recipes, or animals.
+
+### 2.2 Explicit non-goals for the current world
+
+- No return to 26- or 40-island layouts.
+- No mass import of free asset packs.
+- No new ship class until the current class loop is complete.
+- No claim warfare before persistence and authority are trustworthy.
+- No large quest chain before the first 30 minutes work end to end.
+- No public-Internet promise until a real external test is authorized and recorded.
+- No claim that generated visuals or sounds are final without human review.
+
+## 3. Current implementation truth
+
+The advanced five-island branch is the source from which the cleaned project was selected. The following are known to exist and have prior functional or Play-check evidence, but they must be rechecked after changes that affect them:
+
+| Area | Current truth | Important gap or caution |
+|---|---|---|
+| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. Run and verify the reef builder before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete |
+| Port | Saltreach Freeport has merchants, buying/selling, service spaces, a safe zone, HUD feedback, and placeholder sound | Other ports are blockouts; merchant stock does not yet have complete persistence |
+| Economy | Starting purse is zero; merchants and shipyard paths exist | Balance needs journey testing and duplicate-transaction protection |
+| Ships | Raft, dinghy tuning, sloop, schooner, brigantine, and Cavalier-related content exist; per-sail controls and crew-dependent helm control work | Visual quality, modularization, recipes, complete permissions, and persistence vary by system |
+| Cannon | Sponge, powder-step, shot, ram, recoil, targeting, and fight checks exist | A real powder inventory item and moving-target lead are still required; obstruction rules need acceptance testing |
+| Sailing | Individual sails, five deployment positions, crewed helm control, class speeds, sail multipliers, anchor and sinking checks exist | Weighted-sail presentation is placeholder; recipes and complete handling balance are not accepted |
+| Survival | Needs, food, sickness, death/respawn, death bags, gathering, tools, cooking, skills, and building paths exist | Full first-30-minute pacing and owner-facing presentation are not accepted |
+| Persistence | Survivors, ships, resources, death bags, and wreck crates have save behavior | Companies, merchant stock, schema migration, atomic recovery, and full dedicated-server coverage are incomplete |
+| Multiplayer | Hosted/listen and separate-process checks exist; survivor reconnect and Company/ship-sharing paths exist | Public Internet is untested; direct-IP/session identity is transitional; in-game ship give/abandon is missing |
+| Companies | Company screen and sharing policy exist | Company state is not fully persisted; roles and edge cases require authority tests |
+| Crew | Sailhands, hired gunners, and service NPC paths exist | Wages, limits, target lead, lifecycle, and full persistence are incomplete |
+| UI | Title, HUD, inventory, hotbar, crafting, skills, objectives, journal, map/fog, options, Company, and port feedback have checks | Visual hierarchy, accessibility, controller consistency, and 1080p readability need one accepted standard |
+| Audio | Generated/imported placeholder ambience, wildlife, work, town, ship, and UI sounds exist | Technical presence is not human audition; provenance and final mix remain incomplete |
+
+Treat this table as a starting audit, not permission to skip verification.
+
+## 4. Resolved conflicts
+
+These decisions replace every older conflicting statement:
+
+| Conflict | Canonical resolution |
+|---|---|
+| 5 vs. 26 vs. 40 islands | Exactly five large islands in the current world. High-count generators, tests, maps, and images are obsolete. |
+| Four vs. five regions | Five: Plains, Winter, Swamp, Desert, Jungle. Plains is a full central region. |
+| Island directions | Plains center/start; Winter north; Swamp south; Desert east; Jungle west. |
+| Reefs | Five major regional reefs, one associated with each island and placed clear of the port. Older six-reef text is void. |
+| Regional primary trees | Plains Oak; Winter Birch; Swamp Spruce; Desert Palm; Jungle Ash. Birch never belongs to Swamp in the canonical plan. |
+| Cavalier size | Cavalier is a distinct capital class approximately comparable in overall footprint to Brigantine, not an automatically larger scaled copy. It has three traversable levels. |
+| Cavalier rooms | Upper deck, a separate deck below, and a lower interior reached by ladder; exact room and weapon layout remains approval work. |
+| Sloop interior | Sloop has a lower deck but no captain's quarters. |
+| Schooner | Same general width family as sloop but longer/taller; aft full-width quarters about one-eighth length; helm above. |
+| Brigantine | Wider/taller; longer quarters; helm inside. |
+| Sail assemblies | Base hulls have empty hardpoints. Removable sail assemblies include mast/pole, cloth, rigging, and attachment details. No flags are built into sail assemblies. |
+| Boarding ladders | Centered at the stern. |
+| Shipyard tiers | Small yard: Raft/Sloop. Medium: Schooner/Brigantine. Large: Cavalier. Higher yards do not automatically craft lower tiers. |
+| Sulfur | Desert sulfur is sulfur ore, mined with Metal Pick or any approved higher-tier pick. Do not invent an Iron Pick gate. |
+| Launch maps | Title launches the game; Coastal Playground is the canonical owner test world. ThirdPerson is only a temporary session harness until migrated. |
+| Work model | One Claude production guide and one workload. Old agent locks, handoffs, team charters, and model workflows are void. |
+
+## 5. Canonical five-island world bible
+
+### 5.1 World constants
+
+- Exactly five islands, each approximately 1.5–2.5 km across its longest dimension.
+- Plains is central and is the universal start. Winter is north, Swamp south, Desert east, Jungle west.
+- Ocean depth may reach approximately 1.5 km where the world design requires deep water.
+- Terrain is deterministic and explainable. A seed or source-data change must produce a reviewable diff.
+- Coastlines are irregular: coves, headlands, beaches, shelves, cliffs, and eroded transitions. Never use five scaled/rotated copies of one island.
+- Authored ports, caves, safe landings, primary landmarks, and gameplay resources do not move when decorative generation changes.
+- World Partition, One File Per Actor, Data Layers, HLOD, and PCG are used where the canonical map supports them. Decorative PCG is separate from persistent resources and player structures.
+
+### 5.2 Regional identity and resource matrix
+
+| Region | Landform and palette | Primary ecology and hazards | Canonical resources | Navigation and sound identity |
+|---|---|---|---|---|
+| Plains | Rolling grassland, broad beaches, lake/river, gentle limestone cliffs; deep brown loam, restrained green, gray limestone, pale sand | Oak groves, common prey, boar/predator pockets, storms, exposure away from shelter | Oak; stone, flint, gravel; clay, sand, soil; berries, plants, herbs; basic iron/copper; water; common hides, meat, bones | Saltreach lighthouse, oak ridge, standing stones or sea arch; open birds, oak wind, moderate surf |
+| Winter | Mountain spine, ice cliffs, frozen basin, sheltered dark shore; blue-gray rock, dirty white snow, dark soil, muted ice | Birch and cold scrub; freezing, blizzard, poor visibility, wolves and bears | Birch; snow/ice; water; iron, coal, stone; hides, fur, bones; emerald and coal also appear on mountainsides | Split ice face or black-rock peak; low wind, snow movement, distant ice, sparse wildlife |
+| Swamp | Low marsh, channels, peat islands, wet coast; black peat, olive, brown water, gray-green bark | Spruce, reeds, rushes, mushrooms, moss; poison, contaminated water, crocodiles, snakes, slowed travel | Spruce/resin; peat/soil; reeds/rushes; clay/bog iron; mushrooms/moss/herbs; dark gemstones in submerged caves | Giant dead tree, half-sunken ruin, or dry ridge; frogs, insects, close rustle, water movement |
+| Desert | Dunes, plateau, canyon, oasis, sandstone coast; warm ochre, pale gold, red-brown stone, salt white | Palm at water, thorn scrub; heat, dehydration, sandstorm, scorpions, snakes | Palm/fronds/fibers/coconuts; sand, sandstone, clay; copper, iron; salt; sulfur ore; amber gems | Needles, arch, or mesa; dry wind, moving sand, sparse birds, canyon reflection |
+| Jungle | Steep forest, rivers, waterfalls, hidden basins/ruins; dark loam, deep green, wet gray stone, small saturated accents | Ash canopy, vines, ferns, flowering understory; predators, poison, tight sightlines | Ash; vines/fibers/leaves; herbs/fruits; clay/river stone; copper; green gemstones; resin/exotic plants | Waterfall cliff, overgrown ruin, or giant tree; insects, water, day chorus, canopy movement |
+
+Primary tree assignments create instant regional readability, not a ban on secondary species. Use substantial terrain-aware stands with clearings and forest edges, never token trees or grids.
+
+### 5.3 Required island composition
+
+Every island has:
+
+1. One primary silhouette landmark readable from sea at 1–2 km.
+2. Two secondary inland navigation landmarks.
+3. At least three shoreline characters, such as beach, rock shelf, cliff, mangrove, ice, or dune.
+4. One safe landing legible from a moving ship in day, night, rain, and regional weather.
+5. One difficult landing.
+6. One deliberate freshwater source where appropriate; Desert uses its oasis or equivalent.
+7. One cave or sheltered exploration space.
+8. One high-value inland resource area.
+9. One predator/prey/habitat ecology loop.
+10. One port site. Saltreach is the only port required to be fully functional during five-island production.
+
+PCG masks use slope, height, moisture, shore distance, exposure, soil, and region profile. Avoid even rings, circular resource clusters, repeated tree grids, and identical port plans. Preserve player buildings when generation reruns.
+
+### 5.4 Caves, crystals, and harvesting
+
+Ruby, sapphire, emerald, and obsidian may appear in every regional cave. Emerald and coal also appear on Winter mountainsides. Crystal nodes require a Metal Pick or approved higher-tier pick, yield 4–8 units, and use a 60-minute respawn unless later tuning is explicitly approved. Sulfur ore follows the same tool-tier interpretation.
+
+Trees regrow after 20 minutes unless a building blocks regrowth. A felled log remains for 5 minutes unless harvested and must survive the intended save/reload boundary. Gameplay resource nodes use stable IDs; decorative instances do not require individual persistence.
+
+## 6. Player, survival, progression, and land systems
+
+### 6.1 First-session arc
+
+The first 30 minutes prove the land game and prepare the first voyage:
+
+- Minutes 0–5: arrive on a safe Plains beach, read ocean/fresh-water/landmark directions, learn movement and interaction through contextual prompts.
+- Minutes 5–10: gather wood, stone, fiber, berries, and water; craft one real stone tool.
+- Minutes 10–15: build or repair fire/shelter, cook a safer meal, see hunger/thirst consequences.
+- Minutes 15–20: face a modest wildlife or environmental threat; recover from injury or sickness.
+- Minutes 20–25: reach Saltreach, sell or turn in something, understand merchants, storage, shipyard, and Company access without a wall of text.
+- Minutes 25–30: acquire or prepare the first eligible craft, load essentials, and receive a clear regional-voyage goal.
+
+No unexplained full-screen tutorial. The player should identify a safe route, water direction, and one memorable cue within ten seconds of spawn.
+
+### 6.2 Needs and food
+
+- Hunger and thirst each use a 0–100 scale.
+- Ordinary hunger drains over roughly 45 minutes; thirst over roughly 25 minutes. Activity, climate, sickness, and equipment may modify data-driven rates.
+- Raw fish: +8 hunger, 15% sickness chance.
+- Cooked fish: +20 hunger, +3 health.
+- Raw meat: +12 hunger, -3 health, 25% sickness chance.
+- Cooked meat: +30 hunger, +5 health.
+- Berries: +6 hunger.
+- Cooked berry dish: +15 hunger, +2 health.
+- Sickness lasts 3 minutes, reduces stamina regeneration by 30%, increases thirst depletion by 50%, is cured by herbs/remedy, and is not fatal by itself.
+
+Death uses a readable fade/icy-edge presentation. Respawn chooses a safe randomized point in the same region. The death bag lasts 30 minutes. Save/load must preserve the intended bag lifetime and contents without duplication.
+
+### 6.3 Progression
+
+The current maximum level is 50. Each level grants one unspent stat point and one skill point. The implemented Wayfarer constellation contains First Light plus Gatherer, Torchbearer, Hardy, Field Repair, Strong Back, Second Wind, Metalwork, and Deep Reserves. Hunter, Cook, Builder, or other constellation proposals are not approved merely because they exist in history; introduce them only through an explicit balance/design slice with UI, save migration, and tests.
+
+### 6.4 Building and claims
+
+Building is a real gameplay system but still needs production art, cost, multiplayer, claim, and persistence hardening. New pieces require placement preview, collision, support rules, server authority, resource cost, cancellation/refund rules, save/load, demolition, and controller use.
+
+Claims are deferred until the core voyage and persistence phases, but their canonical rules are:
+
+- Claims apply to multiplayer only. In single-player, all five regions are accessible, world shapes remain fixed for the save, and the player may build without a Company, claim, contest, or artificial resource gate. Placement still obeys collision and NPC-site rules.
+- A Company is required. Plains remains permanently neutral.
+- Claim Banner plus 500 Gold starts a 30-minute establishment.
+- Upkeep is 100 Gold per 24 hours; at most 7 days may be prepaid.
+- A claim becomes abandoned after 72 hours without upkeep.
+- A daily 2-hour vulnerability window controls hostile interaction.
+- Rival banner capture takes 30 minutes and successful capture grants 48 hours of protection.
+- PvE mode has no hostile takeover.
+- In the five-island phase claims may be optional or simulated; do not let them block the voyage loop.
+
+### 6.5 Input and control baseline
+
+The current bindings are a baseline to verify in the actual Enhanced Input assets and Play checks, not a promise that all controller paths are accepted. Every shipping action needs keyboard/mouse and controller access. On foot: WASD/mouse or two sticks move/look; Space jumps/swims up; Shift sprints; left mouse/right trigger attacks; E/X interacts; I/Y opens inventory; M/View opens the map; Escape/Start opens pause. Hotbar 1–8 uses number keys or D-pad 1–4, with left trigger plus D-pad for 5–8. Inventory tabs use Tab/Shift+Tab or shoulder controls; arrows/D-pad move focus; Enter/A confirms; Escape/B closes. Map drag/right stick pans; wheel/triggers zoom. Sail trim uses left/right arrows or LB/RB; ladder uses up/down arrows or D-pad. Build Mode uses B/right-stick click, Tab/Y for the piece dial, Q/E or D-pad left/right to rotate, and left mouse/A or right trigger to place. Test-only F9 item spawn, F10 private session, and Shift+number teleports must remain out of shipping builds.
+
+Known controller debt: jump, sprint, and stance bindings require gamepad-only Play verification; LB/RB overlap hotbar and sail/menu contexts; real-stick build-dial movement needs a physical controller check; a unified rebinding screen is missing. Resolve conflicts with explicit input contexts and on-screen focus, not hidden priority rules.
+
+## 7. Maritime, ship, combat, and economy authority
+
+### 7.1 Ship classes and yards
+
+| Class | Base speed | Canonical role/shape | Yard |
+|---|---:|---|---|
+| Raft | 3 knots | Smallest improvised craft; current footprint is the reference | Small |
+| Dinghy | 5 knots, tuning | Small utility/recovery craft | Existing acquisition path; do not invent a tier |
+| Sloop | 8 knots | Primary vertical-slice vessel; lower deck, no captain's quarters | Small |
+| Schooner | 10 knots | Similar width family to sloop, longer/taller; full-width aft quarters about one-eighth length; helm above | Medium |
+| Brigantine | 12 knots | Wider/taller; longer aft quarters; helm inside | Medium |
+| Cavalier | 14 knots | Distinct capital class, roughly comparable footprint to Brigantine; three traversable levels; helm inside | Large |
+
+Ship recipes and prices remain data-driven. Do not infer that a larger yard can craft lower-tier vessels. All ships use centered stern ladders and base-hull sail hardpoints.
+
+### 7.2 Sail behavior
+
+- Deployment positions are 0%, 25%, 50%, 75%, and 100%.
+- A standard small/medium/large sail gives a whole-ship multiplier of 1.30/1.50/1.80.
+- A weighted small/medium/large sail gives 1.25/1.40/1.70 and steadies current influence by 10%.
+- Only the best drawing sail multiplier applies; multipliers do not stack.
+- All sails at zero create the approved horizontal hold.
+- A lone player can operate individual sails at their stations. Helm control changes only sails assigned to crew.
+- Wind fill, trim, class speed, weight, current, damage, and weather must remain inspectable data rather than hidden exceptions.
+
+### 7.3 Repair
+
+Shipwright's Hammer recipe: 30 Wood, 15 Stone, 10 Fiber, 5 Iron. A hole repair requires 20 Wood, 10 Fiber, 5 Resin, and 5 Iron. Minor repair takes 5 seconds; major repair takes 10 seconds. Consume materials only after a successful server-authoritative action. An emergency patch stops most water but does not restore full structure; permanent repair restores durability and has a distinct visible state.
+
+### 7.4 Cannon and damage
+
+Cannons use an explicit sponge → powder → shot → ram sequence, then aim/fire/recoil. A real powder inventory item must back the powder step before the loop is complete. Gunners must not fire through obstructions and must lead moving targets before acceptance. Hull damage needs location-readable fresh splintering, a hole, incoming water, temporary patch, and permanent repair. Minor damage must not instantly sink a ship.
+
+### 7.5 Port and economy
+
+Saltreach is a working frontier Freeport: safe harbor, market, tavern, shipyard, services, storage, and voyage preparation. It is not a pristine resort, a ruined ghost town, or a generic fantasy village. Starting currency is zero. Purchases, sales, ship acquisition, crew hire, and repair are server-authoritative and idempotent under retries. Merchant stock, restock time, pricing profile, and transaction state must become persistent in Phase 4.
+
+## 8. Multiplayer and persistence contract
+
+Every persisted object needs a stable-ID rule, serialization owner, payload version, migration path, missing-reference behavior, duplicate-ID detection, and at least one older fixture. The save envelope contains schema version, build/commit ID, world seed/map ID, timestamp/server ID, object type/stable ID/owner scope, subsystem payload version, integrity result, and safe-write state.
+
+Use atomic replacement: write a new generation, validate it, preserve the prior valid generation, then promote the new file. Never overwrite the only valid save. A corrupt newest generation must recover from the prior valid one without silently zeroing inventory or deleting a ship.
+
+Required eventual persistence scope: survivor identity/appearance/position rules/inventory/stats/progression; Companies and roles; ships, fittings, cargo, damage, anchor, sails, crew and ownership; resource state and regrowth; death bags and wreck crates; merchant stock and transaction state; structures and enabled claims; scalable required wildlife state. Do not serialize every decorative animal every frame.
+
+Tests must cover listen server, dedicated server with two clients, two physical PCs on LAN, 100–200 ms simulated latency, loss/duplicate requests, disconnect before acknowledgement, and shutdown immediately before/after save. Public Internet testing is separate and requires owner authorization. Direct-IP identity is transitional; preserve a migration path to stable platform/EOS identity.
+
+## 9. Visual production standard
+
+Claude may check geometry, scale, collision, pivots, UV/material assignment, LOD/Nanite state, broken textures, intersections, exposure ranges, framing consistency, and whether required screenshots exist. Claude must not declare a composition beautiful, cohesive, historically convincing, or final. Those judgments remain Owner visual review pending.
+
+### 9.1 Visual thesis and palette
+
+Use grounded stylized realism: believable 1740–1760 construction and proportions, natural materials, restrained saturation, clear silhouettes, and weathering caused by salt, sun, water, use, and shelter. Avoid modern plastic, electric fixtures, machine-perfect timber, contemporary typography, industrial fasteners, generic neon fantasy glow, and uniform dirt overlays.
+
+| Use | Anchor color |
+|---|---|
+| Sun-bleached plaster | #D6C7A8 |
+| Limestone | #B8AA8E |
+| Warm weathered timber | #5B402D |
+| Dark wet timber | #2D241E |
+| Tar/deep shadow | #181815 |
+| Rope/canvas | #A88961 |
+| Oxidized copper accent | #52726A |
+| Plains grass | #71834D |
+| Winter blue-gray | #697987 |
+| Swamp olive | #59603A |
+| Desert ochre | #B77A3D |
+| Jungle deep green | #244B36 |
+
+These are anchors, not flat albedo values. Materials need controlled value, roughness, hue, edge wear, moisture, sun bleaching, and contact variation. Saturated color is reserved for navigation, banners, hazards, important props, flora accents, UI, and approved rare materials.
+
+### 9.2 Scale, meshes, materials, and UI
+
+- 1 Unreal unit = 1 cm. Human reference is about 180 cm. Typical doors are 210–230 cm high.
+- Test stairs, ladders, hatches, rail gaps, deck headroom, and paths against the real player capsule and third-person camera.
+- Use logical pivots and intentional gameplay collision.
+- Target about 512 pixels/meter for ordinary environment surfaces and up to 1024 pixels/meter for close hero assets. Large surfaces use tiles, trims, and detail normals rather than huge unique maps.
+- Keep material slots low; use instances. Provide intentional LODs or measured Nanite use.
+- At 1920×1080, primary body text is at least a 24 px equivalent and secondary labels at least 18 px unless measured otherwise. Aim for 4.5:1 normal-text contrast.
+- Controller focus uses shape/value as well as color. Generated Scenario images contain no text; typography is built in UMG.
+
+### 9.3 Lighting and navigation readability
+
+Start daylight direction near physically plausible 50,000–100,000 lux and then tune measured exposure. Night remains dark but navigable through sky fill, moon, fire, windows, lighthouse, and route hierarchy—not a bright blue sun. Avoid adaptation pumping when opening UI or entering buildings. Keep the sea horizon readable in navigable weather. In final 8-bit evidence, do not crush gameplay-critical surfaces; night interaction areas generally remain distinguishable around RGB 20–80.
+
+### 9.4 Mandatory visual evidence
+
+Capture before and after using the same camera, 70-degree horizontal FOV unless the gameplay camera differs, 1920×1080, same preset, time, weather, exposure, and color settings. Beauty views contain no gizmos, selection, or debug text. Diagnostic views are separate.
+
+For a location capture: 1 km establishing; 200–300 m navigation; 20–30 m human-scale; 2–5 m interaction; reverse angle; day; night; signature weather. Add collision, navmesh, lighting complexity, overdraw, PCG mask, LOD/HLOD, and performance diagnostics where relevant.
+
+Check objectively: no floating/buried/intersecting critical props; capsule fit; no foliage through structures; water/shore gaps; plausible variation without visible repetition; landmark visibility; collision alignment; intentional shadows/reflections; no gameplay-route LOD pop; weather/night retain interaction cues. Then mark Owner visual review pending.
+
+### 9.5 Scenario visual workflow
+
+Use Scenario for original reference boards, material studies, decals, icons without text, sky/weather studies, vegetation studies, prop turnarounds, and approved production textures. Never upload Fab, Marketplace, Megascans, Epic sample, other-game, film, scraped portfolio, or copyrighted character material as a reference/training input without explicit generative-use rights.
+
+Base prompt:
+
+Production reference for Elitewake. Grounded stylized realism; historical maritime frontier approximately 1740–1760; believable hand-built construction; natural materials; restrained saturation; weathered by salt, sun, water, and use; strong readable silhouette. SUBJECT: [one precise subject]. GAMEPLAY FUNCTION: [how the player uses or reads it]. REGION: [Plains/Winter/Swamp/Desert/Jungle]. DIMENSIONS: [centimeters and human comparison]. MATERIALS: [specific species, stone, metal, cloth]. CONSTRUCTION: [joints, fasteners, load-bearing logic]. CAMERA: [orthographic or 70-degree gameplay view, exact distance and height]. LIGHT: [time, direction, weather, neutral exposure]. BACKGROUND: neutral, uncluttered. Preserve identical proportions across views.
+
+Negative prompt:
+
+No modern hardware, plastic, neon, science fiction, cartoon proportions, excessive fantasy ornament, readable generated text, logo, watermark, extra parts, impossible joints, glossy uniform material, extreme depth of field, black crush, cinematic fog hiding construction, or inconsistent view-to-view proportions.
+
+For any modeled prop, request front, back, left, right, top, underside, and three-quarter views of the same design. Specify exact dimensions and a 180 cm human silhouette. Reject a set if doors, joints, handles, anatomy, count of parts, or material boundaries change between views. Scenario output is a reference until modeled/imported, integrated, tested, and reviewed.
+
+## 10. Audio production standard
+
+Audio communicates material, distance, weather, danger, and ship condition. Preserve quiet and dynamic space; do not fill every moment with music or animal calls. Claude may validate files and implementation but must mark selections Owner audio audition pending until the owner listens.
+
+- Master at 48 kHz, 24-bit WAV where possible.
+- Mono for positional one-shots; stereo stems for ambience/music unless a spatial design requires otherwise.
+- Peak at or below approximately -1 dBTP before Unreal mix processing.
+- Remove DC offset, clipping, accidental silence, bad generation tails, and loop seams. Preserve lossless masters.
+- Common events have at least three variations and appropriate concurrency/cooldown.
+- Ordinary world sound: full about 4 m, faded by about 40 m.
+- Surf: full at water edge, fade from roughly 2 m inland, silent near 20 m; inland ponds are not surf emitters.
+- Region-bed crossfade: at least 2.5 seconds.
+- Cannon and anchor-scale work: full within 20 m, audible around 400 m when conditions allow.
+- Use attenuation assets, Sound Classes, Submixes, Audio Modulation, MetaSounds, Quartz, and concurrency instead of baking behavior into a stereo file.
+
+Mix priority: immediate danger/damage; dialogue/critical confirmation; player action; ship state; nearby wildlife/settlement; weather/ambience; music.
+
+Scenario starting models, subject to checking the current model card at generation time:
+
+- ElevenLabs Sound Effects 2 — model_elevenlabs-sound-effects-v2 — commercially licensed, loop option, up to 30 seconds.
+- Beatoven SFX — model_beatoven-sound-effect — royalty-free, up to 35 seconds.
+- MM Audio 2 text-to-audio — model_mm-audio-2-t2a — MIT model card, up to 30 seconds.
+- MM Audio 2 video-to-audio — model_mm-audio-2 — use only owner-captured silent gameplay video.
+
+Scenario consumes compute units. A free plan or low audio cost does not make every generation free forever. Record the displayed cost before generation and download selected outputs; platform retention may be limited.
+
+SFX prompt:
+
+Isolated game sound effect. SOURCE: [object/creature]. ACTION: [one action]. MATERIAL: [wood/rope/canvas/iron/water/soil]. FORCE/SPEED: [specific]. ENVIRONMENT: [close dry/open harbor/stone cave/ship deck]. LISTENER DISTANCE: [meters]. DURATION: [seconds]. TRANSIENT: [soft/sharp]. TAIL: [none/short natural decay]. Produce a clean source, no music, melody, speech, unrelated ambience, cinematic boom, modern machinery, clipping, or reverb unless specified.
+
+Ambience prompt:
+
+Seamless environmental ambience stem for a grounded historical maritime survival game. REGION: [region]. LAYER ONLY: [wind/water/fauna/settlement]. TIME: [day/night]. WEATHER: [condition]. DENSITY: sparse and natural. DURATION: [maximum supported]. No music, dialogue, foreground action, modern source, siren, or rhythmic repetition. Stable loop bed with no dominant event at the seam.
+
+Generate wind, water, fauna, weather, and settlement separately so Unreal can mix state. For synchronized Foley, owner-captured video is reference; interactive events still require separate triggers.
+
+## 11. Free asset and license policy
+
+Free means zero price at acquisition, commercial game use allowed, studio account acquisition completed where required, compatible engine/use restrictions, satisfiable attribution, and a complete ASSET_LEDGER.csv entry. A downloadable or royalty-free file is not automatically free or shippable.
+
+Allowed evaluation sources include Unreal built-in tools/content under current terms; compatible Epic samples; Fab zero-price products under the Fab Standard License; Fab CC-BY with exact attribution; currently free or previously validly claimed Megascans; CC0/public-domain material with provenance; original studio work; and Scenario output whose model and inputs permit commercial generative use.
+
+The Fab Standard License generally permits commercial/private use, modification, and distribution inside a project, but not resale or standalone redistribution. Personal and Professional tiers have the same use scope; Reference-Only does not supply source format. CC-BY requires attribution. UE-Only and any additional listing restrictions must be recorded. Claim assets through the studio account and preserve a listing/license snapshot.
+
+Megascans is not categorically free. Use only assets validly claimed under earlier terms or currently shown as zero price and acquired under current terms. Record which license applies.
+
+Prefer built-in Unreal 5.8 capabilities before a plugin: World Partition/Data Layers/OFPA/HLOD; PCG; Landscape/Water; Nanite/Lumen after profiling; Niagara; MetaSounds/Sound Cues/Audio Modulation/Quartz; Control Rig/IK Rig/IK Retargeter; Modeling Mode/Geometry Script; Chaos where measured; UMG/Slate/CommonUI; Automation Framework; Insights and Network Insights. Procedural Vegetation Editor is experimental and must not become a production dependency without an exit plan.
+
+New third-party packs enter an isolated intake map, not /Game/Elitewake. Check license, version, dependency, scale, collision, topology, UVs, material slots, texture memory, skeleton/root motion, LOD/Nanite, naming pollution, warnings, style, package inclusion, and size. Mark accept, modify, reference-only, or reject. Migrate only used pieces.
+
+Never use ripped assets, search-result images, Pinterest/ArtStation/DeviantArt material without direct rights, YouTube audio, other-game content, non-commercial/editorial-only assets, expiring trial output, unidentified authors, or GPL code/plugins without deliberate legal and architecture review.
+
+Official references to recheck at acquisition time:
+
+- https://www.unrealengine.com/fabfreecontent
+- https://www.fab.com/eula
+- https://www.unrealengine.com/license
+- https://www.unrealengine.com/eula/unreal
+- https://dev.epicgames.com/documentation/unreal-engine/unreal-engine-5-8-release-notes
+- https://dev.epicgames.com/documentation/unreal-engine/metasounds-the-next-generation-sound-sources-in-unreal-engine
+- https://help.scenario.com/articles/1129045411-frequently-asked-questions-faq
+- https://help.scenario.com/articles/2852272401-introduction-to-audio-generation-on-scenario
+- https://help.scenario.com/articles/8811829644-model-costs-for-asset-generation
+
+Before public release, export the ledger, map every non-studio packaged asset to a record, generate notices, confirm raw source is not redistributed, exclude intake/rejected packs, audit Scenario inputs, and preserve evidence with the release.
+
+## 12. Production phases and copy-ready Claude guides
+
+Run phases in order. A later phase may be audited early, but do not expand it while an earlier exit criterion blocks the core loop. Within a phase, complete the smallest vertical slice, verify it, and commit before the next slice. A visually impressive change does not excuse a broken save, controller path, authority rule, or packaged build.
+
+### Phase 0 — Stabilize one real project
+
+#### Objective
+
+Make the owner shortcut, normal checkout, GitHub main, verified backup, tests, and this guide refer to the same recoverable game state. No gameplay or art expansion belongs in this phase.
+
+#### Required sequence
+
+1. Inventory all project folders/worktrees, branches, HEADs, upstreams, dirty files, LFS state, shortcuts, backups, packages, and Unreal versions.
+2. Select the newest complete five-island implementation by commit ancestry and functional evidence, not folder name or timestamp alone.
+3. Create a byte-verified project snapshot excluding only generated directories and a complete Git bundle containing every ref. Record file count, total bytes, hashes, source commit, and bundle verification.
+4. Build a clean candidate checkout from the bundle/remote. Prove that apparent LFS or timestamp modifications have zero content diff before clearing false flags.
+5. Resolve known text/config conflicts: exactly five islands, five reefs, five regions, canonical tree assignments, Coastal editor startup, solo workload, and one authority file.
+6. Remove obsolete high-island code paths, tests, images, model-agent instructions, redundant READMEs, exact duplicate source art, stale reports, and obsolete local generated builds only after the new backup is verified.
+7. Run Python tests, source/config searches, LFS checks, Unreal Editor build, game build, native automation, focused Play checks, package, and launch smoke test.
+8. Point both owner shortcuts at the tested C:\UnrealProjects\EW_CLEAN checkout and test through the same game shortcut the owner will use. Retire the locked old EW folder only when Windows releases it; do not treat that stale folder as a second project authority.
+9. Push the tested commit to GitHub main by fast-forward; never rewrite public history. Verify remote main, then remove obsolete agent branches. The bundle remains the recovery path.
+10. Delete the retired local project, old backup, quarantine, old packets/reports, and temporary cleanup checkout only after the owner shortcut launches and the remote is verified. If Windows locks a retired folder, leave its exact path recorded and retry after the handle is closed; never delete the active EW_CLEAN checkout.
+
+#### Baseline visual evidence
+
+These are truth captures, not an art pass: title screen; Plains spawn in daylight; Saltreach sea approach daylight; Saltreach market at night; each island offshore at roughly 1 km; two distinct connected players; packaged-build title screen. Use 1920×1080, the same preset, 70-degree horizontal FOV, and no editor overlay.
+
+#### Verification and exit
+
+- Exactly one normal project path and one retained verified backup.
+- Main and local normal checkout resolve to the same commit.
+- Status is clean; LFS objects required by that commit are available.
+- Python/unit gates pass; editor and game targets compile.
+- Packaged development build launches and reaches Coastal Playground.
+- The owner shortcut launches that tested project.
+- Current tree contains this Markdown file only; the asset ledger is present.
+- No 26/40-island path, stale model workflow, or conflicting world authority remains.
+
+#### Copy-ready prompt for Claude
+
+Work only on Phase 0 in section 12 of CLAUDE.md. Begin read-only: report exact project path, branch, HEAD, upstream, worktrees, status, Git LFS state, Unreal version, shortcut target, and backup targets. Treat /Game/Elitewake/Maps/Lvl_CoastalPlayground as the canonical owner test map and exactly five islands as absolute. Preserve all working gameplay. Create and verify recovery artifacts before any deletion. Do not use reset --hard, force push, or broad deletion. Remove only verified obsolete duplicates, old model workflows, high-island paths, generated builds, and superseded documents. Run the complete Phase 0 build/test/package/shortcut gates. Stop before any unverified destructive action. Report exact evidence and leave one clean workload.
+
+### Phase 1 — Accept the first 30 minutes
+
+#### Objective and boundary
+
+Deliver a new-player Plains experience that teaches through play and ends with the player supplied, capable, and curious about a voyage. Do not add another ship class, claim warfare, advanced farming/breeding, late-game metals, a large quest chain, or a second fully functional port.
+
+#### Implementation slices
+
+1. Arrival: spawn orientation, movement/camera/jump/crouch/interact prompts, safe beach, fresh-water cue, oak silhouette, and distant Saltreach cue.
+2. First resources: wood, stone, fiber, berries, water, correct feedback, inventory-full response, and a stone tool through the real crafting path.
+3. Shelter and sustenance: fire or minimal shelter loop, cooking, needs explanation through consequences, save/reload.
+4. Risk and recovery: modest threat, injury/sickness treatment, death, same-region respawn, and 30-minute death bag.
+5. Saltreach arrival: merchant interaction, zero-purse economy explanation, storage/services/shipyard orientation.
+6. Voyage readiness: acquire or prepare the eligible starting craft, load food/water/repair materials, and present one destination goal.
+
+Each slice includes keyboard/mouse, controller, save/reload, failure-path, UI, audio trigger, and screenshot evidence before continuing.
+
+#### Exact Plains visual target
+
+Spawn at late morning. Put the ocean behind or 30–90 degrees to one side rather than directly filling the forward view. The forward 10-second read contains: a 3–6 m wide traversable sand/grass route; one oak group creating a vertical silhouette; a low fresh-water or terrain cue; one distant human-made Saltreach/lighthouse cue; and no more than one prominent tutorial prompt. Use pale warm sand, restrained #71834D grass, deep-brown soil, gray limestone, and weathered timber. Avoid a symmetrical corridor, evenly scattered rocks, identical trees, oversaturated green, fog that hides the destination, or a cluttered survival-game prop dump.
+
+At 20–30 m, every first resource has a different silhouette and material response. At 2–5 m, the interaction point is unobstructed, the pickup/tool animation contacts the source, and the prompt never covers the crosshair or item. Fire/shelter establishes a warm value focal point without turning daylight orange. The Saltreach reveal frames lighthouse/roof/mast layers rather than exposing the whole town at once.
+
+#### Scenario references to make only when needed
+
+Plains spawn board prompt:
+
+Elitewake gameplay-environment reference, grounded stylized realism, 1740–1760 maritime frontier. A safe central-Plains island arrival beach viewed from third-person player eye height 170 cm, 70-degree horizontal FOV. Ocean 45 degrees behind-left; forward route 4 m wide crossing pale sand into restrained green grass; irregular gray limestone; a natural oak group forming one readable silhouette; subtle freshwater direction cue; distant Saltreach lighthouse and masts at least 500 m away. Late-morning warm sun from camera-right, neutral exposure, clear navigation, no UI. Natural asymmetry, believable erosion and scale. No tropical resort, no modern objects, no giant fantasy tree, no excessive props, no symmetrical path, no cinematic depth of field, no text.
+
+First-resource sheet prompt:
+
+Consistent production reference sheet for five separate Elitewake Plains harvestables: fallen oak branch bundle, loose flint/stone cluster, fibrous grass/reed bundle, berry bush, and clear freshwater edge. Grounded stylized realism, neutral overcast studio light, exact scale beside a 180 cm human and 30 cm ruler, front/side/top/three-quarter views, clear silhouette at 5 m, believable hand-harvest points, no labels or generated text, no decorative fantasy glow, no duplicate silhouettes.
+
+#### Audio target
+
+Use separate gentle surf, light oak wind, sparse birds, sand/grass/soil/stone/wood footsteps, gather impacts, pickup, craft completion, drinking/eating, fire ignition/loop, and restrained discovery cue. Common footsteps/impacts need at least three variations. Needs warnings are brief, non-musical, and never repetitive beeps. The campfire loop has close attenuation and no audible seam. No constant dramatic music.
+
+#### Failure tests
+
+Craft without materials; invalid/contaminated water; deterministic raw-food sickness; inventory-full pickup; death before/after shelter; death-bag expiration/recovery; save after cooking, level-up, and storage placement; disconnect/reconnect where hosted multiplayer is active. Test UI at 1920×1080 and controller navigation from the title screen through voyage readiness.
+
+#### Required captures and exit
+
+Capture the same spawn camera day/night/weather; 10-second route read; each resource at 20 m and 3 m; tool contact; fire/shelter day/night; threat/readable damage; death/respawn/bag; Saltreach reveal and service route; loaded starting craft. Record an uninterrupted playthrough.
+
+Exit when a new player finishes without developer commands in a median 25–40 minutes, no keyboard/controller blocker exists, the sequence survives save/load, death recovery works, tuning is data-driven, objective visual checks pass, and the owner has reviewed visuals and auditioned the full recording.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 1 in section 12 of CLAUDE.md. Audit the existing game against every five-minute block before editing. Choose the first incomplete vertical slice and state what later slices will remain untouched. Implement the real gameplay path—never a verification-only shortcut—with keyboard/mouse, controller, server authority where relevant, save/load, failure tests, objective visual captures, and audio triggers. Follow the exact Plains composition, scale, palette, screenshot, and sound rules in CLAUDE.md. Do not expand another region, ship class, claims, or quests. End with the uninterrupted playthrough evidence and label artistic/audio judgments pending until the owner accepts them.
+
+### Phase 2 — Build five memorable islands, not five color swaps
+
+#### Objective and boundary
+
+Turn the five-island test world into five distinct, navigable, performant regional identities. Work one island at a time: Plains and Saltreach interfaces, then Winter, Swamp, Desert, Jungle. Do not reactivate 26/40 islands or make all ports fully functional.
+
+#### Per-island production order
+
+1. Lock scale, coastline, elevation, silhouette, safe/difficult landings, cave, freshwater logic, authored port site, and three navigation landmarks.
+2. Validate player/ship approach, traversal, collision, navmesh, world streaming, and return to sea in graybox.
+3. Add soil/shore/material profile and primary tree stands.
+4. Add persistent resources with stable IDs and ecology/hazard loop.
+5. Add region weather, post-process limits, audio stems, and landmark sounds.
+6. Add decorative PCG using slope/height/moisture/shore/exposure masks; generate HLOD and profile.
+7. Capture the full evidence set, fix objective defects, obtain owner review, then proceed.
+
+The baseline map currently has no placed reefs. For each island, run the existing reef builder, save its actors into the canonical map, and pass `verify_reefs_play.py` with one listen server and one client: one reef per region clear of the port, at least 40 submerged corals of all four kinds per reef, solid coral collision, four glow colors, and the shark/ray pair visible on both machines. Do not count a generator script or reference image as placed world content.
+
+#### Exact visual cards
+
+Plains: broad, navigable beaches; rolling grass/loam; gray limestone; oak stands with irregular clearings; one freshwater corridor; Saltreach/lighthouse dominance near the home coast. The silhouette is low-to-medium relief with one ridge/arch/standing-stone break. It feels hospitable but not manicured.
+
+Winter: a dark-rock mountain spine breaks the horizon; dirty snow occupies planes based on exposure and wind, not every surface uniformly; blue-gray ice is localized; birch stands collect in sheltered lower areas. Safe landing is a dark sheltered shore. Blizzard reduces range but retains the landing cue. Avoid pure white, bright cyan ice, Christmas-pine shorthand, and terrain hidden by fog.
+
+Swamp: low peat islands and winding channels create close choices; brown water remains visually distinct from walkable black/olive ground; spruce rises on firmer pockets, while reeds/rushes/mushrooms mark moisture. A giant dead tree, raised ridge, or half-sunken ruin provides a long cue. Avoid a uniform green filter, identical mangrove tunnel, or water/ground ambiguity.
+
+Desert: large-form dune direction leads toward plateau/canyon/oasis; warm ochre and red-brown sandstone are broken by salt-white and sparse palm at water only. Landmark is an arch, mesa, or needle visible above dust. Keep sand microdetail quiet enough to read slope. Avoid endless flat sand, random palms, orange global tint, and a lush oasis larger than its water logic supports.
+
+Jungle: steep wet-gray stone, rivers/waterfalls, dark loam, dense ash canopy, ferns/vines, and small saturated flora accents. Local sightlines tighten but authored corridors and waterfall/ruin/giant-tree cues prevent maze failure. Canopy density varies with slope, gaps, river, and exposure. Avoid an impenetrable wall, uniformly bright green, foliage through routes, or every surface shining wet.
+
+#### Scenario island prompts
+
+For each region substitute its card into this template:
+
+Elitewake regional island production reference, grounded stylized realism and believable geography. REGION: [name and exact card]. Island is 1.5–2.5 km across. CAMERA: offshore at sea level, 1 km from safe landing, third-person ship-eye height 4 m, 70-degree horizontal FOV. Show one primary landmark readable against sky, at least three shoreline materials, one obvious safe landing, and a different hazardous landing. Lighting: neutral late morning; no cinematic haze hiding the silhouette. Natural eroded coastline, terrain-driven vegetation, plausible drainage and human-scale construction. No circular island, no cloned mountain, no evenly spaced trees, no fantasy megastructure, no modern object, no labels, no tiny diorama perspective.
+
+Generate four compass approaches per island and compare silhouette consistency. Generate separate 200–300 m landing and 20–30 m route references; do not use a distant concept painting to decide interaction-scale dressing.
+
+#### Required evidence per island
+
+High aerial with scale and named routes; four offshore compass views at about 1 km; safe and difficult landing from ship-eye height; primary landmark at 1 km, 250 m, and 30 m; inland route in day/night/signature weather; fresh water, cave, resource area, ecology loop, port site; collision/navmesh; PCG masks; World Partition/Data Layer/HLOD view; streaming and densest-scene profile.
+
+#### Audio and performance
+
+Each region owns separate day/night base bed, wind/weather, shore/water, sparse fauna scheduler, and landmark emitter. Crossfade at least 2.5 seconds; never play every animal call continuously. Export Scenario stems separately. Profile an approach, landing, inland traversal, dense vista, cave transition, storm, and departure on the agreed minimum machine and two-player server.
+
+#### Exit
+
+All five load in approved directions and size range; each has a distinct silhouette, survival problem, economy, palette, and sound identity; a player can sail to, land, traverse, and leave; authored items do not move after decorative regeneration; persistence survives streaming/reload; target performance holds; the owner reviews the image set and full regional traversal audio.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 2 in section 12 of CLAUDE.md, one island at a time in the stated order. First compare the current island against its exact visual card, ten composition requirements, resource matrix, and evidence list. Fix authored geography, safe/difficult landings, landmarks, port/cave/freshwater, routes, collision, and streaming before decorative PCG. Use terrain-driven masks; never a circular scatter or cloned island. Do not reactivate high-count layouts or complete another port. Produce exact-distance day/night/weather and diagnostic captures, measured performance, persistence checks, and separated regional audio stems. Mark visuals and audio pending until owner review.
+
+### Phase 3 — Complete one maritime voyage
+
+#### Objective and boundary
+
+Deliver one complete Saltreach-to-region-and-back voyage using the sloop: prepare, load, crew or manually operate, depart, navigate wind/weather, face one threat, take damage, repair/recover, obtain cargo, return, trade/store, save, quit, and reload. Do not add a ship class. Refactor AEWShip only one tested responsibility at a time.
+
+#### Required voyage and architecture slices
+
+1. Acquisition/ownership: eligible ship, owner, Company sharing policy, unauthorized denial.
+2. Provisioning: real food, water, repair materials, shot, and real powder; hold transfer and capacity.
+3. Stations: manual sail use, crew assignment, helm behavior, anchor, boarding, centered stern ladder.
+4. Navigation: wind, trim, compass/map, landmark route, weather/current, world streaming.
+5. Threat/combat: one wildlife/weather/hostile-ship event; cannon four-step load; obstruction and target lead.
+6. Damage/recovery: hull location, flooding, bail, emergency patch, permanent repair, sinking/wreck recovery.
+7. Return/persistence: berth, trade/store, ship/cargo/crew/fittings/sails/anchor/position/hull/hole state after reload.
+
+Incrementally separate sailing/propulsion, helm/sails, fittings/stations, hull/flooding/repair, cargo, ownership/permissions, crew/orders, and serialization components. Each extraction preserves the current tests before the next.
+
+#### Exact ship visual language
+
+The sloop is a believable working vessel, not a theme-park pirate prop. From profile, hull sheer, bow/stern, waterline, one dominant mast/sail group, centered stern ladder, and functional deck circulation read at 50–100 m. At helm, horizon occupies enough frame to navigate across full camera movement; mast and cloth never block the forward route continuously. Stations use silhouette, rope/wood/iron material contrast, hand-height placement, and deck circulation rather than floating labels.
+
+Show sails at 0/50/100% through cloth area, tension, line position, and rigging—not UI alone. Cannon stages visibly differ: sponge tool in bore; powder container/charge; shot; rammer. Damage stages differ by material/state: bright fresh wood/splinters; dark opening; moving water; rough temporary patch; fitted permanent repair. Hold uses organized zones and load-state cues rather than literal display of every item. Night preserves horizon, compass, station edges, and lighthouse without flattening sea into daylight.
+
+#### Scenario ship references
+
+Damage-state prompt:
+
+Consistent five-panel production reference of the same 1740–1760 oak ship-hull section at human scale: intact weathered planking; fresh cannon splinter damage with localized bright fibers; open hull hole with dark interior; emergency patch made from rough timber/canvas/resin; permanent fitted repair matching plank structure. Orthographic three-quarter close view from 3 m, neutral daylight, identical camera and plank layout in every panel. Grounded stylized realism, believable fasteners and thickness. No gore, fire, fantasy glow, huge explosion, modern bolts, labels, text, or changed hull geometry between panels.
+
+Station sheet prompt:
+
+Elitewake sloop station reference sheet: helm, sail line/cleat, anchor capstan control, cannon work area, repair point, hold access. 1740–1760 working maritime construction, oak/iron/hemp/canvas, exact dimensions beside 180 cm sailor, 1 m clear circulation where practical, hand interaction heights 80–120 cm, readable silhouettes and distinct material groupings, front/top/three-quarter views, neutral light. No floating UI, no fantasy ornament, no modern hardware, no impossible rope routing, no unsafe blocked ladder.
+
+#### Audio target
+
+Ship creak scales rest-to-speed; rigging scales with deployed sail and speed; close line/canvas/block-pulley events are separate; anchor release, bottom catch, and recovery differ; flooding intensity tracks active holes; bailing plays per stroke; sinking changes or stops normal ship sound. Cannon has tool stages, powder/shot handling, report/recoil, and sea/hull/land impacts. Use at least three variations for wood, rigging, and water impacts.
+
+#### Failure, network, and evidence gates
+
+Test owner, shared Company member, unauthorized player at every station; disconnect at helm/repair/fire/trade/cargo; owner leaves Company; streaming boundary with crew/cargo/holes; restart at sea/berth; sink online/offline owner; simultaneous ammo request; simultaneous repair; merchant/shipyard retry under latency.
+
+Capture ship profile at no/half/full sail; helm into/across wind; every cannon-load step; intact/hole/flooding/temporary/permanent repair; empty/partial/full hold; Saltreach departure day/night; destination signature weather; sinking and wreck recovery; two-client synchronized damage.
+
+Exit only when a packaged two-player dedicated-server voyage completes, permissions and transactions are authoritative, required state persists, damage/repair is owner-reviewed, and departure/underway/combat/damage/repair/return/night audio is auditioned.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 3 in section 12 of CLAUDE.md. Map current AEWShip responsibilities and existing checks to the required sloop voyage before editing. Choose one missing vertical slice and one incremental component boundary; do not rewrite the ship monolith wholesale and do not add a vessel class. Use real inventory items, server validation, permissions, failure/retry handling, save/reload, packaged two-player testing, and the exact visual/audio evidence. Preserve manual solo station use and crew-only helm sail control. End with a full Saltreach-to-region-and-back voyage report; visual and audio acceptance remains human.
+
+### Phase 4 — Make multiplayer and persistence trustworthy
+
+#### Objective and boundary
+
+Make hosted and dedicated play survive reconnects and server restarts without loss, duplication, or unauthorized control. Do not add account-service or public-Internet scope without authorization. Do not delete incompatible player data to make a migration test pass.
+
+#### Implementation order
+
+1. Inventory each persisted type, stable ID, authority owner, current payload, save trigger, load order, dependencies, and known failure behavior.
+2. Implement the versioned save envelope and atomic generation replacement with integrity validation and prior-good fallback.
+3. Add fixtures: empty/new; oldest recoverable; previous schema; current; corrupt newest/valid previous; missing asset; removed recipe/item; missing Company owner; missing ship owner; duplicate IDs.
+4. Migrate one subsystem at a time: survivor; Company; ship; resources; recoverable containers; merchants/economy; structures/claims; scalable wildlife.
+5. Make retry-prone transactions idempotent: buy/sell, transfer, craft, repair, cannon load/fire, ship transfer, Company operations, harvest, death/loot.
+6. Add configurable autosave, save-duration/file-size telemetry, manual administrator save, clean shutdown, rotating backups, structured logs, and performed crash recovery.
+7. Run the complete server matrix and keep public-Internet status separate.
+
+#### UI and visual communication
+
+Reconnect/loading never implies that data vanished. Use a restrained full-screen state with plain language, current step, and recoverable failure option; do not show a fake percent. Ownership denial names the owning scope and reason without exposing private identifiers. Company roles and ship sharing use a visible controller focus, explicit confirmation, and before/after state. Save feedback is small and nonblocking; repeated autosaves do not flash or chime.
+
+Required captures: two clients viewing the same cargo and hull damage; Company policy before/after; unauthorized station denial; reconnect restoration; merchant stock before/after restart; migration success and fallback log/summary; controller focus at 1080p.
+
+#### Audio communication
+
+Use restrained, distinct events for invite, accepted transaction, denied action, failed save, and recovered connection. A successful background autosave normally does not play a prominent sound. The failure sound cannot resemble damage, low health, or combat danger.
+
+#### Test matrix
+
+Run critical transactions on listen server plus client; dedicated server plus two clients; real two-PC LAN; 100–200 ms latency; packet loss/duplicate simulation; disconnect before acknowledgement; server shutdown immediately before and after save. Measure populated-world save duration, file growth, load time, fallback time, and log volume. Test the temporary ThirdPerson session harness before replacing it; then rerun the same matrix on Coastal.
+
+#### Exit
+
+All required state survives restart/reconnect; current and previous versions migrate; corrupt newest restores prior valid; retries never duplicate currency/items; unauthorized clients cannot mutate protected state; two-PC LAN passes; save cost is measured; the written recovery procedure has been performed successfully; public Internet remains accurately labeled tested or untested.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 4 in section 12 of CLAUDE.md. Begin with a table of every persisted type, stable ID rule, server owner, payload version, dependencies, save/load trigger, and existing test. Design fixtures and the atomic versioned save envelope before modifying payloads. Migrate one subsystem at a time and retain original data on failure. Exercise listen, dedicated, LAN, latency, duplicate, disconnect, and shutdown boundaries. Never silently zero inventory, currency, Company, or ship state. Produce the exact synchronized-state, denial, reconnect, stock, and migration evidence. Do not start public-Internet/account-service work without owner authorization.
+
+### Phase 5 — Replace placeholders with one coherent production language
+
+#### Objective and boundary
+
+Replace the hero-path placeholders with performant art and audio using Unreal's included tools, properly acquired zero-cost public assets, and original Scenario-assisted material. The goal is one controlled language, not the largest library. Do not delete a placeholder until its replacement is integrated, referenced, packaged, performance-checked, and owner-approved.
+
+#### Production order
+
+1. Create a small reference gallery map containing a 180 cm mannequin, 1 m/5 m/20 m scales, neutral daylight, neutral overcast, night, water edge, material spheres, and performance markers.
+2. Approve one Plains material/prop/foliage/lighting/audio family.
+3. Finish Plains spawn and the full first-30-minute route.
+4. Finish Saltreach sea silhouette, harbor mouth, market, tavern, shipyard, and night-light hierarchy.
+5. Finish the sloop exterior/interior, stations, sails, damage, cargo states, and sound layers.
+6. Finish one hero vista and one complete gameplay route for Winter, Swamp, Desert, and Jungle.
+7. Extend only the accepted kits to secondary areas.
+8. Optimize textures/materials/meshes/audio/streaming, validate package inclusion, then remove superseded placeholders.
+
+#### Free-resource acquisition ladder
+
+Use this order and record every external/generative asset in ASSET_LEDGER.csv:
+
+1. Reuse or modify current project assets when quality and rights are adequate.
+2. Use Unreal 5.8 built-in systems and editor tools: Modeling Mode, Geometry Script, Landscape, Water, PCG, Niagara, Control Rig, IK Retargeter, MetaSounds, Material Editor, UMG/CommonUI, World Partition, HLOD, Insights.
+3. Evaluate official Epic samples or zero-cost Epic/Fab content in an isolated intake map. Copy only the necessary pieces; do not drag in an architecture to obtain one feature.
+4. Evaluate zero-price Fab Standard or CC0/CC-BY content with a direct listing/license record. Treat Reference-Only, UE-Only, attribution, and additional terms explicitly.
+5. Use Scenario to make original references, texture/decal/icon candidates, ambience, Foley, and music drafts under the rules in sections 9–11.
+6. Model, texture, retarget, or synthesize the gap in-house when imported kits would fracture the style.
+
+Do not assume Paragon, Infinity Blade, Lyra, Game Animation Sample, Starter Content, or a free Fab pack fits the historical visual language. They are candidates or learning references, not automatic production content.
+
+#### Intake checklist
+
+Before import: listing URL; publisher; acquisition date; zero price proof; license and attribution; engine restriction; plugin/version; source size; expected cooked size; topology/UV/material count; texture resolution/memory; collision; skeleton/root motion; LOD/Nanite; naming/folder impact; warnings; visual comparison; generative-use restriction. Test in the intake gallery, decide accept/modify/reference-only/reject, and migrate only selected files into /Game/Elitewake.
+
+#### Saltreach visual specification
+
+Saltreach is a busy frontier Freeport. From 1 km, lighthouse/signal tower, clustered pale masonry and dark weathered roofs, ship masts, cranes, and the harbor mouth make the silhouette. At 200–300 m, piers, shipyard slip, market awnings, route lighting, and berths establish functions. At 20–30 m, props form believable work groups: timber and saw area; rope/spar store; repair scaffolds; fish/food/cargo stalls; tavern seating/service. At 2–5 m, wood grain scale, iron fasteners, rope diameter, wear, interaction height, and collision hold up.
+
+Architecture uses pale plaster/limestone lower levels, weathered timber upper structures, restrained canvas, dark roof forms, and oxidized copper accents. Market lanes remain clear and asymmetrical; people work, walk, or converse for a reason. Night hierarchy is lighthouse first, harbor route second, market/tavern third, minor windows last. Do not repeat identical lamps down every street, overfill the scene with barrels, use pristine white resort plaster, or turn the port into ruins.
+
+Saltreach Scenario prompt:
+
+Elitewake Saltreach Freeport production reference, grounded stylized realism, 1740–1760 frontier harbor. CAMERA: gameplay ship approach at sea level, 1 km distance, eye height 4 m, 70-degree horizontal FOV. Show a readable harbor mouth; one lighthouse/signal tower as primary vertical; layered masts, cranes, clustered dark roofs, pale weathered masonry, timber upper structures, restrained canvas, working piers and shipyard slip. Late-afternoon side light with neutral exposure; water and horizon readable. The town is active, repaired, practical, and imperfect—not pristine and not ruined. Natural asymmetry and plausible construction. No modern marina, palm-resort cliché, giant castle, fantasy skyline, identical lamps, barrel clutter, generated signs/text, crowds posing at camera, or cinematic depth of field.
+
+Create matching sea-approach, 250 m harbor, 25 m market lane, 3 m merchant stall, reverse, night, and storm references with the same geography. Do not accept a set if lighthouse, harbor mouth, roof arrangement, or main route moves between views.
+
+#### Sloop and character/animal content
+
+Hero ships require consistent orthographic profile/top/front/rear and human-scale deck/interior views before production geometry. Base hull excludes permanent sails; hardpoints and centered stern ladder remain readable. Verify deck/headroom/ladder/cannon contact with the real capsule and animation.
+
+Each production animal needs a consistent front/back/left/right/top/underside reference, real species anatomy, scale, rig, idle, walk, run/sprint, relevant attack/action, transitions, collision, navigation, and audio variations. Treat reference art, mesh, texture, rig, animation, audio, integration, behavior, performance, and owner acceptance as separate milestones. Do not invent species to fill an asset-pack gap.
+
+#### Texture and Scenario rules
+
+Generate material studies as tile candidates with specified real-world scale, albedo/roughness/normal/height intent, neutral lighting, and no baked directional shadows. Never ship an AI image as a physical material without checking tiling, perspective, seams, color-space, PBR ranges, compression, mip behavior, and distance readability. Icons use a consistent camera, stroke/silhouette, light direction, palette, transparent background, and no generated text.
+
+Material prompt:
+
+Seamless square material source study for Elitewake: [specific material and exposure story], real-world tile covers [meters], grounded stylized realism, orthographic flat capture, even neutral light, no directional shadow, no object silhouette, no text, no border. Show medium and large variation caused by [salt/sun/water/hand wear], physically believable joints and grain, restrained color. Intended for separate albedo, roughness, normal, and height authoring—not a finished PBR set. No perspective, vignette, dramatic lighting, random stains, modern treatment, or repeated obvious motif.
+
+#### Audio production batch
+
+Produce in this order: core footsteps/gather/survival feedback; Plains beds; Saltreach market/tavern/shipyard/pier; sloop hull/deck/rigging/canvas/line/helm/anchor/flood/repair; cannon stages/impacts; other regional stems; wildlife actions; restrained music layers. Generate 3–6 variations for repeated one-shots, keep stems separate, record model/output/prompt/settings/cost/input rights, import lossless masters, and implement attenuation/concurrency before owner audition.
+
+#### Evidence and exit
+
+For each asset family provide the gallery turntable/scale, source/license row, memory/material/LOD report, collision, in-context required cameras, day/night/weather where relevant, package inclusion, before/after performance, and owner review status. Exit when the first-30-minute route, Saltreach, sloop, and one hero route per remaining region use an accepted coherent language; no unlicensed source is packaged; hero placeholders are removed only after replacement; target performance and memory hold; owner accepts visual sets and audio families.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 5 in section 12 of CLAUDE.md and name one hero-path asset family. Audit existing assets before acquiring or generating anything. Follow the free-resource acquisition ladder and isolated intake gate; add complete ASSET_LEDGER.csv rows before migration. Use the exact Elitewake palette, scale, texel density, construction, camera, screenshot, Saltreach/sloop/animal, Scenario, and audio rules. Import only used pieces. Preserve the current placeholder until its replacement is integrated, packaged, profiled, reference-validated, and owner-reviewed. Never claim visual or audio quality from metadata or a test alone.
+
+### Phase 6 — Controlled alpha hardening
+
+#### Objective and boundary
+
+Turn the accepted core loop into a reproducible private alpha: install, host/join, play the first session and voyage, save/reconnect/restart, report a problem, and recover. This is hardening, not a content-expansion phase. Freeze new islands, classes, large mechanics, and broad art kits.
+
+#### Release slices
+
+1. Define supported Windows version, CPU/GPU/RAM/storage, graphics presets, input devices, server topology, save compatibility, and known limitations.
+2. Create a clean versioned development package with correct maps/assets, icon, configuration, crash/log paths, no secrets, no internal reports, and no intake/rejected content.
+3. Test clean-machine install/launch, title/settings/input, host/join, first 30 minutes, complete voyage, save/quit/reload, disconnect/reconnect, server restart, and uninstall/reinstall with preserved save policy.
+4. Run performance/streaming/network/save soak tests and fix blockers, crashes, loss, duplication, authority exploits, and severe readability failures before cosmetic issues.
+5. Produce a concise tester guide inside the distribution channel, structured feedback form, build/commit identification, privacy statement, log collection, save backup/recovery, and rollback plan.
+6. Test the release and rollback procedure with a small internal ring before adding testers.
+
+#### Visual and audio alpha gate
+
+At Low/Medium/High or the approved presets, verify title/UI text, Plains spawn, Saltreach day/night, all five offshore silhouettes, sloop stations/damage, storms, caves, and critical prompts. Capture frame time/VRAM/streaming behavior rather than screenshots alone. Confirm graphics presets do not remove navigation cues or turn night into black.
+
+Listen through the entire first session and voyage on ordinary stereo speakers and headphones. Check repetition, missing surface types, ambience transitions, UI spam, danger masking, ship-state mismatch, and excessive peaks. Alpha can contain labeled placeholders, but it cannot contain broken, misleading, unlicensed, or painfully repetitive audio.
+
+#### Priority order
+
+P0: crash, corrupt/lost save, inability to launch/join/progress, remote authority exploit.
+P1: duplication, ownership bypass, severe performance/streaming blocker, broken reconnect, unreadable required UI.
+P2: balance/pacing/animation/visual/audio problem that does not block the loop.
+P3: polish or content suggestion.
+
+#### Exit
+
+A clean machine installs and launches; two physical machines complete first session and voyage; save/reconnect/restart and fallback recovery pass; agreed performance and network budget holds; package contains no secrets/unlicensed/rejected assets; build/commit and logs are identifiable; rollback has been performed; owner approves the private-alpha release and known-issues list.
+
+#### Copy-ready prompt for Claude
+
+Execute only Phase 6 in section 12 of CLAUDE.md. Freeze feature/content expansion. Define the target machine and measurable release budgets, produce a clean versioned private-alpha candidate, and run clean-install, title/input, first-session, voyage, multiplayer, persistence, restart, soak, package-audit, and rollback gates. Rank every finding P0–P3 using the guide and fix P0/P1 before polish. Verify visuals across presets and audition the full route on speakers/headphones. Do not publish publicly, invite testers, expose credentials, or declare alpha accepted without owner authorization.
+
+## 13. Human review forms
+
+### 13.1 Visual location review
+
+Record commit, map/location, asset/gallery version, reviewer/date, resolution/preset/hardware, time/weather set, and before/after camera path.
+
+Claude checks: same camera/FOV/conditions; required distances/reverse/day/night/weather; beauty images free of overlays; diagnostics present; no missing material; no obvious critical intersection; capsule fits; landmark visible; performance captured. Owner scores 1–5: immediate identity; focal hierarchy; natural navigation; believable scale; material cohesion; exposure/weathering story; inhabited feeling; day readability; night readability; weather readability; historical tone; desire to explore. Decision: accept; accept with minor fixes; revise same cameras; reject direction. Record exact revisions.
+
+### 13.2 Visual asset review
+
+Record asset, source/license, project path, dimensions/pivot, intended role, memory and material count. Claude checks ledger, collision, UVs, texture sizes, LOD/Nanite, shadows/reflections, interaction/animation contact, and consistent turnaround. Owner answers: silhouette at gameplay distance; Elitewake proportion/material fit; generated geometry/anatomy/text/construction errors; generic/regional/hero status; changes required before repetition.
+
+### 13.3 Audio review
+
+Record commit/path, Scenario model/output or third-party source, prompt/settings/license, trigger/attenuation, format/channels/sample rate/duration/peak, and listening devices. Claude checks decode, clipping/silence, loop, variations, attenuation/concurrency, trigger/replication, and ledger. Owner scores 1–5: source/material identity; period/region fit; synthetic artifact absence; transient/tail; meaning without looking; variation; close/medium/far behavior; mix priority; repetition comfort; speakers/headphones. Decision: production source; placeholder; edit; regenerate; reject.
+
+### 13.4 Full-sequence review
+
+Record build, commit, server, players, inputs, route, time/weather, and capture. During uninterrupted playback timestamp navigation failures, unclear interactions, exposure jumps, wrong/missing surface sound, repetitive ambience/fauna, masked danger/dialogue, ship-state mismatch, hero placeholders, frame/streaming/LOD hitches, and successful place/danger/reward moments. End with three strongest moments, three highest-priority problems, and accept/revise decision for the phase.
+
+## 14. Verification commands and evidence discipline
+
+Adjust only the project path when the canonical checkout moves; do not change maps or targets to make a failure disappear.
+
+Fast source/world gate from the repository root:
+
+    python -m unittest discover -s Scripts/Tests -p "test_*.py" -v
+
+Editor compile on the canonical Windows installation:
+
+    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EWEditor Win64 Development "C:\UnrealProjects\EW_CLEAN\EW.uproject" -WaitMutex -NoHotReloadFromIDE
+
+Game compile:
+
+    "C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EW Win64 Development "C:\UnrealProjects\EW_CLEAN\EW.uproject" -WaitMutex -NoHotReloadFromIDE
+
+Use the focused scripts in Scripts/Verification only after reading what each changes, launches, captures, and leaves behind. Prefer the narrowest relevant Play check, then run integrated/title-to-coast/first-voyage/session lifecycle and package checks for phase gates. A script filename is not evidence that it passed; retain timestamped output tied to commit and map.
+
+Before every commit:
+
+1. Inspect the full diff, staged file types, large files, LFS pointers, generated directories, secrets, external paths, and unexpected deletes.
+2. Run tests affected by the change plus the fast world suite.
+3. If Unreal content changed, validate references, redirectors, map load, package inclusion, and the relevant Play check.
+4. If visuals changed, create fixed-camera before/after and diagnostics; if audio changed, record technical analysis and audition state.
+5. If a third-party or Scenario asset changed, update ASSET_LEDGER.csv in the same commit.
+
+## 15. ASSET_LEDGER.csv rules
+
+Use one row per product or generated family, with child rows when files have different licenses/restrictions. Required columns already exist in the repository ledger. Boolean fields use TRUE/FALSE/UNKNOWN, not prose. PricePaid is 0.00 only when acquisition was actually zero cost. SourceURL points to the listing or model card, not a search result. LicenseURL and acquisition evidence must remain retrievable. Scenario rows include exact model ID, output ID, input-rights verification, and owner approver. Unknown rights means the asset stays out of production/package.
+
+## 16. The next correct build order
+
+After cleanup, do not wander across the backlog. Work in this order:
+
+1. Finish Phase 0 and freeze the canonical baseline.
+2. Audit and accept Phase 1 as one uninterrupted 30-minute experience.
+3. Complete Phase 2 one island at a time, beginning with Plains/Saltreach interfaces.
+4. Complete Phase 3 with one sloop voyage before expanding vessel content.
+5. Harden Phase 4 persistence/authority before claims or broad public tests.
+6. Use Phase 5 to replace hero placeholders along the already working routes.
+7. Run Phase 6 only when the full core loop is stable enough to harden instead of redesign.
+
+If uncertain what to do next, choose the earliest unmet exit criterion in this order and propose the smallest testable slice that advances it.

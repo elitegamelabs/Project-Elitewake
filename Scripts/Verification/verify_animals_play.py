@@ -3,7 +3,7 @@
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the animals from
 Scripts/Setup/build_animals.py. Run unattended with run_play_check.py.
 
-  1. The client has every animal the server has, of all six kinds, on the island and the second island, each
+  1. The client has every animal the server has, of all ten kinds, on the island and the second island, each
      standing on the ground.
   2. Left alone they wander: several walk off from where they stood; on the client their legs move with them (the
      stride advances while the copy walks) and each copy near the survivor stays close to the server's.
@@ -41,7 +41,7 @@ animals = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unre
 copies = {a.get_name(): a for a in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWAnimal)}
 raw_meat = unreal.load_asset('/Game/Elitewake/Items/Food/DA_RawMeat')
 BEACH = unreal.Vector(150, 0, 150)
-KINDS = {'American Alligator', 'Flamingo', 'Brown Pelican', 'Cottonmouth', 'Tortoise', 'Squirrel Monkey'}
+KINDS = {'American Alligator', 'Flamingo', 'Brown Pelican', 'Cottonmouth', 'Tortoise', 'Squirrel Monkey', 'Black Bear', 'Lion', 'Giant Crocodile', 'Elephant'}
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -119,7 +119,8 @@ def all_present():
     # Spread over the five-region world (owner, October 15): on many islands, in at least four regions.
     labels = {a.get_actor_label().rsplit(' ', 2)[-2] for a in animals}
     regions = {k.rstrip('0123456789') for k in labels}
-    assert len(labels) >= 15 and len(regions) >= 4, f'on {len(labels)} islands in {sorted(regions)}'
+    # The five-island world has Plains, Swamp, Desert and Jungle animals (Winter has no land species yet: task GR4).
+    assert len(labels) >= 4 and len(regions) >= 4, f'on {len(labels)} islands in {sorted(regions)}'
     second = [a for a in animals if 'Starter' not in a.get_actor_label()]
     off = []
     for a in animals:
@@ -130,6 +131,17 @@ def all_present():
     assert not off, f'not standing on the ground: {off[:5]}'
     state['memo'].update(animals=len(animals), off_the_starter=len(second), islands=len(labels))
     return True
+
+
+def to_animals():
+    """Stand among the peaceful animals: where the survivor begins there may be none within the client's range."""
+    here = owner.get_actor_location()
+    calm = [a for a in animals if not a.get_editor_property('definition').get_editor_property('aggressive')]
+    if sum(1 for a in calm if (a.get_actor_location() - here).length() < 14000) >= 3:
+        return
+    target = max(calm, key=lambda a: sum(1 for b in calm if (b.get_actor_location() - a.get_actor_location()).length() < 6000))
+    spot = target.get_actor_location() + unreal.Vector(400, 0, 150)
+    owner.teleport(spot, unreal.Rotator())
 
 
 def wandered():
@@ -242,8 +254,8 @@ def monkey_killed():
     if not (monkey.is_dead() and copy_of(monkey).is_dead()):
         return False
     state['follow'] = None
-    roll = abs(copy_of(monkey).get_editor_property('visual').get_editor_property('relative_rotation').roll)
-    assert roll > 60, f'the dead monkey is not on its side on the client (roll {roll:.0f})'
+    up = copy_of(monkey).get_editor_property('visual').get_up_vector().z   # a model turned to face +X lies down as pitch, not roll
+    assert up < .5, f'the dead monkey is not on its side on the client (up.z {up:.2f})'
     at = monkey.get_actor_location()
     place(unreal.Vector(at.x - 140, at.y, feet(monkey) + 100), at)
     state['memo'].update(meat_before=owner.get_inventory_component().get_item_count(raw_meat), pressed=0.0)
@@ -271,9 +283,9 @@ def harvested():
 
 
 STEPS = [
-    ('The client has every animal the server has, all six kinds, across the islands of the world, each standing on the ground',
+    ('The client has every animal the server has, all ten kinds, across the islands of the world, each standing on the ground',
      begin_count, all_present, 4),
-    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', lambda: None, wandered, 20),
+    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', to_animals, wandered, 20),
     ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),
     ('Struck with Left Mouse, a flamingo is hurt', strike('Flamingo', 110), flamingo_hit, 8),
     ('The struck flamingo runs off faster than it walks', lambda: None, flamingo_ran, 4),

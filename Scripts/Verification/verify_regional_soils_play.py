@@ -1,4 +1,4 @@
-"""Screenshots of each region's own ground (owner, October 16: Design/World/REGIONAL_SOIL_TEXTURE_REQUIREMENTS_2026-10-16.md):
+"""Screenshots of each region's own ground (owner, October 16: CLAUDE.md):
 Winter frozen earth and snow, Plains loam and grass, Jungle dark loam with leaf litter and moss, Swamp black wet
 peat with puddles, Desert rippled sand, hardpan and sandstone.
 
@@ -39,7 +39,7 @@ def ground(x, y):
 
 
 def spot(region):
-    isl = max((i for i in W.ISLANDS if i.region == region and i.key != 'Starter'), key=lambda i: i.rx * i.ry)
+    isl = next(i for i in W.ISLANDS if i.region == region)
     for a in range(0, 360, 30):
         x = isl.cx + math.cos(math.radians(a)) * isl.rx * .35
         y = isl.cy + math.sin(math.radians(a)) * isl.ry * .35

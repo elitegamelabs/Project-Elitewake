@@ -29,12 +29,17 @@ class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
+class UEWItemSpawnerWidget;
+class UEWItemDefinition;
 class UEWOptionsWidget;
 class UEWHitMarkerWidget;
 class UEWCompanyComponent;
 class UEWContainerWidget;
+class UEWDialogueWidget;
+class AEWTownsfolk;
 class UEWSoundscapeComponent;
 class UEWPlacementPreviewComponent;
+class UEWBuildComponent;
 
 /**
  *  Basic PlayerController class for a third person game
@@ -59,16 +64,24 @@ public:
     UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsSessionMenuOpen() const { return bSessionMenuOpen; }
     UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);
     UPROPERTY(Transient) TObjectPtr<UEWSessionWidget> SessionWidget;
+    UPROPERTY(Transient) TObjectPtr<UEWItemSpawnerWidget> ItemSpawnerWidget;
     bool bSessionMenuOpen = false;
     /** Escape's OPTIONS menu. In single player it pauses the world. */
     UFUNCTION(BlueprintCallable, Category="Options") void SetOptionsMenuOpen(bool bOpen);
     UFUNCTION(BlueprintPure, Category="Options") float GetUserBrightness() const { return UserBrightness; }
     UFUNCTION(BlueprintCallable, Category="Options") void SetUserBrightness(float Value);
-    UFUNCTION(BlueprintPure, Category="Options") float GetMouseLookSensitivity() const { return MouseLookSensitivity; }
-    UFUNCTION(BlueprintCallable, Category="Options") void SetMouseLookSensitivity(float Value);
-    UFUNCTION(BlueprintPure, Category="Options") float GetControllerLookSensitivity() const { return ControllerLookSensitivity; }
-    UFUNCTION(BlueprintCallable, Category="Options") void SetControllerLookSensitivity(float Value);
-    float GetActiveLookSensitivity() const { return bControllerPrompts ? ControllerLookSensitivity : MouseLookSensitivity; }
+    /** The display gamma the brightness setting gives the whole picture. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetDisplayGamma() const;
+    /** Look speeds (owner, October 30: left-right and up-down apart, for the mouse and for the controller), 0.1 to 3:
+     *  0 mouse horizontal, 1 mouse vertical, 2 controller horizontal, 3 controller vertical. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetLookSensitivity(int32 Which) const { return LookSensitivity[FMath::Clamp(Which, 0, 3)]; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetLookSensitivity(int32 Which, float Value);
+    /** Master volume, 0 to 1 (everything this machine plays); saved with the other user settings. */
+    UFUNCTION(BlueprintPure, Category="Options") float GetMasterVolume() const { return MasterVolume; }
+    UFUNCTION(BlueprintCallable, Category="Options") void SetMasterVolume(float Value);
+    /** How fast the view turns left-right (yaw) and up-down (pitch) with the device in use. */
+    float GetYawLookSensitivity() const { return LookSensitivity[bControllerPrompts ? 2 : 0]; }
+    float GetPitchLookSensitivity() const { return LookSensitivity[bControllerPrompts ? 3 : 1]; }
     UFUNCTION(BlueprintPure, Category="Options") bool IsOptionsMenuOpen() const { return bOptionsMenuOpen; }
     UFUNCTION(BlueprintPure, Category="Options") UEWOptionsWidget* GetOptionsWidget() const { return OptionsWidget; }
     UFUNCTION(Server, Reliable) void ServerSetOptionsMenuOpen(bool bOpen);
@@ -95,6 +108,10 @@ public:
     TObjectPtr<UEWSoundscapeComponent> SoundscapeComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Placement")
     TObjectPtr<UEWPlacementPreviewComponent> PlacementPreview;
+    /** Build Mode: the foundation ghost, placing and demolishing (owner, October 27). */
+    UFUNCTION(BlueprintPure, Category="Build") UEWBuildComponent* GetBuildComponent() const { return BuildComponent; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Build")
+    TObjectPtr<UEWBuildComponent> BuildComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWObjectiveWidget> ObjectiveWidget;
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")
@@ -103,6 +120,18 @@ public:
     /** The dead survivor chooses to respawn (owner, October 22): the server drops their bag where they fell and brings them back at a safe place away from it. */
     void RequestRespawn() { ServerRequestRespawn(); }
     UFUNCTION(Server, Reliable) void ServerRequestRespawn();
+    /** Testing only (owner, October 24): Shift + 1 to 5 carries the survivor to Plains, Jungle, Desert, Swamp or Winter. Does nothing in a shipping build. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToRegion(int32 RegionIndex) { ServerDebugTeleportToRegion(RegionIndex); }
+    UFUNCTION(Server, Reliable) void ServerDebugTeleportToRegion(int32 RegionIndex);
+    /** Testing only (owner, October 30): Shift + 6 carries the survivor to the nearest Port, in front of its merchant. Does nothing in a shipping build. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToPort() { ServerDebugTeleportToPort(); }
+    /** F9's item spawner (testing only, owner, October 30): every craftable item, then the rest; each click or A gives one. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void SetItemSpawnerOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Debug") bool IsItemSpawnerOpen() const { return ItemSpawnerWidget != nullptr; }
+    UFUNCTION(BlueprintPure, Category="Debug") UEWItemSpawnerWidget* GetItemSpawnerWidget() const { return ItemSpawnerWidget; }
+    /** Testing only: one of Item into this survivor's pack (an item of the game's item list; nothing in shipping builds). */
+    UFUNCTION(Server, Reliable) void ServerDebugGiveItem(UEWItemDefinition* Item);
+    UFUNCTION(Server, Reliable) void ServerDebugTeleportToPort();
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
     UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
@@ -146,7 +175,8 @@ public:
     virtual bool InputKey(const FInputKeyEventArgs& Params) override;
     virtual void FlushPressedKeys() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-    static int32 HotbarSlotForKey(const FKey& Key, bool bControllerModifier);
+    /** Slot for a key: 1-8 on the keyboard; d-pad = slots 1-4 on a controller; hold LB + a face button, or hold LT + the d-pad (owner, October 22: all eight within reach of one thumb), for 5-8. */
+    static int32 HotbarSlotForKey(const FKey& Key, bool bControllerModifier, bool bTriggerModifier = false);
     void SetHotbarModifierHeld(bool bHeld) { bHotbarModifierHeld = bHeld; }
     bool IsHotbarModifierHeld() const { return bHotbarModifierHeld; }
     UFUNCTION(BlueprintCallable, Category="Hotbar")
@@ -175,6 +205,17 @@ public:
     /** Local container screen (a ship's hold) beside the survivor's inventory. Null closes it. */
     UFUNCTION(BlueprintCallable, Category="Inventory|Container")
     void SetContainerOpen(AActor* Container);
+    /** A townsperson's dialogue window (owner, October 30): opened by the server when the survivor talks to them; choices go back to it. */
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void OpenDialogue(AEWTownsfolk* Speaker);
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void CloseDialogue();
+    UFUNCTION(BlueprintPure, Category="Dialogue") bool IsDialogueOpen() const;
+    UFUNCTION(BlueprintPure, Category="Dialogue") AEWTownsfolk* GetDialogueSpeaker() const { return DialogueSpeaker; }
+    /** The last answer the server gave this player (for the checks). */
+    UFUNCTION(BlueprintPure, Category="Dialogue") FText GetLastDialogueReply() const { return LastDialogueReply; }
+    UFUNCTION(BlueprintPure, Category="Dialogue") UEWDialogueWidget* GetDialogueWidget() const { return DialogueWidget; }
+    UFUNCTION(Client, Reliable) void ClientOpenDialogue(AEWTownsfolk* Speaker);
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category="Dialogue") void ServerChooseDialogue(AEWTownsfolk* Speaker, FName Key);
+    UFUNCTION(Client, Reliable) void ClientDialogueReply(AEWTownsfolk* Speaker, const FText& Reply);
     UFUNCTION(BlueprintPure, Category="Inventory|Container")
     AActor* GetOpenContainer() const { return OpenContainer; }
     /** Sent by the server once it has agreed this player may use the container. */
@@ -224,8 +265,10 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UEWCompassWidget> CompassWidget;
     bool bControllerPrompts = false;
     float UserBrightness = 0.f;
-    float MouseLookSensitivity = 1.f;
-    float ControllerLookSensitivity = 1.f;
+    float LookSensitivity[4] = {1.f, 1.f, 1.f, 1.f};
+    /** The whole picture's brightness (owner, October 30): the display gamma, every camera and view alike. */
+    void ApplyBrightness() const;
+    float MasterVolume = 1.f;
     bool bLocalInteractionIntent = false;
     UPROPERTY(Transient)
     TObjectPtr<UEWSurvivalWidget> SurvivalWidget;
@@ -240,6 +283,7 @@ protected:
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;
+    bool bHotbarTriggerHeld = false;
     TSet<FKey> SuppressedHotbarKeys;
     UPROPERTY(EditAnywhere, Category="Input|Interaction")
     TObjectPtr<UInputAction> InteractAction;
@@ -278,6 +322,11 @@ protected:
     TObjectPtr<UEWContainerWidget> ContainerWidget;
     UPROPERTY(Transient)
     TObjectPtr<AActor> OpenContainer;
+    UPROPERTY(Transient)
+    TObjectPtr<UEWDialogueWidget> DialogueWidget;
+    UPROPERTY(Transient)
+    TObjectPtr<AEWTownsfolk> DialogueSpeaker;
+    FText LastDialogueReply;
     /** Shared by the inventory and container screens: blocks gameplay input and tells the server a menu is up. */
     void SetMenuInputBlocked(bool bBlocked);
 

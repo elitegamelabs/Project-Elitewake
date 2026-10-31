@@ -6,7 +6,9 @@
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
+#include "EWProgressionComponent.h"
 #include "EWSurvivorSave.h"
+#include "EWWalletComponent.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
@@ -55,6 +57,13 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Axe shortcut binds"), Original->GetHotbarComponent()->BindItem(2, Axe) == EEWHotbarResult::Success);
     TestTrue(TEXT("Berry shortcut binds"), Original->GetHotbarComponent()->BindItem(5, Berry) == EEWHotbarResult::Success);
 
+    // Two levels: one stat point spent on Vitality, one skill point on the Gatherer star.
+    UEWProgressionComponent* Progress = Original->GetProgressionComponent();
+    Progress->GrantExperience(Progress->GetExperienceForNextLevel());
+    Progress->GrantExperience(Progress->GetExperienceForNextLevel());
+    TestTrue(TEXT("A stat point is spent"), Progress->SpendPoint(EEWStat::Vitality));
+    TestTrue(TEXT("A star is lit"), Progress->UnlockSkill(TEXT("Gatherer")));
+    Original->GetWalletComponent()->SetCopper(1234);
     TestTrue(TEXT("Save writes to isolated test slot"), UEWSurvivorSave::SaveSurvivor(Original, SlotName));
     TestTrue(TEXT("Test slot exists"), UEWSurvivorSave::HasSave(SlotName));
     Original->GetSurvivalComponent()->ApplyDamage(50.f);
@@ -72,7 +81,7 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
 
     TestTrue(TEXT("Saved location restored"), Resumed->GetActorLocation().Equals(FVector(120.f, -240.f, 500.f), .1f));
     TestTrue(TEXT("Saved facing restored"), FMath::IsNearlyEqual(Resumed->GetActorRotation().Yaw, 73.f, .1f));
-    TestTrue(TEXT("Health restored"), FMath::IsNearlyEqual(Resumed->GetSurvivalComponent()->GetHealth(), 77.f, .01f));
+    TestTrue(TEXT("Health restored"), FMath::IsNearlyEqual(Resumed->GetSurvivalComponent()->GetHealth(), 87.f, .01f));   // 100 - 23, plus the 10 a point of Vitality healed
     TestTrue(TEXT("Hunger restored"), FMath::IsNearlyEqual(Resumed->GetSurvivalComponent()->GetHunger(), 42.f, .01f));
     TestTrue(TEXT("Hydration restored"), FMath::IsNearlyEqual(Resumed->GetSurvivalComponent()->GetHydration(), 31.f, .01f));
     const TArray<FEWInventoryEntry> ResumedEntries = Resumed->GetInventoryComponent()->GetInventoryEntries();
@@ -85,6 +94,15 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Starter and saved tool resolve to one owned unit"), Resumed->GetHotbarComponent()->GetOwnedQuantity(Axe), 1);
     TestEqual(TEXT("First hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(2), Axe);
     TestEqual(TEXT("Second hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(5), Berry);
+    UEWProgressionComponent* Back = Resumed->GetProgressionComponent();
+    TestEqual(TEXT("Purse restored"), Resumed->GetWalletComponent()->GetCopper(), int64(1234));
+    TestEqual(TEXT("Level restored"), Back->GetLevel(), 3);
+    TestEqual(TEXT("Unspent stat point restored"), Back->GetUnspentPoints(), 1);
+    TestEqual(TEXT("Spent stat point restored"), Back->GetStatPoints(EEWStat::Vitality), 1);
+    TestEqual(TEXT("Skill point restored"), Back->GetSkillPoints(), 1);
+    TestTrue(TEXT("Lit star restored"), Back->IsSkillUnlocked(TEXT("Gatherer")));
+    TestFalse(TEXT("An unlit star stays unlit"), Back->IsSkillUnlocked(TEXT("Hardy")));
+    TestTrue(TEXT("Vitality bonus applies to health"), FMath::IsNearlyEqual(Resumed->GetSurvivalComponent()->GetMaxHealth(), 110.f, .01f));
     TestTrue(TEXT("Temporary save slot is removed"), UGameplayStatics::DeleteGameInSlot(SlotName, 0));
     TestFalse(TEXT("Temporary save slot no longer exists"), UEWSurvivorSave::HasSave(SlotName));
     return true;

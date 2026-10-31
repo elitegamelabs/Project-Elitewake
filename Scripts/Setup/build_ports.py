@@ -1,4 +1,4 @@
-"""Build the five regional Ports (owner, October 15: Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md).
+"""Build the five regional Ports (owner, October 15: CLAUDE.md).
 Safe to run again. Run in the editor after build_coastal_terrain.py (which levels each Port's site), outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
@@ -435,11 +435,13 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     for actor in actors.get_all_level_actors():
-        if str(actor.get_folder_path()).startswith('World/Ports'):
+        if str(actor.get_folder_path()).startswith('World/Ports') and not str(actor.get_folder_path()).startswith('World/Ports/Plains'):
             actors.destroy_actor(actor)
     ground = Ground()
     report = {}
     for region, port in W.PORTS.items():
+        if region == 'Plains':
+            continue   # Saltreach Freeport stands on the Plains Port's site (owner, October 30; build_freeport.py)
         style = STYLES[region]
         mats = {'stone': instance(stone_parent, f'MI_PortStone_{region}_v1', {'Dark': style['stone'][0], 'Light': style['stone'][1],
                                                                                'Snow': style['snow'], 'Moss': style['moss']}),

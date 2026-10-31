@@ -22,11 +22,11 @@ a straight trunk under whorls of drooping boughs that shorten toward the spire, 
 needle sprays (Art/Flora/Spruce-Needles-v1.png).
 
 The five-region world (owner, October 15; world_layout.py). Each region's primary tree (owner, October 15,
-Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): Central Plains Oak, Winter Birch, Jungle
+CLAUDE.md): Central Plains Oak, Winter Birch, Jungle
 Ash, Desert Palm, Swamp Spruce, in substantial stands. DECIDED (delegated, densities are tuning): Plains and Swamp
 grow in groves with clearings between, Winter and Jungle as forest, Desert's palms near its shores; a few Maravai
 stay in the Jungle under the ash. The starter island has no palms (owner, October 16: palms belong to the Desert;
-Docs/STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md): its old inland hardwoods are oaks in their old places,
+CLAUDE.md): its old inland hardwoods are oaks in their old places,
 oak groves stand back from its beaches where the palms were, and its new western land is dressed like the other
 Plains islands. Every island has fiber
 plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).
@@ -107,7 +107,8 @@ RECIPES = {'Plains': dict(trees={'Oak': 0.8}, groups=True, plants=(0.45, 0.3, 0.
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
            'Jungle': dict(trees={'Ash': 4.0, 'Maravai': 0.5}, groups=False, plants=(0.5, 0.4, 0.25)),
            'Swamp': dict(trees={'Spruce': 2.2}, groups=True, plants=(0.7, 0.3, 0.15))}
-MAX_TREES = 500        # per island (the bigger islands of October 15 night; tuning)
+MAX_TREES = 800        # per island and kind (the five-island world's islands are about 2 km across; tuning)
+MAX_BY_KIND = {'Maravai': 120}      # the jungle's secondary tree stays a minority beside its Ash
 MAX_PLANTS = 220       # of each kind per island
 PALM_SCALE = (.7, 1.35)
 MARAVAI_SCALE = (.75, 1.25)
@@ -402,10 +403,28 @@ def write_tree_mesh(make, shape, path, materials):
     return asset
 
 
-def birch_bark_material():
+def add_fade(material, node, custom, mask=None):
+    """Fade-out copy of a tree material (owner, October 27: a felled tree lies a few seconds, then fades over 3 s, smoothly).
+    The copy is translucent: opacity is the leaf art's alpha (`mask`; none for bark) times a scalar parameter Fade (1 = solid,
+    0 = gone) that the game sets on the tree's own material copy. Lit with the ordinary shading model (translucent materials
+    cannot use two-sided foliage)."""
+    mel = unreal.MaterialEditingLibrary
+    material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_TRANSLUCENT)
+    material.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_DEFAULT_LIT)
+    fade = node(unreal.MaterialExpressionScalarParameter, parameter_name='Fade', default_value=1.0)
+    if mask is None:
+        assert mel.connect_material_property(fade, '', unreal.MaterialProperty.MP_OPACITY)
+    else:
+        both = custom('return A * F;', unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('A', 'F'))
+        assert mel.connect_material_expressions(mask, 'A', both, 'A')
+        assert mel.connect_material_expressions(fade, '', both, 'F')
+        assert mel.connect_material_property(both, '', unreal.MaterialProperty.MP_OPACITY)
+
+
+def birch_bark_material(fade=False):
     """White birch bark marked with dark horizontal streaks (lenticels) and black patches, in world space."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_BirchBark_v1')
+    material, node, custom = material_builder(f'{FOLDER}/M_BirchBark_v1' + ('_Fade' if fade else ''))
     colour = custom(
         'float3 q = P * float3(.32, .32, 2.6); float3 i = floor(q), f = frac(q);'
         ' float h = frac(sin(dot(i, float3(12.9898, 78.233, 37.719))) * 43758.5453);'
@@ -420,6 +439,10 @@ def birch_bark_material():
     assert mel.connect_material_expressions(node(unreal.MaterialExpressionWorldPosition), '', colour, 'P')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.8), '', unreal.MaterialProperty.MP_ROUGHNESS)
+    if fade:
+        add_fade(material, node, custom)
+    else:
+        material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_OPAQUE)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -515,16 +538,20 @@ def import_texture(name, source):
     return texture
 
 
-def bark_material():
+def bark_material(fade=False):
     """Grey-brown palm bark from the timber texture, darker in the leaf-scar rings' shadow."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(f'{FOLDER}/M_PalmBark_v1')
+    material, node, custom = material_builder(f'{FOLDER}/M_PalmBark_v1' + ('_Fade' if fade else ''))
     wood = node(unreal.MaterialExpressionTextureSample, texture=unreal.load_asset(TIMBER))
     colour = custom('float g = dot(W, float3(0.3, 0.59, 0.11)); return lerp(W * float3(0.9, 0.78, 0.62), g * float3(0.86, 0.8, 0.72), 0.55) * 0.85;',
                     unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('W',))
     assert mel.connect_material_expressions(wood, 'RGB', colour, 'W')
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.9), '', unreal.MaterialProperty.MP_ROUGHNESS)
+    if fade:
+        add_fade(material, node, custom)
+    else:
+        material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_OPAQUE)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
     return material
@@ -542,11 +569,11 @@ def berry_material():
     return material
 
 
-def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
+def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False, fade=False):
     """Leaves: the art, cut out by its alpha, lit through from behind; dry fronds turn straw brown. Each tree takes
     its own shade of green, from blue-green to yellow-green, picked by where it stands."""
     mel = unreal.MaterialEditingLibrary
-    material, node, custom = material_builder(path)
+    material, node, custom = material_builder(path + ('_Fade' if fade else ''))
     material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
     material.set_editor_property('two_sided', True)
     material.set_editor_property('shading_model', unreal.MaterialShadingModel.MSM_TWO_SIDED_FOLIAGE)
@@ -591,8 +618,16 @@ def frond_material(texture, path=f'{FOLDER}/M_PalmFrond_v1', snow=False):
             assert mel.connect_material_expressions(pivot, '', target, 'O')
         colour, through = snowy, lit
     assert mel.connect_material_property(colour, '', unreal.MaterialProperty.MP_BASE_COLOR)
-    assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
-    assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
+    if fade:
+        add_fade(material, node, custom, mask=art)
+        # Translucent leaves cannot be lit through from behind, so add that glow back as emission (tuning): without it the
+        # fading crown looks darker and flatter than the solid one.
+        glow = custom('return C * 0.04;', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C',))
+        assert mel.connect_material_expressions(through, '', glow, 'C')
+        assert mel.connect_material_property(glow, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    else:
+        assert mel.connect_material_property(through, '', unreal.MaterialProperty.MP_SUBSURFACE_COLOR)
+        assert mel.connect_material_property(art, 'A', unreal.MaterialProperty.MP_OPACITY_MASK)
     assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=0.65), '', unreal.MaterialProperty.MP_ROUGHNESS)
     mel.recompile_material(material)
     assert unreal.EditorAssetLibrary.save_loaded_asset(material)
@@ -739,7 +774,7 @@ def dress_islands(actors, ground, kinds, wood, thatch):
         reach = island.reach()
         here = []
         for kind, density in recipe['trees'].items():
-            wanted = min(MAX_TREES, int(round(density * area)))
+            wanted = min(MAX_BY_KIND.get(kind, MAX_TREES), int(round(density * area)))
             meshes, scales, radius, half, sink = kinds[kind]
             spacing = {'Spruce': 450.0, 'Ash': 500.0, 'Oak': 800.0}.get(kind, 650.0)
             centres = [(island.cx + rng.uniform(-reach, reach) * .7, island.cy + rng.uniform(-reach, reach) * .7) for _ in range(max(1, wanted // 5))]

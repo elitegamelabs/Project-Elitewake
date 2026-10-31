@@ -64,11 +64,13 @@ FEWClimate AEWClimateRegion::SampleClimate(const UObject* WorldContext, FVector 
     const FEWClimate Sea = OpenSea();
     if (!World) return Sea;
     const AEWClimateRegion* Best = nullptr;
-    float BestOut = 1.f;
+    float BestOut = 1.f, BestScore = 2.f;
     for (TActorIterator<AEWClimateRegion> It(const_cast<UWorld*>(World)); It; ++It)
     {
         const float Out = It->DistanceOutside(Location);
-        if (Out < BestOut) { BestOut = Out; Best = *It; }
+        // Where two regions' circles overlap (a big island's circle reaching its neighbour's shore), the nearer centre decides.
+        const float Score = Out + .001f * FVector::Dist2D(Location, It->GetActorLocation()) / FMath::Max(1.f, It->Radii.GetMax());
+        if (Out < 1.f && Score < BestScore) { BestScore = Score; BestOut = Out; Best = *It; }
     }
     if (!Best) return Sea;
     FEWClimate C = Best->Climate;

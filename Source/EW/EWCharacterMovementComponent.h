@@ -25,6 +25,8 @@ public:
     virtual void UnCrouch(bool bClientSimulation = false) override;
     virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
     virtual void UpdateFromCompressedFlags(uint8 Flags) override;
+    /** A swimmer who lets go of the stick stops quickly across the water (owner, October 22), but is still free to bob up and sink under buoyancy: the extra braking is horizontal only. */
+    virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
     virtual FNetworkPredictionData_Client* GetPredictionData_Client() const override;
 
     /** Apply replicated size without running authority clearance checks on a remote proxy. */

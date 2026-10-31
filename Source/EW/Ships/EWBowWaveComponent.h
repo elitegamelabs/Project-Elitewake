@@ -8,7 +8,7 @@ class AEWShip;
 class UInstancedStaticMeshComponent;
 
 /**
- * Water pushed aside by a ship's hull (owner, October 16: Design/Ships/SHIP_DISPLACEMENT_WAVES_2026-10-16.md), drawn on
+ * Water pushed aside by a ship's hull (owner, October 16: CLAUDE.md), drawn on
  * every machine from the ship's speed and how fast she is turning (nothing extra is replicated). Making way, her bow
  * parts the water in two waves spreading outward and aft from the stem, and foam washes along both sides to meet the
  * wake trail (UEWWakeTrailComponent) astern. Turning, the wash is heavier on the outside of the turn and lighter

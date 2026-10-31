@@ -26,7 +26,7 @@ from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Grass'
 # Per region: clumps per square metre where the ground is fully grassed, and the clump scale range (tuning).
-DENSITY = {'Plains': (2.5, (.8, 1.35)), 'Jungle': (1.4, (.8, 2.0))}
+DENSITY = {'Plains': (7.0, (.8, 1.35)), 'Jungle': (1.4, (.8, 2.0))}      # Plains 2.5 on the old islands; the five-island Plains island is mostly open ground and needs about 7 to stay at least 1.5 times as thick as the Jungle
 # The Jungle's understory (owner, October 16, BIOME_TERRAIN_FOLIAGE_AND_GLOBAL_SUN: dense bushes, grass of varying
 # heights, understory plants and flowers, layered, with navigable paths and performance-aware density): ferns, leafy
 # bushes and flowering plants among its grass, per square metre, with their scale ranges (tuning). None of it blocks.

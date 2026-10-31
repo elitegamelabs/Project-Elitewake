@@ -100,14 +100,14 @@ def wrong_tool():
 def deplete():
     node.set_editor_property('remaining',2); node.force_net_update()
 
-step(spawn); step(request); step(lambda:check('Bare hands rejected',0,0,12,0,'Equip a pickaxe'))
+step(spawn); step(request); step(lambda:check('Bare hands rejected',0,0,12,0,''))
 step(lambda:inventory.add_item(pickaxe,1)); step(request); step(lambda:check('Carried pickaxe insufficient',0,0,12,0))
-step(equip); step(lambda:check('Equipped pickaxe Attack hint',0,0,12,0,'Left Mouse: Mine resource'))
+step(equip); step(lambda:check('Equipped pickaxe Attack hint',0,0,12,0,''))
 step(lambda:tap('E')); step(lambda:check('E cannot mine',0,0,12,0))
 step(lambda:tap('LeftMouseButton')); step(lambda:check('Mouse mines stone',3,0,9,0))
-step(lambda:tap('Gamepad_RightTrigger')); step(lambda:check('RT mines and switches prompt',6,0,6,0,'RT: Mine resource'))
+step(lambda:tap('Gamepad_RightTrigger')); step(lambda:check('RT mines and switches prompt',6,0,6,0,''))
 step(request,.05); step(request,1.3); step(lambda:check('Duplicate strike admission',9,0,3,0))
-step(wrong_tool); step(request); step(lambda:check('Hatchet cannot mine',9,0,3,0,'Equip a pickaxe')); step(equip)
+step(wrong_tool); step(request); step(lambda:check('Hatchet cannot mine',9,0,3,0,'')); step(equip)
 step(lambda:tap('I')); step(request); step(lambda:check('Menu rejects Attack',9,0,3,0,'')); step(lambda:tap('I')); step(lambda:turn(0))
 step(lambda:turn(90)); step(request); step(lambda:check('Aim rejects Attack',9,0,3,0,'')); step(lambda:turn(0))
 step(blocker); step(request); step(lambda:check('Wall rejects Attack',9,0,3,0,'')); step(remove_walls)

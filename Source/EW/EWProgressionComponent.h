@@ -64,7 +64,10 @@ public:
     /** Authority only. Spends one stat point; false when none is left. */
     UFUNCTION(BlueprintCallable, Category="Progression") bool SpendPoint(EEWStat Stat);
     /** Authority only: sets level and spent points straight (a saved survivor coming back, and tests). */
-    void Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints);
+    void Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints, int32 NewSkillPoints = 0, const TArray<FName>& NewSkills = TArray<FName>());
+    /** The lit stars, for saving. */
+    const TArray<FName>& GetUnlockedSkills() const { return UnlockedSkills; }
+    const TArray<int32>& GetAllStatPoints() const { return StatPoints; }
     /** Authority only: gives the inventory every recipe the lit stars name (on arrival, after a load, and when a star is lit). */
     void GrantSkillRecipes();
 

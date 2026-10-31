@@ -1,6 +1,6 @@
 """Create the first sloop: ship definition, helm and sail test fittings, and one bare hull in the coastal map.
 
-Follows the ship model in Docs/DESIGN_REFERENCE.md#ship-model: a complete hull with a helm mount, a Medium
+Follows the ship model in CLAUDE.md: a complete hull with a helm mount, a Medium
 mainsail mount, a Small headsail mount, the two confirmed cannon hardpoints and a boarding ladder on each
 side, and an anchor capstan near the bow. The hull starts bare and anchored.
 Sizes, weights and speeds are labelled test tuning, not balance.
@@ -65,7 +65,7 @@ def configure_sloop(ship):
     ship.set_editor_property('hull_extent', unreal.Vector(500, 160, 100))
     ship.set_editor_property('hull_draft', 60.0)
     ship.set_editor_property('crew_capacity', 6)
-    ship.set_editor_property('top_speed', 700.0)
+    ship.set_editor_property('top_speed', 8 * 51.4444)   # 8 knots base (owner, October 18)
     ship.set_editor_property('turn_rate', 30.0)
     ship.set_editor_property('boarding_points', LADDERS)
     ship.set_editor_property('anchor_point', unreal.Vector(350, -90, 130))  # Capstan near the bow, port side.

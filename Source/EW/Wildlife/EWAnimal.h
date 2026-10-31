@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
 #include "Wildlife/EWWildlifeRest.h"
+#include "Wildlife/EWAnimalDefinition.h"
 #include "EWAnimal.generated.h"
 
 class AEWCharacter;
@@ -49,8 +50,23 @@ public:
     /** This screen's walking speed, cm/s, as its legs show it. */
     UFUNCTION(BlueprintPure, Category="Animal") float GetShownSpeed() const { return ShownSpeed; }
     UFUNCTION(BlueprintPure, Category="Animal") float GetStridePhase() const { return StridePhase; }
+    /** What it is doing now (wandering, grazing, lying down, looking about, fleeing, chasing). */
+    UFUNCTION(BlueprintPure, Category="Animal") EEWAnimalAction GetAction() const { return Action; }
+    /** How far its body is lowered (lying down, 0..1) and its head bowed (grazing, 0..1), as shown. */
+    UFUNCTION(BlueprintPure, Category="Animal") float GetLieShown() const { return LieShown; }
+    UFUNCTION(BlueprintPure, Category="Animal") float GetGrazeShown() const { return GrazeShown; }
+
+    UFUNCTION(BlueprintPure, Category="Animal") AEWCharacter* GetRider() const { return Rider; }
+    /** Where a rider's centre sits, relative to this actor, for a capsule of the given half height. */
+    FVector GetRideSeatLocal(float RiderHalfHeight) const;
+    /** Authority: the rider's steering, a world-space direction on the ground (length 0 to 1; 0 stands still). */
+    void SetRideSteer(AEWCharacter* Who, FVector2D Direction);
+    /** Authority: the rider gets off, onto the ground beside it. */
+    void Dismount();
+    bool CanRide(const AEWCharacter* Character) const;
 
     /** Authority only: a survivor's blow. Returns true if it landed. */
+    UFUNCTION(BlueprintCallable, Category="Wildlife")
     bool TakeStrike(AEWCharacter* Striker, float Damage);
     /** The live animal a survivor's swing would hit: in front of them, within reach of their arm. */
     static AEWAnimal* FindStruck(const AEWCharacter* Striker, float Reach);
@@ -65,7 +81,22 @@ public:
 
 private:
     UPROPERTY(Replicated)
+    TObjectPtr<AEWCharacter> Rider;
+    FVector2D RideDirection = FVector2D::ZeroVector;
+    float RideSteerAge = 0.f;
+    void ThinkRidden(float DeltaSeconds);
+    UPROPERTY(Replicated)
     float Health = 1.f;
+    UPROPERTY(Replicated)
+    EEWAnimalAction Action = EEWAnimalAction::Wander;
+    float LieShown = 0.f;
+    float GrazeShown = 0.f;
+    float LookYaw = 0.f;
+    /** Authority: after a walk it stands and does something: graze, look about, or lie down. */
+    void ChooseIdle();
+    void PushTrees(float DeltaSeconds);
+    float TreePushCooldown = 5.f;
+    FVector Repulsion() const;
     UPROPERTY(ReplicatedUsing=OnRep_State)
     bool bDead = false;
     UPROPERTY(ReplicatedUsing=OnRep_State)
@@ -76,6 +107,12 @@ private:
     void MulticastFlinch();
     /** Authority: it calls out, heard on every screen near; never twice within a few seconds. */
     void Call();
+    /** Every machine: one of its attack (Kind 1) or death (Kind 2) sounds at the animal. */
+    UFUNCTION(NetMulticast, Unreliable)
+    void MulticastCue(uint8 Kind);
+    /** For the checks: attack and death sounds played on this machine. */
+    UFUNCTION(BlueprintPure, Category="Wildlife") int32 GetCuesHeard() const { return CuesHeard; }
+    int32 CuesHeard = 0;
     UFUNCTION(NetMulticast, Unreliable)
     void MulticastCall();
     float CallSeconds = 0.f;

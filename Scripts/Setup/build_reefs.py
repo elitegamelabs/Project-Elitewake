@@ -1,8 +1,8 @@
-"""Grow the six major reefs (world_reefs.py). Safe to run again. Run in the editor after build_coastal_terrain.py,
+"""Grow the five major reefs (world_reefs.py). Safe to run again. Run in the editor after build_coastal_terrain.py,
 outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
-Design reference, Ocean: six major reefs glow day and night. Four corals, built here: branching staghorn coral,
+Canonical world rule: one reef per island, glowing day and night. Four corals are built here: branching staghorn coral,
 lumpy brain-like mounds, upright sea fans and clusters of pillar coral; in five glows (cyan, magenta, lime, amber,
 violet) whose light breathes slowly, bright enough to find a reef from the surface at night but not to light the
 sea. Each coral stands on the sea floor (the island mesh, ray-cast) and stays at least 80 cm under the surface. Corals

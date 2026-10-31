@@ -1,4 +1,5 @@
 #include "EWGameInstance.h"
+#include "Misc/SecureHash.h"
 #include "EWPlayerController.h"
 #include "Characters/EWAppearanceSave.h"
 #include "EWCharacter.h"
@@ -23,6 +24,24 @@ bool UEWGameInstance::NormalizePrivateAddress(const FString& Input, FString& Out
     else if (Port.IsEmpty() || Port.Len()>5 || !Port.IsNumeric() || FCString::Atoi(*Port)<1 || FCString::Atoi(*Port)>65535) return false;
     for (TCHAR C:Port) if (C<TEXT('0') || C>TEXT('9')) return false;
     if (Host.Equals(TEXT("localhost"),ESearchCase::IgnoreCase)) Host=TEXT("127.0.0.1");
+    const int32 GamePort=Port.IsEmpty()?7777:FCString::Atoi(*Port);
+    // Owner, October 30 (friends over the Internet): a host name (a dynamic-DNS name) is accepted too: letters, digits and hyphens in
+    // dot-separated labels, with at least one letter, never a URL, an option or a path.
+    bool bHasLetter=false, bNameChars=!Host.IsEmpty() && Host.Len()<=63;
+    for (TCHAR C:Host)
+    {
+        if (FChar::IsAlpha(C)) bHasLetter=true;
+        else if (!FChar::IsDigit(C) && C!=TEXT('.') && C!=TEXT('-')) bNameChars=false;
+    }
+    if (bHasLetter)
+    {
+        TArray<FString> Labels; Host.ParseIntoArray(Labels,TEXT("."),false);
+        if (!bNameChars || Labels.Num()<1) return false;
+        for (const FString& Label:Labels)
+            if (Label.IsEmpty() || Label.StartsWith(TEXT("-")) || Label.EndsWith(TEXT("-"))) return false;
+        Output=FString::Printf(TEXT("%s:%d"),*Host.ToLower(),GamePort);
+        return true;
+    }
     TArray<FString> Parts; Host.ParseIntoArray(Parts,TEXT("."),false);
     if (Parts.Num()!=4) return false;
     int32 Values[4];
@@ -32,11 +51,16 @@ bool UEWGameInstance::NormalizePrivateAddress(const FString& Input, FString& Out
         for (TCHAR C:Parts[I]) if (C<TEXT('0') || C>TEXT('9')) return false;
         Values[I]=FCString::Atoi(*Parts[I]); if (Values[I]>255) return false;
     }
-    if (!(Values[0]==127 || Values[0]==10 || (Values[0]==172 && Values[1]>=16 && Values[1]<=31)
-        || (Values[0]==192 && Values[1]==168))) return false;
-    Output=FString::Printf(TEXT("%d.%d.%d.%d:%d"),Values[0],Values[1],Values[2],Values[3],Port.IsEmpty()?7777:FCString::Atoi(*Port));
+    // Any host a friend can reach: this PC, the LAN or the Internet (a public address); never 0.x, multicast or reserved.
+    if (Values[0]==0 || Values[0]>=224) return false;
+    Output=FString::Printf(TEXT("%d.%d.%d.%d:%d"),Values[0],Values[1],Values[2],Values[3],GamePort);
     return true;
 }
+FString UEWGameInstance::StablePlayerId()
+{
+    return FMD5::HashAnsiString(*(FPlatformMisc::GetLoginId() + TEXT("|") + FPlatformProcess::UserName()));
+}
+
 void UEWGameInstance::SetChosenAppearance(const FEWAppearance& Appearance)
 {
     ChosenAppearance = Appearance;
@@ -104,14 +128,15 @@ bool UEWGameInstance::JoinLocalGame(const FString& Address)
 {
     FString Target;
     if (!NormalizePrivateAddress(Address,Target))
-    { Status=NSLOCTEXT("Elitewake","SessionInvalidAddress","Enter a local or LAN IPv4 address, such as 127.0.0.1:7777. Internet connection setup is pending."); return false; }
+    { Status=NSLOCTEXT("Elitewake","SessionInvalidAddress","Enter the host's address: 127.0.0.1 on this PC, their LAN address, or over the Internet their public IP (or host name), port 7777."); return false; }
     if (!CanStart()) return false;
     auto* Controller=UGameplayStatics::GetPlayerController(this,0);
     if (!Controller || !Controller->IsLocalController()) return false;
     bJoinedHost=false;
     bHasConnectionError=false; bPending=true; bShowMenuOnArrival=true;
     Status=NSLOCTEXT("Elitewake","SessionJoining","Connecting... Use Leave / Cancel to return to local play.");
-    Controller->ClientTravel(Target,TRAVEL_Absolute); return true;
+    // Who this is, so the host gives back this player's survivor when they come again.
+    Controller->ClientTravel(Target+TEXT("?EWId=")+StablePlayerId(),TRAVEL_Absolute); return true;
 }
 bool UEWGameInstance::LeaveLocalGame()
 {

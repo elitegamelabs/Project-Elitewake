@@ -66,23 +66,20 @@ for world in worlds:
         for side in (-1, 1):
             checks.append(sealed_window(world, schooner, f'{role} Schooner side {x:g} {side:+d}',
                                         (x, side * 300.0, 377.5), (x, 0.0, 377.5), (x, side * y_out, 377.5)))
-    # Schooner aft-quarterdeck bulkhead lights, facing the main deck at x=-825.
-    for y in (-130.0, 130.0):
-        checks.append(sealed_window(world, schooner, f'{role} Schooner quarterdeck front {y:+g}',
-                                    (-750.0, y, 377.5), (-890.0, y, 377.5), (-821.0, y, 377.5)))
+    # The reworked schooner (October 18) has side lights only; its quarters front has a doorway and no window panes, so no front pane is traced.
 
-    # Brigantine raised cabin and forecastle: side panes use 400..450; front panes sit at deck+95..140.
-    for x in (-1000.0, -1130.0, -1260.0, 1150.0, 1260.0):
+    # Brigantine captain's quarters (October 20 rebuild: no forecastle): side panes at the builder's CABIN_WINDOWS
+    # (z 400..450); front panes at deck+95..140 in the wall at QUARTERDECK's front edge.
+    for x in brigantine.CABIN_WINDOWS:
         y_out = brigantine.HULL.half_beam(x) + 1.0
         for side in (-1, 1):
             checks.append(sealed_window(world, brig, f'{role} Brigantine side {x:g} {side:+d}',
                                         (x, side * 520.0, 425.0), (x, 0.0, 425.0), (x, side * y_out, 425.0)))
+    front = brigantine.QUARTERDECK[0]
     for y in (-130.0, 130.0):
         checks.append(sealed_window(world, brig, f'{role} Brigantine quarterdeck front {y:+g}',
-                                    (-800.0, y, 417.5), (-1050.0, y, 417.5), (-896.0, y, 417.5)))
-        checks.append(sealed_window(world, brig, f'{role} Brigantine forecastle front {y:+g}',
-                                    (1000.0, y, 417.5), (1120.0, y, 417.5), (1046.0, y, 417.5)))
+                                    (front + 100.0, y, 417.5), (front - 150.0, y, 417.5), (front + 4.0, y, 417.5)))
 
-assert len(checks) == 40, len(checks)
+assert len(checks) == 24, len(checks)   # 2 roles x (schooner 4 + brigantine 8)
 RESULT.write_text(json.dumps({'success': True, 'checks': checks,
                               'note': 'Generated mesh assets were assigned to HullVisual components in PIE only; map and ship definitions were not saved.'}, indent=2))

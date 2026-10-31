@@ -2,7 +2,7 @@
 Run with ordinary Python (Pillow), outside Unreal:
     python Scripts/Art/make_fish_models.py
 
-For each creature in Art/Concepts/Fish/2026-10-12 it writes, under Art/Fauna/Fish:
+For each aquatic creature in Art/Concepts/Animals/2026-10-12 it writes, under Art/Fauna/Fish:
   <Name>-v1.png       the creature cut out on transparency, cropped, head toward the right (+X in Unreal)
   <Name>-v1.mesh.json a body for it, in two parts. The trunk is truly round (owner, October 15: the creatures
                       looked flat): along its length, an oval cross-section as tall as the silhouette's body with the
@@ -21,19 +21,19 @@ from pathlib import Path
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'Art/Concepts/Fish/2026-10-12'
+SOURCE = ROOT / 'Art/Concepts/Animals/2026-10-12'
 OUT = ROOT / 'Art/Fauna/Fish'
 
 # name, source art, which way the head faces in the art, working length in cm (tuning), how thick the inflated
 # silhouette is for its height (fins, tail; a ray's whole body), and how broad the round trunk is for its height
 # (0 for a ray, which has none). All tuning.
 CREATURES = [
-    ('Piranha', 'angryfish.png', 'left', 30.0, .10, .42),
+    ('Piranha', 'piranha.png', 'left', 30.0, .10, .42),
     ('Bass', 'bass.png', 'left', 50.0, .10, .48),
     ('Catfish', 'catfish.png', 'left', 90.0, .12, .95),
-    ('MantaRay', 'mantaray.png', 'left', 380.0, .12, 0.0),
-    ('GreatWhiteShark', 'shark.png', 'left', 450.0, .08, .78),
-    ('HammerheadShark', 'shark2.png', 'left', 400.0, .08, .74),
+    ('MantaRay', 'manta_ray.png', 'left', 380.0, .12, 0.0),
+    ('GreatWhiteShark', 'great_white_shark.png', 'left', 450.0, .08, .78),
+    ('HammerheadShark', 'hammerhead_shark.png', 'left', 400.0, .08, .74),
     ('Squid', 'squid.png', 'left', 180.0, .12, .95),
 ]
 RING = 20           # points round the trunk's cross-section
@@ -196,7 +196,7 @@ def build(name, source, head, length, thickness, breadth):
                     tris += [(a, b, c, side), (a, c, d, side)]
     loft = trunk(inside, w, h, cm, breadth) if breadth > 0 else {'verts': [], 'uvs': [], 'tris': []}
     (OUT / f'{name}-v1.mesh.json').write_text(json.dumps({
-        'name': name, 'length_cm': length, 'height_cm': round(h * cm, 1), 'source': f'Art/Concepts/Fish/2026-10-12/{source}',
+        'name': name, 'length_cm': length, 'height_cm': round(h * cm, 1), 'source': f'Art/Concepts/Animals/2026-10-12/{source}',
         'verts': verts, 'uvs': uvs, 'tris': tris, 'trunk': loft}), encoding='utf-8')
     return name, art.size, len(verts), len(tris)
 

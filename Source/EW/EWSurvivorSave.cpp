@@ -3,6 +3,11 @@
 #include "EWHotbarComponent.h"
 #include "EWStarterKit.h"
 #include "EWSurvivalComponent.h"
+#include "EWProgressionComponent.h"
+#include "EWWalletComponent.h"
+#include "EWExplorationComponent.h"
+#include "EWGameMode.h"
+#include "EWPlayerController.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -18,9 +23,12 @@ namespace
     }
 }
 
-bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName)
+bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotName, bool bWithWorld)
 {
     if (!Survivor || !Survivor->HasAuthority()) return false;
+    // Not while dead (it would resume dead), nor while carried by something that is not in the save (a ship, a ladder, a mount):
+    // its position would put the survivor in the air or the sea on resume.
+    if (Survivor->IsDead() || Survivor->GetAttachParentActor() || Survivor->IsOnLadder() || Survivor->IsMounted()) return false;
     auto* Save = Cast<UEWSurvivorSave>(UGameplayStatics::CreateSaveGameObject(StaticClass()));
     if (!Save) return false;
     Save->MapPath = MapOf(Survivor);
@@ -37,6 +45,29 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
     if (const auto* Worn = Survivor->GetEquipmentComponent()) Save->Equipment = Worn->GetEquipmentEntries();
     if (const auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Save->Hotbar.Add(Bar->GetBoundItem(i));
+    if (const auto* Purse = Survivor->GetWalletComponent()) Save->Copper = Purse->GetCopper();
+    if (const auto* Progress = Survivor->GetProgressionComponent())
+    {
+        Save->Level = Progress->GetLevel(); Save->Experience = Progress->GetExperience(); Save->UnspentStatPoints = Progress->GetUnspentPoints();
+        Save->StatPoints = Progress->GetAllStatPoints(); Save->SkillPoints = Progress->GetSkillPoints(); Save->UnlockedSkills = Progress->GetUnlockedSkills();
+    }
+    if (const auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (const UEWExplorationComponent* Explored = Controller->GetExploration())
+            if (Explored->GetBoundsSize() > 0.f)
+            {
+                const TArray<uint8>& Cells = Explored->GetCells();
+                Save->ExploredBits.Init(0, (Cells.Num() + 7) / 8);
+                for (int32 i = 0; i < Cells.Num(); ++i) if (Cells[i]) Save->ExploredBits[i >> 3] |= uint8(1 << (i & 7));
+                Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
+            }
+    if (bWithWorld)
+    {
+        AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
+        AEWShip::CaptureAll(Survivor->GetWorld(), Save->Ships);
+        Save->bHasShips = true;
+        UEWWorldStateSubsystem::Capture(Survivor->GetWorld(), Save->WorldState);
+        Save->bHasWorldState = true;
+    }
     return UGameplayStatics::SaveGameToSlot(Save, SlotName, 0);
 }
 
@@ -64,14 +95,27 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
     // An item that no longer exists in the game is left out. Equipped items go back through the inventory so
     // they are equipped the ordinary way.
     TArray<FEWInventoryEntry> Entries = Inventory.FilterByPredicate([](const FEWInventoryEntry& E) { return E.ItemDefinition && E.Quantity > 0; });
+    // Room is made for the equipped items even if the pack has shrunk since the save, so none is lost; the pack's own size is put back
+    // once they are worn (they leave it again, so it fits).
+    const int32 PackSlots = Pack->MaxSlots;
+    int32 Worn_ = 0;
+    for (const FEWEquipmentEntry& Entry : Equipment) if (Entry.ItemDefinition) ++Worn_;
+    Pack->MaxSlots = PackSlots + Worn_;
     for (const FEWEquipmentEntry& Entry : Equipment)
         if (Entry.ItemDefinition) UEWInventoryComponent::AddToEntries(Entries, Pack->MaxSlots, Entry.ItemDefinition, 1);
     Pack->Entries = MoveTemp(Entries);
     Pack->HandleInventoryChanged();
     for (const FEWEquipmentEntry& Entry : Equipment)
         if (Entry.ItemDefinition) Worn->EquipItem(Entry.ItemDefinition, Entry.Slot);
+    Pack->MaxSlots = PackSlots;
     if (auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Bar->BindItem(i, Hotbar.IsValidIndex(i) ? Hotbar[i].Get() : nullptr);
+    if (Copper >= 0)
+        if (auto* Purse = Survivor->GetWalletComponent()) Purse->SetCopper(Copper);
+    // Levels first: their health bonus raises the maximum before the saved health is put back.
+    if (Level > 0)
+        if (auto* Progress = Survivor->GetProgressionComponent())
+            Progress->Restore(Level, Experience, UnspentStatPoints, StatPoints, SkillPoints, UnlockedSkills);
     if (auto* Needs = Survivor->GetSurvivalComponent())
     {
         const float Change = Health - Needs->GetHealth();
@@ -80,6 +124,27 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         Needs->SetHunger(Hunger);
         Needs->SetHydration(Hydration);
     }
+    if (ExploredSize > 0.f)
+        if (auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+            if (UEWExplorationComponent* Explored = Controller->GetExploration())
+            {
+                TArray<uint8> Cells; Cells.Init(0, UEWExplorationComponent::GridSize * UEWExplorationComponent::GridSize);
+                for (int32 i = 0; i < Cells.Num() && (i >> 3) < ExploredBits.Num(); ++i) if (ExploredBits[i >> 3] & (1 << (i & 7))) Cells[i] = 255;
+                Explored->LoadCells(Cells, ExploredMin, ExploredSize);
+                // The server's own edge grows to where this survivor has been, so teleports do not fire inside their explored map.
+                if (const AEWGameMode* Mode = Survivor->GetWorld() ? Survivor->GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr)
+                    if (Mode->WorldEdge) Mode->WorldEdge->GrowToCover(ExploredSize);
+            }
+    // What was built comes back (a map loaded fresh has none; pieces already standing are left alone).
+    if (BuiltPieces.Num() > 0 && Survivor->GetWorld())
+    {
+        bool bAny = false;
+        for (TActorIterator<AEWBuildPiece> It(Survivor->GetWorld()); It; ++It) { bAny = true; break; }
+        if (!bAny) AEWBuildPiece::RestoreAll(Survivor->GetWorld(), BuiltPieces);
+    }
+    // The ships as they were (before the survivor is set down, so one saved standing on a deck lands on it).
+    if (bHasShips && Survivor->GetWorld()) AEWShip::RestoreAll(Survivor->GetWorld(), Ships);
+    if (bHasWorldState && Survivor->GetWorld()) UEWWorldStateSubsystem::Restore(Survivor->GetWorld(), WorldState);
     Survivor->TeleportTo(Location, FRotator(0.f, Facing.Yaw, 0.f), false, true);
     if (AController* Controller = Survivor->GetController()) Controller->SetControlRotation(Facing);
     return true;

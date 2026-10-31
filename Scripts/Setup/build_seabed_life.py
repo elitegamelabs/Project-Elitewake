@@ -8,9 +8,8 @@ The plants are alive: seagrass and kelp lean and sway back and forth with the sw
 tips the most, and the kelp's long fronds drift; the corals, fans and sponges stand still and are solid, so a swimmer
 bumps into them. Laid as foliage instances, which fade out with distance as the sea's own haze swallows them.
 
-The shapes and colours here are PROVISIONAL: the owner wants ChatGPT's designs as the base, and none for the sea floor
-exist yet (queued as G8 in Docs/Delegation/CHATGPT.md). When they land, match COLOURS and the mesh builders to them.
-The six glowing major reefs keep their own look (build_reefs.py). Sizes, colours and fade distances are tuning.
+The shapes and colours here are provisional and need the owner visual review defined in CLAUDE.md.
+The five glowing major reefs keep their own look (build_reefs.py). Sizes, colours and fade distances are tuning.
 Writes Saved/SeabedLifeResult.json.
 """
 import json

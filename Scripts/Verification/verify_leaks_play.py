@@ -136,13 +136,16 @@ def bailed():
     """Three strokes: each an Interact held at the bucket until its stroke completes (as a held key does)."""
     m = state['memo']
     keep_aim()
-    now = time.monotonic()
-    if now - m['t'] < 1.0:
+    if time.monotonic() - m['t'] < 1.0:
         return False
+    now = unreal.GameplayStatics.get_time_seconds(server_world)      # game time: a slow frame stretches the strokes and the leaks alike
     if 'w_before' not in m:
         assert ship.is_aboard(owner), 'the survivor is not aboard'
         assert 'Bail water' in str(ship.get_interaction_prompt(owner)), f'the bucket offers "{ship.get_interaction_prompt(owner)}"'
-        m['w_before'], m['leaks'], m['bail_t'], m['next'] = ship.get_water_aboard(), ship.get_leak_count(), now, now
+        m['w_before'], m['leaks'], m['bail_t'], m['next'], m['let_in'], m['last'] = ship.get_water_aboard(), ship.get_leak_count(), now, now, 0.0, now
+    # The water she takes in is counted frame by frame: as she fills she settles and holes that rode above the sea go under, so the leak count rises.
+    m['let_in'] += ship.get_leak_count() * LEAK * (now - m['last'])
+    m['last'] = now
     if m['strokes'] < 3:
         if now >= m['next']:
             assert lib.send_verification_interaction_request(client, peer)
@@ -151,9 +154,9 @@ def bailed():
         return False
     if now < m['next']:
         return False
-    let_in = m['leaks'] * LEAK * (now - m['bail_t'])
+    let_in = m['let_in']
     thrown = m['w_before'] + let_in - ship.get_water_aboard()
-    assert abs(thrown - 3 * STROKE) < 12, f'{thrown:.0f} kg bailed by three strokes'
+    assert abs(thrown - 3 * STROKE) < 12, f'{thrown:.0f} kg bailed by three strokes; before {m["w_before"]:.0f}, leaks {m["leaks"]}, now {ship.get_water_aboard():.0f}, elapsed {now - m["bail_t"]:.1f}, capacity {ship.get_weight_capacity():.0f}, holes {ship.get_hole_count()}'
     m['bailed_kg'] = round(thrown)
     return True
 

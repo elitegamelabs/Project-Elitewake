@@ -1,4 +1,4 @@
-"""Client acceptance for the anchor's chain (owner, October 16: Design/Ships/ANCHOR_CHAIN_ANIMATION_AUDIO_2026-10-16.md).
+"""Client acceptance for the anchor's chain (owner, October 16: CLAUDE.md).
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, with the moored sloop.
 Run unattended with run_play_check.py. The sloop starts at anchor; the server fits her out with full sail and turns

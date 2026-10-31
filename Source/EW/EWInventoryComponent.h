@@ -133,6 +133,9 @@ private:
     friend class FEWContainerTransferTest;
     friend class UEWEquipmentComponent;
     friend class UEWSurvivorSave;
+    friend class AEWShip;
+    friend class AEWDeathBag;
+    friend class AEWWreckCrate;
     friend class FEWSurvivorSaveRoundTripTest;
     double LastFoodClockSeconds = 0.;
     void RefreshFoodAge();

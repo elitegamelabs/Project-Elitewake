@@ -3,6 +3,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include "Widgets/SWindow.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/App.h"
 
 // Route through Slate focus and hit testing: calling ContinueToMenu directly
 // cannot detect an unfocusable or mouse-transparent painted widget.
@@ -114,6 +115,12 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWTitleSlateInputTest, "Elitewake.Title.Routed
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 bool FEWTitleSlateInputTest::RunTest(const FString& Parameters)
 {
+    // A headless run (-nullrhi) draws nothing, so no widget ever gets geometry: the check needs a rendering editor.
+    if (!FApp::CanEverRender())
+    {
+        AddInfo(TEXT("Skipped: this run does not render"));
+        return true;
+    }
     if (!FSlateApplication::IsInitialized())
     {
         AddError(TEXT("This input regression requires a Slate application"));

@@ -23,7 +23,9 @@ def run_equipment_verification():
     wood=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
     assert hat and alternate and wood
     head=unreal.EWEquipmentSlot.HEAD
-    assert not inventory.get_inventory_entries() and not equipment.get_equipment_entries(),'Use fresh PIE'
+    for e in list(equipment.get_equipment_entries()): equipment.unequip_item(e.get_editor_property('slot'))
+    for e in list(inventory.get_inventory_entries()): inventory.remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))      # the starter kit arrives with every survivor
+    assert not inventory.get_inventory_entries() and not equipment.get_equipment_entries(),'could not empty the starter kit'
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
     old_throttle=settings.get_editor_property('bThrottleCPUWhenNotForeground')
     settings.set_editor_property('bThrottleCPUWhenNotForeground',False)
@@ -62,8 +64,8 @@ def run_equipment_verification():
             assert other.get_inventory_component().get_item_count(alternate)==1 and not other.get_equipment_component().get_equipment_entries(),label+': foreign pawn changed'
     def select(index):
         widget=ui();assert widget and widget.has_user_focus(controller)
-        while widget.get_selected_index()<index:key('Down')
-        while widget.get_selected_index()>index:key('Up')
+        while widget.get_selected_index()<index:key('Right')
+        while widget.get_selected_index()>index:key('Left')
         key('Enter')
     def client_reject():
         if not controller.has_authority():

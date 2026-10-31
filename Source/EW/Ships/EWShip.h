@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "EWInteractable.h"
 #include "EWShipTypes.h"
+#include "EWInventoryComponent.h"
 #include "EWShip.generated.h"
 
 class AEWCharacter;
@@ -16,6 +17,7 @@ class UMaterialInstanceDynamic;
 class UEWShipSoundComponent;
 class UEWWakeTrailComponent;
 class UEWBowWaveComponent;
+class AEWShipSurgeon;
 
 /** One cannon on its mount: who mans it, where it is aimed (degrees from its rest, up is positive pitch) and
  *  whether it is loaded or being loaded. Replicated with the ship. */
@@ -35,6 +37,16 @@ struct FEWCannonState
     bool bLoaded = false;
     UPROPERTY(BlueprintReadOnly, Category="Cannon")
     bool bLoading = false;
+    /** A hired gunner (a Port NPC signed on with Gunner Articles) serves this cannon: loads it from the hold and fires
+     *  with the volley whenever a survivor fires a cannon of this ship (owner, October 18). */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    bool bCrewed = false;
+    /** Shots fired from this cannon (wraps); every machine plays the recoil when it changes. */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    uint8 Shots = 0;
+    /** When loading began, on the server's clock, so every machine can tell the step (swab, powder, shot, ram). */
+    UPROPERTY(BlueprintReadOnly, Category="Cannon")
+    float LoadStartedAt = -1.f;
 };
 
 /** Where round shot holed the hull, in the ship's space, and which way the planking faced there. */
@@ -54,6 +66,53 @@ enum class EEWFittingResult : uint8 { Installed, Removed, Busy, NotAllowed, NoMo
 /** How much sail is set. The helmsman steps through five positions and trims to the wind separately. */
 UENUM(BlueprintType)
 enum class EEWSailState : uint8 { Furled, Quarter, Half, ThreeQuarter, Full };
+
+/** One sail's own setting and who works it (owner, October 18: crew dependency). A sail with a hired sailhand follows the
+ *  helm's orders; any sail can be worked by hand at its lines (the pin rail at the foot of its mast). Replicated. */
+USTRUCT(BlueprintType)
+struct FEWSailLine
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    FName MountId;
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    EEWSailState State = EEWSailState::Furled;
+    /** A hired sailhand (a Port NPC signed on with Sailhand's Articles) stands at these lines. */
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    bool bCrewed = false;
+    /** A survivor working these lines by hand, if any. */
+    UPROPERTY(BlueprintReadOnly, Category="Sail")
+    TObjectPtr<AEWCharacter> Worker;
+};
+
+/**
+ * A ship as a save keeps her (M7 persistence, October 30): where she lies, her class, what is fitted, her hold, her hull (health,
+ * holes, water aboard), her anchor, every sail's setting and hired hand, every cannon's hired gunner and charge, and which ports are
+ * open. Nobody aboard is kept here (survivors are saved on their own); a ship placed in the map is matched by its name.
+ */
+USTRUCT(BlueprintType)
+struct FEWSavedShip
+{
+    GENERATED_BODY()
+    /** The placed ship's name in the map; none for a ship bought or spawned in play. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") FName MapName;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TSubclassOf<class AEWShip> ShipClass;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TObjectPtr<UEWShipDefinition> Definition;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FTransform Transform;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInstalledFitting> Fittings;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Cargo;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float HullHealth = -1.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWHullHole> Holes;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float WaterAboard = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") bool bAnchored = true;
+    UPROPERTY(BlueprintReadOnly, Category="Save") EEWSailState SailState = EEWSailState::Furled;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSailLine> SailLines;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWCannonState> Cannons;
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> OpenGunports;
+    /** Her owner: the host's stable key for the player (none: unclaimed) and the name shown. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerKey;
+    UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerName;
+};
 
 /**
  * A vessel built from a ship definition: a complete hull with fixed mounts. Players install fittings
@@ -171,6 +230,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Anchor")
     FVector GetAnchorPointWorld() const;
     /** Authority only. Raises or drops the anchor; anyone able to act may work the capstan. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
     bool SetAnchored(AEWCharacter* Character, bool bNewAnchored);
     /** Tuning: how hard a dropped anchor slows the ship, in cm/s per second. */
     static constexpr float AnchorDrag = 500.f;
@@ -245,7 +305,7 @@ public:
     EEWSailState GetSailState() const { return SailState; }
     /** Fraction of available sail currently set, in 25% steps. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
-    float GetSailFraction() const { return SailFractionForState(SailState); }
+    float GetSailFraction() const;
     static constexpr float SailFractionForState(EEWSailState State) { return static_cast<uint8>(State) * .25f; }
     /** Forward speed in cm/s. */
     UFUNCTION(BlueprintPure, Category="Ship|Sailing")
@@ -311,16 +371,52 @@ public:
     FVector GetHelmSeatLocal(float CapsuleHalfHeight) const;
 
     /** Authority only. The survivor must be able to act and the helm must be installed and free. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool TakeHelm(AEWCharacter* Character);
     /** Authority only. Fails if the exit spot is blocked, unless forced. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool LeaveHelm(AEWCharacter* Character, bool bForce = false);
     /** Authority only, from the helmsman: -1 hard to port, +1 hard to starboard. Held until changed. */
     bool SetRudder(AEWCharacter* Character, float NewRudder);
     /** Authority only, from the helmsman: +1 sets more sail, -1 takes it in. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
     bool StepSails(AEWCharacter* Character, int32 Direction);
     /** Authority only, from the helmsman: +1 swings the sails toward starboard, -1 toward port, 0 holds them.
      *  Held until changed. */
     bool SetSailTrim(AEWCharacter* Character, int32 Direction);
+    /** Each sail's own setting: the helm's order for a crewed sail, whatever was last set by hand otherwise. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    EEWSailState GetMountSailState(FName MountId) const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    bool IsSailCrewed(FName MountId) const;
+    /** Sail mounts with a sailhand; the helm commands only these (owner, October 18). */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    int32 GetCrewedSailCount() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    AEWCharacter* GetLinesWorker(FName MountId) const;
+    /** Authority only: a sailhand joins this sail mount; false if it has one already or is no sail. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool SignOnSailhand(FName MountId);
+    /** Authority only (checks and test setups): a sailhand on every sail mount. Returns how many joined. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    int32 CrewEverySail();
+    /** Authority only: a survivor takes a sail's lines, then Up/Down raise or lower that sail a step at a time. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool TakeLines(AEWCharacter* Character, FName MountId);
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool LeaveLines(AEWCharacter* Character);
+    /** Authority only, from the survivor at the lines: +1 sets more of that sail, -1 takes it in. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Sailing")
+    bool StepSailByHand(AEWCharacter* Character, int32 Direction);
+    /** Where a sail's lines are, in the ship's space: on a pin rail at the foot of its mast. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    FVector GetLinesLocal(FName MountId) const;
+    /** Authority only, for Play checks: fits an item at a mount without a survivor carrying it. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Verification")
+    bool VerificationInstallFitting(FName MountId, UEWItemDefinition* Item);
+    /** Tuning: how far from the lines a survivor may stray before letting go, and how long a sailhand hauls after an order. */
+    static constexpr float LinesReach = 300.f;
+    static constexpr float HaulSeconds = 1.5f;
     /** How far the sails swing either side of the centreline, and how fast, in degrees and degrees per second (tuning). */
     /** The sails swing 90 degrees to either side of square across the hull: 180 in all (owner, October 16). */
     static constexpr float MaxSailAngle = 90.f;
@@ -332,9 +428,20 @@ public:
 
     /** Simulation and handling tuning. */
     static constexpr float SimulationStep = .05f;
-    /** Owner, October 16: sailing from island to island took too long, so every sailing ship goes this much faster
-     *  than its definition's top speed (the paddled raft keeps its pace). Tuning. */
-    static constexpr float SailingPace = 1.6f;
+    /** Owner, October 18 (superseding the October 16 pace-up): a ship's definition TopSpeed is its class base speed (raft 3, sloop 8,
+     *  schooner 10, brigantine 12, Cavalier 14 knots; the dinghy 5 is a delegated choice). The sails raise it by the best drawing sail's
+     *  deployment times its multiplier (UEWItemDefinition::SailSpeedMultiplier): a cap, not stacked per hardpoint. */
+    static constexpr float CmPerSecondPerKnot = 51.4444f;
+    /** Owner, October 30 ("bring back faster"): crossings at the October 18 speeds were too slow, so every ship, under sail or paddles,
+     *  goes this much faster than its class base speed, as the October 16 pace-up did. The class ratios and sail multipliers stand. */
+    static constexpr float CrossingPace = 1.6f;
+    /** The best drawing sail's deployment times its multiplier (0 with every sail down), and whether that sail is weighted. */
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    float GetSailSpeedCap() const;
+    UFUNCTION(BlueprintPure, Category="Ship|Sailing")
+    bool IsWeightedSailDrawing() const;
+    /** Delegated tuning (October 18): a drawing weighted sail damps roll and pitch by this share. */
+    static constexpr float WeightedSailDamping = .1f;
     static constexpr float MaxCatchUpSeconds = .5f;
     static constexpr float Acceleration = 240.f;   // was 150 before the faster crossings (owner, October 16)
     static constexpr float Deceleration = 250.f;
@@ -381,10 +488,50 @@ public:
     static constexpr float CannonMountHeight = 40.f;
     /** Authority only. A survivor mans an installed cannon from behind it, aims it with the view and fires it;
      *  while they man it, it loads itself from the round shot they carry. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool ManCannon(AEWCharacter* Character, FName MountId);
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool LeaveCannon(AEWCharacter* Character, bool bForce = false);
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool AimCannon(AEWCharacter* Character, float Yaw, float Pitch);
+    /** Authority only, from the cannon's gunner. Every hired gunner whose cannon is loaded, bears on the shot's mark and
+     *  has a clear line to it fires with it (the volley). */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool FireCannon(AEWCharacter* Character);
+    /** Hired gunners (owner, October 18: Port NPCs assigned to any deck's cannons). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    bool IsCannonCrewed(FName MountId) const;
+    /** Authority only: a gunner joins an installed cannon; false if it has one or there is no cannon there. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    bool SignOnGunner(FName MountId);
+    /** Authority only (checks and test setups): a gunner on every installed cannon. Returns how many joined. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    int32 CrewEveryCannon();
+    /** Server: how many hired gunners fired with the last shot a survivor fired from this ship. */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    int32 GetLastVolley() const { return LastVolley; }
+    /** Tuning: how far ahead of the muzzle the volley's mark is sought, and the slack a hired gunner's aim allows
+     *  beyond its cannon's swing before it holds fire (degrees). */
+    static constexpr float VolleyRange = 20000.f;
+    /** The step a loading cannon is at (owner, October 18: powder, ball and ramming): Swab, Powder, Shot or Ram, each a quarter of
+     *  CannonLoadSeconds; None when it is not loading. Only the round shot is taken from a stock (there is no powder item yet). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    FName GetCannonLoadStep(FName MountId) const;
+    /** How far the cannon is thrown back by its last shot now, cm (0 at rest). */
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    float GetCannonRecoil(FName MountId) const;
+    /** Tuning: how far a shot throws the cannon back (cm), how fast (s), and how long it takes to run out again (s). */
+    static constexpr float RecoilDistance = 55.f;
+    static constexpr float RecoilKickSeconds = .08f;
+    static constexpr float RecoilReturnSeconds = 1.6f;
+    /** Authority: the survivor at a cannon marks the ship their cannon is laid on as the target, for the hired gunners to lay their
+     *  cannons on (owner, October 18: NPCs aim at the player's targeted enemy); laid on open water, the mark is cleared. True when a
+     *  ship is marked. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
+    bool MarkTarget(AEWCharacter* Character);
+    UFUNCTION(BlueprintPure, Category="Ship|Cannon")
+    AEWShip* GetMarkedShip() const { return MarkedShip; }
+    static constexpr float VolleyAimSlack = 3.f;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     AEWCharacter* GetCannonGunner(FName MountId) const;
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
@@ -401,6 +548,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     float GetGunportOpening(FName MountId) const;
     /** Authority only, from the gunner of that port's cannon. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Cannon")
     bool SetGunportOpen(AEWCharacter* Character, bool bOpen);
     /** Tuning: how fast a port opens or shuts (of the way a second), and how far its cannon runs in, cm. */
     static constexpr float GunportRate = .8f;
@@ -429,6 +577,40 @@ public:
     /** Authority only: round shot struck the hull at Where (world), the planking facing Normal there. */
     UFUNCTION(BlueprintCallable, Category="Ship|Hull")
     void TakeRoundShot(const FVector& Where, const FVector& Normal, AEWCharacter* Gunner);
+    /** Authority: a shipyard makes her whole (owner, October 30: the Freeport shipwright repairs ships): full hull health, every
+     *  hole patched and the water pumped out. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Hull")
+    void RepairAtShipyard();
+    /** Authority: a harbor's pilots bring her to Where (a berth, or the harbor mouth for departure): her anchor comes up, she is moved
+     *  (kept at her own height on the water) and the anchor goes down there. Survivors standing aboard come with her; anyone at
+     *  the helm, a cannon or the lines lets go first. False while she is sinking. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Anchor")
+    bool TowTo(const FTransform& Where);
+    /** Ownership (DECIDED, delegated, October 30): a bought ship is her buyer's; an unclaimed ship is claimed by the first survivor to
+     *  take her helm. Only her shipmates (the owner, or members of the owner's Company when its ship policy is not Personal) take the
+     *  helm, open the hold, work the anchor, sails and cannons, sign on crew and change fittings. Anyone may climb aboard and bail.
+     *  Single player has no gates (owner, October 14). */
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    bool IsOwned() const { return !OwnerName.IsEmpty(); }
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    FString GetOwnerName() const { return OwnerName; }
+    UFUNCTION(BlueprintPure, Category="Ship|Owner")
+    bool IsShipmate(const AEWCharacter* Character) const;
+    /** Authority: makes her this player's (null: unclaimed again). */
+    UFUNCTION(BlueprintCallable, Category="Ship|Owner")
+    void SetShipOwner(AController* NewOwner);
+    /** Alive, here, and one of her shipmates. */
+    bool CanCommand(const AEWCharacter* Character) const { return CanModifyFittings(Character) && IsShipmate(Character); }
+    /** Saving (M7): this ship as a save keeps her, and putting a saved state back on her (authority). */
+    FEWSavedShip CaptureForSave() const;
+    void RestoreFromSave(const FEWSavedShip& Saved);
+    /** Authority: every ship afloat in World (none going down), for a save. */
+    static void CaptureAll(UWorld* World, TArray<FEWSavedShip>& Out);
+    /** Authority: puts the saved ships back: placed ones by name, the rest launched anew; a placed ship the save does not have was
+     *  lost and is taken away. Returns how many ships were put back. */
+    static int32 RestoreAll(UWorld* World, const TArray<FEWSavedShip>& Ships);
+    /** Authority: a shipyard fits an item at a mount of a new hull (the same rule as fitting one by hand). */
+    bool FitAtShipyard(FName MountId, UEWItemDefinition* Item) { return VerificationInstallFitting(MountId, Item); }
 
     /** Tuning: water each hole below the waterline lets in, kg (litres) a second. */
     static constexpr float LeakPerHole = 6.f;
@@ -461,7 +643,21 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship|Hull")
     FVector GetBucketWorld() const;
 
+public:
+    /** The permanent surgeon aboard (server side; null where the hull has no deck below). */
+    UFUNCTION(BlueprintPure, Category="Ship|Interior") AEWShipSurgeon* GetSurgeon() const { return Surgeon; }
 private:
+    UPROPERTY() TObjectPtr<AEWShipSurgeon> Surgeon;
+    /** The owner's stable key on this host (server only; saved), their name, their player id this session (none while away) and
+     *  the Company they were last seen in. */
+    FString OwnerKey;
+    UPROPERTY(Replicated) FString OwnerName;
+    UPROPERTY(Replicated) int32 OwnerPlayerId = INDEX_NONE;
+    UPROPERTY(Replicated) FGuid OwnerCompanyId;
+    float OwnerRefreshIn = 0.f;
+    /** Authority: finds the owner among the players here (their id, name and Company now). */
+    void RefreshOwner();
+    FText CrewOnlyPrompt() const;
     UPROPERTY(ReplicatedUsing=OnRep_Fittings)
     TArray<FEWInstalledFitting> Fittings;
     /** Local query boxes, one per mount, rebuilt from the definition on every machine. */
@@ -537,6 +733,14 @@ private:
     UPROPERTY(Transient)
     TMap<FName, TObjectPtr<UStaticMeshComponent>> CoverVisuals;
     void ShowGunports(float DeltaSeconds);
+    /** Every machine: start a cannon's recoil when its shot count changes, and draw it thrown back and running out again. */
+    void ShowRecoil(float DeltaSeconds);
+    TMap<FName, uint8> ShownShots;
+    TMap<FName, float> RecoilClock;
+    void PlaceCannonVisual(const FEWShipMount& Mount);
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWShip> MarkedShip;
+    float ServerNow() const;
     /** A cannon mount's transform with its cannon run in as far as its port is shut. */
     FTransform GunMountTransform(const FEWShipMount& Mount) const;
     UPROPERTY(ReplicatedUsing=OnRep_Holes)
@@ -561,6 +765,17 @@ private:
     void OnRep_Holes();
     /** Server: seconds until each loading cannon is ready. */
     TMap<FName, float> CannonLoadLeft;
+    int32 LastVolley = 0;
+    /** Spawns a round shot from a cannon's muzzle as aimed; the cannon is then empty. */
+    bool LaunchShot(FName MountId, AEWCharacter* Shooter);
+    /** Hired gunners lay their cannons on Mark and fire where they can (not Except, the survivor's own cannon). */
+    int32 FireVolley(const FVector& Mark, const AActor* MarkActor, FName Except, AEWCharacter* Caller);
+    bool TraceVolleyLine(FHitResult& Hit, const FVector& From, const FVector& To) const;
+    /** The placeholder hired gunners standing behind their cannons, and when each last fired (for its lean). */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> GunnerVisuals;
+    void ShowHiredGunners();
+    static UEWItemDefinition* FindCarriedGunnerArticles(const AEWCharacter* Character);
     FEWCannonState* FindCannon(FName MountId) { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
     const FEWCannonState* FindCannon(FName MountId) const { return Cannons.FindByPredicate([MountId](const FEWCannonState& C) { return C.MountId == MountId; }); }
     /** The installed cannon's barrel pivot at rest, in the ship's space; false if no cannon is fitted there. */
@@ -582,6 +797,29 @@ private:
     TObjectPtr<AEWCharacter> Helmsman;
     UPROPERTY(ReplicatedUsing=OnRep_SailState)
     EEWSailState SailState = EEWSailState::Furled;
+    UPROPERTY(ReplicatedUsing=OnRep_SailLines)
+    TArray<FEWSailLine> SailLines;
+    UFUNCTION()
+    void OnRep_SailLines();
+    FEWSailLine* FindLine(FName MountId) { return SailLines.FindByPredicate([MountId](const FEWSailLine& L) { return L.MountId == MountId; }); }
+    const FEWSailLine* FindLine(FName MountId) const { return SailLines.FindByPredicate([MountId](const FEWSailLine& L) { return L.MountId == MountId; }); }
+    FEWSailLine& FindOrAddLine(FName MountId);
+    FName FindAimedLines(const AEWCharacter* Character) const;
+    /** Sailhand's Articles in the pack (an item with bSignsOnSailhand), or none. */
+    static UEWItemDefinition* FindCarriedArticles(const AEWCharacter* Character);
+    /** Server: let go for survivors who walked off or can no longer work; everywhere: the sailhands haul. */
+    void UpdateSailLines(float DeltaSeconds);
+    void BuildLineVisuals();
+    /** The pin rail (aim target and stand-in look) and the placeholder sailhand at each sail's lines. */
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UBoxComponent>> LineTargets;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> LineVisuals;
+    UPROPERTY(Transient)
+    TMap<FName, TObjectPtr<UStaticMeshComponent>> SailhandVisuals;
+    /** Seconds each sailhand still hauls (shown), and the state last seen, to start hauling when it changes. */
+    TMap<FName, float> HaulLeft;
+    TMap<FName, EEWSailState> HaulSeen;
     UPROPERTY(Replicated)
     float Speed = 0.f;
     UPROPERTY(Replicated)

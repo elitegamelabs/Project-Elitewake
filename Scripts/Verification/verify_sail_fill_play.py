@@ -1,5 +1,5 @@
 """Screenshots of the sloop's sails filled and slack (owner, October 16: sails billow when they catch the wind, go
-slack and keep flapping when they don't; Design/Ships/WIND_REACTIVE_SAIL_ANIMATION_2026-10-16.md).
+slack and keep flapping when they don't; CLAUDE.md).
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground (EW_PLAY_PLAYERS=1 is enough). Run unattended with
 run_play_check.py. Fits out the moored sloop (helm, mainsail, headsail, full sail; she stays anchored), then:
@@ -19,6 +19,9 @@ RESULT = Path(unreal.Paths.project_saved_dir(), 'SailFillPlayResult.json')
 SHOTS = Path(unreal.Paths.project_saved_dir(), 'Screenshots', 'SailFill')
 SHOTS.mkdir(parents=True, exist_ok=True)
 world = next(w for w in lib.get_play_worlds())
+# Crew dependency (owner, October 18): the helm sets only sails with a hired sailhand, so every ship here is crewed first.
+for _s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip):
+    _s.crew_every_sail()
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
 owner = pc.get_controlled_pawn()
 ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)

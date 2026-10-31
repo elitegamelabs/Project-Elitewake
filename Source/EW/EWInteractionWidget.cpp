@@ -79,33 +79,11 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
     if (bNoticeTorch) HighlightedTorches.AddUnique(Torch);
     HighlightedTorches.RemoveAll([Survivor](const TWeakObjectPtr<AEWInnTorchPickup>& Item)
         { return !Item.IsValid() || Item->IsActorBeingDestroyed() || Item->HasCollected(Survivor); });
-    if (const auto* Tree = Cast<AEWHarvestTree>(Target))
+    // Trees and rocks show no prompt at all (owner, October 25): a tree is a tree, a rock is a rock; the swing is learned, not announced.
+    if (Cast<AEWHarvestTree>(Target) || Cast<AEWMineable>(Target))
     {
-        if (!Tree->CanAccessSource(Survivor))
-        {
-            Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
-            Panel->SetVisibility(ESlateVisibility::Collapsed); return;
-        }
-        Prompt->SetText(Tree->CanHarvest(Survivor)
-            ? (PC->UsesControllerPrompts() ? NSLOCTEXT("Elitewake","HarvestRT","RT: Chop tree")
-                : NSLOCTEXT("Elitewake","HarvestMouse","Left Mouse: Chop tree"))
-            : NSLOCTEXT("Elitewake","HarvestNeedsHatchet","Equip a hatchet to harvest"));
-        Progress->SetPercent(0); Progress->SetVisibility(ESlateVisibility::Collapsed);
-        Panel->SetVisibility(ESlateVisibility::HitTestInvisible); return;
-    }
-    if (const auto* Node = Cast<AEWMineable>(Target))
-    {
-        if (!Node->CanAccessSource(Survivor))
-        {
-            Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
-            Panel->SetVisibility(ESlateVisibility::Collapsed); return;
-        }
-        Prompt->SetText(Node->CanMine(Survivor)
-            ? (PC->UsesControllerPrompts() ? NSLOCTEXT("Elitewake","MineRT","RT: Mine resource")
-                : NSLOCTEXT("Elitewake","MineMouse","Left Mouse: Mine resource"))
-            : NSLOCTEXT("Elitewake","MineNeedsPickaxe","Equip a pickaxe to mine"));
-        Progress->SetPercent(0); Progress->SetVisibility(ESlateVisibility::Collapsed);
-        Panel->SetVisibility(ESlateVisibility::HitTestInvisible); return;
+        Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+        Panel->SetVisibility(ESlateVisibility::Collapsed); return;
     }
     if (!Target || !IEWInteractable::Execute_CanInteract(Target, Survivor))
     {

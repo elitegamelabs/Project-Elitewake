@@ -51,10 +51,10 @@ def tick(delta):
             state['shovels'] = inv.get_item_count(shovel)
             client.set_inventory_open(True)
         elif phase == 1:
-            assert lib.send_verification_ui_key(client, 'PageDown')      # Crafting
+            menu().focus_crafting()      # the crafting list under the inventory
         elif phase == 2:
             m = menu()
-            assert m.get_selected_section() == 1
+            assert m.is_crafting_focused()
             shown = m.get_shown_recipe()
             assert shown is not None
             # Select the shovel with the d-pad/Up until it is the one shown.

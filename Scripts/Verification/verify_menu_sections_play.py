@@ -1,4 +1,4 @@
-"""Play: every menu section (inventory, crafting, building, skills, company, tames, journal) is reachable by keyboard and controller, and the Journal pages with the
+"""Play: every menu section (inventory with crafting beneath it, skills, company, tames, journal) is reachable by keyboard and controller, and the Journal pages with the
 arrows (owner, October 22). Run with EW_PLAY_PLAYERS=2 like the other menu checks. Writes Saved/MenuSectionsPlayResult.json."""
 import unreal, json, time
 from pathlib import Path
@@ -8,8 +8,8 @@ pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
 client = next(c for c in pcs if not c.has_authority())
 client_world = worlds[pcs.index(client)]
 # (key to press, section expected afterwards): forward with PageDown, RB and Tab; back with PageUp, LT and Tab with shift is not sendable here.
-STEPS = [('PageDown', 1), ('PageDown', 2), ('PageDown', 3), ('Gamepad_RightShoulder', 4), ('PageDown', 5), ('Tab', 6), ('Tab', 0),
-         ('PageUp', 6), ('Gamepad_LeftTrigger', 5), ('PageUp', 4), ('PageUp', 3), ('PageUp', 2), ('PageUp', 1), ('PageUp', 0)]
+STEPS = [('PageDown', 1), ('PageDown', 2), ('Gamepad_RightShoulder', 3), ('Tab', 4), ('Tab', 0),
+         ('PageUp', 4), ('Gamepad_LeftTrigger', 3), ('Gamepad_LeftShoulder', 2), ('PageUp', 1), ('PageUp', 0)]
 phase = 0
 next_at = time.monotonic() + 2
 checks = []
@@ -47,9 +47,9 @@ def tick(delta):
         elif phase == 2 + len(STEPS):
             key, want = STEPS[-1]
             assert menu().get_selected_section() == want, f'{key} did not return to the inventory'
-            checks.append('Tab, PageDown, PageUp, right bumper and left trigger step through all seven sections and wrap')
+            checks.append('Tab, PageDown, PageUp, right bumper and left trigger and a tap of the left bumper step through all five sections and wrap')
             # The Journal: Down pages forward, Up pages back.
-            menu().open_section(6)
+            menu().open_section(4)
         elif phase == 3 + len(STEPS):
             journal = menu().get_journal_panel()
             assert journal.get_page_count() > 1
@@ -62,7 +62,7 @@ def tick(delta):
         elif phase == 5 + len(STEPS):
             assert menu().get_journal_panel().get_selected_page() == 0
             checks.append('The Journal pages with the arrows and the d-pad')
-            assert menu().get_selected_section() == 6
+            assert menu().get_selected_section() == 4
             assert lib.send_verification_ui_key(client, 'Escape')
         elif phase == 6 + len(STEPS):
             assert not client.is_inventory_open(), 'Escape did not close the menu from the Journal'

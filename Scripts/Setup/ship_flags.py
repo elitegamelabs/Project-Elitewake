@@ -6,7 +6,7 @@ October 18 (owner): base hulls have no permanent masts and sail assemblies carry
 with sail sockets fly from deck staffs (`deck_staff`: a jackstaff at the bow, an ensign staff at the stern, more on
 the larger hulls); the masthead flagstaffs below remain only for hulls not yet converted.
 
-DECIDED (delegated; recorded in Docs/OPEN_QUESTIONS_2026-10-15.md): a flag flies at the head of each mast, from a short
+DECIDED (delegated; recorded in CLAUDE.md): a flag flies at the head of each mast, from a short
 flagstaff above the masthead cap, and one ensign at the stern on an ensign staff. That is the owner's count exactly for
 the sloop (one mast), the brigantine (two) and the Cavalier (three). The schooner was not named: she flies from her fore
 and main mastheads and the stern, 3 (her mizzen flies none), so the count grows with the ship. The staffs are part of

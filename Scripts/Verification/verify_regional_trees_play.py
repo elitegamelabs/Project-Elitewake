@@ -1,5 +1,5 @@
 """Acceptance for the regional trees (owner, October 15: Central Plains Oak, Winter Birch, Jungle Ash, Desert Palm,
-Swamp Spruce, in substantial stands; Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md).
+Swamp Spruce, in substantial stands; CLAUDE.md).
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground (EW_PLAY_PLAYERS=1 is enough), after build_coastal_flora.py.
 Run unattended with run_play_check.py.
   1. On every island but the starter, its region's tree is the primary one: most of its trees, and at least MIN_STAND
@@ -100,7 +100,7 @@ def grounded():
 
 def stand_of(region):
     """A place among the most trees of that region's primary kind: the centre of a dense patch on its biggest island."""
-    isl = max((i for i in W.ISLANDS if i.region == region and i.key != 'Starter'), key=lambda i: i.rx * i.ry)
+    isl = next(i for i in W.ISLANDS if i.region == region)
     mine = [t.get_actor_location() for t in trees if kind(t) == PRIMARY[region] and island_of(t) is isl]
     best = max(mine, key=lambda p: sum(1 for q in mine if (q - p).length() < 2500))
     return best

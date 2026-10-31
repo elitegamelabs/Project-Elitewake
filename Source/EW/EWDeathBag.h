@@ -8,6 +8,7 @@
 class AEWCharacter;
 class UEWInventoryComponent;
 class UStaticMeshComponent;
+struct FEWSavedContainer;
 
 /**
  * What a survivor left where they died: everything they carried, in a bag that stays 30 real minutes (owner, October 22). Anyone beside it opens it like a
@@ -31,7 +32,11 @@ public:
     UFUNCTION(BlueprintPure, Category="Death")
     bool CanAccess(const AEWCharacter* Character) const;
     /** Authority only: moves everything the survivor carries into a new bag where they stand. Returns null (and spawns nothing) when they carry nothing. */
+    UFUNCTION(BlueprintCallable, Category="Death")
     static AEWDeathBag* DropInventoryOf(AEWCharacter* Dead, const FVector& Where);
+    /** Saving (M7): the bag as a save keeps it, and a new bag made as saved (authority). */
+    FEWSavedContainer CaptureForSave() const;
+    void RestoreSaved(const FEWSavedContainer& Saved);
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;

@@ -196,33 +196,37 @@ EEWFoodUseResult UEWInventoryComponent::ConsumeFood(UEWItemDefinition* Item)
     if (!Owner || !Owner->HasAuthority()) return EEWFoodUseResult::NotAuthority;
     if (bEquipmentTransferInProgress) return EEWFoodUseResult::Busy;
     RefreshFoodAge();
-    // Raw/cooked meat and sickness deliberately remain unsupported in this slice.
+    // Berries age and spoil (FreshLifetimeSeconds); the other foods do not. Any food may carry a sickness chance or cure sickness.
+    const bool bAgeing = Item && Item->FoodKind == EEWFoodKind::Berry;
     if (!IsValid(Item) || Item->ItemId.IsNone() || !Item->bFoodConsumptionEnabled
-        || Item->Category != EEWItemCategory::Consumable || Item->FoodKind != EEWFoodKind::Berry
+        || Item->Category != EEWItemCategory::Consumable || Item->FoodKind == EEWFoodKind::None
         || Item->EquipmentSlot != EEWEquipmentSlot::None
-        || !FMath::IsFinite(Item->FreshLifetimeSeconds) || Item->FreshLifetimeSeconds <= 0.f
-        || !FMath::IsFinite(Item->HungerRestoreFraction) || !FMath::IsFinite(Item->HealthRestoreFraction)
+        || !FMath::IsFinite(Item->FreshLifetimeSeconds) || (bAgeing && Item->FreshLifetimeSeconds <= 0.f)
+        || !FMath::IsFinite(Item->HungerRestoreFraction) || !FMath::IsFinite(Item->HealthRestoreFraction) || !FMath::IsFinite(Item->SicknessChance)
         || Item->HungerRestoreFraction < 0.f || Item->HungerRestoreFraction > 1.f
-        || Item->HealthRestoreFraction < 0.f || Item->HealthRestoreFraction > 1.f)
+        || Item->HealthRestoreFraction < -1.f || Item->HealthRestoreFraction > 1.f)
         return EEWFoodUseResult::InvalidFood;
     if (!HasItem(Item)) return EEWFoodUseResult::NotOwned;
     UEWSurvivalComponent* Survival = Owner->FindComponentByClass<UEWSurvivalComponent>();
     if (!Survival || Survival->GetHealth() <= 0.f) return EEWFoodUseResult::UnavailableSurvivor;
     const float Hunger = FMath::Clamp(Survival->Hunger + 100.f * Item->HungerRestoreFraction, 0.f, 100.f);
     const float Health = FMath::Clamp(Survival->Health + Survival->MaxHealth * Item->HealthRestoreFraction, 0.f, Survival->MaxHealth);
-    if (Hunger == Survival->Hunger && Health == Survival->Health) return EEWFoodUseResult::NoBenefit;
+    const bool bCures = Item->bCuresFoodSickness && Survival->IsFoodSick();
+    if (Hunger == Survival->Hunger && Health == Survival->Health && !bCures) return EEWFoodUseResult::NoBenefit;
     // The shared guard also blocks equipment transfers and nested food use during delegates.
     TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
     // Choose the oldest still-fresh stack. Expired/misconfigured stacks never qualify.
     int32 FoodIndex = INDEX_NONE;
     for (int32 Index = 0; Index < Entries.Num(); ++Index)
         if (Entries[Index].ItemDefinition == Item && Entries[Index].Quantity > 0
-            && Entries[Index].FoodAgeSeconds < Item->FreshLifetimeSeconds
+            && (!bAgeing || Entries[Index].FoodAgeSeconds < Item->FreshLifetimeSeconds)
             && (FoodIndex == INDEX_NONE || Entries[Index].FoodAgeSeconds > Entries[FoodIndex].FoodAgeSeconds)) FoodIndex = Index;
     if (FoodIndex == INDEX_NONE) return EEWFoodUseResult::InvalidFood;
     if (--Entries[FoodIndex].Quantity == 0) Entries.RemoveAt(FoodIndex);
     Survival->Hunger = Hunger;
     Survival->Health = Health;
+    if (Item->bCuresFoodSickness) Survival->CureFoodSickness();
+    if (Item->SicknessChance > 0.f && FMath::FRand() < Item->SicknessChance) Survival->ContractFoodSickness();
     // Contents and both food effects are final before weight/stat/inventory observers run.
     HandleInventoryChanged();
     Owner->ForceNetUpdate();

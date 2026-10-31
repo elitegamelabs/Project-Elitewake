@@ -41,16 +41,22 @@ state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'memo': {}
 
 
 def clumps(world):
-    out = []
+    """Every grass instance in the world, thinned to about 60,000 points (a Python call per instance is slow); the total comes back with it."""
+    comps = []
     for actor in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.InstancedFoliageActor):
         for comp in actor.get_components_by_class(unreal.InstancedStaticMeshComponent):
             mesh = comp.get_editor_property('static_mesh')
-            if not mesh or 'SM_GrassClump' not in mesh.get_name():
-                continue
-            for k in range(comp.get_instance_count()):
+            if mesh and 'SM_GrassClump' in mesh.get_name():
+                comps.append(comp)
+    total = sum(c.get_instance_count() for c in comps)
+    stride = max(1, total // 60000)
+    out = []
+    if world is server_world:
+        for comp in comps:
+            for k in range(0, comp.get_instance_count(), stride):
                 p = comp.get_instance_transform(k, True).translation
                 out.append((p.x, p.y, p.z))
-    return out
+    return out, total, stride
 
 
 def by_island(points):
@@ -62,15 +68,17 @@ def by_island(points):
 
 
 def everywhere():
-    server, seen = clumps(server_world), clumps(client_world)
-    assert len(server) > 1000, f'only {len(server)} clumps'
-    assert len(seen) == len(server), f'the client has {len(seen)} clumps, the server {len(server)}'
+    server, total, stride = clumps(server_world)
+    seen = clumps(client_world)[1]
+    assert total > 1000, f'only {total} clumps'
+    assert seen == total, f'the client has {seen} clumps, the server {total}'
+    state['stride'] = stride
     count = by_island(server)
     density = {}
     for i in W.ISLANDS:
         if i.region in ('Plains', 'Jungle'):
-            assert count.get(i.key, 0) > 100, f'{i.key} has {count.get(i.key, 0)} clumps'
-            density.setdefault(i.region, []).append(count[i.key] / (math.pi * i.rx * i.ry / 1e4))
+            assert count.get(i.key, 0) * stride > 100, f'{i.key} has {count.get(i.key, 0)} clumps'
+            density.setdefault(i.region, []).append(count[i.key] * stride / (math.pi * i.rx * i.ry / 1e4))
         else:
             assert not count.get(i.key), f'{i.key} ({i.region}) has grass'
     plains, jungle = (sum(density[r]) / len(density[r]) for r in ('Plains', 'Jungle'))
@@ -80,7 +88,7 @@ def everywhere():
             mesh = comp.get_editor_property('static_mesh')
             if mesh and 'SM_GrassClump' in mesh.get_name():
                 assert comp.get_collision_enabled() == unreal.CollisionEnabled.NO_COLLISION, 'grass has collision'
-    state['memo'].update(clumps=len(server), plains_per_m2=round(plains, 2), jungle_per_m2=round(jungle, 2))
+    state['memo'].update(clumps=total, plains_per_m2=round(plains, 2), jungle_per_m2=round(jungle, 2))
     state['points'] = server
     return True
 
@@ -105,10 +113,14 @@ def meadow():
     """The 10 m line on the starter island with the most grass along it."""
     pts = [(x, y) for x, y, _ in state['points'] if W.ISLANDS[0].distance(x, y) < -2000]
     best = None
+    cells = {}
+    for x, y in pts:
+        cells.setdefault((int(x // 1000), int(y // 1000)), []).append((x, y))
     for x0, y0 in pts[::max(1, len(pts) // 60)]:
+        near = [q for i in range(int(x0 // 1000) - 2, int(x0 // 1000) + 3) for j in range(int(y0 // 1000) - 2, int(y0 // 1000) + 3) for q in cells.get((i, j), ())]
         for a in range(0, 360, 30):
             ax, ay = math.cos(math.radians(a)), math.sin(math.radians(a))
-            n = sum(1 for x, y in pts if 0 < (x - x0) * ax + (y - y0) * ay < 1000 and abs(-(x - x0) * ay + (y - y0) * ax) < 60)
+            n = sum(1 for x, y in near if 0 < (x - x0) * ax + (y - y0) * ay < 1000 and abs(-(x - x0) * ay + (y - y0) * ax) < 60)
             ok = all(not T.near_cave(x0 + ax * d, y0 + ay * d, 300) and W.ISLANDS[0].distance(x0 + ax * d, y0 + ay * d) < -1500
                      for d in range(0, 1101, 100))
             if ok and (best is None or n > best[0]):
@@ -118,7 +130,7 @@ def meadow():
 
 def start_walk():
     n, x, y, a = meadow()
-    assert n >= 15, f'no thick meadow found ({n} clumps on the best line)'
+    assert n * state['stride'] >= 15, f'no thick meadow found ({n} clumps on the best line)'
     z = T.height(x, y) + 120
     for p in (owner, pawn):
         assert p.teleport(unreal.Vector(x, y, z), unreal.Rotator(0, 0, a))

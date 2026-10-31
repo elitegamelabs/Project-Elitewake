@@ -5,6 +5,9 @@
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
 #include "EWPlayerController.h"
+#include "EWCompanyComponent.h"
+#include "EWGameMode.h"
+#include "GameFramework/PlayerState.h"
 #include "EWInteractionComponent.h"
 #include "EWWindSubsystem.h"
 #include "EW.h"
@@ -26,6 +29,9 @@
 #include "Ships/EWShipSoundComponent.h"
 #include "Ships/EWWakeTrailComponent.h"
 #include "Ships/EWBowWaveComponent.h"
+#include "Ships/EWShipSurgeon.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/Volume.h"
 
 namespace
 {
@@ -122,6 +128,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, Fittings);
     DOREPLIFETIME(AEWShip, Helmsman);
     DOREPLIFETIME(AEWShip, SailState);
+    DOREPLIFETIME(AEWShip, SailLines);
     DOREPLIFETIME(AEWShip, Speed);
     DOREPLIFETIME(AEWShip, Rudder);
     DOREPLIFETIME(AEWShip, RudderAngle);
@@ -133,6 +140,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bChainTaut);
     DOREPLIFETIME(AEWShip, CapstanWorker);
     DOREPLIFETIME(AEWShip, Cannons);
+    DOREPLIFETIME(AEWShip, MarkedShip);
     DOREPLIFETIME(AEWShip, HullHealth);
     DOREPLIFETIME(AEWShip, Holes);
     DOREPLIFETIME(AEWShip, OpenGunports);
@@ -142,6 +150,9 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, WaterAboard);
     DOREPLIFETIME(AEWShip, bSinking);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
+    DOREPLIFETIME(AEWShip, OwnerName);
+    DOREPLIFETIME(AEWShip, OwnerPlayerId);
+    DOREPLIFETIME(AEWShip, OwnerCompanyId);
 }
 
 void AEWShip::OnConstruction(const FTransform& Transform)
@@ -165,6 +176,21 @@ void AEWShip::BeginPlay()
     PlaceWake();
     // A ship that starts at anchor has her anchor down already, chain out below her bow.
     if (HasAuthority() && bAnchored && ChainReach <= 0.f) LayAnchor();
+    // The permanent surgeon, aboard from the start on every hull with a deck below (only in a running game, never in the editor).
+    if (HasAuthority() && Definition && Definition->bHasSurgeon && GetWorld() && GetWorld()->IsGameWorld() && !Surgeon)
+    {
+        FActorSpawnParameters Params;
+        Params.Owner = this;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        Surgeon = GetWorld()->SpawnActor<AEWShipSurgeon>(AEWShipSurgeon::StaticClass(), GetActorTransform().TransformPosition(Definition->SurgeonPoint),
+            GetActorRotation() + FRotator(0.f, Definition->SurgeonYaw, 0.f), Params);
+        if (Surgeon)
+        {
+            Surgeon->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+            // She rides with the hull; its swept moves must never catch on her.
+            HullCollision->IgnoreActorWhenMoving(Surgeon, true);
+        }
+    }
     // Water bodies answer swimming and wave queries; their collision boxes must never stop a hull.
     for (TActorIterator<AWaterBody> It(GetWorld()); It; ++It) HullCollision->IgnoreActorWhenMoving(*It, true);
 }
@@ -184,11 +210,18 @@ void AEWShip::PostInitializeComponents()
 void AEWShip::OnRep_Definition() { ApplyDefinition(); RefreshFittingVisuals(); }
 void AEWShip::OnRep_Fittings() { RefreshFittingVisuals(); }
 void AEWShip::OnRep_SailState() { RefreshFittingVisuals(); }
+void AEWShip::OnRep_SailLines() { RefreshFittingVisuals(); }
 
 void AEWShip::ApplyDefinition()
 {
     for (auto& Pair : MountTargets) if (Pair.Value) Pair.Value->DestroyComponent();
     MountTargets.Reset();
+    for (auto& Pair : LineTargets) if (Pair.Value) Pair.Value->DestroyComponent();
+    LineTargets.Reset();
+    for (auto& Pair : LineVisuals) if (Pair.Value) Pair.Value->DestroyComponent();
+    LineVisuals.Reset();
+    for (auto& Pair : SailhandVisuals) if (Pair.Value) Pair.Value->DestroyComponent();
+    SailhandVisuals.Reset();
     for (UPointLightComponent* Light : LanternVisuals) if (Light) Light->DestroyComponent();
     LanternVisuals.Reset();
     for (auto& Pair : MastVisuals) if (Pair.Value) Pair.Value->DestroyComponent();
@@ -385,6 +418,7 @@ void AEWShip::ApplyDefinition()
         Target->RegisterComponent();
         MountTargets.Add(Mount.MountId, Target);
     }
+    BuildLineVisuals();
 }
 
 void AEWShip::RefreshFittingVisuals()
@@ -433,14 +467,15 @@ void AEWShip::RefreshFittingVisuals()
         bool bShown = true;
         if (Mount->Type == EEWShipMountType::Sail && Mesh != StandInCube())
         {
-            if (SailState == EEWSailState::Furled)
+            const EEWSailState Own = GetMountSailState(Fitting.MountId);
+            if (Own == EEWSailState::Furled)
             {
                 Mesh = bMountLook ? Mount->FittedFurledMesh.LoadSynchronous() : Fitting.Item->FittingFurledMesh.LoadSynchronous();
                 bShown = Mesh != nullptr;
             }
             else
             {
-                Local.SetScale3D(Local.GetScale3D() * FVector(1, 1, GetSailFraction()));
+                Local.SetScale3D(Local.GetScale3D() * FVector(1, 1, SailFractionForState(Own)));
             }
         }
         Visual->SetStaticMesh(Mesh);
@@ -577,7 +612,7 @@ void AEWShip::ShowSailFill(float DeltaSeconds)
         // Square on to the wind it fills; with the wind along it, it hangs slack (tuning: slack below 7 degrees of
         // incidence, full from about 33).
         const float Strike = FVector::DotProduct(Blow, Across.GetSafeNormal2D());
-        const float Target = SailState == EEWSailState::Furled ? 0.f : FMath::Sign(Strike) * FMath::SmoothStep(.12f, .55f, FMath::Abs(Strike));
+        const float Target = GetMountSailState(Look.Key) == EEWSailState::Furled ? 0.f : FMath::Sign(Strike) * FMath::SmoothStep(.12f, .55f, FMath::Abs(Strike));
         float& Shown = SailFill.FindOrAdd(Look.Key);
         // Fills and empties over about a second: no pop when the sail swings through the wind.
         Shown = DeltaSeconds > 0.f ? FMath::FInterpTo(Shown, Target, DeltaSeconds, SailFillRate) : Target;
@@ -815,7 +850,7 @@ FVector AEWShip::GetCargoHatchWorld() const
 
 bool AEWShip::CanAccessCargo(const AEWCharacter* Character) const
 {
-    return Cargo && CanModifyFittings(Character)
+    return Cargo && CanCommand(Character)
         && (IsAboard(Character) || FVector::Dist(Character->GetActorLocation(), GetCargoHatchWorld()) <= CargoReach);
 }
 
@@ -872,7 +907,7 @@ FVector AEWShip::GetAnchorPointWorld() const
 
 bool AEWShip::SetAnchored(AEWCharacter* Character, bool bNewAnchored)
 {
-    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || bAnchored == bNewAnchored) return false;
+    if (!HasAuthority() || bChangingFittings || !CanCommand(Character) || bAnchored == bNewAnchored) return false;
     bAnchored = bNewAnchored;
     if (bAnchored) LayAnchor();
     bChainTaut = false;
@@ -1000,13 +1035,14 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
         {
             FVector Deck = Head - Outward * In + Across * Aside;
             if (FMath::Abs(Outward.Y) > .5f && Deck.Y * Outward.Y < 0.f) Deck.Y = 0.f;   // never past the centreline
-            // On whichever deck is there: the main deck, or a raised quarterdeck at the stern.
+            // On whichever deck is there: the main deck, or a raised quarterdeck at the stern. The hull ignores the
+            // Visibility channel (so interaction aims pass through it), so look for the floor a survivor stands on.
             float Floor = Definition->GetDeckHeight();
             FCollisionQueryParams Query(SCENE_QUERY_STAT(EWShipBoarding), false, Character);
             FHitResult Hit;
             const FTransform& Frame = GetActorTransform();
             if (GetWorld()->LineTraceSingleByChannel(Hit, Frame.TransformPosition(FVector(Deck.X, Deck.Y, Top + 400.f)),
-                    Frame.TransformPosition(FVector(Deck.X, Deck.Y, Floor - 40.f)), ECC_Visibility, Query) && Hit.GetActor() == this)
+                    Frame.TransformPosition(FVector(Deck.X, Deck.Y, Floor - 40.f)), ECC_Pawn, Query) && Hit.GetActor() == this)
                 Floor = Frame.InverseTransformPosition(Hit.ImpactPoint).Z;
             Deck.Z = Floor + HalfHeight + 2.f;
             const FVector Candidate = GetActorTransform().TransformPosition(Deck);
@@ -1028,8 +1064,8 @@ bool AEWShip::ClimbAboard(AEWCharacter* Character, int32 BoardingIndex)
 
 EEWInteractionMode AEWShip::GetInteractionModeFor_Implementation(AEWCharacter* Character) const
 {
-    // A ladder is grabbed with a press; fittings, the anchor and the hold keep a deliberate hold.
-    return FindAimedBoardingPoint(Character) != INDEX_NONE ? EEWInteractionMode::Press : EEWInteractionMode::Hold;
+    // A ladder or a sail's lines are taken with a press; fittings, the anchor and the hold keep a deliberate hold.
+    return FindAimedBoardingPoint(Character) != INDEX_NONE || !FindAimedLines(Character).IsNone() ? EEWInteractionMode::Press : EEWInteractionMode::Hold;
 }
 
 void AEWShip::GetLadderSpan(int32 BoardingIndex, float& Bottom, float& Top) const
@@ -1080,12 +1116,96 @@ bool AEWShip::StartClimb(AEWCharacter* Character, int32 BoardingIndex)
     return true;
 }
 
+bool AEWShip::IsShipmate(const AEWCharacter* Character) const
+{
+    // An unclaimed ship is anyone's; single player has no ownership gates.
+    if (!IsOwned() || GetNetMode() == NM_Standalone) return true;
+    if (!Character) return false;
+    const AController* Controller = Character->GetController();
+    if (HasAuthority())
+    {
+        // The server knows players by their stable key, so a returning owner is known at once.
+        const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+        if (Mode && Controller && !OwnerKey.IsEmpty() && Mode->PlayerKey(Controller) == OwnerKey) return true;
+    }
+    else if (const APlayerState* State = Character->GetPlayerState(); State && OwnerPlayerId != INDEX_NONE && State->GetPlayerId() == OwnerPlayerId)
+        return true;
+    // The owner's Company shares her unless its ship policy is Personal.
+    const auto* Player = Cast<AEWPlayerController>(Controller);
+    const UEWCompanyComponent* Company = Player ? Player->GetCompanyComponent() : nullptr;
+    if (!Company || !OwnerCompanyId.IsValid()) return false;
+    const FEWCompanySnapshot Snapshot = Company->GetCompany();
+    return Snapshot.Id == OwnerCompanyId && Snapshot.Ships != EEWCompanyOwnership::Personal;
+}
+
+void AEWShip::SetShipOwner(AController* NewOwner)
+{
+    if (!HasAuthority()) return;
+    const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+    const FString Key = Mode && NewOwner ? Mode->PlayerKey(NewOwner) : FString();
+    OwnerKey = Key;
+    OwnerName = Key.IsEmpty() ? FString() : NewOwner->PlayerState && !NewOwner->PlayerState->GetPlayerName().IsEmpty()
+        ? NewOwner->PlayerState->GetPlayerName() : TEXT("A captain");
+    OwnerPlayerId = INDEX_NONE;
+    OwnerCompanyId.Invalidate();
+    RefreshOwner();
+    ForceNetUpdate();
+}
+
+void AEWShip::RefreshOwner()
+{
+    const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+    if (!HasAuthority() || !Mode || OwnerKey.IsEmpty()) return;
+    int32 Id = INDEX_NONE;
+    FGuid Company = OwnerCompanyId;  // while the owner is away their Company keeps its share
+    FString Name = OwnerName;
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        const APlayerController* Player = It->Get();
+        if (!Player || !Player->PlayerState || Mode->PlayerKey(Player) != OwnerKey) continue;
+        Id = Player->PlayerState->GetPlayerId();
+        if (!Player->PlayerState->GetPlayerName().IsEmpty()) Name = Player->PlayerState->GetPlayerName();
+        const auto* EWPlayer = Cast<AEWPlayerController>(Player);
+        const UEWCompanyComponent* Membership = EWPlayer ? EWPlayer->GetCompanyComponent() : nullptr;
+        Company = Membership ? Membership->GetCompany().Id : FGuid();
+        break;
+    }
+    if (Id == OwnerPlayerId && Company == OwnerCompanyId && Name == OwnerName) return;
+    OwnerPlayerId = Id;
+    OwnerCompanyId = Company;
+    OwnerName = Name;
+    ForceNetUpdate();
+}
+
+FText AEWShip::CrewOnlyPrompt() const
+{
+    return FText::Format(NSLOCTEXT("Elitewake", "CrewOnly", "{0}'s ship: only her crew can use this"), FText::FromString(OwnerName));
+}
+
 bool AEWShip::CanModifyFittings(const AEWCharacter* Character) const
 {
     return Definition && IsValid(Character) && !Character->IsActorBeingDestroyed() && !IsActorBeingDestroyed()
         && Character->GetWorld() == GetWorld() && Character->GetController() && Character->GetController()->GetPawn() == Character
         && Character->GetInventoryComponent() && Character->GetSurvivalComponent()
         && Character->GetSurvivalComponent()->GetHealth() > 0;
+}
+
+bool AEWShip::VerificationInstallFitting(FName MountId, UEWItemDefinition* Item)
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!HasAuthority() || !Mount || !Item || GetFitting(MountId) || !UEWShipDefinition::Accepts(*Mount, Item)) return false;
+    Fittings.Add({MountId, Item});
+    RefreshFittingVisuals();
+    ForceNetUpdate();
+    return true;
+}
+
+UEWItemDefinition* AEWShip::FindCarriedArticles(const AEWCharacter* Character)
+{
+    if (!IsValid(Character) || !Character->GetInventoryComponent()) return nullptr;
+    for (const FEWInventoryEntry& Entry : Character->GetInventoryComponent()->GetInventoryEntries())
+        if (Entry.Quantity > 0 && Entry.ItemDefinition && Entry.ItemDefinition->bSignsOnSailhand) return Entry.ItemDefinition;
+    return nullptr;
 }
 
 UEWItemDefinition* AEWShip::FindCarriedFitting(const AEWCharacter* Character, const FEWShipMount& Mount) const
@@ -1098,7 +1218,7 @@ UEWItemDefinition* AEWShip::FindCarriedFitting(const AEWCharacter* Character, co
 EEWFittingResult AEWShip::InstallFitting(AEWCharacter* Character, FName MountId)
 {
     if (!HasAuthority() || bChangingFittings) return EEWFittingResult::Busy;
-    if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
+    if (!CanCommand(Character)) return EEWFittingResult::NotAllowed;
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount) return EEWFittingResult::NoMount;
     if (!IsMountOpen(MountId)) return EEWFittingResult::NeedsRailing;
@@ -1117,7 +1237,7 @@ EEWFittingResult AEWShip::InstallFitting(AEWCharacter* Character, FName MountId)
 EEWFittingResult AEWShip::RemoveFitting(AEWCharacter* Character, FName MountId)
 {
     if (!HasAuthority() || bChangingFittings) return EEWFittingResult::Busy;
-    if (!CanModifyFittings(Character)) return EEWFittingResult::NotAllowed;
+    if (!CanCommand(Character)) return EEWFittingResult::NotAllowed;
     const int32 Index = Fittings.IndexOfByPredicate([MountId](const FEWInstalledFitting& F) { return F.MountId == MountId; });
     if (Index == INDEX_NONE) return EEWFittingResult::NoMount;
     if (Definition && Definition->IsBuiltIn(MountId)) return EEWFittingResult::NotAllowed;
@@ -1145,14 +1265,23 @@ bool AEWShip::CanInteract_Implementation(AEWCharacter* Character) const
     if (IsGunnerHere(Character)) return true;  // Leave the cannon.
     if (IsAimingAtAnchor(Character)) return true;
     if (IsAimingAtBucket(Character)) return IsAboard(Character) && WaterAboard > 0.f;
-    if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character);
+    if (IsAimingAtCargoHatch(Character)) return CanAccessCargo(Character) || !IsShipmate(Character);
     if (FindAimedBoardingPoint(Character) != INDEX_NONE) return !IsAboard(Character) && !Character->GetHelmShip() && !Character->IsOnLadder();
+    if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
+    {
+        if (!IsShipmate(Character)) return true;
+        if (GetLinesWorker(Lines) == Character) return true;
+        if (!IsSailCrewed(Lines) && FindCarriedArticles(Character)) return true;
+        return !GetLinesWorker(Lines) && !Character->GetHelmShip() && !Character->GetGunShip() && !Character->GetLinesShip();
+    }
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition->FindMount(MountId);
     if (!Mount || !IsMountOpen(MountId)) return false;
+    if (!IsShipmate(Character)) return true;
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
     {
         // An installed helm is taken and a cannon manned, not removed; removing them is a Builder's Plan action.
+        if (Installed->FittingMountType == EEWShipMountType::Cannon && !IsCannonCrewed(MountId) && FindCarriedGunnerArticles(Character)) return true;
         if (Installed->FittingMountType == EEWShipMountType::Cannon)
             return !GetCannonGunner(MountId) && !Character->GetHelmShip() && !Character->GetGunShip() && !Character->bIsCrouched && !Character->IsProne();
         return Installed->FittingMountType != EEWShipMountType::Helm
@@ -1183,9 +1312,18 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
     if (IsGunnerHere(Character))
     {
         const FName Mount = Character->GetGunMount();
-        const FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
+        const FName Step = GetCannonLoadStep(Mount);
+        FText State = IsCannonLoaded(Mount) ? NSLOCTEXT("Elitewake", "CannonLoaded", "Loaded")
+            : Step == FName(TEXT("Swab")) ? NSLOCTEXT("Elitewake", "CannonSwab", "Loading: sponging out the barrel")
+            : Step == FName(TEXT("Powder")) ? NSLOCTEXT("Elitewake", "CannonPowder", "Loading: powder charge in")
+            : Step == FName(TEXT("Shot")) ? NSLOCTEXT("Elitewake", "CannonShot", "Loading: round shot in")
+            : Step == FName(TEXT("Ram")) ? NSLOCTEXT("Elitewake", "CannonRam", "Loading: ramming home")
             : IsCannonLoading(Mount) ? NSLOCTEXT("Elitewake", "CannonLoading", "Loading...")
             : NSLOCTEXT("Elitewake", "CannonEmpty", "Empty: carry round shot to load it");
+        // The target the hired gunners lay on, or how to mark one.
+        State = IsValid(MarkedShip)
+            ? FText::Format(NSLOCTEXT("Elitewake", "CannonTarget", "{0}  -  Target marked (Right Mouse on open water clears it)"), State)
+            : FText::Format(NSLOCTEXT("Elitewake", "CannonNoTarget", "{0}  -  Right Mouse marks the ship you are laid on"), State);
         if (const FEWShipMount* Port = Definition ? Definition->FindMount(Mount) : nullptr; Port && Port->bGunport)
         {
             const FText PortState = !IsGunportOpen(Mount) ? NSLOCTEXT("Elitewake", "PortShut", "Port shut: Up opens it")
@@ -1195,20 +1333,42 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         }
         return FText::Format(NSLOCTEXT("Elitewake", "LeaveCannon", "Leave the cannon  (mouse aims, Left Mouse fires)  -  {0}"), State);
     }
+    if (IsAimingAtAnchor(Character) && !IsShipmate(Character)) return CrewOnlyPrompt();
     if (IsAimingAtAnchor(Character))
         return bAnchored ? NSLOCTEXT("Elitewake", "RaiseAnchor", "Raise anchor") : NSLOCTEXT("Elitewake", "DropAnchor", "Drop anchor");
     if (IsAimingAtBucket(Character))
         return WaterAboard > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "BailWater", "Bail water  ({0} kg aboard)"), FText::AsNumber(FMath::RoundToInt(WaterAboard)))
             : NSLOCTEXT("Elitewake", "BucketDry", "Bucket  (no water aboard)");
-    if (IsAimingAtCargoHatch(Character)) return NSLOCTEXT("Elitewake", "OpenHold", "Open the hold");
+    if (IsAimingAtCargoHatch(Character))
+        return IsShipmate(Character) ? NSLOCTEXT("Elitewake", "OpenHold", "Open the hold") : CrewOnlyPrompt();
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
-        return IsAboard(Character) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
+        return IsAboard(Character) ? FText::GetEmpty()
+            : IsOwned() && !IsShipmate(Character) ? FText::Format(NSLOCTEXT("Elitewake", "GrabLadderOwned", "Climb the ladder  ({0}'s ship)"), FText::FromString(OwnerName))
+            : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
+    if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
+    {
+        if (!IsShipmate(Character)) return CrewOnlyPrompt();
+        const FText Sail = FText::FromName(Lines);
+        const FText Setting = FText::AsPercent(SailFractionForState(GetMountSailState(Lines)));
+        if (GetLinesWorker(Lines) == Character)
+            return FText::Format(NSLOCTEXT("Elitewake", "LeaveLines", "Let go of the {0} lines  (Up/Down raise/lower: {1})"), Sail, Setting);
+        if (!IsSailCrewed(Lines) && IsValid(Character) && FindCarriedArticles(Character))
+            return FText::Format(NSLOCTEXT("Elitewake", "SignOnSailhand", "Sign on a sailhand for the {0}"), Sail);
+        if (GetLinesWorker(Lines)) return FText::Format(NSLOCTEXT("Elitewake", "LinesBusy", "{0} lines: in use"), Sail);
+        return IsSailCrewed(Lines)
+            ? FText::Format(NSLOCTEXT("Elitewake", "WorkCrewedLines", "Work the {0}  ({1}, a sailhand follows the helm)"), Sail, Setting)
+            : FText::Format(NSLOCTEXT("Elitewake", "WorkLines", "Work the {0}  ({1}, no sailhand: the helm cannot set it)"), Sail, Setting);
+    }
     const FName MountId = FindAimedMount(Character);
     const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
     if (!Mount) return FText::GetEmpty();
+    if (!IsShipmate(Character)) return CrewOnlyPrompt();
     if (const UEWItemDefinition* Installed = GetFitting(MountId))
         return Installed->FittingMountType == EEWShipMountType::Cannon
-            ? (GetCannonGunner(MountId) ? FText::GetEmpty() : NSLOCTEXT("Elitewake", "ManCannon", "Man the cannon"))
+            ? (!IsCannonCrewed(MountId) && IsValid(Character) && FindCarriedGunnerArticles(Character) ? NSLOCTEXT("Elitewake", "SignOnGunner", "Sign on a gunner for this cannon")
+                : GetCannonGunner(MountId) ? FText::GetEmpty()
+                : IsCannonCrewed(MountId) ? NSLOCTEXT("Elitewake", "ManCrewedCannon", "Man the cannon (its hired gunner stands aside)")
+                : NSLOCTEXT("Elitewake", "ManCannon", "Man the cannon"))
             : Installed->FittingMountType == EEWShipMountType::Helm
             ? (Helmsman ? FText::GetEmpty() : Definition->bPaddled ? NSLOCTEXT("Elitewake", "TakePaddles", "Take up the paddles")
                 : NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm"))
@@ -1227,7 +1387,7 @@ float AEWShip::GetHoldDurationFor_Implementation(AEWCharacter* Character) const
 void AEWShip::HoldChanged_Implementation(AEWCharacter* Character, bool bHolding)
 {
     if (!HasAuthority()) return;
-    if (bHolding && Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character)) SetCapstanWorker(Character);
+    if (bHolding && Definition && !Definition->CapstanMesh.IsNull() && IsAimingAtAnchor(Character) && CanCommand(Character)) SetCapstanWorker(Character);
     else if (!bHolding && (!Character || CapstanWorker == Character)) SetCapstanWorker(nullptr);
 }
 
@@ -1253,6 +1413,8 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         || FEWInteractionTargeting::FindTarget(Character) != this) return false;
     if (Helmsman == Character) return LeaveHelm(Character);
     if (IsGunnerHere(Character)) return LeaveCannon(Character);
+    // Only climbing aboard and bailing are open to anyone.
+    if (!IsShipmate(Character) && !IsAimingAtBucket(Character) && FindAimedBoardingPoint(Character) == INDEX_NONE) return false;
     if (IsAimingAtAnchor(Character)) return SetAnchored(Character, !bAnchored);
     if (IsAimingAtBucket(Character))
     {
@@ -1270,10 +1432,24 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         return true;
     }
     if (const int32 Ladder = FindAimedBoardingPoint(Character); Ladder != INDEX_NONE) return StartClimb(Character, Ladder);
+    if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
+    {
+        if (GetLinesWorker(Lines) == Character) return LeaveLines(Character);
+        if (!IsSailCrewed(Lines))
+            if (UEWItemDefinition* Articles = FindCarriedArticles(Character))
+                return Character->GetInventoryComponent()->RemoveItem(Articles, 1) == 1 && SignOnSailhand(Lines);
+        return TakeLines(Character, Lines);
+    }
     const FName MountId = FindAimedMount(Character);
     const UEWItemDefinition* Installed = GetFitting(MountId);
     if (Installed && Installed->FittingMountType == EEWShipMountType::Helm) return TakeHelm(Character);
-    if (Installed && Installed->FittingMountType == EEWShipMountType::Cannon) return ManCannon(Character, MountId);
+    if (Installed && Installed->FittingMountType == EEWShipMountType::Cannon)
+    {
+        if (!IsCannonCrewed(MountId))
+            if (UEWItemDefinition* Articles = FindCarriedGunnerArticles(Character))
+                return Character->GetInventoryComponent()->RemoveItem(Articles, 1) == 1 && SignOnGunner(MountId);
+        return ManCannon(Character, MountId);
+    }
     const EEWFittingResult Result = Installed ? RemoveFitting(Character, MountId) : InstallFitting(Character, MountId);
     return Result == EEWFittingResult::Installed || Result == EEWFittingResult::Removed;
 }
@@ -1323,9 +1499,78 @@ bool AEWShip::GetCannonFrame(FName MountId, FTransform& Frame) const
 
 FTransform AEWShip::GunMountTransform(const FEWShipMount& Mount) const
 {
-    if (!Mount.bGunport) return Mount.Transform;
+    // A shot throws the cannon back on its carriage; it runs out again.
+    const float Recoil = GetCannonRecoil(Mount.MountId);
+    if (!Mount.bGunport) return FTransform(FVector(-Recoil, 0.f, 0.f)) * Mount.Transform;
     // As built, the cannon stands run out at its port, the muzzle in the opening; shut, it is run in behind it.
-    return FTransform(FVector(-CannonRunIn * (1.f - GetGunportOpening(Mount.MountId)), 0.f, 0.f)) * Mount.Transform;
+    return FTransform(FVector(-CannonRunIn * (1.f - GetGunportOpening(Mount.MountId)) - Recoil, 0.f, 0.f)) * Mount.Transform;
+}
+
+float AEWShip::ServerNow() const
+{
+    const AGameStateBase* State = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+    return State ? float(State->GetServerWorldTimeSeconds()) : (GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f);
+}
+
+FName AEWShip::GetCannonLoadStep(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    if (!Cannon || !Cannon->bLoading || Cannon->LoadStartedAt < 0.f) return NAME_None;
+    const float Done = (ServerNow() - Cannon->LoadStartedAt) / CannonLoadSeconds;
+    static const FName Steps[] = {FName(TEXT("Swab")), FName(TEXT("Powder")), FName(TEXT("Shot")), FName(TEXT("Ram"))};
+    return Steps[FMath::Clamp(int32(Done * 4.f), 0, 3)];
+}
+
+float AEWShip::GetCannonRecoil(FName MountId) const
+{
+    const float* Clock = RecoilClock.Find(MountId);
+    if (!Clock) return 0.f;
+    if (*Clock < RecoilKickSeconds) return RecoilDistance * (*Clock / RecoilKickSeconds);
+    const float Back = FMath::Clamp((*Clock - RecoilKickSeconds) / RecoilReturnSeconds, 0.f, 1.f);
+    return RecoilDistance * (1.f - Back * Back * (3.f - 2.f * Back));
+}
+
+void AEWShip::PlaceCannonVisual(const FEWShipMount& Mount)
+{
+    const UEWItemDefinition* Item = GetFitting(Mount.MountId);
+    if (!Item || Item->FittingMountType != EEWShipMountType::Cannon) return;
+    if (const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Mount.MountId); Visual && *Visual)
+        (*Visual)->SetRelativeTransform(Item->FittingMeshTransform * GunMountTransform(Mount));
+    if (TurningRest.Contains(Mount.MountId))
+        TurningRest.Add(Mount.MountId, Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(Mount));
+}
+
+void AEWShip::ShowRecoil(float DeltaSeconds)
+{
+    if (!Definition) return;
+    for (const FEWCannonState& Cannon : Cannons)
+    {
+        uint8* Shown = ShownShots.Find(Cannon.MountId);
+        if (!Shown) { ShownShots.Add(Cannon.MountId, Cannon.Shots); continue; }
+        if (*Shown != Cannon.Shots) { *Shown = Cannon.Shots; RecoilClock.Add(Cannon.MountId, 0.f); }
+    }
+    for (auto It = RecoilClock.CreateIterator(); It; ++It)
+    {
+        It.Value() += DeltaSeconds;
+        const bool bDone = It.Value() >= RecoilKickSeconds + RecoilReturnSeconds;
+        if (bDone) It.Value() = RecoilKickSeconds + RecoilReturnSeconds;
+        if (const FEWShipMount* Mount = Definition->FindMount(It.Key())) PlaceCannonVisual(*Mount);
+        if (bDone) It.RemoveCurrent();
+    }
+}
+
+bool AEWShip::MarkTarget(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !IsGunnerHere(Character)) return false;
+    const FTransform Aimed = GetCannonMuzzleWorld(Character->GetGunMount());
+    FHitResult Hit;
+    AEWShip* Target = nullptr;
+    if (TraceVolleyLine(Hit, Aimed.GetLocation(), Aimed.GetLocation() + Aimed.GetRotation().GetForwardVector() * VolleyRange))
+        // Something aboard her (her surgeon, a fitting) counts as the ship.
+        for (AActor* Part = Hit.GetActor(); Part && !Target; Part = Part->GetAttachParentActor()) Target = Cast<AEWShip>(Part);
+    MarkedShip = Target && Target != this && !Target->IsSinking() ? Target : nullptr;
+    ForceNetUpdate();
+    return MarkedShip != nullptr;
 }
 
 bool AEWShip::IsGunportOpen(FName MountId) const
@@ -1376,13 +1621,7 @@ void AEWShip::ShowGunports(float DeltaSeconds)
         if (Opening == Was) continue;
         // The cover slides aside along the hull and the cannon runs out behind it, together.
         if (Cover) Cover->SetRelativeTransform(FTransform(Mount.CoverSlide * Opening) * Mount.CoverTransform * Mount.Transform);
-        if (const UEWItemDefinition* Item = GetFitting(Mount.MountId); Item && Item->FittingMountType == EEWShipMountType::Cannon)
-        {
-            if (const TObjectPtr<UStaticMeshComponent>* Visual = FittingVisuals.Find(Mount.MountId); Visual && *Visual)
-                (*Visual)->SetRelativeTransform(Item->FittingMeshTransform * GunMountTransform(Mount));
-            if (TurningRest.Contains(Mount.MountId))
-                TurningRest.Add(Mount.MountId, Item->FittingTurningPivot * Item->FittingMeshTransform * GunMountTransform(Mount));
-        }
+        PlaceCannonVisual(Mount);
     }
 }
 
@@ -1435,7 +1674,7 @@ bool AEWShip::IsGunnerHere(const AEWCharacter* Character) const
 bool AEWShip::ManCannon(AEWCharacter* Character, FName MountId)
 {
     FTransform Frame;
-    if (!HasAuthority() || bChangingFittings || !CanModifyFittings(Character) || !GetCannonFrame(MountId, Frame)
+    if (!HasAuthority() || bChangingFittings || !CanCommand(Character) || !GetCannonFrame(MountId, Frame)
         || GetCannonGunner(MountId) || Character->GetHelmShip() || Character->GetGunShip() || Character->IsOnLadder()
         || Character->bIsCrouched || Character->IsProne())
         return false;
@@ -1482,10 +1721,33 @@ bool AEWShip::FireCannon(AEWCharacter* Character)
 {
     if (!HasAuthority() || !IsGunnerHere(Character)) return false;
     const FName MountId = Character->GetGunMount();
+    // The mark: what the survivor's cannon is laid on, or a point far down its line.
+    const FTransform Aimed = GetCannonMuzzleWorld(MountId);
+    FVector Mark = Aimed.GetLocation() + Aimed.GetRotation().GetForwardVector() * VolleyRange;
+    const AActor* MarkActor = nullptr;
+    {
+        FHitResult Hit;
+        if (TraceVolleyLine(Hit, Aimed.GetLocation(), Mark)) { Mark = Hit.ImpactPoint; MarkActor = Hit.GetActor(); }
+    }
+    // A marked target: the hired gunners lay on her (amidships, half way up her side) instead of where this cannon points.
+    if (IsValid(MarkedShip) && !MarkedShip->IsSinking() && FVector::Dist(MarkedShip->GetActorLocation(), GetActorLocation()) <= VolleyRange)
+    {
+        Mark = MarkedShip->GetActorLocation() + FVector(0.f, 0.f, MarkedShip->GetDeckHeight() * .5f);
+        MarkActor = MarkedShip;
+    }
+    else if (MarkedShip) MarkedShip = nullptr;
+    if (!LaunchShot(MountId, Character)) return false;
+    LastVolley = FireVolley(Mark, MarkActor, MountId, Character);
+    return true;
+}
+
+bool AEWShip::LaunchShot(FName MountId, AEWCharacter* Shooter)
+{
     FEWCannonState* Cannon = FindCannon(MountId);
-    if (!Cannon->bLoaded) return false;
+    if (!Cannon || !Cannon->bLoaded) return false;
     // Not through a shut port, nor before the cannon is run out.
     if (GetGunportOpening(MountId) < .99f) return false;
+    AEWCharacter* Character = Shooter;
     const FTransform Muzzle = GetCannonMuzzleWorld(MountId);
     FActorSpawnParameters Params;
     Params.Owner = this;
@@ -1496,8 +1758,122 @@ bool AEWShip::FireCannon(AEWCharacter* Character)
     // The shot keeps the ship's own way through the water.
     Shot->Launch(this, Character, Muzzle.GetRotation().GetForwardVector() * CannonMuzzleSpeed + GetActorForwardVector() * Speed);
     Cannon->bLoaded = false;
+    ++Cannon->Shots;
     ForceNetUpdate();
     return true;
+}
+
+bool AEWShip::TraceVolleyLine(FHitResult& Hit, const FVector& From, const FVector& To) const
+{
+    // Solid things only: land, hulls, buildings. Not this ship, not the sea's volumes, not round shot already flying.
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(EWVolleyLine), false, this);
+    for (TActorIterator<AEWCannonBall> Ball(GetWorld()); Ball; ++Ball) Query.AddIgnoredActor(*Ball);
+    for (TActorIterator<AWaterBody> Water(GetWorld()); Water; ++Water) Query.AddIgnoredActor(*Water);
+    // Volumes (the sea's swimming volume, physics and audio volumes) are not solid: a line runs through them.
+    for (TActorIterator<AVolume> Volume(GetWorld()); Volume; ++Volume) Query.AddIgnoredActor(*Volume);
+    FCollisionObjectQueryParams Objects;
+    Objects.AddObjectTypesToQuery(ECC_WorldStatic);
+    Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
+    return GetWorld()->LineTraceSingleByObjectType(Hit, From, To, Objects, Query);
+}
+
+int32 AEWShip::FireVolley(const FVector& Mark, const AActor* MarkActor, FName Except, AEWCharacter* Caller)
+{
+    int32 Fired = 0;
+    const FTransform Ship = GetActorTransform();
+    for (FEWCannonState& Cannon : Cannons)
+    {
+        // Only hired gunners on their own, ready, with the port open, join in.
+        if (!Cannon.bCrewed || Cannon.Gunner || Cannon.MountId == Except || !Cannon.bLoaded || GetGunportOpening(Cannon.MountId) < .99f) continue;
+        FTransform Frame;
+        if (!GetCannonFrame(Cannon.MountId, Frame)) continue;
+        // Lay the cannon on the mark: it must bear (in front of the port, within its swing, a little slack allowed).
+        const FVector Local = (Frame * Ship).InverseTransformPosition(Mark);
+        if (Local.X <= 0.f) continue;
+        const float Yaw = FMath::RadiansToDegrees(FMath::Atan2(Local.Y, Local.X));
+        const float Pitch = FMath::RadiansToDegrees(FMath::Atan2(Local.Z, FVector2D(Local.X, Local.Y).Size()));
+        if (FMath::Abs(Yaw) > CannonTraverse + VolleyAimSlack || Pitch > CannonElevation + VolleyAimSlack || Pitch < -CannonDepression - VolleyAimSlack) continue;
+        Cannon.Yaw = FMath::Clamp(Yaw, -CannonTraverse, CannonTraverse);
+        Cannon.Pitch = FMath::Clamp(Pitch, -CannonDepression, CannonElevation);
+        // A clear line from the muzzle to the mark (the mark itself, or nothing short of it).
+        const FVector From = GetCannonMuzzleWorld(Cannon.MountId).GetLocation();
+        FHitResult Hit;
+        if (TraceVolleyLine(Hit, From, Mark) && Hit.GetActor() != MarkActor
+            && FVector::Dist(Hit.ImpactPoint, Mark) > 150.f)
+        {
+            UE_LOG(LogEW, Verbose, TEXT("Volley: %s holds fire, %s (%s) in the way %.0f cm out, mark %.0f cm"), *Cannon.MountId.ToString(),
+                *GetNameSafe(Hit.GetActor()), *GetNameSafe(Hit.GetComponent()), Hit.Distance, FVector::Dist(From, Mark));
+            continue;
+        }
+        if (LaunchShot(Cannon.MountId, Caller)) ++Fired;
+    }
+    if (Fired) ForceNetUpdate();
+    return Fired;
+}
+
+bool AEWShip::IsCannonCrewed(FName MountId) const
+{
+    const FEWCannonState* Cannon = FindCannon(MountId);
+    return Cannon && Cannon->bCrewed;
+}
+
+bool AEWShip::SignOnGunner(FName MountId)
+{
+    const UEWItemDefinition* Installed = GetFitting(MountId);
+    if (!HasAuthority() || !Installed || Installed->FittingMountType != EEWShipMountType::Cannon || IsCannonCrewed(MountId)) return false;
+    FEWCannonState* Cannon = FindCannon(MountId);
+    if (!Cannon)
+    {
+        Cannon = &Cannons.AddDefaulted_GetRef();
+        Cannon->MountId = MountId;
+    }
+    Cannon->bCrewed = true;
+    // The hired gunner runs out at once: a hull port is opened for them.
+    if (const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr; Mount && Mount->bGunport) OpenGunports.Add(MountId);
+    ForceNetUpdate();
+    return true;
+}
+
+int32 AEWShip::CrewEveryCannon()
+{
+    int32 Joined = 0;
+    for (const FEWInstalledFitting& Fitting : Fittings)
+        if (SignOnGunner(Fitting.MountId)) ++Joined;
+    return Joined;
+}
+
+UEWItemDefinition* AEWShip::FindCarriedGunnerArticles(const AEWCharacter* Character)
+{
+    if (!IsValid(Character) || !Character->GetInventoryComponent()) return nullptr;
+    for (const FEWInventoryEntry& Entry : Character->GetInventoryComponent()->GetInventoryEntries())
+        if (Entry.Quantity > 0 && Entry.ItemDefinition && Entry.ItemDefinition->bSignsOnGunner) return Entry.ItemDefinition;
+    return nullptr;
+}
+
+void AEWShip::ShowHiredGunners()
+{
+    static UStaticMesh* Cylinder = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    for (const FEWCannonState& Cannon : Cannons)
+    {
+        TObjectPtr<UStaticMeshComponent>& Figure = GunnerVisuals.FindOrAdd(Cannon.MountId);
+        const bool bShown = Cannon.bCrewed && !Cannon.Gunner && GetFitting(Cannon.MountId);
+        if (!Figure && !bShown) continue;
+        if (!Figure)
+        {
+            Figure = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+                *FString::Printf(TEXT("HiredGunner_%s"), *Cannon.MountId.ToString())), RF_Transient);
+            Figure->SetupAttachment(HullCollision);
+            Figure->SetStaticMesh(Cylinder);
+            Figure->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Figure->RegisterComponent();
+        }
+        Figure->SetVisibility(bShown);
+        if (!bShown) continue;
+        // Placeholder gunner behind the carriage; stooped over it, ramming, while it loads.
+        const FTransform Seat = GetGunnerSeatLocal(Cannon.MountId, 85.f);
+        const float Stoop = Cannon.bLoading ? 18.f * FMath::Abs(FMath::Sin(GetWorld()->GetTimeSeconds() * 3.f)) : 0.f;
+        Figure->SetRelativeTransform(FTransform(Seat.Rotator() + FRotator(-Stoop, 0, 0), Seat.GetLocation(), FVector(.42, .42, 1.7)));
+    }
 }
 
 void AEWShip::UpdateCannons(float DeltaSeconds)
@@ -1507,14 +1883,14 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
     {
         AEWCharacter* Gunner = Cannon.Gunner.Get();
         FTransform Frame;
-        if (Cannon.Gunner && (!IsValid(Gunner) || Gunner->GetGunShip() != this || !CanModifyFittings(Gunner) || !GetCannonFrame(Cannon.MountId, Frame)))
+        if (Cannon.Gunner && (!IsValid(Gunner) || Gunner->GetGunShip() != this || !CanCommand(Gunner) || !GetCannonFrame(Cannon.MountId, Frame)))
         {
             if (IsValid(Gunner)) LeaveCannon(Gunner, true);
             Cannon.Gunner = nullptr;
             bChanged = true;
             continue;
         }
-        if (!Gunner || Cannon.bLoaded) continue;
+        if ((!Gunner && !Cannon.bCrewed) || Cannon.bLoaded || !GetFitting(Cannon.MountId)) continue;
         if (Cannon.bLoading)
         {
             float& Left = CannonLoadLeft.FindOrAdd(Cannon.MountId);
@@ -1524,10 +1900,12 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
         }
         // Loading takes one round shot from the gunner and a while to ram home.
         UEWItemDefinition* Ammo = GetFitting(Cannon.MountId)->CannonAmmo.LoadSynchronous();
-        UEWInventoryComponent* Carried = Gunner->GetInventoryComponent();
+        // A survivor loads from what they carry; a hired gunner on their own fetches it from the hold.
+        UEWInventoryComponent* Carried = Gunner ? Gunner->GetInventoryComponent() : Cargo.Get();
         if (Ammo && Carried && Carried->GetItemCount(Ammo) > 0 && Carried->RemoveItem(Ammo, 1) == 1)
         {
             Cannon.bLoading = true;
+            Cannon.LoadStartedAt = ServerNow();
             CannonLoadLeft.Add(Cannon.MountId, CannonLoadSeconds);
             bChanged = true;
         }
@@ -1556,8 +1934,164 @@ void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWChar
     ForceNetUpdate();
 }
 
+FEWSavedShip AEWShip::CaptureForSave() const
+{
+    FEWSavedShip Saved;
+    // A ship that came with the map is known again by its name; one bought or spawned in play is launched anew on load.
+    if (IsNetStartupActor()) Saved.MapName = GetFName();
+    Saved.ShipClass = GetClass();
+    Saved.Definition = Definition;
+    Saved.Transform = GetActorTransform();
+    Saved.Fittings = Fittings;
+    if (Cargo) Saved.Cargo = Cargo->Entries;
+    Saved.HullHealth = HullHealth;
+    Saved.Holes = Holes;
+    Saved.WaterAboard = WaterAboard;
+    Saved.bAnchored = bAnchored;
+    Saved.SailState = SailState;
+    Saved.SailLines = SailLines;
+    for (FEWSailLine& Line : Saved.SailLines) Line.Worker = nullptr;
+    Saved.Cannons = Cannons;
+    for (FEWCannonState& Cannon : Saved.Cannons) { Cannon.Gunner = nullptr; Cannon.bLoading = false; }
+    Saved.OpenGunports = OpenGunports;
+    Saved.OwnerKey = OwnerKey;
+    Saved.OwnerName = OwnerName;
+    return Saved;
+}
+
+void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
+{
+    if (!HasAuthority()) return;
+    // Anyone at a station lets go; the ship is moved as she was saved, still on the water.
+    for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+    {
+        if (It->GetHelmShip() == this) LeaveHelm(*It, true);
+        if (It->GetGunShip() == this) LeaveCannon(*It, true);
+        if (It->GetLinesShip() == this) LeaveLines(*It);
+    }
+    Speed = 0.f;
+    Rudder = 0.f;
+    SetActorTransform(Saved.Transform, false, nullptr, ETeleportType::TeleportPhysics);
+    Fittings = Saved.Fittings;
+    if (Cargo)
+    {
+        Cargo->Entries = Saved.Cargo.FilterByPredicate([](const FEWInventoryEntry& E) { return E.ItemDefinition && E.Quantity > 0; });
+        Cargo->HandleInventoryChanged();
+    }
+    if (Saved.HullHealth >= 0.f) HullHealth = FMath::Min(Saved.HullHealth, GetMaxHullHealth());
+    Holes = Saved.Holes;
+    WaterAboard = Saved.WaterAboard;
+    SailState = Saved.SailState;
+    SailLines = Saved.SailLines;
+    Cannons = Saved.Cannons;
+    CannonLoadLeft.Reset();
+    OpenGunports = Saved.OpenGunports;
+    bAnchored = Saved.bAnchored;
+    bChainTaut = false;
+    if (bAnchored) LayAnchor();
+    OwnerKey = Saved.OwnerKey;
+    OwnerName = Saved.OwnerKey.IsEmpty() ? FString() : Saved.OwnerName.IsEmpty() ? TEXT("A captain") : Saved.OwnerName;
+    OwnerPlayerId = INDEX_NONE;
+    OwnerCompanyId.Invalidate();
+    RefreshOwner();
+    RefreshFittingVisuals();
+    OnRep_Holes();
+    ForceNetUpdate();
+}
+
+void AEWShip::CaptureAll(UWorld* World, TArray<FEWSavedShip>& Out)
+{
+    Out.Reset();
+    if (!World || World->GetNetMode() == NM_Client) return;
+    for (TActorIterator<AEWShip> It(World); It; ++It)
+        if (!It->IsSinking() && !It->IsActorBeingDestroyed() && It->Definition) Out.Add(It->CaptureForSave());
+}
+
+int32 AEWShip::RestoreAll(UWorld* World, const TArray<FEWSavedShip>& Ships)
+{
+    if (!World || World->GetNetMode() == NM_Client) return 0;
+    TMap<FName, AEWShip*> Placed;
+    TArray<AEWShip*> Spawned;
+    for (TActorIterator<AEWShip> It(World); It; ++It)
+    {
+        if (It->IsNetStartupActor()) Placed.Add(It->GetFName(), *It);
+        else Spawned.Add(*It);
+    }
+    // Ships launched in play before this load are not the save's: they go, and the save's own come back.
+    for (AEWShip* Ship : Spawned) Ship->Destroy();
+    int32 Restored = 0;
+    TSet<FName> Kept;
+    for (const FEWSavedShip& Saved : Ships)
+    {
+        if (!Saved.Definition) continue;
+        AEWShip* Ship = nullptr;
+        if (!Saved.MapName.IsNone())
+        {
+            if (AEWShip** Found = Placed.Find(Saved.MapName)) Ship = *Found;
+            if (!Ship) continue;     // the map no longer has that ship
+            Kept.Add(Saved.MapName);
+        }
+        else
+        {
+            const TSubclassOf<AEWShip> Class = Saved.ShipClass ? Saved.ShipClass : TSubclassOf<AEWShip>(AEWShip::StaticClass());
+            Ship = World->SpawnActorDeferred<AEWShip>(Class, Saved.Transform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+            if (!Ship) continue;
+            Ship->Definition = Saved.Definition;
+            Ship->FinishSpawning(Saved.Transform);
+        }
+        Ship->RestoreFromSave(Saved);
+        ++Restored;
+    }
+    // A ship of the map that the save does not have was lost (sunk) before it was made.
+    for (const auto& Pair : Placed)
+        if (!Kept.Contains(Pair.Key)) Pair.Value->Destroy();
+    return Restored;
+}
+
+void AEWShip::RepairAtShipyard()
+{
+    if (!HasAuthority() || bSinking) return;
+    HullHealth = GetMaxHullHealth();
+    Holes.Reset();
+    WaterAboard = 0.f;
+    OnRep_Holes();
+    ForceNetUpdate();
+}
+
+bool AEWShip::TowTo(const FTransform& Where)
+{
+    if (!HasAuthority() || bSinking || !GetWorld()) return false;
+    const FTransform From = GetActorTransform();
+    TArray<TPair<AEWCharacter*, FVector>> Aboard;
+    for (TActorIterator<AEWCharacter> It(GetWorld()); It; ++It)
+    {
+        AEWCharacter* Survivor = *It;
+        if (IsAboard(Survivor)) Aboard.Add({Survivor, From.InverseTransformPosition(Survivor->GetActorLocation())});
+        if (Survivor->GetHelmShip() == this) LeaveHelm(Survivor, true);
+        if (Survivor->GetGunShip() == this) LeaveCannon(Survivor, true);
+        if (Survivor->GetLinesShip() == this) LeaveLines(Survivor);
+    }
+    Speed = 0.f;
+    Rudder = 0.f;
+    bAnchored = false;
+    const FVector Spot(Where.GetLocation().X, Where.GetLocation().Y, From.GetLocation().Z);
+    SetActorLocationAndRotation(Spot, FRotator(0.f, Where.Rotator().Yaw, 0.f), false, nullptr, ETeleportType::TeleportPhysics);
+    bAnchored = true;
+    LayAnchor();
+    bChainTaut = false;
+    for (const auto& Pair : Aboard)
+        Pair.Key->TeleportTo(GetActorTransform().TransformPosition(Pair.Value), Pair.Key->GetActorRotation(), false, true);
+    ForceNetUpdate();
+    return true;
+}
+
 void AEWShip::OnRep_Holes()
 {
+    // Patched at a shipyard: the drawn holes beyond those left go.
+    while (HoleVisuals.Num() > FMath::Min(Holes.Num(), MaxShownHoles))
+    {
+        if (UStaticMeshComponent* Gone = HoleVisuals.Pop()) Gone->DestroyComponent();
+    }
     static UStaticMesh* HoleMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/Elitewake/World/Ships/SM_ShotHole_v1.SM_ShotHole_v1"));
     if (!HoleMesh) return;
     // Each hole is drawn where it struck, flat on the planking and a hair proud of it.
@@ -1577,14 +2111,16 @@ void AEWShip::OnRep_Holes()
 
 bool AEWShip::IsValidHelmsman(const AEWCharacter* Character) const
 {
-    return Character && Helmsman == Character && Character->GetHelmShip() == this && CanModifyFittings(Character);
+    return Character && Helmsman == Character && Character->GetHelmShip() == this && CanCommand(Character);
 }
 
 bool AEWShip::TakeHelm(AEWCharacter* Character)
 {
-    if (!HasAuthority() || bChangingFittings || Helmsman || !CanModifyFittings(Character)
+    if (!HasAuthority() || bChangingFittings || Helmsman || !CanCommand(Character)
         || Character->GetHelmShip() || Character->bIsCrouched || Character->IsProne() || !HasFittingOfType(EEWShipMountType::Helm))
         return false;
+    // An unclaimed ship is the first helmsman's.
+    if (!IsOwned()) SetShipOwner(Character->GetController());
     Helmsman = Character;
     Rudder = 0.f;
     SailTrimDirection = 0;
@@ -1643,9 +2179,217 @@ bool AEWShip::StepSails(AEWCharacter* Character, int32 Direction)
     if (!PC || PC->GetInteractionComponent()->IsMenuBlocked()) return false;
     // Paddled craft retain their two deliberate effort levels; sail rigs use all four 25% steps.
     const int32 Step = Definition && Definition->bPaddled ? Direction * 2 : Direction;
+    // The helm commands only sails with a sailhand (owner, October 18); with none aboard its orders go unheard.
+    if (HasTrimmableSails() && GetCrewedSailCount() == 0) return false;
     SailState = static_cast<EEWSailState>(FMath::Clamp(static_cast<int32>(SailState) + Step, 0, 4));
+    for (FEWSailLine& Line : SailLines)
+        if (Line.bCrewed) Line.State = SailState;
     RefreshFittingVisuals();
+    ForceNetUpdate();
     return true;
+}
+
+float AEWShip::GetSailFraction() const
+{
+    // Paddles, or no sail fitted: the helm's setting. Otherwise each fitted sail's own setting, weighted by its size.
+    if (!Definition || Definition->bPaddled) return SailFractionForState(SailState);
+    float Fitted = 0.f, Set = 0.f;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        if (Mount.Type != EEWShipMountType::Sail || !GetFitting(Mount.MountId)) continue;
+        Fitted += SailWeight(Mount.SailSize);
+        Set += SailWeight(Mount.SailSize) * SailFractionForState(GetMountSailState(Mount.MountId));
+    }
+    return Fitted > 0.f ? Set / Fitted : SailFractionForState(SailState);
+}
+
+EEWSailState AEWShip::GetMountSailState(FName MountId) const
+{
+    const FEWSailLine* Line = FindLine(MountId);
+    return Line ? Line->State : EEWSailState::Furled;
+}
+
+bool AEWShip::IsSailCrewed(FName MountId) const
+{
+    const FEWSailLine* Line = FindLine(MountId);
+    return Line && Line->bCrewed;
+}
+
+int32 AEWShip::GetCrewedSailCount() const
+{
+    int32 Count = 0;
+    for (const FEWSailLine& Line : SailLines) Count += Line.bCrewed ? 1 : 0;
+    return Count;
+}
+
+AEWCharacter* AEWShip::GetLinesWorker(FName MountId) const
+{
+    const FEWSailLine* Line = FindLine(MountId);
+    return Line ? Line->Worker.Get() : nullptr;
+}
+
+FEWSailLine& AEWShip::FindOrAddLine(FName MountId)
+{
+    if (FEWSailLine* Line = FindLine(MountId)) return *Line;
+    FEWSailLine& Added = SailLines.AddDefaulted_GetRef();
+    Added.MountId = MountId;
+    return Added;
+}
+
+bool AEWShip::SignOnSailhand(FName MountId)
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!HasAuthority() || !Mount || Mount->Type != EEWShipMountType::Sail || IsSailCrewed(MountId)) return false;
+    FEWSailLine& Line = FindOrAddLine(MountId);
+    Line.bCrewed = true;
+    // A new hand sets the sail as the helm last ordered.
+    Line.State = SailState;
+    RefreshFittingVisuals();
+    ForceNetUpdate();
+    return true;
+}
+
+int32 AEWShip::CrewEverySail()
+{
+    int32 Joined = 0;
+    if (Definition)
+        for (const FEWShipMount& Mount : Definition->Mounts)
+            if (Mount.Type == EEWShipMountType::Sail && SignOnSailhand(Mount.MountId)) ++Joined;
+    return Joined;
+}
+
+FVector AEWShip::GetLinesLocal(FName MountId) const
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!Mount) return FVector::ZeroVector;
+    const FVector At = Mount->Transform.GetLocation();
+    // To starboard of the mast foot, on a small boat no further out than her side allows.
+    const float Out = FMath::Min(75.f, Definition->HullExtent.Y * .55f);
+    return FVector(At.X, At.Y + Out, GetDeckHeight());
+}
+
+FName AEWShip::FindAimedLines(const AEWCharacter* Character) const
+{
+    const UPrimitiveComponent* Aimed = TraceAimedComponent(Character);
+    if (!Aimed) return NAME_None;
+    for (const auto& Pair : LineTargets) if (Pair.Value == Aimed) return Pair.Key;
+    return NAME_None;
+}
+
+bool AEWShip::TakeLines(AEWCharacter* Character, FName MountId)
+{
+    const FEWShipMount* Mount = Definition ? Definition->FindMount(MountId) : nullptr;
+    if (!HasAuthority() || !Mount || Mount->Type != EEWShipMountType::Sail || !CanCommand(Character)
+        || Character->GetHelmShip() || Character->GetGunShip() || Character->GetLinesShip() || GetLinesWorker(MountId)) return false;
+    FindOrAddLine(MountId).Worker = Character;
+    Character->SetLinesPost(this, MountId);
+    ForceNetUpdate();
+    return true;
+}
+
+bool AEWShip::LeaveLines(AEWCharacter* Character)
+{
+    if (!HasAuthority() || !Character) return false;
+    bool bLeft = false;
+    for (FEWSailLine& Line : SailLines)
+        if (Line.Worker == Character) { Line.Worker = nullptr; bLeft = true; }
+    if (Character->GetLinesShip() == this) Character->SetLinesPost(nullptr, NAME_None);
+    if (bLeft) ForceNetUpdate();
+    return bLeft;
+}
+
+bool AEWShip::StepSailByHand(AEWCharacter* Character, int32 Direction)
+{
+    if (!HasAuthority() || !Character || (Direction != 1 && Direction != -1)) return false;
+    FEWSailLine* Line = SailLines.FindByPredicate([Character](const FEWSailLine& L) { return L.Worker == Character; });
+    if (!Line) return false;
+    const auto* PC = Cast<AEWPlayerController>(Character->GetController());
+    if (!PC || PC->GetInteractionComponent()->IsMenuBlocked()) return false;
+    const EEWSailState Next = static_cast<EEWSailState>(FMath::Clamp(static_cast<int32>(Line->State) + Direction, 0, 4));
+    if (Next == Line->State) return false;
+    Line->State = Next;
+    RefreshFittingVisuals();
+    ForceNetUpdate();
+    return true;
+}
+
+void AEWShip::BuildLineVisuals()
+{
+    if (!Definition) return;
+    UStaticMesh* Cylinder = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder"));
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        if (Mount.Type != EEWShipMountType::Sail) continue;
+        const FVector Lines = GetLinesLocal(Mount.MountId);
+        auto* Target = NewObject<UBoxComponent>(this, MakeUniqueObjectName(this, UBoxComponent::StaticClass(),
+            *FString::Printf(TEXT("Lines_%s"), *Mount.MountId.ToString())), RF_Transient);
+        Target->SetupAttachment(HullCollision);
+        Target->SetRelativeLocation(Lines + FVector(0, 0, 85));
+        Target->SetBoxExtent(FVector(30, 14, 45));
+        Target->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+        Target->SetCollisionResponseToAllChannels(ECR_Ignore);
+        Target->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+        Target->SetGenerateOverlapEvents(false);
+        Target->RegisterComponent();
+        LineTargets.Add(Mount.MountId, Target);
+        if (GetNetMode() == NM_DedicatedServer) continue;
+        // Stand-in pin rail: a short bar where the lines are belayed (placeholder until art).
+        auto* Rail = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+            *FString::Printf(TEXT("PinRail_%s"), *Mount.MountId.ToString())), RF_Transient);
+        Rail->SetupAttachment(HullCollision);
+        Rail->SetStaticMesh(StandInCube());
+        Rail->SetRelativeTransform(FTransform(FRotator::ZeroRotator, Lines + FVector(0, 0, 80), FVector(.55, .08, .08)));
+        Rail->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Rail->RegisterComponent();
+        LineVisuals.Add(Mount.MountId, Rail);
+        // The sailhand, a placeholder figure across the mast from the rail; shown only when one is signed on.
+        auto* Hand = NewObject<UStaticMeshComponent>(this, MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),
+            *FString::Printf(TEXT("Sailhand_%s"), *Mount.MountId.ToString())), RF_Transient);
+        Hand->SetupAttachment(HullCollision);
+        Hand->SetStaticMesh(Cylinder);
+        const FVector Stand(Lines.X, 2.f * Mount.Transform.GetLocation().Y - Lines.Y, Lines.Z + 85.f);
+        Hand->SetRelativeTransform(FTransform(FRotator::ZeroRotator, Stand, FVector(.42, .42, 1.7)));
+        Hand->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Hand->SetVisibility(IsSailCrewed(Mount.MountId));
+        Hand->RegisterComponent();
+        SailhandVisuals.Add(Mount.MountId, Hand);
+    }
+}
+
+void AEWShip::UpdateSailLines(float DeltaSeconds)
+{
+    if (HasAuthority())
+        for (FEWSailLine& Line : SailLines)
+        {
+            if (!Line.Worker) continue;
+            AEWCharacter* Worker = Line.Worker;
+            const FVector Lines = GetActorTransform().TransformPosition(GetLinesLocal(Line.MountId));
+            if (!IsValid(Worker) || !CanCommand(Worker) || FVector::Dist2D(Worker->GetActorLocation(), Lines) > LinesReach
+                || Worker->GetLinesShip() != this)
+            {
+                if (IsValid(Worker)) LeaveLines(Worker);
+                else Line.Worker = nullptr;
+            }
+        }
+    if (GetNetMode() == NM_DedicatedServer) return;
+    // The sailhands haul their lines for a moment whenever their sail is set or taken in: a stand-in bob and lean.
+    for (const FEWSailLine& Line : SailLines)
+    {
+        const TObjectPtr<UStaticMeshComponent>* Found = SailhandVisuals.Find(Line.MountId);
+        if (!Found || !*Found) continue;
+        UStaticMeshComponent* Hand = *Found;
+        Hand->SetVisibility(Line.bCrewed);
+        EEWSailState& Seen = HaulSeen.FindOrAdd(Line.MountId, Line.State);
+        float& Left = HaulLeft.FindOrAdd(Line.MountId);
+        if (Seen != Line.State) { Seen = Line.State; Left = HaulSeconds; }
+        Left = FMath::Max(0.f, Left - DeltaSeconds);
+        const float Pull = Left > 0.f ? FMath::Abs(FMath::Sin(Left * 2.f * PI * 1.6f)) : 0.f;
+        FTransform Pose = Hand->GetRelativeTransform();
+        const FVector Rest(Pose.GetLocation().X, Pose.GetLocation().Y, GetLinesLocal(Line.MountId).Z + 85.f);
+        Pose.SetLocation(Rest - FVector(0, 0, 10.f * Pull));
+        Pose.SetRotation(FRotator(-14.f * Pull, 0, 0).Quaternion());
+        Hand->SetRelativeTransform(Pose);
+    }
 }
 
 bool AEWShip::SetSailTrim(AEWCharacter* Character, int32 Direction)
@@ -1689,6 +2433,8 @@ float AEWShip::GetWindFactor() const
     // Badly trimmed sails lose the heading's advantage, down to the least any sail gives, so a ship always makes
     // some headway.
     const float Heading = Wind->GetHeadingFactor(GetActorForwardVector());
+    // A raft's sail is not trimmed from her paddles: it swings itself to the wind.
+    if (!HasTrimmableSails()) return Heading;
     return UEWWindSubsystem::MinUpwindFactor + (Heading - UEWWindSubsystem::MinUpwindFactor) * GetTrimQuality();
 }
 
@@ -1705,14 +2451,43 @@ float AEWShip::GetFittedSailFraction() const
     return Capacity > 0.f ? Fitted / Capacity : 0.f;
 }
 
+float AEWShip::GetSailSpeedCap() const
+{
+    if (!Definition) return 0.f;
+    float Best = 0.f;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        const UEWItemDefinition* Sail = Mount.Type == EEWShipMountType::Sail ? GetFitting(Mount.MountId) : nullptr;
+        if (!Sail) continue;
+        Best = FMath::Max(Best, SailFractionForState(GetMountSailState(Mount.MountId)) * FMath::Max(Sail->SailSpeedMultiplier, 0.f));
+    }
+    return Best;
+}
+
+bool AEWShip::IsWeightedSailDrawing() const
+{
+    if (!Definition) return false;
+    float Best = 0.f;
+    bool bWeighted = false;
+    for (const FEWShipMount& Mount : Definition->Mounts)
+    {
+        const UEWItemDefinition* Sail = Mount.Type == EEWShipMountType::Sail ? GetFitting(Mount.MountId) : nullptr;
+        if (!Sail) continue;
+        const float Cap = SailFractionForState(GetMountSailState(Mount.MountId)) * Sail->SailSpeedMultiplier;
+        if (Cap > Best) { Best = Cap; bWeighted = Sail->bWeightedSail; }
+    }
+    return Best > 0.f && bWeighted;
+}
+
 float AEWShip::ComputeTargetSpeed() const
 {
     // At anchor the sails still drive her: the chain, not the anchor, stops her (StepSimulation).
-    if (!Definition || bSwamped || SailState == EEWSailState::Furled) return 0.f;
-    const float SailSet = GetSailFraction();
-    // Paddlers set their own pace whatever the wind, with no sails to fill.
-    if (Definition->bPaddled) return Definition->TopSpeed * SailSet * GetLoadSpeedFactor();
-    return Definition->TopSpeed * SailingPace * SailSet * GetFittedSailFraction() * GetWindFactor() * GetLoadSpeedFactor();
+    if (!Definition || bSwamped) return 0.f;
+    // Under sail: the class base speed, raised by the best drawing sail (owner, October 18), as the wind allows.
+    const float UnderSail = Definition->TopSpeed * CrossingPace * GetSailSpeedCap() * GetWindFactor() * GetLoadSpeedFactor();
+    // Paddlers set their own pace whatever the wind; a raft with a sail set goes as fast as either.
+    if (Definition->bPaddled) return FMath::Max(Definition->TopSpeed * CrossingPace * SailFractionForState(SailState) * GetLoadSpeedFactor(), UnderSail);
+    return UnderSail;
 }
 
 void AEWShip::SimulateSailing(float DeltaSeconds)
@@ -1812,6 +2587,8 @@ void AEWShip::StepSimulation(float Step)
     RudderAngle = FMath::FInterpConstantTo(RudderAngle, Rudder, Step, RudderRate);
     const float Target = ComputeTargetSpeed();
     Speed = FMath::FInterpConstantTo(Speed, Target, Step, Target > Speed ? Acceleration : bAnchored ? AnchorDrag : Deceleration);
+    // Owner, October 18: with every sail down (and no paddle stroke) she stops at once and holds her place: no drift, no coasting.
+    if (GetSailSpeedCap() <= 0.f && (!Definition->bPaddled || SailState == EEWSailState::Furled)) Speed = 0.f;
     if (bAnchored && ChainReach > 0.f)
     {
         // The chain's pull: free while there is slack, slowing her over the last of it, holding her once taut.
@@ -1842,9 +2619,13 @@ void AEWShip::StepSimulation(float Step)
     const float SailSet = GetSailFraction();
     const float WantedHeel = HasTrimmableSails() && !bAnchored
         ? MaxHeel * SwayScale() * SailSet * GetFittedSailFraction() * GetWindFactor() * (SailAngle >= 0.f ? 1.f : -1.f) : 0.f;
-    Heel = FMath::FInterpConstantTo(Heel, WantedHeel, Step, 2.f);
+    // A drawing weighted sail steadies her (delegated tuning).
+    const float Steady = IsWeightedSailDrawing() ? 1.f - WeightedSailDamping : 1.f;
+    Heel = FMath::FInterpConstantTo(Heel, WantedHeel * Steady, Step, 2.f);
     float Roll, Pitch, Rise;
     GetSwayAt(SwayTime, Roll, Pitch, Rise);
+    Roll = Heel + (Roll - Heel) * Steady;
+    Pitch *= Steady;
     Pitch -= 1.5f * ChainJerk * FMath::Sin(ChainJerk * PI);   // the bow dips as the chain snubs her up
     const float Yaw = GetActorRotation().Yaw;
     // At anchor the rudder does nothing; otherwise a stopped ship may still turn to free itself.
@@ -1896,12 +2677,21 @@ void AEWShip::Tick(float DeltaSeconds)
     }
     if (GetNetMode() != NM_DedicatedServer && SailLooks.Num()) ShowSailFill(DeltaSeconds);
     if (GetNetMode() != NM_DedicatedServer) ShowFlags(DeltaSeconds);
+    if (SailLines.Num()) UpdateSailLines(DeltaSeconds);
+    if (Cannons.Num() && GetNetMode() != NM_DedicatedServer) ShowHiredGunners();
     ShowGunports(DeltaSeconds);
+    if (GetNetMode() != NM_DedicatedServer) ShowRecoil(DeltaSeconds);
     ShowChain(DeltaSeconds);
     if (!HasAuthority())
     {
         SmoothClientMotion(DeltaSeconds);
         return;
+    }
+    // Who her owner is this session (they come and go, join and leave Companies).
+    if (IsOwned() && (OwnerRefreshIn -= DeltaSeconds) <= 0.f)
+    {
+        OwnerRefreshIn = 1.f;  // tuning
+        RefreshOwner();
     }
     if (Helmsman && !IsValidHelmsman(Helmsman))
     {
@@ -1927,5 +2717,9 @@ void AEWShip::Tick(float DeltaSeconds)
 void AEWShip::EndPlay(const EEndPlayReason::Type Reason)
 {
     if (HasAuthority() && IsValid(Helmsman)) LeaveHelm(Helmsman, true);
+    if (HasAuthority())
+        for (FEWSailLine& Line : SailLines)
+            if (IsValid(Line.Worker)) LeaveLines(Line.Worker);
+    if (HasAuthority() && IsValid(Surgeon)) Surgeon->Destroy();
     Super::EndPlay(Reason);
 }

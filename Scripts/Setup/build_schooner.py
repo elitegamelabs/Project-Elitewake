@@ -16,7 +16,7 @@ separate). Under the main deck a lower deck has twelve square gunports, six a si
 and its cannon place, a hatch and stairs down, pillars, ribs and beams, a bulkhead with a doorway into a small aft
 hold, and barrels, crates and a chest under three lanterns. Four railing hardpoints along the main deck, a boarding
 ladder at the centre of her stern, a capstan and a bowsprit with its bobstay. Her two flags fly from a jackstaff at the
-bow and an ensign staff on the raised aft deck. Sizes are tuning; Docs/OPEN_QUESTIONS records the delegated choices.
+bow and an ensign staff on the raised aft deck. Sizes are tuning; CLAUDE.md holds the current rules.
 
 Coordinates are the ship's own, in cm, with the waterline at Z 0 and the lower deck above the swell.
 """
@@ -309,7 +309,7 @@ def update_definition(hull, rig, looks, capstan):
         'ladder_tops': [unreal.Vector(STERN_LADDER[1][0] - 18, 0, STERN_LADDER[1][2])],
         'lantern_lights': [unreal.Vector(*p) for p in LIGHTS],
         # Crew: the twelve cannons' crews plus the player and the Surgeon. Speed, turning and hold are tuning.
-        'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 800.0, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
+        'hull_health': 2500.0, 'crew_capacity': 14, 'top_speed': 10 * 51.4444, 'turn_rate': 22.0, 'cargo_slots': 40, 'weight_capacity': 4000.0,
         'mounts': mounts,
     }
     for k, v in values.items():

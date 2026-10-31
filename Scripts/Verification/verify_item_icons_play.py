@@ -14,6 +14,7 @@ material=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestIconMaterial')
 output=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestIconOutput')
 texture=unreal.load_asset('/Engine/EngineResources/DefaultTexture')
 recipe=unreal.load_asset('/Game/Elitewake/Crafting/Testing/DA_RecipeIconCheck')
+recipe.set_editor_property('craft_seconds',0.2)  # crafting takes seconds now; these checks are about what it makes (verify_craft_time_play times it)
 assert material and output and recipe and texture
 assert inv.add_item(material,1)==1 and inv.unlock_recipe(recipe)
 phase=0;next_at=time.monotonic()+2;checks=[];handle=None
@@ -32,7 +33,7 @@ def tick(delta):
         elif phase==1:
             assert menu().get_displayed_inventory_icon(material)==texture
             checks.append('Inventory renders the assigned item texture')
-            assert lib.send_verification_ui_key(client,'Tab')
+            menu().focus_crafting()
         elif phase==2:
             assert menu().get_displayed_material_icon(material)==texture
             checks.append('Crafting material uses identical authored texture')
@@ -40,7 +41,7 @@ def tick(delta):
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==3:
             assert inv.get_item_count(output)==1 and inv.get_item_count(material)==0
-            assert lib.send_verification_ui_key(client,'PageUp')
+            menu().focus_inventory()
         elif phase==4:
             assert menu().get_displayed_inventory_icon(output)==texture
             assert menu().get_displayed_inventory_icon(material) is None

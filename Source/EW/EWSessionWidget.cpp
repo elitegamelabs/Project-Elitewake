@@ -31,7 +31,7 @@ TSharedRef<SWidget> UEWSessionWidget::RebuildWidget()
         {
             Text(FText::Format(NSLOCTEXT("Elitewake", "SessionBuildLabel", "Build: {0}"), Instance->GetPrivateBuildLabel()), 16);
         }
-        Text(NSLOCTEXT("Elitewake","SessionAddressHelp","Same PC: 127.0.0.1:7777. LAN: enter the host PC's private IPv4 address. Internet setup remains pending."),16);
+        Text(NSLOCTEXT("Elitewake","SessionAddressHelp","Same PC: 127.0.0.1:7777. LAN: the host PC's private IPv4 address. Internet: the host's public IP (or host name) with port 7777; the host forwards UDP port 7777 on their router to their PC and allows EW through Windows Firewall."),16);
         Address=WidgetTree->ConstructWidget<UEditableTextBox>(); Address->SetText(FText::FromString(TEXT("127.0.0.1:7777"))); Body->AddChildToVerticalBox(Address);
         Status=Text(FText::GetEmpty(),18);
         auto Button=[&](const FText& Value)

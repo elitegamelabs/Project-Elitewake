@@ -11,7 +11,7 @@ class UTexture2D;
 class UStaticMesh;
 
 UENUM(BlueprintType)
-enum class EEWFoodKind : uint8 { None, Berry };
+enum class EEWFoodKind : uint8 { None, Berry, RawFish, CookedFish, RawMeat, CookedMeat, BerryDish, Remedy };
 
 UENUM(BlueprintType)
 enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
@@ -59,9 +59,15 @@ public:
     /** Fraction of the full hunger bar restored by one unit (berries: 1/16). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
     float HungerRestoreFraction = 0.f;
-    /** Fraction of current maximum unlocked health, not remaining health (Azul: .05). */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    /** Fraction of current maximum unlocked health, not remaining health (Azul: .05). Negative for food that harms (raw meat: -.03). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="-1", ClampMax="1"))
     float HealthRestoreFraction = 0.f;
+    /** Chance eating one unit brings on food sickness (owner, October 22: raw fish .15, raw meat .25). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0", ClampMax="1"))
+    float SicknessChance = 0.f;
+    /** Eating or using one unit ends food sickness early (medicinal herbs, a crafted remedy). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
+    bool bCuresFoodSickness = false;
     /** Real elapsed seconds in the running session; berries use 1200. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0"))
     float FreshLifetimeSeconds = 0.f;
@@ -97,6 +103,20 @@ public:
 	/** Weight of one unit in kilograms. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Inventory", meta=(ClampMin="0.0", Units="kg"))
 	float UnitWeight = 0.0f;
+
+	/** What a Port merchant pays for one unit, in Copper; 0 means they will not buy it (design reference: vendor prices are data-driven,
+	 *  values TBD: every value here is a placeholder for tuning). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Economy", meta=(ClampMin="0"))
+	int32 SellValueCopper = 0;
+
+    /** Sailhand's Articles: used at a sail's lines aboard, it signs a hired Port sailhand on for that sail, who then follows
+     *  the helm's orders (owner, October 18: crew dependency). */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Economy")
+    bool bSignsOnSailhand = false;
+
+    /** Gunner Articles: used at an installed cannon aboard, they sign a hired Port gunner on to serve it. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Economy")
+    bool bSignsOnGunner = false;
 
 	/** Worn clothing's warmth: 0 for none; 1 keeps a survivor warm in the Winter region's working cold. It also
 	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
@@ -137,6 +157,13 @@ public:
     /** Sails only: the mount size this sail fits. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     EEWSailSize FittingSailSize = EEWSailSize::None;
+    /** Sails only (owner, October 18): the whole-ship speed multiplier this sail gives at full deployment while it draws: small 1.30,
+     *  medium 1.50, large 1.80; weighted small 1.25, medium 1.40, large 1.70. Sails do not stack: the best one counts. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
+    float SailSpeedMultiplier = 1.f;
+    /** Sails only: a weighted sail (a weighted hem) steadies the ship in the wind (delegated, October 18: 10% more roll and pitch damping). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    bool bWeightedSail = false;
     /** Railing modules only: how many cannon places the module opens behind it (0 plain or dinghy, 2 two-cannon). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
     int32 FittingCannonSlots = 0;

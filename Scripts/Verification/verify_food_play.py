@@ -16,7 +16,15 @@ owner_id = pid(pc.get_controlled_pawn())
 def characters(w): return unreal.GameplayStatics.get_all_actors_of_class(w, unreal.EWCharacter)
 owner = next(p for p in characters(server) if pid(p) == owner_id)
 inv = owner.get_inventory_component(); survival = owner.get_survival_component()
-assert all(not p.get_inventory_component().get_inventory_entries() for p in characters(server)), 'Use fresh empty Play'
+# The starter kit arrives with every survivor: empty the pack and the body first, since this check counts every item.
+def clear_survivor(who):
+    for e in list(who.get_equipment_component().get_equipment_entries()):
+        who.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(who.get_inventory_component().get_inventory_entries()):
+        who.get_inventory_component().remove_item(e.get_editor_property('item_definition'), e.get_editor_property('quantity'))
+for p in characters(server): clear_survivor(p)
+home = owner.get_actor_location()      # the survivor's own start: the fixtures are laid out from it, not from fixed map coordinates
+assert all(not p.get_inventory_component().get_inventory_entries() for p in characters(server)), 'could not empty the starter kit'
 berry = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestAzulBerry')
 toxic = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestToxicBerry')
 wood = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
@@ -78,7 +86,7 @@ def offset_check():
     report['checkpoints'].append({'label': 'Real clock offset updates replicated freshness', 'freshness': value})
 def chord():
     assert lib.send_verification_ui_key_event(pc, 'Gamepad_LeftShoulder', True)
-    key('Gamepad_FaceButton_Bottom')
+    key('Gamepad_DPad_Left')      # slot 1 is the d-pad's left; the face buttons are slots 5 to 8 now
     assert lib.send_verification_ui_key_event(pc, 'Gamepad_LeftShoulder', False)
 step(lambda: check('Fresh empty inventory; no automatic grant', 0, 0, 50, 50, 0))
 step(lambda: spawn(5)); step(lambda: key('E')); step(lambda: check('E gathers authored Azren', 5, 0, 50, 50, 1))
@@ -88,7 +96,7 @@ step(lambda: key('Gamepad_FaceButton_Left')); step(lambda: check('Inventory X ea
 step(full); step(lambda: key('R')); step(lambda: check('No-benefit inventory use preserves units', 3, 0, 100, 100))
 step(lambda: key('One')); step(lambda: key('I')); step(damaged)
 step(lambda: key('One')); step(lambda: check('Keyboard hotbar consumes one berry', 2, 0, 56.25, 55))
-step(chord); step(lambda: check('Controller LB+A consumes one berry', 1, 0, 62.5, 60))
+step(chord); step(lambda: check('Controller LB + d-pad left consumes one berry', 1, 0, 62.5, 60))
 step(lambda: lib.send_verification_food_request(pc, toxic)); step(lambda: lib.send_verification_food_request(pc, wood))
 step(lambda: check('Toxic/resource/unowned requests preserve stats and units', 1, 0, 62.5, 60))
 step(lambda: survival.apply_damage(100)); step(lambda: lib.send_verification_food_request(pc, berry))

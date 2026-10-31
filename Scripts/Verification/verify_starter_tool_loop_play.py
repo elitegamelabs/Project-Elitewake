@@ -10,12 +10,15 @@ assert len(worlds)==2 and all('Lvl_M5PickupTest' in w.get_name() for w in worlds
 client=next(c for c in pcs if not c.has_authority())
 server=next(w for w,c in zip(worlds,pcs) if c.has_authority())
 local=worlds[pcs.index(client)]
+def crafting_ui():
+    return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(local,unreal.EWInventoryWidget,False) if w.get_owning_player()==client and w.is_in_viewport())
 def pid(p): return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'),['PlayerId']))['PlayerId']
 owner=next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server,unreal.EWCharacter) if pid(p)==pid(client.get_controlled_pawn()))
 inv=owner.get_inventory_component()
 assert not inv.get_inventory_entries() and not inv.get_available_recipes()
 items={n:unreal.load_asset('/Game/Elitewake/Items/Testing/DA_Test'+n) for n in ['Wood','Thatch','Stone','WoodenAxe','WoodenPickaxe','WoodenShovel','HideWaterFlask','InnTorch']}
 recipes={n:unreal.load_asset('/Game/Elitewake/Crafting/Testing/DA_Recipe'+n) for n in ['WoodenAxe','WoodenPickaxe']}
+for _r in recipes.values(): _r.set_editor_property('craft_seconds',0.2)  # crafting takes seconds now; these checks are about what it makes (verify_craft_time_play times it)
 icons={n:unreal.load_asset('/Game/Elitewake/UI/PlaceholderIcons/T_'+t+'_v1') for n,t in [('WoodenAxe','Axe'),('WoodenPickaxe','Pickaxe'),('WoodenShovel','Shovel'),('HideWaterFlask','Flask'),('InnTorch','Torch')]}
 assert all(items.values()) and all(recipes.values()) and all(icons.values())
 assert inv.add_item(items['Wood'],40)==40
@@ -42,7 +45,7 @@ def tick(delta):
     try:
         if phase==0:
             client.set_inventory_open(True)
-            assert lib.send_verification_ui_key(client,'Tab')
+            crafting_ui().focus_crafting()
             assert lib.send_verification_ui_key(client,'Enter')
         elif phase==1:
             assert count('Wood')==20 and count('WoodenAxe')==1

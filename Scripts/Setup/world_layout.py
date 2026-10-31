@@ -1,24 +1,17 @@
-"""The world's islands: where each lies, which region it belongs to, and its shape. Plain Python (no Unreal), shared
-by the world setup scripts and checked on its own:
+"""The canonical five-island world: where each island lies, which region it belongs to, and its shape.
+
+Plain Python (no Unreal), shared by the world setup scripts and checked on its own:
     python Scripts/Setup/world_layout.py          # prints the layout and checks it; exit code 1 if a rule fails
 
-Owner direction, October 15 (Docs/METRIC_WORLD_SCALE_AND_ISLAND_SPACING_2026-10-15.md,
-Art/REGIONAL_WORLD_AND_3D_ASSET_REQUIREMENTS_2026-10-15.md, Docs/STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md):
+Current owner direction:
   - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (+X), Jungle west (-X);
-  - the owner-approved October 18 target is exactly eight islands in each region; the starter island is in Central
-    Plains, with seven other Plains islands;
+  - exactly one large, distinct island per region during the current production phase;
+  - the Plains island is the universal starting island;
   - islands separated by open sea, 800 m to 2,000 m between shorelines.
-DECIDED (delegated): "every pair of islands 800-2,000 m apart" cannot hold literally for 25+ islands (they cannot
-all lie within 2 km of one another and 800 m apart); the layout keeps every pair at least 800 m apart and every
-island's nearest neighbour within 2,000 m. Listed for the owner in Docs/OPEN_QUESTIONS_2026-10-15.md.
-
-Owner, October 15 night: the islands should be big, immersive and able to be explored. DECIDED (delegated, tuning):
-every other island is 500 m to 900 m across the long way (it was 120 m to 340 m); the starter island grows west into
-a Plains island about 650 m by 520 m, its old shape kept as the eastern headland where the beach spawn, dock landing,
-pond and the sloop's mooring stay exactly where they were.
 
 Units are Unreal centimetres (1 m = 100). Every other island is generated from a seed and has its own silhouette
-(harmonics), size, orientation, height and, on some, a cove. Island sizes and heights are tuning.
+(harmonics), size, orientation, height and cove. Island sizes and heights are tuning. There is no alternate
+high-island-count build path in this module.
 """
 import math
 import random
@@ -28,10 +21,7 @@ M = 100.0                       # cm per metre
 MIN_GAP, MAX_GAP = 800 * M, 2000 * M
 REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
                   'Desert': (7000 * M, 0.0), 'Jungle': (-7000 * M, 0.0)}
-LEGACY_ISLANDS_PER_REGION = {'Plains': 6, 'Winter': 5, 'Swamp': 5, 'Desert': 5, 'Jungle': 5}
-ISLANDS_PER_REGION = {'Plains': 8, 'Winter': 8, 'Swamp': 8, 'Desert': 8, 'Jungle': 8}
-REGION_SPREAD = 3000 * M        # how far a region's islands lie from its centre
-SEED = 1015
+ISLANDS_PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
 
 
 class Island:
@@ -97,19 +87,6 @@ class StarterIsland(Island):
         return max(self.old.radius(angle), best)
 
 
-def starter():
-    old = Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
-                 features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
-    # The western island (tuning): its east shore runs just inside the old island's, so the old east end stays the
-    # headland with the dock; rolling hills inland.
-    west = Island('StarterWest', 'Plains', -29000.0, -400.0, 30000.0, 26000.0, wobble=0.02,
-                  harmonics=((3, .03, .7), (5, .02, 2.1)),
-                  features=[(-8000, 7000, 9000, 1600), (6000, -9000, 7000, 1100), (-14000, -6000, 8000, 1300)], peak=1600.0)
-    # Hill positions are relative to the island's centre; make them relative to the old centre the starter keeps.
-    west.features = [(x + west.cx - old.cx, y + west.cy - old.cy, r, h) for x, y, r, h in west.features]
-    return StarterIsland(old, west)
-
-
 def shore_gap(a, b, n=160):
     """Shortest open-water gap between two islands' shorelines, in cm."""
     pa, pb = a.outline(n), b.outline(n)
@@ -120,106 +97,30 @@ def quick_gap(a, b):
     return math.hypot(a.cx - b.cx, a.cy - b.cy) - a.reach() - b.reach()
 
 
-def generate_legacy(seed=SEED):
-    """Recreate the pre-expansion layout exactly; its records are the preservation baseline."""
+def _organic(key, region, cx, cy, rx, ry, turn, seed, peak, hills, cove):
+    """An island with a hand-set size and an irregular shore: eight harmonics of its own, a cove or two, ridges and hills of its own."""
     rng = random.Random(seed)
-    islands = [starter()]
-    for region, count in LEGACY_ISLANDS_PER_REGION.items():
-        rcx, rcy = REGION_CENTRES[region]
-        made, tries = (1 if region == 'Plains' else 0), 0
-        while made < count:
-            tries += 1
-            assert tries < 40000, f'could not place {region} islands'
-            # Sizes (tuning): 500 m to 900 m across the long way.
-            long_r = rng.uniform(250, 450) * M
-            short_r = long_r * rng.uniform(0.6, 0.9)
-            if region == 'Plains':
-                # Round the starter: 0.8-2 km of sea from its shore.
-                ang = rng.uniform(0, 2 * math.pi)
-                dist = islands[0].reach() * 0.75 + long_r + rng.uniform(850, 1700) * M
-                cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
-            else:
-                ang, dist = rng.uniform(0, 2 * math.pi), REGION_SPREAD * math.sqrt(rng.random())
-                cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
-            harmonics = [(k, rng.uniform(0.02, 0.09), rng.uniform(0, 2 * math.pi)) for k in rng.sample([2, 4, 5, 6, 9], 3)]
-            cove = (rng.uniform(0, 2 * math.pi), rng.uniform(0.25, 0.45), rng.uniform(0.18, 0.35)) if rng.random() < 0.4 else None
-            peak = {'Winter': rng.uniform(1800, 3800), 'Jungle': rng.uniform(900, 2200), 'Desert': rng.uniform(400, 1400),
-                    'Swamp': rng.uniform(80, 250), 'Plains': rng.uniform(400, 1200)}[region]
-            features = []
-            for _ in range(rng.randint(1, 3)):
-                fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0, 0.5) * short_r
-                features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.25, 0.5) * long_r, peak * rng.uniform(0.5, 1.0)))
-            isle = Island(f'{region}{made + 1}', region, cx, cy, long_r, short_r, rng.uniform(0, math.pi),
-                          rng.uniform(0.02, 0.06), harmonics, cove, features, peak)
-            # Far enough from every island; checked roughly first, then along the shores.
-            if any(quick_gap(isle, o) < MIN_GAP - 50 * M for o in islands):
-                continue
-            if any(shore_gap(isle, o, 60) < MIN_GAP for o in islands if quick_gap(isle, o) < MIN_GAP + 400 * M):
-                continue
-            # ...and near enough to one already placed, so no island is left more than 2 km from its neighbours.
-            if not any(shore_gap(isle, o, 60) < MAX_GAP - 50 * M for o in islands if quick_gap(isle, o) < MAX_GAP):
-                continue
-            islands.append(isle)
-            made += 1
-    return islands
-
-
-_ADDITION_SEED_OFFSETS = {'Plains': 0xA510, 'Winter': 0xB620, 'Swamp': 0xC730,
-                          'Desert': 0xD840, 'Jungle': 0xE950}
-
-
-def _additional_island(region, key, rng, islands):
-    """Make one new island without consuming the legacy generator's random stream."""
-    rcx, rcy = REGION_CENTRES[region]
-    long_r = rng.uniform(250, 450) * M
-    short_r = long_r * rng.uniform(0.6, 0.9)
-    if region == 'Plains':
-        ang = rng.uniform(0, 2 * math.pi)
-        dist = islands[0].reach() * 0.75 + long_r + rng.uniform(850, 1700) * M
-        cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
-    else:
-        ang, dist = rng.uniform(0, 2 * math.pi), REGION_SPREAD * math.sqrt(rng.random())
-        cx, cy = rcx + dist * math.cos(ang), rcy + dist * math.sin(ang)
-    harmonics = [(k, rng.uniform(0.02, 0.09), rng.uniform(0, 2 * math.pi))
-                 for k in rng.sample([2, 4, 5, 6, 9], 3)]
-    cove = (rng.uniform(0, 2 * math.pi), rng.uniform(0.25, 0.45), rng.uniform(0.18, 0.35)) if rng.random() < 0.4 else None
-    peak = {'Winter': rng.uniform(1800, 3800), 'Jungle': rng.uniform(900, 2200), 'Desert': rng.uniform(400, 1400),
-            'Swamp': rng.uniform(80, 250), 'Plains': rng.uniform(400, 1200)}[region]
+    harmonics = [(k, rng.uniform(0.035, 0.11) / (1 + 0.12 * k), rng.uniform(0, 2 * math.pi)) for k in (2, 3, 4, 5, 6, 8, 11, 14)]
     features = []
-    for _ in range(rng.randint(1, 3)):
-        fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0, 0.5) * short_r
-        features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.25, 0.5) * long_r,
-                         peak * rng.uniform(0.5, 1.0)))
-    return Island(key, region, cx, cy, long_r, short_r, rng.uniform(0, math.pi),
-                  rng.uniform(0.02, 0.06), harmonics, cove, features, peak)
+    for n in range(hills):
+        fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0.05, 0.6) * min(rx, ry)
+        features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.18, 0.34) * min(rx, ry), peak * (1.0 if n == 0 else rng.uniform(0.35, 0.8))))
+    return Island(key, region, cx, cy, rx, ry, turn, rng.uniform(0.04, 0.07), harmonics, cove, features, peak)
 
 
-def _fits_spacing(island, placed):
-    """Cheap bounds first, then shoreline checks for minimum and nearest-neighbour gaps."""
-    if any(quick_gap(island, other) < MIN_GAP - 50 * M for other in placed):
-        return False
-    if any(shore_gap(island, other, 60) < MIN_GAP
-           for other in placed if quick_gap(island, other) < MIN_GAP + 400 * M):
-        return False
-    return any(shore_gap(island, other, 60) < MAX_GAP - 50 * M
-               for other in placed if quick_gap(island, other) < MAX_GAP)
-
-
-def generate(seed=SEED):
-    """Keep the original 26 islands intact, then append fourteen independently seeded islands."""
-    islands = generate_legacy(seed)
-    for region, target in ISLANDS_PER_REGION.items():
-        legacy_count = LEGACY_ISLANDS_PER_REGION[region]
-        rng = random.Random(seed + _ADDITION_SEED_OFFSETS[region])
-        made, tries = legacy_count, 0
-        while made < target:
-            tries += 1
-            assert tries < 200000, f'could not place {region} addition {made + 1}'
-            candidate = _additional_island(region, f'{region}{made + 1}', rng, islands)
-            if not _fits_spacing(candidate, islands):
-                continue
-            islands.append(candidate)
-            made += 1
+def generate():
+    """The Plains island (the starter, grown to about 2 km) in the middle and one island each for Winter (north), Swamp (south), Desert (east) and Jungle (west)."""
+    old = Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
+                 features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
+    # The old east end keeps the beach spawn, dock, pond and sloop mooring; the island grows west from it, about 2 km across, with a notched, irregular shore.
+    west = _organic('StarterWest', 'Plains', -99000.0, -400.0, 101000.0, 82000.0, 0.15, 7101, 2600.0, 6, (math.pi * 0.9, 0.3, 0.22))
+    west.cx = 3000.0 - west.radius(0.0)      # its east shore lands 30 m east of the old centre, just inside the old east end
+    west.features = [(x + west.cx - old.cx, y + west.cy - old.cy, r, h) for x, y, r, h in west.features]
+    islands = [StarterIsland(old, west)]
+    islands.append(_organic('Winter1', 'Winter', -60000.0, 280000.0, 118000.0, 82000.0, 0.45, 7202, 11000.0, 5, (-math.pi / 2, 0.35, 0.25)))
+    islands.append(_organic('Swamp1', 'Swamp', -30000.0, -270000.0, 100000.0, 80000.0, 2.6, 7303, 260.0, 4, (math.pi / 3, 0.4, 0.3)))
+    islands.append(_organic('Desert1', 'Desert', 280000.0, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (math.pi, 0.3, 0.2)))
+    islands.append(_organic('Jungle1', 'Jungle', -380000.0, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (0.3, 0.35, 0.24)))
     return islands
 
 
@@ -232,7 +133,7 @@ def check(islands):
             problems.append(f'{region} has {n} islands; exactly {expected} are required')
     around = [i for i in islands if i.region == 'Plains' and i.key != 'Starter']
     if len(around) != ISLANDS_PER_REGION['Plains'] - 1:
-        problems.append(f'{len(around)} islands round the starter; seven are required')
+        problems.append(f'{len(around)} islands round the starter; {ISLANDS_PER_REGION["Plains"] - 1} are required')
     nearest = {}
     for a_i, a in enumerate(islands):
         for b in islands[a_i + 1:]:
@@ -258,21 +159,10 @@ def check(islands):
 ISLANDS = generate()
 
 
-def _legacy_port_island_keys():
-    """Freeze the original Port islands so new, larger islands cannot silently move any Port."""
-    legacy = generate_legacy()
-    return {region: max((i for i in legacy if i.region == region and i.key != 'Starter'),
-                        key=lambda i: i.rx * i.ry).key for region in REGION_CENTRES}
-
-
-LEGACY_PORT_ISLAND_KEYS = _legacy_port_island_keys()
-
-
 # ---- Ports ----------------------------------------------------------------------------------------------------
-# Owner, October 15 (Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md): one Port in each region, not on
-# every island. DECIDED (delegated): each region's Port is on its largest island (in the Plains, the largest
-# besides the starter island), its waterfront on the side facing the world's centre, so ships come in from the
-# Plains. The islands, names, vendors and safe zones the owner has not set stay open.
+# One Port in each region. With one island per region, every island carries its regional Port. Waterfronts face
+# the world's centre except Saltreach Freeport on the Plains starter island, whose established approach faces
+# south-west.
 PORT_PAD = 3800.0        # cm: radius of the level, paved Port site (tuning)
 PORT_INLAND = 2600.0     # cm: how far inland of the shore the site's middle lies
 
@@ -301,8 +191,15 @@ class Port:
 
 
 def _ports():
-    by_key = {i.key: i for i in ISLANDS}
-    return {region: Port(region, by_key[key]) for region, key in LEGACY_PORT_ISLAND_KEYS.items()}
+    ports = {region: Port(region, i) for region in REGION_CENTRES for i in ISLANDS if i.region == region}
+    starter_port = ports['Plains']
+    starter_port.facing = -2.3
+    r = starter_port.island.radius(starter_port.facing)
+    starter_port.shore = (starter_port.island.cx + r * math.cos(starter_port.facing),
+                          starter_port.island.cy + r * math.sin(starter_port.facing))
+    starter_port.cx = starter_port.island.cx + (r - PORT_INLAND) * math.cos(starter_port.facing)
+    starter_port.cy = starter_port.island.cy + (r - PORT_INLAND) * math.sin(starter_port.facing)
+    return ports
 
 
 PORTS = _ports()

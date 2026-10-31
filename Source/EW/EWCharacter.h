@@ -23,11 +23,14 @@ class UEWProgressionComponent;
 class UEWInventoryComponent;
 class UEWEquipmentComponent;
 class UEWHotbarComponent;
+class UEWFootprintComponent;
+class UEWWalletComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
 class UEWItemDefinition;
 class AEWFish;
+class AEWAnimal;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -107,6 +110,9 @@ class EW_API AEWCharacter : public ACharacter
     UEWEquipmentComponent* EquipmentComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess="true"))
     UEWHotbarComponent* HotbarComponent;
+    /** Footprints in the ground, by surface. */
+    UPROPERTY(VisibleAnywhere, Category="Footprints") UEWFootprintComponent* FootprintComponent;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Wallet", meta=(AllowPrivateAccess="true")) UEWWalletComponent* WalletComponent;
 	
 protected:
 
@@ -170,6 +176,9 @@ protected:
 	bool bStanceInputHeld = false;
 
     bool bSprintInputHeld = false;
+    /** Controller sprint: one click of the left stick starts it and it runs until the stick is clicked again, movement stops or stamina runs out. */
+    bool bSprintLatched = false;
+    float SprintLatchIdle = 0.f;
     /** Local swim ascent intent; movement acceleration uses the standard saved-move path. */
     bool bSwimAscendInputHeld = false;
 
@@ -185,7 +194,7 @@ protected:
 	FTimerHandle StanceHoldTimer;
 
 public:
-    void CancelRestrictedActions() { StopSprint(); CancelStanceInput(); }
+    void CancelRestrictedActions() { bSprintLatched=false; StopSprint(); CancelStanceInput(); }
 
     /** True once health has run out and until the server brings the survivor back (owner, October 22). */
     UFUNCTION(BlueprintPure, Category="Death")
@@ -219,6 +228,18 @@ public:
     UFUNCTION(BlueprintPure, Category="Ship")
     bool IsTrimmingSails() const { return bHelmTrimHeld; }
 
+    /** The animal this survivor rides, if any (a rideable animal: the spider). */
+    UFUNCTION(BlueprintPure, Category="Animal")
+    AEWAnimal* GetMount() const { return Mount; }
+    bool IsMounted() const { return Mount != nullptr; }
+    /** Authority only; called by the animal when it is mounted (or with null when its rider gets off). */
+    void SetMount(AEWAnimal* Animal);
+    /** The rider's steering as a world-space direction on the ground (length 0 to 1). */
+    UFUNCTION(Server, Unreliable)
+    void ServerRideSteer(FVector2D Direction);
+    UFUNCTION(Server, Reliable)
+    void ServerDismount();
+
     /** The dead fish this survivor carries, if any. */
     UFUNCTION(BlueprintPure, Category="Fish")
     AEWFish* GetCarriedFish() const { return CarriedFish; }
@@ -228,6 +249,12 @@ public:
     /** The ship and mount of the cannon this survivor mans, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")
     AEWShip* GetGunShip() const { return GunShip; }
+    /** The ship whose sail lines this survivor is working by hand (AEWShip::TakeLines), if any. */
+    UFUNCTION(BlueprintPure, Category="Ship")
+    AEWShip* GetLinesShip() const { return LinesShip; }
+    FName GetLinesMount() const { return LinesMount; }
+    /** Authority only, from the ship. */
+    void SetLinesPost(AEWShip* Ship, FName MountId) { LinesShip = Ship; LinesMount = MountId; ForceNetUpdate(); }
     UFUNCTION(BlueprintPure, Category="Ship")
     FName GetGunMount() const { return GunMount; }
     /** Authority only; called by the ship when a cannon is manned or left. */
@@ -236,6 +263,9 @@ public:
     void ServerCannonAim(float Yaw, float Pitch);
     UFUNCTION(Server, Reliable)
     void ServerFireCannon();
+    /** At a cannon: mark the ship it is laid on as the hired gunners' target, or clear the mark (AEWShip::MarkTarget). */
+    UFUNCTION(Server, Reliable)
+    void ServerMarkTarget();
     /** The gunner opens (true) or shuts their cannon's hull gunport (AEWShip::SetGunportOpen). */
     UFUNCTION(Server, Reliable)
     void ServerSetGunport(bool bOpen);
@@ -261,6 +291,13 @@ public:
     UFUNCTION(Server, Reliable)
     void ServerLetGoOfLadder();
 private:
+    UPROPERTY(ReplicatedUsing=OnRep_Mount)
+    TObjectPtr<AEWAnimal> Mount;
+    UFUNCTION()
+    void OnRep_Mount();
+    FVector2D PendingRide = FVector2D::ZeroVector;
+    FVector2D SentRide = FVector2D::ZeroVector;
+    double SentRideAt = 0.0;
     /** Authority: leave the ladder, onto the deck at its head or into the water. */
     void ReleaseLadder(bool bOntoDeck);
     void ApplyLadderPose();
@@ -278,6 +315,10 @@ private:
     TObjectPtr<AEWShip> HelmShip;
     UPROPERTY(ReplicatedUsing=OnRep_GunPost)
     TObjectPtr<AEWShip> GunShip;
+    UPROPERTY(Replicated)
+    TObjectPtr<AEWShip> LinesShip;
+    UPROPERTY(Replicated)
+    FName LinesMount;
     UPROPERTY(Replicated)
     TObjectPtr<AEWFish> CarriedFish;
     UPROPERTY(Replicated)
@@ -340,6 +381,9 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	/** One click of the left stick (L3) latches sprint on or off. */
+	void ToggleSprintLatch();
 
 	/** Begin sprint input. */
 	void StartSprint();
@@ -456,8 +500,8 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-	/** Applies the local player's persistent exposure adjustment to the survivor cameras. */
-	void ApplyUserBrightness(float ExposureBias);
+	/** The local screen's nausea, 0 to 1 (for the checks). */
+	UFUNCTION(BlueprintPure, Category="Survival") float GetNausea() const { return Nausea; }
 
 	/** Returns FirstPersonCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
@@ -473,6 +517,8 @@ public:
 	/** Returns the character inventory component. */
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+    UFUNCTION(BlueprintPure, Category="Wallet")
+    UEWWalletComponent* GetWalletComponent() const { return WalletComponent; }
     UFUNCTION(BlueprintPure, Category="Equipment")
     UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
     UFUNCTION(BlueprintPure, Category="Hotbar")
@@ -629,6 +675,9 @@ private:
     TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
     int32 WorkImpactCount = 0;
     float ClimateClock = 0.f;
+    /** The local screen's food-sickness queasiness, 0 to 1: the picture greys and greens and the colours fringe and sway while sick (owner, October 22: nausea). */
+    float Nausea = 0.f;
+    void UpdateNauseaLook(float DeltaSeconds);
     /** Every machine: a footstep each stride (wood on deck, sand, snow in the Winter region) or a stroke while swimming. */
     void UpdateFootsteps(float DeltaSeconds);
     /** The step for the ground under the survivor's feet. */

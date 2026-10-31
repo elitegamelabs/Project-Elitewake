@@ -9,7 +9,8 @@ Through ordinary owned requests and keys, the client:
   3. swims to the moored sloop, takes hold of its ladder and climbs aboard with Up;
   4. opens the hold at the hatch, takes out the helm, the mainsail and the headsail, and closes it with I;
   5. fits all three, raises the anchor at the capstan, takes the helm, sets full sail and trims to the wind;
-  6. sails for 4 s, leaves the helm and drops the anchor;
+  6. sails for 4 s, lowers every sail with four back taps (owner, October 18: she stops dead and holds her place), leaves the helm and
+     drops the anchor;
   7. goes over the side, fights a manta ray with the axe in hand until it dies, carries its body ashore and
      harvests it there for 6 to 10 Raw Fish.
 Each step waits for its result on the server and on the client's copy, with a timeout.
@@ -29,6 +30,9 @@ pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
 client = next(c for c in pcs if not c.has_authority())
 server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
 client_world = worlds[pcs.index(client)]
+# Crew dependency (owner, October 18): the helm sets only sails with a hired sailhand, so every ship here is crewed first.
+for _s in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip):
+    _s.crew_every_sail()
 pawn = client.get_controlled_pawn()
 
 
@@ -275,6 +279,20 @@ def sails_full():
     return ship.get_sail_state() == unreal.EWSailState.FULL and peer.get_sail_state() == unreal.EWSailState.FULL
 
 
+def lower_sails():
+    keys()
+    state['aim'] = None
+    state['memo']['frame0'] = state['frame']
+    state['input'] = lambda f: pawn.do_move(0, -1) if any(start <= f < start + 5 for start in (0, 10, 20, 30)) else pawn.do_move(0, 0)
+
+
+def sails_down():
+    if not (ship.get_sail_state() == unreal.EWSailState.FURLED and peer.get_sail_state() == unreal.EWSailState.FURLED):
+        return False
+    state['input'] = None
+    return ship.get_speed() == 0
+
+
 def trim():
     state['input'] = None
     side = 'D' if ship.get_best_sail_angle() > ship.get_sail_angle() else 'A'
@@ -310,7 +328,16 @@ def left_helm():
 
 
 def anchored_again():
-    return ship.is_anchored() and peer.is_anchored() and ship.get_speed() < 1
+    m = state['memo']
+    # Interaction is a hold: on a ship still running before the wind, the survivor's aim can slip off the capstan and
+    # the hold is cancelled, where a player would keep holding E. Until the anchor is down, stand at the capstan again
+    # and hold once more every 4 s (longer than the 3 s hold, so a hold in progress is never cut short).
+    if not ship.is_anchored():
+        if time.monotonic() - m['t'] > 4.0:
+            m['anchor_presses'] = m.get('anchor_presses', 1) + 1
+            work('Anchor')()
+        return False
+    return peer.is_anchored() and ship.get_speed() < 1
 
 
 # 7. Fish ------------------------------------------------------------------------------------------------------
@@ -424,9 +451,9 @@ STEPS = [
     ('Four forward taps set full sail', full_sail, sails_full, 6),
     ('Shift with A or D trims the sails to the wind', trim, trimmed, 8),
     ('The sloop sails for 4 s and the client keeps up', lambda: None, sailed, 8),
+    ('Four back taps lower every sail and she stops dead (owner, October 18)', lower_sails, sails_down, 6),
     ('It leaves the helm', leave_helm, left_helm, 6),
-    # Under sail she runs out her chain's slack before it snubs her up (owner, October 16).
-    ('It drops the anchor and the sloop stops, held by her chain', work('Anchor'), anchored_again, 45),
+    ('It drops the anchor and the sloop stays put', work('Anchor'), anchored_again, 45),
     ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 75),
     ('E at the floating body picks it up', to_body, picked_up, 6),
     ('Carried ashore, E sets it down on the beach', ashore, set_down, 6),

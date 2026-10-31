@@ -42,7 +42,7 @@ def player_id(p):
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 palms = [t for t in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWHarvestTree) if t.get_actor_label().startswith('Oak')]
 rocks = list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWMineable))
-spring = next(iter(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWWaterSource)))
+spring = next(a for a in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWWaterSource) if 'Freshwater spring' in str(a.get_actor_label()))     # Ports have wells of their own now
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
@@ -172,11 +172,11 @@ def mined():
 
 def to_spring():
     state['memo']['hydration_before_fill'] = owner.get_survival_component().get_hydration()
-    approach(spring, 120, 0)
+    approach(spring, 150, 0)       # 150 cm: the five-island rebuild put its rim a little closer
 
 
 def filled():
-    if not press_after_settle(interact=next(iter(unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWWaterSource)))):
+    if not press_after_settle(interact=next(a for a in unreal.GameplayStatics.get_all_actors_of_class(client_world, unreal.EWWaterSource) if a.get_name() == spring.get_name())):
         return False
     if not (held(owner) == full_skin and held(pawn) == full_skin):
         return False

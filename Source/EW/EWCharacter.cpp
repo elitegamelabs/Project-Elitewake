@@ -1,6 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "World/EWSafeZone.h"
+#include "World/EWFootprintComponent.h"
+#include "EWWalletComponent.h"
 #include "AnimationRuntime.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
@@ -50,6 +53,8 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("InventoryComponent"));
     EquipmentComponent = CreateDefaultSubobject<UEWEquipmentComponent>(TEXT("EquipmentComponent"));
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
+    FootprintComponent = CreateDefaultSubobject<UEWFootprintComponent>(TEXT("FootprintComponent"));
+    WalletComponent = CreateDefaultSubobject<UEWWalletComponent>(TEXT("WalletComponent"));
     BodyRoster = TSoftObjectPtr<UEWBodyRoster>(FSoftObjectPath(TEXT("/Game/Elitewake/Characters/DA_BodyRoster.DA_BodyRoster")));
     HeldItem = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldItem"));
     HeldItem->SetupAttachment(GetMesh(), TEXT("hand_r"));
@@ -145,6 +150,9 @@ void AEWCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AEWCharacter::StopSprint);
 			EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Canceled, this, &AEWCharacter::StopSprint);
 		}
+
+		// Controller: a single click of the left stick latches sprint (see ToggleSprintLatch).
+		PlayerInputComponent->BindKey(EKeys::Gamepad_LeftThumbstick, IE_Pressed, this, &AEWCharacter::ToggleSprintLatch);
 
 		// Crouching and prone
 		if (StanceAction)
@@ -376,6 +384,27 @@ UStaticMesh* AEWCharacter::GetHeldMesh() const
     return HeldItem ? HeldItem->GetStaticMesh() : nullptr;
 }
 
+void AEWCharacter::UpdateNauseaLook(float DeltaSeconds)
+{
+	bool bSick = false;
+	if (SurvivalComponent)
+		for (const FEWDebuffNotice& Notice : SurvivalComponent->GetDebuffNotices()) if (Notice.Id == TEXT("FoodSickness")) { bSick = true; break; }
+	const float Target = bSick && !IsDead() ? 1.f : 0.f;
+	if (Nausea == Target) return;
+	Nausea = FMath::FInterpConstantTo(Nausea, Target, DeltaSeconds, 1.f / 2.f);   // two seconds to come on or fade
+	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	const float Wave = .5f + .5f * FMath::Sin(float(Now) * 1.6f);
+	for (UCameraComponent* Camera : {FollowCamera, FirstPersonCamera})
+	{
+		if (!Camera) continue;
+		FPostProcessSettings& Look = Camera->PostProcessSettings;
+		Look.bOverride_ColorSaturation = true;  Look.ColorSaturation = FVector4(1.f - .35f * Nausea, 1.f - .2f * Nausea, 1.f - .35f * Nausea, 1.f);
+		Look.bOverride_ColorGain = true;        Look.ColorGain = FVector4(1.f - .12f * Nausea, 1.f, 1.f - .18f * Nausea, 1.f);
+		Look.bOverride_SceneFringeIntensity = true; Look.SceneFringeIntensity = 4.f * Nausea * (.4f + .6f * Wave);
+		Camera->PostProcessBlendWeight = Nausea;
+	}
+}
+
 void AEWCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -412,6 +441,18 @@ void AEWCharacter::Tick(float DeltaSeconds)
         HeldLight->SetIntensity(Base * (.9f + Waver));
     }
     if (bIsFirstPerson && IsLocallyControlled()) UpdateFirstPersonCamera(DeltaSeconds);
+    if (IsLocallyControlled() && IsValid(LinesShip) && !IsValid(HelmShip))
+    {
+        // At a sail's lines, holding Up/Down steps that one sail, a notch every SailStepInterval.
+        const int8 HeldStep = SailStepInput > .5f ? 1 : SailStepInput < -.5f ? -1 : 0;
+        const double Now = GetWorld()->GetTimeSeconds();
+        if (HeldStep != 0 && (HeldStep != ActiveSailStepSign || Now >= NextSailStepTime))
+        {
+            ServerSailStep(HeldStep);
+            NextSailStepTime = Now + SailStepInterval;
+        }
+        ActiveSailStepSign = HeldStep;
+    }
     if (IsLocallyControlled() && IsValid(HelmShip))
     {
         // Send helm controls only when they change. The ship holds them until the next change,
@@ -451,6 +492,23 @@ void AEWCharacter::Tick(float DeltaSeconds)
         }
         PendingHelmRight = PendingHelmForward = 0.f;
     }
+    if (IsLocallyControlled() && IsValid(Mount) && GetController())
+    {
+        // Steering is the move input turned by the camera's heading into a world direction, sent when it changes and
+        // every fifth of a second while held (the animal lets an order lapse after half a second).
+        const FRotator Yaw(0.f, GetController()->GetControlRotation().Yaw, 0.f);
+        const FVector World = FRotationMatrix(Yaw).GetUnitAxis(EAxis::X) * PendingRide.Y + FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y) * PendingRide.X;
+        const FVector2D Order = FVector2D(World.X, World.Y).GetClampedToMaxSize(1.f);
+        const double Now = GetWorld()->GetTimeSeconds();
+        const bool bStopped = Order.IsNearlyZero(.05f);
+        if (bStopped ? !SentRide.IsNearlyZero(.05f) : (!Order.Equals(SentRide, .08f) || Now - SentRideAt > .2))
+        {
+            ServerRideSteer(bStopped ? FVector2D::ZeroVector : Order);
+            SentRide = bStopped ? FVector2D::ZeroVector : Order;
+            SentRideAt = Now;
+        }
+        PendingRide = FVector2D::ZeroVector;
+    }
     if (IsLocallyControlled() && IsValid(GunShip))
     {
         // The view aims the cannon: its direction relative to the gun's rest, sent when it changes.
@@ -474,9 +532,19 @@ void AEWCharacter::Tick(float DeltaSeconds)
 			AddMovementInput(FVector::UpVector);
 	}
 
+	if (IsLocallyControlled()) UpdateNauseaLook(DeltaSeconds);
+
+	if (bSprintLatched && IsLocallyControlled())
+	{
+		// Let go of the latch once the survivor stops moving or can no longer sprint.
+		SprintLatchIdle = GetLastMovementInputVector().IsNearlyZero() ? SprintLatchIdle + DeltaSeconds : 0.f;
+		if (SprintLatchIdle > .3f || !bIsSprinting) { bSprintLatched = false; SprintLatchIdle = 0.f; bSprintInputHeld = false; SetSprinting(false); }
+	}
+
 	if (HasAuthority() && SurvivalComponent)
 	{
 		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
+		SurvivalComponent->UpdateNeeds(bIsSprinting, DeltaSeconds);
 		// The climate where the survivor stands, twice a second.
 		ClimateClock += DeltaSeconds;
 		if (ClimateClock >= .5f)
@@ -528,7 +596,10 @@ void AEWCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AEWCharacter, bIsSprinting);
 	DOREPLIFETIME(AEWCharacter, bIsProne);
     DOREPLIFETIME(AEWCharacter, HelmShip);
+    DOREPLIFETIME(AEWCharacter, Mount);
     DOREPLIFETIME(AEWCharacter, GunShip);
+    DOREPLIFETIME(AEWCharacter, LinesShip);
+    DOREPLIFETIME(AEWCharacter, LinesMount);
     DOREPLIFETIME(AEWCharacter, GunMount);
     DOREPLIFETIME(AEWCharacter, bHeldItemLit);
     DOREPLIFETIME(AEWCharacter, CarriedFish);
@@ -587,6 +658,7 @@ bool AEWCharacter::RespawnAfterDeath()
     const FVector DeathSpot = GetActorLocation();
     AEWDeathBag::DropInventoryOf(this, DeathSpot);
     // Out of any post, off any ladder.
+    if (IsValid(Mount)) Mount->Dismount();
     if (IsValid(HelmShip)) HelmShip->LeaveHelm(this, true);
     if (IsValid(GunShip)) { SetGunPost(nullptr, NAME_None); DetachFromActor(FDetachmentTransformRules::KeepWorldTransform); GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); }
     if (IsOnLadder()) ReleaseLadder(false);
@@ -606,6 +678,50 @@ void AEWCharacter::SetHelmShip(AEWShip* Ship)
     HelmShip = Ship;
     OnRep_HelmShip();
     ForceNetUpdate();
+}
+
+void AEWCharacter::SetMount(AEWAnimal* Animal)
+{
+    if (!HasAuthority()) return;
+    Mount = Animal;
+    OnRep_Mount();
+    ForceNetUpdate();
+}
+
+void AEWCharacter::OnRep_Mount()
+{
+    CancelRestrictedActions();
+    bSwimAscendInputHeld = false;
+    StopJumping();
+    PendingRide = SentRide = FVector2D::ZeroVector;
+    SetSprinting(false);
+    GetCharacterMovement()->StopMovementImmediately();
+    if (IsValid(Mount))
+    {
+        // The rider sits on the animal's back and goes where it goes.
+        GetCharacterMovement()->DisableMovement();
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        AttachToActor(Mount, FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+        SetActorRelativeLocation(Mount->GetRideSeatLocal(GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+        SetActorRelativeRotation(FRotator::ZeroRotator);
+    }
+    else if (Cast<AEWAnimal>(GetAttachParentActor()))
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+        GetCharacterMovement()->SetMovementMode(MOVE_Falling);
+    }
+    RefreshHeldItem();
+}
+
+void AEWCharacter::ServerRideSteer_Implementation(FVector2D Direction)
+{
+    if (IsValid(Mount)) Mount->SetRideSteer(this, Direction);
+}
+
+void AEWCharacter::ServerDismount_Implementation()
+{
+    if (IsValid(Mount)) Mount->Dismount();
 }
 
 void AEWCharacter::SetGunPost(AEWShip* Ship, FName MountId)
@@ -652,6 +768,11 @@ void AEWCharacter::ServerCannonAim_Implementation(float Yaw, float Pitch)
 void AEWCharacter::ServerFireCannon_Implementation()
 {
     if (IsValid(GunShip)) GunShip->FireCannon(this);
+}
+
+void AEWCharacter::ServerMarkTarget_Implementation()
+{
+    if (IsValid(GunShip)) GunShip->MarkTarget(this);
 }
 
 void AEWCharacter::ServerSetGunport_Implementation(bool bOpen)
@@ -800,6 +921,7 @@ void AEWCharacter::ServerSailTrim_Implementation(int8 Direction)
 void AEWCharacter::ServerSailStep_Implementation(int8 Direction)
 {
     if (IsValid(HelmShip)) HelmShip->StepSails(this, Direction);
+    else if (IsValid(LinesShip)) LinesShip->StepSailByHand(this, Direction);
 }
 
 void AEWCharacter::OnStartCrouch(float HalfHeightAdjust, float ScaledHalfHeightAdjust)
@@ -833,9 +955,25 @@ void AEWCharacter::Look(const FInputActionValue& Value)
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
 
+void AEWCharacter::ToggleSprintLatch()
+{
+	if (HelmShip || IsValid(Mount)) return;
+	if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
+	SprintLatchIdle = 0.f;
+	if (bSprintLatched) { bSprintLatched = false; bSprintInputHeld = false; SetSprinting(false); return; }
+	if (bIsProne) SetProne(false);
+	if (bIsCrouched) UnCrouch();
+	bSprintInputHeld = true;
+	SetSprinting(true);
+	bSprintLatched = bIsSprinting;
+}
+
 void AEWCharacter::StartSprint()
 {
     if (HelmShip) { bHelmTrimHeld = true; return; }
+    if (IsValid(Mount)) return;
+	// A click of the left stick is handled by ToggleSprintLatch, whatever the input asset maps to it.
+	if (const auto* Pad = Cast<APlayerController>(GetController()); Pad && Pad->IsInputKeyDown(EKeys::Gamepad_LeftThumbstick)) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bSprintInputHeld = true;
 	if (bIsProne)
@@ -854,16 +992,18 @@ void AEWCharacter::StartSprint()
 void AEWCharacter::StopSprint()
 {
     bHelmTrimHeld = false;
+	if (bSprintLatched) return;
 	bSprintInputHeld = false;
 	SetSprinting(false);
 }
 
 void AEWCharacter::StartStanceInput()
 {
-    if (HelmShip) return;
+    if (HelmShip || IsValid(Mount)) return;
 	if (GetCharacterMovement()->IsSwimming()) return;
     if (const auto* PC = Cast<AEWPlayerController>(GetController()); PC && (PC->IsMapOpen() || PC->IsSessionMenuOpen())) return;
 	bStanceInputHeld = true;
+	bSprintLatched = false;
 	bSprintInputHeld = false;
 	SetSprinting(false);
 
@@ -1117,6 +1257,7 @@ void AEWCharacter::DoMove(float Right, float Forward)
         PendingLadderForward = Forward;
         return;
     }
+    if (IsValid(Mount)) { PendingRide = FVector2D(Right, Forward); return; }
     if (HelmShip)
     {
         PendingHelmRight = Right;
@@ -1150,32 +1291,16 @@ void AEWCharacter::DoLook(float Yaw, float Pitch)
 	if (GetController() != nullptr)
 	{
 		const auto* PlayerController = Cast<AEWPlayerController>(GetController());
-		const float Sensitivity = PlayerController ? PlayerController->GetActiveLookSensitivity() : 1.f;
-		AddControllerYawInput(Yaw * Sensitivity);
-		AddControllerPitchInput(Pitch * Sensitivity);
+		// Left-right and up-down each at their own speed (owner, October 30).
+		AddControllerYawInput(Yaw * (PlayerController ? PlayerController->GetYawLookSensitivity() : 1.f));
+		AddControllerPitchInput(Pitch * (PlayerController ? PlayerController->GetPitchLookSensitivity() : 1.f));
 	}
-}
-
-void AEWCharacter::ApplyUserBrightness(float ExposureBias)
-{
-	const float ClampedBias = FMath::Clamp(ExposureBias, -.5f, .5f);
-	const float Gain = FMath::Exp2(ClampedBias);
-	const auto Apply = [ClampedBias, Gain](UCameraComponent* Camera)
-	{
-		if (!Camera) return;
-		Camera->PostProcessSettings.bOverride_AutoExposureBias = true;
-		Camera->PostProcessSettings.AutoExposureBias = ClampedBias;
-		Camera->PostProcessSettings.bOverride_ColorGain = true;
-		Camera->PostProcessSettings.ColorGain = FVector4(Gain, Gain, Gain, 1.f);
-		Camera->SetPostProcessBlendWeight(1.f);
-	};
-	Apply(FollowCamera);
-	Apply(FirstPersonCamera);
 }
 
 void AEWCharacter::DoJumpStart()
 {
     if (IsDead()) return;
+    if (IsValid(Mount)) { ServerDismount(); return; }
     if (HelmShip || GunShip) return;
     // Space lets go of a ladder.
     if (IsOnLadder()) { ServerLetGoOfLadder(); return; }
@@ -1207,7 +1332,7 @@ void AEWCharacter::DoJumpEnd()
 
 bool AEWCharacter::CanAttack() const
 {
-    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !GunShip && !IsOnLadder() && !CarriedFish;
+    return SurvivalComponent && SurvivalComponent->GetHealth() > 0.f && !bIsProne && !HelmShip && !GunShip && !IsValid(Mount) && !IsOnLadder() && !CarriedFish;
 }
 
 void AEWCharacter::PlayOneShot(UAnimSequenceBase* Animation) const
@@ -1363,6 +1488,8 @@ AEWCharacter* AEWCharacter::MeleeStrike()
         return nullptr;
     }
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
+    // A free port: nobody hurts anybody inside its bounds (either of them inside is enough).
+    if (AEWSafeZone::IsPvPBlocked(this, GetActorLocation()) || AEWSafeZone::IsPvPBlocked(this, Victim->GetActorLocation())) return nullptr;
     Victim->SurvivalComponent->ApplyDamage(FistDamage);
     Victim->MulticastHitReact();
     return Victim;

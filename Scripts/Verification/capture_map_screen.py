@@ -25,7 +25,14 @@ def move(dx, dy):
     return go
 
 
-steps = [(lambda: pc.set_map_open(True), 3.0), (shot('1_map_start'), 2.0), (lambda: pc.set_map_open(False), 1.0)]
+def reveal_all():
+    e = pc.get_exploration()
+    e.ensure_bounds()
+    m, size = e.get_bounds_min(), e.get_bounds_size()
+    e.reveal_around(unreal.Vector(m.x + size / 2, m.y + size / 2, 0), size)
+
+
+steps = ([(reveal_all, 1.0)] if os.environ.get('EW_MAP_REVEAL') == '1' else []) + [(lambda: pc.set_map_open(True), 3.0), (shot('1_map_start'), 2.0), (lambda: pc.set_map_open(False), 1.0)]
 if os.environ.get('EW_MAP_WALK') == '1':
     for _ in range(6):
         steps += [(move(60000, 0), 3.0)]

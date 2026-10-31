@@ -81,6 +81,9 @@ def reset_position():
         assert peer.teleport(unreal.Vector(0, 0, 5000 + peer.get_editor_property('capsule_component').get_scaled_capsule_half_height() + 2.15), unreal.Rotator())
     controller.set_control_rotation(unreal.Rotator())
 
+retries = {}
+
+
 def check(label, state, half_height, max_x=None, max_yaw=None, speed=None):
     capsule = pawn.get_editor_property('capsule_component')
     mesh = pawn.get_editor_property('mesh')
@@ -112,6 +115,11 @@ def check(label, state, half_height, max_x=None, max_yaw=None, speed=None):
                         'half_height_cm': peer_capsule.get_scaled_capsule_half_height(),
                         'position': [peer_location.x, peer_location.y, peer_location.z]}
             rows.append(peer_row)
+            if peer.get_locomotion_state() != state and retries.get(label, 0) < 5:
+                retries[label] = retries.get(label, 0) + 1      # the other machine can trail by a frame or two
+                steps.insert(index + 1, (lambda: check(label, state, half_height, max_x, max_yaw, speed), .1))
+                report['checkpoints'].pop()
+                return
             assert peer.get_locomotion_state() == state, label + ': authoritative stance differs'
             assert abs(peer_row['half_height_cm']-half_height) < .1, label + ': authoritative collider differs'
             assert peer_anim.get_editor_property('EWIsProne') == peer.is_prone, label + ': remote animation differs'

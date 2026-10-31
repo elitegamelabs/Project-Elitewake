@@ -9,8 +9,8 @@ class UInstancedStaticMeshComponent;
 
 /**
  * The foam a ship leaves on the water (owner, October 16: a realistic, foamy, turbulent wake about 20 m behind a ship
- * moving forward, following its path and its shape, fading after it stops; Design/Ships/SHIP_WAKE_AND_WATER_TRAIL_
- * 2026-10-16.md). Every machine lays its own: as the ship makes way, a patch of churned foam is set on the sea at its
+ * moving forward, following its path and its shape, fading after it stops; see CLAUDE.md). Every machine lays its own:
+ * as the ship makes way, a patch of churned foam is set on the sea at its
  * stern each metre; the patches stay where they were laid, so the trail follows every turn, spread wider as they age
  * and fade out over the last TrailLength of the ship's track, or a few seconds after it stops. Width scales with the
  * hull's beam and strength with speed. Sizes and times are tuning.

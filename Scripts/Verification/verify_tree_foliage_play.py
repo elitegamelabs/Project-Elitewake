@@ -1,5 +1,5 @@
 """Screenshots for the dense foliage and the Winter trees' partial snow (owner, October 16:
-Docs/TREE_FOLIAGE_AND_WINTER_SNOW_DIRECTION_2026-10-16.md), close up and at gameplay distance.
+CLAUDE.md), close up and at gameplay distance.
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground (EW_PLAY_PLAYERS=1 is enough). Run unattended with
 run_play_check.py. For an oak (Plains), ash and Maravai (Jungle), birch (Winter) and spruce (Swamp): finds the tree of

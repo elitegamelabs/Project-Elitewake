@@ -1,6 +1,7 @@
 #include "EWSurvivalWidget.h"
 #include "EWCharacter.h"
 #include "EWSurvivalComponent.h"
+#include "EWWalletComponent.h"
 #include "EWHudIcon.h"
 #include "GameFramework/GameStateBase.h"
 #include "Components/SizeBox.h"
@@ -16,6 +17,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "World/EWClimateRegion.h"
+#include "World/EWSafeZone.h"
 
 namespace
 {
@@ -26,6 +28,11 @@ namespace
         TEXT("/Game/Elitewake/UI/HUD/T_Hunger_Matte_v2.T_Hunger_Matte_v2"),
         TEXT("/Game/Elitewake/UI/HUD/T_Hydration_Matte_v2.T_Hydration_Matte_v2"),
         TEXT("/Game/Elitewake/UI/HUD/T_Weight_Matte_v2.T_Weight_Matte_v2")};
+
+    /** Empty space under and over the painted icon in its texture (fraction of the height), so the fill runs over the icon
+        itself: a small loss of health then shows, and an empty stat shows nothing. Health, stamina, food, hydration, weight. */
+    const float ArtBottom[]={.110f,.061f,.147f,.038f,.065f};
+    const float ArtTop[]={.135f,.066f,.169f,.042f,.065f};
 }
 
 TSharedRef<SWidget> UEWSurvivalWidget::RebuildWidget()
@@ -102,6 +109,17 @@ void UEWSurvivalWidget::BuildWidgetTree()
         BannerSlot->SetAnchors(FAnchors(.5f,0.f)); BannerSlot->SetAlignment(FVector2D(.5f,0.f)); BannerSlot->SetAutoSize(true);
         BannerSlot->SetOffsets(FMargin(0,90,0,0));
     }
+    ZoneBanner = WidgetTree->ConstructWidget<UTextBlock>();
+    {
+        auto Font = ZoneBanner->GetFont(); Font.Size = 18; Font.LetterSpacing = 120; ZoneBanner->SetFont(Font);
+        ZoneBanner->SetJustification(ETextJustify::Center);
+        ZoneBanner->SetColorAndOpacity(FSlateColor(FLinearColor(.95f, .82f, .5f)));
+        ZoneBanner->SetShadowOffset(FVector2D(2,2)); ZoneBanner->SetShadowColorAndOpacity(FLinearColor(0,0,0,.7f));
+        auto* ZoneSlot = Canvas->AddChildToCanvas(ZoneBanner);
+        ZoneSlot->SetAnchors(FAnchors(.5f,0.f)); ZoneSlot->SetAlignment(FVector2D(.5f,0.f)); ZoneSlot->SetAutoSize(true);
+        ZoneSlot->SetOffsets(FMargin(0,142,0,0));
+        ZoneBanner->SetRenderOpacity(0.f);
+    }
     auto* Notices = WidgetTree->ConstructWidget<UVerticalBox>();
     NoticePanel=Notices;
     auto* NoticeSlot = Canvas->AddChildToCanvas(Notices);
@@ -168,7 +186,9 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         const float Fraction=Maxima[i]>0.f ? Values[i]/Maxima[i] : 0.f;
         Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%.0f%%"),Fraction*100.f)));
         Bars[i]->SetToolTipText(FText::FromString(Text));
-        Bars[i]->SetPercent(Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f);
+        const float Level=Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f;
+        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
+        Bars[i]->SetPercent(Floor+Level*Span);
         Bars[i]->SetFillColorAndOpacity(bHasArt[i] ? FLinearColor::White : Colors[i]);
     }
     const int32 Indices[]={2,3,1};
@@ -195,6 +215,8 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         FString Line = FString::Printf(TEXT("%s   %.0f°C"), *AEWClimateRegion::RegionName(C.Region).ToString().ToUpper(), Survival->GetFeltTemperature());
         if (bRegionIsHumid || C.Humidity >= 70.f) Line += FString::Printf(TEXT("   Humidity %.0f%%"), C.Humidity);
         Line += FString::Printf(TEXT("   Body %.1f°C"), Body);
+        if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
+            if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("   Purse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
         ClimateLine->SetText(FText::FromString(Line));
         // Blue as the body cools, white when comfortable, orange as it heats.
         const FLinearColor Cold(.45f,.75f,1.f), Hot(1.f,.55f,.2f);
@@ -210,6 +232,36 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         }
         BannerSeconds = FMath::Max(0.f, BannerSeconds - DeltaTime);
         RegionBanner->SetRenderOpacity(FMath::Clamp(BannerSeconds / 1.2f, 0.f, 1.f));
+        // A free port's bounds, checked twice a second: announced on the way in and on the way out.
+        if ((ZoneCheck -= DeltaTime) <= 0.f)
+        {
+            ZoneCheck = .5f;
+            const APawn* Me = GetOwningPlayerPawn();
+            const AEWSafeZone* Zone = Me ? AEWSafeZone::FindAt(this, Me->GetActorLocation()) : nullptr;
+            const FString Name = Zone ? Zone->ZoneName.ToString() : FString();
+            if (Me && (!bZoneKnown || Name != ShownZone))
+            {
+                if (Zone)
+                {
+                    TArray<FString> Rules;
+                    if (Zone->bNoPvP) Rules.Add(TEXT("no fighting"));
+                    if (Zone->bNoBuilding) Rules.Add(TEXT("no building"));
+                    if (Zone->bNoHostiles) Rules.Add(TEXT("no beasts"));
+                    ZoneBanner->SetText(FText::Format(NSLOCTEXT("Elitewake", "ZoneEnter", "{0}  ·  a free port: {1}"), Zone->ZoneName,
+                        FText::FromString(FString::Join(Rules, TEXT(", ")))));
+                    ZoneSeconds = 6.f;
+                }
+                else if (bZoneKnown)
+                {
+                    ZoneBanner->SetText(FText::Format(NSLOCTEXT("Elitewake", "ZoneLeave", "Leaving {0}  ·  the open sea's rules"), FText::FromString(ShownZone)));
+                    ZoneSeconds = 4.f;
+                }
+                ShownZone = Name;
+                bZoneKnown = true;
+            }
+        }
+        ZoneSeconds = FMath::Max(0.f, ZoneSeconds - DeltaTime);
+        ZoneBanner->SetRenderOpacity(FMath::Clamp(ZoneSeconds / 1.2f, 0.f, 1.f));
     }
     const bool Overweight=Survival->GetCarriedWeight()>Survival->GetMaxCarryWeight();
     Warnings[3]->SetText(Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
@@ -245,6 +297,11 @@ FText UEWSurvivalWidget::GetDisplayedClimate() const
 {
     return ClimateLine ? ClimateLine->GetText() : FText::GetEmpty();
 }
+FText UEWSurvivalWidget::GetDisplayedZoneBanner() const
+{
+    return ZoneBanner && ZoneSeconds > 0.f ? ZoneBanner->GetText() : FText::GetEmpty();
+}
+
 FText UEWSurvivalWidget::GetDisplayedRegionBanner() const
 {
     return RegionBanner && BannerSeconds > 0.f ? RegionBanner->GetText() : FText::GetEmpty();
@@ -256,7 +313,11 @@ FText UEWSurvivalWidget::GetDisplayedSummary() const
 TArray<float> UEWSurvivalWidget::GetDisplayedFillFractions() const
 {
     TArray<float> Result;
-    for (const auto& Bar : Bars) Result.Add(Bar->GetPercent());
+    for (int32 i=0;i<Bars.Num();++i)
+    {
+        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
+        Result.Add(FMath::Clamp((Bars[i]->GetPercent()-Floor)/Span,0.f,1.f));
+    }
     return Result;
 }
 FText UEWSurvivalWidget::GetDisplayedWarnings() const

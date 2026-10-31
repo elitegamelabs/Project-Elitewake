@@ -25,25 +25,31 @@ SEA = -65.0
 FLOOR = -6000.0          # the foot of an island's shelf, 60 m down
 DEEP = SEA - 150000.0    # the deepest sea anywhere (owner, October 22: at most 1,500 m; was 2,000 m)
 SHELF = 20000.0          # how far an island's own terrain reaches past its shore (cm)
+
+
+def ground_spacing(island):
+    """The island mesh's grid step, cm; keeps each large island mesh near a million vertices."""
+    return 400.0 if island.key == 'Starter' else 300.0
+
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
 POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 260.0
 
 
 def seabed(d):
-    """Depth below the waterline at d cm offshore: a sandy shelf, a drop-off, then the slope to the floor."""
-    if d < 1500:
-        return SEA - 0.3 * d
-    if d < 4600:
-        return SEA - 450 - 0.8 * (d - 1500)
-    return SEA - 2930 - 0.25 * (d - 4600)
+    """Depth below the waterline at d cm offshore (owner, October 26: beaches that slope naturally into the water and level
+    out into the sea). A gentle foreshore at the waterline deepening smoothly to the floor at SHELF."""
+    # One unbroken curve: a gentle foreshore (about 8 degrees at the water) that keeps deepening without a flat step or a
+    # sudden shelf break, reaching the 60 m floor at SHELF where the open sea floor takes over.
+    d = min(d, SHELF)
+    shelf = 450.0 * (1 - math.exp(-d / 3000.0)) + (SEA - FLOOR - 450.0) * (d / SHELF) ** 1.8
+    return SEA - shelf
 
 
 def land(inland):
-    """Height at inland cm from the waterline: a 6 m beach, then a gentle rise."""
-    if inland < 600:
-        return SEA + inland / 600 * 80
-    return 15 + min(inland - 600, 2500) * 0.02
+    """Height at inland cm from the waterline: a long gentle beach (about 7 % at the water, easing off over some 15 m),
+    then a gentle rise."""
+    return SEA + 100.0 * (1 - math.exp(-inland / 1500.0)) + 0.02 * min(max(inland - 600.0, 0.0), 2500.0)
 
 
 def bump(x, y, cx, cy, radius, height):
@@ -60,26 +66,15 @@ def cliff_of(island):
 
 CLIFFS = {i.key: cliff_of(i) for i in W.ISLANDS}
 
-# Owner, October 15 (Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): every island
-# individually designed, with different combinations of mountains, hills, ridges, valleys and plateaus, so none is a
-# resized copy of another. DECIDED (delegated, tuning): each non-starter island outside the Swamp draws a terrain plan
-# from its region's list, no two islands of a region the same plan; its own seed sets each shape's size, place and
-# heading. Peaks are sharp mountains, ridges long spines, plateaus flat-topped mesas with steep sides, valleys cut
-# across the island (never down to the sea). The Swamp stays low wetland, varied by its pools and channels.
+# Every island is individually designed with its own combination of mountains, hills, ridges, valleys and plateaus,
+# so none is a resized copy of another. Each non-starter island outside the Swamp draws a terrain plan from its
+# region's list; its own seed sets each shape's size, place and heading. Peaks are mountain massifs, ridges long
+# spines, plateaus flat-topped mesas with steep sides, and valleys cut across the island without reaching the sea.
+# The Swamp stays low wetland, varied by its pools and channels.
 PLANS = {'Winter': [('peak', 'ridge'), ('peak', 'valley'), ('ridge', 'valley', 'peak'), ('peak', 'peak'), ('ridge', 'plateau')],
          'Jungle': [('ridge', 'valley'), ('peak', 'valley'), ('plateau', 'valley'), ('ridge', 'ridge'), ('peak', 'ridge', 'valley')],
          'Desert': [('plateau',), ('plateau', 'valley'), ('ridge', 'plateau'), ('plateau', 'plateau'), ('ridge', 'valley')],
          'Plains': [('valley',), ('plateau', 'valley'), ('ridge',), ('peak', 'valley'), ('plateau', 'ridge')]}
-
-# These plans serve only the fourteen newly appended islands. Keeping additions separate preserves the shuffled
-# assignments, and therefore the authored terrain, of every original island.
-ADDITIONAL_PLANS = {
-    'Winter': [('peak', 'ridge', 'plateau'), ('peak', 'peak', 'valley'), ('ridge', 'ridge', 'peak')],
-    'Jungle': [('ridge', 'plateau'), ('peak', 'plateau'), ('valley', 'ridge', 'plateau')],
-    'Desert': [('plateau', 'ridge', 'valley'), ('peak', 'plateau'), ('plateau', 'valley', 'peak')],
-    'Plains': [('peak', 'ridge'), ('valley', 'plateau', 'ridge'), ('peak', 'plateau', 'valley')],
-}
-
 
 def _plans():
     plans = {}
@@ -87,24 +82,22 @@ def _plans():
         order = list(options)
         random.Random(sum(map(ord, region)) * 31).shuffle(order)
         islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        assignments = list(zip(islands[:len(order)], order))
-        assignments.extend(zip(islands[len(order):], ADDITIONAL_PLANS.get(region, ())))
-        for isl, plan in assignments:
+        for isl, plan in zip(islands, order):
             rng = random.Random(sum(map(ord, isl.key)) * 104723)
             shapes = []
             for kind in plan:
                 a = rng.uniform(0, 2 * math.pi)
                 u, v = rng.uniform(-.35, .35) * isl.rx, rng.uniform(-.35, .35) * isl.ry
                 if kind == 'peak':
-                    shapes.append(('peak', u, v, rng.uniform(.25, .4) * isl.rx, isl.peak * rng.uniform(.9, 1.4),
+                    shapes.append(('peak', u, v, rng.uniform(.4, .6) * isl.rx, isl.peak * rng.uniform(.9, 1.4),
                                    rng.randint(4, 7), rng.uniform(0, 2 * math.pi)))
                 elif kind == 'ridge':
-                    shapes.append(('ridge', u, v, a, rng.uniform(.45, .8) * isl.rx, rng.uniform(.12, .2) * isl.ry,
+                    shapes.append(('ridge', u, v, a, rng.uniform(.45, .8) * isl.rx, rng.uniform(.25, .4) * isl.ry,
                                    isl.peak * rng.uniform(.5, .9), rng.uniform(0, 2 * math.pi)))
                 elif kind == 'plateau':
                     shapes.append(('plateau', u, v, rng.uniform(.25, .4) * isl.ry, isl.peak * rng.uniform(.45, .8)))
                 else:   # a valley runs right across, near the middle
-                    shapes.append(('valley', u * .4, v * .4, a, rng.uniform(.08, .14) * isl.ry, isl.peak * rng.uniform(.4, .7)))
+                    shapes.append(('valley', u * .4, v * .4, a, rng.uniform(.16, .26) * isl.ry, isl.peak * rng.uniform(.4, .7)))
             plans[isl.key] = (plan, shapes)
     return plans
 
@@ -124,14 +117,20 @@ def shapes_height(i, lx, ly):
     for shape in plan[1]:
         kind = shape[0]
         if kind == 'peak':
-            # Not a cone: spurs run down its flanks between gullies, and crags break up the slopes near the top.
+            # A massif, not a cone (owner, October 26): foothills ease in, the flanks climb steeply and the summit rounds off;
+            # long spurs and gullies run down between ridgelines, a shoulder and a second top stand on its side, and the
+            # whole is roughened by broad noise. Every feature is wider than six grid steps so the mesh holds it smoothly.
             _, u, v, r, height, spurs, phase = shape
             d = math.hypot(x - u, y - v)
             if d < r:
                 f = d / r
-                spur = 1 + .35 * f * math.sin(spurs * math.atan2(y - v, x - u) + phase + 2.5 * f)
-                crag = .1 * (1 - f) * abs(math.sin(x / 640 + phase) * math.sin(y / 560 - phase))
-                h += height * ((1 - f) ** 1.4 * spur + crag)
+                s = 1 - f
+                body = s * s * (3 - 2 * s) * .85 + s ** 1.6 * .15
+                ang = math.atan2(y - v, x - u)
+                ridges = 1 + .3 * (4 * f * (1 - f)) * math.sin(spurs * ang + phase + 1.8 * f)
+                top = .22 * math.exp(-((f - .45) / .22) ** 2) * (.5 + .5 * math.sin(2 * ang + phase * 1.7))   # a shoulder and a lesser summit
+                rough = (noise(x, y, 14000.0, 21) - .5) * .30 * s * (1 - s * .5) + (noise(x, y, 6000.0, 23) - .5) * .10 * s * f
+                h += height * max(0.0, body * ridges + top + rough)
         elif kind == 'ridge':
             _, u, v, a, half, width, height, phase = shape
             dx, dy = x - u, y - v
@@ -154,7 +153,7 @@ def shapes_height(i, lx, ly):
     return h
 # How much higher and steeper each region's hills are than world_layout's base features (tuning): Winter mountains,
 # Jungle's broken hills, Desert's rises among the dunes, Plains' rolling ground.
-RELIEF = {'Winter': (3.6, 0.7), 'Jungle': (2.2, 0.8), 'Desert': (1.3, 1.0), 'Plains': (1.2, 1.2), 'Swamp': (1.0, 1.0)}
+RELIEF = {'Winter': (0.9, 1.8), 'Jungle': (2.2, 0.8), 'Desert': (1.3, 1.0), 'Plains': (1.2, 1.2), 'Swamp': (1.0, 1.0)}
 
 
 # The Desert's dunes (owner, October 16, BIOME_TERRAIN_FOLIAGE_AND_GLOBAL_SUN: irregular natural sand dunes):
@@ -211,15 +210,18 @@ def island_land(i, x, y, inland):
     h = land(inland)
     tall, wide = RELIEF[i.region]
     for fx, fy, radius, height in i.features:
-        h += bump(lx, ly, fx, fy, radius * wide, height * tall) * rise
+        h += bump(lx, ly, fx, fy, radius * wide, height * tall) * rise * (.8 + .4 * noise(lx, ly, 14000.0, 31) if i.region == 'Winter' else 1.0)
     if i.region == 'Plains':
         h += rise * (220 * math.sin(lx / 2300 + 1.1) * math.sin(ly / 1900 + .4) + 60 * math.sin((lx + ly) / 900))
     elif i.region == 'Desert':
         h += rise * dunes(lx, ly)
     elif i.region == 'Winter':
-        h += rise * (420 * abs(math.sin(lx / 520 + .7) * math.sin(ly / 430 + 1.9)) + 180 * abs(math.sin((lx - ly) / 300)))
+        # Owner, October 26: the hills looked unreal, a sawtooth of creases. Creases (abs of a sine) and features under a
+        # few grid steps wide alias on the 300 cm mesh, so these are smooth, broad swells with a little noise.
+        # Owner, October 26 (again): realistic hills. Rolling ground from three octaves of noise, not a regular pattern.
+        h += rise * (700 * (noise(lx, ly, 4200.0, 7) - .5) + 330 * (noise(lx, ly, 1900.0, 8) - .5) + 110 * (noise(lx, ly, 900.0, 9) - .5) + 300)
     elif i.region == 'Jungle':
-        h += rise * (200 * abs(math.sin(lx / 640) * math.cos(ly / 560 + .3)) + 80 * math.sin(lx / 260) * math.sin(ly / 310))
+        h += rise * (520 * (noise(lx, ly, 3800.0, 11) - .5) + 260 * (noise(lx, ly, 1700.0, 12) - .5) + 90 * (noise(lx, ly, 850.0, 13) - .5) + 160)
     if i.region != 'Swamp' and i.key in TERRAIN_PLANS:
         # The island's own plan; a valley floor stays above the sea (a little over the beach's top).
         h = max(h + rise * shapes_height(i, lx, ly), min(h, SEA + 120.0))
@@ -439,7 +441,7 @@ class Cave:
     def __init__(self, island, kind, mx, my, heading, floor, scale, bend):
         self.island, self.kind = island, kind
         self.mx, self.my, self.heading, self.floor, self.scale, self.bend = mx, my, heading, floor, scale, bend
-        self.cell = 200.0 if island.key == 'Starter' else 400.0       # the island mesh's grid
+        self.cell = ground_spacing(island)       # the island mesh's grid
         self.margin = 1.5 * self.cell                                  # notch past the hollow
         self.length = 1400.0 * scale                                   # passage
         self.chamber = (600.0 * scale, 500.0 * max(scale, .8), 450.0)  # chamber half-sizes (u, v, z)
@@ -637,7 +639,7 @@ def cover(x, y, z):
 
 
 # Each region's code in the terrain's vertex alpha, for its own soils (owner, October 16:
-# Design/World/REGIONAL_SOIL_TEXTURE_REQUIREMENTS_2026-10-16.md); M_CoastalTerrain_v1 reads it.
+# CLAUDE.md); M_CoastalTerrain_v1 reads it.
 REGION_CODES = {'Winter': .1, 'Plains': .3, 'Jungle': .5, 'Swamp': .7, 'Desert': .9}
 
 
@@ -651,7 +653,7 @@ def region_code(x, y):
 def grid_of(island):
     """The island mesh's grid as build_coastal_terrain.py builds it: (x0, y0, step x, step y, cells x, cells y)."""
     reach = island.reach() + SHELF
-    spacing = 200.0 if island.key == 'Starter' else 400.0
+    spacing = ground_spacing(island)
     x0, x1, y0, y1 = island.cx - reach, island.cx + reach, island.cy - reach, island.cy + reach
     nx, ny = max(2, int(round((x1 - x0) / spacing))), max(2, int(round((y1 - y0) / spacing)))
     return x0, y0, (x1 - x0) / nx, (y1 - y0) / ny, nx, ny

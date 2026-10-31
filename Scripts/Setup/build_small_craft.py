@@ -4,8 +4,9 @@ Run in the editor after build_ship_fittings.py, outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
 - Raft, about 5 m by 2.5 m: a bed of lashed logs under cross beams and a plank deck, rail logs along the sides,
-  rope-wrapped corner posts, a lashed crate for its hold and a stone anchor on a rope coil. No mast or sail: it is
-  paddled (owner, October 12). Its two paddles rest in lashings on the side rails, blades in the water, and
+  rope-wrapped corner posts, a lashed crate for its hold and a stone anchor on a rope coil. It is paddled (owner,
+  October 12) and has one Small sail hardpoint forward (owner, October 18: the raft has one functional small-sail
+  hardpoint); a fitted sail brings its own short mast and sets on a boom high over the paddler. Its two paddles rest in lashings on the side rails, blades in the water, and
   are part of the raft; taking them up is taking its helm, and forward and back set the stroke.
 - Dinghy, about 3.5 m by 1.4 m: a small plank boat with a pointed bow and a rounded transom, ribs, floor boards,
   two thwarts, a short mast, a sea chest for its hold and a grapnel. Steered by a rudder and tiller.
@@ -69,7 +70,7 @@ def bermuda_sail(mast_x, boom_z, head_z, boom_len, furled):
 
 RAFT_HALF = (250.0, 125.0)
 RAFT_DECK = 32.0
-RAFT_SPEED = 250.0                 # cm/s at a hard stroke (tuning)
+RAFT_SPEED = 3 * 51.4444          # cm/s: the raft's base speed, 3 knots (owner, October 18), at a hard stroke or under sail
 
 
 def raft_hull():
@@ -370,7 +371,15 @@ def rename_if_present(folder, old, new):
         assert library.rename_asset(f'{folder}/{old}', f'{folder}/{new}'), old
 
 
-def build_raft(timber):
+def raft_mast(height):
+    """A raft sail assembly's short mast (owner, October 18: the mast belongs to the removable sail), from a socket on the deck."""
+    b = Builder()
+    b.tube([(0, 0, -30), (0, 0, height)], lambda k: (7.0, 5.0)[k], sides=10)
+    b.box((0, 0, -24), (26, 26, 12))
+    return b
+
+
+def build_raft(timber, sail_mi):
     hull = write_static_mesh(raft_hull(), f'{FOLDER}/SM_RaftHull_v1', [timber], UV_TILE)
     helm_at = (-140.0, 0.0, RAFT_DECK + 50)
     # The raft was first steered by an oar; its paddles take that item's and mesh's place.
@@ -386,8 +395,21 @@ def build_raft(timber):
         'anchor_point': unreal.Vector(205, -75, RAFT_DECK + 30), 'cargo_hatch_point': unreal.Vector(120, 60, RAFT_DECK + 30),
         'boarding_points': [unreal.Vector(0, s * (hy + 30), -10) for s in (-1, 1)],
         'hull_health': 200.0, 'cargo_slots': 8, 'weight_capacity': 400.0, 'top_speed': RAFT_SPEED, 'turn_rate': 25.0, 'crew_capacity': 2,
-        'mounts': [mount('Helm', T.HELM, helm_at)],
+        'mounts': [mount('Helm', T.HELM, helm_at), raft_sail_mount(timber, sail_mi)],
     }, helm)
+
+
+def raft_sail_mount(timber, sail_mi):
+    """The raft's one Small sail hardpoint, forward of the paddler: a triangular sail on its own mast and a boom high over his head."""
+    sail_at = (70.0, 0.0, RAFT_DECK + 30)
+    boom_z, head_z = RAFT_DECK + 190, RAFT_DECK + 420
+    sail_args = (0.0, boom_z, head_z, 150)
+    sail = write_static_mesh(bermuda_sail(*sail_args, False), f'{FOLDER}/SM_RaftSail_v1', [timber, sail_mi], UV_TILE, collision=False)
+    furled = write_static_mesh(bermuda_sail(*sail_args, True), f'{FOLDER}/SM_RaftSailFurled_v1', [timber, sail_mi], UV_TILE, collision=False)
+    mast = write_static_mesh(raft_mast(head_z - sail_at[2] + 10), f'{FOLDER}/SM_RaftMast_v1', [timber], UV_TILE, collision=False)
+    m = mount('Sail', T.SAIL, sail_at, unreal.EWSailSize.SMALL, (sail, furled, (0, 0, boom_z - sail_at[2])))
+    m.set_editor_property('mast_mesh', mast)
+    return m
 
 
 def build_dinghy(timber, sail_mi):
@@ -409,7 +431,7 @@ def build_dinghy(timber, sail_mi):
         'deck_height': D_FLOOR, 'hold_floor_height': D_FLOOR,
         'anchor_point': unreal.Vector(135, 0, D_FLOOR + 25), 'cargo_hatch_point': unreal.Vector(-95, 0, D_FLOOR + 22),
         'boarding_points': [unreal.Vector(-20, s * (D_BEAM + 35), -10) for s in (-1, 1)],
-        'hull_health': 300.0, 'cargo_slots': 6, 'weight_capacity': 250.0, 'top_speed': 450.0, 'turn_rate': 45.0, 'crew_capacity': 2,
+        'hull_health': 300.0, 'cargo_slots': 6, 'weight_capacity': 250.0, 'top_speed': 5 * 51.4444, 'turn_rate': 45.0, 'crew_capacity': 2,
         'cannot_sink': True,   # design reference: ordinary damage cannot sink the dinghy
         'mounts': [mount('Helm', T.HELM, helm_at),
                    mount('Sail', T.SAIL, sail_at, unreal.EWSailSize.SMALL, (sail, furled, (0, 0, D_BOOM_Z - sail_at[2])))],
@@ -438,7 +460,7 @@ def main():
     timber = make_timber_material()
     sail_mi = unreal.load_asset(f'{FOLDER}/MI_SailSmall_v1')
     assert sail_mi, 'Run build_ship_fittings.py first'
-    definitions = (build_raft(timber), build_dinghy(timber, sail_mi))
+    definitions = (build_raft(timber, sail_mi), build_dinghy(timber, sail_mi))
     moor(definitions)
     Path(unreal.Paths.project_saved_dir(), 'SmallCraftResult.json').write_text(json.dumps({'success': True}))
     unreal.log('Raft and dinghy built')

@@ -21,7 +21,12 @@ def run_hotbar_verification():
     stone=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestStone')
     torch=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestInnTorch')
     assert torch, 'Y quick-assign needs the existing hand-tool fixture'
-    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'Use fresh PIE'
+    # The starter kit now arrives with every survivor: empty the pack and the body first (this check counts every item).
+    for e in list(authority.get_equipment_component().get_equipment_entries()):
+        authority.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(inv.get_inventory_entries()):
+        inv.remove_item(e.get_editor_property('item_definition'), e.get_editor_property('quantity'))
+    assert not inv.get_inventory_entries() and not authority.get_equipment_component().get_equipment_entries(),'could not empty the starter kit'
     assert all(hotbar.get_bound_item(i) is None for i in range(8))
     if other:assert other.get_inventory_component().add_item(alternate,1)==1
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
@@ -76,9 +81,14 @@ def run_hotbar_verification():
         check(label+str(index+1),{0:hat,1:alternate,7:wood},index,expected,
               hat_count=0 if expected==hat else 1,alt_count=1 if expected==hat else 0,wood_count=1)
         assert not pawn.is_prone and not pawn.get_editor_property('bIsCrouched') and not pawn.get_movement_component().is_falling(),'Chord leaked into stance/jump'
+    start=authority.get_actor_location()
     def position_for_pickup():
-        if other:other.teleport(unreal.Vector(-500,500,96),unreal.Rotator())
-        authority.teleport(unreal.Vector(0,0,96),unreal.Rotator())
+        # The map no longer carries a fixture: put ten wood on the ground 1.1 m ahead of the survivor's own start, at eye height where the pickup is aimed.
+        here=unreal.Vector(start.x,start.y,start.z)
+        if other:other.teleport(unreal.Vector(here.x-500,here.y+500,here.z),unreal.Rotator())
+        authority.teleport(here,unreal.Rotator())
+        now=authority.get_actor_location()      # where the teleport really left the survivor
+        assert lib.spawn_verification_pickup(server,unreal.Vector(now.x+110,now.y,now.z+18),wood,10)
         authority.get_controller().set_control_rotation(unreal.Rotator())
         controller.set_control_rotation(unreal.Rotator())
     steps=[(initial,.1),(lambda:inv.add_item(hat,1),.1),(lambda:inv.add_item(wood,251),1.5),
@@ -111,32 +121,32 @@ def run_hotbar_verification():
         steps.extend([(lambda n=name:chord(n),1.5),(lambda i=index:world_chord_check(i),.1)])
     steps.extend([(lambda:event('Gamepad_LeftShoulder',True),.1),(lambda:event('Gamepad_FaceButton_Bottom',True),.1),
                   (lambda:event('Gamepad_LeftShoulder',False),.1),(lambda:event('Gamepad_FaceButton_Bottom',False),1.5),
-                  (lambda:world_chord_check(0),.1),
+                  (lambda:world_chord_check(4),.1),      # LB then A (slot 5, empty), LB let go first: the chord still selected slot 5 and nothing else leaked
                   (lambda:inv.add_item(torch,1),1.5),
                   (lambda:key('Gamepad_FaceButton_Top'),.4),
                   (lambda:select_inventory_item(torch),.2),
                   (lambda:key('Gamepad_FaceButton_Top'),1.5),
                   (lambda:check('Xbox Y quick-assigns selected item to nearest empty slot',
-                                {0:hat,1:alternate,2:torch,7:wood},2,alternate,hat_count=0,alt_count=1,wood_count=1,torch_count=1,opened=True),.1),
+                                {0:hat,1:alternate,4:torch,7:wood},4,alternate,hat_count=1,alt_count=0,wood_count=1,torch_count=1,opened=True),.1),
                   (lambda:key('Gamepad_FaceButton_Right'),.4),
-                  (lambda:key('Gamepad_DPad_Right'),1.5),
-                  (lambda:check('Y-assigned item activates from slot 3',{0:hat,1:alternate,2:torch,7:wood},2,alternate,hat_count=0,alt_count=1,wood_count=1,torch_count=0,main_hand=torch),.1),
+                  (lambda:chord('Gamepad_FaceButton_Bottom'),1.5),
+                  (lambda:check('Y-assigned item activates from slot 5 (LB + A)',{0:hat,1:alternate,4:torch,7:wood},4,alternate,hat_count=1,alt_count=0,wood_count=1,torch_count=0,main_hand=torch),.1),
                   (lambda:lib.send_verification_equipment_request(controller,None,unreal.EWEquipmentSlot.MAIN_HAND,True),1.5),
-                  (lambda:request(2,None),1.5),(lambda:inv.remove_item(torch,1),1.5),
+                  (lambda:request(4,None),1.5),(lambda:inv.remove_item(torch,1),1.5),
                   (lambda:request(1,alternate),1.5),
                   (lambda:key('Gamepad_DPad_Right'),.4),
                   (lambda:key('Gamepad_FaceButton_Right'),.4),
-                  (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},0,hat_count=0,alt_count=1,wood_count=1),.1),
+                  (lambda:check('Y/B normal inventory roles return',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=1),.1),
                   # Closing UI recaptures the mouse; re-aim after any resulting cursor delta.
                   (position_for_pickup,2),
-                  (lambda:key('Gamepad_FaceButton_Left'),1.5),
-                  (lambda:check('X ordinary pickup restored after LB release',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=11),.1),
+                  (lambda:event('Gamepad_FaceButton_Left',True),1.6),(lambda:event('Gamepad_FaceButton_Left',False),1.0),   # picking up is a held action
+                  (lambda:check('X ordinary pickup restored after LB release',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=11),.1),
                   (lambda:key('Gamepad_FaceButton_Bottom'),.15),
                   (lambda:report['checkpoints'].append({'label':'A ordinary jump restored','falling':pawn.get_movement_component().is_falling()}),.1),
                   (lambda:assert_jump(),1.5),
                   (lambda:event('Gamepad_LeftShoulder',True),.1),
                   (lambda:assert_flush(),.1),(lambda:key('Gamepad_FaceButton_Top'),.4),
-                  (lambda:check('engine focus flush releases LB',{0:hat,1:alternate,7:wood},0,hat,hat_count=0,alt_count=1,wood_count=11,opened=True),.1),
+                  (lambda:check('engine focus flush releases LB',{0:hat,1:alternate,7:wood},2,alternate,hat_count=1,alt_count=0,wood_count=11,opened=True),.1),
                   (lambda:key('Gamepad_FaceButton_Right'),.4)])
     def assert_jump():assert report['checkpoints'][-1]['falling'],'Normal A did not jump'
     def assert_flush():assert lib.flush_verification_input(controller),'Engine flush did not clear LB'
@@ -144,7 +154,7 @@ def run_hotbar_verification():
         panel=ui();assert panel,'Y quick-assign needs the inventory open'
         for _ in range(32):
             if panel.get_selected_item_definition()==item:return
-            key('Down')
+            key('Right')
         assert panel.get_selected_item_definition()==item,'Could not select quick-assign item'
     index=0;next_time=unreal.GameplayStatics.get_time_seconds(world)+1;handle=None
     def finish():

@@ -57,10 +57,10 @@ def tick(delta):
             state['health'] = stats.get_max_health()
             client.set_inventory_open(True)
         elif phase == 1:
-            assert lib.send_verification_ui_key(client, 'PageDown') and lib.send_verification_ui_key(client, 'PageDown') and lib.send_verification_ui_key(client, 'PageDown')
+            assert lib.send_verification_ui_key(client, 'PageDown')
         elif phase == 2:
             m = menu()
-            assert m.get_selected_section() == 3, f'section {m.get_selected_section()}'
+            assert m.get_selected_section() == 1, f'section {m.get_selected_section()}'
             tree = m.get_skills_panel()
             assert tree.get_node_count() == 9
             checks.append('Page keys reach the Skills section, which shows the nine-star constellation')
@@ -109,14 +109,16 @@ def tick(delta):
             assert sel in ('Gatherer', 'Torchbearer', 'FieldRepair', 'SecondWind'), f'd-pad up from the root reached {sel}'
             checks.append('The d-pad moves from star to star')
             assert inv.add_item(wood, 15) == 15 and inv.add_item(stone, 10) == 10
-            assert lib.send_verification_ui_key(client, 'PageUp') and lib.send_verification_ui_key(client, 'PageUp')
+            assert lib.send_verification_ui_key(client, 'PageUp')
         elif phase == 10:
             m = menu()
-            assert m.get_selected_section() == 1
-            for _ in range(10):
+            assert m.get_selected_section() == 0
+            m.focus_crafting()
+            assert m.is_crafting_focused()
+            for _ in range(12):
                 if menu().get_shown_recipe() == hatchet_recipe:
                     break
-                assert lib.send_verification_ui_key(client, 'Down')
+                assert lib.send_verification_ui_key(client, 'Right')
         elif phase == 11:
             assert menu().get_shown_recipe() == hatchet_recipe, 'the unlocked Hatchet is not selectable'
             assert menu().is_craft_action_enabled()

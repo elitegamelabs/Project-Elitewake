@@ -19,6 +19,8 @@ def run_inventory_selection_verification():
     inventory=server_pawn.get_inventory_component()
     item=unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
     assert item
+    for e in list(server_pawn.get_equipment_component().get_equipment_entries()): server_pawn.get_equipment_component().unequip_item(e.get_editor_property('slot'))
+    for e in list(inventory.get_inventory_entries()): inventory.remove_item(e.get_editor_property('item_definition'),e.get_editor_property('quantity'))      # the starter kit arrives with every survivor
     settings=unreal.get_default_object(unreal.load_class(None,'/Script/UnrealEd.EditorPerformanceSettings'))
     old_throttle=settings.get_editor_property('bThrottleCPUWhenNotForeground')
     settings.set_editor_property('bThrottleCPUWhenNotForeground',False)
@@ -29,6 +31,8 @@ def run_inventory_selection_verification():
             lib.set_verification_network_settings(w,100,1)
     controller.set_inventory_open(False)
     inventory.remove_item(item,100000)
+    for entry in list(inventory.get_inventory_entries()):      # a start-up stray (a torch or starter kit item, seen now and then) would make 'empty' not empty
+        inventory.remove_item(entry.get_editor_property('item_definition'),entry.get_editor_property('quantity'))
     unreal.WidgetLibrary.set_focus_to_game_viewport()
     report={'success':False,'network':len(worlds)==2,'checkpoints':[],'errors':[]}
     path=os.path.join(unreal.Paths.project_saved_dir(),'M5ESelectionNetworkResult.json' if len(worlds)==2 else 'M5ESelectionPlayResult.json')
@@ -51,19 +55,21 @@ def run_inventory_selection_verification():
         if details is not None:assert row['details']==details,label+': wrong details state'
         if count is not None:assert row['count']==count,label+': wrong replicated item count'
     steps=[(lambda:key('I'),.4),(lambda:check('empty open',-1,False,count=0),.1),
-           (lambda:key('Down'),.1),(lambda:key('Enter'),.1),(lambda:check('empty navigation safe',-1,False),.1),
+           (lambda:key('Right'),.1),(lambda:key('Down'),.1),(lambda:key('Enter'),.1),(lambda:check('empty navigation safe',-1,False),.1),
            (lambda:key('I'),.4),(lambda:check('I closes',opened=False),.1),
            (lambda:inventory.add_item(item,751),1.5),(lambda:key('Gamepad_FaceButton_Top'),.4),
            (lambda:check('Y opens first valid row',0,False,count=751),.1),
-           (lambda:key('Down'),.2),(lambda:check('keyboard next',1,False),.1),
+           (lambda:key('Right'),.2),(lambda:check('keyboard next',1,False),.1),
            (lambda:key('Enter'),.2),(lambda:check('keyboard confirms',1,True),.1),
-           (lambda:key('Gamepad_DPad_Down'),.2),(lambda:check('D-pad next',2,False),.1),
+           (lambda:key('Gamepad_DPad_Right'),.2),(lambda:check('D-pad next',2,False),.1),
            (lambda:key('Gamepad_FaceButton_Bottom'),.2),(lambda:check('A confirms',2,True),.1),
            (lambda:analog(.2),.4),(lambda:check('stick dead zone',2,True),.1),
-           (lambda:analog(-1),.1),(lambda:analog(0),.1),(lambda:check('stick down',3,False),.1),
-           (lambda:analog(1),.8),(lambda:analog(0),.1),(lambda:check('stick repeat reaches first boundary',0,False),.1),
+           (lambda:analog(-1),.1),(lambda:analog(0),.1),(lambda:check('stick down on the last row stays (the crafting list below is empty)',2,True),.1),
+           (lambda:analog(1),.8),(lambda:analog(0),.1),(lambda:check('stick up on the top row goes up to the tab bar; the selection stays',2,True),.1),
+           (lambda:key('Gamepad_DPad_Down'),.2),(lambda:check('Down returns from the tab bar',2,True),.1),
+           (lambda:key('Gamepad_DPad_Left'),.2),(lambda:check('D-pad left',1,False),.1),(lambda:key('Left'),.2),(lambda:key('Left'),.2),(lambda:check('left stops at the first slot',0,False),.1),
            (lambda:key('Gamepad_FaceButton_Right'),.4),(lambda:check('B closes',opened=False),.1),
-           (lambda:key('I'),.4),(lambda:key('Down'),.1),(lambda:key('Down'),.1),(lambda:key('Down'),.1),
+           (lambda:key('I'),.4),(lambda:key('Right'),.1),(lambda:key('Right'),.1),(lambda:key('Right'),.1),
            (lambda:inventory.remove_item(item,251),1.5),(lambda:check('removed selected row clamps',1,False,count=500),.1),
            (lambda:key('Enter'),.1),(lambda:inventory.add_item(item,1),1.5),
            (lambda:check('live refresh retains selected stack and details',1,True,count=501),.1),
@@ -71,7 +77,7 @@ def run_inventory_selection_verification():
            (lambda:inventory.add_item(item,251),1.5),(lambda:check('empty to populated selects first',0,False,count=251),.1),
            (lambda:key('Escape'),.4),(lambda:check('Escape closes',opened=False),.1),
            (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:check('Y reopens',0,False),.1),
-           (lambda:key('Gamepad_FaceButton_Top'),.4),(lambda:check('Y closes',opened=False),.1)]
+           (lambda:key('Gamepad_FaceButton_Right'),.4),(lambda:check('B closes (Y quick-assigns to the hotbar inside the menu)',opened=False),.1)]
     index=0
     next_time=unreal.GameplayStatics.get_time_seconds(world)+1
     handle=None

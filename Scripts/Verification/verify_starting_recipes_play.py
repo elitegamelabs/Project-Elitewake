@@ -8,6 +8,8 @@ client=next(c for c in pcs if not c.has_authority())
 host=next(c for c in pcs if c.has_authority())
 server_world=worlds[pcs.index(host)]
 client_world=worlds[pcs.index(client)]
+def crafting_ui():
+    return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world,unreal.EWInventoryWidget,False) if w.get_owning_player()==client and w.is_in_viewport())
 def pid(p): return json.loads(unreal.ToolsetLibrary.get_object_properties(p.get_editor_property('PlayerState'),['PlayerId']))['PlayerId']
 original=next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world,unreal.EWCharacter) if pid(p)==pid(client.get_controlled_pawn()))
 server_pc=original.get_controller()
@@ -38,7 +40,7 @@ def tick(delta):
             assert not host.get_controlled_pawn().get_inventory_component().get_available_recipes()
             checks.append('Possessed client receives only its authored recipes, with no inventory grant')
             client.set_inventory_open(True)
-            assert lib.send_verification_ui_key(client,'Tab')
+            crafting_ui().focus_crafting()
         elif phase==1:
             ui=next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(client_world,unreal.EWInventoryWidget,False) if w.get_owning_player()==client and w.is_in_viewport())
             assert not ui.is_craft_action_enabled()

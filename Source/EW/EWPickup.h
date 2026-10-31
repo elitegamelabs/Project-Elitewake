@@ -34,6 +34,8 @@ public:
     /** True if taking it is a reach into a bush rather than a stoop to the ground. */
     virtual bool UsesBushReach() const { return false; }
     virtual int32 TryPickup(AEWCharacter* Character);
+    /** Authority, loading a save (M7): how much is left to take. */
+    void RestoreSaved(int32 InQuantity);
 
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;

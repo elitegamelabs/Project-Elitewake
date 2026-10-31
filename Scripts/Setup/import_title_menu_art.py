@@ -1,6 +1,6 @@
 """Import the owner title splash, water mask, prompt, and main-menu concept.
 
-Run in Unreal Editor from this project. Source PNGs are kept in Art/UI/Title/2026-10-13.
+Run in Unreal Editor from this project. Source PNGs are kept in Art/UI/Title.
 It creates a UI material that UV-animates pixels inside the white water mask only. It does not
 modify maps or editor preferences.
 """
@@ -11,7 +11,7 @@ ROOT = Path(unreal.Paths.project_dir()).resolve()
 SOURCE = ROOT / 'Art/UI/Title/2026-10-13'
 DESTINATION = '/Game/Elitewake/UI/Title'
 ASSETS = {
-    'Elitewake-Starter-Screen-Owner-v1.png': 'T_ElitewakeStarterScreen_20261013',
+    '../Elitewake-Title-v1.png': 'T_ElitewakeStarterScreen_20261013',
     'Elitewake-Starter-WaterMask-v1.png': 'T_TitleWaterMask_20261013',
     'Press-Any-Key-To-Start-v2.png': 'T_PressAnyKeyToStart_20261013_v2',
 }

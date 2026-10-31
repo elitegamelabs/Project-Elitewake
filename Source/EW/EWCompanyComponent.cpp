@@ -159,6 +159,6 @@ void AEWCompanyRegistry::SetPolicy(UEWCompanyComponent* C,int32 Kind,EEWCompanyO
     C->LastResult=TEXT("Only the Company owner can change ownership policies.");
     if (!Co || Kind<0 || Kind>2 || static_cast<uint8>(Policy)>2) return;
     if (Kind==0) Co->Ships=Policy; else if (Kind==1) Co->Structures=Policy; else Co->Tames=Policy;
-    C->LastResult=TEXT("Policy saved for this session. Asset transfer integration is pending."); Refresh();
+    C->LastResult=Kind==0 ? TEXT("Ship policy changed: it decides who may sail members' ships.") : TEXT("Policy saved for this session."); Refresh();
 }
 
