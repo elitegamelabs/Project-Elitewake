@@ -1,5 +1,5 @@
 """Screenshots of the sloop's sails filled and slack (owner, October 16: sails billow when they catch the wind, go
-slack and keep flapping when they don't; Design/Ships/WIND_REACTIVE_SAIL_ANIMATION_2026-10-16.md).
+slack and keep flapping when they don't; CLAUDE.md).
 
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground (EW_PLAY_PLAYERS=1 is enough). Run unattended with
 run_play_check.py. Fits out the moored sloop (helm, mainsail, headsail, full sail; she stays anchored), then:

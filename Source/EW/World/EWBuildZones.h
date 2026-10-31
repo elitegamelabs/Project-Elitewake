@@ -7,7 +7,7 @@
 /**
  * Where Build Mode may place a piece (owner, October 26-27: build on every island outside Ports and obstruction zones; zones
  * only carve out parts of an island; beaches near docks are not buildable). Design:
- * Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md. The zone list is Content/Elitewake/Data/BuildZones.json,
+ * CLAUDE.md. The zone list is Content/Elitewake/Data/BuildZones.json,
  * written by Scripts/Setup/export_buildzones.py from the world layout, so the editor scripts and the game agree. This is only
  * the rule; the pieces, ghost and placing come in later milestones. Sizes and limits are tuning, not owner-approved values.
  *

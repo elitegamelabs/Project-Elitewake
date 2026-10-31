@@ -68,8 +68,9 @@ def one_each():
         assert sorted(a.get_actor_label() for a in seen) == sorted(a.get_actor_label() for a in mine), f'the client lacks {key}\'s landmark'
         assert all(mark.kind.rstrip('s') in a.get_actor_label().split(': ')[1] for a in mine), [a.get_actor_label() for a in mine]
         kinds.add(mark.kind)
-    # The five-island world's only Plains island is the starter, which gets sea stacks: the standing-stone ring does not occur.
-    assert kinds == {'stacks', 'arch', 'stones', 'spire', 'snag'} or (W.FIVE_ISLAND_WORLD and kinds == {'stacks', 'arch', 'spire', 'snag'}), kinds
+    # The only Plains island is the starter, which gets sea stacks; the retired extra-Plains standing-stone ring
+    # does not occur in the canonical world.
+    assert kinds == {'stacks', 'arch', 'spire', 'snag'}, kinds
     state['memo'].update({f'{k}_islands': sum(1 for m in LANDMARKS.values() if m.kind == k) for k in sorted(kinds)})
     return True
 

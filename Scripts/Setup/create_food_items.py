@@ -1,4 +1,4 @@
-"""Food items and cooking recipes from the owner's October 22 decisions (Docs/OwnerDecisions/GAMEPLAY_DESIGN_DECISIONS_2026-10-22.md, section 2):
+"""Food items and cooking recipes from the owner's October 22 decisions (CLAUDE.md, section 2):
 hunger and health per food, the sickness chance of raw fish (15%) and raw meat (25%), cooking at 6 and 8 seconds (the owner's range is 5 to 12), and a medicinal
 herb that cures food sickness. Safe to run again. Run in the editor outside Play:
     UnrealEditor-Cmd.exe EW.uproject -ExecutePythonScript=<this file>"""

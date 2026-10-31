@@ -22,11 +22,11 @@ a straight trunk under whorls of drooping boughs that shorten toward the spire, 
 needle sprays (Art/Flora/Spruce-Needles-v1.png).
 
 The five-region world (owner, October 15; world_layout.py). Each region's primary tree (owner, October 15,
-Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): Central Plains Oak, Winter Birch, Jungle
+CLAUDE.md): Central Plains Oak, Winter Birch, Jungle
 Ash, Desert Palm, Swamp Spruce, in substantial stands. DECIDED (delegated, densities are tuning): Plains and Swamp
 grow in groves with clearings between, Winter and Jungle as forest, Desert's palms near its shores; a few Maravai
 stay in the Jungle under the ash. The starter island has no palms (owner, October 16: palms belong to the Desert;
-Docs/STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION_2026-10-15.md): its old inland hardwoods are oaks in their old places,
+CLAUDE.md): its old inland hardwoods are oaks in their old places,
 oak groves stand back from its beaches where the palms were, and its new western land is dressed like the other
 Plains islands. Every island has fiber
 plants, fallen sticks and berry bushes to gather by hand (owner: common resources everywhere).

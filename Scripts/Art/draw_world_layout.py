@@ -1,9 +1,9 @@
-"""Draw the world layout (Scripts/Setup/world_layout.py) as a map picture for the docs. Safe to run again.
+"""Draw the canonical five-island layout as a reference picture. Safe to run again.
     python Scripts/Art/draw_world_layout.py
-Writes Docs/images/world_layout_v2.png: every island's real outline in its region's colour, labelled, the region
+Writes Art/World/WorldLayout_FiveIslands.png: every island's real outline in its region's colour, labelled, the region
 names at their centres, each Port (site centre plus a quay line along its waterfront) and each cave mouth
 (an arrow along its heading, coloured by kind), a legend, a 1 km scale bar and north up. A reference picture, not
-the in-game map. Does not edit world_layout.py or world_terrain.py (Docs/DELEGATED_TASKS.md T17).
+the in-game map. Does not edit world_layout.py or world_terrain.py.
 """
 import math
 import sys
@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / 'Scripts/Setup'))
 import world_layout as W   # noqa: E402
 import world_terrain as T  # noqa: E402
 
-OUT = ROOT / 'Docs/images/world_layout_v2.png'
+OUT = ROOT / 'Art/World/WorldLayout_FiveIslands.png'
 SIZE = 1600
 COLOURS = {'Plains': (122, 160, 70), 'Winter': (225, 235, 245), 'Swamp': (90, 105, 60), 'Desert': (222, 196, 130),
            'Jungle': (40, 110, 60)}
@@ -37,12 +37,13 @@ def main():
         font, big = ImageFont.truetype('arial.ttf', 15), ImageFont.truetype('arialbd.ttf', 30)
     except OSError:
         font = big = ImageFont.load_default()
-    for region, (cx, cy) in W.REGION_CENTRES.items():
-        x, y = px(cx, cy)
-        draw.text((x, y - 170 if region != 'Swamp' else y + 150), region.upper(), fill=(200, 220, 235), font=big, anchor='mm')
     for i in W.ISLANDS:
         pts = [px(x, y) for x, y in i.outline(120)]
         draw.polygon(pts, fill=COLOURS[i.region], outline=(250, 240, 210))
+        x_min, x_max = min(p[0] for p in pts), max(p[0] for p in pts)
+        y_min = min(p[1] for p in pts)
+        draw.text(((x_min + x_max) / 2, y_min - 34), i.region.upper(),
+                  fill=(200, 220, 235), font=big, anchor='mm')
         x, y = px(i.cx, i.cy - i.reach())
         draw.text((x, y + 14), i.key + (' (start)' if i.key == 'Starter' else ''), fill=(240, 240, 240), font=font, anchor='mm')
 

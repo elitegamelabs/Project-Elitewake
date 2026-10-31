@@ -1,4 +1,4 @@
-"""Play: the owner's sailing rules (October 18, Docs/OwnerDecisions/SAIL_SPEED_WIND_AND_CODEX_PRIORITY_2026-10-18.md, with the delegated
+"""Play: the owner's sailing rules (October 18, CLAUDE.md, with the delegated
 choices). One player, /Game/Elitewake/Maps/Test/Lvl_ShipsTest:
   - each class's base speed: raft 3, dinghy 5, sloop 8, schooner 10, brigantine 12 knots;
   - the sloop under a full standard medium mainsail (with the small headsail full too) heads for 8 knots x 1.50: sails do not stack;

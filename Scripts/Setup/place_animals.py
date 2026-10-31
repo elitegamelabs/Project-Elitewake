@@ -9,8 +9,7 @@ shores of the Plains and Desert islands. The starter island keeps a few docile a
 tortoise and squirrel monkeys) so a new survivor is not met by an alligator. The Winter islands wait for their
 Snow Leopards. Aggressive animals start well away from the beach spawn and the dock.
 
-build_animals.py also places animals on the old two-island layout when run; run this after it to lay them out over
-the world instead.
+Run this after build_animals.py to lay the approved populations out across the canonical five-island world.
 """
 import json
 import math
@@ -22,7 +21,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
-from wildlife_distribution import HABITAT, LEGACY_ISLAND_KEYS, expansion_islands, missing_counts  # noqa: E402
+from wildlife_distribution import HABITAT, target_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
@@ -49,29 +48,18 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     existing_animals = [actor for actor in actors.get_all_level_actors() if isinstance(actor, unreal.EWAnimal)]
-    if W.FIVE_ISLAND_WORLD:
-        # The old islands are gone: animals left standing where they were would float over open sea.
-        for actor in existing_animals:
-            actors.destroy_actor(actor)
-        existing_animals = []
-    added_keys = {island.key for island in W.ISLANDS if island.key not in LEGACY_ISLAND_KEYS}
-    existing_by_island_kind = {}
+    # This is a deterministic full-world placement pass. Clear the previous placement so re-running it cannot leave
+    # animals at stale terrain positions or multiply a population.
     for actor in existing_animals:
-        label = f' {actor.get_actor_label()} '
-        island_key = next((key for key in added_keys if f' {key} ' in label), None)
-        if island_key:
-            definition = actor.get_editor_property('definition')
-            kind = definition.get_name().removeprefix('DA_Animal_') if definition else ''
-            existing_by_island_kind[(island_key, kind)] = existing_by_island_kind.get((island_key, kind), 0) + 1
-    targets = expansion_islands()
-    # Leave all existing actors in place. Fill only missing species counts on the fourteen appended islands.
+        actors.destroy_actor(actor)
+    existing_animals = []
+    targets = W.ISLANDS
     trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
              if isinstance(t, unreal.EWHarvestTree)]
     ground = Ground()
     placed, counts = [], {}
     for island in targets:
-        existing_counts = {kind: count for (key, kind), count in existing_by_island_kind.items() if key == island.key}
-        plan = missing_counts(island, existing_counts)
+        plan = target_counts(island)
         rng = random.Random(sum(map(ord, island.key)) * 6151)
         reach = island.reach()
         near_trees = [(tx, ty) for tx, ty in trees if abs(tx - island.cx) < reach and abs(ty - island.cy) < reach]

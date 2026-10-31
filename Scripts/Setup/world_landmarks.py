@@ -156,7 +156,7 @@ LANDMARKS = _landmarks()
 # sand pillars, permitted on any island where they fit, not on every island). DECIDED (delegated, tuning): three to
 # five on each Desert island, standing 9-20 m out of the dunes at least 40 m apart; one each on two Plains islands
 # with open ground. Some are hoodoos under a cap rock.
-PILLAR_ISLANDS = {'Starter': 1} if W.FIVE_ISLAND_WORLD else {'Plains2': 1, 'Plains5': 1}
+PILLAR_ISLANDS = {'Starter': 1}
 
 
 def _pillars(island, rng, count):

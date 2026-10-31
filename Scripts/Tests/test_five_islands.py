@@ -1,4 +1,4 @@
-"""The five-island test world (owner, October 21-22): one island per region, each about 1,500 to 2,500 m across with an organic, irregular coast, and no two alike."""
+"""The canonical world: one island per region, each about 1,500 to 2,500 m across with an organic, irregular coast, and no two alike."""
 import math
 import os
 import sys
@@ -12,7 +12,6 @@ import world_layout as W  # noqa: E402
 M = W.M
 
 
-@unittest.skipUnless(W.FIVE_ISLAND_WORLD, 'five-island world not selected')
 class FiveIslandTests(unittest.TestCase):
     def test_one_island_per_region(self):
         self.assertEqual(sorted(i.region for i in W.ISLANDS), sorted(W.REGION_CENTRES))

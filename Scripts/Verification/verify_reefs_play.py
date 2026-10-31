@@ -1,9 +1,9 @@
-"""Client acceptance for the six major reefs (design reference: six reefs glow day and night). Needs Play in
+"""Client acceptance for the five major reefs, one per canonical island. Needs Play in
 /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, after build_reefs.py. Run unattended
 with run_play_check.py.
 
-  1. Six reefs: one in each region and a second in the Plains, each off an island with no Port (not the starter),
-     each with at least 40 corals of all four kinds; the client has them all.
+  1. Five reefs: one in each region, clear of that island's Port, each with at least 40 corals of all four kinds;
+     the client has them all.
   2. Every coral stands on the sea floor and is wholly under water (at least 50 cm below the surface).
   3. Every coral glows (a glowing coral material), in at least four colours per reef.
   4. Corals are solid: a level trace into each reef's largest mounds and pillar clumps stops on them.
@@ -38,7 +38,7 @@ def corals(world, key):
             if a.get_actor_label().startswith(f'Reef {key}:')]
 
 
-def six():
+def five():
     regions = {}
     for reef in REEFS:
         mine, seen = corals(server_world, reef.key), corals(client_world, reef.key)
@@ -46,10 +46,9 @@ def six():
         assert len(seen) == len(mine), f'the client has {len(seen)} of {reef.key}\'s {len(mine)} corals'
         kinds = {a.get_actor_label().split(': ')[1].split(' ')[0] for a in mine}
         assert kinds == {'branching', 'mound', 'fan', 'pillar'}, (reef.key, kinds)
-        assert W.FIVE_ISLAND_WORLD or (reef.island.key != 'Starter' and not W.port_on(reef.island)), reef.key     # the five-island world's islands all have Ports
         regions[reef.island.region] = regions.get(reef.island.region, 0) + 1
         state['memo'][f'{reef.key}_corals'] = len(mine)
-    assert regions == {'Plains': 1 if W.FIVE_ISLAND_WORLD else 2, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}, regions
+    assert regions == {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}, regions
     return True
 
 
@@ -106,7 +105,7 @@ def patrolled():
 
 
 STEPS = [
-    ('Six reefs, one per region and two in the Plains, off islands without a Port; 40+ corals of all four kinds each; the client has them', lambda: None, six, 4),
+    ('Five reefs, one per region and clear of its Port; 40+ corals of all four kinds each; the client has them', lambda: None, five, 4),
     ('Every coral stands on the sea floor, wholly under water', lambda: None, floor_and_water, 6),
     ('Every coral glows, in at least four colours per reef', lambda: None, glowing, 4),
     ("Each reef's largest mounds and pillars are solid", lambda: None, solid, 4),

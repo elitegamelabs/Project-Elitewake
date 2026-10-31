@@ -17,7 +17,7 @@ side, each with its sliding glass cover and its cannon place, with stairs throug
 beams, bulkheads with doorways into small holds fore and aft, stores and lanterns, and the surgeon's table aft-port.
 Three railing hardpoints a side, a boarding ladder at the centre of her stern, a capstan and a bowsprit with its
 bobstay. Her three flags fly from deck staffs: a jack at the bow and two on the raised aft deck. Sizes are tuning;
-Docs/DESIGN_REFERENCE.md records the delegated choices.
+CLAUDE.md records the delegated choices.
 
 Coordinates are the ship's own, in cm, with the waterline at Z 0 and the gun deck above the swell.
 """

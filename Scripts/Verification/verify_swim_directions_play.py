@@ -1,6 +1,5 @@
 """Client acceptance for swimming directions (owner, October 16: only forward and backward propel a swimmer; left and
-right add no sideways movement, alone or with forward or back; Design/Gameplay/SWIMMING_DIRECTIONAL_ANIMATION_
-REQUIREMENTS_2026-10-16.md). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one
+right add no sideways movement, alone or with forward or back; see CLAUDE.md). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one
 client. Run unattended with run_play_check.py. Through the client's own keys, swimming in open water east of the
 starter island, facing east:
   1. D alone: the survivor stays where they are (under 0.5 m of drift in 2 s, on both machines).

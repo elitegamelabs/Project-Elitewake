@@ -5,7 +5,7 @@ Optionally set EW_REBUILD_FROM to a step's name to start part-way, or EW_REBUILD
 steps to run just those. Writes Saved/WorldRebuildResult.json after each
 step, so a failure shows where it stopped; the editor closes either way.
 
-The order (Docs/REPORTS/2026-10-15_Claude.md, "Rebuild order for the coastal map"): ground first, then what is cut
+The order (CLAUDE.md, "Rebuild order for the coastal map"): ground first, then what is cut
 into it (caves) or stands on it, then what lives there and the climate, Ports and the sloop.
 """
 import json

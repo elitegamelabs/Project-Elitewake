@@ -6,8 +6,7 @@ or just:
     python -m unittest
 
 These only import `world_layout` and `world_terrain` (Scripts/Setup) and never edit them; a failing rule here means
-those scripts drifted from the owner's decisions, not that this file should be changed to match. See
-`Docs/DELEGATED_TASKS.md` T12 and `Docs/VERIFICATION.md` for how this is run and recorded.
+those scripts drifted from the canonical five-island rules, not that this file should be changed to match.
 """
 import math
 import os
@@ -26,7 +25,7 @@ M = W.M  # cm per metre
 
 
 class WorldLayoutRuleTests(unittest.TestCase):
-    """The owner's spacing and region rules (Docs/METRIC_WORLD_SCALE_AND_ISLAND_SPACING_2026-10-15.md et al.)."""
+    """The canonical five-island spacing and region rules."""
 
     @classmethod
     def setUpClass(cls):
@@ -34,19 +33,6 @@ class WorldLayoutRuleTests(unittest.TestCase):
 
     def test_check_reports_no_problems(self):
         self.assertEqual(self.problems, [], f'world_layout.check() found problems: {self.problems}')
-
-    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
-
-    def test_at_least_five_islands_per_region(self):
-        for region in W.REGION_CENTRES:
-            n = sum(1 for i in W.ISLANDS if i.region == region)
-            self.assertGreaterEqual(n, 5, f'{region} has only {n} islands')
-
-    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
-
-    def test_at_least_five_islands_round_the_starter(self):
-        around = [i for i in W.ISLANDS if i.region == 'Plains' and i.key != 'Starter']
-        self.assertGreaterEqual(len(around), 5, f'only {len(around)} islands round the starter')
 
     def test_every_pair_at_least_800m_apart(self):
         islands = W.ISLANDS
@@ -153,12 +139,6 @@ class CaveRuleTests(unittest.TestCase):
                           'CAVES does not have exactly one entry per island')
         missing = [key for key, cave in self.caves.items() if cave is None]
         self.assertEqual(missing, [], f'no cave was placed for: {missing}')
-
-    @unittest.skipIf(W.FIVE_ISLAND_WORLD, 'owner, Oct 21-22: the five-island test world replaces the 26/40-island layout')
-
-    def test_all_three_cave_kinds_occur(self):
-        kinds = {cave.kind for cave in self.caves.values() if cave}
-        self.assertEqual(kinds, set(T.CAVE_KINDS), f'only saw kinds {kinds}, expected {set(T.CAVE_KINDS)}')
 
     def test_cave_footprints_lie_on_their_own_island_and_off_every_port(self):
         for key, cave in self.caves.items():

@@ -36,7 +36,7 @@ struct EW_API FEWSavedPiece
 };
 
 /**
- * A piece the player built with Build Mode (design: Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md).
+ * A piece the player built with Build Mode (design: CLAUDE.md).
  * The foundation is a 4 m square slab whose top is just above the ground and whose underside reaches down to the lowest ground
  * beneath it, so it stands level on uneven ground. Every other piece attaches to a foundation (its Base) in the foundation's
  * frame: walls on an edge, pillar corners on a corner, ceilings and roofs above, staircases on its footprint. Server-owned and

@@ -2,7 +2,7 @@
 Run Scripts/Art/make_fish_models.py and Scripts/Art/make_food_icons.py first, then in the editor, outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
-From the owner's art (Art/Concepts/Fish/2026-10-12), each creature gets its cut-out art as a texture, a body
+From the owner's art (Art/Concepts/Animals/2026-10-12), each creature gets its cut-out art as a texture, a body
 inflated from its silhouette, and a material that makes it swim: fish sway their tails, the manta beats its wings.
 Every creature has a definition with its habits from the design reference: bass and catfish are
 peaceful; piranhas, mantas (a tail sting), sharks (a bite) and squid are aggressive. Killed, a creature floats up
@@ -71,7 +71,7 @@ WORLD = {'MantaRay': [('Starter', 3), ('Plains', 3), ('Desert', 3), ('Jungle', 2
          'HammerheadShark': [('Starter', 2), ('any', 6)],
          'Squid': [('Starter', 3), ('any', 6)]}
 OFFSHORE = (2000.0, 60000.0)   # how far out from a shore they start, cm
-# Over each of the six reefs (world_reefs.py; design reference: reef sharks): a reef shark and a manta ray patrol it.
+# Over each of the five regional reefs: a reef shark and a manta ray patrol it.
 REEF_LIFE = {'HammerheadShark': 1, 'MantaRay': 1}
 
 

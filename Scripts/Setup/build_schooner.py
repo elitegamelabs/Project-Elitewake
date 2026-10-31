@@ -16,7 +16,7 @@ separate). Under the main deck a lower deck has twelve square gunports, six a si
 and its cannon place, a hatch and stairs down, pillars, ribs and beams, a bulkhead with a doorway into a small aft
 hold, and barrels, crates and a chest under three lanterns. Four railing hardpoints along the main deck, a boarding
 ladder at the centre of her stern, a capstan and a bowsprit with its bobstay. Her two flags fly from a jackstaff at the
-bow and an ensign staff on the raised aft deck. Sizes are tuning; Docs/OPEN_QUESTIONS records the delegated choices.
+bow and an ensign staff on the raised aft deck. Sizes are tuning; CLAUDE.md holds the current rules.
 
 Coordinates are the ship's own, in cm, with the waterline at Z 0 and the lower deck above the swell.
 """

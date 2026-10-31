@@ -108,7 +108,7 @@ def falls():
 
 
 def into_cave():
-    c = T.CAVES['Winter1' if W.FIVE_ISLAND_WORLD else 'Winter3']
+    c = T.CAVES['Winter1']
     x, y = c.world(c.chamber_u, 0)
     go(x, y, c.floor + 120)
 
@@ -122,7 +122,7 @@ def stops():
 
 
 def out_of_cave():
-    c = T.CAVES['Winter1' if W.FIVE_ISLAND_WORLD else 'Winter3']
+    c = T.CAVES['Winter1']
     x, y = c.world(-900, 0)
     go(x, y, T.height(x, y) + 150)
 

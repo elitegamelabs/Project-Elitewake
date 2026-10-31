@@ -1,5 +1,4 @@
-"""Apply the owner's sailing rules (Docs/OwnerDecisions/SAIL_SPEED_WIND_AND_CODEX_PRIORITY_2026-10-18.md, with the delegated choices in
-Docs/REPORTS/2026-10-18_ChatGPT_Delegated_Decisions.md) to the existing assets. Safe to run again:
+"""Apply the canonical sailing rules in CLAUDE.md to the existing assets. Safe to run again:
   - each ship definition's TopSpeed becomes its class base speed: raft 3, dinghy 5 (delegated: between the raft and the sloop), sloop 8,
     schooner 10, brigantine 12 knots (the builders now write the same values);
   - the three standard sails get their whole-ship multipliers: small 1.30, medium 1.50, large 1.80;

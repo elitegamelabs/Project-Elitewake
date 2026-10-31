@@ -1,6 +1,6 @@
 """Create the first sloop: ship definition, helm and sail test fittings, and one bare hull in the coastal map.
 
-Follows the ship model in Docs/DESIGN_REFERENCE.md#ship-model: a complete hull with a helm mount, a Medium
+Follows the ship model in CLAUDE.md: a complete hull with a helm mount, a Medium
 mainsail mount, a Small headsail mount, the two confirmed cannon hardpoints and a boarding ladder on each
 side, and an anchor capstan near the bow. The hull starts bare and anchored.
 Sizes, weights and speeds are labelled test tuning, not balance.

@@ -2,11 +2,11 @@
 underwater slopes and on the seamounts (owner, October 17: dynamic sea-floor scenery, corals and aquatic plants).
 Plain Python (no Unreal); build_seabed_life.py builds and lays them.
 
-DECIDED (delegated; recorded in Docs/OPEN_QUESTIONS_2026-10-15.md): each kind keeps to the depths it suits, and each
+The canonical world guide in CLAUDE.md keeps each kind to the depths it suits, and each
 region's water favours its own: kelp forests in the cold Winter sea, corals thickest in the warm Jungle and Desert
 seas, seagrass meadows thickest in the sheltered Plains and the murky Swamp. The glowing major reefs (world_reefs.py)
 stay as they are and nothing else grows on them. Everything grows in patches, never as an even carpet. All counts,
-depths and sizes are tuning; the looks are provisional until ChatGPT's designs (Docs/Delegation/CHATGPT.md, G8) land.
+depths and sizes are tuning; the looks need owner visual review.
 """
 import math
 import random

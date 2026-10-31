@@ -1,13 +1,12 @@
-"""Acceptance for individually designed islands (owner, October 15: every island its own terrain; Design/World/
-ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground
+"""Acceptance for the five individually designed islands in CLAUDE.md. Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground
 (EW_PLAY_PLAYERS=1 is enough) after rebuild_world.py. Run unattended with run_play_check.py.
-  1. Every island but the starter and the Swamp's has a terrain plan (peaks, ridges, plateaus, valleys), no two islands
-     of a region the same plan, and every island its own size, outline and relief (no two with the same top, mean
+  1. Every island but the starter and the Swamp's has a terrain plan (peaks, ridges, plateaus, valleys), and every island
+     has its own size, outline and relief (no two with the same top, mean
      height and size within 1 m).
   2. The built ground matches the plan: at 12 points on each island the ground under a trace is within 1.5 m of the
      height function (world_terrain.built_height), so the meshes in the map are the designed ones.
   3. Every island has its cave, with a walkable way in (at most a 45 cm step at the mouth).
-  4. Screenshots of six islands from 25 m above the sea, one per region and the starter, in Saved/Screenshots/IslandTerrain/
+  4. Screenshots of five islands from 25 m above the sea, one per region, in Saved/Screenshots/IslandTerrain/
      (a person still has to look at them).
 Writes Saved/IslandTerrainPlayResult.json.
 """
@@ -46,7 +45,8 @@ def relief(i):
 def designed():
     for region in T.PLANS:
         plans = [T.TERRAIN_PLANS[i.key][0] for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        assert len(plans) >= (0 if W.FIVE_ISLAND_WORLD and region == 'Plains' else 1 if W.FIVE_ISLAND_WORLD else 5) and len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
+        expected = 0 if region == 'Plains' else 1
+        assert len(plans) == expected and len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
     stats = {i.key: relief(i) for i in W.ISLANDS}
     keys = list(stats)
     same = [(a, b) for n, a in enumerate(keys) for b in keys[n + 1:]
@@ -96,8 +96,8 @@ def caves():
     return True
 
 
-VIEWS = [('starter', 'Starter'), ('winter', 'Winter1'), ('jungle', 'Jungle1'), ('desert', 'Desert1'), ('swamp', 'Swamp1')] if W.FIVE_ISLAND_WORLD else [
-         ('starter', 'Starter'), ('plains', 'Plains2'), ('winter', 'Winter4'), ('jungle', 'Jungle3'), ('desert', 'Desert2'), ('swamp', 'Swamp1')]
+VIEWS = [('starter', 'Starter'), ('winter', 'Winter1'), ('jungle', 'Jungle1'),
+         ('desert', 'Desert1'), ('swamp', 'Swamp1')]
 STEPS = [('Every island has its own plan and its own size, outline and relief', designed),
          ('The built ground in the map matches every island\'s plan', built),
          ('Every island has its cave with a walkable way in', caves)]

@@ -28,10 +28,8 @@ SHELF = 20000.0          # how far an island's own terrain reaches past its shor
 
 
 def ground_spacing(island):
-    """The island mesh's grid step, cm. The five-island world's islands are about 2 km across, so the step is coarser than the old islands' (400 cm on the starter, 300 elsewhere) to keep each mesh near a million vertices."""
-    if W.FIVE_ISLAND_WORLD:
-        return 400.0 if island.key == 'Starter' else 300.0
-    return 200.0 if island.key == 'Starter' else 400.0
+    """The island mesh's grid step, cm; keeps each large island mesh near a million vertices."""
+    return 400.0 if island.key == 'Starter' else 300.0
 
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
@@ -68,26 +66,15 @@ def cliff_of(island):
 
 CLIFFS = {i.key: cliff_of(i) for i in W.ISLANDS}
 
-# Owner, October 15 (Design/World/ISLAND_TERRAIN_AND_REGIONAL_TREE_ASSIGNMENTS_2026-10-15.md): every island
-# individually designed, with different combinations of mountains, hills, ridges, valleys and plateaus, so none is a
-# resized copy of another. DECIDED (delegated, tuning): each non-starter island outside the Swamp draws a terrain plan
-# from its region's list, no two islands of a region the same plan; its own seed sets each shape's size, place and
-# heading. Peaks are sharp mountains, ridges long spines, plateaus flat-topped mesas with steep sides, valleys cut
-# across the island (never down to the sea). The Swamp stays low wetland, varied by its pools and channels.
+# Every island is individually designed with its own combination of mountains, hills, ridges, valleys and plateaus,
+# so none is a resized copy of another. Each non-starter island outside the Swamp draws a terrain plan from its
+# region's list; its own seed sets each shape's size, place and heading. Peaks are mountain massifs, ridges long
+# spines, plateaus flat-topped mesas with steep sides, and valleys cut across the island without reaching the sea.
+# The Swamp stays low wetland, varied by its pools and channels.
 PLANS = {'Winter': [('peak', 'ridge'), ('peak', 'valley'), ('ridge', 'valley', 'peak'), ('peak', 'peak'), ('ridge', 'plateau')],
          'Jungle': [('ridge', 'valley'), ('peak', 'valley'), ('plateau', 'valley'), ('ridge', 'ridge'), ('peak', 'ridge', 'valley')],
          'Desert': [('plateau',), ('plateau', 'valley'), ('ridge', 'plateau'), ('plateau', 'plateau'), ('ridge', 'valley')],
          'Plains': [('valley',), ('plateau', 'valley'), ('ridge',), ('peak', 'valley'), ('plateau', 'ridge')]}
-
-# These plans serve only the fourteen newly appended islands. Keeping additions separate preserves the shuffled
-# assignments, and therefore the authored terrain, of every original island.
-ADDITIONAL_PLANS = {
-    'Winter': [('peak', 'ridge', 'plateau'), ('peak', 'peak', 'valley'), ('ridge', 'ridge', 'peak')],
-    'Jungle': [('ridge', 'plateau'), ('peak', 'plateau'), ('valley', 'ridge', 'plateau')],
-    'Desert': [('plateau', 'ridge', 'valley'), ('peak', 'plateau'), ('plateau', 'valley', 'peak')],
-    'Plains': [('peak', 'ridge'), ('valley', 'plateau', 'ridge'), ('peak', 'plateau', 'valley')],
-}
-
 
 def _plans():
     plans = {}
@@ -95,9 +82,7 @@ def _plans():
         order = list(options)
         random.Random(sum(map(ord, region)) * 31).shuffle(order)
         islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        assignments = list(zip(islands[:len(order)], order))
-        assignments.extend(zip(islands[len(order):], ADDITIONAL_PLANS.get(region, ())))
-        for isl, plan in assignments:
+        for isl, plan in zip(islands, order):
             rng = random.Random(sum(map(ord, isl.key)) * 104723)
             shapes = []
             for kind in plan:
@@ -654,7 +639,7 @@ def cover(x, y, z):
 
 
 # Each region's code in the terrain's vertex alpha, for its own soils (owner, October 16:
-# Design/World/REGIONAL_SOIL_TEXTURE_REQUIREMENTS_2026-10-16.md); M_CoastalTerrain_v1 reads it.
+# CLAUDE.md); M_CoastalTerrain_v1 reads it.
 REGION_CODES = {'Winter': .1, 'Plains': .3, 'Jungle': .5, 'Swamp': .7, 'Desert': .9}
 
 

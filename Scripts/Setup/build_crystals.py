@@ -1,4 +1,4 @@
-"""Crystals, obsidian and coal (owner, October 18 rules: Docs/OwnerDecisions/CRYSTAL_AND_COAL_SPAWN_RULES_2026-10-18.md; the owner asked again
+"""Crystals, obsidian and coal (owner, October 18 rules: CLAUDE.md; the owner asked again
 on October 28). Safe to run again. Run in the editor outside Play, with no unsaved maps:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 

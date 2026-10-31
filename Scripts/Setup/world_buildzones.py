@@ -1,6 +1,6 @@
 """Where Build Mode may place a piece (owner, October 26-27: build on every island outside Ports and obstruction zones;
 zones only carve out parts of an island, the rest is buildable; beaches are not buildable near docks).
-Design: Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md. Plain Python (no Unreal). The same zone list is
+Design: CLAUDE.md. Plain Python (no Unreal). The same zone list is
 exported to Content/Elitewake/Data/BuildZones.json (export_buildzones.py) and read by UEWBuildZones in the game, so the
 editor, the checks and the game agree. Every size and limit is tuning, not an owner-approved value.
 

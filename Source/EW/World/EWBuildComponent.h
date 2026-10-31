@@ -15,7 +15,7 @@ UENUM(BlueprintType)
 enum class EEWBuildMode : uint8 { Off, Place, Demolish };
 
 /**
- * Build Mode (design: Design/Gameplay/BUILD_MODE_ISLAND_BUILDING_DESIGN_2026-10-27.md). On the player controller.
+ * Build Mode (design: CLAUDE.md). On the player controller.
  * Press B (keyboard) or click the right stick (controller) to enter it: a blue ghost of the selected piece follows where you
  * look, red with a one-line reason where it may not go (UEWBuildZones for foundations; other pieces need a foundation to attach
  * to). Place with left mouse / A / right trigger; turn it a quarter with Q and E (d-pad left and right); change the material

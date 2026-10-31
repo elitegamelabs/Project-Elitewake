@@ -13,7 +13,7 @@ and no raised deck (owner: the sloop has below-deck access but none); the helm s
 rails with brass caps run round her bulwarks, open over the two railing hardpoints (the modular outer rails); a boarding
 ladder at the centre of her stern, a capstan and a long bowsprit at the bow, a rudder and an anchor each side.
 Below, one furnished hold lit by two lanterns. Her two flags fly from a jackstaff at the bow and an ensign staff at
-the stern. Sizes are tuning; Docs/OPEN_QUESTIONS records the delegated choices.
+the stern. Sizes are tuning; CLAUDE.md holds the current rules.
 
 Coordinates are the ship's own, in cm: X forward to the bow, Y to starboard, Z up, the waterline at Z 0. The hold
 floor sits above the waves so the sea neither shows nor counts as swimmable inside.

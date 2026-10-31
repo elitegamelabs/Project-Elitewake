@@ -1,4 +1,4 @@
-"""Build the five regional Ports (owner, October 15: Docs/PORT_TERMINOLOGY_AND_REGIONAL_PORT_DESIGN_2026-10-15.md).
+"""Build the five regional Ports (owner, October 15: CLAUDE.md).
 Safe to run again. Run in the editor after build_coastal_terrain.py (which levels each Port's site), outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 

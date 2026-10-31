@@ -1,4 +1,4 @@
-# Local connector configuration (shared endpoints live in .codex/)
+# Local connector configuration; never commit tokens or machine-specific endpoints.
 /.mcp.json
 
 # Visual Studio and IDE state
