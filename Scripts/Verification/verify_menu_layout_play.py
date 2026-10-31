@@ -3,7 +3,8 @@
   - Down past the last item row moves the cursor into the crafting list beneath the inventory, Up on its first row returns; the picked tile wears the ring.
   - The inventory and crafting search boxes filter their lists.
   - Skills fills the panel; RT starts picking a stat to spend a point on.
-  - Company (front-end prototype): search, select, promote, demote, remove with confirmation, invite, rank-dependent actions, activity log.
+  - Company (live since October 30): with no Company it offers to make one; creating one makes you its Leader; the ship policy
+    changes; leaving asks first; what each rank may do.
   - Tames: the list of creatures, and the picked one's name, lineage and level.
 Saves a screenshot of each page under Saved/Screenshots/Menus. Writes Saved/MenuLayoutPlayResult.json."""
 import json
@@ -91,8 +92,8 @@ def s4():
     m = menu()
     assert not m.is_survivor_info_shown() and not m.is_skills_shown()
     company = m.get_company_panel()
-    assert company.get_member_count() == 10 and company.get_shown_member_count() == 10
-    checks.append('Company shows its own panel with ten sample members and no character panel')
+    assert not company.is_in_company() and company.get_member_count() == 0 and company.get_viewer_rank() == -1
+    checks.append('Company shows its own panel (no character panel) and, outside a Company, offers to make one')
     shot('3_company')
 
 
@@ -193,37 +194,26 @@ def s10():
 
 
 def s11():
+    menu().open_section(2)
     company = menu().get_company_panel()
-    company.set_search('ren')
-    assert company.get_shown_member_count() == 2, f'{company.get_shown_member_count()} members match "ren"'
-    company.set_search('')
-    company.select_member_by_name('Pip Marlowe')
-    assert company.get_selected_rank() == 0 and company.get_viewer_rank() == 2
-    assert company.is_action_enabled(0) and not company.is_action_enabled(1) and company.is_action_enabled(3) and not company.is_action_enabled(4)
-    before = company.get_log_count()
-    company.do_action(0)
-    assert company.get_selected_rank() == 1 and company.get_log_count() == before + 1
-    company.do_action(1)
-    assert company.get_selected_rank() == 0 and company.get_log_count() == before + 2
-    checks.append('Company: search filters the members; Promote and Demote change the picked member\'s rank and add to the activity log')
-    company.do_action(3)
-    assert company.is_confirm_open()
-    company.confirm_dialog(False)
-    assert company.get_member_count() == 10 and not company.is_confirm_open()
-    company.do_action(3)
-    company.confirm_dialog(True)
-    assert company.get_member_count() == 9 and company.get_log_count() == before + 3
-    checks.append('Company: Remove asks first; cancelling keeps the member, confirming removes them and logs it')
-    pending = company.get_pending_invite_count()
-    company.send_sample_invite('Test Sailor')
-    assert company.get_pending_invite_count() == pending + 1 and company.get_log_count() == before + 4
-    company.set_sub_tab(1)
-    assert company.get_sub_tab() == 1
-    company.set_sub_tab(1)
-    checks.append('Company: an invitation can be made and shows in the pending list; the bottom panel switches between activity, invitations and ranks')
+    company.create_company('Lone Gull')
+
+
+def s11a():
+    company = menu().get_company_panel()
+    assert company.is_in_company() and company.get_company_name() == 'Lone Gull', company.get_status_text()
+    assert company.get_member_count() == 1 and company.get_viewer_rank() == 2 and company.get_log_count() >= 1
+    checks.append('Company: creating one makes you its Leader, alone on the roster; the server answer is logged')
+    assert company.get_ship_policy() == 0
+    company.cycle_ship_policy()
 
 
 def s11b():
+    company = menu().get_company_panel()
+    assert company.get_ship_policy() == 1, company.get_ship_policy()
+    checks.append('Company: the Leader changes who may sail the ships (Personal to Personal Shared)')
+    company.set_sub_tab(1)
+    assert company.get_sub_tab() == 1
     shot('6_company_invites')
 
 
@@ -238,17 +228,17 @@ def s11d():
 def s12():
     company = menu().get_company_panel()
     company.set_sub_tab(0)
-    company.select_member_by_name('Cato Fenwick')
-    assert not company.is_action_enabled(4), 'an Officer should not be able to transfer leadership'
-    company.cycle_viewer_rank()
-    assert company.get_viewer_rank() == 3 and company.is_action_enabled(4), 'as Leader, transferring leadership should be possible'
-    company.cycle_viewer_rank()
-    assert company.get_viewer_rank() == 0 and not company.is_action_enabled(0) and not company.is_action_enabled(2), 'a Recruit can do nothing here'
-    checks.append('Company: actions depend on the rank you view the screen as')
+    assert company.is_action_enabled(2) and not company.is_action_enabled(0) and not company.is_action_enabled(4), 'alone: invite only'
+    assert company.is_action_enabled(5), 'a Leader alone may leave'
+    company.do_action(5)
+    assert company.is_confirm_open()
+    company.confirm_dialog(False)
+    assert not company.is_confirm_open() and company.is_in_company()
+    checks.append('Company: alone, the Leader may invite and leave; leaving asks first and cancelling keeps the Company')
     finish()
 
 
-STEPS = [(s1, 1.5), (s2, 1.2), (s2b, 1.2), (s3, 1.2), (s3t, 0.5), (s3b, 1.2), (s4, 1.2), (s4b, 1.2), (s5, 1.5), (s6, 1.0), (s7, 1.5), (s8, 0.5), (s9, 1.2), (s10, 0.8), (s11, 1.2), (s11b, 1.2), (s11c, 1.2), (s11d, 1.2), (s12, 0.5)]
+STEPS = [(s1, 1.5), (s2, 1.2), (s2b, 1.2), (s3, 1.2), (s3t, 0.5), (s3b, 1.2), (s4, 1.2), (s4b, 1.2), (s5, 1.5), (s6, 1.0), (s7, 1.5), (s8, 0.5), (s9, 1.2), (s10, 0.8), (s11, 1.5), (s11a, 1.5), (s11b, 1.2), (s11c, 1.2), (s11d, 1.2), (s12, 0.5)]
 
 
 def tick(delta):
