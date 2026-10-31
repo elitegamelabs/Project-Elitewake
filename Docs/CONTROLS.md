@@ -16,6 +16,7 @@ Owner, October 22: every action has a controller equivalent using standard MMORP
 | Inventory | I | Y (north face button) | OK |
 | Map | M | Back / View button (added Oct 22) | OK (this change; needs a Play check) |
 | Pause menu: RESUME GAME, SAVE GAME (single player), OPTIONS, MAIN MENU; OPTIONS holds brightness (whole picture), mouse and controller horizontal/vertical look speed and master volume (with a dial), BACK or Escape returns | Escape, Up/Down, Enter, Left/Right adjust | Start, d-pad, A, B | OK (`verify_options_menu_play`) |
+| Item spawner (testing only, not in shipping builds): every craftable item, then every other item; one per click or A | F9 (open/close), click, arrows, Enter; Escape closes | d-pad, A, B | OK (`verify_item_spawner_multiplayer_play`) |
 | Private-test session menu | F10 | (none) | GAP, test-only |
 | Hotbar slots 1 to 8 | 1 to 8 | d-pad left/up/right/down = 1 to 4; hold LT + the d-pad = 5 to 8 (one thumb, added Oct 23, `verify_hotbar_trigger_play`); or hold LB + A/X/B/Y = 5 to 8 | OK (`verify_hotbar_play`, `verify_hotbar_trigger_play`) |
 | Assign item to hotbar | Open inventory, press 1 to 8 | Select item, hold LB + slot button, or Y quick-assigns to the first empty slot; Y again (item already on bar, or bar full) opens a slot picker: d-pad moves, A assigns or removes, B cancels | OK (`verify_hotbar_picker_play`) |

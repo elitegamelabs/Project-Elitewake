@@ -29,6 +29,8 @@ class UEWObjectiveComponent;
 class UEWObjectiveWidget;
 class UEWMapWidget;
 class UEWSessionWidget;
+class UEWItemSpawnerWidget;
+class UEWItemDefinition;
 class UEWOptionsWidget;
 class UEWHitMarkerWidget;
 class UEWCompanyComponent;
@@ -62,6 +64,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsSessionMenuOpen() const { return bSessionMenuOpen; }
     UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);
     UPROPERTY(Transient) TObjectPtr<UEWSessionWidget> SessionWidget;
+    UPROPERTY(Transient) TObjectPtr<UEWItemSpawnerWidget> ItemSpawnerWidget;
     bool bSessionMenuOpen = false;
     /** Escape's OPTIONS menu. In single player it pauses the world. */
     UFUNCTION(BlueprintCallable, Category="Options") void SetOptionsMenuOpen(bool bOpen);
@@ -122,6 +125,12 @@ public:
     UFUNCTION(Server, Reliable) void ServerDebugTeleportToRegion(int32 RegionIndex);
     /** Testing only (owner, October 30): Shift + 6 carries the survivor to the nearest Port, in front of its merchant. Does nothing in a shipping build. */
     UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToPort() { ServerDebugTeleportToPort(); }
+    /** F9's item spawner (testing only, owner, October 30): every craftable item, then the rest; each click or A gives one. */
+    UFUNCTION(BlueprintCallable, Category="Debug") void SetItemSpawnerOpen(bool bOpen);
+    UFUNCTION(BlueprintPure, Category="Debug") bool IsItemSpawnerOpen() const { return ItemSpawnerWidget != nullptr; }
+    UFUNCTION(BlueprintPure, Category="Debug") UEWItemSpawnerWidget* GetItemSpawnerWidget() const { return ItemSpawnerWidget; }
+    /** Testing only: one of Item into this survivor's pack (an item of the game's item list; nothing in shipping builds). */
+    UFUNCTION(Server, Reliable) void ServerDebugGiveItem(UEWItemDefinition* Item);
     UFUNCTION(Server, Reliable) void ServerDebugTeleportToPort();
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }

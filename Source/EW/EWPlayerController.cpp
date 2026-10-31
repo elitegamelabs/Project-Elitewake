@@ -2,6 +2,9 @@
 
 
 #include "EWPlayerController.h"
+#include "EWItemSpawnerWidget.h"
+#include "EWItemDefinition.h"
+#include "Engine/AssetManager.h"
 #include "EWCrewMaster.h"
 #include "Misc/App.h"
 #include "WaterBodyActor.h"
@@ -454,6 +457,15 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         return true;
     }
     if (IsSessionMenuOpen() || IsOptionsMenuOpen()) return true;
+#if !UE_BUILD_SHIPPING
+    // Testing phase only: F9 opens the item spawner (owner, October 30).
+    if (Params.Key == EKeys::F9)
+    {
+        if (Params.Event == IE_Pressed) SetItemSpawnerOpen(!IsItemSpawnerOpen());
+        return true;
+    }
+#endif
+    if (IsItemSpawnerOpen()) return true;
     // Build Mode takes B / the right stick to enter; while it is on, Q E LB RB, X / B, Escape and the place key too.
     if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
         && BuildComponent->HandleKey(Params)) return true;
@@ -631,6 +643,38 @@ void AEWPlayerController::ServerDebugTeleportToRegion_Implementation(int32 Regio
         if (bFound) break;
     }
     Survivor->TeleportTo(Spot, Survivor->GetActorRotation(), false, true);
+#endif
+}
+
+void AEWPlayerController::SetItemSpawnerOpen(bool bOpen)
+{
+#if !UE_BUILD_SHIPPING
+    if (!IsLocalPlayerController() || IsItemSpawnerOpen() == bOpen) return;
+    if (bOpen) { SetMapOpen(false); SetInventoryOpen(false); SetOptionsMenuOpen(false); SetSessionMenuOpen(false); }
+    FlushPressedKeys();
+    SetIgnoreMoveInput(bOpen); SetIgnoreLookInput(bOpen);
+    if (bOpen)
+    {
+        ItemSpawnerWidget = CreateWidget<UEWItemSpawnerWidget>(this, UEWItemSpawnerWidget::StaticClass());
+        if (ItemSpawnerWidget)
+        {
+            ItemSpawnerWidget->AddToPlayerScreen(105);
+            FInputModeUIOnly Mode; Mode.SetWidgetToFocus(ItemSpawnerWidget->TakeWidget()); SetInputMode(Mode);
+        }
+    }
+    else { if (ItemSpawnerWidget) ItemSpawnerWidget->RemoveFromParent(); ItemSpawnerWidget = nullptr; SetInputMode(FInputModeGameOnly()); }
+    bShowMouseCursor = bOpen;
+#endif
+}
+
+void AEWPlayerController::ServerDebugGiveItem_Implementation(UEWItemDefinition* Item)
+{
+#if !UE_BUILD_SHIPPING
+    // Only an item of the game's item list, to a living survivor; one at a time.
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Item || !Survivor || Survivor->IsDead() || !Survivor->GetInventoryComponent()) return;
+    if (!UAssetManager::Get().GetPrimaryAssetPath(Item->GetPrimaryAssetId()).IsValid()) return;
+    Survivor->GetInventoryComponent()->AddItem(Item, 1);
 #endif
 }
 
