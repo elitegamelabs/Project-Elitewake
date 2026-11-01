@@ -1,7 +1,7 @@
 # ELITEWAKE — Claude Production Guide and Canonical World Bible
 
-Last consolidated: 2026-10-31
-Engine: Unreal Engine 5.8
+Last consolidated: 2026-11-01
+Engine: Unreal Engine 5.8 (installed build verified 2026-11-01: 5.8.3, changelist 58210709, promoted release)
 Project: EW.uproject
 Canonical playable map: /Game/Elitewake/Maps/Lvl_CoastalPlayground
 Title map: /Game/Elitewake/Maps/Lvl_Title
@@ -89,7 +89,7 @@ Every session ends with: outcome; branch and commit; exact changed files; tests 
 
 ## 2. Product concept
 
-Elitewake is a cooperative age-of-sail survival, expedition, and maritime-combat game. The ship is not a disposable vehicle; it is the player's persistent home, cargo hold, workshop, social space, and largest source of risk. The intended period language is approximately 1740–1760, expressed as grounded stylized realism rather than strict simulation or high fantasy.
+Elitewake is a cooperative age-of-sail survival, expedition, and maritime-combat game. The ship is not a disposable vehicle; it is the player's persistent home, cargo hold, workshop, social space, and largest source of risk. The intended period language is approximately 1740–1760, expressed as high-definition naturalistic realism (section 9.1; owner, 2026-11-01) rather than a cartoon or stylized look, strict simulation, or high fantasy.
 
 The core loop is:
 
@@ -123,10 +123,11 @@ The advanced five-island branch is the source from which the cleaned project was
 
 | Area | Current truth | Important gap or caution |
 |---|---|---|
-| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. The owner wants about three open-ocean reefs (section 4); build and verify them before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete |
+| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. The owner wants about three open-ocean reefs (section 4); build and verify them before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete. Measured 2026-11-01 (terrain function): islands 2.0–2.4 km long, 2.4–3.0 km² of land, one dominant peak each (Winter 360 m, Jungle 261 m, Desert 118 m, Plains 65 m); the Swamp is a flat sheet (top 1.6 m) cut by a wave-pattern maze of channels. Walking crossing times have never been measured (section 5.1) |
+| Wildlife | Six land animals, bears, a lion, a giant crocodile and elephants are placed by `wildlife_distribution.py` / `place_animals.py` (a 146-animal placement plan: Plains 50, Desert 35, Jungle 30, Swamp 29, Winter 2) | Every animal is a rigid model built from lofted shapes, with no skeleton or animation. Behavior has two temperaments only: aggressive, or flee for 6 s when struck; the elephant flees. The 146 is a placement plan, not a population cap (section 5.6) |
 | Port | Saltreach Freeport has merchants, buying/selling, service spaces, a safe zone, HUD feedback, and placeholder sound | Other ports are blockouts; merchant stock does not yet have complete persistence |
 | Economy | Starting purse is zero; merchants and shipyard paths exist | Balance needs journey testing and duplicate-transaction protection |
-| Ships | Raft, dinghy tuning, sloop, schooner, brigantine, and Cavalier-related content exist; per-sail controls and crew-dependent helm control work | Visual quality, modularization, recipes, complete permissions, and persistence vary by system |
+| Ships | Raft, dinghy, sloop, schooner, and brigantine exist; per-sail controls and crew-dependent helm control work | The Cavalier is not built: no definition, hull, or build script exists, only its class speed in a code comment. The owner will supply the design reference `cavalier.png`. Visual quality, modularization, recipes, complete permissions, and persistence vary by system |
 | Cannon | Sponge, powder-step, shot, ram, recoil, targeting, and fight checks exist | A real powder inventory item and moving-target lead are still required; obstruction rules need acceptance testing |
 | Sailing | Individual sails, five deployment positions, crewed helm control, class speeds, sail multipliers, anchor and sinking checks exist | Weighted-sail presentation is placeholder; recipes and complete handling balance are not accepted |
 | Survival | Needs, food, sickness, death/respawn, death bags, gathering, tools, cooking, skills, and building paths exist | Full first-30-minute pacing and owner-facing presentation are not accepted |
@@ -134,7 +135,7 @@ The advanced five-island branch is the source from which the cleaned project was
 | Multiplayer | Hosted/listen and separate-process checks exist; survivor reconnect and Company/ship-sharing paths exist | Public Internet is untested; direct-IP/session identity is transitional; in-game ship give/abandon is missing |
 | Companies | Company screen and sharing policy exist | Company state is not fully persisted; roles and edge cases require authority tests |
 | Crew | Sailhands, hired gunners, and service NPC paths exist | Wages, limits, target lead, lifecycle, and full persistence are incomplete |
-| UI | Title, HUD, inventory, hotbar, crafting, skills, objectives, journal, map/fog, options, Company, and port feedback have checks | Visual hierarchy, accessibility, controller consistency, and 1080p readability need one accepted standard |
+| UI | Title, HUD, inventory, hotbar, crafting, skills, objectives, journal, map/fog, options, Company, and port feedback have checks | Visual hierarchy, accessibility, controller consistency, and 1080p readability need one accepted standard. Options has brightness, look sensitivity, and volume only: no graphics quality settings exist (section 9.6). The controller hotbar and Build Mode bindings differ from the owner layout in section 6.5 |
 | Audio | Generated/imported placeholder ambience, wildlife, work, town, ship, and UI sounds exist | Technical presence is not human audition; provenance and final mix remain incomplete |
 
 Treat this table as a starting audit, not permission to skip verification.
@@ -158,7 +159,14 @@ These decisions replace every older conflicting statement:
 | Sail assemblies | Base hulls have empty hardpoints. Removable sail assemblies include mast/pole, cloth, rigging, and attachment details. No flags are built into sail assemblies. |
 | Boarding ladders | Centered at the stern. |
 | Shipyard tiers | Small yard: Raft/Sloop. Medium: Schooner/Brigantine. Large: Cavalier. Higher yards do not automatically craft lower tiers. |
-| Sulfur | Desert sulfur is sulfur ore, mined with Metal Pick or any approved higher-tier pick. Do not invent an Iron Pick gate. |
+| Sulfur | Desert only (owner, 2026-11-01, superseding the same day's Swamp-sulfur request). Desert sulfur is sulfur ore, mined with Metal Pick or any approved higher-tier pick. Do not invent an Iron Pick gate. No sulfur item or deposit exists yet. |
+| Visual target | Owner, 2026-11-01: high-definition naturalistic realism (section 9.1) replaces "high-definition naturalistic realism" everywhere, including prompts. |
+| Island size | Owner, 2026-11-01: a representative walk across each island takes 30–45 minutes on foot, measured in-game. This replaces the fixed 1.5–2.5 km diameter; there is no fixed diameter or mountain-height cap. |
+| Swamp water | Owner, 2026-11-01: one winding coast-to-coast main river with connected tributaries; ponds stay separate closed water (section 5.5). Replaces the maze of channels. |
+| Wild animals and tames | Owner, 2026-11-01: no design cap on wild animals, only technical spawning and performance controls (section 5.6). The tame limits (25 per player, 75 per Company, `UEWCompanyComponent::FitsTameCaps`) are separate and unchanged. |
+| Elephant temperament | Owner, 2026-11-01: neutral. It never attacks unprovoked; struck, it defends itself instead of fleeing. |
+| Controller hotbar and Build Mode | Owner, 2026-11-01: section 6.5 is the layout. It replaces the left-trigger hotbar chords, LB+A/X/B/Y order, right-stick Build Mode entry, and LB/RB material cycling. |
+| Graphics tiers | Owner, 2026-11-01: higher quality settings improve visuals only; gameplay is identical on every tier (section 9.6). |
 | Launch maps | Title launches the game; Coastal Playground is the canonical owner test world. ThirdPerson is only a temporary session harness until migrated. |
 | Work model | One Claude production guide and one workload. Old agent locks, handoffs, team charters, and model workflows are void. |
 
@@ -166,7 +174,10 @@ These decisions replace every older conflicting statement:
 
 ### 5.1 World constants
 
-- Exactly five islands, each approximately 1.5–2.5 km across its longest dimension.
+- Exactly five islands. Each is sized so a representative walk across it takes 30–45 minutes on foot (owner, 2026-11-01). This is a gameplay-time target, not a diameter or height limit. Measure representative routes in-game (landing to forest, coast to coast, landing to the main resource areas) at real walking speed over real terrain before deciding dimensions, and keep the measurements with the island's evidence.
+- Travel is full, not empty: accessible landings and routes into the main forest; space for wildlife, resources, exploration, hills, valleys, ravines, scattered mountains, and cliffs; no long stretches of empty travel.
+- Relief is several smaller, plausibly shaped hills, peaks, or ridges distributed around each island, never one dominant central mountain to trek over.
+- Each island offers practical base sites on hills and cliff shelves as well as flat ground (section 6.4).
 - Plains is central and is the universal start. Winter is north, Swamp south, Desert east, Jungle west.
 - Ocean depth may reach approximately 1.5 km where the world design requires deep water.
 - Terrain is deterministic and explainable. A seed or source-data change must produce a reviewable diff.
@@ -180,7 +191,7 @@ These decisions replace every older conflicting statement:
 |---|---|---|---|---|
 | Plains | Rolling grassland, broad beaches, lake/river, gentle limestone cliffs; deep brown loam, restrained green, gray limestone, pale sand | Oak groves, common prey, boar/predator pockets, storms, exposure away from shelter | Oak; stone, flint, gravel; clay, sand, soil; berries, plants, herbs; basic iron/copper; water; common hides, meat, bones | Saltreach lighthouse, oak ridge, standing stones or sea arch; open birds, oak wind, moderate surf |
 | Winter | Mountain spine, ice cliffs, frozen basin, sheltered dark shore; blue-gray rock, dirty white snow, dark soil, muted ice | Birch and cold scrub; freezing, blizzard, poor visibility, wolves and bears | Birch; snow/ice; water; iron, coal, stone; hides, fur, bones; emerald and coal also appear on mountainsides | Split ice face or black-rock peak; low wind, snow movement, distant ice, sparse wildlife |
-| Swamp | Low marsh, channels, peat islands, wet coast; black peat, olive, brown water, gray-green bark | Spruce, reeds, rushes, mushrooms, moss; poison, contaminated water, crocodiles, snakes, slowed travel | Spruce/resin; peat/soil; reeds/rushes; clay/bog iron; mushrooms/moss/herbs; dark gemstones in submerged caves | Giant dead tree, half-sunken ruin, or dry ridge; frogs, insects, close rustle, water movement |
+| Swamp | Low marsh crossed by one winding coast-to-coast river with tributaries (section 5.5), separate closed ponds, peat ground, sandy banks, wet coast; black peat, olive, brown water, gray-green bark | Spruce, reeds, rushes, mushrooms, moss; poison, contaminated water, crocodiles, snakes, slowed travel | Spruce/resin; peat/soil; reeds/rushes; clay/bog iron; mushrooms/moss/herbs; dark gemstones in submerged caves | Giant dead tree, half-sunken ruin, or dry ridge; frogs, insects, close rustle, water movement |
 | Desert | Dunes, plateau, canyon, oasis, sandstone coast; warm ochre, pale gold, red-brown stone, salt white | Palm at water, thorn scrub; heat, dehydration, sandstorm, scorpions, snakes | Palm/fronds/fibers/coconuts; sand, sandstone, clay; copper, iron; salt; sulfur ore; amber gems | Needles, arch, or mesa; dry wind, moving sand, sparse birds, canyon reflection |
 | Jungle | Steep forest, rivers, waterfalls, hidden basins/ruins; dark loam, deep green, wet gray stone, small saturated accents | Ash canopy, vines, ferns, flowering understory; predators, poison, tight sightlines | Ash; vines/fibers/leaves; herbs/fruits; clay/river stone; copper; green gemstones; resin/exotic plants | Waterfall cliff, overgrown ruin, or giant tree; insects, water, day chorus, canopy movement |
 
@@ -201,13 +212,25 @@ Every island has:
 9. One predator/prey/habitat ecology loop.
 10. One port site. Saltreach is the only port required to be fully functional during five-island production.
 
-PCG masks use slope, height, moisture, shore distance, exposure, soil, and region profile. Avoid even rings, circular resource clusters, repeated tree grids, and identical port plans. Preserve player buildings when generation reruns.
+PCG masks use slope, height, moisture, shore distance, exposure, soil, and region profile. Some areas have dense forest; vary species, spacing, undergrowth, bushes, and clearings with terrain and moisture. Avoid even rings, circular resource clusters, repeated tree grids, identical vegetation patterns, flat biome-wide color filters, and identical port plans. Preserve player buildings when generation reruns.
 
 ### 5.4 Caves, crystals, and harvesting
 
 Ruby, sapphire, emerald, and obsidian may appear in every regional cave. Emerald and coal also appear on Winter mountainsides. Crystal nodes require a Metal Pick or approved higher-tier pick, yield 4–8 units, and use a 60-minute respawn unless later tuning is explicitly approved. Sulfur ore follows the same tool-tier interpretation.
 
 Trees regrow after 20 minutes unless a building blocks regrowth. A felled log remains for 5 minutes unless harvested and must survive the intended save/reload boundary. Gameplay resource nodes use stable IDs; decorative instances do not require individual persistence.
+
+### 5.5 Swamp river
+
+Owner, 2026-11-01. The Swamp island has one navigable main tidal river or channel crossing it from coast to coast. Its winding, meandering course connects every flowing tributary and has distinct stretches: open marsh, wooded banks, bends, shallow-looking edges, and broader pools. It is not an arbitrary maze. Ponds remain separate closed bodies of water, never connected to the river network. Grassy ground, wet swamp, and sandy banks blend naturally; varied rocks are scattered across sandy areas without blocking land or ship routes. Wildlife is abundant but ecologically appropriate, with varied behavior, and does not fill every area uniformly. There is no Swamp sulfur (section 4).
+
+The river is sized for the Cavalier, the largest intended ship: several metres of clear water on each side of the ship on the narrowest straight, wider in bends and turning areas. Before the channel is accepted, measure the Cavalier's beam, fully loaded draft, overall length, slow-speed turning circle, and mast top above the waterline in-game, plus any water-level variation (the game has no tides today: the sea level is fixed). Then verify safe depth at the lowest navigable water level, bank collision, overhead clearance, and a complete coast-to-coast voyage in-game. Never size the channel from a concept image. Until the Cavalier exists, build a large river that ships can enter and label every channel dimension provisional.
+
+### 5.6 Wildlife populations
+
+Owner, 2026-11-01. There is no design cap on wild animals. Keep species appropriate to each island and make the world feel alive, using sensible technical spawning and performance controls (distance-based spawning and simulation, a measured server budget), never a fixed design count. Placement counts in `wildlife_distribution.py` are a plan, not a cap. Wild-animal populations are separate from the tame limits (25 per player, 75 per Company), which stay as they are.
+
+People, elephants, and other wildlife have credible anatomy, proportions, skin or fur, movement, and behavior (section 9.1). Elephants look realistic and are neutral: they never attack unprovoked and defend themselves when attacked instead of fleeing.
 
 ## 6. Player, survival, progression, and land systems
 
@@ -246,6 +269,8 @@ The current maximum level is 50. Each level grants one unspent stat point and on
 
 Building is a real gameplay system but still needs production art, cost, multiplayer, claim, and persistence hardening. New pieces require placement preview, collision, support rules, server authority, resource cost, cancellation/refund rules, save/load, demolition, and controller use.
 
+Bases must be practical on hills and cliff shelves, not only flat ground (owner, 2026-11-01). Today a foundation is refused when the ground under its 4 × 4 m footprint varies by more than 2.5 m (`max_slope_rise`, `world_buildzones.py` / `BuildZones.json`); revise it with supported foundations and terrain-marked shelves rather than by removing the check.
+
 Claims are deferred until the core voyage and persistence phases, but their canonical rules are:
 
 - Claims apply to multiplayer only. In single-player, all five regions are accessible, world shapes remain fixed for the save, and the player may build without a Company, claim, contest, or artificial resource gate. Placement still obeys collision and NPC-site rules.
@@ -260,7 +285,7 @@ Claims are deferred until the core voyage and persistence phases, but their cano
 
 ### 6.5 Input and control baseline
 
-The current bindings are a baseline to verify in the actual Enhanced Input assets and Play checks, not a promise that all controller paths are accepted. Every shipping action needs keyboard/mouse and controller access. On foot: WASD/mouse or two sticks move/look; Space jumps/swims up; Shift sprints; left mouse/right trigger attacks; E/X interacts; I/Y opens inventory; M/View opens the map; Escape/Start opens pause. Hotbar 1–8 uses number keys or D-pad 1–4, with left trigger plus D-pad for 5–8. Inventory tabs use Tab/Shift+Tab or shoulder controls; arrows/D-pad move focus; Enter/A confirms; Escape/B closes. Map drag/right stick pans; wheel/triggers zoom. Sail trim uses left/right arrows or LB/RB; ladder uses up/down arrows or D-pad. Build Mode uses B/right-stick click, Tab/Y for the piece dial, Q/E or D-pad left/right to rotate, and left mouse/A or right trigger to place. Test-only F9 item spawn, F10 private session, and Shift+number teleports must remain out of shipping builds.
+The current bindings are a baseline to verify in the actual Enhanced Input assets and Play checks, not a promise that all controller paths are accepted. Every shipping action needs keyboard/mouse and controller access. On foot: WASD/mouse or two sticks move/look; Space jumps/swims up; Shift sprints; left mouse/right trigger attacks; E/X interacts; I/Y opens inventory; M/View opens the map; Escape/Start opens pause. Hotbar 1–8 uses number keys. On a controller (owner, 2026-11-01): slot 1 D-pad Left, 2 D-pad Up, 3 D-pad Right, 4 D-pad Down; slot 5 LB+X, 6 LB+Y, 7 LB+B, 8 LB+A. The left trigger plus D-pad selects nothing. Inventory tabs use Tab/Shift+Tab or shoulder controls; arrows/D-pad move focus; Enter/A confirms; Escape/B closes. Map drag/right stick pans; wheel/triggers zoom. Sail trim uses left/right arrows or LB/RB; ladder uses up/down arrows or D-pad. Build Mode (owner, 2026-11-01): enter with B on the keyboard or hold LB and press D-pad Right on a controller, only on foot. Entering opens the radial menu of build options at once, on its paper/parchment backdrop, with no second press. Choose with the mouse or right stick and confirm with left mouse or A, which closes the radial and shows the placement preview; Tab/Y reopens it. On a controller, B closes the radial and B again leaves Build Mode; on the keyboard, Escape closes the radial and Escape or B leaves. Q/E or D-pad Left/Right alone rotate. Material: C or RB next, Z or LB+RB previous; LB alone does nothing in Build Mode. Demolish: X on the keyboard, R3 (right-stick click) on a controller, in Build Mode only; the right-stick click no longer enters Build Mode. Left mouse/A or right trigger places. LB keeps its sail-trim and cannon-target roles at those stations. Test-only F9 item spawn, F10 private session, and Shift+number teleports must remain out of shipping builds.
 
 Known controller debt: jump, sprint, and stance bindings require gamepad-only Play verification; LB/RB overlap hotbar and sail/menu contexts; real-stick build-dial movement needs a physical controller check; a unified rebinding screen is missing. Resolve conflicts with explicit input contexts and on-screen focus, not hidden priority rules.
 
@@ -275,7 +300,7 @@ Known controller debt: jump, sprint, and stance bindings require gamepad-only Pl
 | Sloop | 8 knots | Primary vertical-slice vessel; lower deck, no captain's quarters | Small |
 | Schooner | 10 knots | Similar width family to sloop, longer/taller; full-width aft quarters about one-eighth length; helm above | Medium |
 | Brigantine | 12 knots | Wider/taller; longer aft quarters; helm inside | Medium |
-| Cavalier | 14 knots | Distinct capital class, roughly comparable footprint to Brigantine; three traversable levels; helm inside | Large |
+| Cavalier | 14 knots | Distinct capital class, roughly comparable footprint to Brigantine; three traversable levels; helm inside. Not built yet: the owner will supply `cavalier.png` as its design reference | Large |
 
 Ship recipes and prices remain data-driven. Do not infer that a larger yard can craft lower-tier vessels. All ships use centered stern ladders and base-hull sail hardpoints.
 
@@ -317,7 +342,7 @@ Claude may check geometry, scale, collision, pivots, UV/material assignment, LOD
 
 ### 9.1 Visual thesis and palette
 
-Use grounded stylized realism: believable 1740–1760 construction and proportions, natural materials, restrained saturation, clear silhouettes, and weathering caused by salt, sun, water, use, and shelter. Avoid modern plastic, electric fixtures, machine-perfect timber, contemporary typography, industrial fasteners, generic neon fantasy glow, and uniform dirt overlays.
+Use high-definition naturalistic realism (owner, 2026-11-01), not a cartoon or stylized look. People and animals have credible anatomy, proportions, skin or fur, movement, and behavior; crouching, walking, working, and interacting look physically believable. Vendor booths, villages, ships, terrain, foliage, and materials look like functional places and objects of the 1740–1760 setting, never exaggerated props. Use natural lighting, restrained color grading, believable wear and texture scale, varied silhouettes, natural materials, and weathering caused by salt, sun, water, use, and shelter. The grounded maritime appeal of Atlas is a mood reference only, with a more modern visual finish; never copy its assets or designs. Avoid modern plastic, electric fixtures, machine-perfect timber, contemporary typography, industrial fasteners, generic neon fantasy glow, and uniform dirt overlays.
 
 | Use | Anchor color |
 |---|---|
@@ -364,13 +389,17 @@ Use Scenario for original reference boards, material studies, decals, icons with
 
 Base prompt:
 
-Production reference for Elitewake. Grounded stylized realism; historical maritime frontier approximately 1740–1760; believable hand-built construction; natural materials; restrained saturation; weathered by salt, sun, water, and use; strong readable silhouette. SUBJECT: [one precise subject]. GAMEPLAY FUNCTION: [how the player uses or reads it]. REGION: [Plains/Winter/Swamp/Desert/Jungle]. DIMENSIONS: [centimeters and human comparison]. MATERIALS: [specific species, stone, metal, cloth]. CONSTRUCTION: [joints, fasteners, load-bearing logic]. CAMERA: [orthographic or 70-degree gameplay view, exact distance and height]. LIGHT: [time, direction, weather, neutral exposure]. BACKGROUND: neutral, uncluttered. Preserve identical proportions across views.
+Production reference for Elitewake. High-definition naturalistic realism; historical maritime frontier approximately 1740–1760; believable hand-built construction; natural materials; restrained saturation; weathered by salt, sun, water, and use; strong readable silhouette. SUBJECT: [one precise subject]. GAMEPLAY FUNCTION: [how the player uses or reads it]. REGION: [Plains/Winter/Swamp/Desert/Jungle]. DIMENSIONS: [centimeters and human comparison]. MATERIALS: [specific species, stone, metal, cloth]. CONSTRUCTION: [joints, fasteners, load-bearing logic]. CAMERA: [orthographic or 70-degree gameplay view, exact distance and height]. LIGHT: [time, direction, weather, neutral exposure]. BACKGROUND: neutral, uncluttered. Preserve identical proportions across views.
 
 Negative prompt:
 
 No modern hardware, plastic, neon, science fiction, cartoon proportions, excessive fantasy ornament, readable generated text, logo, watermark, extra parts, impossible joints, glossy uniform material, extreme depth of field, black crush, cinematic fog hiding construction, or inconsistent view-to-view proportions.
 
 For any modeled prop, request front, back, left, right, top, underside, and three-quarter views of the same design. Specify exact dimensions and a 180 cm human silhouette. Reject a set if doors, joints, handles, anatomy, count of parts, or material boundaries change between views. Scenario output is a reference until modeled/imported, integrated, tested, and reviewed.
+
+### 9.6 Graphics quality tiers
+
+Owner, 2026-11-01. Provide scalable visual-quality settings so stronger graphics cards show higher-resolution textures, foliage, shadows, water, and effects. Core gameplay, resource availability, navigation, and fairness stay the same on every tier: anything that blocks movement, conceals a player, or can be gathered or interacted with never scales with quality. A better GPU must never grant a gameplay advantage. Verify with an automated comparison of gameplay objects, collision, and resources across tiers, and measure frame time per tier.
 
 ## 10. Audio production standard
 
@@ -507,11 +536,11 @@ At 20–30 m, every first resource has a different silhouette and material respo
 
 Plains spawn board prompt:
 
-Elitewake gameplay-environment reference, grounded stylized realism, 1740–1760 maritime frontier. A safe central-Plains island arrival beach viewed from third-person player eye height 170 cm, 70-degree horizontal FOV. Ocean 45 degrees behind-left; forward route 4 m wide crossing pale sand into restrained green grass; irregular gray limestone; a natural oak group forming one readable silhouette; subtle freshwater direction cue; distant Saltreach lighthouse and masts at least 500 m away. Late-morning warm sun from camera-right, neutral exposure, clear navigation, no UI. Natural asymmetry, believable erosion and scale. No tropical resort, no modern objects, no giant fantasy tree, no excessive props, no symmetrical path, no cinematic depth of field, no text.
+Elitewake gameplay-environment reference, high-definition naturalistic realism, 1740–1760 maritime frontier. A safe central-Plains island arrival beach viewed from third-person player eye height 170 cm, 70-degree horizontal FOV. Ocean 45 degrees behind-left; forward route 4 m wide crossing pale sand into restrained green grass; irregular gray limestone; a natural oak group forming one readable silhouette; subtle freshwater direction cue; distant Saltreach lighthouse and masts at least 500 m away. Late-morning warm sun from camera-right, neutral exposure, clear navigation, no UI. Natural asymmetry, believable erosion and scale. No tropical resort, no modern objects, no giant fantasy tree, no excessive props, no symmetrical path, no cinematic depth of field, no text.
 
 First-resource sheet prompt:
 
-Consistent production reference sheet for five separate Elitewake Plains harvestables: fallen oak branch bundle, loose flint/stone cluster, fibrous grass/reed bundle, berry bush, and clear freshwater edge. Grounded stylized realism, neutral overcast studio light, exact scale beside a 180 cm human and 30 cm ruler, front/side/top/three-quarter views, clear silhouette at 5 m, believable hand-harvest points, no labels or generated text, no decorative fantasy glow, no duplicate silhouettes.
+Consistent production reference sheet for five separate Elitewake Plains harvestables: fallen oak branch bundle, loose flint/stone cluster, fibrous grass/reed bundle, berry bush, and clear freshwater edge. High-definition naturalistic realism, neutral overcast studio light, exact scale beside a 180 cm human and 30 cm ruler, front/side/top/three-quarter views, clear silhouette at 5 m, believable hand-harvest points, no labels or generated text, no decorative fantasy glow, no duplicate silhouettes.
 
 #### Audio target
 
@@ -555,7 +584,7 @@ Plains: broad, navigable beaches; rolling grass/loam; gray limestone; oak stands
 
 Winter: a dark-rock mountain spine breaks the horizon; dirty snow occupies planes based on exposure and wind, not every surface uniformly; blue-gray ice is localized; birch stands collect in sheltered lower areas. Safe landing is a dark sheltered shore. Blizzard reduces range but retains the landing cue. Avoid pure white, bright cyan ice, Christmas-pine shorthand, and terrain hidden by fog.
 
-Swamp: low peat islands and winding channels create close choices; brown water remains visually distinct from walkable black/olive ground; spruce rises on firmer pockets, while reeds/rushes/mushrooms mark moisture. A giant dead tree, raised ridge, or half-sunken ruin provides a long cue. Avoid a uniform green filter, identical mangrove tunnel, or water/ground ambiguity.
+Swamp: one winding coast-to-coast river (section 5.5) with tributaries, broad pools, bends, wooded banks, and open marsh creates close choices without becoming a maze; ponds stay separate; brown water remains visually distinct from walkable black/olive ground; spruce rises on firmer pockets, while reeds/rushes/mushrooms mark moisture. A giant dead tree, raised ridge, or half-sunken ruin provides a long cue. Avoid a uniform green filter, identical mangrove tunnel, or water/ground ambiguity.
 
 Desert: large-form dune direction leads toward plateau/canyon/oasis; warm ochre and red-brown sandstone are broken by salt-white and sparse palm at water only. Landmark is an arch, mesa, or needle visible above dust. Keep sand microdetail quiet enough to read slope. Avoid endless flat sand, random palms, orange global tint, and a lush oasis larger than its water logic supports.
 
@@ -565,7 +594,7 @@ Jungle: steep wet-gray stone, rivers/waterfalls, dark loam, dense ash canopy, fe
 
 For each region substitute its card into this template:
 
-Elitewake regional island production reference, grounded stylized realism and believable geography. REGION: [name and exact card]. Island is 1.5–2.5 km across. CAMERA: offshore at sea level, 1 km from safe landing, third-person ship-eye height 4 m, 70-degree horizontal FOV. Show one primary landmark readable against sky, at least three shoreline materials, one obvious safe landing, and a different hazardous landing. Lighting: neutral late morning; no cinematic haze hiding the silhouette. Natural eroded coastline, terrain-driven vegetation, plausible drainage and human-scale construction. No circular island, no cloned mountain, no evenly spaced trees, no fantasy megastructure, no modern object, no labels, no tiny diorama perspective.
+Elitewake regional island production reference, high-definition naturalistic realism and believable geography. REGION: [name and exact card]. Island sized for a 30–45 minute walk across, with several distributed hills, ridges, valleys, and cliffs, no single dominant mountain. CAMERA: offshore at sea level, 1 km from safe landing, third-person ship-eye height 4 m, 70-degree horizontal FOV. Show one primary landmark readable against sky, at least three shoreline materials, one obvious safe landing, and a different hazardous landing. Lighting: neutral late morning; no cinematic haze hiding the silhouette. Natural eroded coastline, terrain-driven vegetation, plausible drainage and human-scale construction. No circular island, no cloned mountain, no evenly spaced trees, no fantasy megastructure, no modern object, no labels, no tiny diorama perspective.
 
 Generate four compass approaches per island and compare silhouette consistency. Generate separate 200–300 m landing and 20–30 m route references; do not use a distant concept painting to decide interaction-scale dressing.
 
@@ -613,7 +642,7 @@ Show sails at 0/50/100% through cloth area, tension, line position, and rigging�
 
 Damage-state prompt:
 
-Consistent five-panel production reference of the same 1740–1760 oak ship-hull section at human scale: intact weathered planking; fresh cannon splinter damage with localized bright fibers; open hull hole with dark interior; emergency patch made from rough timber/canvas/resin; permanent fitted repair matching plank structure. Orthographic three-quarter close view from 3 m, neutral daylight, identical camera and plank layout in every panel. Grounded stylized realism, believable fasteners and thickness. No gore, fire, fantasy glow, huge explosion, modern bolts, labels, text, or changed hull geometry between panels.
+Consistent five-panel production reference of the same 1740–1760 oak ship-hull section at human scale: intact weathered planking; fresh cannon splinter damage with localized bright fibers; open hull hole with dark interior; emergency patch made from rough timber/canvas/resin; permanent fitted repair matching plank structure. Orthographic three-quarter close view from 3 m, neutral daylight, identical camera and plank layout in every panel. High-definition naturalistic realism, believable fasteners and thickness. No gore, fire, fantasy glow, huge explosion, modern bolts, labels, text, or changed hull geometry between panels.
 
 Station sheet prompt:
 
@@ -715,7 +744,7 @@ Architecture uses pale plaster/limestone lower levels, weathered timber upper st
 
 Saltreach Scenario prompt:
 
-Elitewake Saltreach Freeport production reference, grounded stylized realism, 1740–1760 frontier harbor. CAMERA: gameplay ship approach at sea level, 1 km distance, eye height 4 m, 70-degree horizontal FOV. Show a readable harbor mouth; one lighthouse/signal tower as primary vertical; layered masts, cranes, clustered dark roofs, pale weathered masonry, timber upper structures, restrained canvas, working piers and shipyard slip. Late-afternoon side light with neutral exposure; water and horizon readable. The town is active, repaired, practical, and imperfect—not pristine and not ruined. Natural asymmetry and plausible construction. No modern marina, palm-resort cliché, giant castle, fantasy skyline, identical lamps, barrel clutter, generated signs/text, crowds posing at camera, or cinematic depth of field.
+Elitewake Saltreach Freeport production reference, high-definition naturalistic realism, 1740–1760 frontier harbor. CAMERA: gameplay ship approach at sea level, 1 km distance, eye height 4 m, 70-degree horizontal FOV. Show a readable harbor mouth; one lighthouse/signal tower as primary vertical; layered masts, cranes, clustered dark roofs, pale weathered masonry, timber upper structures, restrained canvas, working piers and shipyard slip. Late-afternoon side light with neutral exposure; water and horizon readable. The town is active, repaired, practical, and imperfect—not pristine and not ruined. Natural asymmetry and plausible construction. No modern marina, palm-resort cliché, giant castle, fantasy skyline, identical lamps, barrel clutter, generated signs/text, crowds posing at camera, or cinematic depth of field.
 
 Create matching sea-approach, 250 m harbor, 25 m market lane, 3 m merchant stall, reverse, night, and storm references with the same geography. Do not accept a set if lighthouse, harbor mouth, roof arrangement, or main route moves between views.
 
@@ -731,7 +760,7 @@ Generate material studies as tile candidates with specified real-world scale, al
 
 Material prompt:
 
-Seamless square material source study for Elitewake: [specific material and exposure story], real-world tile covers [meters], grounded stylized realism, orthographic flat capture, even neutral light, no directional shadow, no object silhouette, no text, no border. Show medium and large variation caused by [salt/sun/water/hand wear], physically believable joints and grain, restrained color. Intended for separate albedo, roughness, normal, and height authoring—not a finished PBR set. No perspective, vignette, dramatic lighting, random stains, modern treatment, or repeated obvious motif.
+Seamless square material source study for Elitewake: [specific material and exposure story], real-world tile covers [meters], high-definition naturalistic realism, orthographic flat capture, even neutral light, no directional shadow, no object silhouette, no text, no border. Show medium and large variation caused by [salt/sun/water/hand wear], physically believable joints and grain, restrained color. Intended for separate albedo, roughness, normal, and height authoring—not a finished PBR set. No perspective, vignette, dramatic lighting, random stains, modern treatment, or repeated obvious motif.
 
 #### Audio production batch
 
