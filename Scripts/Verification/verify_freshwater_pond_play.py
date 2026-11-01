@@ -3,10 +3,11 @@
 Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, after
 build_freshwater_pond.py and build_fish.py. Run unattended with run_play_check.py.
 
-  1. Bass, catfish and piranhas live in the pond on server and client: under its surface, within its banks.
+  1. Bass and catfish live in the pond on server and client: under its surface, within its banks. No piranhas
+     (owner, October 31: they left the starter pond).
   2. A survivor who wades into the middle swims, on server and client.
-  3. A piranha notices the swimmer and bites: health falls on both.
-  4. Out on the bank, the survivor walks again and the piranha gives up.
+  3. Nothing in the pond bites: health holds for 8 s on both.
+  4. Out on the bank, the survivor walks again and no fish is after them.
 Writes Saved/FreshwaterPondPlayResult.json.
 """
 import json
@@ -33,6 +34,7 @@ def player_id(p):
 
 owner = next(p for p in unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWCharacter) if player_id(p) == player_id(pawn))
 FRESH = ('Bass', 'Catfish', 'Piranha')
+STOCK = ('Bass', 'Catfish')
 
 
 def kind(f):
@@ -59,7 +61,7 @@ def place(x, y, z):
 def stocked():
     server, seen = pond_fish(server_world), pond_fish(client_world)
     kinds = sorted({kind(f) for f in server})
-    assert kinds == sorted(FRESH), f'pond holds {kinds}'
+    assert kinds == sorted(STOCK), f'pond holds {kinds}'
     assert len(seen) == len(server), f'client sees {len(seen)} of {len(server)}'
     for f in server:
         at = f.get_actor_location()
@@ -71,18 +73,19 @@ def stocked():
 def wade_in():
     place(POND[0], POND[1], SURFACE - 60)
     state['memo']['health_before'] = owner.get_survival_component().get_health()
+    state['memo']['waded_at'] = time.monotonic()
 
 
 def swimming():
     return mode(owner) == unreal.MovementMode.MOVE_SWIMMING and mode(pawn) == unreal.MovementMode.MOVE_SWIMMING
 
 
-def bitten():
-    biters = [f for f in pond_fish(server_world) if kind(f) == 'Piranha' and f.get_quarry() == owner]
-    if not biters:
-        return False
-    return owner.get_survival_component().get_health() < state['memo']['health_before'] and \
-        pawn.get_survival_component().get_health() < state['memo']['health_before']
+def unharmed():
+    before = state['memo']['health_before']
+    for who in (owner, pawn):
+        assert who.get_survival_component().get_health() >= before, 'bitten in the starter pond'
+    assert not any(f.get_quarry() == owner for f in pond_fish(server_world)), 'a fish is hunting the swimmer'
+    return time.monotonic() - state['memo']['waded_at'] >= 8.0
 
 
 def climb_out():
@@ -97,10 +100,10 @@ def ashore():
 
 
 STEPS = [
-    ('Bass, catfish and piranhas live in the pond, under its surface and within its banks, on server and client', lambda: None, stocked, 5),
+    ('Bass and catfish (no piranhas) live in the pond, under its surface and within its banks, on server and client', lambda: None, stocked, 5),
     ('A survivor in the middle of the pond swims, on server and client', wade_in, swimming, 5),
-    ('A piranha notices the swimmer and bites: health falls on server and client', lambda: None, bitten, 15),
-    ('On the bank the survivor walks again and the piranha gives up', climb_out, ashore, 6),
+    ('Nothing in the pond bites the swimmer: health holds for 8 s on server and client', lambda: None, unharmed, 15),
+    ('On the bank the survivor walks again and no fish is after them', climb_out, ashore, 6),
 ]
 
 
@@ -123,9 +126,9 @@ def tick(delta):
             if state['index'] == len(STEPS):
                 finish()
         elif time.monotonic() > state['deadline']:
-            hunting = sum(1 for f in pond_fish(server_world) if kind(f) == 'Piranha' and f.get_quarry() == owner)
+            hunting = sum(1 for f in pond_fish(server_world) if f.get_quarry() == owner)
             raise TimeoutError(f'not done within {timeout} s; survivor {mode(owner)}, health '
-                               f'{owner.get_survival_component().get_health():.0f}, piranhas hunting {hunting}')
+                               f'{owner.get_survival_component().get_health():.0f}, fish hunting {hunting}')
     except Exception as error:
         finish(f'step {state["index"]} ({description}): {error!r}')
 

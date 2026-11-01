@@ -23,6 +23,7 @@ class UEWDeathWidget;
 class UEWExplorationComponent;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
+class UEWArrivalPromptWidget;
 class UEWShipMarkersWidget;
 class UEWCompassWidget;
 class UEWObjectiveComponent;
@@ -94,6 +95,10 @@ public:
     void ShowWorkHit(bool bGave, const TArray<FEWGatherGain>& Gains, EEWWorkRefusal Refusal);
     void ShowGains(const TArray<FEWGatherGain>& Gains);
     UFUNCTION(BlueprintPure, Category="Gathering") UEWHitMarkerWidget* GetHitMarkerWidget() const { return HitMarkerWidget; }
+    UFUNCTION(BlueprintPure, Category="Interaction") UEWInteractionWidget* GetInteractionWidget() const { return InteractionWidget; }
+    /** The arrival's one prompt at a time (Phase 1). */
+    UFUNCTION(BlueprintPure, Category="Arrival") UEWArrivalPromptWidget* GetArrivalPromptWidget() const { return ArrivalPromptWidget; }
+    UPROPERTY(Transient) TObjectPtr<UEWArrivalPromptWidget> ArrivalPromptWidget;
     UPROPERTY(Transient) TObjectPtr<UEWHitMarkerWidget> HitMarkerWidget;
     bool bOptionsMenuOpen = false;
     UFUNCTION(BlueprintPure, Category="Objectives")

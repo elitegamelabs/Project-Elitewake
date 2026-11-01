@@ -54,6 +54,7 @@
 #include "EWInteractable.h"
 #include "EWInteractionComponent.h"
 #include "EWInteractionWidget.h"
+#include "EWArrivalPromptWidget.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
 #include "EWInventoryComponent.h"
@@ -116,6 +117,8 @@ void AEWPlayerController::BeginPlay()
         if (SurvivalWidget) SurvivalWidget->AddToPlayerScreen(2);
         InteractionWidget = CreateWidget<UEWInteractionWidget>(this, UEWInteractionWidget::StaticClass());
         if (InteractionWidget) InteractionWidget->AddToPlayerScreen(3);
+        ArrivalPromptWidget = CreateWidget<UEWArrivalPromptWidget>(this, UEWArrivalPromptWidget::StaticClass());
+        if (ArrivalPromptWidget) ArrivalPromptWidget->AddToPlayerScreen(3);
         ShipMarkersWidget = CreateWidget<UEWShipMarkersWidget>(this, UEWShipMarkersWidget::StaticClass());
         if (ShipMarkersWidget) ShipMarkersWidget->AddToPlayerScreen(1);
         CompassWidget = CreateWidget<UEWCompassWidget>(this, UEWCompassWidget::StaticClass());
@@ -761,6 +764,7 @@ void AEWPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
     if (HotbarWidget) HotbarWidget->RemoveFromParent();
     if (SurvivalWidget) SurvivalWidget->RemoveFromParent();
     if (InteractionWidget) InteractionWidget->RemoveFromParent();
+    if (ArrivalPromptWidget) ArrivalPromptWidget->RemoveFromParent();
     Super::EndPlay(EndPlayReason);
 }
 

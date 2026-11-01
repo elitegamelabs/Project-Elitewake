@@ -4,6 +4,7 @@
 #include "World/EWSafeZone.h"
 #include "World/EWFootprintComponent.h"
 #include "EWWalletComponent.h"
+#include "EWArrivalComponent.h"
 #include "AnimationRuntime.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
@@ -55,6 +56,7 @@ AEWCharacter::AEWCharacter(const FObjectInitializer& ObjectInitializer)
     HotbarComponent = CreateDefaultSubobject<UEWHotbarComponent>(TEXT("HotbarComponent"));
     FootprintComponent = CreateDefaultSubobject<UEWFootprintComponent>(TEXT("FootprintComponent"));
     WalletComponent = CreateDefaultSubobject<UEWWalletComponent>(TEXT("WalletComponent"));
+    ArrivalComponent = CreateDefaultSubobject<UEWArrivalComponent>(TEXT("ArrivalComponent"));
     BodyRoster = TSoftObjectPtr<UEWBodyRoster>(FSoftObjectPath(TEXT("/Game/Elitewake/Characters/DA_BodyRoster.DA_BodyRoster")));
     HeldItem = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HeldItem"));
     HeldItem->SetupAttachment(GetMesh(), TEXT("hand_r"));

@@ -2,6 +2,7 @@
 #include "EWInteractable.h"
 #include "EWCharacter.h"
 #include "EWSurvivalComponent.h"
+#include "EWArrivalComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/GameStateBase.h"
 #include "Engine/World.h"
@@ -45,7 +46,7 @@ void UEWInteractionComponent::Request(AActor* Target)
     if (IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) == EEWInteractionMode::Press)
     {
         TGuardValue<bool> Guard(bDispatching, true);
-        IEWInteractable::Execute_Interact(Target, Survivor);
+        if (IEWInteractable::Execute_Interact(Target, Survivor) && IsValid(Survivor)) Survivor->GetArrivalComponent()->NoteInteracted();
         return;
     }
     const float Duration = IEWInteractable::Execute_GetHoldDurationFor(Target, Survivor);
@@ -95,7 +96,7 @@ void UEWInteractionComponent::ValidateHold()
     // Clear before dispatch: a target may destroy itself or change possession during completion.
     Cancel();
     TGuardValue<bool> Guard(bDispatching, true);
-    IEWInteractable::Execute_Interact(Target, Survivor);
+    if (IEWInteractable::Execute_Interact(Target, Survivor) && IsValid(Survivor)) Survivor->GetArrivalComponent()->NoteInteracted();
 }
 void UEWInteractionComponent::EndPlay(const EEndPlayReason::Type Reason)
 {

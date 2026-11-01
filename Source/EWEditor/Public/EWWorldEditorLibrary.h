@@ -31,4 +31,10 @@ public:
      *  renderer decides about it, for diagnosing water that does not draw. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|World")
     static FString RebuildWaterBody(AWaterBody* WaterBody);
+
+    /** Takes out the painted foliage (grass, ferns...) whose mesh name contains MeshNameContains and whose root stands inside
+     *  any of the circles (X, Y and the radius in Z, at any height), through the foliage tool's own records, as its eraser
+     *  does. Returns how many instances went. For keeping a laid track or spring bare without regrowing a whole island. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|World")
+    static int32 RemoveFoliageInCircles(UWorld* World, const TArray<FVector>& Circles, const FString& MeshNameContains);
 };

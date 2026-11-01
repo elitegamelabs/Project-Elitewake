@@ -55,6 +55,8 @@ public:
     /** The purse in Copper (October 29). -1 in an older save: the survivor then keeps the starting purse. */
     UPROPERTY(BlueprintReadOnly, Category="Save") int64 Copper = -1;
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 SkillPoints = 0;
+    /** How far through the arrival prompts the survivor got (October 31, UEWArrivalComponent). -1 in an older save: finished. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 ArrivalStep = -1;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> UnlockedSkills;
     /** Everything built with Build Mode (October 27), bases before what stands on them. Older saves have none. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedPiece> BuiltPieces;

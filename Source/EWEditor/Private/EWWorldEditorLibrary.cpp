@@ -6,6 +6,10 @@
 #include "WaterZoneActor.h"
 #include "Materials/Material.h"
 #include "WaterWaves.h"
+#include "EngineUtils.h"
+#include "FoliageType_InstancedStaticMesh.h"
+#include "InstancedFoliage.h"
+#include "InstancedFoliageActor.h"
 
 float UEWWorldEditorLibrary::ConfigureGerstnerSwell(UWaterWavesAsset* Waves, int32 NumWaves, float MinWavelength,
     float MaxWavelength, float MinAmplitude, float MaxAmplitude, float WindAngleDeg, float SpreadDeg)
@@ -66,4 +70,38 @@ bool UEWWorldEditorLibrary::AddWaterTerrain(AActor* Actor)
     Actor->AddInstanceComponent(Terrain);
     Terrain->RegisterComponent();
     return true;
+}
+
+int32 UEWWorldEditorLibrary::RemoveFoliageInCircles(UWorld* World, const TArray<FVector>& Circles, const FString& MeshNameContains)
+{
+    if (!World || Circles.IsEmpty()) return 0;
+    int32 Removed = 0;
+    for (TActorIterator<AInstancedFoliageActor> It(World); It; ++It)
+    {
+        AInstancedFoliageActor* Foliage = *It;
+        It->ForEachFoliageInfo([&](UFoliageType* Type, FFoliageInfo& Info)
+        {
+            const auto* MeshType = Cast<UFoliageType_InstancedStaticMesh>(Type);
+            const UStaticMesh* Mesh = MeshType ? MeshType->GetStaticMesh() : nullptr;
+            if (!Mesh || !Mesh->GetName().Contains(MeshNameContains)) return true;
+            TSet<int32> Inside;
+            for (const FVector& Circle : Circles)
+            {
+                TArray<int32> Near;
+                Info.GetInstancesInsideBounds(FBox(FVector(Circle.X - Circle.Z, Circle.Y - Circle.Z, -1e7),
+                    FVector(Circle.X + Circle.Z, Circle.Y + Circle.Z, 1e7)), Near);
+                for (int32 Index : Near)
+                    if (Info.Instances.IsValidIndex(Index) && FVector::Dist2D(Info.Instances[Index].Location, FVector(Circle.X, Circle.Y, 0)) <= Circle.Z)
+                        Inside.Add(Index);
+            }
+            if (!Inside.IsEmpty())
+            {
+                Foliage->Modify();
+                Info.RemoveInstances(Inside.Array(), true);
+                Removed += Inside.Num();
+            }
+            return true;
+        });
+    }
+    return Removed;
 }

@@ -6,8 +6,8 @@ Owner, October 15 (STARTER_ISLAND_CENTRAL_PLAINS_DIRECTION, REGIONAL_WORLD_AND_3
 Plains are grassland. Until now the grass was only painted on the ground. This adds clumps of real blades, each a
 tapered, curved strip, darker at the root and lighter and yellower at the tip, swaying in the wind, laid as foliage
 instances wherever the ground is grassed (world_terrain.cover) and not steep: thick on the Plains islands (the
-starter island's included), thinner under the Jungle's trees. Kept off the beach, the spring, the Ports and the
-caves. Grass has no collision and fades out past about 65 m (the painted ground carries on beyond). DECIDED (delegated): heights 35-70 cm and densities are
+starter island's included), thinner under the Jungle's trees. Kept off the beach, the spring, the Ports, the
+caves and the arrival's track and spring (arrival_layout.py). Grass has no collision and fades out past about 65 m (the painted ground carries on beyond). DECIDED (delegated): heights 35-70 cm and densities are
 tuning.
 """
 import json
@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
+import arrival_layout  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
@@ -250,8 +251,11 @@ def spots(island, rng, density=None, scales=None):
         if slope > .75 or z < T.SEA + 40:
             continue
         s = rng.uniform(*scales)
-        out.append(unreal.Transform(unreal.Vector(x, y, z - 2), unreal.Rotator(rng.uniform(-4, 4), rng.uniform(-4, 4), rng.uniform(0, 360)),
-                                    unreal.Vector(s, s, s * rng.uniform(.85, 1.15))))
+        clump = unreal.Transform(unreal.Vector(x, y, z - 2), unreal.Rotator(rng.uniform(-4, 4), rng.uniform(-4, 4), rng.uniform(0, 360)),
+                                 unreal.Vector(s, s, s * rng.uniform(.85, 1.15)))
+        # Not on the arrival's track or spring (arrival_layout.py); tested after every draw so the rest of the grass stays as it was.
+        if not arrival_layout.near_arrival(x, y, 40):
+            out.append(clump)
     return out
 
 

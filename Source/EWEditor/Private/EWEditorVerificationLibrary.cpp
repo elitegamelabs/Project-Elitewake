@@ -373,6 +373,17 @@ bool UEWEditorVerificationLibrary::SendVerificationGameplayKeyState(AEWPlayerCon
     return true;
 }
 
+bool UEWEditorVerificationLibrary::SendVerificationGameplayAxis(AEWPlayerController* Controller, FName KeyName, float Value)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    const FKey Key(KeyName); if (!Key.IsValid() || !Key.IsAxis1D()) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    FInputKeyEventArgs Args; Args.Key = Key; Args.Event = IE_Axis; Args.AmountDepressed = Value; Args.NumSamples = 1;
+    Args.DeltaTime = Controller->GetWorld()->GetDeltaSeconds();
+    Controller->InputKey(Args);
+    return true;
+}
+
 bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers)
 {
     if (!GEditor || GEditor->PlayWorld || GEditor->IsPlaySessionInProgress()) return false;

@@ -25,6 +25,7 @@ class UEWEquipmentComponent;
 class UEWHotbarComponent;
 class UEWFootprintComponent;
 class UEWWalletComponent;
+class UEWArrivalComponent;
 struct FInputActionValue;
 class FLifetimeProperty;
 class AEWShip;
@@ -113,6 +114,8 @@ class EW_API AEWCharacter : public ACharacter
     /** Footprints in the ground, by surface. */
     UPROPERTY(VisibleAnywhere, Category="Footprints") UEWFootprintComponent* FootprintComponent;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Wallet", meta=(AllowPrivateAccess="true")) UEWWalletComponent* WalletComponent;
+    /** The arrival prompts this survivor has been through (Phase 1). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Arrival", meta=(AllowPrivateAccess="true")) UEWArrivalComponent* ArrivalComponent;
 	
 protected:
 
@@ -519,6 +522,8 @@ public:
 	UEWInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
     UFUNCTION(BlueprintPure, Category="Wallet")
     UEWWalletComponent* GetWalletComponent() const { return WalletComponent; }
+    UFUNCTION(BlueprintPure, Category="Arrival")
+    UEWArrivalComponent* GetArrivalComponent() const { return ArrivalComponent; }
     UFUNCTION(BlueprintPure, Category="Equipment")
     UEWEquipmentComponent* GetEquipmentComponent() const { return EquipmentComponent; }
     UFUNCTION(BlueprintPure, Category="Hotbar")

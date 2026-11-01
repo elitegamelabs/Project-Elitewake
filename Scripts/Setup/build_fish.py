@@ -10,7 +10,7 @@ and is harvested for Raw Fish. (The manatee was removed from active gameplay by 
 
 In the coastal sea: mantas in the warmer shallows, sharks and squid out in deeper water, the aggressive
 ones well away from the spawn, the dock and the moorings. In the island's freshwater pond (build_freshwater_pond.py
-first): bass, catfish and piranhas. All numbers are tuning.
+first): bass and catfish (owner, October 31: the piranhas left the starter pond). All numbers are tuning.
 """
 import json
 import math
@@ -61,7 +61,7 @@ ITEMS = {'RawFish': ('Raw Fish', 'Raw-Fish-v1.png', 'Fresh from the sea or a pon
 PLACEMENT = {'MantaRay': (3, 250, 3500), 'GreatWhiteShark': (2, 700, 6000),
              'HammerheadShark': (2, 700, 6000), 'Squid': (3, 900, 5500)}
 # Freshwater kinds in the island's pond (build_freshwater_pond.py): how many of each.
-POND_FISH = {'Bass': 3, 'Catfish': 2, 'Piranha': 2}
+POND_FISH = {'Bass': 3, 'Catfish': 2}   # owner, October 31: no piranhas in the starter pond (kept for a Jungle river later)
 PEOPLE = [(150.0, 0.0), (4000.0, 900.0), (5300.0, 350.0), (6200.0, 2350.0)]   # spawn, dock landing, moorings
 # Across the five-region world (owner, October 15): which islands' waters each kind lives in, and how many there
 # (DECIDED, delegated; tuning). 'Starter' is the starter island's own waters (kept as before, for the first sessions

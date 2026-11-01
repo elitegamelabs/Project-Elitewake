@@ -5,6 +5,7 @@
 #include "EWSurvivalComponent.h"
 #include "EWProgressionComponent.h"
 #include "EWWalletComponent.h"
+#include "EWArrivalComponent.h"
 #include "EWExplorationComponent.h"
 #include "EWGameMode.h"
 #include "EWPlayerController.h"
@@ -46,6 +47,7 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
     if (const auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Save->Hotbar.Add(Bar->GetBoundItem(i));
     if (const auto* Purse = Survivor->GetWalletComponent()) Save->Copper = Purse->GetCopper();
+    if (const auto* Arrival = Survivor->GetArrivalComponent()) Save->ArrivalStep = Arrival->GetStepIndex();
     if (const auto* Progress = Survivor->GetProgressionComponent())
     {
         Save->Level = Progress->GetLevel(); Save->Experience = Progress->GetExperience(); Save->UnspentStatPoints = Progress->GetUnspentPoints();
@@ -112,6 +114,8 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Bar->BindItem(i, Hotbar.IsValidIndex(i) ? Hotbar[i].Get() : nullptr);
     if (Copper >= 0)
         if (auto* Purse = Survivor->GetWalletComponent()) Purse->SetCopper(Copper);
+    // A survivor saved before the arrival prompts existed has long since learned to walk: they stay finished.
+    if (auto* Arrival = Survivor->GetArrivalComponent()) Arrival->SetStepIndex(ArrivalStep < 0 ? UEWArrivalComponent::StepCount : ArrivalStep);
     // Levels first: their health bonus raises the maximum before the saved health is put back.
     if (Level > 0)
         if (auto* Progress = Survivor->GetProgressionComponent())
