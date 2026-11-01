@@ -2,6 +2,7 @@
 
 #include "EWPlayerController.h"
 #include "EWVolumeDial.h"
+#include "EWGraphicsSettings.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
@@ -23,7 +24,8 @@ namespace
     constexpr float MaxBrightness = .5f;
     constexpr float MinSensitivity = .1f;
     constexpr float MaxSensitivity = 3.f;
-    constexpr int32 SettingCount = 6;
+    constexpr int32 SettingCount = 12;
+    constexpr float QualityStep = 1.f / (FEWGraphicsSettings::Levels - 1);
 
     float Normalize(float Value, float Min, float Max) { return (Value - Min) / (Max - Min); }
     float Denormalize(float Value, float Min, float Max) { return Min + FMath::Clamp(Value, 0.f, 1.f) * (Max - Min); }
@@ -157,6 +159,22 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             if (auto* Row = Cast<UHorizontalBox>(VolumeSlider->GetParent()))
                 Row->AddChildToHorizontalBox(DialSize)->SetPadding(FMargin(10, 0, 0, 0));
         }
+        // Graphics (owner, November 1; CLAUDE.md 9.6): the overall quality, then each group, Low to Epic.
+        QualitySlider = AddSetting(NSLOCTEXT("Elitewake", "GraphicsQualityLabel", "Graphics quality"), 0.f);
+        QualitySlider->SetStepSize(QualityStep);
+        QualitySlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnQualityChanged);
+        for (int32 Group = 0; Group < FEWGraphicsSettings::GroupCount; ++Group)
+        {
+            USlider* Slider = AddSetting(FEWGraphicsSettings::GroupName(static_cast<FEWGraphicsSettings::EGroup>(Group)), 0.f);
+            Slider->SetStepSize(QualityStep);
+            GraphicsSliders.Add(Slider);
+        }
+        GraphicsSliders[0]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnTexturesChanged);
+        GraphicsSliders[1]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnShadowsChanged);
+        GraphicsSliders[2]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnFoliageChanged);
+        GraphicsSliders[3]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnReflectionsChanged);
+        GraphicsSliders[4]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnEffectsChanged);
+        SyncGraphicsSliders();
         BackButton = Button(OptionsPage, NSLOCTEXT("Elitewake", "OptionsBack", "BACK"));
         BackButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::BackToButtons);
         BackButton->OnHovered.AddDynamic(this, &UEWOptionsWidget::HoverBack);
@@ -209,6 +227,9 @@ void UEWOptionsWidget::RefreshSettingLabels()
     for (int32 Which = 0; Which < 4; ++Which)
         SettingValues[1 + Which]->SetText(FText::AsNumber(FMath::RoundToInt((PC ? PC->GetLookSensitivity(Which) : 1.f) * 100.f)));
     SettingValues[5]->SetText(FText::AsNumber(FMath::RoundToInt((PC ? PC->GetMasterVolume() : 1.f) * 100.f)));
+    SettingValues[SettingGraphics]->SetText(FEWGraphicsSettings::LevelName(FEWGraphicsSettings::GetOverall()));
+    for (int32 Group = 0; Group < FEWGraphicsSettings::GroupCount; ++Group)
+        SettingValues[SettingGraphics + 1 + Group]->SetText(FEWGraphicsSettings::LevelName(FEWGraphicsSettings::Get(static_cast<FEWGraphicsSettings::EGroup>(Group))));
     if (VolumeDial) VolumeDial->SetValue(PC ? PC->GetMasterVolume() : 1.f);
 }
 
@@ -233,11 +254,44 @@ void UEWOptionsWidget::OnVolumeChanged(float Value)
     RefreshSettingLabels();
 }
 
+void UEWOptionsWidget::OnQualityChanged(float Value)
+{
+    if (bSyncingGraphics) return;
+    Selected = SettingGraphics;
+    FEWGraphicsSettings::SetOverall(FMath::RoundToInt(Value / QualityStep));
+    SyncGraphicsSliders();
+    RefreshSettingLabels();
+}
+
+void UEWOptionsWidget::OnGraphicsChanged(int32 Group, float Value)
+{
+    if (bSyncingGraphics) return;
+    Selected = SettingGraphics + 1 + Group;
+    FEWGraphicsSettings::Set(static_cast<FEWGraphicsSettings::EGroup>(Group), FMath::RoundToInt(Value / QualityStep));
+    SyncGraphicsSliders();
+    RefreshSettingLabels();
+}
+
+void UEWOptionsWidget::SyncGraphicsSliders()
+{
+    TGuardValue<bool> Syncing(bSyncingGraphics, true);
+    const int32 Overall = FEWGraphicsSettings::GetOverall();
+    if (QualitySlider && Overall != INDEX_NONE) QualitySlider->SetValue(Overall * QualityStep);
+    for (int32 Group = 0; Group < GraphicsSliders.Num(); ++Group)
+        if (GraphicsSliders[Group]) GraphicsSliders[Group]->SetValue(FEWGraphicsSettings::Get(static_cast<FEWGraphicsSettings::EGroup>(Group)) * QualityStep);
+}
+
 void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 {
-    USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider};
-    if (Selected >= 0 && Selected < SettingCount && Sliders[Selected])
-        Sliders[Selected]->SetValue(FMath::Clamp(Sliders[Selected]->GetValue() + Direction * .02f, 0.f, 1.f));
+    USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider, QualitySlider,
+        GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4]};
+    if (Selected < 0 || Selected >= SettingCount || !Sliders[Selected]) return;
+    // The graphics settings move a whole level at a time (and the slider's change handler applies it).
+    const float Step = Selected >= SettingGraphics ? QualityStep : .02f;
+    const float Value = FMath::Clamp(Sliders[Selected]->GetValue() + Direction * Step, 0.f, 1.f);
+    Sliders[Selected]->SetValue(Value);
+    if (Selected == SettingGraphics) OnQualityChanged(Value);
+    else if (Selected > SettingGraphics) OnGraphicsChanged(Selected - SettingGraphics - 1, Value);
 }
 
 FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)

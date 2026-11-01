@@ -144,12 +144,34 @@ def adjust_settings():
     assert volume < .95, f'master volume did not apply live: 1.0 -> {volume}'
     assert abs(menu.get_dial_value() - volume) < .001, f'the dial ({menu.get_dial_value()}) does not show the volume ({volume})'
     c.set_master_volume(1.0)      # leave the saved setting as found
-    assert key('Down') and menu.get_selected() == 6, 'Down did not reach BACK'
+    # Graphics (owner, November 1): the overall quality, then five groups, a whole level per Left / Right.
+    gus = unreal.GameUserSettings.get_game_user_settings()
+    found = gus.get_overall_scalability_level()
+    assert key('Down') and menu.get_selected() == 6, 'Down did not reach graphics quality'
+    for _ in range(3):
+        assert key('Left')
+    assert gus.get_overall_scalability_level() == 0, f'three Lefts did not set Low ({gus.get_overall_scalability_level()})'
+    for _ in range(3):
+        assert key('Right')
+    assert gus.get_overall_scalability_level() == 3, f'three Rights did not set Epic ({gus.get_overall_scalability_level()})'
+    assert menu.get_selected() == 6, f'changing the quality moved the selection to {menu.get_selected()}'
+    assert key('Down') and menu.get_selected() == 7, 'Down did not reach textures'
+    assert key('Left') and gus.get_texture_quality() == 2, f'Left on textures did not set High ({gus.get_texture_quality()})'
+    assert gus.get_overall_scalability_level() == -1, 'a mixed setting is not shown as custom'
+    assert key('Right') and gus.get_texture_quality() == 3 and gus.get_overall_scalability_level() == 3, 'Right did not restore Epic textures'
+    for row in range(8, 12):
+        assert key('Down') and menu.get_selected() == row, f'Down did not reach graphics row {row}'
+    if found in (0, 1, 2, 3):
+        gus.set_overall_scalability_level(found)    # leave the saved setting as found
+        gus.apply_non_resolution_settings()
+        gus.save_settings()
+    state['memo']['graphics'] = 'Low, Epic, custom textures, back to Epic'
+    assert key('Down') and menu.get_selected() == 12, 'Down did not reach BACK'
     assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
     state['memo']['settings'] = (after_brightness, looks)
     assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
     checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
-                  'change live by keys; BACK returns to the buttons')
+                  'change live by keys; graphics quality steps Low to Epic, a group alone makes it custom; BACK returns to the buttons')
 
 
 def save_game():

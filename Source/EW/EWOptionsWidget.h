@@ -10,14 +10,15 @@ class UEWVolumeDial;
 
 /** Escape's pause menu (owner, October 30): a column of buttons, RESUME GAME, SAVE GAME (single player), OPTIONS and MAIN MENU.
  *  OPTIONS opens the settings page (brightness; mouse and controller look speed, each horizontal and vertical; master volume, with a
- *  dial beside it) and BACK;
+ *  dial beside it; graphics: an overall quality and five groups, Low to Epic, FEWGraphicsSettings, owner November 1) and BACK;
  *  Escape or B there returns to the buttons. */
 UCLASS()
 class EW_API UEWOptionsWidget : public UUserWidget
 {
     GENERATED_BODY()
 public:
-    /** The highlighted entry: on the buttons page one of the Item* values, on the settings page 0..5 a setting and 6 BACK. */
+    /** The highlighted entry: on the buttons page one of the Item* values, on the settings page 0..11 a setting and 12 BACK
+     *  (0 brightness, 1-4 look speeds, 5 volume, 6 graphics quality, 7-11 the graphics groups). */
     UFUNCTION(BlueprintPure, Category="Options") int32 GetSelected() const { return Selected; }
     /** 0 = the buttons, 1 = OPTIONS (the settings page). */
     UFUNCTION(BlueprintPure, Category="Options") int32 GetTab() const { return Tab; }
@@ -31,7 +32,8 @@ public:
     static constexpr int32 ItemSave = 11;
     static constexpr int32 ItemOptions = 12;
     static constexpr int32 ItemMainMenu = 13;
-    static constexpr int32 SettingBack = 6;
+    static constexpr int32 SettingBack = 12;
+    static constexpr int32 SettingGraphics = 6;
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float Delta) override;
@@ -54,6 +56,15 @@ private:
     UFUNCTION() void OnControllerVerticalChanged(float Value) { OnLookChanged(3, Value); }
     void OnLookChanged(int32 Which, float Value);
     UFUNCTION() void OnVolumeChanged(float Value);
+    UFUNCTION() void OnQualityChanged(float Value);
+    UFUNCTION() void OnTexturesChanged(float Value) { OnGraphicsChanged(0, Value); }
+    UFUNCTION() void OnShadowsChanged(float Value) { OnGraphicsChanged(1, Value); }
+    UFUNCTION() void OnFoliageChanged(float Value) { OnGraphicsChanged(2, Value); }
+    UFUNCTION() void OnReflectionsChanged(float Value) { OnGraphicsChanged(3, Value); }
+    UFUNCTION() void OnEffectsChanged(float Value) { OnGraphicsChanged(4, Value); }
+    void OnGraphicsChanged(int32 Group, float Value);
+    /** Put the graphics sliders where the settings are (after the overall quality changes every group). */
+    void SyncGraphicsSliders();
     void AdjustSelectedSetting(float Direction);
     void RefreshSettingLabels();
     /** The buttons page's entries in order (SAVE GAME only in single player). */
@@ -71,10 +82,15 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<USlider>> LookSliders;
     UPROPERTY(Transient) TObjectPtr<USlider> VolumeSlider;
     UPROPERTY(Transient) TObjectPtr<UEWVolumeDial> VolumeDial;
+    /** The overall quality, then textures, shadows, foliage detail, water and reflections, effects. Four steps each. */
+    UPROPERTY(Transient) TObjectPtr<USlider> QualitySlider;
+    UPROPERTY(Transient) TArray<TObjectPtr<USlider>> GraphicsSliders;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingLabels;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingValues;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> PausePage;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> OptionsPage;
     int32 Selected = ItemResume;
+    /** SyncGraphicsSliders is moving the sliders: their change handlers stand aside. */
+    bool bSyncingGraphics = false;
     int32 Tab = 0;
 };
