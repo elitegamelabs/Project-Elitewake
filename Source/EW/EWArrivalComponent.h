@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "World/EWClimateRegion.h"
 #include "EWArrivalComponent.generated.h"
 
 class UEWCraftingRecipe;
@@ -10,10 +11,28 @@ class UEWCraftingRecipe;
 UENUM(BlueprintType)
 enum class EEWArrivalStep : uint8 { Look, Move, Jump, Crouch, Interact, Done };
 
-/** What Saltreach is for (CLAUDE.md Phase 1 slice 5, minutes 20-25), shown one at a time once the survivor is in the town. They
- *  may be done in any order; the first not yet done is the one shown. */
+/** What Saltreach is for (CLAUDE.md Phase 1 slice 5, minutes 20-25), shown one at a time once the survivor is in the town, then
+ *  the first voyage made ready (slice 6, minutes 25-30): a boat bought, her hold loaded, and the destination. They may be done in
+ *  any order; the first not yet done is the one shown. */
 UENUM(BlueprintType)
-enum class EEWTownStep : uint8 { Sell, Store, Shipyard, Company, Done };
+enum class EEWTownStep : uint8 { Sell, Store, Shipyard, Company, Boat, Provision, Voyage, Done };
+
+class UEWInventoryComponent;
+
+/** What a first voyage needs in the hold (slice 6; tuning): food to eat, a full waterskin, and wood (or a kit) to patch her. */
+struct EW_API FEWVoyageProvisions
+{
+    static constexpr int32 FoodNeeded = 2;
+    static constexpr int32 WaterNeeded = 1;
+    /** Patching, counted as each item's UEWItemDefinition::PatchValue (Wood 1, a Repair Kit 20). */
+    static constexpr int32 PatchNeeded = 20;
+    int32 Food = 0;
+    int32 Water = 0;
+    int32 Patch = 0;
+    /** Counts what a hold carries. Food is anything eaten for hunger; water a full waterskin (an item that empties). */
+    static FEWVoyageProvisions Count(const UEWInventoryComponent* Hold);
+    bool IsReady() const { return Food >= FoodNeeded && Water >= WaterNeeded && Patch >= PatchNeeded; }
+};
 
 /** What the survivor's own machine sees of them each frame: enough to tell whether a step's action has been done. */
 struct FEWArrivalSnapshot
@@ -52,8 +71,10 @@ private:
  * Arriving there, a survivor also knows how to make their first tools by hand (FirstRecipes, slice 2): the stone hatchet
  * from sticks, stones and fiber, then the pickaxe from the wood it fells. Other maps keep their intro-gated recipes.
  * Reaching Saltreach afterwards (slice 5: inside a safe zone), the town steps follow the same way: sell or hand in something, put
- * something in the strongbox, talk to the shipwright, open the Company page. The server judges the first three from the real
- * action; the owning machine reports the last (a menu page, nothing to win by it).
+ * something in the strongbox, talk to the shipwright, open the Company page; then (slice 6) buy a boat, load her hold
+ * (FEWVoyageProvisions), and sail to the first destination (VoyageRegion), shown on the compass. The server judges every step
+ * from the real action or place; the owning machine reports the Company page (a menu, nothing to win by it) and arriving, which
+ * the server checks against where it has the survivor.
  */
 UCLASS(ClassGroup=(Elitewake), meta=(BlueprintSpawnableComponent))
 class EW_API UEWArrivalComponent : public UActorComponent
@@ -110,8 +131,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="Arrival|Town") void SetTownStepsDone(int32 Mask);
     /** Authority: the survivor did a town step's action for real (sold, stored, spoke to the shipwright). */
     void NoteTownStep(EEWTownStep Done);
-    /** The owning machine: the Company page was opened. The server accepts only that step this way. */
+    /** The owning machine: the Company page was opened, or the voyage's destination reached. The server accepts only those two
+     *  steps this way, the second only where it has the survivor inside the destination. */
     UFUNCTION(Server, Reliable) void ServerCompleteTownStep(int32 Completed);
+    /** The first voyage's destination: the nearest other region to Saltreach (owner, November 1: the Swamp island; tuning). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Arrival|Town") EEWRegion VoyageRegion = EEWRegion::Swamp;
+    /** Authority: a ship's hold changed; if she is this survivor's own and now carries a voyage's provisions, the step is done. */
+    void NoteHoldLoaded(const class AEWShip* Ship);
+    /** True where Location lies in the voyage's destination. */
+    bool IsAtDestination(const FVector& Location) const;
 
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Step) int32 Step = 0;

@@ -476,7 +476,7 @@ def build_people(stalls, placed, ship_class):
                          'f', clothes('Provisioner', SKIN[0], (.6, .55, .45), (.3, .16, .1), sash=(.1, .25, .28)))
     provisioner.set_editor_property('goods', [goods('Testing/DA_TestRoundShot', 5, 50, 6), goods('Testing/DA_TestRepairKit', 1, 60, 4),
                                               goods('Food/DA_CookedFish', 1, 15, 8), goods('Food/DA_MedicinalHerb', 1, 25, 5),
-                                              goods('Testing/DA_TestHideWaterFlask', 1, 40, 3)])
+                                              goods('Testing/DA_TestHideWaterFlask', 1, 15, 3)])
     a, c, yaw = at('Outfitter', -40)
     outfitter = person(unreal.EWMerchant, 'Outfitter', a, c, yaw, 'Lucia Fane', 'Outfitter',
                        'Hats, colours and finery for a captain who wants to be remembered. Have a look.',
@@ -526,7 +526,7 @@ def build_people(stalls, placed, ship_class):
                     ('Oak for the frames, pine for the planks, pitch for everything.', 'Never trust a ship that does not creak.'),
                     'm', clothes('Shipwright', SKIN[5], (.5, .45, .34), (.22, .17, .11), hair=(.35, .3, .26), sash=(.3, .2, .1)))
     sales = []
-    for ship, price, fit in (('Raft', 180, ('Ships/DA_RaftPaddles', 'Testing/DA_TestSailSmall')),
+    for ship, price, fit in (('Raft', 60, ('Ships/DA_RaftPaddles', 'Testing/DA_TestSailSmall')),
                              ('Dinghy', 400, ('Ships/DA_DinghyTiller', 'Testing/DA_TestSailSmall')),
                              ('Sloop', 2500, ('Testing/DA_TestShipHelm', 'Testing/DA_TestSailMedium', 'Testing/DA_TestSailSmall'))):
         definition = unreal.load_asset(f'/Game/Elitewake/Ships/DA_Ship_{ship}')

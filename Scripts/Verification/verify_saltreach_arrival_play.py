@@ -31,6 +31,7 @@ import arrival_layout as A  # noqa: E402
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'SaltreachArrivalPlayResult.json')
 SLOT = 'EW_SaltreachArrivalPlayCheck'
+TOWN_STEPS = 0b1111   # Sell, Store, Shipyard, Company: this slice's; slice 6's (boat, hold, voyage) follow them
 worlds = lib.get_play_worlds()
 assert len(worlds) == 2, 'Start Play as a listen server plus one client.'
 pcs = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]
@@ -299,6 +300,10 @@ def told_about_company():
     return True
 
 
+def slice5_done(a):
+    return a.get_town_steps_done() & TOWN_STEPS == TOWN_STEPS
+
+
 def company_opened():
     if not client.is_inventory_open():
         press('I')
@@ -309,7 +314,7 @@ def company_opened():
             assert lib.send_verification_ui_key(client, 'Tab')
             m['tabs'] += 1
         return False
-    if not (arrival().is_town_complete() and arrival(pawn()).is_town_complete()):
+    if not (slice5_done(arrival()) and slice5_done(arrival(pawn()))):
         return False
     m['section'] = client.get_inventory_widget().get_selected_section()
     return True
@@ -321,8 +326,9 @@ def town_done():
         return False
     if time.monotonic() - m['pressed'] < 2.5:
         return False
-    assert prompt() == '', prompt()
-    assert not compass().is_showing_place()
+    # The town's own four are done; the next is slice 6's (buy a boat), shown on the compass at Elias Thorne.
+    assert 'first boat' in prompt(), prompt()
+    assert compass().is_showing_place()
     return True
 
 
@@ -354,7 +360,7 @@ def saved_and_restored():
     assert unreal.EWSurvivorSave.load_save(SLOT).apply_to(owner), 'restore failed'
     unreal.GameplayStatics.delete_game_in_slot(SLOT, 0)
     assert count(box, 'Hatchet') == 1, 'the restored strongbox is empty'
-    assert arrival().is_town_complete(), 'the town steps were not restored'
+    assert slice5_done(arrival()), 'the town steps were not restored'
     return True
 
 

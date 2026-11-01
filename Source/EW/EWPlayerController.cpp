@@ -943,8 +943,13 @@ void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Con
     if (bToContainer)
     {
         // Putting something in the strongbox is the town's storage step (Phase 1 slice 5).
-        if (Carried->TransferEntryTo(Hold, EntryIndex, Quantity) > 0 && Cast<AEWStrongbox>(Container))
-            if (auto* Arrival = Survivor->GetArrivalComponent()) Arrival->NoteTownStep(EEWTownStep::Store);
+        if (Carried->TransferEntryTo(Hold, EntryIndex, Quantity) > 0)
+            if (auto* Arrival = Survivor->GetArrivalComponent())
+            {
+                if (Cast<AEWStrongbox>(Container)) Arrival->NoteTownStep(EEWTownStep::Store);
+                // Loading her own boat's hold is the voyage's provisions step (slice 6) once it holds enough.
+                if (const auto* Ship = Cast<AEWShip>(Container)) Arrival->NoteHoldLoaded(Ship);
+            }
     }
     else Hold->TransferEntryTo(Carried, EntryIndex, Quantity);
 }

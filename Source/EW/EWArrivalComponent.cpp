@@ -7,6 +7,8 @@
 #include "EWFreeportServices.h"
 #include "EWPlayerController.h"
 #include "World/EWSafeZone.h"
+#include "Ships/EWShip.h"
+#include "EWItemDefinition.h"
 #include "World/EWStrongbox.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -153,9 +155,45 @@ bool UEWArrivalComponent::IsInTown() const
     return GetOwner() && AEWSafeZone::FindAt(GetOwner(), GetOwner()->GetActorLocation()) != nullptr;
 }
 
+FEWVoyageProvisions FEWVoyageProvisions::Count(const UEWInventoryComponent* Hold)
+{
+    FEWVoyageProvisions Out;
+    if (!Hold) return Out;
+    for (const FEWInventoryEntry& Entry : Hold->GetInventoryEntries())
+    {
+        const UEWItemDefinition* Item = Entry.ItemDefinition;
+        if (!Item || Entry.Quantity <= 0) continue;
+        if (Item->bFoodConsumptionEnabled && Item->FoodKind != EEWFoodKind::None && Item->FoodKind != EEWFoodKind::Remedy && Item->HungerRestoreFraction > 0.f)
+            Out.Food += Entry.Quantity;
+        if (!Item->EmptiedVersion.IsNull()) Out.Water += Entry.Quantity;     // a full skin: drinking empties it
+        Out.Patch += Item->PatchValue * Entry.Quantity;
+    }
+    return Out;
+}
+
+bool UEWArrivalComponent::IsAtDestination(const FVector& Location) const
+{
+    return GetWorld() && AEWClimateRegion::SampleClimate(GetWorld(), Location).Region == VoyageRegion;
+}
+
+void UEWArrivalComponent::NoteHoldLoaded(const AEWShip* Ship)
+{
+    const auto* Survivor = Cast<AEWCharacter>(GetOwner());
+    if (!Survivor || !Survivor->HasAuthority() || !IsValid(Ship) || IsTownStepDone(EEWTownStep::Provision)) return;
+    // Her own boat: owned, and this survivor one of her shipmates (not someone else's, nor the yard's).
+    if (!Ship->IsOwned() || Ship->bHeldByYard || !Ship->IsShipmate(Survivor)) return;
+    if (FEWVoyageProvisions::Count(Ship->GetCargo()).IsReady()) NoteTownStep(EEWTownStep::Provision);
+}
+
 void UEWArrivalComponent::TickTown(double Time)
 {
     if (IsTownComplete()) return;
+    // Arriving: the owning machine sees it and says so; the server checks where it has the survivor.
+    if (!IsTownStepDone(EEWTownStep::Voyage) && Time - TownSentAt >= 1. && GetOwner() && IsAtDestination(GetOwner()->GetActorLocation()))
+    {
+        TownSentAt = Time;
+        ServerCompleteTownStep(int32(EEWTownStep::Voyage));
+    }
     // Entering the town gives the first view a moment without a prompt, as arriving does.
     const bool bInTown = IsInTown();
     if (bInTown && !bWasInTown) TownShowAt = FMath::Max(TownShowAt, Time + FirstPromptDelay);
@@ -174,7 +212,9 @@ void UEWArrivalComponent::TickTown(double Time)
 
 bool UEWArrivalComponent::IsTownPromptDue() const
 {
-    return IsComplete() && !IsTownComplete() && bWasInTown && GetWorld() && GetWorld()->GetTimeSeconds() >= TownShowAt;
+    // The town's steps show in the town; the voyage's wherever the survivor is (at sea, most of all).
+    return IsComplete() && !IsTownComplete() && (bWasInTown || GetTownStep() == EEWTownStep::Voyage)
+        && GetWorld() && GetWorld()->GetTimeSeconds() >= TownShowAt;
 }
 
 bool UEWArrivalComponent::GetTownTarget(FVector& OutLocation) const
@@ -194,7 +234,20 @@ bool UEWArrivalComponent::GetTownTarget(FVector& OutLocation) const
         for (TActorIterator<AEWMerchant> It(GetWorld()); It; ++It) if (It->bBuysPack && !It->IsA<AEWCrewMaster>()) Consider(*It);
         break;
     case EEWTownStep::Store: for (TActorIterator<AEWStrongbox> It(GetWorld()); It; ++It) Consider(*It); break;
-    case EEWTownStep::Shipyard: for (TActorIterator<AEWShipwright> It(GetWorld()); It; ++It) Consider(*It); break;
+    case EEWTownStep::Shipyard: case EEWTownStep::Boat:
+        for (TActorIterator<AEWShipwright> It(GetWorld()); It; ++It) Consider(*It);
+        break;
+    case EEWTownStep::Provision:
+    {
+        // Her own boat (the nearest, if more than one).
+        const auto* Survivor = Cast<AEWCharacter>(GetOwner());
+        for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
+            if (It->IsOwned() && !It->bHeldByYard && It->IsShipmate(Survivor)) Consider(*It);
+        break;
+    }
+    case EEWTownStep::Voyage:
+        for (TActorIterator<AEWClimateRegion> It(GetWorld()); It; ++It) if (It->Region == VoyageRegion) Consider(*It);
+        break;
     default: break;   // the Company page is in the menu, not a place
     }
     if (!Best) return false;
@@ -219,6 +272,7 @@ void UEWArrivalComponent::NoteTownStep(EEWTownStep Done)
 void UEWArrivalComponent::ServerCompleteTownStep_Implementation(int32 Completed)
 {
     if (Completed == int32(EEWTownStep::Company)) NoteTownStep(EEWTownStep::Company);
+    else if (Completed == int32(EEWTownStep::Voyage) && GetOwner() && IsAtDestination(GetOwner()->GetActorLocation())) NoteTownStep(EEWTownStep::Voyage);
 }
 
 void UEWArrivalComponent::OnRep_TownDone()
@@ -238,6 +292,11 @@ FText UEWArrivalComponent::TownPromptFor(EEWTownStep Step, bool bController)
                                                     : NSLOCTEXT("Elitewake", "TownYardKeys", "Ships are sold and mended at the shipyard. E: talk to Elias Thorne");
     case EEWTownStep::Company: return bController ? NSLOCTEXT("Elitewake", "TownCompanyPad", "To sail with friends, form a Company. Y, then RB twice: Company")
                                                    : NSLOCTEXT("Elitewake", "TownCompanyKeys", "To sail with friends, form a Company. I, then Tab twice: Company");
+    case EEWTownStep::Boat: return bController ? NSLOCTEXT("Elitewake", "TownBoatPad", "X: buy your first boat, a raft, from Elias Thorne at the shipyard")
+                                                : NSLOCTEXT("Elitewake", "TownBoatKeys", "E: buy your first boat, a raft, from Elias Thorne at the shipyard");
+    case EEWTownStep::Provision: return bController ? NSLOCTEXT("Elitewake", "TownProvisionPad", "X at her hold: load 2 food, a full waterskin and 20 wood")
+                                                     : NSLOCTEXT("Elitewake", "TownProvisionKeys", "E at her hold: load 2 food, a full waterskin and 20 wood");
+    case EEWTownStep::Voyage: return NSLOCTEXT("Elitewake", "TownVoyage", "First voyage: sail to the Swamp island. Follow the compass");
     default: return FText::GetEmpty();
     }
 }

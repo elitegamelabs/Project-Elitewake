@@ -112,6 +112,8 @@ struct FEWSavedShip
     /** Her owner: the host's stable key for the player (none: unclaimed) and the name shown. */
     UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerKey;
     UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerName;
+    /** Still the shipyard's, for sale (November 1, AEWShip::bHeldByYard): 1 or 0; -1 in an older save, which leaves her as the map has her. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 YardHeld = -1;
 };
 
 /**
@@ -591,9 +593,17 @@ public:
      *  helm, open the hold, work the anchor, sails and cannons, sign on crew and change fittings. Anyone may climb aboard and bail.
      *  Single player has no gates (owner, October 14). */
     UFUNCTION(BlueprintPure, Category="Ship|Owner")
-    bool IsOwned() const { return !OwnerName.IsEmpty(); }
+    bool IsOwned() const { return !OwnerName.IsEmpty() || bHeldByYard; }
     UFUNCTION(BlueprintPure, Category="Ship|Owner")
-    FString GetOwnerName() const { return OwnerName; }
+    FString GetOwnerName() const { return bHeldByYard ? FString(TEXT("Saltreach shipyard")) : OwnerName; }
+    /** The shipyard's, for sale (owner, November 1: a moored ship no longer claims herself; the first boat is bought). Nobody takes
+     *  her helm, hold, anchor, sails or cannons, single player included, until the shipwright sells her (AEWShipwright::BuyShip hands
+     *  over a held ship of the class bought before launching a new one). Anyone may still climb aboard and look. */
+    UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="Ship|Owner")
+    bool bHeldByYard = false;
+    /** Authority: the yard lets her go to her buyer. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Owner")
+    void ReleaseFromYard(AController* Buyer);
     UFUNCTION(BlueprintPure, Category="Ship|Owner")
     bool IsShipmate(const AEWCharacter* Character) const;
     /** Authority: makes her this player's (null: unclaimed again). */

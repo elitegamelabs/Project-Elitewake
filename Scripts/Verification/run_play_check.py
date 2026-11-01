@@ -14,6 +14,9 @@ PowerShell or cmd: Git Bash rewrites values that start with "/" into Windows pat
   EW_PLAY_STANDALONE optional, 1 plays one survivor with no network (Single Player)
   EW_PLAY_WINDOW   optional, e.g. 1280x720 for the Play window size
   EW_PLAY_STARTER_KIT optional, default 1: the map's test starter kit (ew.TestStarterKit); 0 is the normal, empty-handed start
+  EW_PLAY_YARD_SHIPS optional, default sold: ships the map holds for the shipyard (AEWShip::bHeldByYard, the moored sloop since
+                   November 1) are let go before the check, as if sold, so the ship checks written for a sloop anyone may use
+                   still work her; held leaves them as the game has them (verify_voyage_ready_play needs that)
 
   UnrealEditor.exe EW.uproject <map> -unattended -ExecCmds="py <path>/run_play_check.py"
 
@@ -36,6 +39,7 @@ check = os.environ['EW_PLAY_CHECK']
 result = saved / os.environ['EW_PLAY_RESULT']
 players = int(os.environ.get('EW_PLAY_PLAYERS', '2'))
 timeout = float(os.environ.get('EW_PLAY_TIMEOUT', '180'))
+yard_ships = os.environ.get('EW_PLAY_YARD_SHIPS', 'sold')
 
 unreal.SystemLibrary.execute_console_command(None, 'ew.NeedsDepletion 0')   # checks read exact hunger and thirst; verify_needs_play turns depletion back on
 unreal.SystemLibrary.execute_console_command(None, f"ew.TestStarterKit {os.environ.get('EW_PLAY_STARTER_KIT', '1')}")   # the checks were written with the kit
@@ -88,6 +92,14 @@ def advance():
         elif now >= state['at']:
             state.update(step='stop', outcome='Play session did not start')
     elif step == 'settle' and now >= state['at']:
+        if yard_ships == 'sold':
+            for world in lib.get_play_worlds():
+                for ship in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip):
+                    # Every copy, the client's too: the map's value is on both, and a property set from Python is not
+                    # sent to clients.
+                    if ship.get_editor_property('held_by_yard'):
+                        ship.set_editor_property('held_by_yard', False)
+                        unreal.log(f"EWPLAYRUN let go of the yard's {ship.get_actor_label()} for this check")
         runpy.run_path(check)
         state.update(step='wait_result', at=now + timeout)
     elif step == 'wait_result':

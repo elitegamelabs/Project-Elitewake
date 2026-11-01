@@ -45,6 +45,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="Shipwright") bool RepairShip(AEWCharacter* Character);
     /** The damaged ship nearest the survivor within reach, and what making her whole costs. */
     UFUNCTION(BlueprintPure, Category="Shipwright") AEWShip* FindShipToRepair(const AEWCharacter* Character, int64& OutCost) const;
+    /** A ship the yard holds for sale of this class (AEWShip::bHeldByYard), or null. */
+    UFUNCTION(BlueprintPure, Category="Shipwright") AEWShip* FindHeldShip(const UEWShipDefinition* Definition) const;
     /** No ship lies on the slipway's foot. */
     UFUNCTION(BlueprintPure, Category="Shipwright") bool IsSlipClear() const;
     static FText ShipName(const UEWShipDefinition* Definition);

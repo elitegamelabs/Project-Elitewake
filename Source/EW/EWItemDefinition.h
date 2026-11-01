@@ -155,6 +155,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Placement")
     TSubclassOf<class AEWCampfire> PlacedActor;
 
+    /** How much hull patching one unit gives a voyage's provisions (Phase 1 slice 6, FEWVoyageProvisions): Wood 1, a Repair Kit 20;
+     *  0 for everything else (tuning). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting", meta=(ClampMin="0"))
+    int32 PatchValue = 0;
     /** None means this item is not a ship fitting. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     EEWShipMountType FittingMountType = EEWShipMountType::None;

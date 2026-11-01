@@ -36,13 +36,30 @@ bool AEWShipwright::IsSlipClear() const
     return true;
 }
 
+AEWShip* AEWShipwright::FindHeldShip(const UEWShipDefinition* Definition) const
+{
+    for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
+        if (It->bHeldByYard && It->Definition == Definition && !It->IsSinking()) return *It;
+    return nullptr;
+}
+
 AEWShip* AEWShipwright::BuyShip(AEWCharacter* Character, int32 Index)
 {
-    if (!HasAuthority() || !ShipsForSale.IsValidIndex(Index) || !ShipsForSale[Index].Definition || !ShipClass || !IsInReach(Character)
-        || !IsSlipClear()) return nullptr;
+    if (!HasAuthority() || !ShipsForSale.IsValidIndex(Index) || !ShipsForSale[Index].Definition || !ShipClass || !IsInReach(Character)) return nullptr;
     const FEWShipForSale& Sale = ShipsForSale[Index];
+    // One the yard already holds of this class is handed over where she lies, as she is; otherwise a new hull goes down the slip.
+    AEWShip* Held = FindHeldShip(Sale.Definition);
+    if (!Held && !IsSlipClear()) return nullptr;
     UEWWalletComponent* Purse = Character->GetWalletComponent();
     if (!Purse || !Purse->TrySpend(Sale.PriceCopper)) return nullptr;
+    // Buying a boat is the town's boat step (Phase 1 slice 6).
+    UEWArrivalComponent* Arrival = Character->GetArrivalComponent();
+    if (Held)
+    {
+        Held->ReleaseFromYard(Character->GetController());
+        if (Arrival) Arrival->NoteTownStep(EEWTownStep::Boat);
+        return Held;
+    }
     AEWShip* Ship = GetWorld()->SpawnActorDeferred<AEWShip>(ShipClass, LaunchPoint, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
     if (!Ship)
     {
@@ -55,6 +72,7 @@ AEWShip* AEWShipwright::BuyShip(AEWCharacter* Character, int32 Index)
     Ship->SetShipOwner(Character->GetController());
     for (int32 Fit = 0; Fit < Sale.FittedMounts.Num() && Fit < Sale.FittedItems.Num(); ++Fit)
         if (Sale.FittedItems[Fit]) Ship->FitAtShipyard(Sale.FittedMounts[Fit], Sale.FittedItems[Fit]);
+    if (Arrival) Arrival->NoteTownStep(EEWTownStep::Boat);
     return Ship;
 }
 
@@ -97,10 +115,13 @@ void AEWShipwright::GetDialogueOptions(const AEWCharacter* Character, TArray<FEW
     {
         const FEWShipForSale& Sale = ShipsForSale[Index];
         if (!Sale.Definition) continue;
-        Out.Add({FName(*FString::Printf(TEXT("Ship%d"), Index)), bSlip
+        const bool bHeld = FindHeldShip(Sale.Definition) != nullptr;
+        Out.Add({FName(*FString::Printf(TEXT("Ship%d"), Index)), bHeld
+            ? FText::Format(NSLOCTEXT("Elitewake", "ShipwrightBuyHeld", "Buy the yard's {0} for {1}, moored where she lies"), ShipName(Sale.Definition), Copper(Sale.PriceCopper))
+            : bSlip
             ? FText::Format(NSLOCTEXT("Elitewake", "ShipwrightBuy", "Buy a {0} for {1}, launched from the slipway"), ShipName(Sale.Definition), Copper(Sale.PriceCopper))
             : FText::Format(NSLOCTEXT("Elitewake", "ShipwrightSlipBusy", "Buy a {0} for {1} (the slipway is blocked)"), ShipName(Sale.Definition), Copper(Sale.PriceCopper)),
-            bSlip && Purse && Purse->CanAfford(Sale.PriceCopper)});
+            (bHeld || bSlip) && Purse && Purse->CanAfford(Sale.PriceCopper)});
     }
     int64 Cost = 0;
     if (const AEWShip* Ship = FindShipToRepair(Character, Cost))
@@ -121,8 +142,11 @@ FText AEWShipwright::ActOnDialogue(AEWCharacter* Character, FName Key)
     if (Name.StartsWith(TEXT("Ship")))
     {
         const int32 Index = FCString::Atoi(*Name.RightChop(4));
+        const bool bHeld = ShipsForSale.IsValidIndex(Index) && FindHeldShip(ShipsForSale[Index].Definition);
         if (const AEWShip* Ship = BuyShip(Character, Index))
-            return FText::Format(NSLOCTEXT("Elitewake", "ShipwrightSold", "She is yours. Your {0} is afloat at the foot of the slipway, anchored and fitted out."), ShipName(Ship->Definition));
+            return bHeld
+                ? FText::Format(NSLOCTEXT("Elitewake", "ShipwrightSoldHeld", "She is yours. Your {0} lies where she is moored; she is yours to take."), ShipName(Ship->Definition))
+                : FText::Format(NSLOCTEXT("Elitewake", "ShipwrightSold", "She is yours. Your {0} is afloat at the foot of the slipway, anchored and fitted out."), ShipName(Ship->Definition));
         return NSLOCTEXT("Elitewake", "ShipwrightNoSale", "The slipway is not clear, or your purse is light.");
     }
     return FText::GetEmpty();

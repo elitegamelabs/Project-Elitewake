@@ -151,6 +151,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bSinking);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
     DOREPLIFETIME(AEWShip, OwnerName);
+    DOREPLIFETIME(AEWShip, bHeldByYard);
     DOREPLIFETIME(AEWShip, OwnerPlayerId);
     DOREPLIFETIME(AEWShip, OwnerCompanyId);
 }
@@ -1118,7 +1119,8 @@ bool AEWShip::StartClimb(AEWCharacter* Character, int32 BoardingIndex)
 
 bool AEWShip::IsShipmate(const AEWCharacter* Character) const
 {
-    // An unclaimed ship is anyone's; single player has no ownership gates.
+    // The yard's, for sale, is nobody's yet; an unclaimed ship is anyone's; single player has no ownership gates.
+    if (bHeldByYard) return false;
     if (!IsOwned() || GetNetMode() == NM_Standalone) return true;
     if (!Character) return false;
     const AController* Controller = Character->GetController();
@@ -1177,8 +1179,16 @@ void AEWShip::RefreshOwner()
     ForceNetUpdate();
 }
 
+void AEWShip::ReleaseFromYard(AController* Buyer)
+{
+    if (!HasAuthority()) return;
+    bHeldByYard = false;
+    SetShipOwner(Buyer);
+}
+
 FText AEWShip::CrewOnlyPrompt() const
 {
+    if (bHeldByYard) return NSLOCTEXT("Elitewake", "YardHeld", "The shipyard's: for sale from Elias Thorne in Saltreach");
     return FText::Format(NSLOCTEXT("Elitewake", "CrewOnly", "{0}'s ship: only her crew can use this"), FText::FromString(OwnerName));
 }
 
@@ -1343,7 +1353,7 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
         return IsShipmate(Character) ? NSLOCTEXT("Elitewake", "OpenHold", "Open the hold") : CrewOnlyPrompt();
     if (FindAimedBoardingPoint(Character) != INDEX_NONE)
         return IsAboard(Character) ? FText::GetEmpty()
-            : IsOwned() && !IsShipmate(Character) ? FText::Format(NSLOCTEXT("Elitewake", "GrabLadderOwned", "Climb the ladder  ({0}'s ship)"), FText::FromString(OwnerName))
+            : IsOwned() && !IsShipmate(Character) ? FText::Format(NSLOCTEXT("Elitewake", "GrabLadderOwned", "Climb the ladder  ({0}'s ship)"), FText::FromString(GetOwnerName()))
             : NSLOCTEXT("Elitewake", "GrabLadder", "Climb the ladder");
     if (const FName Lines = FindAimedLines(Character); !Lines.IsNone())
     {
@@ -1956,6 +1966,7 @@ FEWSavedShip AEWShip::CaptureForSave() const
     Saved.OpenGunports = OpenGunports;
     Saved.OwnerKey = OwnerKey;
     Saved.OwnerName = OwnerName;
+    Saved.YardHeld = bHeldByYard ? 1 : 0;
     return Saved;
 }
 
@@ -1991,6 +2002,7 @@ void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
     if (bAnchored) LayAnchor();
     OwnerKey = Saved.OwnerKey;
     OwnerName = Saved.OwnerKey.IsEmpty() ? FString() : Saved.OwnerName.IsEmpty() ? TEXT("A captain") : Saved.OwnerName;
+    if (Saved.YardHeld >= 0) bHeldByYard = Saved.YardHeld == 1;
     OwnerPlayerId = INDEX_NONE;
     OwnerCompanyId.Invalidate();
     RefreshOwner();

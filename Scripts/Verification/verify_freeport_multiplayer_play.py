@@ -146,8 +146,9 @@ def talks():
             ('Buy3', lambda: check('Elias sells a weighted small sail for 180 Copper', count('Ships/DA_SailSmallWeighted') == 1 and copper() == shot0['c'] - 180,
                                    copper=copper())),
             (None, lambda: shot0.update(c=copper())),
-            ('Ship0', lambda: check('Elias launches a raft at the slipway for 180 Copper',
-                                    len(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)) == shot0['ships'] + 1 and copper() == shot0['c'] - 180,
+            ('Ship0', lambda: check('Elias launches a raft at the slipway for her price (60 Copper since November 1)',
+                                    len(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWShip)) == shot0['ships'] + 1
+                                    and copper() == shot0['c'] - person('Elias Thorne').get_editor_property('ships_for_sale')[0].get_editor_property('price_copper'),
                                     copper=copper(), reply=client.get_last_dialogue_reply())),
             (None, lambda: hole_the_raft()),
             ('Repair', lambda: check('Elias repairs the holed raft', state['raft'].get_hull_health() >= state['raft'].get_max_hull_health() - .01
