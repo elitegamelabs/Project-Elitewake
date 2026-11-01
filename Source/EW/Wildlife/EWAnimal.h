@@ -137,6 +137,10 @@ private:
     TWeakObjectPtr<AEWCharacter> Quarry;
     TWeakObjectPtr<AEWCharacter> FleeFrom;
     float FleeSeconds = 0.f;
+    /** A neutral animal (bDefendsItself) answering a blow: how long it keeps at its attacker. */
+    float DefendSeconds = 0.f;
+    /** Authority: close on Target and strike it when in reach (the attack aggressive and defending animals share). */
+    void PressAttack(AEWCharacter* Target, float DeltaSeconds);
     float AttackCooldown = 0.f;
     float DeadSeconds = 0.f;
     float FlinchSeconds = 0.f;

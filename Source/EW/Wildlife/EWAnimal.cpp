@@ -263,21 +263,24 @@ void AEWAnimal::Think(float DeltaSeconds)
         // Going for someone, it warns them first.
         if (Target && !Quarry.IsValid()) Call();
         Quarry = Target;
-        if (Target)
+        if (Target) { PressAttack(Target, DeltaSeconds); return; }
+    }
+    else if (Definition->bDefendsItself && Quarry.IsValid())
+    {
+        // Neutral (owner, November 1): it never starts a fight, but keeps at whoever struck it until it calms down, they are
+        // well away, off the land, dead, or inside a free port.
+        AEWCharacter* Target = Quarry.Get();
+        DefendSeconds -= DeltaSeconds;
+        const float Away = FVector::Dist(Target->GetActorLocation(), GetActorLocation());
+        if (DefendSeconds <= 0.f || Target->IsDead() || !IsAshore(Target) || Away > Definition->DefendGiveUpRange
+            || AEWSafeZone::KeepsHostilesOut(this, Target->GetActorLocation()))
         {
-            Action = EEWAnimalAction::Chase;
-            const FVector Nose = GetActorLocation() + GetActorForwardVector() * Definition->Size.X * .5f;
-            if (FVector::Dist2D(Nose, Target->GetActorLocation()) > Definition->AttackReach * .6f)
-                WalkToward(Target->GetActorLocation(), Definition->RunSpeed, DeltaSeconds);
-            if (AttackCooldown <= 0.f && FVector::Dist(Nose, Target->GetActorLocation()) < Definition->AttackReach + 70.f)
-            {
-                AttackCooldown = Definition->AttackInterval;
-                Target->GetSurvivalComponent()->ApplyDamage(Definition->AttackDamage);
-                Target->ReactToHit();
-                MulticastCue(1);
-            }
-            return;
+            UE_LOG(LogTemp, Verbose, TEXT("EWANIMAL %s calms: defend %.1f s left, dead %d, ashore %d, %.0f cm away (gives up at %.0f), port %d"),
+                *GetName(), DefendSeconds, Target->IsDead(), IsAshore(Target), Away, Definition->DefendGiveUpRange,
+                AEWSafeZone::KeepsHostilesOut(this, Target->GetActorLocation()));
+            Quarry = nullptr;
         }
+        else { PressAttack(Target, DeltaSeconds); return; }
     }
     if (FleeSeconds > 0.f && FleeFrom.IsValid())
     {
@@ -311,6 +314,21 @@ void AEWAnimal::Think(float DeltaSeconds)
         RoamPoint = PickRoamPoint();
         RoamSeconds = 20.f;
         if (bArrived) ChooseIdle();
+    }
+}
+
+void AEWAnimal::PressAttack(AEWCharacter* Target, float DeltaSeconds)
+{
+    Action = EEWAnimalAction::Chase;
+    const FVector Nose = GetActorLocation() + GetActorForwardVector() * Definition->Size.X * .5f;
+    if (FVector::Dist2D(Nose, Target->GetActorLocation()) > Definition->AttackReach * .6f)
+        WalkToward(Target->GetActorLocation(), Definition->RunSpeed, DeltaSeconds);
+    if (AttackCooldown <= 0.f && FVector::Dist(Nose, Target->GetActorLocation()) < Definition->AttackReach + 70.f)
+    {
+        AttackCooldown = Definition->AttackInterval;
+        Target->GetSurvivalComponent()->ApplyDamage(Definition->AttackDamage);
+        Target->ReactToHit();
+        MulticastCue(1);
     }
 }
 
@@ -447,6 +465,15 @@ bool AEWAnimal::TakeStrike(AEWCharacter* Striker, float Damage)
     Call();
     if (Health <= 0.f) { Die(); if (Striker && Striker->GetProgressionComponent()) Striker->GetProgressionComponent()->Award(EEWExperienceSource::Hunt); }
     else if (Definition->bAggressive) Quarry = Striker;
+    else if (Definition->bDefendsItself)
+    {
+        // Neutral: it turns on the attacker instead of running.
+        Quarry = Striker;
+        DefendSeconds = Definition->DefendSeconds;
+        FleeSeconds = 0.f;
+        RestSeconds = 0.f;
+        Action = EEWAnimalAction::Chase;
+    }
     else
     {
         FleeFrom = Striker;
@@ -508,6 +535,8 @@ void AEWAnimal::Respawn()
     Health = Definition->MaxHealth;
     YieldLeft = 0;
     FleeSeconds = 0.f;
+    DefendSeconds = 0.f;
+    Quarry = nullptr;
     RoamPoint = Home;
     Action = EEWAnimalAction::Wander;
     SetActorLocationAndRotation(Home, FRotator(0, FMath::FRandRange(-180.f, 180.f), 0));

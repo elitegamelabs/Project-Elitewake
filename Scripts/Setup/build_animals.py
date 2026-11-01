@@ -621,6 +621,8 @@ def elephant():
 
 # Name, display, builder, size (length, height), stride, gait (0 four legs, 1 two legs, 2 snake), animation
 # (swing, lift, bob, tail sway, nod, snake amplitude, wave), surface (scales, scale size, fur, mottle, roughness),
+# Neutral kinds: never start a fight, but defend themselves when struck instead of fleeing (UEWAnimalDefinition::bDefendsItself).
+DEFENDERS = ('Elephant',)
 # behaviour (aggressive, walk, run, turn, roam, wade, notice, damage, interval, reach, attack name, health), yield
 # (fewest, most), and where it lives (habitat, count on the island, count on the second island).
 ANIMALS = {
@@ -655,7 +657,8 @@ ANIMALS = {
                            behave=(True, 80, 420, 60, 1200, 90, 900, 45, 2.2, 150, 'bite', 900), yield_=(14, 20), live=('water', 0, 0)),
     'Elephant': dict(display='Elephant', build=elephant, size=(430, 290), stride=170, gait=0,
                      anim=(26, 7, 1.5, 6, 5, 0, 1), surface=(0, 1, .25, .18, .9),
-                     behave=(False, 70, 380, 45, 1500, 0, 0, 0, 1, 0, '', 1500), yield_=(20, 30), live=('inland', 0, 0)),
+                     # Neutral (owner, November 1): never starts a fight; struck, it defends itself with its tusks (tuning: 30 every 2 s).
+                     behave=(False, 70, 380, 45, 1500, 0, 0, 30, 2.0, 120, 'tusk', 1500), yield_=(20, 30), live=('inland', 0, 0)),
     'Spider': dict(display='Cave Spider', build=spider, size=(180, 120), stride=60, gait=3,
                    anim=(26, 22, 1.2, 0, 0, 0, 1), surface=(0, 1, .6, .3, .75),
                    behave=(True, 130, 430, 200, 450, 0, 800, 18, 1.2, 90, 'bite', 90), yield_=(2, 5), live=('cave', 0, 0)),
@@ -804,7 +807,7 @@ def build_definitions(meat):
                      'run_speed': float(run), 'turn_rate': float(turn), 'roam_radius': float(roam), 'wade_depth': float(wade),
                      'notice_range': float(notice), 'attack_damage': float(damage), 'attack_interval': float(interval),
                      'attack_reach': float(reach), 'attack_name': attack, 'max_health': float(health), 'yield': meat,
-                     'pushes_trees': name == 'Elephant', 'rideable': name == 'Spider', 'ride_seat_height': 100.0, 'ride_seat_forward': -30.0, 'yield_min': a['yield_'][0], 'yield_max': a['yield_'][1], 'respawn_seconds': 300.0}.items():
+                     'defends_itself': name in DEFENDERS, 'pushes_trees': name == 'Elephant', 'rideable': name == 'Spider', 'ride_seat_height': 100.0, 'ride_seat_forward': -30.0, 'yield_min': a['yield_'][0], 'yield_max': a['yield_'][1], 'respawn_seconds': 300.0}.items():
             definition.set_editor_property(k, v)
         assert unreal.EditorAssetLibrary.save_loaded_asset(definition)
         defs[name] = definition

@@ -39,9 +39,17 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Animal")
     float StrideLength = 60.f;
 
-    /** Aggressive animals go for a survivor who comes near on land; the rest run off when struck. */
+    /** Aggressive animals go for a survivor who comes near on land; the rest run off when struck, unless they defend themselves. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     bool bAggressive = false;
+    /** Neutral (owner, November 1: elephants): it never starts a fight, but struck it turns on its attacker with its attack
+     *  instead of fleeing, until DefendSeconds pass or the attacker is DefendGiveUpRange away (tuning). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    bool bDefendsItself = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float DefendSeconds = 20.f;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    float DefendGiveUpRange = 3000.f;
     /** Walking and running speeds, cm/s, and how fast it turns, degrees per second. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float WalkSpeed = 80.f;
