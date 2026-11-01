@@ -18,7 +18,7 @@ When instructions conflict, use this order:
 
 1. The owner's newest explicit instruction in the current conversation.
 2. This file, after checking its last-consolidated date.
-3. The current five-island implementation and its tests.
+3. The current island implementation and its tests (five islands are placed today; the approved world is twenty, section 5).
 4. Current source code, Data Assets, maps, and verified runtime behavior.
 5. Git history only as recovery evidence, never as current design authority.
 
@@ -109,7 +109,7 @@ The project succeeds when a player can tell a story about a voyage: what they pr
 
 ### 2.2 Explicit non-goals for the current world
 
-- No return to 26- or 40-island layouts.
+- No return to the old 26- or 40-island layouts. The approved world is twenty islands, four per region (owner, 2026-11-01).
 - No mass import of free asset packs.
 - No new ship class until the current class loop is complete.
 - No claim warfare before persistence and authority are trustworthy.
@@ -123,7 +123,7 @@ The advanced five-island branch is the source from which the cleaned project was
 
 | Area | Current truth | Important gap or caution |
 |---|---|---|
-| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. The owner wants about three open-ocean reefs (section 4); build and verify them before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete. Measured 2026-11-01 (terrain function): islands 2.0–2.4 km long, 2.4–3.0 km² of land, one dominant peak each (Winter 360 m, Jungle 261 m, Desert 118 m, Plains 65 m); the Swamp is a flat sheet (top 1.6 m) cut by a wave-pattern maze of channels. Walking crossing times have never been measured (section 5.1) |
+| World | Five-island Coastal Playground, regional terrain/resources, caves, landmarks, wildlife, day/night, weather, and procedural setup scripts exist; reef-building scripts exist | The October 31 two-player reef Play check found zero placed reefs in Coastal Playground. The owner wants about three open-ocean reefs (section 4); build and verify them before claiming reef completion. Much of the presentation is placeholder or procedural; owner visual acceptance is not complete. Measured 2026-11-01 (terrain function): islands 2.0–2.4 km long, 2.4–3.0 km² of land, one dominant peak each (Winter 360 m, Jungle 261 m, Desert 118 m, Plains 65 m); the Swamp is a flat sheet (top 1.6 m) cut by a wave-pattern maze of channels. Walking crossing times have never been measured (section 5.1). The map places exactly five islands; 35 more island meshes (Desert2–8, Jungle2–8, Plains2–8, Swamp2–8, Winter2–8, October 22) sit unused in `Content/Elitewake/World/Meshes/Islands` from the old 40-island layout; do not reuse or delete them without owner approval |
 | Wildlife | Six land animals, bears, a lion, a giant crocodile and elephants are placed by `wildlife_distribution.py` / `place_animals.py` (a 146-animal placement plan: Plains 50, Desert 35, Jungle 30, Swamp 29, Winter 2) | Every animal is a rigid model built from lofted shapes, with no skeleton or animation. Behavior has two temperaments only: aggressive, or flee for 6 s when struck; the elephant flees. The 146 is a placement plan, not a population cap (section 5.6) |
 | Port | Saltreach Freeport has merchants, buying/selling, service spaces, a safe zone, HUD feedback, and placeholder sound | Other ports are blockouts; merchant stock does not yet have complete persistence |
 | Economy | Starting purse is zero; merchants and shipyard paths exist | Balance needs journey testing and duplicate-transaction protection |
@@ -146,7 +146,8 @@ These decisions replace every older conflicting statement:
 
 | Conflict | Canonical resolution |
 |---|---|
-| 5 vs. 26 vs. 40 islands | Exactly five large islands in the current world. High-count generators, tests, maps, and images are obsolete. |
+| Island count | Owner, 2026-11-01: twenty islands, four per region, each with its own shape and land area. This supersedes "exactly five". The old 26- and 40-island generators, tests, maps, and images stay obsolete; the twenty-island world is built fresh from section 5.7. The earlier "four sceneries per region" request is met by the four islands. |
+| Villages | Owner, 2026-11-01: exactly one village per region, on one island (section 5.7); every other island has landings, not a village or port. Saltreach is the Plains village. |
 | Four vs. five regions | Five: Plains, Winter, Swamp, Desert, Jungle. Plains is a full central region. |
 | Island directions | Plains center/start; Winter north; Swamp south; Desert east; Jungle west. |
 | Reefs | Owner, 2026-10-31: about three reefs out in the open ocean between islands, clear of every port. This replaces the five-regional-reef plan and the older six-reef text. |
@@ -161,7 +162,7 @@ These decisions replace every older conflicting statement:
 | Shipyard tiers | Small yard: Raft/Sloop. Medium: Schooner/Brigantine. Large: Cavalier. Higher yards do not automatically craft lower tiers. |
 | Sulfur | Desert only (owner, 2026-11-01, superseding the same day's Swamp-sulfur request). Desert sulfur is sulfur ore, mined with Metal Pick or any approved higher-tier pick. Do not invent an Iron Pick gate. No sulfur item or deposit exists yet. |
 | Visual target | Owner, 2026-11-01: high-definition naturalistic realism (section 9.1) replaces "high-definition naturalistic realism" everywhere, including prompts. |
-| Island size | Owner, 2026-11-01: a representative walk across each island takes 30–45 minutes on foot, measured in-game. This replaces the fixed 1.5–2.5 km diameter; there is no fixed diameter or mountain-height cap. |
+| Island size | Owner, 2026-11-01 (corrected the same day from 30–45): a representative walk across each island takes 15–20 minutes on foot, measured in-game. This replaces the fixed 1.5–2.5 km diameter; there is no fixed diameter or mountain-height cap. Default until the owner says otherwise: all four islands of a region meet 15–20 minutes and differ in shape and land area. |
 | Swamp water | Owner, 2026-11-01: one winding coast-to-coast main river with connected tributaries; ponds stay separate closed water (section 5.5). Replaces the maze of channels. |
 | Wild animals and tames | Owner, 2026-11-01: no design cap on wild animals, only technical spawning and performance controls (section 5.6). The tame limits (25 per player, 75 per Company, `UEWCompanyComponent::FitsTameCaps`) are separate and unchanged. |
 | Elephant temperament | Owner, 2026-11-01: neutral. It never attacks unprovoked; struck, it defends itself instead of fleeing. |
@@ -170,15 +171,15 @@ These decisions replace every older conflicting statement:
 | Launch maps | Title launches the game; Coastal Playground is the canonical owner test world. ThirdPerson is only a temporary session harness until migrated. |
 | Work model | One Claude production guide and one workload. Old agent locks, handoffs, team charters, and model workflows are void. |
 
-## 5. Canonical five-island world bible
+## 5. Canonical world bible
 
 ### 5.1 World constants
 
-- Exactly five islands. Each is sized so a representative walk across it takes 30–45 minutes on foot (owner, 2026-11-01). This is a gameplay-time target, not a diameter or height limit. Measure representative routes in-game (landing to forest, coast to coast, landing to the main resource areas) at real walking speed over real terrain before deciding dimensions, and keep the measurements with the island's evidence.
+- Twenty islands, four per region (owner, 2026-11-01), each of its own shape and land area. Each is sized so a representative walk across it takes 15–20 minutes on foot (owner, 2026-11-01). This is a gameplay-time target, not a diameter or height limit. Measure representative routes in-game (landing to forest, coast to coast, landing to the main resource areas) at real walking speed over real terrain before deciding dimensions, and keep the measurements with the island's evidence.
 - Travel is full, not empty: accessible landings and routes into the main forest; space for wildlife, resources, exploration, hills, valleys, ravines, scattered mountains, and cliffs; no long stretches of empty travel.
 - Relief is several smaller, plausibly shaped hills, peaks, or ridges distributed around each island, never one dominant central mountain to trek over.
 - Each island offers practical base sites on hills and cliff shelves as well as flat ground (section 6.4).
-- Plains is central and is the universal start. Winter is north, Swamp south, Desert east, Jungle west.
+- Plains is central and is the universal start. Winter is north, Swamp south, Desert east, Jungle west; each region's four islands lie together in its direction, open sea between them.
 - Ocean depth may reach approximately 1.5 km where the world design requires deep water.
 - Terrain is deterministic and explainable. A seed or source-data change must produce a reviewable diff.
 - Coastlines are irregular: coves, headlands, beaches, shelves, cliffs, and eroded transitions. Never use five scaled/rotated copies of one island.
@@ -210,7 +211,8 @@ Every island has:
 7. One cave or sheltered exploration space.
 8. One high-value inland resource area.
 9. One predator/prey/habitat ecology loop.
-10. One port site. Saltreach is the only port required to be fully functional during five-island production.
+10. Landings and, on the one village island of its region only, the village (section 5.7). Saltreach is the only port required to be fully functional during island production.
+11. Its own reason to visit: a specialty resource or combination not found elsewhere in its region (section 5.7), with the basics (water, wood, stone, fiber, food, hide or meat) within about 3 minutes' walk of a safe landing.
 
 PCG masks use slope, height, moisture, shore distance, exposure, soil, and region profile. Some areas have dense forest; vary species, spacing, undergrowth, bushes, and clearings with terrain and moisture. Avoid even rings, circular resource clusters, repeated tree grids, identical vegetation patterns, flat biome-wide color filters, and identical port plans. Preserve player buildings when generation reruns.
 
@@ -230,7 +232,42 @@ The river is sized for the Cavalier, the largest intended ship: several metres o
 
 Owner, 2026-11-01. There is no design cap on wild animals. Keep species appropriate to each island and make the world feel alive, using sensible technical spawning and performance controls (distance-based spawning and simulation, a measured server budget), never a fixed design count. Placement counts in `wildlife_distribution.py` are a plan, not a cap. Wild-animal populations are separate from the tame limits (25 per player, 75 per Company), which stay as they are.
 
+Distribution (owner, 2026-11-01): animals spread through suitable habitat across every island, placed by water, food, cover, and terrain, never as a uniform grid or one cluster, and never identically on every island. Species stay in their region (winter wildlife in Winter, desert in Desert, jungle in Jungle, plains in Plains, swamp in Swamp); islands within a region carry different mixes. Passive animals keep about 150 m and aggressive ones about 250 m from safe landings and villages. Species not yet in the game arrive as realistic, rigged assets (Phase 5); until then only existing species are placed, and only where they belong (today's squirrel monkeys on the Plains island are out of region).
+
 People, elephants, and other wildlife have credible anatomy, proportions, skin or fur, movement, and behavior (section 9.1). Elephants look realistic and are neutral: they never attack unprovoked and defend themselves when attacked instead of fleeing.
+
+### 5.7 Island plan and villages
+
+Owner-approved 2026-11-01. Every island is worth visiting: the basics stay accessible everywhere, and each island has its own specialty. 🏘 marks the region's one village. Many listed resources and species do not exist yet as items or assets; adding them is part of island production.
+
+| Region | Island | Specialty | Wildlife mix |
+|---|---|---|---|
+| Plains | P1 Starter 🏘 | Saltreach; oak, flint, berries, the spring pond | Boar, hares; coastal pelicans and flamingos |
+| Plains | P2 Copper Downs | Copper and iron outcrops on limestone hills | Boar, deer, a lion pride on the high grass |
+| Plains | P3 Clay Shore | Clay, sand, herbs along a river and lake | Deer, wild horses, wading birds |
+| Plains | P4 Oak Heights | The great hardwood forest: ship timber, herbs, hides | Deer, boar, wolves in the deep wood |
+| Winter | W1 Coal Spine | Coal seams along the mountainsides | Mountain goats, bears |
+| Winter | W2 Birch Haven 🏘 | Sheltered birch valleys, fresh water, fur trade | Caribou, hares, foxes |
+| Winter | W3 Iron Cliffs | Iron ore, building stone, emerald faces | Wolves, eagles |
+| Winter | W4 Ice Reach | Ice and snow, best furs, emerald caves | Seals and walrus on the shore, polar bears |
+| Swamp | S1 River Isle 🏘 | The coast-to-coast river (5.5), spruce, reeds | Herons, turtles, otters, cottonmouths |
+| Swamp | S2 Bog Fen | Bog iron and peat fuel | Alligators, boar |
+| Swamp | S3 Resin Woods | Spruce resin and pitch for ship repair | Giant crocodile in the backwater, snakes |
+| Swamp | S4 Mushroom Hollows | Mushrooms, medicinal herbs, dark gems in submerged caves | Spiders, frogs, crocodiles at the edges |
+| Desert | D1 Oasis Isle 🏘 | The oasis spring, date palms, coconuts | Gazelles, tortoises; flamingos at the lagoon |
+| Desert | D2 Sulfur Flats | Sulfur ore at vents and evaporite flats (sulfur is Desert-only) | Scorpions, snakes, vultures |
+| Desert | D3 Salt Pans | Salt for preserving food, sandstone | Flamingos, pelicans, jackals |
+| Desert | D4 Copper Canyon | Copper, iron, amber in canyon sandstone | Snakes, tortoises, oryx |
+| Jungle | J1 Waterfall Basin 🏘 | Rivers and falls, fruit, fresh water | Squirrel monkeys, parrots, tapirs |
+| Jungle | J2 Gem Ridge | Green gemstones in ravines, copper | Jaguars, snakes |
+| Jungle | J3 Spice Isle | Exotic plants, herbs, and fruit as trade goods | Monkeys, tortoises, parrots |
+| Jungle | J4 Vine Woods | Ash timber, vines, and fiber for rope | Elephant herds (neutral, they defend themselves), boar |
+
+Village islands have a sheltered harbor, their own fresh water, buildable ground, and a central sailing position in their region: P1 keeps Saltreach and the start; W2 is the sheltered, forested, watered option in the cold; S1's river gives ships a route inland; D1's oasis is the desert's water; J1 sits at the waterfall basin's river mouth.
+
+Acceptance checks for the island world: exactly 20 islands, 4 per region, and 5 villages, one per region (layout test and map scan); a measured coast-to-coast walk of 15–20 minutes on every island, landing to forest in 3 minutes or less, and no empty stretch over 2 minutes; the basics within 3 minutes of each safe landing; each island's specialty present on it and absent from the rest of its region; every species placed only in its allowed region; no 200 m square holding more than 15% of an island's animals; the island mixes within a region all different; the landing and village distances above; server and client frame time measured at full populations.
+
+After the islands, the map screen shows a deep blue ocean around the islands (owner, 2026-11-01).
 
 ## 6. Player, survival, progression, and land systems
 
@@ -281,7 +318,7 @@ Claims are deferred until the core voyage and persistence phases, but their cano
 - A daily 2-hour vulnerability window controls hostile interaction.
 - Rival banner capture takes 30 minutes and successful capture grants 48 hours of protection.
 - PvE mode has no hostile takeover.
-- In the five-island phase claims may be optional or simulated; do not let them block the voyage loop.
+- During island production claims may be optional or simulated; do not let them block the voyage loop.
 
 ### 6.5 Input and control baseline
 
@@ -564,7 +601,7 @@ Execute only Phase 1 in section 12 of CLAUDE.md. Audit the existing game against
 
 #### Objective and boundary
 
-Turn the five-island test world into five distinct, navigable, performant regional identities. Work one island at a time: Plains and Saltreach interfaces, then Winter, Swamp, Desert, Jungle. Do not reactivate 26/40 islands or make all ports fully functional.
+Turn the test world into the approved twenty-island world (section 5.7): five distinct, navigable, performant regional identities, four islands each. Work one island at a time: Plains and Saltreach interfaces, then Winter, Swamp, Desert, Jungle. Do not reactivate the old 26/40-island layouts or make all villages fully functional.
 
 #### Per-island production order
 
@@ -594,7 +631,7 @@ Jungle: steep wet-gray stone, rivers/waterfalls, dark loam, dense ash canopy, fe
 
 For each region substitute its card into this template:
 
-Elitewake regional island production reference, high-definition naturalistic realism and believable geography. REGION: [name and exact card]. Island sized for a 30–45 minute walk across, with several distributed hills, ridges, valleys, and cliffs, no single dominant mountain. CAMERA: offshore at sea level, 1 km from safe landing, third-person ship-eye height 4 m, 70-degree horizontal FOV. Show one primary landmark readable against sky, at least three shoreline materials, one obvious safe landing, and a different hazardous landing. Lighting: neutral late morning; no cinematic haze hiding the silhouette. Natural eroded coastline, terrain-driven vegetation, plausible drainage and human-scale construction. No circular island, no cloned mountain, no evenly spaced trees, no fantasy megastructure, no modern object, no labels, no tiny diorama perspective.
+Elitewake regional island production reference, high-definition naturalistic realism and believable geography. REGION: [name and exact card]. Island sized for a 15–20 minute walk across, with several distributed hills, ridges, valleys, and cliffs, no single dominant mountain. CAMERA: offshore at sea level, 1 km from safe landing, third-person ship-eye height 4 m, 70-degree horizontal FOV. Show one primary landmark readable against sky, at least three shoreline materials, one obvious safe landing, and a different hazardous landing. Lighting: neutral late morning; no cinematic haze hiding the silhouette. Natural eroded coastline, terrain-driven vegetation, plausible drainage and human-scale construction. No circular island, no cloned mountain, no evenly spaced trees, no fantasy megastructure, no modern object, no labels, no tiny diorama perspective.
 
 Generate four compass approaches per island and compare silhouette consistency. Generate separate 200–300 m landing and 20–30 m route references; do not use a distant concept painting to decide interaction-scale dressing.
 
@@ -608,7 +645,7 @@ Each region owns separate day/night base bed, wind/weather, shore/water, sparse 
 
 #### Exit
 
-All five load in approved directions and size range; each has a distinct silhouette, survival problem, economy, palette, and sound identity; a player can sail to, land, traverse, and leave; authored items do not move after decorative regeneration; persistence survives streaming/reload; target performance holds; the owner reviews the image set and full regional traversal audio.
+All twenty load in approved directions and crossing-time range; each has a distinct silhouette, survival problem, economy, palette, and sound identity; a player can sail to, land, traverse, and leave; authored items do not move after decorative regeneration; persistence survives streaming/reload; target performance holds; the owner reviews the image set and full regional traversal audio.
 
 #### Copy-ready prompt for Claude
 
