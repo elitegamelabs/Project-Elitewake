@@ -13,6 +13,7 @@ PowerShell or cmd: Git Bash rewrites values that start with "/" into Windows pat
   EW_PLAY_TIMEOUT  optional seconds, default 180
   EW_PLAY_STANDALONE optional, 1 plays one survivor with no network (Single Player)
   EW_PLAY_WINDOW   optional, e.g. 1280x720 for the Play window size
+  EW_PLAY_STARTER_KIT optional, default 1: the map's test starter kit (ew.TestStarterKit); 0 is the normal, empty-handed start
 
   UnrealEditor.exe EW.uproject <map> -unattended -ExecCmds="py <path>/run_play_check.py"
 
@@ -37,6 +38,7 @@ players = int(os.environ.get('EW_PLAY_PLAYERS', '2'))
 timeout = float(os.environ.get('EW_PLAY_TIMEOUT', '180'))
 
 unreal.SystemLibrary.execute_console_command(None, 'ew.NeedsDepletion 0')   # checks read exact hunger and thirst; verify_needs_play turns depletion back on
+unreal.SystemLibrary.execute_console_command(None, f"ew.TestStarterKit {os.environ.get('EW_PLAY_STARTER_KIT', '1')}")   # the checks were written with the kit
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)
 started = time.time()

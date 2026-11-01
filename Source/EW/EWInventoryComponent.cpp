@@ -93,6 +93,13 @@ int32 UEWInventoryComponent::AddItem(UEWItemDefinition* ItemDefinition, int32 Qu
     return Added;
 }
 
+int32 UEWInventoryComponent::GetRoomFor(UEWItemDefinition* Item, int32 Quantity) const
+{
+    if (!Item || Quantity <= 0) return 0;
+    TArray<FEWInventoryEntry> Trial = Entries;
+    return AddToEntries(Trial, MaxSlots, Item, Quantity);
+}
+
 int32 UEWInventoryComponent::AddToEntries(TArray<FEWInventoryEntry>& Entries, int32 MaxSlots, UEWItemDefinition* ItemDefinition, int32 Quantity)
 {
 	const int32 MaxStackSize = FMath::Max(1, ItemDefinition->MaxStackSize);

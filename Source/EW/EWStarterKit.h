@@ -19,7 +19,9 @@ struct FEWStarterKitItem
 };
 
 /** Test maps only: gives each player's survivor a kit once per session and stocks each ship's hold at
- *  Play start, on the server. Normal starts place no kit, so survivors still begin with nothing. */
+ *  Play start, on the server. Normal starts place no kit, so survivors still begin with nothing. The survivor's
+ *  kit is given only while ew.TestStarterKit is 1 (owner, October 31: the kit is a test setup, not the normal start;
+ *  run_play_check.py turns it on for the checks that need it). Ships' holds are stocked either way. */
 UCLASS()
 class EW_API AEWStarterKit : public AActor
 {

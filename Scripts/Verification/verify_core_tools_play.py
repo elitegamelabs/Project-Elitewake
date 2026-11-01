@@ -126,7 +126,7 @@ def spawned():
         return False
     names = sorted(str(i.get_editor_property('display_name')) for i in want)
     state['memo']['supplies'] = names
-    assert names == ['Hatchet', 'Pickaxe', 'Torch', 'Waterskin'], names
+    assert names == ['Pickaxe', 'Stone Hatchet', 'Torch', 'Waterskin'], names   # the hatchet is the stone hatchet since October 31
     return True
 
 

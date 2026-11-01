@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "EWArrivalComponent.generated.h"
 
+class UEWCraftingRecipe;
+
 /** The first things a new survivor is shown, one at a time, in this order (CLAUDE.md Phase 1, minutes 0-5). */
 UENUM(BlueprintType)
 enum class EEWArrivalStep : uint8 { Look, Move, Jump, Crouch, Interact, Done };
@@ -42,6 +44,8 @@ private:
  * the step replicates to its owner only. Its own machine sees the first four done and tells the server; the server judges
  * the last itself, from a real interaction. Only maps whose PlayerStart is tagged "Arrival" run it; elsewhere, and for any
  * survivor restored from a save made before it existed, it starts finished.
+ * Arriving there, a survivor also knows how to make their first tools by hand (FirstRecipes, slice 2): the stone hatchet
+ * from sticks, stones and fiber, then the pickaxe from the wood it fells. Other maps keep their intro-gated recipes.
  */
 UCLASS(ClassGroup=(Elitewake), meta=(BlueprintSpawnableComponent))
 class EW_API UEWArrivalComponent : public UActorComponent
@@ -59,6 +63,10 @@ public:
     static constexpr float FirstPromptDelay = 3.f;
     /** Seconds between one step's end and the next prompt (tuning). */
     static constexpr float StepGap = 1.f;
+
+    /** The recipes a survivor arriving on an arrival map knows from the start, given each time they arrive (tuning). */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Arrival") TArray<TSoftObjectPtr<UEWCraftingRecipe>> FirstRecipes;
+    UFUNCTION(BlueprintPure, Category="Arrival") bool IsArrivalMap() const { return bArrivalMap; }
 
     UFUNCTION(BlueprintPure, Category="Arrival") int32 GetStepIndex() const { return Step; }
     UFUNCTION(BlueprintPure, Category="Arrival") EEWArrivalStep GetStep() const { return Step >= StepCount ? EEWArrivalStep::Done : EEWArrivalStep(Step); }
@@ -82,6 +90,7 @@ private:
     bool ReadSnapshot(FEWArrivalSnapshot& Out) const;
 
     FEWArrivalTracker Tracker;
+    bool bArrivalMap = false;
     /** The owning machine's clock (seconds) when the current prompt may show, and when a completion was last sent. */
     double ShowAt = 0.;
     double SentAt = -100.;

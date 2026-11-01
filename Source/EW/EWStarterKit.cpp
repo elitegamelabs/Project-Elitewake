@@ -6,6 +6,10 @@
 #include "EWItemDefinition.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerState.h"
+#include "HAL/IConsoleManager.h"
+
+static TAutoConsoleVariable<int32> CVarTestStarterKit(TEXT("ew.TestStarterKit"), 0,
+    TEXT("1 gives each survivor the map's test starter kit (checks and testing only); 0, the normal start, gives nothing."));
 
 AEWStarterKit::AEWStarterKit()
 {
@@ -50,7 +54,7 @@ bool AEWStarterKit::GiveKit(AEWCharacter* Survivor)
 {
     APlayerState* Player = Survivor ? Survivor->GetPlayerState() : nullptr;
     UEWInventoryComponent* Inventory = Survivor ? Survivor->GetInventoryComponent() : nullptr;
-    if (!HasAuthority() || !Player || !Inventory || Given.Contains(Player)) return false;
+    if (!HasAuthority() || !Player || !Inventory || Given.Contains(Player) || CVarTestStarterKit.GetValueOnGameThread() == 0) return false;
     Given.Add(Player);
     for (const FEWStarterKitItem& Entry : Items)
     {

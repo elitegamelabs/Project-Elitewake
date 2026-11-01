@@ -70,7 +70,7 @@ def tick(delta):
             deadline = time.monotonic()+12
         elif phase == 8:
             assert not movement(owner).is_swimming() and not movement(owner).is_falling(), [(str(p.get_actor_location()),str(movement(p).movement_mode),str(movement(p).velocity)) for p in [owner,pawn]]
-            assert len(owner.get_inventory_component().get_available_recipes()) == 0
+            assert sorted(r.get_name() for r in owner.get_inventory_component().get_available_recipes()) == ['DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe']   # only the first hand-made tools (Phase 1 slice 2)
             checks.append('Client swims from offshore up the sloped beach to grounded movement; intro recipe locks remain intact')
             place((6200,0,-400))
             deadline = time.monotonic() + 8

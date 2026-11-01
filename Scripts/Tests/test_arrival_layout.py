@@ -115,6 +115,28 @@ class ArrivalLayoutTests(unittest.TestCase):
         self.assertLess(slope, .1, 'spring on a slope')
         self.assertGreater(T.height(x, y), T.SEA + 60)
 
+    def test_first_resources_can_be_gathered_into_a_stone_hatchet(self):
+        kinds = {kind for _, kind, *_ in A.FIRST_RESOURCES}
+        self.assertTrue({'LOOSE_STICKS', 'PLANT_FIBER', 'LOOSE_STONES', 'BERRIES'} <= kinds)
+        held = {}
+        for label, kind, item, x, y, quantity in A.FIRST_RESOURCES:
+            held[item] = held.get(item, 0) + quantity
+            d = math.hypot(x - S[0], y - S[1])
+            self.assertTrue(1000 <= d <= 7000, f'{label} {d / 100:.0f} m from the spawn')
+            self.assertGreater(A.distance_to_route(x, y), A.ROUTE_WIDTH / 2 + 250, f'{label} on the track')
+            self.assertGreater(math.hypot(x - A.SPRING[0], y - A.SPRING[1]), A.SPRING_RADIUS + 250, f'{label} in the spring')
+            for ox, oy, _ in A.OAKS:
+                self.assertGreater(math.hypot(x - ox, y - oy), 400, f'{label} inside an oak')
+            self.assertGreater(T.height(x, y), T.SEA + 60, f'{label} wet')
+        for item, need in A.STONE_HATCHET.items():
+            self.assertGreaterEqual(held.get(item, 0), 2 * need, f'not enough {item} for a hatchet and a mistake')
+        for i, a in enumerate(A.FIRST_RESOURCES):
+            for b in A.FIRST_RESOURCES[i + 1:]:
+                self.assertGreater(math.hypot(a[3] - b[3], a[4] - b[4]), 250, f'{a[0]} crowds {b[0]}')
+        # At least one of each kind needed for the hatchet lies within the first view.
+        for kind in ('LOOSE_STICKS', 'PLANT_FIBER', 'LOOSE_STONES'):
+            self.assertTrue(any(in_view(x, y) for _, k, _, x, y, _ in A.FIRST_RESOURCES if k == kind), f'no {kind} in view')
+
     def test_generators_keep_clear_of_the_arrival(self):
         self.assertTrue(A.near_arrival(*S))
         self.assertTrue(A.near_arrival(*A.SPRING))

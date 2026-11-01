@@ -35,6 +35,21 @@ OAKS = [(-21127.0, -62225.0, 1.15), (-21635.0, -61455.0, 0.95), (-20346.0, -6250
 SPRING = (-20565.0, -63530.0)
 SPRING_RADIUS = 110.0            # cm, the water's radius inside its stones
 
+# The first things to gather by hand (Phase 1 slice 2, minutes 5-10), within 15-60 m and a few metres off the track: fallen
+# oak sticks under the oaks, fibre plants in the grass, loose stones by the spring and on the beach's top, a berry bush on
+# ahead. (label, gathering kind as unreal.EWHandGatheringKind names it, item asset, x, y, quantity). Between them they hold
+# more than the stone hatchet takes (3 sticks, 2 stones, 4 fibre; DA_RecipeStoneHatchet), with some left for mistakes.
+FIRST_RESOURCES = [
+    ('Arrival sticks 1', 'LOOSE_STICKS', 'DA_TestSticks', -20750.0, -62900.0, 6),
+    ('Arrival sticks 2', 'LOOSE_STICKS', 'DA_TestSticks', -21900.0, -62650.0, 6),
+    ('Arrival fiber 1', 'PLANT_FIBER', 'DA_TestFiber', -19500.0, -63800.0, 10),
+    ('Arrival fiber 2', 'PLANT_FIBER', 'DA_TestFiber', -23100.0, -63650.0, 10),
+    ('Arrival stones 1', 'LOOSE_STONES', 'DA_TestStone', -20050.0, -63100.0, 4),
+    ('Arrival stones 2', 'LOOSE_STONES', 'DA_TestStone', -21600.0, -65150.0, 4),
+    ('Arrival berries 1', 'BERRIES', 'DA_TestAzulBerry', -24300.0, -63450.0, 10),
+]
+STONE_HATCHET = {'DA_TestSticks': 3, 'DA_TestStone': 2, 'DA_TestFiber': 4}   # the recipe build_first_resources.py writes
+
 # How far round the arrival other generators keep clear (grass, scattered flora): the track's edge plus this margin.
 CLEAR_MARGIN = 150.0
 

@@ -33,6 +33,10 @@ bool FEWHandGatheringTest::RunTest(const FString& Parameters)
     World->InitializeActorsForPlay(FURL()); World->BeginPlay();
     auto* Inventory=Pawn->GetInventoryComponent();
     TestTrue(TEXT("Hand node uses shared pickup targeting"),FEWInteractionTargeting::FindTarget(Pawn)==Node);
+    // Loose stones (Phase 1: the first stone tool needs no pickaxe) are a resource picked up by hand like loose sticks.
+    Node->GatheringKind=EEWHandGatheringKind::LooseStones;
+    TestTrue(TEXT("Loose stones are eligible by hand"),IEWInteractable::Execute_CanInteract(Node,Pawn));
+    TestTrue(TEXT("Loose stones are collected, not gathered"),IEWInteractable::Execute_GetInteractionPrompt(Node,Pawn).ToString().StartsWith(TEXT("Collect")));
     Item->Category=EEWItemCategory::Weapon;
     TestFalse(TEXT("Invalid resource category is ineligible"),IEWInteractable::Execute_CanInteract(Node,Pawn));
     TestEqual(TEXT("Invalid category cannot transfer directly"),Node->TryPickup(Pawn),0); Item->Category=EEWItemCategory::Resource;
@@ -51,6 +55,8 @@ bool FEWHandGatheringTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Partial gather fills only available capacity"),Inventory->GetItemCount(Item),6000);
     TestEqual(TEXT("Unaccepted units remain in node"),Node->Quantity,7);
     TestEqual(TEXT("Full inventory does not consume yield"),Node->TryPickup(Pawn),0);
+    TestEqual(TEXT("A full pack has no room for one more"),Inventory->GetRoomFor(Item,1),0);
+    TestTrue(TEXT("A full pack answers in the prompt"),IEWInteractable::Execute_GetInteractionPrompt(Node,Pawn).ToString().StartsWith(TEXT("No room in your pack")));
     Inventory->RemoveItem(Item,7);
     TestEqual(TEXT("Remainder transfers once"),Node->TryPickup(Pawn),7);
     TestTrue(TEXT("Depleted node destroyed"),Node->IsActorBeingDestroyed());

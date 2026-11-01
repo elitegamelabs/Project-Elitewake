@@ -44,8 +44,17 @@ bool AEWPickup::CanInteract_Implementation(AEWCharacter* Character) const
         && (!GetOwner() || GetOwner() == Character || GetOwner() == Character->GetController());
 }
 
+FText AEWPickup::NoRoomPrompt(const AEWCharacter* Character) const
+{
+    const UEWInventoryComponent* Pack = Character ? Character->GetInventoryComponent() : nullptr;
+    return ItemDefinition && Pack && Pack->GetRoomFor(ItemDefinition, 1) == 0
+        ? FText::Format(NSLOCTEXT("Elitewake", "NoRoomPrompt", "No room in your pack for {0}"), ItemDefinition->DisplayName) : FText::GetEmpty();
+}
+
 FText AEWPickup::GetInteractionPrompt_Implementation(AEWCharacter* Character) const
 {
+    const FText Full = NoRoomPrompt(Character);
+    if (!Full.IsEmpty()) return Full;
     return ItemDefinition ? FText::Format(NSLOCTEXT("Elitewake", "PickupPrompt", "Pick up {0}"),
         ItemDefinition->DisplayName) : FText::GetEmpty();
 }

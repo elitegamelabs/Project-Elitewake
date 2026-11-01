@@ -1,5 +1,7 @@
 #include "EWArrivalComponent.h"
 #include "EWCharacter.h"
+#include "EWCraftingRecipe.h"
+#include "EWInventoryComponent.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerStart.h"
@@ -35,6 +37,9 @@ UEWArrivalComponent::UEWArrivalComponent()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickInterval = .05f;
     SetIsReplicatedByDefault(true);
+    // The first tools, made by hand (Content/Elitewake/Crafting/Testing; slice 2 of Phase 1).
+    for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe")})
+        FirstRecipes.Add(TSoftObjectPtr<UEWCraftingRecipe>(FSoftObjectPath(FString::Printf(TEXT("/Game/Elitewake/Crafting/Testing/DA_Recipe%s.DA_Recipe%s"), Name, Name))));
 }
 
 void UEWArrivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -49,9 +54,11 @@ void UEWArrivalComponent::BeginPlay()
     ShowAt = GetWorld()->GetTimeSeconds() + FirstPromptDelay;
     if (!GetOwner()->HasAuthority()) return;
     // Only a map built for arriving teaches it (build_arrival.py tags its PlayerStart); test maps start finished.
-    bool bArrivalMap = false;
     for (TActorIterator<APlayerStart> It(GetWorld()); It && !bArrivalMap; ++It) bArrivalMap = It->PlayerStartTag == ArrivalStartTag;
-    if (!bArrivalMap) Step = StepCount;
+    if (!bArrivalMap) { Step = StepCount; return; }
+    if (auto* Pack = GetOwner()->FindComponentByClass<UEWInventoryComponent>())
+        for (const TSoftObjectPtr<UEWCraftingRecipe>& Recipe : FirstRecipes)
+            if (UEWCraftingRecipe* Loaded = Recipe.LoadSynchronous()) Pack->UnlockRecipe(Loaded);
 }
 
 bool UEWArrivalComponent::ReadSnapshot(FEWArrivalSnapshot& Out) const

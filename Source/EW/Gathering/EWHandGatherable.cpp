@@ -23,7 +23,9 @@ bool AEWHandGatherable::CanInteract_Implementation(AEWCharacter* Survivor) const
 FText AEWHandGatherable::GetInteractionPrompt_Implementation(AEWCharacter* Survivor) const
 {
     if (!IsValid(ItemDefinition)) return FText::GetEmpty();
-    const FText Pattern = GatheringKind != EEWHandGatheringKind::LooseSticks
+    const FText Full = NoRoomPrompt(Survivor);
+    if (!Full.IsEmpty()) return Full;
+    const FText Pattern = GatheringKind != EEWHandGatheringKind::LooseSticks && GatheringKind != EEWHandGatheringKind::LooseStones
         ? NSLOCTEXT("Elitewake", "GatherPlantResource", "Gather {0}")
         : NSLOCTEXT("Elitewake", "CollectLooseResource", "Collect {0}");
     return FText::Format(Pattern, ItemDefinition->DisplayName);

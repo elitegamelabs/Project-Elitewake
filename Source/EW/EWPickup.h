@@ -33,6 +33,8 @@ public:
     /** Authority only. Requires possession, range, aim/visibility and any assigned actor ownership. */
     /** True if taking it is a reach into a bush rather than a stoop to the ground. */
     virtual bool UsesBushReach() const { return false; }
+    /** The prompt when the survivor's pack has no room for even one (Phase 1: a full pack answers, it does not just ignore E). Empty otherwise. */
+    FText NoRoomPrompt(const AEWCharacter* Character) const;
     virtual int32 TryPickup(AEWCharacter* Character);
     /** Authority, loading a save (M7): how much is left to take. */
     void RestoreSaved(int32 InQuantity);

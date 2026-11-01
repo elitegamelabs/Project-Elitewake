@@ -54,6 +54,9 @@ public:
     bool UnlockRecipe(UEWCraftingRecipe* Recipe);
     UFUNCTION(BlueprintPure, Category="Inventory|Crafting")
     TArray<UEWCraftingRecipe*> GetAvailableRecipes() const;
+    /** How many of Quantity units of Item the pack could take now (free slots and part stacks). Any machine that sees the entries. */
+    UFUNCTION(BlueprintPure, Category="Inventory")
+    int32 GetRoomFor(UEWItemDefinition* Item, int32 Quantity) const;
 
     /** Crafts exactly one item atomically, using server-owned recipe availability. */
     UFUNCTION(BlueprintCallable, Category="Inventory|Crafting")

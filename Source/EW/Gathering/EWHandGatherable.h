@@ -5,7 +5,8 @@
 #include "EWHandGatherable.generated.h"
 
 UENUM(BlueprintType)
-enum class EEWHandGatheringKind : uint8 { PlantFiber, LooseSticks, Berries };
+/** LooseStones (October 31): stones lying loose on the ground, picked up by hand (Phase 1: the first stone tool needs no pickaxe). */
+enum class EEWHandGatheringKind : uint8 { PlantFiber, LooseSticks, Berries, LooseStones };
 
 /** Finite hand-gathered resource pool. Uses pickup's serialized partial transfer.
  * Quantity is the remaining authored yield; no automatic regrowth or tool/Attack behavior.

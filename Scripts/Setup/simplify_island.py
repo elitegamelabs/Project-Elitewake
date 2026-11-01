@@ -18,7 +18,7 @@ MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 TEST_MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'
 ITEMS = '/Game/Elitewake/Items/Testing'
 TOOLS = ['WoodenAxe', 'WoodenPickaxe', 'HideWaterFlask', 'InnTorch']
-NAMES = {'WoodenAxe': 'Hatchet', 'WoodenPickaxe': 'Pickaxe', 'HideWaterFlask': 'Waterskin', 'InnTorch': 'Torch',
+NAMES = {'WoodenAxe': 'Stone Hatchet', 'WoodenPickaxe': 'Pickaxe', 'HideWaterFlask': 'Waterskin', 'InnTorch': 'Torch',
          'Wood': 'Wood', 'Stone': 'Stone', 'Thatch': 'Thatch', 'Fiber': 'Fiber', 'Sticks': 'Sticks', 'AzulBerry': 'Azren Berry'}
 
 
