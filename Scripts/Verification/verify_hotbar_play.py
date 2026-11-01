@@ -46,7 +46,7 @@ def run_hotbar_verification():
     def ui():return next((u for u in unreal.WidgetLibrary.get_all_widgets_of_class(world,unreal.EWInventoryWidget,False) if u.get_owning_player()==controller and u.is_in_viewport()),None)
     def chord(name):event('Gamepad_LeftShoulder',True);key(name);event('Gamepad_LeftShoulder',False)
     names=['Gamepad_DPad_Left','Gamepad_DPad_Up','Gamepad_DPad_Right','Gamepad_DPad_Down',
-           'Gamepad_FaceButton_Bottom','Gamepad_FaceButton_Left','Gamepad_FaceButton_Right','Gamepad_FaceButton_Top']
+           'Gamepad_FaceButton_Left','Gamepad_FaceButton_Top','Gamepad_FaceButton_Right','Gamepad_FaceButton_Bottom']   # LB + X, Y, B, A = 5-8 (owner, November 1)
     def check(label,bindings,selected,equipped,hat_count=1,alt_count=0,wood_count=251,stone_count=0,torch_count=0,main_hand=None,opened=False):
         row={'label':label,'states':[]};report['checkpoints'].append(row)
         hud=next((u for u in unreal.WidgetLibrary.get_all_widgets_of_class(world,unreal.EWHotbarWidget,False) if u.get_owning_player()==controller and u.is_in_viewport()),None)
@@ -117,11 +117,23 @@ def run_hotbar_verification():
     for index,name in enumerate(['One','Two','Three','Four','Five','Six','Seven','Eight']):
         steps.extend([(lambda n=name:key(n),1.5),(lambda i=index:world_chord_check(i,'Keyboard world key '),.1)])
     steps.append((position_for_pickup,2))
+    def build_chord_check():
+        # In the world, on foot, LB + d-pad right opens Build Mode with its dial (owner, November 1), not slot 3.
+        b=controller.get_build_component()
+        assert 'PLACE' in str(b.get_mode()).upper() and b.is_dial_open(),'LB + d-pad right did not open Build Mode with the dial'
+        report.setdefault('checkpoints',[]).append({'label':'LB + d-pad right in the world opens Build Mode with the dial','selected':pawn.get_hotbar_component().get_selected_slot()})
+    def build_left():
+        assert 'OFF' in str(controller.get_build_component().get_mode()).upper(),'B, B did not leave Build Mode'
     for index,name in enumerate(names):
+        if name=='Gamepad_DPad_Right':
+            steps.extend([(lambda n=name:chord(n),1.5),(build_chord_check,.1),
+                          (lambda:key('Gamepad_FaceButton_Right'),.4),(lambda:key('Gamepad_FaceButton_Right'),.8),(build_left,.1)])
+            continue
         steps.extend([(lambda n=name:chord(n),1.5),(lambda i=index:world_chord_check(i),.1)])
     steps.extend([(lambda:event('Gamepad_LeftShoulder',True),.1),(lambda:event('Gamepad_FaceButton_Bottom',True),.1),
                   (lambda:event('Gamepad_LeftShoulder',False),.1),(lambda:event('Gamepad_FaceButton_Bottom',False),1.5),
-                  (lambda:world_chord_check(4),.1),      # LB then A (slot 5, empty), LB let go first: the chord still selected slot 5 and nothing else leaked
+                  (lambda:world_chord_check(7),.1),      # LB then A (slot 8), LB let go first: the chord still selected slot 8 and nothing else leaked
+                  (lambda:chord('Gamepad_FaceButton_Left'),1.5),(lambda:world_chord_check(4),.1),   # LB + X: back on slot 5, where Y's quick-assign looks first
                   (lambda:inv.add_item(torch,1),1.5),
                   (lambda:key('Gamepad_FaceButton_Top'),.4),
                   (lambda:select_inventory_item(torch),.2),
@@ -129,8 +141,8 @@ def run_hotbar_verification():
                   (lambda:check('Xbox Y quick-assigns selected item to nearest empty slot',
                                 {0:hat,1:alternate,4:torch,7:wood},4,alternate,hat_count=1,alt_count=0,wood_count=1,torch_count=1,opened=True),.1),
                   (lambda:key('Gamepad_FaceButton_Right'),.4),
-                  (lambda:chord('Gamepad_FaceButton_Bottom'),1.5),
-                  (lambda:check('Y-assigned item activates from slot 5 (LB + A)',{0:hat,1:alternate,4:torch,7:wood},4,alternate,hat_count=1,alt_count=0,wood_count=1,torch_count=0,main_hand=torch),.1),
+                  (lambda:chord('Gamepad_FaceButton_Left'),1.5),
+                  (lambda:check('Y-assigned item activates from slot 5 (LB + X)',{0:hat,1:alternate,4:torch,7:wood},4,alternate,hat_count=1,alt_count=0,wood_count=1,torch_count=0,main_hand=torch),.1),
                   (lambda:lib.send_verification_equipment_request(controller,None,unreal.EWEquipmentSlot.MAIN_HAND,True),1.5),
                   (lambda:request(4,None),1.5),(lambda:inv.remove_item(torch,1),1.5),
                   (lambda:request(1,alternate),1.5),

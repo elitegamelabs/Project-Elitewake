@@ -132,8 +132,8 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     static const FText GamepadHints[] = {
         FText::FromString(TEXT("←")), FText::FromString(TEXT("↑")),
         FText::FromString(TEXT("→")), FText::FromString(TEXT("↓")),
-        FText::FromString(TEXT("A")), FText::FromString(TEXT("X")),
-        FText::FromString(TEXT("B")), FText::FromString(TEXT("Y"))};
+        FText::FromString(TEXT("X")), FText::FromString(TEXT("Y")),
+        FText::FromString(TEXT("B")), FText::FromString(TEXT("A"))};   // with LB (owner, November 1)
     for (int32 i=0; i<Labels.Num(); ++i)
     {
         KeyHints[i]->SetText(bController ? GamepadHints[i] : FText::AsNumber(i+1));

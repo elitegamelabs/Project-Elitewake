@@ -1,4 +1,5 @@
-"""Play: on a controller, holding the left trigger turns the d-pad into hotbar slots 5 to 8 (owner, October 22), and the d-pad alone is still slots 1 to 4.
+"""Play: the left trigger no longer changes the d-pad (owner, November 1: hotbar slots 5 to 8 are LB with X, Y, B, A; the
+October 22 left-trigger chord is removed). Holding the left trigger, d-pad left is still slot 1, never slot 5.
 One player (EW_PLAY_PLAYERS=1). Uses the starter kit's tools. Writes Saved/HotbarTriggerPlayResult.json."""
 import unreal, json, time
 from pathlib import Path
@@ -9,7 +10,6 @@ pawn = pc.get_controlled_pawn()
 bar = pawn.get_hotbar_component()
 pack = pawn.get_inventory_component()
 axe = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWoodenAxe')
-pick = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWoodenPickaxe')
 wood = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
 phase = 0
 next_at = time.monotonic() + 3
@@ -44,15 +44,15 @@ def tick(delta):
             assert lib.send_verification_hotbar_request(pc, 4, wood, False)      # slot 5: wood (moves the single shortcut to slot 5)
         elif phase == 2:
             assert bar.get_bound_item(4) == wood, 'slot 5 not bound'
-            key('Gamepad_DPad_Left')                                             # d-pad alone: slot 1 (unbound now: nothing)
+            key('Gamepad_DPad_Down')                                             # d-pad down: slot 4, so a change to slot 1 shows
         elif phase == 3:
-            assert bar.get_selected_slot() != 4, 'the d-pad alone reached slot 5'
+            assert bar.get_selected_slot() == 3, f'd-pad down selected slot {bar.get_selected_slot() + 1}'
             event('Gamepad_LeftTrigger', True)
-            key('Gamepad_DPad_Left')                                             # LT + d-pad left: slot 5
+            key('Gamepad_DPad_Left')                                             # LT + d-pad left: slot 1 now, not slot 5
             event('Gamepad_LeftTrigger', False)
         elif phase == 4:
-            assert bar.get_selected_slot() == 4, f'LT + d-pad left selected slot {bar.get_selected_slot()}'
-            checks.append('Holding the left trigger, d-pad left activates hotbar slot 5; the d-pad alone does not')
+            assert bar.get_selected_slot() == 0, f'LT + d-pad left selected slot {bar.get_selected_slot() + 1}, not slot 1'
+            checks.append('Holding the left trigger, d-pad left selects slot 1 (the d-pad\'s own); the left trigger no longer reaches slot 5')
             finish()
             return
         phase += 1

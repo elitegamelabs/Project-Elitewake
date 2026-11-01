@@ -12,7 +12,11 @@
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Engine/Texture2D.h"
 #include "Styling/AppStyle.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SCanvas.h"
@@ -34,8 +38,11 @@ namespace
     const FFitting Fittings[UEWBuildComponent::FittingCount] = {
         {TEXT("Door frame"), EEWBuildPieceType::TopWall, 1}, {TEXT("Door"), EEWBuildPieceType::Door, 0},
         {TEXT("Window frame"), EEWBuildPieceType::TopWall, 2}, {TEXT("Window"), EEWBuildPieceType::Window, 0}};
-    // Option backgrounds are semi-transparent (owner, October 27).
-    const FLinearColor OptionIdle(.02f, .03f, .05f, .38f), OptionHot(1.f, .75f, .15f, .6f);
+    // Option backgrounds are semi-transparent (owner, October 27), dark enough to read white on the parchment.
+    const FLinearColor OptionIdle(.04f, .03f, .02f, .62f), OptionHot(1.f, .75f, .15f, .78f);
+    // The dial's middle text: tar-dark ink (#181815, CLAUDE.md 9.1) on the parchment.
+    const FLinearColor Ink(.009f, .009f, .007f, 1.f);
+    const TCHAR* const ParchmentTexture = TEXT("/Game/Elitewake/UI/Journal/T_JournalParchment.T_JournalParchment");
 }
 
 UEWBuildComponent::UEWBuildComponent()
@@ -103,12 +110,33 @@ void UEWBuildComponent::SetMode(EEWBuildMode NewMode)
     else if (Mode == EEWBuildMode::Demolish) ShowDial(false);
 }
 
+bool UEWBuildComponent::IsOnFoot() const
+{
+    // On foot: not at a helm, a gun, a sail's lines (LB trims there) or a ladder.
+    const AEWCharacter* Survivor = GetSurvivor();
+    return Survivor && !Survivor->GetHelmShip() && !Survivor->GetGunShip() && !Survivor->GetLinesShip() && !Survivor->IsOnLadder();
+}
+
+bool UEWBuildComponent::EnterBuildMode()
+{
+    if (Mode != EEWBuildMode::Off) return true;
+    if (!IsOnFoot()) return false;
+    SetMode(EEWBuildMode::Place);
+    // Owner, November 1: entering shows the piece dial at once, with no second press.
+    bFittingsWheel = false;
+    ShowDial(true);
+    return true;
+}
+
+void UEWBuildComponent::LeaveBuildMode()
+{
+    SetMode(EEWBuildMode::Off);
+}
+
 void UEWBuildComponent::ToggleBuildMode()
 {
-    const AEWCharacter* Survivor = GetSurvivor();
-    if (Mode != EEWBuildMode::Off) { SetMode(EEWBuildMode::Off); return; }
-    if (!Survivor || Survivor->GetHelmShip() || Survivor->GetGunShip() || Survivor->IsOnLadder()) return;
-    SetMode(EEWBuildMode::Place);
+    if (Mode != EEWBuildMode::Off) LeaveBuildMode();
+    else EnterBuildMode();
 }
 
 void UEWBuildComponent::ToggleDemolish()
@@ -203,41 +231,61 @@ void UEWBuildComponent::ShowDial(bool bShow)
     HoveredSlot = bFittingsWheel ? 0 : FMath::Min(static_cast<int32>(SelectedType), SlotCount - 1);
     const FSlateBrush* White = FAppStyle::GetBrush("WhiteBrush");
     TSharedRef<SCanvas> Canvas = SNew(SCanvas);
-    const FVector2D Middle(420.f, 290.f);
+    // Sized for CLAUDE.md 9.2 at 1080p: 18 px labels, 22 px middle text, the sheet behind every label.
+    const FVector2D Middle(615.f, 330.f);
+    const FVector2D DialScale(DialRadius * 2.3f, DialRadius * 1.3f);   // the ring's half-width and half-height, px
     const bool bFittings = bFittingsWheel;
     for (int32 Slot = 0; Slot < Count; ++Slot)
     {
         const float A = FMath::DegreesToRadians(Slot * (360.f / Count));
-        const FVector2D At = Middle + FVector2D(FMath::Sin(A), -FMath::Cos(A)) * FVector2D(DialRadius * 1.9f, DialRadius) - FVector2D(75.f, 18.f);
+        const FVector2D At = Middle + FVector2D(FMath::Sin(A), -FMath::Cos(A)) * DialScale - FVector2D(110.f, 35.f);
         const FText Label = FText::FromString(bFittings ? Fittings[Slot].Label : AEWBuildPiece::TypeName(SlotType(Slot)));
-        Canvas->AddSlot().Position(At).Size(FVector2D(150.f, 36.f))
+        Canvas->AddSlot().Position(At).Size(FVector2D(220.f, 70.f))
         [
-            SNew(SBorder).BorderImage(White).Padding(4.f)
+            SNew(SBorder).BorderImage(White).Padding(FMargin(4.f, 6.f))
             .BorderBackgroundColor_Lambda([this, Slot]() { return Slot == HoveredSlot ? OptionHot : OptionIdle; })
             [
-                SNew(STextBlock).Text(Label).Justification(ETextJustify::Center).AutoWrapText(true)
+                SNew(STextBlock).Text(Label).Justification(ETextJustify::Center).AutoWrapText(true).Font(FCoreStyle::GetDefaultFontStyle("Regular", 18))
                 .ColorAndOpacity_Lambda([this, Slot]() { return Slot == HoveredSlot ? FSlateColor(FLinearColor::Black) : FSlateColor(FLinearColor::White); })
             ]
         ];
     }
-    Canvas->AddSlot().Position(Middle - FVector2D(110.f, 33.f)).Size(FVector2D(220.f, 66.f))
+    Canvas->AddSlot().Position(Middle - FVector2D(170.f, 70.f)).Size(FVector2D(340.f, 140.f))
     [
-        SNew(STextBlock).Justification(ETextJustify::Center).ColorAndOpacity(FLinearColor::White)
+        // Dark ink on the parchment.
+        SNew(STextBlock).Justification(ETextJustify::Center).ColorAndOpacity(Ink).Font(FCoreStyle::GetDefaultFontStyle("Regular", 22))
         .Text_Lambda([this, bFittings]()
         {
-            return FText::FromString(FString::Printf(TEXT("%s\n%s (LB / RB)\n%s"), bFittings ? Fittings[FMath::Clamp(HoveredSlot, 0, FittingCount - 1)].Label : AEWBuildPiece::TypeName(SlotType(HoveredSlot)),
+            return FText::FromString(FString::Printf(TEXT("%s\n%s (RB / LB+RB)\n%s\nB: close"), bFittings ? Fittings[FMath::Clamp(HoveredSlot, 0, FittingCount - 1)].Label : AEWBuildPiece::TypeName(SlotType(HoveredSlot)),
                 AEWBuildPiece::MaterialName(MaterialIndex), bFittings ? TEXT("F / X: back to pieces") : TEXT("F / X: doors and windows")));
         })
     ];
     Canvas->AddSlot()
-    .Position(TAttribute<FVector2D>::CreateLambda([this, Middle]() { return Middle + FVector2D(DialPointer.X, -DialPointer.Y) * FVector2D(DialRadius * 1.9f, DialRadius) - FVector2D(6.f, 6.f); }))
+    .Position(TAttribute<FVector2D>::CreateLambda([this, Middle, DialScale]() { return Middle + FVector2D(DialPointer.X, -DialPointer.Y) * DialScale - FVector2D(6.f, 6.f); }))
     .Size(FVector2D(12.f, 12.f))
     [
         SNew(SBorder).BorderImage(White).BorderBackgroundColor(FLinearColor(1.f, .2f, .2f, 1.f))
     ];
+    // The parchment behind the ring (owner, November 1), the journal's own sheet.
+    if (!Parchment) Parchment = LoadObject<UTexture2D>(nullptr, ParchmentTexture, nullptr, LOAD_Quiet | LOAD_NoWarn);
+    ParchmentBrush = FSlateBrush();
+    ParchmentBrush.DrawAs = ESlateBrushDrawType::Image;
+    ParchmentBrush.ImageSize = FVector2D(1310.f, 720.f);
+    if (Parchment) ParchmentBrush.SetResourceObject(Parchment);
     DialWidget = SNew(SBox).HAlign(HAlign_Center).VAlign(VAlign_Center)
     [
-        SNew(SBox).WidthOverride(840.f).HeightOverride(580.f)[Canvas]
+        SNew(SOverlay)
+        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+        [
+            SNew(SBox).WidthOverride(1310.f).HeightOverride(720.f)
+            [
+                SNew(SImage).Image(&ParchmentBrush).Visibility(Parchment ? EVisibility::HitTestInvisible : EVisibility::Collapsed)
+            ]
+        ]
+        + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+        [
+            SNew(SBox).WidthOverride(1230.f).HeightOverride(660.f)[Canvas]
+        ]
     ];
     GEngine->GameViewport->AddViewportWidgetContent(DialWidget.ToSharedRef(), 60);
 }
@@ -254,41 +302,69 @@ void UEWBuildComponent::UpdateDial(float DeltaSeconds)
     else if (DX != 0.f || DY != 0.f) SetDialPointer(DialPointer.X + DX * .03f, DialPointer.Y + DY * .03f);
 }
 
-bool UEWBuildComponent::HandleKey(const FInputKeyEventArgs& Params)
+EEWBuildKeyAction UEWBuildComponent::ResolveKey(const FKey& Key, bool bPressed, bool bShoulderHeld, EEWBuildMode InMode, bool bInDialOpen)
 {
+    using A = EEWBuildKeyAction;
+    // Owner, November 1: B (keyboard), or hold LB and press d-pad right (controller), enters and leaves.
+    const bool bChord = Key == EKeys::Gamepad_DPad_Right && bShoulderHeld;
+    if (InMode == EEWBuildMode::Off)
+        // Nothing else is Build Mode's while it is off: d-pad right alone stays hotbar slot 3, R3 and LB stay where they are.
+        return bPressed && (Key == EKeys::B || bChord) ? A::Enter : A::None;
+    // LB is only ever half of a chord here; it reaches the controller, which tracks it (and the hotbar's LB + face buttons).
+    if (Key == EKeys::Gamepad_LeftShoulder) return A::None;
+    auto On = [bPressed](A Action) { return bPressed ? Action : A::Consume; };
+    if (Key == EKeys::B || bChord) return On(A::Leave);
+    // Escape and the B button close the dial first, then leave.
+    if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right) return On(bInDialOpen ? A::CloseDial : A::Leave);
+    if (Key == EKeys::Tab || Key == EKeys::Gamepad_FaceButton_Top) return On(A::ToggleDial);
+    if (Key == EKeys::F || Key == EKeys::Gamepad_FaceButton_Left) return On(A::ToggleFittings);
+    if (Key == EKeys::X || Key == EKeys::Gamepad_RightThumbstick) return On(A::ToggleDemolish);
+    if (Key == EKeys::Q || Key == EKeys::Gamepad_DPad_Left) return On(A::RotateLeft);
+    if (Key == EKeys::E || Key == EKeys::Gamepad_DPad_Right) return On(A::RotateRight);
+    if (Key == EKeys::C) return On(A::MaterialNext);
+    if (Key == EKeys::Z) return On(A::MaterialPrevious);
+    if (Key == EKeys::Gamepad_RightShoulder) return On(bShoulderHeld ? A::MaterialPrevious : A::MaterialNext);
+    if (Key == EKeys::R || Key == EKeys::Gamepad_DPad_Up) return On(A::DesignNext);
+    if (Key == EKeys::Gamepad_DPad_Down) return On(A::DesignPrevious);
+    if (Key == EKeys::MouseScrollUp) return On(A::SlotNext);
+    if (Key == EKeys::MouseScrollDown) return On(A::SlotPrevious);
+    if (Key == EKeys::LeftMouseButton || Key == EKeys::Gamepad_RightTrigger || Key == EKeys::Gamepad_FaceButton_Bottom) return On(A::Confirm);
+    return A::None;
+}
+
+bool UEWBuildComponent::HandleKey(const FInputKeyEventArgs& Params, bool bShoulderHeld)
+{
+    // A release goes with its press.
+    if (Params.Event == IE_Released && SwallowedReleases.Remove(Params.Key) > 0) return true;
     const bool bPressed = Params.Event == IE_Pressed;
-    const FKey& Key = Params.Key;
-    if (Key == EKeys::B || Key == EKeys::Gamepad_RightThumbstick)
+    using A = EEWBuildKeyAction;
+    const A Action = ResolveKey(Params.Key, bPressed, bShoulderHeld, Mode, bDialOpen);
+    switch (Action)
     {
-        if (bPressed) ToggleBuildMode();
-        return Mode != EEWBuildMode::Off || bPressed;
+    case A::None: return false;
+    case A::Consume: return true;
+    case A::Enter:
+        // Off a helm, gun, sail's lines or ladder only; otherwise the key goes on to whatever else it does there.
+        if (!EnterBuildMode()) return false;
+        break;
+    case A::Leave: LeaveBuildMode(); break;
+    case A::CloseDial: ShowDial(false); break;
+    case A::ToggleDial: ToggleDial(); break;
+    case A::ToggleFittings: ToggleFittings(); break;
+    case A::ToggleDemolish: ToggleDemolish(); break;
+    case A::RotateLeft: RotateStep(-1); break;
+    case A::RotateRight: RotateStep(1); break;
+    case A::MaterialNext: CycleMaterial(1); break;
+    case A::MaterialPrevious: CycleMaterial(-1); break;
+    case A::DesignNext: CycleDesign(1); break;
+    case A::DesignPrevious: CycleDesign(-1); break;
+    case A::SlotNext: case A::SlotPrevious:
+        if (Mode == EEWBuildMode::Place && !bDialOpen) StepSlot(Action == A::SlotNext ? 1 : -1);
+        break;
+    case A::Confirm: Confirm(); break;
     }
-    if (Mode == EEWBuildMode::Off) return false;
-    if (Key == EKeys::Escape)
-    {
-        if (bPressed) { if (bDialOpen) ShowDial(false); else SetMode(EEWBuildMode::Off); }
-        return true;
-    }
-    if (Key == EKeys::Tab || Key == EKeys::Gamepad_FaceButton_Top) { if (bPressed) ToggleDial(); return true; }
-    if (Key == EKeys::F || Key == EKeys::Gamepad_FaceButton_Left) { if (bPressed) ToggleFittings(); return true; }
-    if (Key == EKeys::Q || Key == EKeys::Gamepad_DPad_Left) { if (bPressed) RotateStep(-1); return true; }
-    if (Key == EKeys::E || Key == EKeys::Gamepad_DPad_Right) { if (bPressed) RotateStep(1); return true; }
-    if (Key == EKeys::Z || Key == EKeys::Gamepad_LeftShoulder) { if (bPressed) CycleMaterial(-1); return true; }
-    if (Key == EKeys::C || Key == EKeys::Gamepad_RightShoulder) { if (bPressed) CycleMaterial(1); return true; }
-    if (Key == EKeys::R || Key == EKeys::Gamepad_DPad_Up) { if (bPressed) CycleDesign(1); return true; }
-    if (Key == EKeys::Gamepad_DPad_Down) { if (bPressed) CycleDesign(-1); return true; }
-    if (Key == EKeys::X || Key == EKeys::Gamepad_FaceButton_Right) { if (bPressed) ToggleDemolish(); return true; }
-    if (Key == EKeys::MouseScrollUp || Key == EKeys::MouseScrollDown)
-    {
-        if (bPressed && Mode == EEWBuildMode::Place && !bDialOpen) StepSlot(Key == EKeys::MouseScrollUp ? 1 : -1);
-        return true;
-    }
-    if (Key == EKeys::LeftMouseButton || Key == EKeys::Gamepad_RightTrigger || Key == EKeys::Gamepad_FaceButton_Bottom)
-    {
-        if (bPressed) Confirm();
-        return true;
-    }
-    return false;
+    if (bPressed) SwallowedReleases.Add(Params.Key);
+    return true;
 }
 
 bool UEWBuildComponent::PlacementAllowed(UWorld* World, const FVector& Location, float Yaw, float& OutTop, float& OutBottom, FString& Reason)
@@ -450,16 +526,15 @@ void UEWBuildComponent::TickComponent(float DeltaSeconds, ELevelTick TickType, F
 {
     Super::TickComponent(DeltaSeconds, TickType, ThisTickFunction);
     if (Mode == EEWBuildMode::Off) return;
-    const AEWCharacter* Survivor = GetSurvivor();
-    if (!Survivor || Survivor->GetHelmShip() || Survivor->GetGunShip() || Survivor->IsOnLadder()) { SetMode(EEWBuildMode::Off); return; }
+    if (!IsOnFoot()) { SetMode(EEWBuildMode::Off); return; }
     if (bDialOpen) UpdateDial(DeltaSeconds);
     else UpdateAim();
 #if !UE_BUILD_SHIPPING
     if (GEngine)
     {
         const FString Line = bDialOpen
-            ? FString::Printf(TEXT("BUILD MODE  %s  point at one: mouse or either stick   Pick: left mouse / A / RT   Other wheel: F / X   Close: Tab / Y / Esc"), bFittingsWheel ? TEXT("DOORS AND WINDOWS") : TEXT("PIECE DIAL"))
-            : FString::Printf(TEXT("BUILD MODE  %s [%s]  [%s]  Rotate: Q/E or d-pad L/R   Material: Z/C or LB/RB   Design: R or d-pad U   Dial: Tab or Y   %s: X or B button   Leave: B or right stick"),
+            ? FString::Printf(TEXT("BUILD MODE  %s  point at one: mouse or either stick   Pick: left mouse / A / RT   Other wheel: F / X   Close: Esc / B button   Leave: B key"), bFittingsWheel ? TEXT("DOORS AND WINDOWS") : TEXT("PIECE DIAL"))
+            : FString::Printf(TEXT("BUILD MODE  %s [%s]  [%s]  Rotate: Q/E or d-pad L/R   Material: C/Z or RB / LB+RB   Design: R or d-pad U   Dial: Tab or Y   %s: X or R3   Leave: B or Esc (B button)"),
                 Mode == EEWBuildMode::Demolish ? TEXT("DEMOLISH") : AEWBuildPiece::TypeName(SelectedType), AEWBuildPiece::MaterialName(MaterialIndex),
                 bAimOk ? TEXT("OK") : *AimReason, Mode == EEWBuildMode::Demolish ? TEXT("Place") : TEXT("Demolish"));
         GEngine->AddOnScreenDebugMessage(7701, .2f, bAimOk || bDialOpen ? FColor::Cyan : FColor::Orange, Line);

@@ -44,6 +44,19 @@ def key(name):
     assert lib.send_verification_gameplay_key(pc, name), f'key {name} not handled'
 
 
+def hold(name, down):
+    assert lib.send_verification_gameplay_key_state(pc, name, down), name
+
+
+def enter_with_b():
+    """B enters Build Mode with the piece dial already open (owner, November 1); Escape closes the dial and stays in."""
+    key('B')
+    assert 'PLACE' in mode(), f'B did not open Build Mode: {mode()}'
+    assert build.is_dial_open(), 'B entered Build Mode without opening the piece dial'
+    key('Escape')
+    assert not build.is_dial_open() and 'PLACE' in mode(), 'Escape did not close the dial and keep Build Mode'
+
+
 def pieces():
     return unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWBuildPiece)
 
@@ -105,8 +118,8 @@ def pick_site():
 
 def open_mode():
     assert 'OFF' in mode(), mode()
-    key('B')
-    assert 'PLACE' in mode(), f'B did not open Build Mode: {mode()}'
+    enter_with_b()
+    note('B opens Build Mode with the dial open at once; Escape closes the dial')
     # the player's own screen keeps aiming each tick; aim again at the site
     x, y = state['site']
     face(x, y, T.height(x, y))
@@ -197,13 +210,15 @@ def still_two():
 
 
 def materials():
+    # Owner, November 1: C / RB next, Z / LB + RB previous; LB alone does nothing in Build Mode.
     m0 = build.get_material()
     key('C'); m1 = build.get_material()
     key('Gamepad_RightShoulder'); m2 = build.get_material()
     key('Z'); m3 = build.get_material()
     key('Gamepad_LeftShoulder'); m4 = build.get_material()
-    note('materials', values=[m0, m1, m2, m3, m4])
-    assert [m1 - m0, m2 - m0, m3 - m0, m4 - m0] == [1, 2, 1, 0], 'C/Z and RB/LB did not cycle the material'
+    hold('Gamepad_LeftShoulder', True); key('Gamepad_RightShoulder'); hold('Gamepad_LeftShoulder', False); m5 = build.get_material()
+    note('materials', values=[m0, m1, m2, m3, m4, m5])
+    assert [m1 - m0, m2 - m0, m3 - m0, m4 - m0, m5 - m0] == [1, 2, 1, 1, 0], 'C/RB, Z/LB+RB did not cycle the material (or LB alone changed it)'
 
 
 def dial_open_keyboard():
@@ -462,8 +477,7 @@ def door_closed():
     note('door closed', is_open=d.is_open(), alpha=round(d.get_open_alpha(), 2))
     assert not d.is_open() and d.get_open_alpha() < .01, 'E did not close the door'
     assert not clear_through(unreal.Vector(loc.x - 150, loc.y, loc.z - 50), unreal.Vector(loc.x + 150, loc.y, loc.z - 50)), 'the closed door does not block'
-    key('B')
-    assert 'PLACE' in mode(), mode()
+    enter_with_b()
     build.select_slot(0)
 
 
@@ -545,8 +559,7 @@ def stair_walked():
     # up the L-shape's flight, across its landing, up the turn and onto the ceiling's top (320 cm above the cell, plus the capsule)
     assert z - state['stair_top'] > 370, f'survivor did not climb the staircase onto the ceiling (z {z}, foundation top {state["stair_top"]})'
     state['walk_f'] = None
-    key('B')
-    assert 'PLACE' in mode(), mode()
+    enter_with_b()
 
 
 def ceiling_aim():
@@ -720,7 +733,7 @@ def after_demolish():
 
 
 def clean_up():
-    # remove the other with the controller's demolish button (B) and finish with demolish off
+    # remove the other piece, then leave with the controller
     x, y = state['site']
     face(x + 400, y, T.height(x + 400, y), back=300.0)
 
@@ -734,20 +747,46 @@ def demolish_second():
         key('LeftMouseButton')
 
 
-def leave_with_stick():
-    key('Gamepad_FaceButton_Right')          # demolish -> place (controller)
+def leave_with_pad():
+    # Owner, November 1: R3 toggles demolish; with the dial closed the B button leaves.
+    key('Gamepad_RightThumbstick')           # demolish -> place (controller)
     assert 'PLACE' in mode(), mode()
-    key('Gamepad_RightThumbstick')           # leave (controller)
+    key('Gamepad_FaceButton_Right')          # leave (controller)
     assert 'OFF' in mode(), mode()
-    note('left with the stick', ghost=build.is_ghost_showing(), pieces=len(pieces()))
+    note('left with the B button', ghost=build.is_ghost_showing(), pieces=len(pieces()))
     assert not build.is_ghost_showing(), 'ghost still showing after leaving'
+
+
+def chord_enter():
+    """Hold LB and press d-pad right: Build Mode with the dial open at once, and the hotbar's slot 3 untouched."""
+    lib.send_verification_gameplay_key(pc, 'Gamepad_RightThumbstick')   # the right-stick click no longer enters (nothing may take it)
+    assert 'OFF' in mode(), f'R3 entered Build Mode: {mode()}'
+    bar = pawn.get_hotbar_component()
+    before = bar.get_selected_slot()
+    hold('Gamepad_LeftShoulder', True)
+    key('Gamepad_DPad_Right')
+    hold('Gamepad_LeftShoulder', False)
+    assert 'PLACE' in mode(), f'LB + d-pad right did not open Build Mode: {mode()}'
+    assert build.is_dial_open(), 'LB + d-pad right entered without the piece dial'
+    assert bar.get_selected_slot() == before, f'the chord also selected hotbar slot {bar.get_selected_slot() + 1}'
+    note('LB + d-pad right opens Build Mode with the dial; hotbar untouched', slot=before)
+    shot('ChordDial')
+
+
+def chord_close_and_leave():
+    key('Gamepad_FaceButton_Right')          # B: close the dial, stay in
+    assert not build.is_dial_open() and 'PLACE' in mode(), f'B did not just close the dial: {mode()}'
+    key('Gamepad_DPad_Right')                # d-pad right alone rotates in Build Mode
+    key('Gamepad_FaceButton_Right')          # B again: leave
+    assert 'OFF' in mode(), f'B again did not leave: {mode()}'
+    note('B closes the dial, B again leaves')
 
 
 def to_port():
     port = W.PORTS['Winter']
     x, y = port.cx, port.cy
     face(x, y, T.height(x, y), back=300.0, yaw=0.0)
-    key('B')
+    enter_with_b()
     face(x, y, T.height(x, y), back=300.0, yaw=0.0)
 
 
@@ -783,7 +822,7 @@ STEPS = [(pick_site, 3.0), (open_mode, 1.5), (ghost_blue, .2), (rotate_keys, .2)
          (place_roof, 1.5), (roof_placed, 1.0), (corner_rules, 1.5), (corner_refused_then_pick, 1.2), (corner_place, 1.5), (corner_placed, .5),
          (doorway_aim, 1.5), (doorway_place, 1.5), (doorway_placed, .5), (stack_aim, 1.5), (stack_place, 1.5), (stacked, .5),
          (fittings_wheel_shot, 1.2), (fittings_wheel_close, .3), (door_pick, 1.5), (door_place, 1.5), (door_placed, .5), (door_use_prepare, 1.5), (door_open, 1.2), (door_opened, 1.0), (door_close, 1.2), (door_closed, .3), (stair_aim, 1.5), (stair_place, 1.5), (stair_placed, .3), (ceiling_aim, 1.5), (ceiling_place, 1.5), (ceiling_placed, .5), (cutout_check, .3), (stair_walk_start, 4.5), (stair_mid, 4.0), (stair_walked, .3), (upper_wall_aim, 1.5), (upper_wall_place, 1.5), (upper_wall_placed, .5), (upper_door_refused, 1.5), (upper_window_place, 1.5), (upper_window_placed, .5), (upper_foundation_refused, 1.5), (upper_foundation_checked, .3), (save_world, 1.0), (restore_world, 2.0), (world_restored, .3), (to_demolish, 1.5), (demolish_first, 1.5), (after_demolish, .2),
-         (clean_up, 1.5), (demolish_second, 1.5), (leave_with_stick, .3), (to_port, 2.0), (port_red, 1.5),
+         (clean_up, 1.5), (demolish_second, 1.5), (leave_with_pad, .3), (chord_enter, 1.0), (chord_close_and_leave, .5), (to_port, 2.0), (port_red, 1.5),
          (port_nothing_built, .2), (finish, .1)]
 
 

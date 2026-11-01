@@ -439,18 +439,14 @@ void AEWPlayerController::ServerSetInteractionMenuBlocked_Implementation(bool bB
     InteractionComponent->SetMenuBlocked(bBlocked || IsMapOpen() || IsSessionMenuOpen());
 }
 
-int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier, bool bTriggerModifier)
+int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerModifier)
 {
-    if (bTriggerModifier)
-    {
-        static const FKey Pad[] = {EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Right, EKeys::Gamepad_DPad_Down};
-        for (int32 i = 0; i < 4; ++i) if (Key == Pad[i]) return 4 + i;
-    }
+    // Owner, November 1: slots 1-4 on the d-pad (left, up, right, down); 5-8 on LB with X, Y, B, A.
     static const FKey Numbers[] = {EKeys::One,EKeys::Two,EKeys::Three,EKeys::Four,EKeys::Five,EKeys::Six,EKeys::Seven,EKeys::Eight};
     static const FKey ControllerKeys[] = {EKeys::Gamepad_DPad_Left,EKeys::Gamepad_DPad_Up,
         EKeys::Gamepad_DPad_Right,EKeys::Gamepad_DPad_Down,
-        EKeys::Gamepad_FaceButton_Bottom,EKeys::Gamepad_FaceButton_Left,
-        EKeys::Gamepad_FaceButton_Right,EKeys::Gamepad_FaceButton_Top};
+        EKeys::Gamepad_FaceButton_Left,EKeys::Gamepad_FaceButton_Top,
+        EKeys::Gamepad_FaceButton_Right,EKeys::Gamepad_FaceButton_Bottom};
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
         if (Key==Numbers[i] || (i < 4 && Key==ControllerKeys[i]) || (i >= 4 && bControllerModifier && Key==ControllerKeys[i])) return i;
     return INDEX_NONE;
@@ -458,6 +454,13 @@ int32 AEWPlayerController::HotbarSlotForKey(const FKey& Key, bool bControllerMod
 
 bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
 {
+    // LB is the controller's modifier (hotbar 5-8, LB + d-pad right for Build Mode): know whether it is down whatever else
+    // takes the key, so a press or release in a menu never leaves it stuck.
+    if (Params.Key==EKeys::Gamepad_LeftShoulder)
+    {
+        if (Params.Event==IE_Pressed) bHotbarModifierHeld=true;
+        if (Params.Event==IE_Released) bHotbarModifierHeld=false;
+    }
     if (Params.Key==EKeys::F10)
     {
         if (Params.Event==IE_Pressed) SetSessionMenuOpen(!IsSessionMenuOpen());
@@ -473,9 +476,9 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
     }
 #endif
     if (IsItemSpawnerOpen()) return true;
-    // Build Mode takes B / the right stick to enter; while it is on, Q E LB RB, X / B, Escape and the place key too.
+    // Build Mode takes B / LB + d-pad right to enter; while it is on, its own keys too (UEWBuildComponent::ResolveKey).
     if (IsLocalPlayerController() && !bMapOpen && (!InventoryWidget || !InventoryWidget->IsInViewport()) && BuildComponent
-        && BuildComponent->HandleKey(Params)) return true;
+        && BuildComponent->HandleKey(Params, bHotbarModifierHeld)) return true;
     // At a cannon, Right Mouse (or LB) marks the ship it is laid on for the hired gunners, or clears the mark (owner, October 18).
     if (Params.Event == IE_Pressed && (Params.Key == EKeys::RightMouseButton || Params.Key == EKeys::Gamepad_LeftShoulder) && !bMapOpen)
         if (auto* Gunner = Cast<AEWCharacter>(GetPawn()); Gunner && Gunner->GetGunShip()) { Gunner->ServerMarkTarget(); return true; }
@@ -538,16 +541,9 @@ bool AEWPlayerController::InputKey(const FInputKeyEventArgs& Params)
         if (Params.Event==IE_Released) bHotbarModifierHeld=false;
         return true;
     }
-    // The left trigger held turns the d-pad into slots 5 to 8 (the menu uses the same trigger to go back a section, so only in the world).
-    if (Params.Key==EKeys::Gamepad_LeftTrigger && (!InventoryWidget || !InventoryWidget->IsInViewport()) && !bMapOpen)
-    {
-        if (Params.Event==IE_Pressed) bHotbarTriggerHeld=true;
-        if (Params.Event==IE_Released) bHotbarTriggerHeld=false;
-        return true;
-    }
     if (!InventoryWidget || !InventoryWidget->IsInViewport())
     {
-        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld,bHotbarTriggerHeld);
+        const int32 Slot = HotbarSlotForKey(Params.Key,bHotbarModifierHeld);
         const AEWCharacter* Survivor = Cast<AEWCharacter>(GetPawn());
         const bool bClimbDirection = Survivor && Survivor->IsOnLadder()
             && (Params.Key == EKeys::Gamepad_DPad_Up || Params.Key == EKeys::Gamepad_DPad_Down);
@@ -567,8 +563,9 @@ void AEWPlayerController::FlushPressedKeys()
 {
     ReleaseInteraction();
     // The engine also flushes on viewport focus loss; custom chord state must follow it.
-    bHotbarModifierHeld=false; bHotbarTriggerHeld=false;
+    bHotbarModifierHeld=false;
     SuppressedHotbarKeys.Reset();
+    if (BuildComponent) BuildComponent->ForgetHeldKeys();
     Super::FlushPressedKeys();
 }
 
