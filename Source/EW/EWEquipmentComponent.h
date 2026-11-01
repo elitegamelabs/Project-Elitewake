@@ -42,6 +42,8 @@ public:
     /** Authority only: the item in Slot changes state where it is held (a waterskin filled or emptied); nothing
      *  moves in or out of the inventory. */
     bool ChangeEquippedState(EEWEquipmentSlot Slot, UEWItemDefinition* NewState);
+    /** Authority only: the item in Slot is used up where it is held (a campfire laid down); nothing goes back to the inventory. */
+    bool ConsumeEquipped(EEWEquipmentSlot Slot);
     UFUNCTION(BlueprintPure, Category="Equipment")
     TArray<FEWEquipmentEntry> GetEquipmentEntries() const { return Entries; }
     UFUNCTION(BlueprintPure, Category="Equipment")

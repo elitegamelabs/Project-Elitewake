@@ -773,10 +773,12 @@ void UEWInventoryWidget::RefreshCrafting()
     CraftButton->SetIsEnabled(Readiness==EEWCraftResult::Success);
     CraftButton->SetToolTipText(FText::FromString(Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
         : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory")
+        : Readiness==EEWCraftResult::NeedsFire ? TEXT("Cook it by a lit campfire")
         : Readiness==EEWCraftResult::Success ? TEXT("Craft one item") : TEXT("Recipe unavailable")));
     if (Readiness!=EEWCraftResult::Success)
         CraftingDetails->SetText(FText::FromString(Details + TEXT("\n") + (Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
-            : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory") : TEXT("Recipe unavailable"))));
+            : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory")
+            : Readiness==EEWCraftResult::NeedsFire ? TEXT("Cook it by a lit campfire") : TEXT("Recipe unavailable"))));
     RecipeDetailsBox->AddChildToVerticalBox(CraftButton);
     // The work in progress: a bar filling over the recipe's time.
     CraftBar = WidgetTree->ConstructWidget<UProgressBar>(); CraftBar->SetFillColorAndOpacity(FLinearColor(.9f,.7f,.25f));
@@ -966,6 +968,7 @@ void UEWInventoryWidget::ShowCraftResult(EEWCraftResult Result)
         case EEWCraftResult::Success: Message=TEXT("Item crafted"); break;
         case EEWCraftResult::MissingIngredients: Message=TEXT("Not enough materials"); break;
         case EEWCraftResult::InventoryFull: Message=TEXT("Make room in your inventory"); break;
+        case EEWCraftResult::NeedsFire: Message=TEXT("Cook it by a lit campfire"); break;
         case EEWCraftResult::Locked: Message=TEXT("Recipe is not unlocked"); break;
         default: Message=TEXT("Crafting could not be completed"); break;
     }

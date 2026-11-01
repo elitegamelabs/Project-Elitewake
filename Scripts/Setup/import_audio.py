@@ -18,7 +18,7 @@ FOLDER = '/Game/Elitewake/Audio'
 ANIMALS = '/Game/Elitewake/Wildlife/Animals'
 # Source file (Art/Audio/<folder>/<file>) -> asset name, volume, and how it plays: 'world' falls off with distance,
 # 'far' too but carries across the water, 'loop' loops everywhere, 'worldloop' loops falling off with distance,
-# 'flat' plays once everywhere.
+# 'flat' plays once everywhere, 'closeloop' loops heard only within a few metres.
 SOUNDS = {
     'Work/SFX_ChopWood-v1.wav': ('S_ChopWood_v1', .8, 'world'),
     'Work/SFX_PickaxeStone-v1.wav': ('S_PickaxeStone_v1', .8, 'world'),
@@ -28,6 +28,8 @@ SOUNDS = {
     'Footsteps/SFX_StepSand-v1.wav': ('S_StepSand_v1', .9, 'world'),
     'Footsteps/SFX_StepSand-v1b.wav': ('S_StepSand_v1b', .9, 'world'),
     'Footsteps/SFX_StepSnow-v1.wav': ('S_StepSnow_v1', .6, 'world'),
+    # The campfire's crackle (October 31): synthesized by Scripts/Art/make_fire_sound.py, nothing sampled; heard only close by.
+    'World/AMB_CampfireLoop-v1.wav': ('S_CampfireLoop_v1', .9, 'closeloop'),
     # The loops are the v1 takes cross-faded end into start (Scripts/Art/make_audio_loops.py), so no seam is heard.
     'Ambience/AMB_OceanSurf-v2.wav': ('S_AmbOceanSurf_v2', 1.0, 'loop'),
     'Ambience/AMB_WinterWind-v2.wav': ('S_AmbWinterWind_v2', 1.4, 'loop'),
@@ -88,8 +90,9 @@ CALLS = {
 }
 # Animal -> its attack and death sounds (October 30; species without their own are silent there for now).
 STRIKES = {'Spider': (['S_SpiderHiss_v1'], ['S_SpiderDeath_v1'])}
-# Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m.
-FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0)}
+# Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m; close ones
+# (a campfire) full within 1.5 m and gone by 15 m.
+FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0), 'SA_Close_v1': (150.0, 1350.0)}
 
 
 def attenuation(name):
@@ -118,10 +121,11 @@ def import_sound(source, name, volume, mode, falloffs):
     wave = unreal.load_asset(f'{folder}/{name}')
     assert isinstance(wave, unreal.SoundWave), name
     wave.set_editor_property('volume', volume)
-    wave.set_editor_property('looping', mode in ('loop', 'worldloop'))
+    wave.set_editor_property('looping', mode in ('loop', 'worldloop', 'closeloop'))
     wave.set_editor_property('attenuation_settings', falloffs['SA_Far_v1'] if mode == 'far' else
+                             falloffs['SA_Close_v1'] if mode == 'closeloop' else
                              falloffs['SA_World_v1'] if mode in ('world', 'worldloop') else None)
-    if mode in ('loop', 'worldloop'):
+    if mode in ('loop', 'worldloop', 'closeloop'):
         # A loop faded right down keeps playing, so it comes back where it was instead of restarting.
         wave.set_editor_property('virtualization_mode', unreal.VirtualizationMode.PLAY_WHEN_SILENT)
     assert unreal.EditorAssetLibrary.save_loaded_asset(wave)

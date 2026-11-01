@@ -1,6 +1,7 @@
 // Copyright Elite Game Labs. All Rights Reserved.
 
 #include "EWInventoryComponent.h"
+#include "World/EWCampfire.h"
 #include "EWItemDefinition.h"
 #include "EWCraftingRecipe.h"
 #include "EWEquipmentComponent.h"
@@ -342,6 +343,7 @@ EEWCraftResult UEWInventoryComponent::StageCraft(UEWCraftingRecipe* Recipe, TArr
         if (RemoveFromEntries(Proposed, Cost.Key, Cost.Value) != Cost.Value)
             return EEWCraftResult::MissingIngredients;
     if (AddToEntries(Proposed, MaxSlots, Recipe->Output, 1) != 1) return EEWCraftResult::InventoryFull;
+    if (Recipe->bNeedsFire && !AEWCampfire::IsLitFireNear(GetOwner())) return EEWCraftResult::NeedsFire;
     return EEWCraftResult::Success;
 }
 float UEWInventoryComponent::GetFoodFreshness(const UEWItemDefinition* Item) const

@@ -2,6 +2,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "EWInventoryComponent.h"
+#include "World/EWCampfire.h"
 #include "EWWorldState.generated.h"
 
 /** One placed resource as a save keeps it: its name in the map and what is left of it (wood and thatch for a tree, ore for a rock,
@@ -42,6 +43,8 @@ struct FEWSavedWorldState
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedResource> Resources;
     /** Death bags and wreck crates lying about (October 30), each with the time it had left. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedContainer> Containers;
+    /** Campfires survivors laid (October 31), with how long each would still burn. An older save has none. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedCampfire> Campfires;
 };
 
 /**

@@ -11,7 +11,7 @@ class UEWItemDefinition;
 class UEWCraftingRecipe;
 
 UENUM(BlueprintType)
-enum class EEWCraftResult : uint8 { Success, NotAuthority, Locked, InvalidRecipe, MissingIngredients, InventoryFull, Busy };
+enum class EEWCraftResult : uint8 { Success, NotAuthority, Locked, InvalidRecipe, MissingIngredients, InventoryFull, Busy, NeedsFire };
 
 UENUM(BlueprintType)
 enum class EEWFoodUseResult : uint8

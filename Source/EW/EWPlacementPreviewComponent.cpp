@@ -2,6 +2,8 @@
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
+#include "EWEquipmentComponent.h"
+#include "World/EWCampfire.h"
 #include "Ships/EWShip.h"
 #include "Ships/EWShipDefinition.h"
 #include "Components/StaticMeshComponent.h"
@@ -84,6 +86,30 @@ void UEWPlacementPreviewComponent::TickComponent(float DeltaSeconds, ELevelTick 
     if (!Survivor || !Ghost || Survivor->GetHelmShip() || Survivor->GetGunShip() || Survivor->IsOnLadder() || !Survivor->GetInventoryComponent())
     {
         Hide();
+        return;
+    }
+    // A campfire in hand (Phase 1): its ring where it would be laid, blue if the ground there takes it, red if not.
+    UEWItemDefinition* Held = Survivor->GetEquipmentComponent() ? Survivor->GetEquipmentComponent()->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    if (Held && Held->PlacedActor)
+    {
+        FTransform Spot; bool bHit = false;
+        bPlaceable = AEWCampfire::FindPlacement(Survivor, Spot, bHit);
+        UStaticMesh* Mesh = Held->PlacedActor->GetDefaultObject<AEWCampfire>()->Ring->GetStaticMesh();
+        if (!bHit || !Mesh)
+        {
+            Hide();
+            return;
+        }
+        if (Ghost->GetStaticMesh() != Mesh)
+        {
+            Ghost->SetStaticMesh(Mesh);
+            for (int32 Slot = 0; Slot < Ghost->GetNumMaterials(); ++Slot) Ghost->SetMaterial(Slot, Glow);
+        }
+        Glow->SetVectorParameterValue(TEXT("Colour"), bPlaceable ? Placeable : NotPlaceable);
+        Ghost->SetWorldTransform(Spot);
+        Ghost->SetVisibility(true);
+        ShownMount = NAME_None;
+        ShownItem = Held;
         return;
     }
     // The mount being looked at, on any ship close by.

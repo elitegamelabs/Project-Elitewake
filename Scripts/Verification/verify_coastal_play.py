@@ -37,7 +37,7 @@ def tick(delta):
     try:
         if phase==0:
             # Arriving on this map a survivor knows only the first hand-made tools (Phase 1 slice 2); nothing intro-gated.
-            assert sorted(r.get_name() for r in inv.get_available_recipes()) == ['DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe']
+            assert sorted(r.get_name() for r in inv.get_available_recipes()) == ['DA_RecipeCampfire', 'DA_RecipeCookedBerryDish', 'DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe']
             # The starter supplies are the four core tools (owner, October 14).
             assert inv.get_item_count(axe)==1 and pawn.get_inventory_component().get_item_count(axe)==1
             assert not owner.get_component_by_class(unreal.CharacterMovementComponent).is_falling()
@@ -60,7 +60,7 @@ def tick(delta):
         elif phase==3:
             assert not owner.get_component_by_class(unreal.CharacterMovementComponent).is_falling()
             assert 115<owner.get_actor_location().z<135
-            assert sorted(r.get_name() for r in inv.get_available_recipes()) == ['DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe']
+            assert sorted(r.get_name() for r in inv.get_available_recipes()) == ['DA_RecipeCampfire', 'DA_RecipeCookedBerryDish', 'DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe']
             checks.append('Dock collision supports the survivor; the starter kit does not unlock intro-gated recipes (only the first hand-made tools are known)')
             for p in [owner,pawn]: assert p.teleport(unreal.Vector(150,0,200),unreal.Rotator())
             client.set_control_rotation(unreal.Rotator(0,0,0))

@@ -37,8 +37,8 @@ UEWArrivalComponent::UEWArrivalComponent()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.TickInterval = .05f;
     SetIsReplicatedByDefault(true);
-    // The first tools, made by hand (Content/Elitewake/Crafting/Testing; slice 2 of Phase 1).
-    for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe")})
+    // The first tools, made by hand, then a fire and a berry dish cooked on it (Content/Elitewake/Crafting/Testing; slices 2-3 of Phase 1).
+    for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe"), TEXT("Campfire"), TEXT("CookedBerryDish")})
         FirstRecipes.Add(TSoftObjectPtr<UEWCraftingRecipe>(FSoftObjectPath(FString::Printf(TEXT("/Game/Elitewake/Crafting/Testing/DA_Recipe%s.DA_Recipe%s"), Name, Name))));
 }
 

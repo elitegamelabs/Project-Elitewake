@@ -29,4 +29,7 @@ public:
     /** Seconds the work takes (owner, October 22: crafting takes several seconds). Materials are used up only when it finishes. Cooking is 5 to 12 s by recipe. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Crafting", meta=(ClampMin="0"))
     float CraftSeconds = 4.f;
+    /** Made only within reach of a lit campfire (Phase 1: the cooked dishes); checked by the server when the work starts and ends. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Crafting")
+    bool bNeedsFire = false;
 };

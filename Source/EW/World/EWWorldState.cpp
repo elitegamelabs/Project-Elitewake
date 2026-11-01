@@ -2,6 +2,7 @@
 #include "EWPickup.h"
 #include "EWDeathBag.h"
 #include "Ships/EWWreckCrate.h"
+#include "World/EWCampfire.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Gathering/EWHarvestTree.h"
@@ -71,6 +72,8 @@ void UEWWorldStateSubsystem::Capture(UWorld* World, FEWSavedWorldState& Out)
         if (!It->IsActorBeingDestroyed() && It->GetContents() && It->GetContents()->GetUsedSlotCount() > 0) Out.Containers.Add(It->CaptureForSave());
     for (TActorIterator<AEWWreckCrate> It(World); It; ++It)
         if (!It->IsActorBeingDestroyed() && It->GetContents() && It->GetContents()->GetUsedSlotCount() > 0) Out.Containers.Add(It->CaptureForSave());
+    for (TActorIterator<AEWCampfire> It(World); It; ++It)
+        if (!It->IsActorBeingDestroyed()) Out.Campfires.Add(It->CaptureForSave());
 }
 
 int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& State)
@@ -106,6 +109,14 @@ int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& S
             if (auto* Crate = World->SpawnActor<AEWWreckCrate>(AEWWreckCrate::StaticClass(), Saved.Transform, Params)) { Crate->RestoreSaved(Saved); ++Changed; }
         }
         else if (auto* Bag = World->SpawnActor<AEWDeathBag>(AEWDeathBag::StaticClass(), Saved.Transform, Params)) { Bag->RestoreSaved(Saved); ++Changed; }
+    }
+    // Campfires likewise: the ones laid since the load go, the save's come back burning as they were.
+    for (TActorIterator<AEWCampfire> It(World); It; ++It) It->Destroy();
+    for (const FEWSavedCampfire& Saved : State.Campfires)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        if (auto* Fire = World->SpawnActor<AEWCampfire>(AEWCampfire::StaticClass(), Saved.Transform, Params)) { Fire->RestoreSaved(Saved); ++Changed; }
     }
     return Changed;
 }

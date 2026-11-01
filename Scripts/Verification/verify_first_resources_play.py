@@ -5,7 +5,7 @@ Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus
 run with run_play_check.py and EW_PLAY_STARTER_KIT=0 (EW_PLAY_PLAYERS=2). The client acts through its own keys, mouse,
 controller buttons and menu only; the server is touched only to fill the pack for the full-pack check and to save.
 
-  1. A new survivor arrives empty-handed, knowing only the Stone Hatchet and Pickaxe recipes, on server and client.
+  1. A new survivor arrives empty-handed, knowing only the first recipes (Stone Hatchet, Pickaxe, Campfire, Cooked Berry Dish).
   2. The first resources lie where they were authored, the same on both machines.
   3-6. Sticks (E), fibre (controller X), stones (E) and berries (E) are taken by hand: the prompt names each, the whole pile
      arrives in the pack on both machines and the pile is gone.
@@ -103,7 +103,7 @@ def empty_handed():
         assert pack.get_used_slot_count() == 0, f'{who.get_name()} starts with {pack.get_used_slot_count()} slots filled'
         assert who.get_equipment_component().get_equipped_item(HAND) is None
         names = sorted(r.get_name() for r in pack.get_available_recipes())
-        assert names == ['DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe'], names
+        assert names == ['DA_RecipeCampfire', 'DA_RecipeCookedBerryDish', 'DA_RecipeStoneHatchet', 'DA_RecipeWoodenPickaxe'], names
     return True
 
 
@@ -265,7 +265,7 @@ def saved_and_restored():
 
 
 STEPS = [
-    ('A new survivor arrives empty-handed, knowing only the Stone Hatchet and Pickaxe recipes, on server and client', lambda: None, empty_handed, 10),
+    ('A new survivor arrives empty-handed, knowing only the first four recipes, on server and client', lambda: None, empty_handed, 10),
     ('The first resources lie where they were authored, the same on both machines', lambda: None, authored, 5),
     *gather_steps('Arrival sticks 1', 'Sticks', 'Collect Sticks', 'E'),
     *gather_steps('Arrival fiber 1', 'Fiber', 'Gather Fiber', 'Gamepad_FaceButton_Left'),

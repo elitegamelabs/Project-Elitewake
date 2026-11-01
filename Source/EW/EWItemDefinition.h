@@ -150,6 +150,10 @@ public:
     TSoftObjectPtr<UEWItemDefinition> FilledVersion;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Water")
     TSoftObjectPtr<UEWItemDefinition> EmptiedVersion;
+    /** Laid on the ground from the hand (Left Mouse / the right trigger where its ghost shows blue), becoming this actor and
+     *  leaving the hand: the campfire (Phase 1). None for everything else. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Placement")
+    TSubclassOf<class AEWCampfire> PlacedActor;
 
     /** None means this item is not a ship fitting. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")

@@ -5,6 +5,7 @@
 #include "World/EWFootprintComponent.h"
 #include "EWWalletComponent.h"
 #include "EWArrivalComponent.h"
+#include "World/EWCampfire.h"
 #include "AnimationRuntime.h"
 #include "EWCharacterMovementComponent.h"
 #include "EWInventoryComponent.h"
@@ -246,7 +247,7 @@ void AEWCharacter::RefreshHeldItem()
 bool AEWCharacter::HasUsableHeldItem() const
 {
     const UEWItemDefinition* Item = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
-    return Item && (Item->HeldLightIntensity > 0.f || !Item->EmptiedVersion.IsNull() || !Item->FilledVersion.IsNull());
+    return Item && (Item->HeldLightIntensity > 0.f || !Item->EmptiedVersion.IsNull() || !Item->FilledVersion.IsNull() || Item->PlacedActor);
 }
 
 void AEWCharacter::ServerUseHeldItem_Implementation()
@@ -260,6 +261,20 @@ void AEWCharacter::ServerUseHeldItem_Implementation()
         RefreshHeldItem();
         ForceNetUpdate();
         if (bHeldItemLit) MulticastToolAnimation(IgniteAnimation);
+        return;
+    }
+    if (Item->PlacedActor)
+    {
+        // Laid where the survivor looks, if the ground there takes it (the server decides from its own view of them).
+        FTransform Spot; bool bHit = false;
+        if (!AEWCampfire::FindPlacement(this, Spot, bHit)) return;
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        AEWCampfire* Fire = GetWorld()->SpawnActor<AEWCampfire>(Item->PlacedActor, Spot, Params);
+        if (!Fire) return;
+        if (!EquipmentComponent->ConsumeEquipped(EEWEquipmentSlot::MainHand)) { Fire->Destroy(); return; }
+        Fire->SetFuel(AEWCampfire::StartingFuel);
+        ForceNetUpdate();
         return;
     }
     if (UEWItemDefinition* Empty = Item->EmptiedVersion.LoadSynchronous())

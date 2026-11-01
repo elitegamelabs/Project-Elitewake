@@ -31,6 +31,16 @@ bool UEWEquipmentComponent::ChangeEquippedState(EEWEquipmentSlot Slot, UEWItemDe
     return true;
 }
 
+bool UEWEquipmentComponent::ConsumeEquipped(EEWEquipmentSlot Slot)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || bTransferInProgress) return false;
+    const int32 Removed = Entries.RemoveAll([Slot](const FEWEquipmentEntry& E) { return E.Slot == Slot && E.ItemDefinition; });
+    if (Removed == 0) return false;
+    OnEquipmentChanged.Broadcast();
+    GetOwner()->ForceNetUpdate();
+    return true;
+}
+
 UEWItemDefinition* UEWEquipmentComponent::GetEquippedItem(EEWEquipmentSlot Slot) const
 {
     const auto* Entry = Entries.FindByPredicate([Slot](const FEWEquipmentEntry& E) { return E.Slot == Slot; });
