@@ -55,6 +55,8 @@
 #include "EWInteractionComponent.h"
 #include "EWInteractionWidget.h"
 #include "EWArrivalPromptWidget.h"
+#include "EWArrivalComponent.h"
+#include "World/EWStrongbox.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
 #include "EWInventoryComponent.h"
@@ -71,6 +73,8 @@ AEWPlayerController::AEWPlayerController()
     PlacementPreview = CreateDefaultSubobject<UEWPlacementPreviewComponent>(TEXT("PlacementPreview"));
     BuildComponent = CreateDefaultSubobject<UEWBuildComponent>(TEXT("Build"));
     ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
+    Strongbox = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("Strongbox"));
+    Strongbox->MaxSlots = StrongboxSlots;
 }
 
 namespace
@@ -934,9 +938,14 @@ void AEWPlayerController::ServerTransferContainerItem_Implementation(AActor* Con
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
     if (!Survivor || !IsValid(Container) || Container->GetWorld() != GetWorld() || !FEWContainerAccess::CanAccess(Container, Survivor)) return;
     UEWInventoryComponent* Carried = Survivor->GetInventoryComponent();
-    UEWInventoryComponent* Hold = FEWContainerAccess::Inventory(Container);
+    UEWInventoryComponent* Hold = FEWContainerAccess::Inventory(Container, Survivor);
     if (!Carried || !Hold) return;
-    if (bToContainer) Carried->TransferEntryTo(Hold, EntryIndex, Quantity);
+    if (bToContainer)
+    {
+        // Putting something in the strongbox is the town's storage step (Phase 1 slice 5).
+        if (Carried->TransferEntryTo(Hold, EntryIndex, Quantity) > 0 && Cast<AEWStrongbox>(Container))
+            if (auto* Arrival = Survivor->GetArrivalComponent()) Arrival->NoteTownStep(EEWTownStep::Store);
+    }
     else Hold->TransferEntryTo(Carried, EntryIndex, Quantity);
 }
 

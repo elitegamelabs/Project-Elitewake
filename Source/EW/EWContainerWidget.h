@@ -29,6 +29,8 @@ protected:
 private:
     UPROPERTY(Transient) TWeakObjectPtr<AActor> Container;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Title;
+    /** The container column's heading ("Hold", "Strongbox"...). */
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> HoldHeading;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> CarriedSummary;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> HoldSummary;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> CarriedList;

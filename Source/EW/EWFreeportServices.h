@@ -48,6 +48,8 @@ public:
     /** No ship lies on the slipway's foot. */
     UFUNCTION(BlueprintPure, Category="Shipwright") bool IsSlipClear() const;
     static FText ShipName(const UEWShipDefinition* Definition);
+    /** Talking to the shipwright is the town's shipyard step (Phase 1 slice 5). */
+    virtual bool Interact_Implementation(AEWCharacter* Character) override;
 
 protected:
     virtual void GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const override;

@@ -7,7 +7,7 @@
  * A compass strip across the top of the screen. The bearings scroll past a fixed centre mark as the view turns:
  * north is the world's +X (as on the map), east +Y. The wind is marked where it blows from.
  * At the helm of a ship with sails it also shows the sails' trim: where they are swung, where they would draw
- * best, and how well they draw. Local and read-only.
+ * best, and how well they draw. In Saltreach it marks where the shown town step is done. Local and read-only.
  */
 UCLASS()
 class EW_API UEWCompassWidget : public UUserWidget
@@ -26,6 +26,14 @@ public:
     /** The trim advice shown, for example "Trim to starboard". */
     UFUNCTION(BlueprintPure, Category="Compass")
     FString GetTrimAdvice() const { return TrimAdvice; }
+    /** True while the strip marks where Saltreach's shown town step is done (UEWArrivalComponent::GetTownTarget). */
+    UFUNCTION(BlueprintPure, Category="Compass")
+    bool IsShowingPlace() const { return bShowPlace; }
+    /** That place's bearing, 0-360, and how far it is, metres. */
+    UFUNCTION(BlueprintPure, Category="Compass")
+    float GetPlaceBearing() const { return PlaceBearing; }
+    UFUNCTION(BlueprintPure, Category="Compass")
+    int32 GetPlaceMetres() const { return PlaceMetres; }
 
     /** Degrees of bearing the strip spans, and its size on screen (tuning). */
     static constexpr float SpanDegrees = 180.f;
@@ -45,4 +53,7 @@ private:
     float TrimQuality = 0.f;
     float MaxSailAngle = 85.f;
     FString TrimAdvice;
+    bool bShowPlace = false;
+    float PlaceBearing = 0.f;
+    int32 PlaceMetres = 0;
 };

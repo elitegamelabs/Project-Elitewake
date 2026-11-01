@@ -15,7 +15,7 @@ class UEWItemDefinition;
 /**
  * Single player's SAVE GAME (Options menu): the survivor as they were, kept for the next Single Player.
  * Kept: the map, where they stand and look, health, hunger and thirst, the inventory (with food ages), what is
- * equipped and the hotbar. Structures built with Build Mode are kept too, the ships afloat, and the map's trees, rocks and pickups as play
+ * equipped, the hotbar and the strongbox in Saltreach. Structures built with Build Mode are kept too, the ships afloat, and the map's trees, rocks and pickups as play
  * left them (October 30). Death bags and wreck crates are kept with their goods. Not kept yet (M7): animals and fish, which come back fresh.
  */
 UCLASS(BlueprintType)
@@ -57,6 +57,11 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 SkillPoints = 0;
     /** How far through the arrival prompts the survivor got (October 31, UEWArrivalComponent). -1 in an older save: finished. */
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 ArrivalStep = -1;
+    /** Saltreach's town steps done, a bit each (November 1, UEWArrivalComponent). -1 in an older save: all done for a survivor from
+     *  before the arrival prompts, none for one who arrived since (they have not been shown the town yet). */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 TownSteps = -1;
+    /** What the survivor keeps in Saltreach's strongbox (November 1, AEWPlayerController::GetStrongbox). Older saves have none. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Strongbox;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FName> UnlockedSkills;
     /** Everything built with Build Mode (October 27), bases before what stands on them. Older saves have none. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedPiece> BuiltPieces;

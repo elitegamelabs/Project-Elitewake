@@ -61,6 +61,12 @@ public:
     virtual void AcknowledgePossession(APawn* P) override;
     UFUNCTION(BlueprintPure, Category="Company") UEWCompanyComponent* GetCompanyComponent() const { return CompanyComponent; }
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Company") TObjectPtr<UEWCompanyComponent> CompanyComponent;
+    /** What this player keeps in Saltreach's strongbox (AEWStrongbox; Phase 1 slice 5). On the player, not the body, so it outlasts
+     *  death; a controller replicates to its own player only, so nobody else sees it. Saved with the survivor. */
+    UFUNCTION(BlueprintPure, Category="Strongbox") UEWInventoryComponent* GetStrongbox() const { return Strongbox; }
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Strongbox") TObjectPtr<UEWInventoryComponent> Strongbox;
+    /** Stacks the strongbox holds (tuning). */
+    static constexpr int32 StrongboxSlots = 20;
     UFUNCTION(BlueprintCallable, Category="Multiplayer") void SetSessionMenuOpen(bool bOpen);
     UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsSessionMenuOpen() const { return bSessionMenuOpen; }
     UFUNCTION(Server, Reliable) void ServerSetSessionMenuOpen(bool bOpen);
@@ -171,6 +177,8 @@ public:
     /** True while a menu screen (inventory or a container) blocks gameplay input. */
     UFUNCTION(BlueprintPure, Category="Inventory")
     bool IsInventoryOpen() const { return bInventoryInputBlocked; }
+    /** The menu (inventory, skills, Company...), once it has been opened. */
+    UFUNCTION(BlueprintPure, Category="Inventory") UEWInventoryWidget* GetInventoryWidget() const { return InventoryWidget; }
     bool UsesControllerPrompts() const { return bControllerPrompts; }
     void RecordInputDevice(const FKey& Key) { if (Key.IsValid()) bControllerPrompts = Key.IsGamepadKey(); }
     bool HasLocalInteractionIntent() const { return bLocalInteractionIntent; }

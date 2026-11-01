@@ -86,6 +86,7 @@ public:
     /** The open menu section (0 inventory ... 4 journal). */
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetSelectedSection() const { return SelectedSection; }
     UFUNCTION(BlueprintPure, Category="Menu") static int32 GetSectionCount() { return 5; }
+    static constexpr int32 CompanySection = 2;
     /** Moves to the next (+1) or previous (-1) menu section, wrapping round: Tab/Shift+Tab, PageDown/PageUp, RB/LT on a controller. */
     /** The stat the arrows or d-pad have picked for spending a point on (C or left stick press starts it), or -1. */
     /** True while the server is crafting; the Craft button is dead until it ends. */

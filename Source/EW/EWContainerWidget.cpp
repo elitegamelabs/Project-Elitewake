@@ -84,7 +84,7 @@ TSharedRef<SWidget> UEWContainerWidget::RebuildWidget()
             ColumnSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
             ColumnSlot->SetPadding(FMargin(0, 16, 24, 0));
         }
-        MakeText(Heading, 18, Column);
+        HoldHeading = MakeText(Heading, 18, Column);      // the last column made, the container's, keeps it
         Summary = MakeText(FString(), 14, Column);
         auto* Scroll = WidgetTree->ConstructWidget<UScrollBox>();
         Column->AddChild(Scroll);
@@ -105,7 +105,7 @@ UEWInventoryComponent* UEWContainerWidget::CarriedInventory() const
 
 UEWInventoryComponent* UEWContainerWidget::HoldInventory() const
 {
-    return FEWContainerAccess::Inventory(Container.Get());
+    return FEWContainerAccess::Inventory(Container.Get(), GetOwningPlayer() ? Cast<AEWCharacter>(GetOwningPlayer()->GetPawn()) : nullptr);
 }
 
 void UEWContainerWidget::NativeTick(const FGeometry& Geometry, float Delta)
@@ -130,6 +130,8 @@ void UEWContainerWidget::Refresh()
     const UEWInventoryComponent* Carried = CarriedInventory();
     const UEWInventoryComponent* Hold = HoldInventory();
     CarriedSummary->SetText(FText::FromString(Summarize(Carried)));
+    if (Title) Title->SetText(FEWContainerAccess::Title(Container.Get()));
+    if (HoldHeading) HoldHeading->SetText(FEWContainerAccess::Heading(Container.Get()));
     FString HoldText = Summarize(Hold);
     if (const auto* Ship = Cast<AEWShip>(Container.Get()))
     {

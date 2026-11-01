@@ -1,6 +1,7 @@
 #include "Ships/EWWreckCrate.h"
 #include "World/EWWorldState.h"
 #include "EWDeathBag.h"
+#include "World/EWStrongbox.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "EWCharacter.h"
@@ -107,12 +108,29 @@ bool AEWWreckCrate::Interact_Implementation(AEWCharacter* Character)
     return true;
 }
 
-UEWInventoryComponent* FEWContainerAccess::Inventory(const AActor* Container)
+UEWInventoryComponent* FEWContainerAccess::Inventory(const AActor* Container, const AEWCharacter* Survivor)
 {
     if (const auto* Ship = Cast<AEWShip>(Container)) return Ship->GetCargo();
     if (const auto* Crate = Cast<AEWWreckCrate>(Container)) return Crate->GetContents();
     if (const auto* Bag = Cast<AEWDeathBag>(Container)) return Bag->GetContents();
+    if (Cast<AEWStrongbox>(Container)) return AEWStrongbox::StoreOf(Survivor);
     return nullptr;
+}
+
+FText FEWContainerAccess::Title(const AActor* Container)
+{
+    if (Cast<AEWWreckCrate>(Container)) return NSLOCTEXT("Elitewake", "ContainerTitleCrate", "WRECK CRATE");
+    if (Cast<AEWDeathBag>(Container)) return NSLOCTEXT("Elitewake", "ContainerTitleBag", "LEFT WHERE YOU FELL");
+    if (Cast<AEWStrongbox>(Container)) return NSLOCTEXT("Elitewake", "ContainerTitleStrongbox", "YOUR STRONGBOX");
+    return NSLOCTEXT("Elitewake", "ContainerTitleHold", "SHIP'S HOLD");
+}
+
+FText FEWContainerAccess::Heading(const AActor* Container)
+{
+    if (Cast<AEWWreckCrate>(Container)) return NSLOCTEXT("Elitewake", "ContainerHeadingCrate", "Crate");
+    if (Cast<AEWDeathBag>(Container)) return NSLOCTEXT("Elitewake", "ContainerHeadingBag", "Bag");
+    if (Cast<AEWStrongbox>(Container)) return NSLOCTEXT("Elitewake", "ContainerHeadingStrongbox", "Strongbox (yours alone)");
+    return NSLOCTEXT("Elitewake", "ContainerHeadingHold", "Hold");
 }
 
 bool FEWContainerAccess::CanAccess(const AActor* Container, const AEWCharacter* Survivor)
@@ -120,5 +138,6 @@ bool FEWContainerAccess::CanAccess(const AActor* Container, const AEWCharacter* 
     if (const auto* Ship = Cast<AEWShip>(Container)) return Ship->CanAccessCargo(Survivor);
     if (const auto* Crate = Cast<AEWWreckCrate>(Container)) return Crate->CanAccess(Survivor);
     if (const auto* Bag = Cast<AEWDeathBag>(Container)) return Bag->CanAccess(Survivor);
+    if (const auto* Box = Cast<AEWStrongbox>(Container)) return Box->CanAccess(Survivor);
     return false;
 }

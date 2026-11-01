@@ -6,7 +6,7 @@
 class UBorder;
 class UTextBlock;
 
-/** The arrival's one prompt at a time (UEWArrivalComponent), low in the middle of the screen, clear of the crosshair, the
+/** The arrival's one prompt at a time (UEWArrivalComponent; then Saltreach's town steps), low in the middle of the screen, clear of the crosshair, the
  *  interaction prompt and the hotbar. Gives way to any menu, death, the helm and the interaction prompt itself. */
 UCLASS()
 class EW_API UEWArrivalPromptWidget : public UUserWidget

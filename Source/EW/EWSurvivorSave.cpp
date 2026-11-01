@@ -47,7 +47,9 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
     if (const auto* Bar = Survivor->GetHotbarComponent())
         for (int32 i = 0; i < UEWHotbarComponent::SlotCount; ++i) Save->Hotbar.Add(Bar->GetBoundItem(i));
     if (const auto* Purse = Survivor->GetWalletComponent()) Save->Copper = Purse->GetCopper();
-    if (const auto* Arrival = Survivor->GetArrivalComponent()) Save->ArrivalStep = Arrival->GetStepIndex();
+    if (const auto* Arrival = Survivor->GetArrivalComponent()) { Save->ArrivalStep = Arrival->GetStepIndex(); Save->TownSteps = Arrival->GetTownStepsDone(); }
+    if (const auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (const UEWInventoryComponent* Store = Controller->GetStrongbox()) Save->Strongbox = Store->Entries;
     if (const auto* Progress = Survivor->GetProgressionComponent())
     {
         Save->Level = Progress->GetLevel(); Save->Experience = Progress->GetExperience(); Save->UnspentStatPoints = Progress->GetUnspentPoints();
@@ -115,7 +117,20 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
     if (Copper >= 0)
         if (auto* Purse = Survivor->GetWalletComponent()) Purse->SetCopper(Copper);
     // A survivor saved before the arrival prompts existed has long since learned to walk: they stay finished.
-    if (auto* Arrival = Survivor->GetArrivalComponent()) Arrival->SetStepIndex(ArrivalStep < 0 ? UEWArrivalComponent::StepCount : ArrivalStep);
+    if (auto* Arrival = Survivor->GetArrivalComponent())
+    {
+        Arrival->SetStepIndex(ArrivalStep < 0 ? UEWArrivalComponent::StepCount : ArrivalStep);
+        Arrival->SetTownStepsDone(TownSteps >= 0 ? TownSteps : ArrivalStep < 0 ? UEWArrivalComponent::AllTownSteps : 0);
+    }
+    // The strongbox as saved, without anything that no longer exists in the game; room is made so nothing saved is lost.
+    if (auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (UEWInventoryComponent* Store = Controller->GetStrongbox())
+        {
+            Store->Entries = Strongbox.FilterByPredicate([](const FEWInventoryEntry& E) { return E.ItemDefinition && E.Quantity > 0; });
+            Store->MaxSlots = FMath::Max(Store->MaxSlots, Store->Entries.Num());
+            Store->HandleInventoryChanged();
+            Controller->ForceNetUpdate();
+        }
     // Levels first: their health bonus raises the maximum before the saved health is put back.
     if (Level > 0)
         if (auto* Progress = Survivor->GetProgressionComponent())

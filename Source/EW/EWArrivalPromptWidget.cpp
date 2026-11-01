@@ -48,11 +48,15 @@ void UEWArrivalPromptWidget::NativeTick(const FGeometry& Geometry, float DeltaSe
     const auto* Arrival = Survivor ? Survivor->GetArrivalComponent() : nullptr;
     const auto* Interaction = PC ? PC->GetInteractionWidget() : nullptr;
     // One prompt at a time: never over a menu, a death, the helm's controls or the interaction prompt.
-    const bool bShow = Arrival && Arrival->IsPromptDue() && !Survivor->IsDead() && !Survivor->GetHelmShip()
-        && !PC->IsInventoryOpen() && !PC->IsMapOpen() && !PC->IsOptionsMenuOpen()
+    // The arrival's steps first; then, in Saltreach, the town's (slice 5).
+    const bool bTown = Arrival && Arrival->IsTownPromptDue();
+    const bool bShow = Arrival && (Arrival->IsPromptDue() || bTown) && !Survivor->IsDead() && !Survivor->GetHelmShip()
+        && !PC->IsInventoryOpen() && !PC->IsMapOpen() && !PC->IsOptionsMenuOpen() && !PC->IsDialogueOpen()
         && !(Interaction && !Interaction->GetDisplayedPrompt().IsEmpty());
     Panel->SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-    Prompt->SetText(bShow ? UEWArrivalComponent::PromptFor(Arrival->GetStep(), PC->UsesControllerPrompts()) : FText::GetEmpty());
+    Prompt->SetText(!bShow ? FText::GetEmpty()
+        : bTown ? UEWArrivalComponent::TownPromptFor(Arrival->GetTownStep(), PC->UsesControllerPrompts())
+                : UEWArrivalComponent::PromptFor(Arrival->GetStep(), PC->UsesControllerPrompts()));
 }
 
 bool UEWArrivalPromptWidget::IsPromptVisible() const

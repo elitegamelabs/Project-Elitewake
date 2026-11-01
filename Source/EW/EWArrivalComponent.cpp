@@ -2,6 +2,12 @@
 #include "EWCharacter.h"
 #include "EWCraftingRecipe.h"
 #include "EWInventoryComponent.h"
+#include "EWInventoryWidget.h"
+#include "EWCrewMaster.h"
+#include "EWFreeportServices.h"
+#include "EWPlayerController.h"
+#include "World/EWSafeZone.h"
+#include "World/EWStrongbox.h"
 #include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerStart.h"
@@ -46,6 +52,7 @@ void UEWArrivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME_CONDITION(UEWArrivalComponent, Step, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UEWArrivalComponent, TownDone, COND_OwnerOnly);
 }
 
 void UEWArrivalComponent::BeginPlay()
@@ -55,7 +62,7 @@ void UEWArrivalComponent::BeginPlay()
     if (!GetOwner()->HasAuthority()) return;
     // Only a map built for arriving teaches it (build_arrival.py tags its PlayerStart); test maps start finished.
     for (TActorIterator<APlayerStart> It(GetWorld()); It && !bArrivalMap; ++It) bArrivalMap = It->PlayerStartTag == ArrivalStartTag;
-    if (!bArrivalMap) { Step = StepCount; return; }
+    if (!bArrivalMap) { Step = StepCount; TownDone = AllTownSteps; return; }
     if (auto* Pack = GetOwner()->FindComponentByClass<UEWInventoryComponent>())
         for (const TSoftObjectPtr<UEWCraftingRecipe>& Recipe : FirstRecipes)
             if (UEWCraftingRecipe* Loaded = Recipe.LoadSynchronous()) Pack->UnlockRecipe(Loaded);
@@ -78,10 +85,10 @@ bool UEWArrivalComponent::ReadSnapshot(FEWArrivalSnapshot& Out) const
 void UEWArrivalComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-    if (IsComplete()) return;
     FEWArrivalSnapshot Now;
     if (!ReadSnapshot(Now)) return;
     const double Time = GetWorld()->GetTimeSeconds();
+    if (IsComplete()) { TickTown(Time); return; }
     if (Time < ShowAt) return;
     if (Tracker.Step != GetStep())
     {
@@ -130,6 +137,109 @@ void UEWArrivalComponent::OnRep_Step()
 {
     if (GetWorld()) ShowAt = FMath::Max(ShowAt, GetWorld()->GetTimeSeconds() + StepGap);
     Tracker.Step = EEWArrivalStep::Done;
+}
+
+// ---- Saltreach (slice 5) ----------------------------------------------------------------------------------------------
+
+EEWTownStep UEWArrivalComponent::GetTownStep() const
+{
+    for (int32 Index = 0; Index < TownStepCount; ++Index)
+        if (!(TownDone & (1 << Index))) return EEWTownStep(Index);
+    return EEWTownStep::Done;
+}
+
+bool UEWArrivalComponent::IsInTown() const
+{
+    return GetOwner() && AEWSafeZone::FindAt(GetOwner(), GetOwner()->GetActorLocation()) != nullptr;
+}
+
+void UEWArrivalComponent::TickTown(double Time)
+{
+    if (IsTownComplete()) return;
+    // Entering the town gives the first view a moment without a prompt, as arriving does.
+    const bool bInTown = IsInTown();
+    if (bInTown && !bWasInTown) TownShowAt = FMath::Max(TownShowAt, Time + FirstPromptDelay);
+    bWasInTown = bInTown;
+    // The Company page is a menu: the owning machine sees it open and says so (once a second at most until the answer comes).
+    if (IsTownStepDone(EEWTownStep::Company) || Time - TownSentAt < 1.) return;
+    const auto* Survivor = Cast<AEWCharacter>(GetOwner());
+    const auto* PC = Survivor ? Cast<AEWPlayerController>(Survivor->GetController()) : nullptr;
+    const UEWInventoryWidget* Menu = PC ? PC->GetInventoryWidget() : nullptr;
+    if (PC && PC->IsInventoryOpen() && Menu && Menu->IsInViewport() && Menu->GetSelectedSection() == UEWInventoryWidget::CompanySection)
+    {
+        TownSentAt = Time;
+        ServerCompleteTownStep(int32(EEWTownStep::Company));
+    }
+}
+
+bool UEWArrivalComponent::IsTownPromptDue() const
+{
+    return IsComplete() && !IsTownComplete() && bWasInTown && GetWorld() && GetWorld()->GetTimeSeconds() >= TownShowAt;
+}
+
+bool UEWArrivalComponent::GetTownTarget(FVector& OutLocation) const
+{
+    if (!IsTownPromptDue() || !GetOwner()) return false;
+    const FVector From = GetOwner()->GetActorLocation();
+    const AActor* Best = nullptr;
+    auto Consider = [&](const AActor* Candidate)
+    {
+        if (IsValid(Candidate) && (!Best || FVector::DistSquared(From, Candidate->GetActorLocation()) < FVector::DistSquared(From, Best->GetActorLocation())))
+            Best = Candidate;
+    };
+    switch (GetTownStep())
+    {
+    case EEWTownStep::Sell:
+        // The market's traders: the recruiter buys too, but the prompt sends the survivor to the stalls.
+        for (TActorIterator<AEWMerchant> It(GetWorld()); It; ++It) if (It->bBuysPack && !It->IsA<AEWCrewMaster>()) Consider(*It);
+        break;
+    case EEWTownStep::Store: for (TActorIterator<AEWStrongbox> It(GetWorld()); It; ++It) Consider(*It); break;
+    case EEWTownStep::Shipyard: for (TActorIterator<AEWShipwright> It(GetWorld()); It; ++It) Consider(*It); break;
+    default: break;   // the Company page is in the menu, not a place
+    }
+    if (!Best) return false;
+    OutLocation = Best->GetActorLocation();
+    return true;
+}
+
+void UEWArrivalComponent::SetTownStepsDone(int32 Mask)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    TownDone = Mask & AllTownSteps;
+    GetOwner()->ForceNetUpdate();
+    OnRep_TownDone();
+}
+
+void UEWArrivalComponent::NoteTownStep(EEWTownStep Done)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || Done >= EEWTownStep::Done || IsTownStepDone(Done)) return;
+    SetTownStepsDone(TownDone | (1 << int32(Done)));
+}
+
+void UEWArrivalComponent::ServerCompleteTownStep_Implementation(int32 Completed)
+{
+    if (Completed == int32(EEWTownStep::Company)) NoteTownStep(EEWTownStep::Company);
+}
+
+void UEWArrivalComponent::OnRep_TownDone()
+{
+    if (GetWorld()) TownShowAt = FMath::Max(TownShowAt, GetWorld()->GetTimeSeconds() + StepGap);
+}
+
+FText UEWArrivalComponent::TownPromptFor(EEWTownStep Step, bool bController)
+{
+    switch (Step)
+    {
+    case EEWTownStep::Sell: return bController ? NSLOCTEXT("Elitewake", "TownSellPad", "Your purse is empty. X: sell what you gathered to a trader at the market")
+                                                : NSLOCTEXT("Elitewake", "TownSellKeys", "Your purse is empty. E: sell what you gathered to a trader at the market");
+    case EEWTownStep::Store: return bController ? NSLOCTEXT("Elitewake", "TownStorePad", "X: keep what you will not carry in your strongbox by the warehouse")
+                                                 : NSLOCTEXT("Elitewake", "TownStoreKeys", "E: keep what you will not carry in your strongbox by the warehouse");
+    case EEWTownStep::Shipyard: return bController ? NSLOCTEXT("Elitewake", "TownYardPad", "Ships are sold and mended at the shipyard. X: talk to Elias Thorne")
+                                                    : NSLOCTEXT("Elitewake", "TownYardKeys", "Ships are sold and mended at the shipyard. E: talk to Elias Thorne");
+    case EEWTownStep::Company: return bController ? NSLOCTEXT("Elitewake", "TownCompanyPad", "To sail with friends, form a Company. Y, then RB twice: Company")
+                                                   : NSLOCTEXT("Elitewake", "TownCompanyKeys", "To sail with friends, form a Company. I, then Tab twice: Company");
+    default: return FText::GetEmpty();
+    }
 }
 
 FText UEWArrivalComponent::PromptFor(EEWArrivalStep Step, bool bController)

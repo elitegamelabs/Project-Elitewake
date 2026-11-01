@@ -10,6 +10,11 @@ class UEWCraftingRecipe;
 UENUM(BlueprintType)
 enum class EEWArrivalStep : uint8 { Look, Move, Jump, Crouch, Interact, Done };
 
+/** What Saltreach is for (CLAUDE.md Phase 1 slice 5, minutes 20-25), shown one at a time once the survivor is in the town. They
+ *  may be done in any order; the first not yet done is the one shown. */
+UENUM(BlueprintType)
+enum class EEWTownStep : uint8 { Sell, Store, Shipyard, Company, Done };
+
 /** What the survivor's own machine sees of them each frame: enough to tell whether a step's action has been done. */
 struct FEWArrivalSnapshot
 {
@@ -46,6 +51,9 @@ private:
  * survivor restored from a save made before it existed, it starts finished.
  * Arriving there, a survivor also knows how to make their first tools by hand (FirstRecipes, slice 2): the stone hatchet
  * from sticks, stones and fiber, then the pickaxe from the wood it fells. Other maps keep their intro-gated recipes.
+ * Reaching Saltreach afterwards (slice 5: inside a safe zone), the town steps follow the same way: sell or hand in something, put
+ * something in the strongbox, talk to the shipwright, open the Company page. The server judges the first three from the real
+ * action; the owning machine reports the last (a menu page, nothing to win by it).
  */
 UCLASS(ClassGroup=(Elitewake), meta=(BlueprintSpawnableComponent))
 class EW_API UEWArrivalComponent : public UActorComponent
@@ -83,9 +91,38 @@ public:
     /** The owning machine: this step's action is done. The server accepts only the step it is on, never the interact step. */
     UFUNCTION(Server, Reliable) void ServerCompleteStep(int32 Completed);
 
+    static constexpr int32 TownStepCount = int32(EEWTownStep::Done);
+    static constexpr int32 AllTownSteps = (1 << TownStepCount) - 1;
+    /** Which town steps are done, a bit each (bit n: EEWTownStep n). */
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") int32 GetTownStepsDone() const { return TownDone; }
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") bool IsTownStepDone(EEWTownStep Which) const { return Which >= EEWTownStep::Done || (TownDone & (1 << int32(Which))); }
+    /** The first town step not yet done, or Done. */
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") EEWTownStep GetTownStep() const;
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") bool IsTownComplete() const { return (TownDone & AllTownSteps) == AllTownSteps; }
+    /** The survivor stands inside a settlement's safe zone (Saltreach). */
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") bool IsInTown() const;
+    /** The owning machine: true while a town step's prompt should be on screen (the arrival prompts finished, in town, not in a pause). */
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") bool IsTownPromptDue() const;
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") static FText TownPromptFor(EEWTownStep Step, bool bController);
+    /** Where the shown town step is done (the nearest such place), for the compass; false when none is shown. */
+    UFUNCTION(BlueprintPure, Category="Arrival|Town") bool GetTownTarget(FVector& OutLocation) const;
+    /** Authority: the town steps outright (a save being restored). */
+    UFUNCTION(BlueprintCallable, Category="Arrival|Town") void SetTownStepsDone(int32 Mask);
+    /** Authority: the survivor did a town step's action for real (sold, stored, spoke to the shipwright). */
+    void NoteTownStep(EEWTownStep Done);
+    /** The owning machine: the Company page was opened. The server accepts only that step this way. */
+    UFUNCTION(Server, Reliable) void ServerCompleteTownStep(int32 Completed);
+
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Step) int32 Step = 0;
     UFUNCTION() void OnRep_Step();
+    UPROPERTY(ReplicatedUsing=OnRep_TownDone) int32 TownDone = 0;
+    UFUNCTION() void OnRep_TownDone();
+    void TickTown(double Time);
+    /** The owning machine: in town at the last look, when the town prompt may next show, and when the Company page was last reported. */
+    bool bWasInTown = false;
+    double TownShowAt = 0.;
+    double TownSentAt = -100.;
     void Advance();
     bool ReadSnapshot(FEWArrivalSnapshot& Out) const;
 

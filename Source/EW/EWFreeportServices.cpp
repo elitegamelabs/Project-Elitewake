@@ -1,5 +1,6 @@
 #include "EWFreeportServices.h"
 #include "EWCharacter.h"
+#include "EWArrivalComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWSurvivalComponent.h"
@@ -127,6 +128,13 @@ FText AEWShipwright::ActOnDialogue(AEWCharacter* Character, FName Key)
     return FText::GetEmpty();
 }
 
+bool AEWShipwright::Interact_Implementation(AEWCharacter* Character)
+{
+    if (!Super::Interact_Implementation(Character)) return false;
+    if (auto* Arrival = Character->GetArrivalComponent()) Arrival->NoteTownStep(EEWTownStep::Shipyard);
+    return true;
+}
+
 // ---- Tavern keeper --------------------------------------------------------------------------------------------------
 
 bool AEWTavernKeeper::CompleteContract(AEWCharacter* Character, int32 Index)
@@ -138,6 +146,7 @@ bool AEWTavernKeeper::CompleteContract(AEWCharacter* Character, int32 Index)
     if (!Pack || !Purse || Pack->GetItemCount(Job.Item) < Job.Quantity) return false;
     if (Pack->RemoveItem(Job.Item, Job.Quantity) != Job.Quantity) return false;
     Purse->AddCopper(Job.RewardCopper);
+    if (auto* Arrival = Character->GetArrivalComponent()) Arrival->NoteTownStep(EEWTownStep::Sell);   // handing in counts as selling
     return true;
 }
 

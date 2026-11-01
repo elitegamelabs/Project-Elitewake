@@ -57,9 +57,13 @@ private:
     bool bEverFilled = false;
 };
 
-/** What a survivor may open in the container screen: a ship's hold or a wreck crate. */
+/** What a survivor may open in the container screen: a ship's hold, a wreck crate, a death bag or their strongbox. */
 struct EW_API FEWContainerAccess
 {
-    static UEWInventoryComponent* Inventory(const AActor* Container);
+    /** The goods the screen shows. A strongbox's are the survivor's own, so it needs to know whose. */
+    static UEWInventoryComponent* Inventory(const AActor* Container, const AEWCharacter* Survivor = nullptr);
     static bool CanAccess(const AActor* Container, const AEWCharacter* Survivor);
+    /** The screen's title and the container column's heading. */
+    static FText Title(const AActor* Container);
+    static FText Heading(const AActor* Container);
 };

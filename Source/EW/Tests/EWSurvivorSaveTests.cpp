@@ -10,6 +10,7 @@
 #include "EWSurvivorSave.h"
 #include "EWWalletComponent.h"
 #include "EWArrivalComponent.h"
+#include "EWPlayerController.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/AutomationTest.h"
@@ -66,6 +67,16 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("A star is lit"), Progress->UnlockSkill(TEXT("Gatherer")));
     Original->GetWalletComponent()->SetCopper(1234);
     Original->GetArrivalComponent()->SetStepIndex(2);
+    Original->GetArrivalComponent()->SetTownStepsDone(0b0011);
+    // The strongbox lives on the player (slice 5): a controller for the original survivor, its store holding wood.
+    UClass* PlayerClass = LoadClass<AEWPlayerController>(nullptr,
+        TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonPlayerController.BP_ThirdPersonPlayerController_C"));
+    AEWPlayerController* Keeper = PlayerClass ? World->SpawnActor<AEWPlayerController>(PlayerClass) : nullptr;
+    if (!TestNotNull(TEXT("A player for the survivor"), Keeper)) return false;
+    Keeper->Possess(Original);
+    TestEqual(TEXT("The player holds the survivor"), Original->GetController(), (AController*)Keeper);
+    TestEqual(TEXT("The strongbox holds twenty stacks"), Keeper->GetStrongbox()->GetMaxSlotCount(), AEWPlayerController::StrongboxSlots);
+    TestEqual(TEXT("Berries go into the strongbox"), Keeper->GetStrongbox()->AddItem(Berry, 6), 6);
     TestTrue(TEXT("Save writes to isolated test slot"), UEWSurvivorSave::SaveSurvivor(Original, SlotName));
     TestTrue(TEXT("Test slot exists"), UEWSurvivorSave::HasSave(SlotName));
     Original->GetSurvivalComponent()->ApplyDamage(50.f);
@@ -99,6 +110,14 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     UEWProgressionComponent* Back = Resumed->GetProgressionComponent();
     TestEqual(TEXT("Purse restored"), Resumed->GetWalletComponent()->GetCopper(), int64(1234));
     TestEqual(TEXT("Arrival prompts resume where they were"), Resumed->GetArrivalComponent()->GetStepIndex(), 2);
+    TestEqual(TEXT("Town steps resume where they were"), Resumed->GetArrivalComponent()->GetTownStepsDone(), 0b0011);
+    TestEqual(TEXT("The save holds the strongbox's one stack"), Saved->Strongbox.Num(), 1);
+    // The strongbox comes back to the player who resumes: the old player lets go, a new one takes the resumed survivor.
+    Keeper->GetStrongbox()->RemoveItem(Berry, 6);
+    Keeper->UnPossess();
+    Keeper->Possess(Resumed);
+    TestTrue(TEXT("Applying again restores the strongbox to the survivor's player"), Saved->ApplyTo(Resumed));
+    TestEqual(TEXT("Strongbox goods restored"), Keeper->GetStrongbox()->GetItemCount(Berry), 6);
     TestEqual(TEXT("Level restored"), Back->GetLevel(), 3);
     TestEqual(TEXT("Unspent stat point restored"), Back->GetUnspentPoints(), 1);
     TestEqual(TEXT("Spent stat point restored"), Back->GetStatPoints(EEWStat::Vitality), 1);
@@ -112,6 +131,12 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("Survivor from an older save"), Veteran)) return false;
     TestTrue(TEXT("Older save applies"), Saved->ApplyTo(Veteran));
     TestTrue(TEXT("Older save leaves the arrival finished"), Veteran->GetArrivalComponent()->IsComplete());
+    Saved->TownSteps = -1;
+    TestTrue(TEXT("Save from before the town steps applies"), Saved->ApplyTo(Veteran));
+    TestTrue(TEXT("A survivor from before the arrival prompts has seen the town"), Veteran->GetArrivalComponent()->IsTownComplete());
+    Saved->ArrivalStep = 3;
+    TestTrue(TEXT("Save from the arrival but before the town steps applies"), Saved->ApplyTo(Veteran));
+    TestEqual(TEXT("A survivor who arrived since is shown the town"), Veteran->GetArrivalComponent()->GetTownStepsDone(), 0);
     TestTrue(TEXT("Temporary save slot is removed"), UGameplayStatics::DeleteGameInSlot(SlotName, 0));
     TestFalse(TEXT("Temporary save slot no longer exists"), UEWSurvivorSave::HasSave(SlotName));
     return true;

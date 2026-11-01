@@ -39,6 +39,8 @@ public:
     virtual bool CanInteract_Implementation(AEWCharacter* Character) const override;
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
     virtual bool Interact_Implementation(AEWCharacter* Character) override;
+    /** A trader who buys speaks first to an empty purse (Phase 1 slice 5): everyone lands with none, and gathering is how to fill it. */
+    virtual FText GetDialogueGreeting(const AEWCharacter* Character) const override;
 
     /** Authority: sells every valued item in the pack; returns the Copper paid (0 when nothing was sold). */
     int64 SellAll(AEWCharacter* Character);

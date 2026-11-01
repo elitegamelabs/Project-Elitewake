@@ -139,6 +139,7 @@ private:
     friend class AEWShip;
     friend class AEWDeathBag;
     friend class AEWWreckCrate;
+    friend class AEWPlayerController;
     friend class FEWSurvivorSaveRoundTripTest;
     double LastFoodClockSeconds = 0.;
     void RefreshFoodAge();

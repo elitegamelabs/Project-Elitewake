@@ -83,4 +83,48 @@ bool FEWArrivalAuthorityTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Prompt text is at least 24 px at 1080p"), UEWArrivalPromptWidget::FontSize >= 24);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWArrivalTownStepsTest, "Elitewake.Arrival.TownStepsFinishByDoingThem",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FEWArrivalTownStepsTest::RunTest(const FString& Parameters)
+{
+    auto* Owner = NewObject<AActor>();
+    auto* Arrival = NewObject<UEWArrivalComponent>(Owner);
+    TestEqual(TEXT("A new survivor has done none of the town"), Arrival->GetTownStepsDone(), 0);
+    TestEqual(TEXT("Selling comes first"), Arrival->GetTownStep(), EEWTownStep::Sell);
+    TestFalse(TEXT("Nothing in town is shown before the arrival prompts finish"), Arrival->IsTownPromptDue());
+
+    Arrival->NoteTownStep(EEWTownStep::Shipyard);
+    TestTrue(TEXT("A step done out of order counts"), Arrival->IsTownStepDone(EEWTownStep::Shipyard));
+    TestEqual(TEXT("The first step not done is still the one shown"), Arrival->GetTownStep(), EEWTownStep::Sell);
+    Arrival->NoteTownStep(EEWTownStep::Sell);
+    TestEqual(TEXT("Then storing"), Arrival->GetTownStep(), EEWTownStep::Store);
+    Arrival->ServerCompleteTownStep_Implementation(int32(EEWTownStep::Store));
+    TestFalse(TEXT("The client cannot claim storing"), Arrival->IsTownStepDone(EEWTownStep::Store));
+    Arrival->ServerCompleteTownStep_Implementation(int32(EEWTownStep::Sell) + 99);
+    TestEqual(TEXT("Nonsense from the client changes nothing"), Arrival->GetTownStepsDone(), 0b0101);
+    Arrival->NoteTownStep(EEWTownStep::Store);
+    Arrival->ServerCompleteTownStep_Implementation(int32(EEWTownStep::Company));
+    TestTrue(TEXT("The client reports the Company page itself"), Arrival->IsTownComplete());
+    TestEqual(TEXT("All done shows nothing"), Arrival->GetTownStep(), EEWTownStep::Done);
+
+    Arrival->SetTownStepsDone(0xFF);
+    TestEqual(TEXT("A restored mask keeps only real steps"), Arrival->GetTownStepsDone(), UEWArrivalComponent::AllTownSteps);
+    Arrival->SetTownStepsDone(0);
+    Owner->SetRole(ROLE_SimulatedProxy);
+    Arrival->NoteTownStep(EEWTownStep::Sell);
+    Arrival->SetTownStepsDone(UEWArrivalComponent::AllTownSteps);
+    TestEqual(TEXT("Only the server marks town steps"), Arrival->GetTownStepsDone(), 0);
+    FVector Place;
+    TestFalse(TEXT("No place on the compass outside the town"), Arrival->GetTownTarget(Place));
+
+    for (int32 Step = 0; Step < UEWArrivalComponent::TownStepCount; ++Step)
+    {
+        TestFalse(TEXT("Every town step has keyboard words"), UEWArrivalComponent::TownPromptFor(EEWTownStep(Step), false).IsEmpty());
+        TestFalse(TEXT("Every town step has controller words"), UEWArrivalComponent::TownPromptFor(EEWTownStep(Step), true).IsEmpty());
+        TestTrue(TEXT("Town prompts are one line, under 80 characters"), UEWArrivalComponent::TownPromptFor(EEWTownStep(Step), false).ToString().Len() < 80);
+    }
+    return true;
+}
 #endif

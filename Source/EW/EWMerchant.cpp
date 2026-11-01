@@ -1,5 +1,6 @@
 #include "EWMerchant.h"
 #include "EWCharacter.h"
+#include "EWArrivalComponent.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWWalletComponent.h"
@@ -227,6 +228,7 @@ int64 AEWMerchant::SellAll(AEWCharacter* Character)
     }
     if (Earned <= 0) return 0;
     Purse->AddCopper(Earned);
+    if (auto* Arrival = Character->GetArrivalComponent()) Arrival->NoteTownStep(EEWTownStep::Sell);
     ++SalesMade;
     ForceNetUpdate();
     return Earned;
@@ -239,6 +241,14 @@ FText AEWMerchant::GoodsName(int32 Index) const
     return Line.Bundle > 1
         ? FText::Format(NSLOCTEXT("Elitewake", "MerchantBundle", "{0} x{1}"), Line.Item->DisplayName, FText::AsNumber(Line.Bundle))
         : Line.Item->DisplayName;
+}
+
+FText AEWMerchant::GetDialogueGreeting(const AEWCharacter* Character) const
+{
+    const UEWWalletComponent* Purse = IsValid(Character) ? Character->GetWalletComponent() : nullptr;
+    if (bBuysPack && Purse && Purse->GetCopper() <= 0)
+        return NSLOCTEXT("Elitewake", "MerchantEmptyPurse", "Empty purse? Everyone lands here with one. I buy what you gather (wood, stone, meat, hides, herbs) and pay in copper you can spend at any stall.");
+    return Super::GetDialogueGreeting(Character);
 }
 
 void AEWMerchant::GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const
