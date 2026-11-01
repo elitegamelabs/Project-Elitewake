@@ -50,6 +50,14 @@ FIRST_RESOURCES = [
 ]
 STONE_HATCHET = {'DA_TestSticks': 3, 'DA_TestStone': 2, 'DA_TestFiber': 4}   # the recipe build_first_resources.py writes
 
+# Risk and recovery (Phase 1 slice 4, minutes 15-20; build_plains_threat.py). Two wild boars root in a pocket of gentle ground
+# about 45 m north of the track, some 240 m on from the spawn: seen from the track, they charge only a survivor who comes within
+# 6 m, so the risk is chosen (and their meat is the reward). Each starts at one of these points; they roam about 9 m round it.
+BOARS = [(-41000.0, -55800.0), (-40300.0, -56350.0)]
+# Medicinal herbs (yarrow, a wound and fever plant of the period) gathered by hand: one clump by the spring, one beside the
+# track before the boars. Eating one ends food sickness (DA_MedicinalHerb). (label, x, y, quantity).
+HERBS = [('Arrival herbs 1', -19700.0, -63250.0, 3), ('Arrival herbs 2', -32800.0, -61700.0, 3)]
+
 # How far round the arrival other generators keep clear (grass, scattered flora): the track's edge plus this margin.
 CLEAR_MARGIN = 150.0
 

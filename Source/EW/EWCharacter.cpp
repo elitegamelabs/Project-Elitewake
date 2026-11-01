@@ -38,6 +38,7 @@
 #include "Ships/EWShipDefinition.h"
 #include "Wildlife/EWFish.h"
 #include "Wildlife/EWAnimal.h"
+#include "EngineUtils.h"
 #include "EWStation.h"
 #include "EWSound.h"
 #include "World/EWClimateRegion.h"
@@ -562,6 +563,7 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	{
 		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
 		SurvivalComponent->UpdateNeeds(bIsSprinting, DeltaSeconds);
+		SurvivalComponent->UpdateRecovery(AEWCampfire::IsLitFireNear(this), DeltaSeconds);
 		// The climate where the survivor stands, twice a second.
 		ClimateClock += DeltaSeconds;
 		if (ClimateClock >= .5f)
@@ -655,6 +657,12 @@ bool AEWCharacter::FindRespawnPoint(const FVector& DeathSpot, FVector& OutLocati
         const EEWRegion Region = AEWClimateRegion::SampleClimate(this, Spot).Region;
         if (DeathRegion != EEWRegion::OpenSea && Region != DeathRegion) continue;
         if (Region == EEWRegion::OpenSea) continue;
+        // Not back among whatever killed them: clear of every living aggressive animal.
+        bool bHostileNear = false;
+        for (TActorIterator<AEWAnimal> It(World); It && !bHostileNear; ++It)
+            bHostileNear = !It->IsDead() && It->Definition && It->Definition->bAggressive
+                && FVector::Dist2D(It->GetActorLocation(), Spot) < RespawnHostileClearance;
+        if (bHostileNear) continue;
         if (World->OverlapBlockingTestByChannel(Spot, FQuat::Identity, ECC_Pawn, Body, Query)) continue;
         OutLocation = Spot;
         return true;

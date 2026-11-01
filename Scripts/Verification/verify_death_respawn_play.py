@@ -84,7 +84,9 @@ def tick(delta):
             assert len(bs) == 1, f'{len(bs)} death bags'
             assert bs[0].get_contents().get_item_count(wood) == 7, 'the bag does not hold the wood'
             assert inv.get_item_count(wood) == 0, 'the survivor still carries the wood'
-            assert unreal.Vector.distance(bs[0].get_actor_location(), state['death_spot']) < 50
+            at, fell = bs[0].get_actor_location(), state['death_spot']
+            # Under the body, on the ground (November 1: it had floated at the body's middle).
+            assert ((at.x - fell.x) ** 2 + (at.y - fell.y) ** 2) ** .5 < 50 and at.z < fell.z - 40, (at, fell)
             checks.append('The seven wood wait in a bag at the place of death; the survivor carries none')
         elif phase == 7:
             w = widget()

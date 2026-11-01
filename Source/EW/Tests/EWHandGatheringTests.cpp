@@ -37,6 +37,15 @@ bool FEWHandGatheringTest::RunTest(const FString& Parameters)
     Node->GatheringKind=EEWHandGatheringKind::LooseStones;
     TestTrue(TEXT("Loose stones are eligible by hand"),IEWInteractable::Execute_CanInteract(Node,Pawn));
     TestTrue(TEXT("Loose stones are collected, not gathered"),IEWInteractable::Execute_GetInteractionPrompt(Node,Pawn).ToString().StartsWith(TEXT("Collect")));
+    // Medicinal herbs (Phase 1 slice 4) are a remedy, gathered: never a plain resource, never food of another kind.
+    Node->GatheringKind=EEWHandGatheringKind::Herbs;
+    TestFalse(TEXT("A resource is not an herb"),IEWInteractable::Execute_CanInteract(Node,Pawn));
+    Item->Category=EEWItemCategory::Consumable; Item->FoodKind=EEWFoodKind::Berry;
+    TestFalse(TEXT("Nor is a berry"),IEWInteractable::Execute_CanInteract(Node,Pawn));
+    Item->FoodKind=EEWFoodKind::Remedy;
+    TestTrue(TEXT("A remedy is gathered as an herb"),IEWInteractable::Execute_CanInteract(Node,Pawn));
+    TestTrue(TEXT("Herbs are gathered"),IEWInteractable::Execute_GetInteractionPrompt(Node,Pawn).ToString().StartsWith(TEXT("Gather")));
+    Item->Category=EEWItemCategory::Resource; Item->FoodKind=EEWFoodKind::None; Node->GatheringKind=EEWHandGatheringKind::LooseStones;
     Item->Category=EEWItemCategory::Weapon;
     TestFalse(TEXT("Invalid resource category is ineligible"),IEWInteractable::Execute_CanInteract(Node,Pawn));
     TestEqual(TEXT("Invalid category cannot transfer directly"),Node->TryPickup(Pawn),0); Item->Category=EEWItemCategory::Resource;

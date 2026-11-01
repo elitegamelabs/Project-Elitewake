@@ -15,6 +15,8 @@ bool AEWHandGatherable::CanInteract_Implementation(AEWCharacter* Survivor) const
     return Super::CanInteract_Implementation(Survivor)
         && (GatheringKind == EEWHandGatheringKind::Berries
             ? ItemDefinition->Category == EEWItemCategory::Consumable && ItemDefinition->FoodKind == EEWFoodKind::Berry
+            : GatheringKind == EEWHandGatheringKind::Herbs
+            ? ItemDefinition->Category == EEWItemCategory::Consumable && ItemDefinition->FoodKind == EEWFoodKind::Remedy
             : ItemDefinition->Category == EEWItemCategory::Resource)
         && !ItemDefinition->ItemId.IsNone()
         && Survivor->GetSurvivalComponent() && Survivor->GetSurvivalComponent()->GetHealth() > 0;

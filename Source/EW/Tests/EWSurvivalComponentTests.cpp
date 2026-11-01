@@ -101,4 +101,42 @@ bool FEWSurvivalExhaustionTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Authority can clear a condition"),Survival->GetDebuffNotices().Num(),0);
     return true;
 }
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWSurvivalMendingTest,"Elitewake.Survival.MendingWhenFedAndWatered",EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWSurvivalMendingTest::RunTest(const FString& Parameters)
+{
+    auto* Owner=NewObject<AActor>();
+    auto* Survival=NewObject<UEWSurvivalComponent>(Owner);
+    Owner->AddInstanceComponent(Survival);
+    const float PerSecond=Survival->GetMaxHealth()/UEWSurvivalComponent::MendSeconds;
+    Survival->ApplyDamage(30.f);
+    Survival->UpdateRecovery(false,UEWSurvivalComponent::HurtPause*.5f);
+    TestEqual(TEXT("No mending straight after a hurt"),Survival->GetHealth(),70.f);
+    Survival->UpdateRecovery(false,UEWSurvivalComponent::HurtPause*.5f);
+    Survival->UpdateRecovery(false,60.f);
+    TestEqual(TEXT("Fed and watered, a minute mends a minute's worth"),Survival->GetHealth(),70.f+60.f*PerSecond,.01f);
+    const float Before=Survival->GetHealth();
+    Survival->UpdateRecovery(true,60.f);
+    TestEqual(TEXT("By a lit fire it mends faster"),Survival->GetHealth(),Before+60.f*PerSecond*UEWSurvivalComponent::FireMendFactor,.01f);
+    Survival->ApplyDamage(5.f);
+    const float Hurt=Survival->GetHealth();
+    Survival->UpdateRecovery(true,UEWSurvivalComponent::HurtPause-1.f);
+    TestEqual(TEXT("A new hurt pauses mending again"),Survival->GetHealth(),Hurt);
+    Survival->UpdateRecovery(false,5.f);
+    Survival->SetHunger(UEWSurvivalComponent::WellFedAbove-1.f);
+    const float Hungry=Survival->GetHealth();
+    Survival->UpdateRecovery(false,60.f);
+    TestEqual(TEXT("Hungry, the body does not mend"),Survival->GetHealth(),Hungry);
+    Survival->SetHunger(100.f);
+    Survival->ContractFoodSickness();
+    Survival->UpdateRecovery(false,60.f);
+    TestEqual(TEXT("Nor while food-sick"),Survival->GetHealth(),Hungry);
+    Survival->CureFoodSickness();
+    Survival->UpdateRecovery(true,UEWSurvivalComponent::MendSeconds);
+    TestEqual(TEXT("Mending stops at full health"),Survival->GetHealth(),Survival->GetMaxHealth());
+    Owner->SetRole(ROLE_SimulatedProxy);
+    Survival->ApplyDamage(10.f);
+    TestEqual(TEXT("Clients cannot change health"),Survival->GetHealth(),Survival->GetMaxHealth());
+    return true;
+}
 #endif

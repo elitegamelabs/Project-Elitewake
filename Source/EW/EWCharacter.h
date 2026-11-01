@@ -213,6 +213,8 @@ public:
     float RespawnMinDistance = 6000.f;
     UPROPERTY(EditDefaultsOnly, Category="Death", meta=(ClampMin="0"))
     float RespawnMaxDistance = 20000.f;
+    /** How far a respawn spot keeps from any living aggressive animal, cm (Phase 1 slice 4; tuning). */
+    static constexpr float RespawnHostileClearance = 3000.f;
 
     /** The ship whose helm this survivor holds, if any. */
     UFUNCTION(BlueprintPure, Category="Ship")

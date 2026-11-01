@@ -90,6 +90,15 @@ public:
 	bool IsFoodSick() const { return FoodSicknessLeft > 0.f; }
 	UFUNCTION(BlueprintPure, Category="Survival|Needs")
 	float GetFoodSicknessLeft() const { return FoodSicknessLeft; }
+	/** Authority: a step of time on the body's own mending (Phase 1 slice 4: recovery from injury). Fed and watered (both at
+	 *  WellFedAbove or more), free of food sickness and unhurt for HurtPause seconds, health slowly comes back; resting by a lit
+	 *  fire (bByFire) it comes back FireMendFactor times as fast. */
+	UFUNCTION(BlueprintCallable, Category="Survival|Health")
+	void UpdateRecovery(bool bByFire, float DeltaSeconds);
+	static constexpr float MendSeconds = 15.f * 60.f;   // s from empty to full health, fed and watered (tuning)
+	static constexpr float FireMendFactor = 3.f;        // by a lit fire: full in five minutes (tuning)
+	static constexpr float WellFedAbove = 40.f;         // hunger and thirst at or above this let the body mend (tuning)
+	static constexpr float HurtPause = 10.f;            // s after any hurt before mending starts, so a fight is not healed mid-way
 
 	/** Working rules from the owner's design decisions of October 22. */
 	static constexpr float HungerEmptySeconds = 45.f * 60.f;
@@ -233,6 +242,8 @@ private:
     UPROPERTY(Replicated)
     float LastDamageAmount = 0.f;
     float PendingSmallDamage = 0.f;
+    /** Server only: seconds since the last hurt of any kind (mending waits for HurtPause). */
+    float SinceHurt = HurtPause;
     float BaseMaxHealth = -1.f, BaseMaxStamina = -1.f, BaseMaxCarry = -1.f;
     float ClimateResistance = 0.f;
 	void NotifyStatsChanged();

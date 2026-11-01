@@ -20,6 +20,7 @@ class EW_API AEWDeathBag : public AActor, public IEWInteractable
     GENERATED_BODY()
 public:
     AEWDeathBag();
+    virtual void PostInitializeComponents() override;
     virtual void Tick(float DeltaSeconds) override;
 
     /** Owner's decision: a dropped bag stays recoverable for 30 real minutes. */
@@ -42,9 +43,14 @@ public:
     virtual FText GetInteractionPrompt_Implementation(AEWCharacter* Character) const override;
     virtual bool Interact_Implementation(AEWCharacter* Character) override;
 
+    /** The modelled sack's asset (built by Scripts/Setup/build_plains_threat.py). */
+    static constexpr const TCHAR* SackMesh = TEXT("/Game/Elitewake/World/Death/SM_DeathBag_v1.SM_DeathBag_v1");
+
 private:
     UPROPERTY(VisibleAnywhere, Category="Death")
     TObjectPtr<UStaticMeshComponent> Sack;
+    /** True when the modelled sack was found (its base at the origin), false for the fallback sphere (its centre). */
+    bool bModelled = false;
     UPROPERTY(VisibleAnywhere, Category="Death")
     TObjectPtr<UEWInventoryComponent> Contents;
     bool bEverFilled = false;

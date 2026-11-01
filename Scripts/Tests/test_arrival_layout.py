@@ -137,6 +137,29 @@ class ArrivalLayoutTests(unittest.TestCase):
         for kind in ('LOOSE_STICKS', 'PLANT_FIBER', 'LOOSE_STONES'):
             self.assertTrue(any(in_view(x, y) for _, k, _, x, y, _ in A.FIRST_RESOURCES if k == kind), f'no {kind} in view')
 
+    def test_boars_are_a_chosen_risk_off_the_track(self):
+        notice, roam = 600.0, 900.0          # DA_Animal_Boar (build_animals.py): it charges within notice of where it wanders
+        for x, y in A.BOARS:
+            self.assertEqual(W.region_of(x, y), 'Plains')
+            self.assertGreater(A.distance_to_route(x, y) - roam - notice, 2000, 'a survivor keeping to the track could be charged')
+            self.assertLess(A.distance_to_route(x, y), 7000, 'too far from the track to be seen from it')
+            self.assertGreater(math.hypot(x - S[0], y - S[1]), 15000, 'in the first minutes of the arrival')
+            self.assertFalse(W.near_port(x, y, 8000), 'by a port')
+            for a in range(8):
+                gx, gy = x + roam * math.cos(a * math.pi / 4), y + roam * math.sin(a * math.pi / 4)
+                self.assertGreater(T.height(gx, gy), T.SEA + 100, 'its ground floods')
+
+    def test_herbs_grow_beside_the_track_before_the_boars(self):
+        boars = min(math.hypot(x - S[0], y - S[1]) for x, y in A.BOARS)
+        self.assertTrue(any(math.hypot(x - S[0], y - S[1]) < boars for _, x, y, _ in A.HERBS))
+        for label, x, y, quantity in A.HERBS:
+            self.assertGreaterEqual(quantity, 2)
+            self.assertTrue(A.ROUTE_WIDTH / 2 + 250 < A.distance_to_route(x, y) < 2000, f'{label} not beside the track')
+            self.assertGreater(T.height(x, y), T.SEA + 60, f'{label} wet')
+            self.assertGreater(math.hypot(x - A.SPRING[0], y - A.SPRING[1]), A.SPRING_RADIUS + 250, f'{label} in the spring')
+            for other in A.FIRST_RESOURCES:
+                self.assertGreater(math.hypot(x - other[3], y - other[4]), 250, f'{label} crowds {other[0]}')
+
     def test_generators_keep_clear_of_the_arrival(self):
         self.assertTrue(A.near_arrival(*S))
         self.assertTrue(A.near_arrival(*A.SPRING))

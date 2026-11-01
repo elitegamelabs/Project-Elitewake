@@ -96,6 +96,7 @@ void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 
 	const float Before = Health;
 	Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
+	SinceHurt = 0.f;
 	// One flash per hit of a point or more; the slow drain of cold or hunger adds up until it is worth showing.
 	PendingSmallDamage += Before - Health;
 	if (PendingSmallDamage >= 1.f || (Health <= KINDA_SMALL_NUMBER && PendingSmallDamage > 0.f))
@@ -176,6 +177,17 @@ void UEWSurvivalComponent::UpdateNeeds(bool bIsSprinting, float DeltaSeconds)
 		FoodSicknessLeft = FMath::Max(0.f, FoodSicknessLeft - DeltaSeconds);
 		if (FoodSicknessLeft <= 0.f) ClearDebuffNotice(TEXT("FoodSickness"));
 	}
+	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::UpdateRecovery(bool bByFire, float DeltaSeconds)
+{
+	if (!GetOwner() || !GetOwner()->HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f || IsDead()) return;
+	SinceHurt += DeltaSeconds;
+	// Only the part of this step after the pause mends.
+	const float Mending = FMath::Min(DeltaSeconds, SinceHurt - HurtPause);
+	if (Mending <= 0.f || Health >= MaxHealth || IsFoodSick() || Hunger < WellFedAbove || Hydration < WellFedAbove) return;
+	Health = FMath::Min(MaxHealth, Health + MaxHealth / MendSeconds * Mending * (bByFire ? FireMendFactor : 1.f));
 	NotifyStatsChanged();
 }
 

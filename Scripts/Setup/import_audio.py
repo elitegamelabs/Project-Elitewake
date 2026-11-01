@@ -76,6 +76,12 @@ SOUNDS = {
     'Fauna/SFX_SpiderChitter-v1.wav': ('S_SpiderChitter_v1', .9, 'world'),
     'Fauna/SFX_SpiderHiss-v1.wav': ('S_SpiderHiss_v1', 1.0, 'world'),
     'Fauna/SFX_SpiderDeath-v1.wav': ('S_SpiderDeath_v1', .9, 'world'),
+    # The wild boar (November 1, Phase 1 slice 4): synthesized by Scripts/Art/make_boar_sound.py, nothing sampled.
+    'Fauna/SFX_BoarGrunt-v1.wav': ('S_BoarGrunt_v1', .9, 'world'),
+    'Fauna/SFX_BoarGrunt-v1b.wav': ('S_BoarGrunt_v1b', .9, 'world'),
+    'Fauna/SFX_BoarGrunt-v1c.wav': ('S_BoarGrunt_v1c', .9, 'world'),
+    'Fauna/SFX_BoarCharge-v1.wav': ('S_BoarCharge_v1', 1.0, 'world'),
+    'Fauna/SFX_BoarDeath-v1.wav': ('S_BoarDeath_v1', .9, 'world'),
 }
 # Animal -> its calls and the seconds between them while it goes about its day (0: only when provoked).
 CALLS = {
@@ -87,9 +93,10 @@ CALLS = {
     'GiantCrocodile': (['S_CrocodileBellow_v1'], (0, 0)),
     'Elephant': (['S_ElephantTrumpet_v1'], (45, 100)),
     'Spider': (['S_SpiderChitter_v1'], (25, 60)),
+    'Boar': (['S_BoarGrunt_v1', 'S_BoarGrunt_v1b', 'S_BoarGrunt_v1c'], (25, 60)),
 }
 # Animal -> its attack and death sounds (October 30; species without their own are silent there for now).
-STRIKES = {'Spider': (['S_SpiderHiss_v1'], ['S_SpiderDeath_v1'])}
+STRIKES = {'Spider': (['S_SpiderHiss_v1'], ['S_SpiderDeath_v1']), 'Boar': (['S_BoarCharge_v1'], ['S_BoarDeath_v1'])}
 # Falloff (tuning): world sounds are full within 4 m and gone by 40 m; far ones full within 20 m, gone by 400 m; close ones
 # (a campfire) full within 1.5 m and gone by 15 m.
 FALLOFFS = {'SA_World_v1': (400.0, 3600.0), 'SA_Far_v1': (2000.0, 38000.0), 'SA_Close_v1': (150.0, 1350.0)}

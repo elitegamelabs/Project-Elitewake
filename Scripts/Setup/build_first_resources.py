@@ -66,7 +66,9 @@ def stone_pile(seed):
 
 def aim_box(mesh):
     """Makes sure the pile has its one box for a look to land on: on a mesh made this same run, easy_to_aim_at's box does not
-    take (found October 31, the pile had none and E never found it), so the box is written here, round the mesh's bounds."""
+    take (found October 31, the pile had none and E never found it), so the box is written here, round the mesh's bounds.
+    Where easy_to_aim_at's box did take (a mesh made on an earlier run), it is set again all the same: the box alone leaves
+    the mesh's built collision as it was, without it, so nothing in Play could hit it (found November 1, the yarrow)."""
     body = mesh.get_editor_property('body_setup')
     geo = body.get_editor_property('agg_geom')
     if not geo.get_editor_property('box_elems'):
@@ -77,9 +79,9 @@ def aim_box(mesh):
         for axis, half in (('x', e.x), ('y', e.y), ('z', e.z)):
             box.set_editor_property(axis, 2 * half)
         geo.set_editor_property('box_elems', [box])
-        body.set_editor_property('agg_geom', geo)
-        body.set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_DEFAULT)
-        assert unreal.EditorAssetLibrary.save_loaded_asset(mesh)
+    body.set_editor_property('agg_geom', geo)                 # setting it rebuilds the collision Play uses
+    body.set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_DEFAULT)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(mesh)
     assert mesh.get_editor_property('body_setup').get_editor_property('agg_geom').get_editor_property('box_elems'), mesh.get_name()
     return mesh
 

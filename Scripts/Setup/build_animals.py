@@ -529,6 +529,36 @@ def lion():
     return b
 
 
+def boar():
+    """Wild boar (Phase 1 slice 4, the Plains' modest threat, CLAUDE.md 5.2): about 140 cm nose to rump and 85 cm at the
+    shoulder, deep and narrow in the chest, the shoulders higher than the rump, short legs on small dark hooves, a long
+    wedge head ending in a flat snout disc with short pale tusks, upright ears and a thin tail. Grizzled grey-brown
+    bristle, darker along the back and legs."""
+    b = Builder()
+    back, flank, dark, disc, tusk = (.022, .017, .012), (.06, .046, .032), (.012, .009, .007), (.09, .062, .05), (.5, .45, .34)
+    fur = lambda q, n: mix(back, flank, min(1.0, max(0.0, .5 - n[2] * .8)))   # noqa: E731
+    # The body: deepest and highest at the shoulders, falling away to a smaller rump.
+    spec = dict(torso=[(60, 0, 62, 15, 22), (40, 0, 64, 19, 28), (12, 0, 61, 19, 25), (-20, 0, 57, 17, 21), (-46, 0, 54, 14, 17),
+                       (-60, 0, 52, 8, 9)], hip_z=44, knee_z=22, spread=10, bend=5, thigh=6, paw=3.5, reach=4,
+                pad=dark, legs=[(40, 1, FL), (40, -1, FR), (-44, 1, BL), (-44, -1, BR)])
+    quadruped(b, fur, spec)
+    # The head: one long wedge from the deep neck down to the snout, narrower than it is tall.
+    body(b, [(52, 0, 66, 16, 22), (70, 0, 60, 12, 17), (84, 0, 51, 8, 10.5), (96, 0, 46.5, 6, 6.5), (100, 0, 46, 5.8, 5.4)],
+         lambda q, n: fur(q, n), HEAD, lambda q, k: 1.0, 16)
+    ball(b, (101, 0, 46), (1.8, 6.0, 5.4), lambda q, n: disc if n[0] > .4 else dark, HEAD, 1.0, 12)      # the snout disc
+    # The bristle crest along the spine, darker, highest over the shoulders.
+    body(b, [(52, 0, 86, 2.0, 4.0), (30, 0, 92, 2.5, 5.0), (0, 0, 87, 2.0, 3.5), (-25, 0, 79, 1.5, 2.0)], lambda q, n: dark, BODY,
+         lambda q, k: 0.0, 8)
+    for y in (1, -1):
+        ball(b, (102.5, 2.2 * y, 46.5), (1.0, 1.0, 1.4), lambda q, n: (.01, .008, .006), HEAD, 1.0, 8)   # nostrils
+        ball(b, (92, 6.2 * y, 44), (3.5, 1.0, 1.0), lambda q, n: tusk, HEAD, 1.0, 8)                       # tusks, curving up
+        ball(b, (94.5, 6.8 * y, 47), (1.0, .9, 2.5), lambda q, n: tusk, HEAD, 1.0, 8)
+        ball(b, (76, 9.5 * y, 61), (1.6, 1.0, 1.4), lambda q, n: (.005, .004, .003), HEAD, 1.0, 8)        # eyes
+        ball(b, (64, 8.5 * y, 77), (2.5, 3.0, 6.5), lambda q, n: dark, HEAD, 1.0, 10)                      # ears
+    body(b, [(-58, 0, 54, 2.2, 2.2), (-70, 0, 46, 1.6, 1.6), (-76, 0, 38, 2.6, 2.6)], lambda q, n: dark, TAIL, lambda q, k: .5, 8, steps=1)
+    return b
+
+
 def giant_crocodile():
     b = Builder()
     top, side, belly = (.03, .028, .016), (.07, .06, .03), (.42, .38, .24)
@@ -615,6 +645,11 @@ ANIMALS = {
     'Lion': dict(display='Lion', build=lion, size=(260, 110), stride=95, gait=0,
                  anim=(17, 6, 1.0, 5, 1.5, 0, 1), surface=(0, 1, .4, .14, .85),
                  behave=(True, 90, 700, 110, 1200, 0, 800, 20, 1.4, 85, 'bite', 300), yield_=(8, 12), live=('inland', 0, 0)),
+    # The Plains' modest threat (Phase 1 slice 4): it charges only a survivor who comes within 6 m, gives up past about 10 m,
+    # and a sprinting survivor (750 cm/s) outruns it; 8 a gore every 1.6 s. Placed by build_plains_threat.py, not place().
+    'Boar': dict(display='Wild Boar', build=boar, size=(140, 85), stride=55, gait=0,
+                 anim=(15, 5, 1.2, 4, 2, 0, 1), surface=(0, 1, .7, .15, .9),
+                 behave=(True, 70, 520, 130, 900, 0, 600, 8, 1.6, 60, 'gore', 80), yield_=(3, 5), live=('plains', 0, 0)),
     'GiantCrocodile': dict(display='Giant Crocodile', build=giant_crocodile, size=(680, 90), stride=150, gait=0,
                            anim=(24, 7, .8, 9, 0, 0, 1), surface=(.3, 5.0, 0, .25, .55),
                            behave=(True, 80, 420, 60, 1200, 90, 900, 45, 2.2, 150, 'bite', 900), yield_=(14, 20), live=('water', 0, 0)),
@@ -797,8 +832,8 @@ def place(actors, defs, ground, trees):
     taken, placed = [], []
     for name, a in ANIMALS.items():
         kind, *counts = a['live']
-        if kind == 'cave':
-            continue      # cave and swamp spiders are placed by add_spiders.py
+        if kind in ('cave', 'plains'):
+            continue      # cave and swamp spiders: add_spiders.py; the Plains boars: build_plains_threat.py
         aggressive = a['behave'][0]
         radius = max(a['size'][1] * .5, a['size'][0] * .3, 15.0)
         for island, count in zip(ISLANDS, counts):
