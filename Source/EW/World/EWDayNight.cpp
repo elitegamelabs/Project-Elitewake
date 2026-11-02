@@ -1,4 +1,5 @@
 #include "World/EWDayNight.h"
+#include "World/EWNorth.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "Engine/PostProcessVolume.h"
@@ -21,7 +22,8 @@ float FEWSkyClock::SunElevation(float Hour)
 
 float FEWSkyClock::SunAzimuth(float Hour)
 {
-    return FRotator::NormalizeAxis(-90.f * (Hour - DayStarts) / 6.f);
+    // East (bearing 90) at 06:00, a quarter of the compass every six hours, as world yaw (World/EWNorth.h).
+    return EWNorth::YawOfBearing(90.f + 90.f * (Hour - DayStarts) / 6.f);
 }
 
 AEWSkyClock::AEWSkyClock()

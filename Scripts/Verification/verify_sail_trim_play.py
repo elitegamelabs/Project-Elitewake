@@ -84,7 +84,8 @@ def keep_aim():
 
 
 def bearing(yaw):
-    return yaw % 360.0
+    # A compass bearing of a world yaw; north is the world's +Y (Source/EW/World/EWNorth.h; owner, November 1).
+    return (yaw - 90.0) % 360.0
 
 
 def angle_gap(a, b):

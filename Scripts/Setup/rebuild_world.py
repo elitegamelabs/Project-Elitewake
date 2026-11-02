@@ -5,8 +5,10 @@ Optionally set EW_REBUILD_FROM to a step's name to start part-way, or EW_REBUILD
 steps to run just those. Writes Saved/WorldRebuildResult.json after each
 step, so a failure shows where it stopped; the editor closes either way.
 
-The order (CLAUDE.md, "Rebuild order for the coastal map"): ground first, then what is cut
-into it (caves) or stands on it, then what lives there and the climate, Ports and the sloop.
+The order: ground first, then what is cut into it (caves) or stands on it, then what lives there and the climate,
+Ports and the sloop; then Phase 1's Plains and Saltreach work, which clears or replaces some of what the world steps
+put back (trees in Saltreach, piranhas in the arrival pond, the boars round the arrival) and holds the sloop for the
+yard. Reefs are not rebuilt here: the owner's three open-ocean reefs (October 31) replace build_reefs.py's layout.
 """
 import json
 import os
@@ -19,7 +21,9 @@ import unreal
 HERE = Path(__file__).resolve().parent
 RESULT = Path(unreal.Paths.project_saved_dir(), 'WorldRebuildResult.json')
 STEPS = ['build_coastal_terrain', 'build_caves', 'build_cave_webs', 'build_landmarks', 'build_grass', 'build_coastal_flora',
-         'build_coastal_rocks', 'build_reefs', 'build_seabed_life', 'build_fish', 'place_animals', 'build_regions', 'build_ports', 'restore_sloop', 'tune_rendering']
+         'build_coastal_rocks', 'build_seabed_life', 'build_fish', 'place_animals', 'add_spiders', 'build_crystals', 'build_regions',
+         'build_ports', 'add_port_merchants', 'build_freeport', 'build_saltreach_welcome', 'restore_sloop', 'build_voyage_ready',
+         'build_arrival', 'build_first_resources', 'build_plains_threat', 'tune_rendering']
 
 
 def main():

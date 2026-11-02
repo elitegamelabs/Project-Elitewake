@@ -509,8 +509,9 @@ def build_people(stalls, placed, ship_class):
                     ('Mind the headland on the way in; the rocks run out further than they look.',),
                     'f', clothes('HarborMaster', SKIN[3], (.08, .1, .2), (.08, .1, .2), hair=(.2, .2, .2), sash=(.6, .5, .2)))
     berths = []
-    for name, a2, c2, yaw2, length in (('the long pier, east berth', 5900, 2650, 0, 2600), ('the long pier, outer east berth', 8300, 3000, 0, 4200),
-                                       ('the long pier, west berth', 8500, 950, 0, 2600), ('the fishing jetty, inner berth', 950, 5300, 90, 1000),
+    # Compass names with north +Y and east -X (Source/EW/World/EWNorth.h): the port's +across side is its west.
+    for name, a2, c2, yaw2, length in (('the long pier, west berth', 5900, 2650, 0, 2600), ('the long pier, outer west berth', 8300, 3000, 0, 4200),
+                                       ('the long pier, east berth', 8500, 950, 0, 2600), ('the fishing jetty, inner berth', 950, 5300, 90, 1000),
                                        ('the fishing jetty, outer berth', 950, 7000, 90, 1000)):
         berth = unreal.EWBerth()
         berth.set_editor_property('where', transform(a2, c2, SEA, yaw2))

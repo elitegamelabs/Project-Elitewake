@@ -29,7 +29,7 @@ struct EW_API FEWSkyClock
     static bool IsDay(float Hour) { return Hour >= DayStarts && Hour < NightStarts; }
     /** The sun's height above the horizon in degrees: 0 at 06:00 and 18:00, HighestSun at noon, below at night. */
     static float SunElevation(float Hour);
-    /** The compass yaw toward the sun: east (0) at 06:00, south (-90) at noon, west (-180) at 18:00. */
+    /** The world yaw toward the sun (World/EWNorth.h): east (180, toward -X) at 06:00, south (-90) at noon, west (0) at 18:00. */
     static float SunAzimuth(float Hour);
     /** How a directional light pointing from a body at (Elevation, Azimuth) toward the ground is turned. */
     static FRotator LightRotation(float Elevation, float Azimuth) { return FRotator(-Elevation, Azimuth + 180.f, 0.f); }

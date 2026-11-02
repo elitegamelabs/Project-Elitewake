@@ -5,7 +5,7 @@
 
 /**
  * A compass strip across the top of the screen. The bearings scroll past a fixed centre mark as the view turns:
- * north is the world's +X (as on the map), east +Y. The wind is marked where it blows from.
+ * north is the world's +Y (as on the map), east -X (World/EWNorth.h). The wind is marked where it blows from.
  * At the helm of a ship with sails it also shows the sails' trim: where they are swung, where they would draw
  * best, and how well they draw. In Saltreach it marks where the shown town step is done. Local and read-only.
  */

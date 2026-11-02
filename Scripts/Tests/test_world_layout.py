@@ -51,8 +51,9 @@ class WorldLayoutRuleTests(unittest.TestCase):
                                   f'{i.key} is {gap / M:.0f} m from its nearest island (> 2,000 m)')
 
     def test_each_region_on_its_side_of_the_world(self):
+        # North is +Y and east -X (Source/EW/World/EWNorth.h; owner, November 1).
         sides = {'Winter': lambda i: i.cy > 0, 'Swamp': lambda i: i.cy < 0,
-                  'Desert': lambda i: i.cx > 0, 'Jungle': lambda i: i.cx < 0}
+                  'Desert': lambda i: i.cx < 0, 'Jungle': lambda i: i.cx > 0}
         for i in W.ISLANDS:
             check = sides.get(i.region)
             if check is None:

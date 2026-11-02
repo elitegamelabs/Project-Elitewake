@@ -4,7 +4,9 @@ Plain Python (no Unreal), shared by the world setup scripts and checked on its o
     python Scripts/Setup/world_layout.py          # prints the layout and checks it; exit code 1 if a rule fails
 
 Current owner direction:
-  - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (+X), Jungle west (-X);
+  - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (-X), Jungle west (+X).
+    North is +Y and east -X, a quarter turn clockwise as Unreal's yaw turns, so the compass, the map and the sun agree
+    (Source/EW/World/EWNorth.h; owner, November 1: Desert and Jungle swapped sides to match);
   - exactly one large, distinct island per region during the current production phase;
   - the Plains island is the universal starting island;
   - islands separated by open sea, 800 m to 2,000 m between shorelines.
@@ -20,8 +22,9 @@ import sys
 M = 100.0                       # cm per metre
 MIN_GAP, MAX_GAP = 800 * M, 2000 * M
 REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
-                  'Desert': (7000 * M, 0.0), 'Jungle': (-7000 * M, 0.0)}
+                  'Desert': (-7000 * M, 0.0), 'Jungle': (7000 * M, 0.0)}
 ISLANDS_PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
+DESERT_X, JUNGLE_X = -390000.0, 280000.0     # cm: centres along X (tuning; the Plains island reaches about 2 km toward -X)
 
 
 class Island:
@@ -119,8 +122,9 @@ def generate():
     islands = [StarterIsland(old, west)]
     islands.append(_organic('Winter1', 'Winter', -60000.0, 280000.0, 118000.0, 82000.0, 0.45, 7202, 11000.0, 5, (-math.pi / 2, 0.35, 0.25)))
     islands.append(_organic('Swamp1', 'Swamp', -30000.0, -270000.0, 100000.0, 80000.0, 2.6, 7303, 260.0, 4, (math.pi / 3, 0.4, 0.3)))
-    islands.append(_organic('Desert1', 'Desert', 280000.0, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (math.pi, 0.3, 0.2)))
-    islands.append(_organic('Jungle1', 'Jungle', -380000.0, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (0.3, 0.35, 0.24)))
+    # Desert east (-X) and Jungle west (+X), each keeping its own shape, seed and size; their coves still face the Plains.
+    islands.append(_organic('Desert1', 'Desert', DESERT_X, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (0.0, 0.3, 0.2)))
+    islands.append(_organic('Jungle1', 'Jungle', JUNGLE_X, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (math.pi - 0.3, 0.35, 0.24)))
     return islands
 
 

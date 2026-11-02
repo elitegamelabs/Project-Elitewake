@@ -121,7 +121,8 @@ def before(actor, distance):
 
 def bearing_to(at):
     here = pawn().get_actor_location()
-    return math.degrees(math.atan2(at.y - here.y, at.x - here.x)) % 360
+    # A compass bearing, clockwise from north; north is the world's +Y (Source/EW/World/EWNorth.h; owner, November 1).
+    return (math.degrees(math.atan2(at.y - here.y, at.x - here.x)) - 90) % 360
 
 
 def arrival(who=None):

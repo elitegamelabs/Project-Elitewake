@@ -4,6 +4,7 @@
 #include "EWPlayerController.h"
 #include "Ships/EWShip.h"
 #include "Ships/EWWindSubsystem.h"
+#include "World/EWNorth.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Fonts/FontMeasure.h"
 #include "Framework/Application/SlateApplication.h"
@@ -20,7 +21,7 @@ const FLinearColor CompassPlace(1.f, .78f, .3f);         // the town step's plac
 // The same compass strip location with a darker, more opaque plate for sea/sky contrast.
 const FLinearColor CompassBacking(.008f, .014f, .022f, .82f);
 
-float Bearing(float Yaw) { return FMath::Fmod(FMath::Fmod(Yaw, 360.f) + 360.f, 360.f); }
+float Bearing(float Yaw) { return EWNorth::BearingOfYaw(Yaw); }
 
 FString PointName(int32 Degrees)
 {
@@ -47,7 +48,7 @@ void UEWCompassWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     if (bShowPlace)
     {
         const FVector To = Place - Survivor->GetActorLocation();
-        PlaceBearing = Bearing(FMath::RadiansToDegrees(FMath::Atan2(To.Y, To.X)));
+        PlaceBearing = EWNorth::BearingOf(To);
         PlaceMetres = FMath::RoundToInt(To.Size2D() / 100.f);
     }
 

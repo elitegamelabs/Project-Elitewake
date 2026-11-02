@@ -84,7 +84,7 @@ bool FEWWorldEdgeGrowthTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Centred: the old square stays inside"),Min.X<=-1000.f && Min.X+Size>=1000.f);
     const FVector Past(Min.X+Size+10.f,0.f,50.f);
     const FVector Wrapped=Edge->WrapLocation(Past);
-    TestTrue(TEXT("Past the east edge comes out on the west"),FMath::IsNearlyEqual(Wrapped.X,Min.X+10.f,.01f));
+    TestTrue(TEXT("Past the west (+X) edge comes out on the east"),FMath::IsNearlyEqual(Wrapped.X,Min.X+10.f,.01f));
     TestTrue(TEXT("Height is kept"),FMath::IsNearlyEqual(Wrapped.Z,50.0));
     const FVector Inside(0.f,0.f,0.f);
     TestTrue(TEXT("Inside is unchanged"),Edge->WrapLocation(Inside).Equals(Inside));

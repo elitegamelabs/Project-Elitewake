@@ -13,6 +13,7 @@
 #include "Components/ScaleBox.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "World/EWNorth.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/SceneCapture2D.h"
 #include "Engine/Texture2D.h"
@@ -126,7 +127,7 @@ void UEWMapWidget::NativeConstruct()
     FActorSpawnParameters Params;
     Params.Owner = GetOwningPlayer();
     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    Capture = GetWorld()->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator(-90, 0, 0), Params);
+    Capture = GetWorld()->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator(-90.f, EWNorth::NorthYaw, 0.f), Params);
     if (!Capture) return;
 
     Capture->SetReplicates(false);
@@ -209,9 +210,9 @@ void UEWMapWidget::PanByScreenDelta(const FVector2D& Delta)
     const FVector2D Size = MapImage->GetCachedGeometry().GetLocalSize();
     if (Size.X <= 1.f || Size.Y <= 1.f) return;
 
-    // Dragging the picture right shows more of what lies to the left: -Y; dragging it down shows what lies above: +X.
-    MapCenter.Y -= (Delta.X / Size.X) * CurrentViewWidth;
-    MapCenter.X += (Delta.Y / Size.Y) * CurrentViewWidth;
+    // Dragging the picture right shows more of what lies to the west (+X); dragging it down, more of the north (+Y).
+    MapCenter.X += (Delta.X / Size.X) * CurrentViewWidth;
+    MapCenter.Y += (Delta.Y / Size.Y) * CurrentViewWidth;
 }
 
 bool UEWMapWidget::IsPointerOverMap(const FVector2D& ScreenPosition) const
@@ -269,11 +270,12 @@ void UEWMapWidget::PositionPlayerMarker(const APawn* Pawn)
     if (Size.X <= 1.f || Size.Y <= 1.f) return;
 
     const FVector Location = Pawn->GetActorLocation();
-    // Right is +Y, up is +X.
-    const float X = FMath::Clamp(((Location.Y - MapCenter.Y) / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
-    const float Y = FMath::Clamp((.5f - (Location.X - MapCenter.X) / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
+    // Right is east, up is north (World/EWNorth.h).
+    const FVector2D Off = EWNorth::EastNorth(Location - MapCenter);
+    const float X = FMath::Clamp((Off.X / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
+    const float Y = FMath::Clamp((.5f - Off.Y / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
     PlayerMarkerSlot->SetPosition(FVector2D(X, Y));
-    PlayerMarker->SetRenderTransformAngle(Pawn->GetActorRotation().Yaw);
+    PlayerMarker->SetRenderTransformAngle(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw));
 }
 
 void UEWMapWidget::UpdateScaleBar()
@@ -328,8 +330,9 @@ void UEWMapWidget::UpdateFog(float DeltaSeconds)
     }
     const FVector2D Min = Exploration->GetBoundsMin();
     const float Half = CurrentViewWidth * .5f;
-    const float U0 = (MapCenter.Y - Half - Min.Y) / Size, U1 = (MapCenter.Y + Half - Min.Y) / Size;
-    const float V0 = 1.f - (MapCenter.X + Half - Min.X) / Size, V1 = 1.f - (MapCenter.X - Half - Min.X) / Size;
+    // The mist image runs east to the right (-X) and north up (+Y), as the picture does.
+    const float U0 = (Min.X + Size - MapCenter.X - Half) / Size, U1 = (Min.X + Size - MapCenter.X + Half) / Size;
+    const float V0 = 1.f - (MapCenter.Y + Half - Min.Y) / Size, V1 = 1.f - (MapCenter.Y - Half - Min.Y) / Size;
     FSlateBrush Brush = FogImage->GetBrush();
     Brush.SetUVRegion(FBox2f(FVector2f(U0, V0), FVector2f(U1, V1)));
     FogImage->SetBrush(Brush);
@@ -341,8 +344,8 @@ float UEWMapWidget::GetFogAlphaAtWorld(FVector Location) const
     if (!Exploration || FogPixels.Num() != FogSize * FogSize || Exploration->GetBoundsSize() <= 0.f) return 1.f;
     const FVector2D Min = Exploration->GetBoundsMin();
     const float Size = Exploration->GetBoundsSize();
-    const int32 X = FMath::Clamp(int32((Location.Y - Min.Y) / Size * FogSize), 0, FogSize - 1);
-    const int32 Y = FMath::Clamp(int32((1.f - (Location.X - Min.X) / Size) * FogSize), 0, FogSize - 1);
+    const int32 X = FMath::Clamp(int32((Min.X + Size - Location.X) / Size * FogSize), 0, FogSize - 1);
+    const int32 Y = FMath::Clamp(int32((1.f - (Location.Y - Min.Y) / Size) * FogSize), 0, FogSize - 1);
     return FogPixels[Y * FogSize + X].A / 255.f;
 }
 
@@ -354,10 +357,10 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
 
     if (!ControllerPanInput.IsNearlyZero())
     {
-        // The right stick: right is +Y, up is +X.
+        // The right stick: right is east (-X), up is north (+Y).
         const FVector2D Normalized = ControllerPanInput.GetClampedToMaxSize(1.f);
-        MapCenter.Y += Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
-        MapCenter.X += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
+        MapCenter.X -= Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
+        MapCenter.Y += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
     }
     if (!FMath::IsNearlyZero(ControllerZoomInput)) AdjustZoom(ControllerZoomInput * DeltaSeconds * 3.f);
 
@@ -367,7 +370,7 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
     const FEWClimate Sample = AEWClimateRegion::SampleClimate(GetWorld(), Pawn->GetActorLocation());
     RegionTitle->SetText(AEWClimateRegion::RegionName(Sample.Region));
     Heading->SetText(FText::Format(NSLOCTEXT("Elitewake", "MapHeading", "Current region  |  Facing {0}°"),
-        FText::AsNumber(FMath::RoundToInt(FMath::Fmod(Pawn->GetActorRotation().Yaw + 360.f, 360.f)))));
+        FText::AsNumber(FMath::RoundToInt(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw)) % 360)));
     PositionPlayerMarker(Pawn);
     UpdateScaleBar();
     UpdateFog(DeltaSeconds);
@@ -375,8 +378,8 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
     CaptureRemaining -= DeltaSeconds;
     if (CaptureRemaining > 0.f) return;
     CaptureRemaining = .5f;
-    // Straight down, up the page being the world's +X.
-    Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, 0.f, 0.f));
+    // Straight down, up the page being north.
+    Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, EWNorth::NorthYaw, 0.f));
     Capture->GetCaptureComponent2D()->CaptureScene();
 }
 

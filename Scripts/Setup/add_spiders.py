@@ -36,6 +36,10 @@ def main():
         if isinstance(actor, unreal.EWAnimal) and actor.get_editor_property('definition') == definition:
             actors.destroy_actor(actor)
     ground = Ground()
+    # An animal stands on its feet a body radius below its centre (AEWAnimal::ApplyDefinition): lift it by that, not a
+    # fixed 25 cm (the spider's radius is larger, which left its feet 35 cm under the floor).
+    size = definition.get_editor_property('size')
+    lift = max(size.y * .5, size.x * .3, 15.0)
     rng = random.Random(8128)
     placed = []
 
@@ -53,7 +57,7 @@ def main():
         for k in range(CAVE_SPIDERS):
             v = (-1 if k % 2 else 1) * rng.uniform(120, 260)
             x, y = cave.world(cave.chamber_u + rng.uniform(-200, 150), v)
-            spawn(x, y, cave.floor + 25, f'{key} cave')
+            spawn(x, y, cave.floor + lift, f'{key} cave')
     for island in W.ISLANDS:
         if island.region != 'Swamp':
             continue
@@ -66,7 +70,7 @@ def main():
                 continue
             if any(math.hypot(x - p[1], y - p[2]) < 500 for p in placed):
                 continue
-            spawn(x, y, z + 25, f'{island.key} swamp')
+            spawn(x, y, z + lift, f'{island.key} swamp')
             made += 1
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'SpidersResult.json').write_text(json.dumps({'success': True, 'spiders': len(placed), 'placed': placed}, indent=2))

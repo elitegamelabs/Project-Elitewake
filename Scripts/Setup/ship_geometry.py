@@ -155,15 +155,24 @@ def triplanar_uv(p, n, tile):
 
 
 def material_builder(path, parent=unreal.Material):
-    """Create (or empty) a material and return it with node helpers."""
+    """Create a material and return it with node helpers.
+
+    A material that already exists is kept as it is (owner-approved, November 1): on UE 5.8.3,
+    MaterialEditingLibrary.DeleteAllMaterialExpressions trips an engine assertion (!IsRooted) on some existing materials,
+    crashing the editor. The helpers then build into a throwaway scratch material, so the caller's wiring runs unchanged
+    and the saved asset keeps its nodes. To change an existing material's look, delete the asset first and run again."""
     assets = unreal.AssetToolsHelpers.get_asset_tools()
     mel = unreal.MaterialEditingLibrary
     folder, name = path.rsplit('/', 1)
-    material = unreal.load_asset(path) or assets.create_asset(name, folder, unreal.Material, unreal.MaterialFactoryNew())
-    mel.delete_all_material_expressions(material)
+    material = unreal.load_asset(path)
+    target = material
+    if material:
+        target = unreal.new_object(unreal.Material)      # outer defaults to the transient package: never saved
+    else:
+        material = target = assets.create_asset(name, folder, unreal.Material, unreal.MaterialFactoryNew())
 
     def node(cls, **props):
-        n = mel.create_material_expression(material, cls)
+        n = mel.create_material_expression(target, cls)
         for k, v in props.items():
             n.set_editor_property(k, v)
         return n

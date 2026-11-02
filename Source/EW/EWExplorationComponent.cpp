@@ -172,14 +172,14 @@ void UEWExplorationComponent::BuildFog(int32 Size, float TimeSeconds, TArray<FCo
     const int32 Block = FMath::Max(1, GridSize / Size);
     // How much of each pixel's block has been seen.
     TArray<float> Seen; Seen.SetNumUninitialized(Size * Size);
-    // The image is laid out as the map shows the world: to the right is +Y, up is +X.
+    // The image is laid out as the map shows the world: to the right is east (-X), up is north (+Y) (World/EWNorth.h).
     for (int32 Y = 0; Y < Size; ++Y)
         for (int32 X = 0; X < Size; ++X)
         {
             int32 Count = 0;
             for (int32 By = 0; By < Block; ++By)
                 for (int32 Bx = 0; Bx < Block; ++Bx)
-                    if (Cells[(X * Block + Bx) * GridSize + (Size - 1 - Y) * Block + By]) ++Count;
+                    if (Cells[((Size - 1 - Y) * Block + By) * GridSize + (Size - 1 - X) * Block + Bx]) ++Count;
             Seen[Y * Size + X] = float(Count) / float(Block * Block);
         }
     // A soft edge: two passes of a 3 x 3 average.

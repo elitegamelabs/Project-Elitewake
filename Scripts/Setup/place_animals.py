@@ -89,7 +89,7 @@ def main():
                 made += 1
                 counts[name] = counts.get(name, 0) + 1
                 display = str(definition.get_editor_property('display_name'))
-                animal.set_actor_label(f'{display} {island.key} {existing_counts.get(name, 0) + made + 1}')
+                animal.set_actor_label(f'{display} {island.key} {made}')
                 animal.set_folder_path(LEVEL_FOLDER)
                 animal.set_editor_property('definition', definition)
                 animal.set_editor_property('surface_z', T.SEA)
