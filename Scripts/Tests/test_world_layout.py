@@ -83,7 +83,8 @@ class WorldTerrainHeightTests(unittest.TestCase):
         self.assertHeightNear(4000.0, 900.0, -47.8)
 
     def test_spring_height(self):
-        self.assertHeightNear(-1700.0, 1500.0, -265.0)
+        # The pond's floor at its middle: surface 5, less 10, less its 15 ft depth (owner, November 1).
+        self.assertHeightNear(-1700.0, 1500.0, -462.0)
 
 
 class BeachAndMountainTests(unittest.TestCase):

@@ -55,5 +55,8 @@ VILLAGES = {region: next(k for k, i in ISLANDS.items() if i['region'] == region 
 CLEAR_OF_PEOPLE_M = {'passive': 150, 'aggressive': 250}
 # No 200 m square holds more than this share of an island's animals.
 MAX_SHARE_PER_200M = .15
-# A representative walk across each island, minutes (owner, November 1, corrected from 30-45).
-CROSSING_MINUTES = (15, 20)
+# A walk across each island, minutes, preferably in every direction (owner, November 1; replaces 15-20 and 30-45).
+CROSSING_MINUTES = (6, 17)
+# Inland water depths at the deepest point (owner, November 1, in feet: ponds 15 ft, lakes 50 ft).
+POND_DEPTH_CM = 457.0
+LAKE_DEPTH_CM = 1524.0

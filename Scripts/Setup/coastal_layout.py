@@ -5,4 +5,4 @@
 POND = (-1700.0, 1500.0)
 POND_RADIUS = 700.0
 POND_SURFACE = 5.0
-POND_DEPTH = 260.0
+POND_DEPTH = 457.0      # 15 feet (owner, November 1: ponds 15 ft deep, lakes 50 ft; world_islands.POND_DEPTH_CM)

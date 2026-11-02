@@ -25,7 +25,7 @@ ARRIVE = 600.0           # cm: close enough to the end
 STALL_EVERY = 2.0        # game seconds between progress checks
 STALL_PROGRESS = 100.0   # cm toward the end in that time, or it is stalled
 DETOUR = 4.0             # game seconds of sidestepping
-GIVE_UP = 45 * 60.0      # game seconds on one route
+GIVE_UP = 30 * 60.0      # game seconds on one route (the target is 15-20 minutes; a route still short at 30 is blocked)
 
 lib = unreal.EWEditorVerificationLibrary
 world = lib.get_play_worlds()[0]

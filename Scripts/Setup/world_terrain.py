@@ -33,7 +33,8 @@ def ground_spacing(island):
 
 PORT_LEVEL = SEA + 220.0  # a Port's paved site, cm
 POND = (-1700.0, 1500.0)
-POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 260.0
+POND_RADIUS, POND_SURFACE, POND_DEPTH = 700.0, 5.0, 457.0     # 15 ft deep (owner, November 1); coastal_layout.py matches
+POND_FLAT = .4            # share of the radius over which the pond's floor lies flat at its full depth
 
 
 def seabed(d):
@@ -183,7 +184,9 @@ def starter_land(x, y, inland, ripple):
     if spring < POND_RADIUS + 300:
         blend = min(1.0, max(0.0, (spring - POND_RADIUS - 50) / 250))
         if spring < POND_RADIUS:
-            floor = POND_SURFACE - 10 - POND_DEPTH * (1 - (spring / POND_RADIUS) ** 2)
+            # A flat floor at the full depth over the middle 40 % (the island's 4 m grid then shows the whole 15 ft), rising
+            # to the banks.
+            floor = POND_SURFACE - 10 - POND_DEPTH * min(1.0, (1 - (spring / POND_RADIUS) ** 2) / (1 - POND_FLAT ** 2))
         else:
             floor = min(20.0, POND_SURFACE - 10 + (spring - POND_RADIUS) * 0.3)
         h = floor * (1 - blend) + h * blend

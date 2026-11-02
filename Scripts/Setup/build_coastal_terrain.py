@@ -15,6 +15,7 @@ the beach spawn, dock landing, pond and sloop keep their places. All heights are
 """
 import json
 import math
+import os
 import sys
 from pathlib import Path
 import unreal
@@ -345,97 +346,119 @@ level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 assert level.load_level(MAP)
 
-# The single 504 m terrain and its surf, and any earlier run of this script.
-retired_labels = ['Main beach', 'Distant islet beach', 'Island interior', 'Distant islet interior', 'Freshwater basin rim',
-                  'Coastal island terrain', 'Main island surf', 'Islet surf', 'Second island surf', 'Winter island surf', 'Sea floor']
-removed = []
-for actor in actors.get_all_level_actors():
-    if actor.get_actor_label() in retired_labels or str(actor.get_folder_path()) in ('World/Islands', 'World/Surf'):
-        removed.append(actor.get_actor_label())
-        actors.destroy_actor(actor)
+# Re-cut only some islands' ground (EW_TERRAIN_ISLANDS=Starter,...): their meshes are rebuilt from world_terrain and their
+# actors pointed at them again; the sea floor, surf, ocean and every other island stay as they are. For local changes such as
+# the spring pond's depth (owner, November 1).
+ONLY = [k for k in os.environ.get('EW_TERRAIN_ISLANDS', '').split(',') if k]
+if ONLY:
+    material = unreal.load_asset('/Game/Elitewake/World/Materials/M_CoastalTerrain_v1')
+    report = {'only': ONLY, 'islands': {}}
+    for island in [i for i in W.ISLANDS if i.key in ONLY]:
+        reach = island.reach() + T.SHELF
+        asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
+                                   island.cy - reach, island.cy + reach, T.ground_spacing(island), material)
+        actor = next(a for a in actors.get_all_level_actors()
+                     if str(a.get_folder_path()) == 'World/Islands' and a.get_actor_label() == f'{island.key} ({island.region})')
+        actor.static_mesh_component.set_static_mesh(asset)
+        report['islands'][island.key] = {'vertices': verts}
+    report['ground_cm'] = {'spring_centre': round(height(T.POND[0], T.POND[1]), 1)}
+    assert level.save_current_level()
+    report['success'] = True
+    (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
+    unreal.log(f'Island ground re-cut: {ONLY}')
+else:
 
-material = make_material()
-surf_material = make_swash_material()
-report = {'removed': len(removed), 'islands': {}}
-terrains = []
-for island in W.ISLANDS:
-    reach = island.reach() + T.SHELF
-    spacing = T.ground_spacing(island)
-    asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
-                               island.cy - reach, island.cy + reach, spacing, material)
-    actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
-    actor.set_actor_label(f'{island.key} ({island.region})')
-    actor.set_folder_path('World/Islands')
-    actor.static_mesh_component.set_static_mesh(asset)
-    terrains.append(actor)
-    build_swash(island, surf_material)
-    report['islands'][island.key] = {'region': island.region, 'centre_m': [round(island.cx / 100), round(island.cy / 100)], 'vertices': verts}
+    # The single 504 m terrain and its surf, and any earlier run of this script.
+    retired_labels = ['Main beach', 'Distant islet beach', 'Island interior', 'Distant islet interior', 'Freshwater basin rim',
+                      'Coastal island terrain', 'Main island surf', 'Islet surf', 'Second island surf', 'Winter island surf', 'Sea floor']
+    removed = []
+    for actor in actors.get_all_level_actors():
+        if actor.get_actor_label() in retired_labels or str(actor.get_folder_path()) in ('World/Islands', 'World/Surf'):
+            removed.append(actor.get_actor_label())
+            actors.destroy_actor(actor)
 
-# The sea floor between the islands, over the whole world and a margin.
-x0, x1, y0, y1 = W.bounds(3000 * 100)
-floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, FLOOR_SPACING, material,
-                                      height=sea_floor_height)
-floor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
-floor.set_actor_label('Sea floor')
-floor.set_folder_path('World/Islands')
-floor.static_mesh_component.set_static_mesh(floor_asset)
-floor.static_mesh_component.set_cast_shadow(False)
-terrains.append(floor)
-report['sea_floor'] = {'vertices': floor_verts, 'size_km': [round((x1 - x0) / 100000, 1), round((y1 - y0) / 100000, 1)]}
-report['seamounts'] = []
-for n, (mx, my, top, r) in enumerate(T.SEAMOUNT_SITES):
-    asset, verts = ground_mesh(f'{MESHES}/SM_Seamount_{n + 1}_v1', mx - 2 * r, mx + 2 * r, my - 2 * r, my + 2 * r, SEAMOUNT_SPACING, material)
-    actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
-    actor.set_actor_label(f'Seamount {n + 1}')
-    actor.set_folder_path('World/Islands')
-    actor.static_mesh_component.set_static_mesh(asset)
-    terrains.append(actor)
-    report['seamounts'].append({'centre_m': [round(mx / 100), round(my / 100)], 'top_m': round(top / 100, 1), 'vertices': verts})
+    material = make_material()
+    surf_material = make_swash_material()
+    report = {'removed': len(removed), 'islands': {}}
+    terrains = []
+    for island in W.ISLANDS:
+        reach = island.reach() + T.SHELF
+        spacing = T.ground_spacing(island)
+        asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
+                                   island.cy - reach, island.cy + reach, spacing, material)
+        actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+        actor.set_actor_label(f'{island.key} ({island.region})')
+        actor.set_folder_path('World/Islands')
+        actor.static_mesh_component.set_static_mesh(asset)
+        terrains.append(actor)
+        build_swash(island, surf_material)
+        report['islands'][island.key] = {'region': island.region, 'centre_m': [round(island.cx / 100), round(island.cy / 100)], 'vertices': verts}
 
-# Keep the fixed places on the ground (the starter island did not change).
-start = next(a for a in actors.get_all_level_actors() if isinstance(a, unreal.PlayerStart))
-spawn_ground = height(start.get_actor_location().x, start.get_actor_location().y)
-start.set_actor_location(unreal.Vector(start.get_actor_location().x, start.get_actor_location().y, spawn_ground + 100), False, False)
-report['spawn_ground_cm'] = round(spawn_ground, 1)
-deck_bottom = 7.0
-for post in [a for a in actors.get_all_level_actors() if a.get_actor_label() == 'Dock support']:
-    p = post.get_actor_location()
-    bottom = height(p.x, p.y) - 40
-    post.set_actor_location(unreal.Vector(p.x, p.y, (deck_bottom + bottom) / 2), False, False)
-    s3 = post.get_actor_scale3d()
-    post.set_actor_scale3d(unreal.Vector(s3.x, s3.y, (deck_bottom - bottom) / 100))
+    # The sea floor between the islands, over the whole world and a margin.
+    x0, x1, y0, y1 = W.bounds(3000 * 100)
+    floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, FLOOR_SPACING, material,
+                                          height=sea_floor_height)
+    floor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+    floor.set_actor_label('Sea floor')
+    floor.set_folder_path('World/Islands')
+    floor.static_mesh_component.set_static_mesh(floor_asset)
+    floor.static_mesh_component.set_cast_shadow(False)
+    terrains.append(floor)
+    report['sea_floor'] = {'vertices': floor_verts, 'size_km': [round((x1 - x0) / 100000, 1), round((y1 - y0) / 100000, 1)]}
+    report['seamounts'] = []
+    for n, (mx, my, top, r) in enumerate(T.SEAMOUNT_SITES):
+        asset, verts = ground_mesh(f'{MESHES}/SM_Seamount_{n + 1}_v1', mx - 2 * r, mx + 2 * r, my - 2 * r, my + 2 * r, SEAMOUNT_SPACING, material)
+        actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+        actor.set_actor_label(f'Seamount {n + 1}')
+        actor.set_folder_path('World/Islands')
+        actor.static_mesh_component.set_static_mesh(asset)
+        terrains.append(actor)
+        report['seamounts'].append({'centre_m': [round(mx / 100), round(my / 100)], 'top_m': round(top / 100, 1), 'vertices': verts})
 
-# The sea over the whole world: the ocean and its water zone, the swimming volume, and the old floor as a backstop.
-half = max(x1 - x0, y1 - y0) / 2 + 200000
-all_actors = actors.get_all_level_actors()
-zone = next(a for a in all_actors if isinstance(a, unreal.WaterZone))
-zone.set_editor_property('zone_extent', unreal.Vector2D(half * 2, half * 2))
-zone.set_editor_property('render_target_resolution', unreal.IntPoint(4096, 4096))
-for terrain in terrains:
-    assert unreal.EWWorldEditorLibrary.add_water_terrain(terrain)
-ocean = next(a for a in all_actors if isinstance(a, unreal.WaterBodyOcean))
-oc = ocean.get_water_body_component()
-oc.set_editor_property('ocean_extents', unreal.Vector2D(half * 2, half * 2))
-oc.set_editor_property('collision_extents', unreal.Vector(half, half, SEA - T.DEEP + 5000))
-SEA_MATERIAL = '/Game/Elitewake/World/Water/MI_CoastalOcean_v1'
-sea = unreal.load_asset(SEA_MATERIAL)
-if sea:
-    oc.set_water_material(sea)
-for label in ('Coastal ocean swimming volume', 'Coastal seabed'):
-    thing = next(a for a in all_actors if a.get_actor_label() == label)
-    centre, extent = thing.get_actor_bounds(False)
-    sc = thing.get_actor_scale3d()
-    thing.set_actor_scale3d(unreal.Vector(sc.x * half / extent.x, sc.y * half / extent.y, sc.z))
-    thing.set_actor_location(unreal.Vector(0, 0, thing.get_actor_location().z), False, False)
-# The swimming volume reaches down to the deepest floor, and the old flat seabed lies just under it as a backstop.
-report['ocean_depth'] = apply_depth(next(a for a in all_actors if a.get_actor_label() == 'Coastal ocean swimming volume'),
-                                    next(a for a in all_actors if a.get_actor_label() == 'Coastal seabed'), SEA)
-report['sea_half_extent_km'] = round(half / 100000, 1)
-report['ocean'] = unreal.EWWorldEditorLibrary.rebuild_water_body(ocean)
-report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
-    'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
-    'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0)}.items()}
-assert level.save_current_level()
-report['success'] = True
-(root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
-unreal.log('World terrain saved')
+    # Keep the fixed places on the ground (the starter island did not change).
+    start = next(a for a in actors.get_all_level_actors() if isinstance(a, unreal.PlayerStart))
+    spawn_ground = height(start.get_actor_location().x, start.get_actor_location().y)
+    start.set_actor_location(unreal.Vector(start.get_actor_location().x, start.get_actor_location().y, spawn_ground + 100), False, False)
+    report['spawn_ground_cm'] = round(spawn_ground, 1)
+    deck_bottom = 7.0
+    for post in [a for a in actors.get_all_level_actors() if a.get_actor_label() == 'Dock support']:
+        p = post.get_actor_location()
+        bottom = height(p.x, p.y) - 40
+        post.set_actor_location(unreal.Vector(p.x, p.y, (deck_bottom + bottom) / 2), False, False)
+        s3 = post.get_actor_scale3d()
+        post.set_actor_scale3d(unreal.Vector(s3.x, s3.y, (deck_bottom - bottom) / 100))
+
+    # The sea over the whole world: the ocean and its water zone, the swimming volume, and the old floor as a backstop.
+    half = max(x1 - x0, y1 - y0) / 2 + 200000
+    all_actors = actors.get_all_level_actors()
+    zone = next(a for a in all_actors if isinstance(a, unreal.WaterZone))
+    zone.set_editor_property('zone_extent', unreal.Vector2D(half * 2, half * 2))
+    zone.set_editor_property('render_target_resolution', unreal.IntPoint(4096, 4096))
+    for terrain in terrains:
+        assert unreal.EWWorldEditorLibrary.add_water_terrain(terrain)
+    ocean = next(a for a in all_actors if isinstance(a, unreal.WaterBodyOcean))
+    oc = ocean.get_water_body_component()
+    oc.set_editor_property('ocean_extents', unreal.Vector2D(half * 2, half * 2))
+    oc.set_editor_property('collision_extents', unreal.Vector(half, half, SEA - T.DEEP + 5000))
+    SEA_MATERIAL = '/Game/Elitewake/World/Water/MI_CoastalOcean_v1'
+    sea = unreal.load_asset(SEA_MATERIAL)
+    if sea:
+        oc.set_water_material(sea)
+    for label in ('Coastal ocean swimming volume', 'Coastal seabed'):
+        thing = next(a for a in all_actors if a.get_actor_label() == label)
+        centre, extent = thing.get_actor_bounds(False)
+        sc = thing.get_actor_scale3d()
+        thing.set_actor_scale3d(unreal.Vector(sc.x * half / extent.x, sc.y * half / extent.y, sc.z))
+        thing.set_actor_location(unreal.Vector(0, 0, thing.get_actor_location().z), False, False)
+    # The swimming volume reaches down to the deepest floor, and the old flat seabed lies just under it as a backstop.
+    report['ocean_depth'] = apply_depth(next(a for a in all_actors if a.get_actor_label() == 'Coastal ocean swimming volume'),
+                                        next(a for a in all_actors if a.get_actor_label() == 'Coastal seabed'), SEA)
+    report['sea_half_extent_km'] = round(half / 100000, 1)
+    report['ocean'] = unreal.EWWorldEditorLibrary.rebuild_water_body(ocean)
+    report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
+        'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
+        'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0)}.items()}
+    assert level.save_current_level()
+    report['success'] = True
+    (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
+    unreal.log('World terrain saved')

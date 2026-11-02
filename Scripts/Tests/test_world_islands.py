@@ -47,7 +47,16 @@ class WorldIslandPlanTests(unittest.TestCase):
                 self.assertEqual(island['region'], 'Jungle')
 
     def test_crossing_target(self):
-        self.assertEqual(P.CROSSING_MINUTES, (15, 20))
+        self.assertEqual(P.CROSSING_MINUTES, (6, 17))
+
+    def test_inland_water_depths_in_feet(self):
+        self.assertAlmostEqual(P.POND_DEPTH_CM / 30.48, 15, places=1)
+        self.assertAlmostEqual(P.LAKE_DEPTH_CM / 30.48, 50, places=1)
+
+    def test_the_starter_pond_follows_the_rule(self):
+        import coastal_layout, world_terrain
+        self.assertEqual(coastal_layout.POND_DEPTH, P.POND_DEPTH_CM)
+        self.assertEqual(world_terrain.POND_DEPTH, P.POND_DEPTH_CM)
 
 
 if __name__ == '__main__':

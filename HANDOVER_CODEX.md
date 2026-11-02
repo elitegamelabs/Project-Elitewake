@@ -36,30 +36,35 @@ pass-over only). This file only says where the work stands and what comes next. 
   RB / LB+RB material. Done and verified.
 - Graphics tiers: visuals only, gameplay identical; done (`Config/DefaultScalability.ini` pins view distance and plant density).
 - Queued after the islands: the map screen shows a **deep blue ocean** around the islands.
+- Inland water (owner, in feet): ponds 15 ft deep, lakes 50 ft deep (`world_islands.POND_DEPTH_CM`, `LAKE_DEPTH_CM`). The
+  starter spring pond is done (flat floor at 15 ft, 4 m grid). Re-cut one island's ground with
+  `EW_TERRAIN_ISLANDS=Starter` and build_coastal_terrain.py, **with `-SCCProvider=None`**: the editor's git plugin
+  otherwise restores the replaced mesh from git.
+- Controller icons: the owner's sheet (`C:\Users\elite\Downloads\Glossy Xbox and PlayStation Button Icon Sheet.png`)
+  was extracted to a preview only; a plan awaits owner approval (asset names, rich-text prompts, family detection with
+  an Options override, trademark/provenance questions). Do not import until approved.
 
-## 3. In progress: walking-route measurement (plan step 5)
+## 3. Walking-route measurement (done 2026-11-01)
 
-`Scripts/Verification/measure_walking_routes_play.py` walks two routes per island (long axis and across, 20 m inland ends) at
-walking speed, game time, slomo 4. It was stopped after three routes for this handover:
+`Scripts/Verification/measure_walking_routes_play.py`, two routes per island (long axis and across, 20 m inland ends),
+walking speed 5 m/s, game time; a route still short at 30 min is blocked.
 
-| Route | Minutes | Walked / straight m | Climbed m | Notes |
-|---|---|---|---|---|
-| Starter long axis | 6.65 | 1980 / 1985 | 88 | 0 detours |
-| Starter across | 6.11 | 1439 / 1260 | 70 | 127 s swimming (pond), 22 detours |
-| Winter1 long axis | 45.0 (gave up) | 10494 / 2230 | 2537 | never arrived: the 360 m central mountain blocks it, 405 detours |
+| Island | Long axis | Across |
+|---|---|---|
+| Starter (Plains) | 6.65 min, 1980 m walked / 1985 m straight | 6.2 min (swims the pond) |
+| Winter1 | blocked (central 360 m mountain) | blocked |
+| Swamp1 | 9.79 min | stuck at its start point: measurement fault, re-measure |
+| Desert1 | blocked (central plateau) | 5.64 min |
+| Jungle1 | blocked (central 261 m hill) | 6.42 min |
 
-Finish it (single player, standalone, about 30–60 real minutes):
-
-    .\Scripts\Verification\run_play_check_once.ps1 -Check measure_walking_routes_play.py -Result WalkingRoutesResult.json -Players 1 -Standalone 1 -Timeout 3600
-
-Then derive the walking pace over each terrain type (flat Plains ≈ 5 m/s straight-line; detours and water cut it) and propose
-island sizes for a 15–20 minute crossing to the owner **before any terrain change**. Expect islands roughly twice today's
-length; at 20 islands the world is ~25–30 km across, which likely needs Unreal Landscape + World Partition instead of one
-static mesh per island — propose that as its own approved step.
+Owner target now: **6–17 minutes across, preferably in every direction** (replaces 15–20). Passable ground runs about
+4–5 m/s straight-line, so today's 1.3–2.2 km islands already fit; what fails is the impassable central relief. Propose
+islands of roughly today's size with several passable hills instead of one mountain; the big World Partition move is
+probably unnecessary.
 
 ## 4. Next steps, in order (each its own commit; owner approval before terrain changes)
 
-1. Finish section 3 and get the owner's decision on sizes and terrain technology.
+1. Re-measure Swamp1 across from a clear start; get the owner's decision on island sizes (section 3).
 2. Apply the direction patch: `C:\ELITEWAKE\BACKUP_CURRENT\Patches\Phase2_NorthPlusY_DesertJungleSwap_from_31e55329.patch`
    (`git apply --check` first; it was made against 31e55329 and later commits touched none of its files except CLAUDE.md,
    so drop its CLAUDE.md hunk — the guide already records north = +Y). Rebuild, run the automation suite.
