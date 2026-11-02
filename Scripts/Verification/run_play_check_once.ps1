@@ -20,7 +20,7 @@ if ($Standalone) { $env:EW_PLAY_STANDALONE = $Standalone } else { Remove-Item En
 $out = Join-Path $Project "Saved\$Result"
 Remove-Item $out -ErrorAction SilentlyContinue
 $runner = (Join-Path $PSScriptRoot 'run_play_check.py') -replace '\\', '/'
-$editor = Start-Process -PassThru -FilePath $Editor -ArgumentList @("`"$Project\EW.uproject`"", '/Game/Elitewake/Maps/Lvl_CoastalPlayground', '-unattended', "-ExecCmds=`"py $runner`"")
+$editor = Start-Process -PassThru -WindowStyle Hidden -FilePath $Editor -ArgumentList @("`"$Project\EW.uproject`"", '/Game/Elitewake/Maps/Lvl_CoastalPlayground', '-unattended', "-ExecCmds=`"py $runner`"")
 $limit = [int]$Timeout + 420
 if (-not $editor.WaitForExit($limit * 1000)) {
     Stop-Process -Id $editor.Id -Force
