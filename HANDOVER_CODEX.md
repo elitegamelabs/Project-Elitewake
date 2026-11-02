@@ -14,15 +14,20 @@ pass-over only). This file only says where the work stands and what comes next. 
   - `f1a54896` guide: the twenty-island world, villages, wildlife plan (CLAUDE.md 5.7).
   - `9d6e41ea` neutral elephants that defend themselves.
   - `bc2a9643` graphics quality tiers that stay fair.
-  - the handover commit (this file, `world_islands.py` and its tests, the walking-route check, `run_play_check_once.ps1`).
+  - `779e4d83` first handover (this file, `world_islands.py` and tests, the walking-route check, `run_play_check_once.ps1`).
+  - `6ea16acd` 15 ft starter pond, 6–17 minute crossings, walking routes measured.
+  - the final handover commit (this update; the controller-icon preview tools in `Scripts/Art`).
+- Claude's own working files (notes, scratch scripts, the icon preview) are copied to
+  `C:\ELITEWAKE\Claude_Handover_20261101` (see its README.txt). Nothing outside the repo is needed to continue: the direction patch is also in the repo at
+  `Scripts/Setup/patches/`.
 - Phase 1 (slices 1–6) is committed but **not owner-accepted**. The owner moved on to island work (Phase 2 direction).
 
 ## 2. Owner decisions in force (all recorded in CLAUDE.md)
 
 - Visual target: high-definition naturalistic realism (9.1). Elephants realistic and **neutral** (done in code; the realistic
   model is Phase 5 asset work).
-- World: **20 islands, 4 per region**, each its own shape and land area; **15–20 minutes to cross each on foot** (measured
-  in-game, not a diameter); **one village per region** — P1 Starter (Saltreach), W2 Birch Haven, S1 River Isle, D1 Oasis Isle,
+- World: **20 islands, 4 per region**, each its own shape and land area; **6–17 minutes to cross each on foot, preferably in every
+  direction** (measured in-game, not a diameter); **one village per region** — P1 Starter (Saltreach), W2 Birch Haven, S1 River Isle, D1 Oasis Isle,
   J1 Waterfall Basin. Island-by-island specialties and wildlife: CLAUDE.md 5.7, as data in `Scripts/Setup/world_islands.py`.
 - Directions: Winter north, Swamp south, Desert east, Jungle west. North must become world +Y and east −X; **Desert and Jungle
   swap sides** (owner choice). That code exists as a saved patch, not yet applied (section 4).
@@ -40,9 +45,7 @@ pass-over only). This file only says where the work stands and what comes next. 
   starter spring pond is done (flat floor at 15 ft, 4 m grid). Re-cut one island's ground with
   `EW_TERRAIN_ISLANDS=Starter` and build_coastal_terrain.py, **with `-SCCProvider=None`**: the editor's git plugin
   otherwise restores the replaced mesh from git.
-- Controller icons: the owner's sheet (`C:\Users\elite\Downloads\Glossy Xbox and PlayStation Button Icon Sheet.png`)
-  was extracted to a preview only; a plan awaits owner approval (asset names, rich-text prompts, family detection with
-  an Options override, trademark/provenance questions). Do not import until approved.
+- Controller icons: in progress, **awaiting owner approval before any import** — section 7.
 
 ## 3. Walking-route measurement (done 2026-11-01)
 
@@ -65,7 +68,9 @@ probably unnecessary.
 ## 4. Next steps, in order (each its own commit; owner approval before terrain changes)
 
 1. Re-measure Swamp1 across from a clear start; get the owner's decision on island sizes (section 3).
-2. Apply the direction patch: `C:\ELITEWAKE\BACKUP_CURRENT\Patches\Phase2_NorthPlusY_DesertJungleSwap_from_31e55329.patch`
+2. Apply the direction patch: `Scripts/Setup/patches/Phase2_NorthPlusY_DesertJungleSwap_from_31e55329.patch` (same file as
+   `C:\ELITEWAKE\BACKUP_CURRENT\Patches\...`; if a checkout's line endings make `git apply` refuse the repo copy, use the
+   C:\ELITEWAKE copy or add `--ignore-whitespace`)
    (`git apply --check` first; it was made against 31e55329 and later commits touched none of its files except CLAUDE.md,
    so drop its CLAUDE.md hunk — the guide already records north = +Y). Rebuild, run the automation suite.
 3. Build the 20-island layout in `Scripts/Setup/world_layout.py` from `world_islands.py` (keys there), keep the Starter
@@ -97,7 +102,10 @@ probably unnecessary.
 - Build: `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" EWEditor Win64 Development "C:\UnrealProjects\EW_CLEAN\EW.uproject" -WaitMutex -NoHotReloadFromIDE`
   (never while an editor is running).
 - Automation: `UnrealEditor-Cmd.exe EW.uproject -ExecCmds="Automation RunTests Elitewake;Quit" -unattended -nullrhi -nosplash`
-  — 49 tests pass at handover. Python: `python -m unittest discover -s Scripts/Tests -p "test_*.py"` — 49 pass.
+  — 49 tests pass at handover. Python: `python -m unittest discover -s Scripts/Tests -p "test_*.py"` — all 52 pass.
+- Editor scripts that delete and recreate assets (terrain re-cuts): run with `-SCCProvider=None` or the git plugin restores
+  the old file from git.
+- Pushing large LFS changes may need the owner's explicit "push" in Claude's tooling; ask before pushing.
 - Play checks: always through `run_play_check_once.ps1` (outside time limit). A runner that fails to load leaves the editor
   idle forever otherwise — that cost an hour once.
 - Python-called server RPCs run locally in Play checks; drive clients with `EWEditorVerificationLibrary` key/interaction
@@ -106,3 +114,44 @@ probably unnecessary.
   only, never force. Map changes push ~1.2 GB of LFS.
 - Report to the owner in plain language, post progress while long runs go, and label visual/audio judgements as owner review
   pending.
+
+## 7. Unfinished: controller-button icons (owner request, November 1)
+
+Source: the owner's sheet `C:\Users\elite\Downloads\Glossy Xbox and PlayStation Button Icon Sheet.png` (1774 × 887,
+real alpha). **Owner rule: show the plan and wait for approval before importing or replacing game assets.** Plan shown to
+the owner; no answer yet. Questions still open: (a) leave out the two Home logo icons — they are cut off at the sheet's
+bottom edge (edge alpha 252/249) and are Microsoft/Sony trademarks; (b) where the sheet came from (provenance, licence,
+ASSET_LEDGER.csv row) — Sony's △○×□ symbols and both logos are trademarks used under platform guidelines; (c) the
+Options override with a neutral fallback.
+
+Done (preview only, nothing imported):
+- `python Scripts/Art/extract_controller_icons.py` cuts the 38 icons (19 Xbox, 19 PlayStation) by their own alpha, grows
+  each crop until its edges are transparent, names them, checks edges, and writes `Saved/ControllerIconPreview/`
+  (icons\, contact_sheet.png, extraction.json). Residual edge alpha ≤ 8/255 is shared haze: fade the outer 4 px at import.
+- `python Scripts/Art/preview_controller_prompts.py` renders example prompts at 1920×1080 in-game size
+  (`prompt_preview_1080p.png`): 44 px icons read well; R3's label is borderline; at 26 px the D-pad arm vanishes, so the
+  hotbar needs ≥ 32 px.
+- Names: `T_Icon_Xbox_{A,B,X,Y,DPad_Up,DPad_Down,DPad_Left,DPad_Right,LB,RB,LT,RT,LeftStick,RightStick,LeftStickPress,
+  RightStickPress,Menu,View,Home}` and `T_Icon_PlayStation_{Cross,Square,Triangle,Circle,DPad_*,L1,R1,L2,R2,LeftStick,
+  RightStick,L3,R3,Options,Create,Home}`. Note: the sheet labels the Xbox stick presses "L3/R3", not Xbox's own naming.
+
+Findings about the game:
+- Prompts are plain FText with Xbox letters (`EWArrivalComponent.cpp` PromptFor/TownPromptFor, the build radial and
+  debug line in `World/EWBuildComponent.cpp`, `EWHotbarWidget.cpp` GamepadHints, map/dialogue/options hints).
+- Device detection is keyboard vs gamepad only (`AEWPlayerController::RecordInputDevice` → `UsesControllerPrompts`);
+  nothing distinguishes Xbox from PlayStation; no GameInput or CommonUI plugin is enabled.
+- Bindings are positional (FaceButton_Bottom = A / Cross, Left = X / Square, Top = Y / Triangle, Right = B / Circle,
+  LeftShoulder = LB / L1), so "hold L1 + D-pad Right" is the same binding as "hold LB + D-pad Right": no remap.
+
+To do once approved (one commit each, tests and 1080p captures):
+1. Import into `/Game/Elitewake/UI/Icons/Controller/Xbox/` and `/PlayStation/` (UI texture group, no mips, 4 px edge fade);
+   ASSET_LEDGER.csv rows with provenance.
+2. A data asset mapping each FKey to its icon per family; prompts look up the key actually bound (BuildComponent's
+   ResolveKey, HotbarSlotForKey, the interaction key), never a hard-coded letter.
+3. Rich text prompts (URichTextBlock + an image decorator) in the arrival/town prompt, interaction prompt, build radial,
+   hotbar hints (≥ 32 px), map/dialogue/options hints. Build prompt: Xbox hold LB + D-pad Right, PlayStation hold L1 +
+   D-pad Right, keyboard B; entering opens the radial on parchment (already implemented).
+4. Family choice: Options "Button icons: Automatic / Xbox / PlayStation"; Automatic uses device identity if available
+   (test GameInput with a real DualSense); unknown → neutral position words ("Left face button") until chosen, so no
+   player sees the wrong brand.
+5. Tests: every bound key has an icon in both families; families never mix; fallback text when unknown.

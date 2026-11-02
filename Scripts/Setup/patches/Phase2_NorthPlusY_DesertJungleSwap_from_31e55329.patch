@@ -1,0 +1,562 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 2a199372..ab5d47a4 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -1,6 +1,6 @@
+ # ELITEWAKE — Claude Production Guide and Canonical World Bible
+ 
+-Last consolidated: 2026-10-31
++Last consolidated: 2026-11-01
+ Engine: Unreal Engine 5.8
+ Project: EW.uproject
+ Canonical playable map: /Game/Elitewake/Maps/Lvl_CoastalPlayground
+@@ -168,6 +168,7 @@ These decisions replace every older conflicting statement:
+ 
+ - Exactly five islands, each approximately 1.5–2.5 km across its longest dimension.
+ - Plains is central and is the universal start. Winter is north, Swamp south, Desert east, Jungle west.
++- North is world +Y and east is world -X (a quarter turn clockwise, as Unreal yaw turns). Source/EW/World/EWNorth.h is the single conversion used by the compass, map and sun; Scripts/Setup/world_layout.py places the islands to match (owner, 2026-11-01: Desert and Jungle swapped sides rather than change the canon).
+ - Ocean depth may reach approximately 1.5 km where the world design requires deep water.
+ - Terrain is deterministic and explainable. A seed or source-data change must produce a reviewable diff.
+ - Coastlines are irregular: coves, headlands, beaches, shelves, cliffs, and eroded transitions. Never use five scaled/rotated copies of one island.
+@@ -260,7 +261,7 @@ Claims are deferred until the core voyage and persistence phases, but their cano
+ 
+ ### 6.5 Input and control baseline
+ 
+-The current bindings are a baseline to verify in the actual Enhanced Input assets and Play checks, not a promise that all controller paths are accepted. Every shipping action needs keyboard/mouse and controller access. On foot: WASD/mouse or two sticks move/look; Space jumps/swims up; Shift sprints; left mouse/right trigger attacks; E/X interacts; I/Y opens inventory; M/View opens the map; Escape/Start opens pause. Hotbar 1–8 uses number keys or D-pad 1–4, with left trigger plus D-pad for 5–8. Inventory tabs use Tab/Shift+Tab or shoulder controls; arrows/D-pad move focus; Enter/A confirms; Escape/B closes. Map drag/right stick pans; wheel/triggers zoom. Sail trim uses left/right arrows or LB/RB; ladder uses up/down arrows or D-pad. Build Mode uses B/right-stick click, Tab/Y for the piece dial, Q/E or D-pad left/right to rotate, and left mouse/A or right trigger to place. Test-only F9 item spawn, F10 private session, and Shift+number teleports must remain out of shipping builds.
++The current bindings are a baseline to verify in the actual Enhanced Input assets and Play checks, not a promise that all controller paths are accepted. Every shipping action needs keyboard/mouse and controller access. On foot: WASD/mouse or two sticks move/look; Space jumps/swims up; Shift sprints; left mouse/right trigger attacks; E/X interacts; I/Y opens inventory; M/View opens the map; Escape/Start opens pause. Hotbar 1–8 uses number keys or D-pad 1–4, with left trigger plus D-pad for 5–8. Inventory tabs use Tab/Shift+Tab or shoulder controls; arrows/D-pad move focus; Enter/A confirms; Escape/B closes. Map drag/right stick pans; wheel/triggers zoom. Sail trim uses left/right arrows or LB/RB; ladder uses up/down arrows or D-pad. Build Mode opens with B on the keyboard and LB on the controller (owner, 2026-11-01: d-pad left/right now select the hotbar; not yet implemented, and LB must open Build Mode only on foot because it trims sails at ship stations), Tab/Y for the piece dial, Q/E or D-pad left/right to rotate, and left mouse/A or right trigger to place. Test-only F9 item spawn, F10 private session, and Shift+number teleports must remain out of shipping builds.
+ 
+ Known controller debt: jump, sprint, and stance bindings require gamepad-only Play verification; LB/RB overlap hotbar and sail/menu contexts; real-stick build-dial movement needs a physical controller check; a unified rebinding screen is missing. Resolve conflicts with explicit input contexts and on-screen focus, not hidden priority rules.
+ 
+diff --git a/Scripts/Setup/build_freeport.py b/Scripts/Setup/build_freeport.py
+index a1eb41a8..4af79563 100644
+--- a/Scripts/Setup/build_freeport.py
++++ b/Scripts/Setup/build_freeport.py
+@@ -509,8 +509,9 @@ def build_people(stalls, placed, ship_class):
+                     ('Mind the headland on the way in; the rocks run out further than they look.',),
+                     'f', clothes('HarborMaster', SKIN[3], (.08, .1, .2), (.08, .1, .2), hair=(.2, .2, .2), sash=(.6, .5, .2)))
+     berths = []
+-    for name, a2, c2, yaw2, length in (('the long pier, east berth', 5900, 2650, 0, 2600), ('the long pier, outer east berth', 8300, 3000, 0, 4200),
+-                                       ('the long pier, west berth', 8500, 950, 0, 2600), ('the fishing jetty, inner berth', 950, 5300, 90, 1000),
++    # Compass names with north +Y and east -X (Source/EW/World/EWNorth.h): the port's +across side is its west.
++    for name, a2, c2, yaw2, length in (('the long pier, west berth', 5900, 2650, 0, 2600), ('the long pier, outer west berth', 8300, 3000, 0, 4200),
++                                       ('the long pier, east berth', 8500, 950, 0, 2600), ('the fishing jetty, inner berth', 950, 5300, 90, 1000),
+                                        ('the fishing jetty, outer berth', 950, 7000, 90, 1000)):
+         berth = unreal.EWBerth()
+         berth.set_editor_property('where', transform(a2, c2, SEA, yaw2))
+diff --git a/Scripts/Setup/rebuild_world.py b/Scripts/Setup/rebuild_world.py
+index 91e3d11a..bbcc5fba 100644
+--- a/Scripts/Setup/rebuild_world.py
++++ b/Scripts/Setup/rebuild_world.py
+@@ -5,8 +5,10 @@ Optionally set EW_REBUILD_FROM to a step's name to start part-way, or EW_REBUILD
+ steps to run just those. Writes Saved/WorldRebuildResult.json after each
+ step, so a failure shows where it stopped; the editor closes either way.
+ 
+-The order (CLAUDE.md, "Rebuild order for the coastal map"): ground first, then what is cut
+-into it (caves) or stands on it, then what lives there and the climate, Ports and the sloop.
++The order: ground first, then what is cut into it (caves) or stands on it, then what lives there and the climate,
++Ports and the sloop; then Phase 1's Plains and Saltreach work, which clears or replaces some of what the world steps
++put back (trees in Saltreach, piranhas in the arrival pond, the boars round the arrival) and holds the sloop for the
++yard. Reefs are not rebuilt here: the owner's three open-ocean reefs (October 31) replace build_reefs.py's layout.
+ """
+ import json
+ import os
+@@ -19,7 +21,9 @@ import unreal
+ HERE = Path(__file__).resolve().parent
+ RESULT = Path(unreal.Paths.project_saved_dir(), 'WorldRebuildResult.json')
+ STEPS = ['build_coastal_terrain', 'build_caves', 'build_cave_webs', 'build_landmarks', 'build_grass', 'build_coastal_flora',
+-         'build_coastal_rocks', 'build_reefs', 'build_seabed_life', 'build_fish', 'place_animals', 'build_regions', 'build_ports', 'restore_sloop', 'tune_rendering']
++         'build_coastal_rocks', 'build_seabed_life', 'build_fish', 'place_animals', 'add_spiders', 'build_crystals', 'build_regions',
++         'build_ports', 'add_port_merchants', 'build_freeport', 'build_saltreach_welcome', 'restore_sloop', 'build_voyage_ready',
++         'build_arrival', 'build_first_resources', 'build_plains_threat', 'tune_rendering']
+ 
+ 
+ def main():
+diff --git a/Scripts/Setup/world_layout.py b/Scripts/Setup/world_layout.py
+index c5e3f46a..0c474e05 100644
+--- a/Scripts/Setup/world_layout.py
++++ b/Scripts/Setup/world_layout.py
+@@ -4,7 +4,9 @@ Plain Python (no Unreal), shared by the world setup scripts and checked on its o
+     python Scripts/Setup/world_layout.py          # prints the layout and checks it; exit code 1 if a rule fails
+ 
+ Current owner direction:
+-  - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (+X), Jungle west (-X);
++  - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (-X), Jungle west (+X).
++    North is +Y and east -X, a quarter turn clockwise as Unreal's yaw turns, so the compass, the map and the sun agree
++    (Source/EW/World/EWNorth.h; owner, November 1: Desert and Jungle swapped sides to match);
+   - exactly one large, distinct island per region during the current production phase;
+   - the Plains island is the universal starting island;
+   - islands separated by open sea, 800 m to 2,000 m between shorelines.
+@@ -20,8 +22,9 @@ import sys
+ M = 100.0                       # cm per metre
+ MIN_GAP, MAX_GAP = 800 * M, 2000 * M
+ REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
+-                  'Desert': (7000 * M, 0.0), 'Jungle': (-7000 * M, 0.0)}
++                  'Desert': (-7000 * M, 0.0), 'Jungle': (7000 * M, 0.0)}
+ ISLANDS_PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
++DESERT_X, JUNGLE_X = -390000.0, 280000.0     # cm: centres along X (tuning; the Plains island reaches about 2 km toward -X)
+ 
+ 
+ class Island:
+@@ -119,8 +122,9 @@ def generate():
+     islands = [StarterIsland(old, west)]
+     islands.append(_organic('Winter1', 'Winter', -60000.0, 280000.0, 118000.0, 82000.0, 0.45, 7202, 11000.0, 5, (-math.pi / 2, 0.35, 0.25)))
+     islands.append(_organic('Swamp1', 'Swamp', -30000.0, -270000.0, 100000.0, 80000.0, 2.6, 7303, 260.0, 4, (math.pi / 3, 0.4, 0.3)))
+-    islands.append(_organic('Desert1', 'Desert', 280000.0, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (math.pi, 0.3, 0.2)))
+-    islands.append(_organic('Jungle1', 'Jungle', -380000.0, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (0.3, 0.35, 0.24)))
++    # Desert east (-X) and Jungle west (+X), each keeping its own shape, seed and size; their coves still face the Plains.
++    islands.append(_organic('Desert1', 'Desert', DESERT_X, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (0.0, 0.3, 0.2)))
++    islands.append(_organic('Jungle1', 'Jungle', JUNGLE_X, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (math.pi - 0.3, 0.35, 0.24)))
+     return islands
+ 
+ 
+diff --git a/Scripts/Tests/test_world_layout.py b/Scripts/Tests/test_world_layout.py
+index 052d9dee..262bd4a3 100644
+--- a/Scripts/Tests/test_world_layout.py
++++ b/Scripts/Tests/test_world_layout.py
+@@ -51,8 +51,9 @@ class WorldLayoutRuleTests(unittest.TestCase):
+                                   f'{i.key} is {gap / M:.0f} m from its nearest island (> 2,000 m)')
+ 
+     def test_each_region_on_its_side_of_the_world(self):
++        # North is +Y and east -X (Source/EW/World/EWNorth.h; owner, November 1).
+         sides = {'Winter': lambda i: i.cy > 0, 'Swamp': lambda i: i.cy < 0,
+-                  'Desert': lambda i: i.cx > 0, 'Jungle': lambda i: i.cx < 0}
++                  'Desert': lambda i: i.cx < 0, 'Jungle': lambda i: i.cx > 0}
+         for i in W.ISLANDS:
+             check = sides.get(i.region)
+             if check is None:
+diff --git a/Scripts/Verification/capture_world_directions.py b/Scripts/Verification/capture_world_directions.py
+new file mode 100644
+index 00000000..9e4edf32
+--- /dev/null
++++ b/Scripts/Verification/capture_world_directions.py
+@@ -0,0 +1,130 @@
++"""World directions, evidence captures (CLAUDE.md Phase 2, first slice; section 9.4): pictures to review, plus measured bearings.
++Run through run_play_check.py on /Game/Elitewake/Maps/Lvl_CoastalPlayground with EW_PLAY_PLAYERS=1, EW_PLAY_WINDOW=1920x1080,
++EW_PLAY_STARTER_KIT=0, EW_PLAY_RESULT=WorldDirectionsCaptures.json. Writes Saved/Screenshots/WorldDirections/*.png, 70-degree view.
++
++North is world +Y and east -X (Source/EW/World/EWNorth.h): Winter north, Swamp south, Desert east, Jungle west.
++  01-04 the gameplay camera on the Plains island's high ground facing each other island, late morning (HUD: the compass);
++  05 the map screen at full extent: Winter at the top, Swamp at the bottom, Desert right, Jungle left (HUD);
++  06 sunrise: the gameplay camera facing east at 06:30 (HUD).
++For each, the compass heading and the island's measured bearing are written to the result; 'success' only means the pictures were taken.
++"""
++import json
++import math
++import sys
++import time
++from pathlib import Path
++import unreal
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Setup'))
++import world_layout as W  # noqa: E402
++
++lib = unreal.EWEditorVerificationLibrary
++saved = Path(unreal.Paths.project_saved_dir())
++shots = saved / 'Screenshots' / 'WorldDirections'
++shots.mkdir(parents=True, exist_ok=True)
++for old in shots.glob('*.png'):
++    old.unlink()
++world = lib.get_play_worlds()[0]
++pc = unreal.GameplayStatics.get_player_controller(world, 0)
++pawn = pc.get_controlled_pawn()
++clock = unreal.EWDayNightSubsystem.get_for_world(world)
++report = {'shots': [], 'facing': {}, 'notes': []}
++EXPECTED = {'Winter': 0.0, 'Desert': 90.0, 'Swamp': 180.0, 'Jungle': 270.0}
++# The Plains island's highest feature: a clear view over the sea in every direction.
++_starter = W.island('Starter')
++_top = max(_starter.features, key=lambda f: f[3])          # features are offsets from the island's centre
++LOOKOUT = (_starter.cx + _top[0], _starter.cy + _top[1])
++
++
++def shot(name, ui):
++    unreal.SystemLibrary.execute_console_command(world, f'Shot {"showui " if ui else ""}filename="{shots / (name + ".png")}"')
++    report['shots'].append(name + '.png')
++    return 1.5
++
++
++def ground(x, y):
++    hit = unreal.SystemLibrary.line_trace_single(world, unreal.Vector(x, y, 20000), unreal.Vector(x, y, -3000),
++                                                 unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [pawn], unreal.DrawDebugTrace.NONE, True)
++    return hit.to_tuple()[4].z if hit else 0.0
++
++
++def bearing(dx, dy):
++    """Clockwise from north (+Y), east -X."""
++    return (math.degrees(math.atan2(dy, dx)) - 90.0) % 360.0
++
++
++def hour(h):
++    clock.set_hour(h)
++    report['notes'].append(f'hour {h}')
++    return 4.0
++
++
++def face(region):
++    def go():
++        x, y = LOOKOUT[0], LOOKOUT[1]
++        pawn.set_actor_location(unreal.Vector(x, y, ground(x, y) + 120), False, True)
++        pawn.get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately()
++        target = next(i for i in W.ISLANDS if i.region == region)
++        yaw = math.degrees(math.atan2(target.cy - y, target.cx - x))
++        pc.set_control_rotation(unreal.Rotator(0.0, -2.0, yaw))
++        report['facing'][region] = {'island_bearing': round(bearing(target.cx - x, target.cy - y), 1),
++                                    'expected': EXPECTED[region], 'yaw': round(yaw, 1)}
++        return 4.0
++    return go
++
++
++def heading(region):
++    def read():
++        compass = next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(world, unreal.EWCompassWidget, False) if w.is_in_viewport())
++        report['facing'][region]['compass_heading'] = round(compass.get_heading(), 1)
++        return .5
++    return read
++
++
++def open_map():
++    pc.set_map_open(True)
++    return 4.0
++
++
++def close_map():
++    pc.set_map_open(False)
++    return 1.5
++
++
++def sunrise():
++    x, y = LOOKOUT[0], LOOKOUT[1]
++    pawn.set_actor_location(unreal.Vector(x, y, ground(x, y) + 120), False, True)
++    pc.set_control_rotation(unreal.Rotator(0.0, 4.0, 180.0))     # east: -X
++    return 4.0
++
++
++steps = [lambda: unreal.SystemLibrary.execute_console_command(world, 'DisableAllScreenMessages'), lambda: hour(10.5)]
++for n, region in enumerate(('Winter', 'Desert', 'Swamp', 'Jungle'), 1):
++    steps += [face(region), heading(region), (lambda n=n, r=region: shot(f'0{n}_facing_{r.lower()}', True))]
++steps += [open_map, lambda: shot('05_map_full_extent', True), close_map,
++          lambda: hour(6.5), sunrise, lambda: shot('06_sunrise_east', True), lambda: hour(10.5)]
++state = {'i': 0, 'at': time.monotonic() + 1.0, 'h': None}
++
++
++def finish(error=None):
++    unreal.unregister_slate_post_tick_callback(state['h'])
++    report.update(success=error is None, error=error, map_open=pc.is_map_open())
++    (saved / 'WorldDirectionsCaptures.json').write_text(json.dumps(report, indent=2))
++    unreal.log(f'EWDIRECTIONSCAPTURE success={error is None} error={error}')
++
++
++def tick(delta):
++    if time.monotonic() < state['at']:
++        return
++    try:
++        if state['i'] >= len(steps):
++            finish()
++            return
++        wait = steps[state['i']]()
++        state['i'] += 1
++        state['at'] = time.monotonic() + (wait if isinstance(wait, float) else .5)
++    except Exception as error:
++        finish(repr(error))
++
++
++state['h'] = unreal.register_slate_post_tick_callback(tick)
+diff --git a/Source/EW/EWCompassWidget.cpp b/Source/EW/EWCompassWidget.cpp
+index 1c546413..edb89043 100644
+--- a/Source/EW/EWCompassWidget.cpp
++++ b/Source/EW/EWCompassWidget.cpp
+@@ -4,6 +4,7 @@
+ #include "EWPlayerController.h"
+ #include "Ships/EWShip.h"
+ #include "Ships/EWWindSubsystem.h"
++#include "World/EWNorth.h"
+ #include "Camera/PlayerCameraManager.h"
+ #include "Fonts/FontMeasure.h"
+ #include "Framework/Application/SlateApplication.h"
+@@ -20,7 +21,7 @@ const FLinearColor CompassPlace(1.f, .78f, .3f);         // the town step's plac
+ // The same compass strip location with a darker, more opaque plate for sea/sky contrast.
+ const FLinearColor CompassBacking(.008f, .014f, .022f, .82f);
+ 
+-float Bearing(float Yaw) { return FMath::Fmod(FMath::Fmod(Yaw, 360.f) + 360.f, 360.f); }
++float Bearing(float Yaw) { return EWNorth::BearingOfYaw(Yaw); }
+ 
+ FString PointName(int32 Degrees)
+ {
+@@ -47,7 +48,7 @@ void UEWCompassWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
+     if (bShowPlace)
+     {
+         const FVector To = Place - Survivor->GetActorLocation();
+-        PlaceBearing = Bearing(FMath::RadiansToDegrees(FMath::Atan2(To.Y, To.X)));
++        PlaceBearing = EWNorth::BearingOf(To);
+         PlaceMetres = FMath::RoundToInt(To.Size2D() / 100.f);
+     }
+ 
+diff --git a/Source/EW/EWCompassWidget.h b/Source/EW/EWCompassWidget.h
+index e73dc6a4..62be8a77 100644
+--- a/Source/EW/EWCompassWidget.h
++++ b/Source/EW/EWCompassWidget.h
+@@ -5,7 +5,7 @@
+ 
+ /**
+  * A compass strip across the top of the screen. The bearings scroll past a fixed centre mark as the view turns:
+- * north is the world's +X (as on the map), east +Y. The wind is marked where it blows from.
++ * north is the world's +Y (as on the map), east -X (World/EWNorth.h). The wind is marked where it blows from.
+  * At the helm of a ship with sails it also shows the sails' trim: where they are swung, where they would draw
+  * best, and how well they draw. In Saltreach it marks where the shown town step is done. Local and read-only.
+  */
+diff --git a/Source/EW/EWExplorationComponent.cpp b/Source/EW/EWExplorationComponent.cpp
+index a3606a20..06d40d24 100644
+--- a/Source/EW/EWExplorationComponent.cpp
++++ b/Source/EW/EWExplorationComponent.cpp
+@@ -172,14 +172,14 @@ void UEWExplorationComponent::BuildFog(int32 Size, float TimeSeconds, TArray<FCo
+     const int32 Block = FMath::Max(1, GridSize / Size);
+     // How much of each pixel's block has been seen.
+     TArray<float> Seen; Seen.SetNumUninitialized(Size * Size);
+-    // The image is laid out as the map shows the world: to the right is +Y, up is +X.
++    // The image is laid out as the map shows the world: to the right is east (-X), up is north (+Y) (World/EWNorth.h).
+     for (int32 Y = 0; Y < Size; ++Y)
+         for (int32 X = 0; X < Size; ++X)
+         {
+             int32 Count = 0;
+             for (int32 By = 0; By < Block; ++By)
+                 for (int32 Bx = 0; Bx < Block; ++Bx)
+-                    if (Cells[(X * Block + Bx) * GridSize + (Size - 1 - Y) * Block + By]) ++Count;
++                    if (Cells[((Size - 1 - Y) * Block + By) * GridSize + (Size - 1 - X) * Block + Bx]) ++Count;
+             Seen[Y * Size + X] = float(Count) / float(Block * Block);
+         }
+     // A soft edge: two passes of a 3 x 3 average.
+diff --git a/Source/EW/EWMapWidget.cpp b/Source/EW/EWMapWidget.cpp
+index 3a82f1ee..c0523a45 100644
+--- a/Source/EW/EWMapWidget.cpp
++++ b/Source/EW/EWMapWidget.cpp
+@@ -13,6 +13,7 @@
+ #include "Components/ScaleBox.h"
+ #include "Components/Overlay.h"
+ #include "Components/OverlaySlot.h"
++#include "World/EWNorth.h"
+ #include "Components/SceneCaptureComponent2D.h"
+ #include "Engine/SceneCapture2D.h"
+ #include "Engine/Texture2D.h"
+@@ -126,7 +127,7 @@ void UEWMapWidget::NativeConstruct()
+     FActorSpawnParameters Params;
+     Params.Owner = GetOwningPlayer();
+     Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+-    Capture = GetWorld()->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator(-90, 0, 0), Params);
++    Capture = GetWorld()->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator(-90.f, EWNorth::NorthYaw, 0.f), Params);
+     if (!Capture) return;
+ 
+     Capture->SetReplicates(false);
+@@ -209,9 +210,9 @@ void UEWMapWidget::PanByScreenDelta(const FVector2D& Delta)
+     const FVector2D Size = MapImage->GetCachedGeometry().GetLocalSize();
+     if (Size.X <= 1.f || Size.Y <= 1.f) return;
+ 
+-    // Dragging the picture right shows more of what lies to the left: -Y; dragging it down shows what lies above: +X.
+-    MapCenter.Y -= (Delta.X / Size.X) * CurrentViewWidth;
+-    MapCenter.X += (Delta.Y / Size.Y) * CurrentViewWidth;
++    // Dragging the picture right shows more of what lies to the west (+X); dragging it down, more of the north (+Y).
++    MapCenter.X += (Delta.X / Size.X) * CurrentViewWidth;
++    MapCenter.Y += (Delta.Y / Size.Y) * CurrentViewWidth;
+ }
+ 
+ bool UEWMapWidget::IsPointerOverMap(const FVector2D& ScreenPosition) const
+@@ -269,11 +270,12 @@ void UEWMapWidget::PositionPlayerMarker(const APawn* Pawn)
+     if (Size.X <= 1.f || Size.Y <= 1.f) return;
+ 
+     const FVector Location = Pawn->GetActorLocation();
+-    // Right is +Y, up is +X.
+-    const float X = FMath::Clamp(((Location.Y - MapCenter.Y) / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
+-    const float Y = FMath::Clamp((.5f - (Location.X - MapCenter.X) / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
++    // Right is east, up is north (World/EWNorth.h).
++    const FVector2D Off = EWNorth::EastNorth(Location - MapCenter);
++    const float X = FMath::Clamp((Off.X / CurrentViewWidth + .5f) * Size.X, 12.f, Size.X - 12.f);
++    const float Y = FMath::Clamp((.5f - Off.Y / CurrentViewWidth) * Size.Y, 12.f, Size.Y - 12.f);
+     PlayerMarkerSlot->SetPosition(FVector2D(X, Y));
+-    PlayerMarker->SetRenderTransformAngle(Pawn->GetActorRotation().Yaw);
++    PlayerMarker->SetRenderTransformAngle(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw));
+ }
+ 
+ void UEWMapWidget::UpdateScaleBar()
+@@ -328,8 +330,9 @@ void UEWMapWidget::UpdateFog(float DeltaSeconds)
+     }
+     const FVector2D Min = Exploration->GetBoundsMin();
+     const float Half = CurrentViewWidth * .5f;
+-    const float U0 = (MapCenter.Y - Half - Min.Y) / Size, U1 = (MapCenter.Y + Half - Min.Y) / Size;
+-    const float V0 = 1.f - (MapCenter.X + Half - Min.X) / Size, V1 = 1.f - (MapCenter.X - Half - Min.X) / Size;
++    // The mist image runs east to the right (-X) and north up (+Y), as the picture does.
++    const float U0 = (Min.X + Size - MapCenter.X - Half) / Size, U1 = (Min.X + Size - MapCenter.X + Half) / Size;
++    const float V0 = 1.f - (MapCenter.Y + Half - Min.Y) / Size, V1 = 1.f - (MapCenter.Y - Half - Min.Y) / Size;
+     FSlateBrush Brush = FogImage->GetBrush();
+     Brush.SetUVRegion(FBox2f(FVector2f(U0, V0), FVector2f(U1, V1)));
+     FogImage->SetBrush(Brush);
+@@ -341,8 +344,8 @@ float UEWMapWidget::GetFogAlphaAtWorld(FVector Location) const
+     if (!Exploration || FogPixels.Num() != FogSize * FogSize || Exploration->GetBoundsSize() <= 0.f) return 1.f;
+     const FVector2D Min = Exploration->GetBoundsMin();
+     const float Size = Exploration->GetBoundsSize();
+-    const int32 X = FMath::Clamp(int32((Location.Y - Min.Y) / Size * FogSize), 0, FogSize - 1);
+-    const int32 Y = FMath::Clamp(int32((1.f - (Location.X - Min.X) / Size) * FogSize), 0, FogSize - 1);
++    const int32 X = FMath::Clamp(int32((Min.X + Size - Location.X) / Size * FogSize), 0, FogSize - 1);
++    const int32 Y = FMath::Clamp(int32((1.f - (Location.Y - Min.Y) / Size) * FogSize), 0, FogSize - 1);
+     return FogPixels[Y * FogSize + X].A / 255.f;
+ }
+ 
+@@ -354,10 +357,10 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
+ 
+     if (!ControllerPanInput.IsNearlyZero())
+     {
+-        // The right stick: right is +Y, up is +X.
++        // The right stick: right is east (-X), up is north (+Y).
+         const FVector2D Normalized = ControllerPanInput.GetClampedToMaxSize(1.f);
+-        MapCenter.Y += Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
+-        MapCenter.X += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
++        MapCenter.X -= Normalized.X * CurrentViewWidth * .72f * DeltaSeconds;
++        MapCenter.Y += Normalized.Y * CurrentViewWidth * .72f * DeltaSeconds;
+     }
+     if (!FMath::IsNearlyZero(ControllerZoomInput)) AdjustZoom(ControllerZoomInput * DeltaSeconds * 3.f);
+ 
+@@ -367,7 +370,7 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
+     const FEWClimate Sample = AEWClimateRegion::SampleClimate(GetWorld(), Pawn->GetActorLocation());
+     RegionTitle->SetText(AEWClimateRegion::RegionName(Sample.Region));
+     Heading->SetText(FText::Format(NSLOCTEXT("Elitewake", "MapHeading", "Current region  |  Facing {0}°"),
+-        FText::AsNumber(FMath::RoundToInt(FMath::Fmod(Pawn->GetActorRotation().Yaw + 360.f, 360.f)))));
++        FText::AsNumber(FMath::RoundToInt(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw)) % 360)));
+     PositionPlayerMarker(Pawn);
+     UpdateScaleBar();
+     UpdateFog(DeltaSeconds);
+@@ -375,8 +378,8 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
+     CaptureRemaining -= DeltaSeconds;
+     if (CaptureRemaining > 0.f) return;
+     CaptureRemaining = .5f;
+-    // Straight down, up the page being the world's +X.
+-    Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, 0.f, 0.f));
++    // Straight down, up the page being north.
++    Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, EWNorth::NorthYaw, 0.f));
+     Capture->GetCaptureComponent2D()->CaptureScene();
+ }
+ 
+diff --git a/Source/EW/Tests/EWDayNightTests.cpp b/Source/EW/Tests/EWDayNightTests.cpp
+index 18822067..f3b849c4 100644
+--- a/Source/EW/Tests/EWDayNightTests.cpp
++++ b/Source/EW/Tests/EWDayNightTests.cpp
+@@ -3,6 +3,7 @@
+ #if WITH_DEV_AUTOMATION_TESTS
+ #include "Misc/AutomationTest.h"
+ #include "World/EWDayNight.h"
++#include "World/EWNorth.h"
+ 
+ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWDayNightClockTest, "Elitewake.World.DayNightClock",
+     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+@@ -21,14 +22,33 @@ bool FEWDayNightClockTest::RunTest(const FString& Parameters)
+     TestEqual(TEXT("...and at 18:00"), FEWSkyClock::SunElevation(18.f), 0.f, .01f);
+     TestEqual(TEXT("The sun stands highest at noon"), FEWSkyClock::SunElevation(12.f), FEWSkyClock::HighestSun, .01f);
+     TestTrue(TEXT("The sun is below the horizon at midnight"), FEWSkyClock::SunElevation(0.f) < -60.f);
+-    TestEqual(TEXT("It rises in the east"), FEWSkyClock::SunAzimuth(6.f), 0.f, .01f);
+-    TestEqual(TEXT("It stands in the south at noon"), FEWSkyClock::SunAzimuth(12.f), -90.f, .01f);
+-    TestEqual(TEXT("It sets in the west"), FMath::Abs(FEWSkyClock::SunAzimuth(18.f)), 180.f, .01f);
++    TestEqual(TEXT("It rises in the east"), EWNorth::BearingOfYaw(FEWSkyClock::SunAzimuth(6.f)), 90.f, .01f);
++    TestEqual(TEXT("It stands in the south at noon"), EWNorth::BearingOfYaw(FEWSkyClock::SunAzimuth(12.f)), 180.f, .01f);
++    TestEqual(TEXT("It sets in the west"), EWNorth::BearingOfYaw(FEWSkyClock::SunAzimuth(18.f)), 270.f, .01f);
+ 
+-    // A light from the noon sun points down and toward the north (+Y).
++    // A light from the noon sun points down and toward the north (+Y); the rising sun's from the east (-X) toward +X.
+     const FVector Noon = FEWSkyClock::LightRotation(FEWSkyClock::SunElevation(12.f), FEWSkyClock::SunAzimuth(12.f)).Vector();
+     TestTrue(TEXT("Noon light shines downward"), Noon.Z < -.85f);
+     TestTrue(TEXT("Noon light shines from the south toward the north"), Noon.Y > .3f);
++    const FVector Dawn = FEWSkyClock::LightRotation(1.f, FEWSkyClock::SunAzimuth(6.f)).Vector();
++    TestTrue(TEXT("Dawn light shines from the east toward the west (+X)"), Dawn.X > .9f);
++    return true;
++}
++
++IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWNorthTest, "Elitewake.World.NorthIsPlusY",
++    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
++
++bool FEWNorthTest::RunTest(const FString& Parameters)
++{
++    // Owner, November 1: Winter north (+Y), Swamp south (-Y), Desert east (-X), Jungle west (+X).
++    TestEqual(TEXT("Facing +Y is north"), EWNorth::BearingOfYaw(90.f), 0.f, .01f);
++    TestEqual(TEXT("Facing -X is east"), EWNorth::BearingOfYaw(180.f), 90.f, .01f);
++    TestEqual(TEXT("Facing -Y is south"), EWNorth::BearingOfYaw(-90.f), 180.f, .01f);
++    TestEqual(TEXT("Facing +X is west"), EWNorth::BearingOfYaw(0.f), 270.f, .01f);
++    TestEqual(TEXT("A place toward -X lies east"), EWNorth::BearingOf(FVector(-1000.f, 0.f, 0.f)), 90.f, .01f);
++    TestEqual(TEXT("Bearings turn back into yaw"), FMath::Abs(EWNorth::YawOfBearing(90.f)), 180.f, .01f);
++    const FVector2D EN = EWNorth::EastNorth(FVector(-300.f, 200.f, 0.f));
++    TestTrue(TEXT("East and north of a location"), EN.Equals(FVector2D(300.f, 200.f)));
+     return true;
+ }
+ #endif
+diff --git a/Source/EW/Tests/EWWorldDressingTests.cpp b/Source/EW/Tests/EWWorldDressingTests.cpp
+index face5779..425cf242 100644
+--- a/Source/EW/Tests/EWWorldDressingTests.cpp
++++ b/Source/EW/Tests/EWWorldDressingTests.cpp
+@@ -84,7 +84,7 @@ bool FEWWorldEdgeGrowthTest::RunTest(const FString& Parameters)
+     TestTrue(TEXT("Centred: the old square stays inside"),Min.X<=-1000.f && Min.X+Size>=1000.f);
+     const FVector Past(Min.X+Size+10.f,0.f,50.f);
+     const FVector Wrapped=Edge->WrapLocation(Past);
+-    TestTrue(TEXT("Past the east edge comes out on the west"),FMath::IsNearlyEqual(Wrapped.X,Min.X+10.f,.01f));
++    TestTrue(TEXT("Past the west (+X) edge comes out on the east"),FMath::IsNearlyEqual(Wrapped.X,Min.X+10.f,.01f));
+     TestTrue(TEXT("Height is kept"),FMath::IsNearlyEqual(Wrapped.Z,50.0));
+     const FVector Inside(0.f,0.f,0.f);
+     TestTrue(TEXT("Inside is unchanged"),Edge->WrapLocation(Inside).Equals(Inside));
+diff --git a/Source/EW/World/EWDayNight.cpp b/Source/EW/World/EWDayNight.cpp
+index cacd5a0a..1f86172c 100644
+--- a/Source/EW/World/EWDayNight.cpp
++++ b/Source/EW/World/EWDayNight.cpp
+@@ -1,4 +1,5 @@
+ #include "World/EWDayNight.h"
++#include "World/EWNorth.h"
+ #include "Components/DirectionalLightComponent.h"
+ #include "Engine/DirectionalLight.h"
+ #include "Engine/PostProcessVolume.h"
+@@ -21,7 +22,8 @@ float FEWSkyClock::SunElevation(float Hour)
+ 
+ float FEWSkyClock::SunAzimuth(float Hour)
+ {
+-    return FRotator::NormalizeAxis(-90.f * (Hour - DayStarts) / 6.f);
++    // East (bearing 90) at 06:00, a quarter of the compass every six hours, as world yaw (World/EWNorth.h).
++    return EWNorth::YawOfBearing(90.f + 90.f * (Hour - DayStarts) / 6.f);
+ }
+ 
+ AEWSkyClock::AEWSkyClock()
+diff --git a/Source/EW/World/EWDayNight.h b/Source/EW/World/EWDayNight.h
+index 625e3ad6..50463bac 100644
+--- a/Source/EW/World/EWDayNight.h
++++ b/Source/EW/World/EWDayNight.h
+@@ -29,7 +29,7 @@ struct EW_API FEWSkyClock
+     static bool IsDay(float Hour) { return Hour >= DayStarts && Hour < NightStarts; }
+     /** The sun's height above the horizon in degrees: 0 at 06:00 and 18:00, HighestSun at noon, below at night. */
+     static float SunElevation(float Hour);
+-    /** The compass yaw toward the sun: east (0) at 06:00, south (-90) at noon, west (-180) at 18:00. */
++    /** The world yaw toward the sun (World/EWNorth.h): east (180, toward -X) at 06:00, south (-90) at noon, west (0) at 18:00. */
+     static float SunAzimuth(float Hour);
+     /** How a directional light pointing from a body at (Elevation, Azimuth) toward the ground is turned. */
+     static FRotator LightRotation(float Elevation, float Azimuth) { return FRotator(-Elevation, Azimuth + 180.f, 0.f); }
+diff --git a/Source/EW/World/EWNorth.h b/Source/EW/World/EWNorth.h
+new file mode 100644
+index 00000000..1c2b3dc9
+--- /dev/null
++++ b/Source/EW/World/EWNorth.h
+@@ -0,0 +1,26 @@
++#pragma once
++
++#include "CoreMinimal.h"
++
++/**
++ * Where north is (CLAUDE.md 4; owner, November 1): the world's +Y. East is -X, a quarter turn clockwise from north seen
++ * from above, the way Unreal's yaw turns, so the compass, the map and the sun agree with the world layout
++ * (Scripts/Setup/world_layout.py: Winter north, Swamp south, Desert east, Jungle west).
++ */
++namespace EWNorth
++{
++    /** The world yaw that faces north. */
++    constexpr float NorthYaw = 90.f;
++
++    /** A compass bearing, 0-360 clockwise from north, of a world yaw. */
++    inline float BearingOfYaw(float Yaw) { return FMath::Fmod(FMath::Fmod(Yaw - NorthYaw, 360.f) + 360.f, 360.f); }
++
++    /** The world yaw that faces a compass bearing. */
++    inline float YawOfBearing(float Bearing) { return float(FRotator::NormalizeAxis(double(Bearing + NorthYaw))); }
++
++    /** The bearing along a world offset. */
++    inline float BearingOf(const FVector& Offset) { return BearingOfYaw(FMath::RadiansToDegrees(FMath::Atan2(Offset.Y, Offset.X))); }
++
++    /** How far east and how far north a world location lies (from the origin, or as an offset). */
++    inline FVector2D EastNorth(const FVector& Location) { return FVector2D(-Location.X, Location.Y); }
++}
