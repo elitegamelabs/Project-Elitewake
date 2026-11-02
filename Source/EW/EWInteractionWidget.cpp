@@ -15,6 +15,9 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Components/TextBlock.h"
+#include "Components/RichTextBlock.h"
+#include "EWControllerIcons.h"
+#include "Styling/CoreStyle.h"
 #include "Components/ProgressBar.h"
 #include "GameFramework/GameStateBase.h"
 #include "Engine/World.h"
@@ -43,8 +46,12 @@ TSharedRef<SWidget> UEWInteractionWidget::RebuildWidget()
         PanelSlot->SetAnchors(FAnchors(.5f,.62f)); PanelSlot->SetAlignment(FVector2D(.5,.5));
         PanelSlot->SetOffsets(FMargin(0,0,460,90));
         auto* Content = WidgetTree->ConstructWidget<UVerticalBox>(); Panel->SetContent(Content);
-        Prompt = WidgetTree->ConstructWidget<UTextBlock>();
-        auto Font = Prompt->GetFont(); Font.Size = 22; Prompt->SetFont(Font);
+        Prompt = WidgetTree->ConstructWidget<URichTextBlock>();
+        FTextBlockStyle Style = FTextBlockStyle::GetDefault();
+        Style.SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 22));
+        Style.SetColorAndOpacity(FLinearColor::White);
+        Prompt->SetDefaultTextStyle(Style);
+        Prompt->SetDecorators({UEWButtonIconDecorator::StaticClass()});
         Prompt->SetJustification(ETextJustify::Center); Prompt->SetAutoWrapText(true);
         Content->AddChildToVerticalBox(Prompt);
         Progress = WidgetTree->ConstructWidget<UProgressBar>();
@@ -82,24 +89,26 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
     // Trees and rocks show no prompt at all (owner, October 25): a tree is a tree, a rock is a rock; the swing is learned, not announced.
     if (Cast<AEWHarvestTree>(Target) || Cast<AEWMineable>(Target))
     {
-        Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+        SetPrompt(FText::GetEmpty(), FText::GetEmpty()); Progress->SetPercent(0);
         Panel->SetVisibility(ESlateVisibility::Collapsed); return;
     }
     if (!Target || !IEWInteractable::Execute_CanInteract(Target, Survivor))
     {
-        Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+        SetPrompt(FText::GetEmpty(), FText::GetEmpty()); Progress->SetPercent(0);
         Panel->SetVisibility(ESlateVisibility::Collapsed); return;
     }
     const FText Action = IEWInteractable::Execute_GetInteractionPrompt(Target, Survivor);
     if (Action.IsEmpty())
     {
-        Prompt->SetText(FText::GetEmpty()); Progress->SetPercent(0);
+        SetPrompt(FText::GetEmpty(), FText::GetEmpty()); Progress->SetPercent(0);
         Panel->SetVisibility(ESlateVisibility::Collapsed); return;
     }
     const bool bHold = IEWInteractable::Execute_GetInteractionModeFor(Target, Survivor) == EEWInteractionMode::Hold;
-    Prompt->SetText(FText::Format(bHold ? NSLOCTEXT("Elitewake","HoldPrompt","Hold {0}: {1}")
-        : NSLOCTEXT("Elitewake","PressPrompt","{0}: {1}"),
-        FText::FromString(PC->UsesControllerPrompts() ? TEXT("X") : TEXT("E")), Action));
+    const FText Pattern = bHold ? NSLOCTEXT("Elitewake","HoldPrompt","Hold {0}: {1}") : NSLOCTEXT("Elitewake","PressPrompt","{0}: {1}");
+    const FString Button = PC->UsesControllerPrompts() ? FEWControllerIcons::Token(EKeys::Gamepad_FaceButton_Left) : FString(TEXT("E"));
+    const EEWGamepadFamily Family = PC->GetPromptFamily();
+    SetPrompt(FText::Format(Pattern, FText::FromString(FEWControllerIcons::Expand(Button, Family, true)), Action),
+        FText::Format(Pattern, FText::FromString(FEWControllerIcons::Expand(Button, Family, false)), Action));
     Panel->SetVisibility(ESlateVisibility::HitTestInvisible);
     Progress->SetVisibility(bHold ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     const FEWHoldState State = PC->GetInteractionComponent()->GetHoldState();
@@ -107,7 +116,12 @@ void UEWInteractionWidget::NativeTick(const FGeometry& Geometry, float DeltaSeco
     Progress->SetPercent(bHold && PC->HasLocalInteractionIntent() && State.Target == Target && State.Duration > 0
         ? FMath::Clamp(float((Now-State.StartTime)/State.Duration),0.f,1.f) : 0.f);
 }
-FText UEWInteractionWidget::GetDisplayedPrompt() const { return Prompt ? Prompt->GetText() : FText::GetEmpty(); }
+FText UEWInteractionWidget::GetDisplayedPrompt() const { return PlainPrompt; }
+void UEWInteractionWidget::SetPrompt(const FText& Rich, const FText& Plain)
+{
+    PlainPrompt = Plain;
+    if (Prompt && !Prompt->GetText().EqualTo(Rich)) Prompt->SetText(Rich);
+}
 FText UEWInteractionWidget::GetInnMessage() const
 {
     return InnMessage && InnMessage->GetVisibility()!=ESlateVisibility::Collapsed ? InnMessage->GetText() : FText::GetEmpty();

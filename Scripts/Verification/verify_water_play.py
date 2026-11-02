@@ -30,6 +30,8 @@ def widget(name):
     cls = unreal.load_class(None, '/Script/EW.' + name)
     return next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(local_world, cls, False) if w.get_owning_player() == pc)
 prompt_widget, hud = widget('EWInteractionWidget'), widget('EWSurvivalWidget')
+# Button names follow the connected pad (owner, November 1); this check reads the Xbox names whatever is plugged in.
+pc.set_button_icons_choice(unreal.EWButtonIconsChoice.XBOX, False)
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)

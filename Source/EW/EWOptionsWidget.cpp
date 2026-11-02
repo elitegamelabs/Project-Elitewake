@@ -3,6 +3,7 @@
 #include "EWPlayerController.h"
 #include "EWVolumeDial.h"
 #include "EWGraphicsSettings.h"
+#include "EWControllerIcons.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
@@ -24,7 +25,8 @@ namespace
     constexpr float MaxBrightness = .5f;
     constexpr float MinSensitivity = .1f;
     constexpr float MaxSensitivity = 3.f;
-    constexpr int32 SettingCount = 12;
+    constexpr int32 SettingCount = 13;
+    constexpr float IconsStep = .5f;     // Automatic, Xbox, PlayStation
     constexpr float QualityStep = 1.f / (FEWGraphicsSettings::Levels - 1);
 
     float Normalize(float Value, float Min, float Max) { return (Value - Min) / (Max - Min); }
@@ -175,6 +177,11 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
         GraphicsSliders[3]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnReflectionsChanged);
         GraphicsSliders[4]->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnEffectsChanged);
         SyncGraphicsSliders();
+        // Button icons (owner, November 1): follow the connected controller, or always Xbox or PlayStation.
+        ButtonIconsSlider = AddSetting(NSLOCTEXT("Elitewake", "ButtonIconsLabel", "Button icons"),
+            (PC ? int32(PC->GetButtonIconsChoice()) : 0) * IconsStep);
+        ButtonIconsSlider->SetStepSize(IconsStep);
+        ButtonIconsSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnButtonIconsChanged);
         BackButton = Button(OptionsPage, NSLOCTEXT("Elitewake", "OptionsBack", "BACK"));
         BackButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::BackToButtons);
         BackButton->OnHovered.AddDynamic(this, &UEWOptionsWidget::HoverBack);
@@ -231,6 +238,13 @@ void UEWOptionsWidget::RefreshSettingLabels()
     for (int32 Group = 0; Group < FEWGraphicsSettings::GroupCount; ++Group)
         SettingValues[SettingGraphics + 1 + Group]->SetText(FEWGraphicsSettings::LevelName(FEWGraphicsSettings::Get(static_cast<FEWGraphicsSettings::EGroup>(Group))));
     if (VolumeDial) VolumeDial->SetValue(PC ? PC->GetMasterVolume() : 1.f);
+    const EEWButtonIconsChoice Icons = PC ? PC->GetButtonIconsChoice() : EEWButtonIconsChoice::Automatic;
+    const EEWGamepadFamily Connected = FEWControllerIcons::DetectConnected();
+    SettingValues[SettingButtonIcons]->SetText(Icons == EEWButtonIconsChoice::Xbox ? NSLOCTEXT("Elitewake", "IconsXbox", "Xbox")
+        : Icons == EEWButtonIconsChoice::PlayStation ? NSLOCTEXT("Elitewake", "IconsPlayStation", "PlayStation")
+        : Connected == EEWGamepadFamily::Xbox ? NSLOCTEXT("Elitewake", "IconsAutoXbox", "Automatic (Xbox)")
+        : Connected == EEWGamepadFamily::PlayStation ? NSLOCTEXT("Elitewake", "IconsAutoPlayStation", "Automatic (PlayStation)")
+        : NSLOCTEXT("Elitewake", "IconsAuto", "Automatic"));
 }
 
 void UEWOptionsWidget::OnBrightnessChanged(float Value)
@@ -272,6 +286,14 @@ void UEWOptionsWidget::OnGraphicsChanged(int32 Group, float Value)
     RefreshSettingLabels();
 }
 
+void UEWOptionsWidget::OnButtonIconsChanged(float Value)
+{
+    Selected = SettingButtonIcons;
+    if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer()))
+        PC->SetButtonIconsChoice(static_cast<EEWButtonIconsChoice>(FMath::Clamp(FMath::RoundToInt(Value / IconsStep), 0, 2)));
+    RefreshSettingLabels();
+}
+
 void UEWOptionsWidget::SyncGraphicsSliders()
 {
     TGuardValue<bool> Syncing(bSyncingGraphics, true);
@@ -284,13 +306,14 @@ void UEWOptionsWidget::SyncGraphicsSliders()
 void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 {
     USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider, QualitySlider,
-        GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4]};
+        GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4], ButtonIconsSlider};
     if (Selected < 0 || Selected >= SettingCount || !Sliders[Selected]) return;
     // The graphics settings move a whole level at a time (and the slider's change handler applies it).
-    const float Step = Selected >= SettingGraphics ? QualityStep : .02f;
+    const float Step = Selected == SettingButtonIcons ? IconsStep : Selected >= SettingGraphics ? QualityStep : .02f;
     const float Value = FMath::Clamp(Sliders[Selected]->GetValue() + Direction * Step, 0.f, 1.f);
     Sliders[Selected]->SetValue(Value);
     if (Selected == SettingGraphics) OnQualityChanged(Value);
+    else if (Selected == SettingButtonIcons) OnButtonIconsChanged(Value);
     else if (Selected > SettingGraphics) OnGraphicsChanged(Selected - SettingGraphics - 1, Value);
 }
 

@@ -7,7 +7,9 @@
 #include "Components/Border.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
-#include "Components/TextBlock.h"
+#include "Components/RichTextBlock.h"
+#include "EWControllerIcons.h"
+#include "Styling/CoreStyle.h"
 
 TSharedRef<SWidget> UEWArrivalPromptWidget::RebuildWidget()
 {
@@ -23,9 +25,12 @@ TSharedRef<SWidget> UEWArrivalPromptWidget::RebuildWidget()
         PanelSlot->SetAnchors(FAnchors(.5f, HeightFraction));
         PanelSlot->SetAlignment(FVector2D(.5f, .5f));
         PanelSlot->SetAutoSize(true);
-        Prompt = WidgetTree->ConstructWidget<UTextBlock>();
-        auto Font = Prompt->GetFont(); Font.Size = FontSize; Prompt->SetFont(Font);
-        Prompt->SetColorAndOpacity(FLinearColor(.93f, .89f, .8f));
+        Prompt = WidgetTree->ConstructWidget<URichTextBlock>();
+        FTextBlockStyle Style = FTextBlockStyle::GetDefault();
+        Style.SetFont(FCoreStyle::GetDefaultFontStyle("Regular", FontSize));
+        Style.SetColorAndOpacity(FLinearColor(.93f, .89f, .8f));
+        Prompt->SetDefaultTextStyle(Style);
+        Prompt->SetDecorators({UEWButtonIconDecorator::StaticClass()});
         Prompt->SetJustification(ETextJustify::Center);
         Panel->SetContent(Prompt);
         Panel->SetVisibility(ESlateVisibility::Collapsed);
@@ -54,9 +59,13 @@ void UEWArrivalPromptWidget::NativeTick(const FGeometry& Geometry, float DeltaSe
         && !PC->IsInventoryOpen() && !PC->IsMapOpen() && !PC->IsOptionsMenuOpen() && !PC->IsDialogueOpen()
         && !(Interaction && !Interaction->GetDisplayedPrompt().IsEmpty());
     Panel->SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-    Prompt->SetText(!bShow ? FText::GetEmpty()
+    const FText Words = !bShow ? FText::GetEmpty()
         : bTown ? UEWArrivalComponent::TownPromptFor(Arrival->GetTownStep(), PC->UsesControllerPrompts())
-                : UEWArrivalComponent::PromptFor(Arrival->GetStep(), PC->UsesControllerPrompts()));
+                : UEWArrivalComponent::PromptFor(Arrival->GetStep(), PC->UsesControllerPrompts());
+    const EEWGamepadFamily Family = PC ? PC->GetPromptFamily() : EEWGamepadFamily::Unknown;
+    PlainPrompt = FEWControllerIcons::Expand(Words, Family, false);
+    const FText Rich = FEWControllerIcons::Expand(Words, Family, true);
+    if (!Prompt->GetText().EqualTo(Rich)) Prompt->SetText(Rich);
 }
 
 bool UEWArrivalPromptWidget::IsPromptVisible() const
@@ -66,5 +75,5 @@ bool UEWArrivalPromptWidget::IsPromptVisible() const
 
 FText UEWArrivalPromptWidget::GetDisplayedPrompt() const
 {
-    return IsPromptVisible() ? Prompt->GetText() : FText::GetEmpty();
+    return IsPromptVisible() ? PlainPrompt : FText::GetEmpty();
 }

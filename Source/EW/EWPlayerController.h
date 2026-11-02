@@ -10,6 +10,7 @@
 #include "EWProgressionComponent.h"
 #include "Characters/EWAppearance.h"
 #include "EWWorkFeedback.h"
+#include "EWControllerIcons.h"
 #include "EWPlayerController.generated.h"
 
 class UInputMappingContext;
@@ -180,6 +181,13 @@ public:
     /** The menu (inventory, skills, Company...), once it has been opened. */
     UFUNCTION(BlueprintPure, Category="Inventory") UEWInventoryWidget* GetInventoryWidget() const { return InventoryWidget; }
     bool UsesControllerPrompts() const { return bControllerPrompts; }
+    /** Which buttons to draw for the gamepad (owner, November 1): the Options choice, or on Automatic the connected pad's family. */
+    UFUNCTION(BlueprintPure, Category="Options") EEWGamepadFamily GetGamepadFamily() const;
+    UFUNCTION(BlueprintPure, Category="Options") EEWButtonIconsChoice GetButtonIconsChoice() const { return ButtonIconsChoice; }
+    /** Options, "Button icons". bRemember false changes it for this session only (Play checks). */
+    UFUNCTION(BlueprintCallable, Category="Options") void SetButtonIconsChoice(EEWButtonIconsChoice Choice, bool bRemember = true);
+    /** The family whose button names and icons prompts use right now: Unknown while the keyboard is in use. */
+    EEWGamepadFamily GetPromptFamily() const { return bControllerPrompts ? GetGamepadFamily() : EEWGamepadFamily::Unknown; }
     void RecordInputDevice(const FKey& Key) { if (Key.IsValid()) bControllerPrompts = Key.IsGamepadKey(); }
     bool HasLocalInteractionIntent() const { return bLocalInteractionIntent; }
     UFUNCTION(BlueprintCallable, Category="Interaction") void ReleaseInteraction();
@@ -277,6 +285,7 @@ protected:
     UPROPERTY(Transient) TObjectPtr<UEWShipMarkersWidget> ShipMarkersWidget;
     UPROPERTY(Transient) TObjectPtr<UEWCompassWidget> CompassWidget;
     bool bControllerPrompts = false;
+    EEWButtonIconsChoice ButtonIconsChoice = EEWButtonIconsChoice::Automatic;
     float UserBrightness = 0.f;
     float LookSensitivity[4] = {1.f, 1.f, 1.f, 1.f};
     /** The whole picture's brightness (owner, October 30): the display gamma, every camera and view alike. */

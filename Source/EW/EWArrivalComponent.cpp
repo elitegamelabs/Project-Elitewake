@@ -284,17 +284,17 @@ FText UEWArrivalComponent::TownPromptFor(EEWTownStep Step, bool bController)
 {
     switch (Step)
     {
-    case EEWTownStep::Sell: return bController ? NSLOCTEXT("Elitewake", "TownSellPad", "Your purse is empty. X: sell what you gathered to a trader at the market")
+    case EEWTownStep::Sell: return bController ? NSLOCTEXT("Elitewake", "TownSellPad", "Your purse is empty. [Gamepad_FaceButton_Left]: sell what you gathered to a trader at the market")
                                                 : NSLOCTEXT("Elitewake", "TownSellKeys", "Your purse is empty. E: sell what you gathered to a trader at the market");
-    case EEWTownStep::Store: return bController ? NSLOCTEXT("Elitewake", "TownStorePad", "X: keep what you will not carry in your strongbox by the warehouse")
+    case EEWTownStep::Store: return bController ? NSLOCTEXT("Elitewake", "TownStorePad", "[Gamepad_FaceButton_Left]: keep what you will not carry in your strongbox by the warehouse")
                                                  : NSLOCTEXT("Elitewake", "TownStoreKeys", "E: keep what you will not carry in your strongbox by the warehouse");
-    case EEWTownStep::Shipyard: return bController ? NSLOCTEXT("Elitewake", "TownYardPad", "Ships are sold and mended at the shipyard. X: talk to Elias Thorne")
+    case EEWTownStep::Shipyard: return bController ? NSLOCTEXT("Elitewake", "TownYardPad", "Ships are sold and mended at the shipyard. [Gamepad_FaceButton_Left]: talk to Elias Thorne")
                                                     : NSLOCTEXT("Elitewake", "TownYardKeys", "Ships are sold and mended at the shipyard. E: talk to Elias Thorne");
-    case EEWTownStep::Company: return bController ? NSLOCTEXT("Elitewake", "TownCompanyPad", "To sail with friends, form a Company. Y, then RB twice: Company")
+    case EEWTownStep::Company: return bController ? NSLOCTEXT("Elitewake", "TownCompanyPad", "To sail with friends, form a Company. [Gamepad_FaceButton_Top], then [Gamepad_RightShoulder] twice: Company")
                                                    : NSLOCTEXT("Elitewake", "TownCompanyKeys", "To sail with friends, form a Company. I, then Tab twice: Company");
-    case EEWTownStep::Boat: return bController ? NSLOCTEXT("Elitewake", "TownBoatPad", "X: buy your first boat, a raft, from Elias Thorne at the shipyard")
+    case EEWTownStep::Boat: return bController ? NSLOCTEXT("Elitewake", "TownBoatPad", "[Gamepad_FaceButton_Left]: buy your first boat, a raft, from Elias Thorne at the shipyard")
                                                 : NSLOCTEXT("Elitewake", "TownBoatKeys", "E: buy your first boat, a raft, from Elias Thorne at the shipyard");
-    case EEWTownStep::Provision: return bController ? NSLOCTEXT("Elitewake", "TownProvisionPad", "X at her hold: load 2 food, a full waterskin and 20 wood")
+    case EEWTownStep::Provision: return bController ? NSLOCTEXT("Elitewake", "TownProvisionPad", "[Gamepad_FaceButton_Left] at her hold: load 2 food, a full waterskin and 20 wood")
                                                      : NSLOCTEXT("Elitewake", "TownProvisionKeys", "E at her hold: load 2 food, a full waterskin and 20 wood");
     case EEWTownStep::Voyage: return NSLOCTEXT("Elitewake", "TownVoyage", "First voyage: sail to the Swamp island. Follow the compass");
     default: return FText::GetEmpty();
@@ -305,15 +305,15 @@ FText UEWArrivalComponent::PromptFor(EEWArrivalStep Step, bool bController)
 {
     switch (Step)
     {
-    case EEWArrivalStep::Look: return bController ? NSLOCTEXT("Elitewake", "ArrivalLookPad", "Right stick: look around")
+    case EEWArrivalStep::Look: return bController ? NSLOCTEXT("Elitewake", "ArrivalLookPad", "[Gamepad_Right2D]: look around")
                                                    : NSLOCTEXT("Elitewake", "ArrivalLookKeys", "Mouse: look around");
-    case EEWArrivalStep::Move: return bController ? NSLOCTEXT("Elitewake", "ArrivalMovePad", "Left stick: walk")
+    case EEWArrivalStep::Move: return bController ? NSLOCTEXT("Elitewake", "ArrivalMovePad", "[Gamepad_Left2D]: walk")
                                                    : NSLOCTEXT("Elitewake", "ArrivalMoveKeys", "W A S D: walk");
-    case EEWArrivalStep::Jump: return bController ? NSLOCTEXT("Elitewake", "ArrivalJumpPad", "A: jump")
+    case EEWArrivalStep::Jump: return bController ? NSLOCTEXT("Elitewake", "ArrivalJumpPad", "[Gamepad_FaceButton_Bottom]: jump")
                                                    : NSLOCTEXT("Elitewake", "ArrivalJumpKeys", "Space: jump");
-    case EEWArrivalStep::Crouch: return bController ? NSLOCTEXT("Elitewake", "ArrivalCrouchPad", "B: crouch (hold to lie flat)")
+    case EEWArrivalStep::Crouch: return bController ? NSLOCTEXT("Elitewake", "ArrivalCrouchPad", "[Gamepad_FaceButton_Right]: crouch (hold to lie flat)")
                                                      : NSLOCTEXT("Elitewake", "ArrivalCrouchKeys", "C: crouch (hold to lie flat)");
-    case EEWArrivalStep::Interact: return bController ? NSLOCTEXT("Elitewake", "ArrivalUsePad", "X: drink at the spring ahead, or use what you face")
+    case EEWArrivalStep::Interact: return bController ? NSLOCTEXT("Elitewake", "ArrivalUsePad", "[Gamepad_FaceButton_Left]: drink at the spring ahead, or use what you face")
                                                        : NSLOCTEXT("Elitewake", "ArrivalUseKeys", "E: drink at the spring ahead, or use what you face");
     default: return FText::GetEmpty();
     }

@@ -106,6 +106,9 @@ void AEWPlayerController::BeginPlay()
             LookSensitivity[Which] = FMath::Clamp(LookSensitivity[Which], .1f, 3.f);
         }
         GConfig->GetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);
+        int32 Icons = 0;
+        GConfig->GetInt(TEXT("Elitewake.UserControls"), TEXT("ButtonIcons"), Icons, GGameUserSettingsIni);
+        ButtonIconsChoice = static_cast<EEWButtonIconsChoice>(FMath::Clamp(Icons, 0, 2));
         MasterVolume = FMath::Clamp(MasterVolume, 0.f, 1.f);
         if (IsLocalPlayerController()) FApp::SetVolumeMultiplier(MasterVolume);
         UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
@@ -182,6 +185,22 @@ void AEWPlayerController::SetLookSensitivity(int32 Which, float Value)
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), LookSensitivityKeys[Which], LookSensitivity[Which], GGameUserSettingsIni);
+        GConfig->Flush(false, GGameUserSettingsIni);
+    }
+}
+
+EEWGamepadFamily AEWPlayerController::GetGamepadFamily() const
+{
+    return FEWControllerIcons::Resolve(ButtonIconsChoice,
+        ButtonIconsChoice == EEWButtonIconsChoice::Automatic ? FEWControllerIcons::DetectConnected() : EEWGamepadFamily::Unknown);
+}
+
+void AEWPlayerController::SetButtonIconsChoice(EEWButtonIconsChoice Choice, bool bRemember)
+{
+    ButtonIconsChoice = static_cast<EEWButtonIconsChoice>(FMath::Clamp(int32(Choice), 0, 2));
+    if (bRemember && GConfig && IsLocalPlayerController())
+    {
+        GConfig->SetInt(TEXT("Elitewake.UserControls"), TEXT("ButtonIcons"), int32(ButtonIconsChoice), GGameUserSettingsIni);
         GConfig->Flush(false, GGameUserSettingsIni);
     }
 }

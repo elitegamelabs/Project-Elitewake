@@ -166,12 +166,21 @@ def adjust_settings():
         gus.apply_non_resolution_settings()
         gus.save_settings()
     state['memo']['graphics'] = 'Low, Epic, custom textures, back to Epic'
-    assert key('Down') and menu.get_selected() == 12, 'Down did not reach BACK'
+    # Button icons (owner, November 1): Automatic, Xbox, PlayStation; left as found.
+    assert key('Down') and menu.get_selected() == 12, 'Down did not reach button icons'
+    icons_found = pc().get_button_icons_choice()
+    for _ in range(3):
+        assert key('Left')
+    assert pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.AUTOMATIC, 'Left did not reach Automatic button icons'
+    assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.XBOX, 'Right did not choose Xbox icons'
+    assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.PLAY_STATION, 'Right did not choose PlayStation icons'
+    pc().set_button_icons_choice(icons_found, True)
+    assert key('Down') and menu.get_selected() == 13, 'Down did not reach BACK'
     assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
     state['memo']['settings'] = (after_brightness, looks)
     assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
     checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
-                  'change live by keys; graphics quality steps Low to Epic, a group alone makes it custom; BACK returns to the buttons')
+                  'change live by keys; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; BACK returns to the buttons')
 
 
 def save_game():

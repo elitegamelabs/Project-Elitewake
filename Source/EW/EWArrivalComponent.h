@@ -103,6 +103,7 @@ public:
     /** The owning machine: true while the current step's prompt should be on screen (not during the pauses). */
     UFUNCTION(BlueprintPure, Category="Arrival") bool IsPromptDue() const;
     /** The words for a step, for the keyboard and mouse or for a controller. */
+    /** Controller words name buttons with [Gamepad_...] tokens, drawn as the pad's own icons (FEWControllerIcons::Expand). */
     UFUNCTION(BlueprintPure, Category="Arrival") static FText PromptFor(EEWArrivalStep Step, bool bController);
 
     /** Authority: sets the step outright (a save being restored); clamped, so StepCount or more is finished. */

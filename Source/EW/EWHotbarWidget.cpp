@@ -16,6 +16,9 @@
 #include "Components/SizeBox.h"
 #include "Styling/CoreStyle.h"
 #include "EWHudIcon.h"
+#include "EWControllerIcons.h"
+#include "Components/RichTextBlock.h"
+#include "World/EWBuildComponent.h"
 
 void UEWHotbarSlotButton::InitializeSlot(int32 NewSlotIndex)
 {
@@ -65,6 +68,22 @@ void UEWHotbarWidget::BuildWidgetTree()
     auto* ModifierSlot = Canvas->AddChildToCanvas(ModifierHint);
     ModifierSlot->SetAnchors(FAnchors(.5f,1.f)); ModifierSlot->SetAlignment(FVector2D(.5f,1.f));
     ModifierSlot->SetOffsets(FMargin(36,-120,42,18));
+    ModifierIcon = WidgetTree->ConstructWidget<UImage>();
+    auto* ModifierIconSlot = Canvas->AddChildToCanvas(ModifierIcon);
+    ModifierIconSlot->SetAnchors(FAnchors(.5f,1.f)); ModifierIconSlot->SetAlignment(FVector2D(.5f,1.f));
+    ModifierIconSlot->SetOffsets(FMargin(36,-114,64,34));
+    ModifierIcon->SetVisibility(ESlateVisibility::Collapsed);
+    BuildHint = WidgetTree->ConstructWidget<URichTextBlock>();
+    FTextBlockStyle HintStyle = FTextBlockStyle::GetDefault();
+    HintStyle.SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 18));    // CLAUDE.md 9.2: secondary labels at least 18
+    HintStyle.SetColorAndOpacity(FLinearColor(.93f,.89f,.8f));
+    HintStyle.SetShadowOffset(FVector2D(1,1)); HintStyle.SetShadowColorAndOpacity(FLinearColor::Black);
+    BuildHint->SetDefaultTextStyle(HintStyle);
+    BuildHint->SetDecorators({UEWButtonIconDecorator::StaticClass()});
+    auto* HintSlot = Canvas->AddChildToCanvas(BuildHint);
+    HintSlot->SetAnchors(FAnchors(.5f,1.f)); HintSlot->SetAlignment(FVector2D(0.f,1.f));
+    HintSlot->SetAutoSize(true); HintSlot->SetPosition(FVector2D(318,-24));   // just right of the eight slots
+    BuildHint->SetVisibility(ESlateVisibility::Collapsed);
     for (int32 i=0; i<UEWHotbarComponent::SlotCount; ++i)
     {
         auto* Box=WidgetTree->ConstructWidget<USizeBox>();Box->SetWidthOverride(72);Box->SetHeightOverride(76);
@@ -87,6 +106,9 @@ void UEWHotbarWidget::BuildWidgetTree()
         Key->SetShadowOffset(FVector2D(1,1));Key->SetShadowColorAndOpacity(FLinearColor::Black);
         Key->SetText(FText::AsNumber(i+1));CellContent->AddChildToCanvas(Key)->SetOffsets(FMargin(2,0,18,18));
         KeyHints.Add(Key);
+        auto* KeyIcon=WidgetTree->ConstructWidget<UImage>();
+        CellContent->AddChildToCanvas(KeyIcon)->SetOffsets(FMargin(-4,-6,32,32));   // at 26 px the D-pad arm vanishes
+        KeyIcon->SetVisibility(ESlateVisibility::Collapsed);KeyIcons.Add(KeyIcon);
         auto* Quantity=WidgetTree->ConstructWidget<UTextBlock>();Quantity->SetFont(Font);Quantity->SetShadowOffset(FVector2D(1,1));Quantity->SetShadowColorAndOpacity(FLinearColor::Black);Quantity->SetJustification(ETextJustify::Right);
         CellContent->AddChildToCanvas(Quantity)->SetOffsets(FMargin(30,51,34,18));Quantities.Add(Quantity);
         auto* Selected=WidgetTree->ConstructWidget<UTextBlock>();Selected->SetFont(Font);
@@ -126,9 +148,18 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Display += FString::Printf(TEXT("%d:%s:%d:%.4f;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0,Freshness);
     }
     Display += FString::FromInt(Hotbar ? Hotbar->GetSelectedSlot() : INDEX_NONE);
+    // The pad's own buttons (owner, November 1): LB+X on an Xbox pad is L1+Square on a PlayStation pad.
+    const EEWGamepadFamily Family = Controller ? Controller->GetPromptFamily() : EEWGamepadFamily::Unknown;
+    const auto* Build = Controller ? Controller->GetBuildComponent() : nullptr;
+    const bool bShowBuildHint = Pawn && !Pawn->IsDead() && Build && Build->GetMode() == EEWBuildMode::Off && Build->IsOnFoot()
+        && !Controller->IsInventoryOpen() && !Controller->IsMapOpen() && !Controller->IsOptionsMenuOpen();
     Display += bController ? TEXT(":PAD") : TEXT(":KEYBOARD");
+    Display += FString::Printf(TEXT(":%d:%d"), int32(Family), bShowBuildHint ? 1 : 0);
     if (Display == LastDisplay) return;
     LastDisplay = Display;
+    static const FKey GamepadKeys[] = {EKeys::Gamepad_DPad_Left, EKeys::Gamepad_DPad_Up, EKeys::Gamepad_DPad_Right, EKeys::Gamepad_DPad_Down,
+        EKeys::Gamepad_FaceButton_Left, EKeys::Gamepad_FaceButton_Top, EKeys::Gamepad_FaceButton_Right, EKeys::Gamepad_FaceButton_Bottom};
+    ShownFamily = 0;
     static const FText GamepadHints[] = {
         FText::FromString(TEXT("←")), FText::FromString(TEXT("↑")),
         FText::FromString(TEXT("→")), FText::FromString(TEXT("↓")),
@@ -136,7 +167,12 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         FText::FromString(TEXT("B")), FText::FromString(TEXT("A"))};   // with LB (owner, November 1)
     for (int32 i=0; i<Labels.Num(); ++i)
     {
+        UTexture2D* KeyTexture = bController ? FEWControllerIcons::IconFor(GamepadKeys[i], Family) : nullptr;
+        if (KeyTexture) { KeyIcons[i]->SetBrushFromTexture(KeyTexture); ShownFamily = int32(Family); }
+        KeyIcons[i]->SetVisibility(KeyTexture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+        // Without an icon (an unknown pad), the short arrow or letter stays: a word would not fit the corner.
         KeyHints[i]->SetText(bController ? GamepadHints[i] : FText::AsNumber(i+1));
+        KeyHints[i]->SetVisibility(KeyTexture ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
         const auto* Item = Hotbar ? Hotbar->GetBoundItem(i) : nullptr;
         const int32 Quantity = Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0;
         const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
@@ -167,7 +203,21 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Cells[i]->SetToolTipText(Item ? Item->DisplayName : FText::FromString(TEXT("Empty slot")));
 
     }
-    if (ModifierHint) ModifierHint->SetVisibility(bController ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    UTexture2D* ModifierTexture = bController ? FEWControllerIcons::IconFor(EKeys::Gamepad_LeftShoulder, Family) : nullptr;
+    if (ModifierTexture) ModifierIcon->SetBrushFromTexture(ModifierTexture);
+    ModifierIcon->SetVisibility(ModifierTexture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    if (ModifierHint) ModifierHint->SetVisibility(bController && !ModifierTexture ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    const FString Hint = bShowBuildHint ? BuildHintText(bController) : FString();
+    BuildHintPlain = FText::FromString(FEWControllerIcons::Expand(Hint, Family, false));
+    BuildHint->SetText(FText::FromString(FEWControllerIcons::Expand(Hint, Family, true)));
+    BuildHint->SetVisibility(bShowBuildHint ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+}
+
+FString UEWHotbarWidget::BuildHintText(bool bController)
+{
+    // Owner, November 1 (CLAUDE.md 6.5): B on the keyboard; hold LB (L1) and press D-pad Right on a controller.
+    return bController ? FString::Printf(TEXT("Build: hold %s + %s"), *FEWControllerIcons::Token(EKeys::Gamepad_LeftShoulder),
+        *FEWControllerIcons::Token(EKeys::Gamepad_DPad_Right)) : FString(TEXT("Build: B"));
 }
 
 FText UEWHotbarWidget::ResultText(EEWHotbarResult Result)

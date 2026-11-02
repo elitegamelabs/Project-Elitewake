@@ -24,6 +24,8 @@ server_pawns = unreal.GameplayStatics.get_all_actors_of_class(server, character_
 server_pawn = next(p for p in server_pawns if pid(p) == player_id)
 widget_cls = unreal.load_class(None, '/Script/EW.EWInteractionWidget')
 prompt_widget = next(w for w in unreal.WidgetLibrary.get_all_widgets_of_class(local_world, widget_cls, False) if w.get_owning_player() == pc)
+# Button names follow the connected pad (owner, November 1); this check reads the Xbox names whatever is plugged in.
+pc.set_button_icons_choice(unreal.EWButtonIconsChoice.XBOX, False)
 settings = unreal.get_default_object(unreal.load_class(None, '/Script/UnrealEd.EditorPerformanceSettings'))
 old_throttle = settings.get_editor_property('bThrottleCPUWhenNotForeground')
 settings.set_editor_property('bThrottleCPUWhenNotForeground', False)

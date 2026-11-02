@@ -84,6 +84,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Build") bool IsGhostShowing() const;
     UFUNCTION(BlueprintPure, Category="Build") AEWBuildPiece* GetAimedPiece() const { return AimedPiece; }
     UFUNCTION(BlueprintPure, Category="Build") bool IsDialOpen() const { return bDialOpen; }
+    /** On foot: not at a helm, a gun, a sail's lines or a ladder (Build Mode is only entered on foot). */
+    bool IsOnFoot() const;
     UFUNCTION(BlueprintPure, Category="Build") int32 GetHoveredSlot() const { return HoveredSlot; }
     UFUNCTION(BlueprintPure, Category="Build") EEWBuildPieceType GetSelectedType() const { return SelectedType; }
     UFUNCTION(BlueprintPure, Category="Build") int32 GetMaterial() const { return MaterialIndex; }
@@ -128,7 +130,6 @@ private:
      *  entering it) never lets go of something else. */
     TSet<FKey> SwallowedReleases;
 
-    bool IsOnFoot() const;
 
     void SetMode(EEWBuildMode NewMode);
     void UpdateAim();

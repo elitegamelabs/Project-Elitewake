@@ -155,3 +155,51 @@ To do once approved (one commit each, tests and 1080p captures):
    (test GameInput with a real DualSense); unknown → neutral position words ("Left face button") until chosen, so no
    player sees the wrong brand.
 5. Tests: every bound key has an icon in both families; families never mix; fallback text when unknown.
+
+## 8. Overnight decisions for the owner's 9 am review (2026-11-01/02)
+
+The owner said: "automatically approve the decisions going forward until i wake up … choose the best option and i'll change it
+in the morning if i don't like it." Each decision below can be reversed; say which you want changed.
+
+1. **Rebuild recovery (approved by the owner before sleeping).** `place_animals.py` label NameError fixed; `material_builder`
+   now keeps an existing material instead of clearing it (UE 5.8.3 asserts in `DeleteAllMaterialExpressions`). The rebuild
+   resumed from the failed step; terrain and grass were not rerun.
+2. **Controller family detection.** Windows Raw Input reads each connected pad's maker: Sony = PlayStation; Microsoft or
+   any XInput pad = Xbox; anything else = Unknown (plain words such as "Left button", never a guessed symbol). If a Sony pad
+   is connected beside an Xbox-style one, PlayStation wins (DS4Windows/Steam show a PlayStation pad as a virtual Xbox
+   pad). Checked every 3 s, so plugging in a pad switches the icons within seconds. Why not GameInput/CommonUI: neither
+   plugin is enabled; Raw Input needs no new dependency.
+3. **Options → "Button icons": Automatic / Xbox / PlayStation** (default Automatic), saved with the other user settings.
+4. **Where icons show:** the arrival and Saltreach prompts, the interaction prompt ("Square: Drink fresh water"), the
+   hotbar slot hints (32 px) and its LB/L1 modifier, and a new build hint right of the hotbar on foot: "Build: hold LB +
+   D-pad Right" / "hold L1 + D-pad Right" / "Build: B". The build dial's middle text uses the pad's names as words
+   (RB / LB+RB, B: close → R1 / L1+R1, Circle: close) — words, not pictures, because it is drawn in Slate outside UMG;
+   icons there are a small follow-up if wanted. The keyboard shows keyboard keys (C / Z, Esc).
+5. **Icons:** 36 of the 38 on the sheet imported (`/Game/Elitewake/UI/Icons/Controller/...`); the two Home logos left out
+   (cut off at the sheet edge, and they are platform logos the game never needs). Each keeps its own shape, longer side
+   256 px, outer 4 px faded. Source PNGs in `Art/UI/ControllerIcons/`.
+6. **Rights:** ASSET_LEDGER row EW-UI-CTRL-001 marks the sheet's source and licence UNKNOWN — please record where it came
+   from. Xbox/PlayStation button symbols are trademarks: fine for development, needs a trademark/platform-terms check
+   before any public release.
+7. **Cave spiders** (the animals Play check's known failure): they were lifted by a fixed 25 cm but their body radius is
+   60 cm, so their feet sat 35 cm under the floor. `add_spiders.py` now lifts by the real radius and was rerun alone.
+8. **North fix follow-ups:** three Play checks (Saltreach arrival, voyage ready, sail trim) still worked out bearings with
+   the old north and failed by exactly 90°; they now use north = +Y like the game.
+9. Three older checks that expect "X: …" now pin the Xbox names for the check only (not saved), so they pass whatever pad
+   is plugged in.
+
+## 9. RESUME HERE (kept current overnight; owner: "if you run out of credits create a handoff for codex")
+
+Committed locally (not pushed; push only when the owner says "push"):
+- 35203c4f world rebuild with north at +Y, rebuild fixes, spider lift, bearing fixes in three checks.
+- the next commit: Xbox/PlayStation detection and button icons (section 8).
+
+Verified tonight on the rebuilt map: EWEditor builds; automation 51/51; Python 51/51. Play checks PASS: arrival,
+Saltreach arrival, voyage ready, first voyage, animals (second run; the first saw only 3 calm animals near the start, none
+walking in 14 s — the check's sample is small), elephant, sail trim, build mode, options (with the Button icons row),
+hotbar (no starter kit), capture_controller_icons (keyboard / Xbox / PlayStation words and icons, no mixing; pictures in
+Saved/Screenshots/ControllerIcons, owner visual review pending). Not runnable here: verify_berry, verify_hand_gathering,
+verify_water (and verify_food) are written for the retired Lvl_M5PickupTest map — port them to Coastal or retire them.
+
+Next, if continuing: nothing is blocked. Owner review at 9 am of section 8; a real DualSense / Xbox pad test on hardware
+(the Raw Input path has only been exercised with no pad connected); then CLAUDE.md Phase 2 work as section 4 lists.

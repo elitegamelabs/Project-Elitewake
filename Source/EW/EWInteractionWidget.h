@@ -5,6 +5,7 @@
 
 class UBorder;
 class UTextBlock;
+class URichTextBlock;
 class UProgressBar;
 class AEWInnTorchPickup;
 
@@ -25,9 +26,13 @@ protected:
     virtual int32 NativePaint(const FPaintArgs& Args, const FGeometry& Geometry, const FSlateRect& Clip,
         FSlateWindowElementList& Elements, int32 Layer, const FWidgetStyle& Style, bool bEnabled) const override;
 private:
+    void SetPrompt(const FText& Rich, const FText& Plain);
     UPROPERTY(Transient) TObjectPtr<UTextBlock> InnMessage;
     TArray<TWeakObjectPtr<AEWInnTorchPickup>> HighlightedTorches;
     UPROPERTY(Transient) TObjectPtr<UBorder> Panel;
-    UPROPERTY(Transient) TObjectPtr<UTextBlock> Prompt;
+    /** Rich text: the controller's button is drawn as its own icon (FEWControllerIcons). */
+    UPROPERTY(Transient) TObjectPtr<URichTextBlock> Prompt;
+    /** The prompt as plain words, for GetDisplayedPrompt. */
+    FText PlainPrompt;
     UPROPERTY(Transient) TObjectPtr<UProgressBar> Progress;
 };

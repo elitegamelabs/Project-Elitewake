@@ -38,7 +38,20 @@ server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
 client_world = worlds[pcs.index(client)]
 pawn = client.get_controlled_pawn()
 WORDS = {k: str(unreal.EWArrivalComponent.prompt_for(getattr(unreal.EWArrivalStep, k), False)) for k in ('LOOK', 'MOVE', 'JUMP', 'CROUCH', 'INTERACT')}
-PAD = {k: str(unreal.EWArrivalComponent.prompt_for(getattr(unreal.EWArrivalStep, k), True)) for k in ('LOOK', 'MOVE', 'JUMP', 'CROUCH', 'INTERACT')}
+# Controller words name buttons with [Gamepad_...] tokens drawn as the pad's own icons (owner, November 1). This check pins
+# the Xbox names (for the session only), so the plain words it reads do not depend on which pad is plugged in.
+XBOX = {'Gamepad_Right2D': 'Right stick', 'Gamepad_Left2D': 'Left stick', 'Gamepad_FaceButton_Bottom': 'A',
+        'Gamepad_FaceButton_Right': 'B', 'Gamepad_FaceButton_Left': 'X', 'Gamepad_FaceButton_Top': 'Y'}
+
+
+def xbox_words(text):
+    for key, name in XBOX.items():
+        text = text.replace(f'[{key}]', name)
+    return text
+
+
+client.set_button_icons_choice(unreal.EWButtonIconsChoice.XBOX, False)
+PAD = {k: xbox_words(str(unreal.EWArrivalComponent.prompt_for(getattr(unreal.EWArrivalStep, k), True))) for k in ('LOOK', 'MOVE', 'JUMP', 'CROUCH', 'INTERACT')}
 
 
 def player_id(p):

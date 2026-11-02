@@ -1,5 +1,7 @@
 #include "World/EWBuildComponent.h"
 #include "EWCharacter.h"
+#include "EWPlayerController.h"
+#include "EWControllerIcons.h"
 #include "World/EWBuildPiece.h"
 #include "World/EWBuildZones.h"
 #include "Components/StaticMeshComponent.h"
@@ -256,8 +258,18 @@ void UEWBuildComponent::ShowDial(bool bShow)
         SNew(STextBlock).Justification(ETextJustify::Center).ColorAndOpacity(Ink).Font(FCoreStyle::GetDefaultFontStyle("Regular", 22))
         .Text_Lambda([this, bFittings]()
         {
-            return FText::FromString(FString::Printf(TEXT("%s\n%s (RB / LB+RB)\n%s\nB: close"), bFittings ? Fittings[FMath::Clamp(HoveredSlot, 0, FittingCount - 1)].Label : AEWBuildPiece::TypeName(SlotType(HoveredSlot)),
-                AEWBuildPiece::MaterialName(MaterialIndex), bFittings ? TEXT("F / X: back to pieces") : TEXT("F / X: doors and windows")));
+            // The controller's own button names (owner, November 1): RB / LB+RB and B on an Xbox pad, R1 / L1+R1 and Circle on a
+            // PlayStation pad, plain words for any other; the keyboard's keys while the keyboard is in use.
+            const auto* PC = Cast<AEWPlayerController>(GetOwner());
+            const bool bPad = PC && PC->UsesControllerPrompts();
+            const EEWGamepadFamily Family = PC ? PC->GetPromptFamily() : EEWGamepadFamily::Unknown;
+            const auto Name = [Family](const FKey& Key) { return FEWControllerIcons::ButtonName(Key, Family); };
+            const FString Materials = bPad ? FString::Printf(TEXT("%s / %s+%s"), *Name(EKeys::Gamepad_RightShoulder),
+                *Name(EKeys::Gamepad_LeftShoulder), *Name(EKeys::Gamepad_RightShoulder)) : FString(TEXT("C / Z"));
+            const FString Wheel = bPad ? Name(EKeys::Gamepad_FaceButton_Left) : FString(TEXT("F"));
+            const FString Close = bPad ? Name(EKeys::Gamepad_FaceButton_Right) : FString(TEXT("Esc"));
+            return FText::FromString(FString::Printf(TEXT("%s\n%s (%s)\n%s: %s\n%s: close"), bFittings ? Fittings[FMath::Clamp(HoveredSlot, 0, FittingCount - 1)].Label : AEWBuildPiece::TypeName(SlotType(HoveredSlot)),
+                AEWBuildPiece::MaterialName(MaterialIndex), *Materials, *Wheel, bFittings ? TEXT("back to pieces") : TEXT("doors and windows"), *Close));
         })
     ];
     Canvas->AddSlot()
