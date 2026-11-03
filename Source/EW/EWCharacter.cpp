@@ -1373,9 +1373,19 @@ void AEWCharacter::PlayAttackAnimation(int32 Variant)
     UAnimSequenceBase* Swing = Kind == 1 ? ChopAnimation.Get() : Kind == 2 ? MineAnimation.Get() : nullptr;
     if (!Swing)
     {
-        // A tool or weapon in hand swings as one; bare hands punch.
-        const TArray<TObjectPtr<UAnimSequenceBase>>& Swings = GetHeldMesh() && ToolSwingAnimations.Num() ? ToolSwingAnimations : AttackAnimations;
-        if (Swings.Num()) Swing = Swings[FMath::Abs(Variant >> 2) % Swings.Num()];
+        // A tool or weapon in hand swings as one; bare hands punch with the arm the player chose (owner, November 3),
+        // and on the puncher's own first-person screen with the fist thrown out in front of the eyes.
+        const bool bLeft = (Variant & AEWPlayerController::LeftArmBit) != 0;
+        const bool bFirstPersonHere = bIsFirstPerson && IsLocallyControlled();
+        const TArray<TObjectPtr<UAnimSequenceBase>>* Swings = &AttackAnimations;
+        if (GetHeldMesh() && ToolSwingAnimations.Num()) Swings = &ToolSwingAnimations;
+        else if (!GetHeldMesh())
+        {
+            const auto& Seen = bLeft ? LeftPunchAnimations : AttackAnimations;
+            const auto& Own = bLeft ? FirstPersonLeftPunchAnimations : FirstPersonRightPunchAnimations;
+            Swings = bFirstPersonHere && Own.Num() ? &Own : Seen.Num() ? &Seen : &AttackAnimations;
+        }
+        if (Swings->Num()) Swing = (*Swings)[FMath::Abs(Variant >> 3) % Swings->Num()];
     }
     LastSwingAnimation = Swing;
     PlayOneShot(Swing);

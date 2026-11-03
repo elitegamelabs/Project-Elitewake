@@ -537,7 +537,9 @@ public:
     UFUNCTION(BlueprintPure, Category="Combat")
     bool CanAttack() const;
     /** Plays a swing on this machine. Variant's lowest two bits are the kind of swing (0 a plain swing or punch,
-     *  1 a hatchet's chop at a tree, 2 a pickaxe's blow at a rock); the rest picks among the plain swings. */
+     *  1 a hatchet's chop at a tree, 2 a pickaxe's blow at a rock); bit 2 a bare-handed punch with the left arm
+     *  (AEWPlayerController::LeftArmBit); the rest picks among the swings. In first person the survivor's own screen
+     *  shows the first-person punch, its fist thrown out in front of the eyes; everyone else sees the third-person one. */
     void PlayAttackAnimation(int32 Variant);
     /** The kind of swing this survivor makes at Target with what is in hand (see PlayAttackAnimation). */
     int32 SwingKindAt(const AActor* Target) const;
@@ -580,9 +582,19 @@ public:
     static constexpr float MeleeReach = 170.f;
     static constexpr float MeleeRadius = 30.f;
 
-    /** Swing animations, played in turn, and the flinch of a survivor who is struck. */
+    /** Bare-handed punches with the right arm (Right Mouse / RT), played in turn, and the flinch of a survivor who is struck. */
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TArray<TObjectPtr<UAnimSequenceBase>> AttackAnimations;
+    /** Bare-handed punches with the left arm (Left Mouse / LT; owner, November 3). Empty: the right arm's. */
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TArray<TObjectPtr<UAnimSequenceBase>> LeftPunchAnimations;
+    /** The punches as the puncher sees them in first person: the fist thrown out in front of the eyes. Empty: the third-person ones. */
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TArray<TObjectPtr<UAnimSequenceBase>> FirstPersonRightPunchAnimations;
+    UPROPERTY(EditDefaultsOnly, Category="Combat")
+    TArray<TObjectPtr<UAnimSequenceBase>> FirstPersonLeftPunchAnimations;
+    /** Something in the hand (a tool, a weapon, a torch, a waterskin): Left Mouse / RT swing or use it; bare hands punch. */
+    bool IsHoldingSomething() const { return GetHeldMesh() != nullptr; }
     /** Swings with a tool or weapon in hand, played in turn instead of the bare-handed ones. */
     UPROPERTY(EditDefaultsOnly, Category="Combat")
     TArray<TObjectPtr<UAnimSequenceBase>> ToolSwingAnimations;

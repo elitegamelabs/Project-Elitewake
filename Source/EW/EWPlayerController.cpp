@@ -226,6 +226,15 @@ void AEWPlayerController::SetupInputComponent()
     RuntimeAttackMappingContext = NewObject<UInputMappingContext>(this, TEXT("IMC_Attack_Runtime"));
     RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::LeftMouseButton);
     RuntimeAttackMappingContext->MapKey(AttackAction, EKeys::Gamepad_RightTrigger);
+    // Bare hands (owner, November 3): left arm on Left Mouse or LT, right arm on Right Mouse or RT.
+    PunchLeftAction = NewObject<UInputAction>(this, TEXT("IA_PunchLeft_Runtime"));
+    PunchLeftAction->ValueType = EInputActionValueType::Boolean;
+    PunchRightAction = NewObject<UInputAction>(this, TEXT("IA_PunchRight_Runtime"));
+    PunchRightAction->ValueType = EInputActionValueType::Boolean;
+    RuntimeAttackMappingContext->MapKey(PunchLeftAction, EKeys::LeftMouseButton);
+    RuntimeAttackMappingContext->MapKey(PunchLeftAction, EKeys::Gamepad_LeftTrigger);
+    RuntimeAttackMappingContext->MapKey(PunchRightAction, EKeys::RightMouseButton);
+    RuntimeAttackMappingContext->MapKey(PunchRightAction, EKeys::Gamepad_RightTrigger);
     ClimbUpAction = NewObject<UInputAction>(this, TEXT("IA_ClimbUp_Runtime"));
     ClimbUpAction->ValueType = EInputActionValueType::Boolean;
     ClimbDownAction = NewObject<UInputAction>(this, TEXT("IA_ClimbDown_Runtime"));
@@ -266,6 +275,8 @@ void AEWPlayerController::SetupInputComponent()
 	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
 	{
         EnhancedInput->BindAction(AttackAction, ETriggerEvent::Started, this, &AEWPlayerController::Attack);
+        EnhancedInput->BindAction(PunchLeftAction, ETriggerEvent::Started, this, &AEWPlayerController::PunchLeft);
+        EnhancedInput->BindAction(PunchRightAction, ETriggerEvent::Started, this, &AEWPlayerController::PunchRight);
         EnhancedInput->BindAction(ClimbUpAction, ETriggerEvent::Started, this, &AEWPlayerController::ClimbUp);
         EnhancedInput->BindAction(ClimbUpAction, ETriggerEvent::Completed, this, &AEWPlayerController::ClimbStop);
         EnhancedInput->BindAction(ClimbDownAction, ETriggerEvent::Started, this, &AEWPlayerController::ClimbDown);
@@ -349,15 +360,36 @@ void AEWPlayerController::Attack()
     // Anything in hand strikes a creature it is aimed at, a torch or a waterskin included.
     if (Survivor && Survivor->HasUsableHeldItem() && !AEWFish::FindStruck(Survivor, AEWCharacter::MeleeReach)
         && !AEWAnimal::FindStruck(Survivor, AEWCharacter::MeleeReach)) { Survivor->ServerUseHeldItem(); return; }
-    if (!Survivor || !Survivor->CanAttack()) return;
-    // Swing at once on this screen, at the pace the server allows; the server decides what it hits.
-    const double Now = GetWorld()->GetTimeSeconds();
-    if (Now - LastLocalAttackTime < AttackInterval) return;
-    LastLocalAttackTime = Now;
+    // Bare hands punch with one arm or the other (PunchLeft, PunchRight); this swings what is held.
+    if (!Survivor || !Survivor->IsHoldingSomething() || !StartSwing(Survivor)) return;
     AActor* Target = FEWInteractionTargeting::FindTarget(Survivor);
-    const int32 Variant = ((++AttackVariant) << 2) | Survivor->SwingKindAt(Target);
+    const int32 Variant = ((++AttackVariant) << 3) | Survivor->SwingKindAt(Target);
     Survivor->PlayAttackAnimation(Variant);
     ServerAttack(Target, Variant);
+}
+
+void AEWPlayerController::Punch(bool bLeft)
+{
+    if (!IsLocalPlayerController() || IsInventoryOpen() || IsMapOpen() || IsSessionMenuOpen()) return;
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    // At a cannon, Left Mouse / RT fire it and Right Mouse marks the target (Attack, InputKey); with anything in hand
+    // the hand swings it (Attack).
+    if (!Survivor || Survivor->GetGunShip() || Survivor->IsHoldingSomething() || !StartSwing(Survivor)) return;
+    AActor* Target = FEWInteractionTargeting::FindTarget(Survivor);
+    const int32 Variant = ((++AttackVariant) << 3) | (bLeft ? LeftArmBit : 0) | Survivor->SwingKindAt(Target);
+    Survivor->PlayAttackAnimation(Variant);
+    ServerAttack(Target, Variant);
+}
+
+bool AEWPlayerController::StartSwing(AEWCharacter* Survivor)
+{
+    if (!Survivor->CanAttack()) return false;
+    if (BuildComponent && BuildComponent->GetMode() != EEWBuildMode::Off) return false;
+    // Swing at once on this screen, at the pace the server allows; the server decides what it hits.
+    const double Now = GetWorld()->GetTimeSeconds();
+    if (Now - LastLocalAttackTime < AttackInterval) return false;
+    LastLocalAttackTime = Now;
+    return true;
 }
 
 void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Variant)

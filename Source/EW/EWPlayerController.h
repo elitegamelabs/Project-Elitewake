@@ -164,8 +164,15 @@ public:
     void ServerConsumeFood(UEWItemDefinition* Item);
     UFUNCTION(Client, Reliable)
     void ClientFoodResult(EEWFoodUseResult Result);
+    /** Left Mouse / RT with something in hand: swing it, use it, or fire the cannon one is laid at. Bare hands punch
+     *  instead (PunchLeft, PunchRight). */
     UFUNCTION(BlueprintCallable, Category="Gathering") void Attack();
+    /** Bare hands only (owner, November 3): the left arm punches with Left Mouse or LT, the right with Right Mouse or RT. */
+    UFUNCTION(BlueprintCallable, Category="Combat") void PunchLeft() { Punch(true); }
+    UFUNCTION(BlueprintCallable, Category="Combat") void PunchRight() { Punch(false); }
+    /** Variant: bits 0-1 the kind of swing (AEWCharacter::PlayAttackAnimation), bit 2 the left arm, the rest a count. */
     UFUNCTION(Server, Reliable) void ServerAttack(AActor* Target, int32 Variant);
+    static constexpr int32 LeftArmBit = 4;
     AEWPlayerController();
     virtual void OnPossess(APawn* InPawn) override;
     UFUNCTION(BlueprintPure, Category="Interaction")
@@ -259,6 +266,12 @@ public:
 	
 protected:
     UPROPERTY(Transient) TObjectPtr<UInputAction> AttackAction;
+    UPROPERTY(Transient) TObjectPtr<UInputAction> PunchLeftAction;
+    UPROPERTY(Transient) TObjectPtr<UInputAction> PunchRightAction;
+    /** A bare-handed punch with one arm, if the survivor may punch now. */
+    void Punch(bool bLeft);
+    /** True when a punch or a swing can start now: in the world, not in a menu, the map or Build Mode, and at pace. */
+    bool StartSwing(class AEWCharacter* Survivor);
     UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbUpAction;
     UPROPERTY(Transient) TObjectPtr<UInputAction> ClimbDownAction;
     /** At the helm only: Left/Right Arrow or LB/RB swing the sails (owner, October 16). */
