@@ -22,7 +22,7 @@ namespace
     /** One gamepad key: its Xbox and PlayStation names, a plain word, and each family's icon (the Home buttons are left out:
      *  both are platform logos, and the game never asks for them). */
     struct FButton { const TCHAR* Key; const TCHAR* Xbox; const TCHAR* PlayStation; const TCHAR* Word; const TCHAR* XboxIcon; const TCHAR* PlayStationIcon; };
-    const FButton Buttons[] = {
+    const FButton GamepadButtons[] = {
         {TEXT("Gamepad_FaceButton_Bottom"), TEXT("A"), TEXT("Cross"), TEXT("Bottom button"), TEXT("A"), TEXT("Cross")},
         {TEXT("Gamepad_FaceButton_Right"), TEXT("B"), TEXT("Circle"), TEXT("Right button"), TEXT("B"), TEXT("Circle")},
         {TEXT("Gamepad_FaceButton_Left"), TEXT("X"), TEXT("Square"), TEXT("Left button"), TEXT("X"), TEXT("Square")},
@@ -52,7 +52,7 @@ namespace
     const FButton* Find(const FKey& Key)
     {
         const FName Name = Key.GetFName();
-        for (const FButton& Button : Buttons) if (Name == FName(Button.Key)) return &Button;
+        for (const FButton& Button : GamepadButtons) if (Name == FName(Button.Key)) return &Button;
         return nullptr;
     }
 
