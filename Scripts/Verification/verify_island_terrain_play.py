@@ -1,4 +1,4 @@
-"""Acceptance for the five individually designed islands in CLAUDE.md. Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground
+"""Acceptance for the individually designed islands of the twenty-island world (CLAUDE.md 5.1, 5.7). Needs Play in /Game/Elitewake/Maps/Lvl_CoastalPlayground
 (EW_PLAY_PLAYERS=1 is enough) after rebuild_world.py. Run unattended with run_play_check.py.
   1. Every island but the starter and the Swamp's has a terrain plan (peaks, ridges, plateaus, valleys), and every island
      has its own size, outline and relief (no two with the same top, mean
@@ -6,7 +6,7 @@
   2. The built ground matches the plan: at 12 points on each island the ground under a trace is within 1.5 m of the
      height function (world_terrain.built_height), so the meshes in the map are the designed ones.
   3. Every island has its cave, with a walkable way in (at most a 45 cm step at the mouth).
-  4. Screenshots of five islands from 25 m above the sea, one per region, in Saved/Screenshots/IslandTerrain/
+  4. Screenshots of every island from 25 m above the sea, in Saved/Screenshots/IslandTerrain/
      (a person still has to look at them).
 Writes Saved/IslandTerrainPlayResult.json.
 """
@@ -45,8 +45,9 @@ def relief(i):
 def designed():
     for region in T.PLANS:
         plans = [T.TERRAIN_PLANS[i.key][0] for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        expected = 0 if region == 'Plains' else 1
-        assert len(plans) == expected and len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
+        expected = W.ISLANDS_PER_REGION[region] - (1 if region == 'Plains' else 0)    # the starter keeps its own ground
+        assert len(plans) == expected, f'{region}: {len(plans)} designed islands, {expected} expected'
+        assert len(set(plans)) == len(plans), f'{region} plans repeat: {plans}'
     stats = {i.key: relief(i) for i in W.ISLANDS}
     keys = list(stats)
     same = [(a, b) for n, a in enumerate(keys) for b in keys[n + 1:]
@@ -96,8 +97,8 @@ def caves():
     return True
 
 
-VIEWS = [('starter', 'Starter'), ('winter', 'Winter1'), ('jungle', 'Jungle1'),
-         ('desert', 'Desert1'), ('swamp', 'Swamp1')]
+# Every island from the sea, as from a ship's masthead (each region's four).
+VIEWS = [(i.key.lower(), i.key) for i in W.ISLANDS]
 STEPS = [('Every island has its own plan and its own size, outline and relief', designed),
          ('The built ground in the map matches every island\'s plan', built),
          ('Every island has its cave with a walkable way in', caves)]

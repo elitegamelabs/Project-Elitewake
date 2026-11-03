@@ -439,6 +439,8 @@ For any modeled prop, request front, back, left, right, top, underside, and thre
 
 Owner, 2026-11-01. Provide scalable visual-quality settings so stronger graphics cards show higher-resolution textures, foliage, shadows, water, and effects. Core gameplay, resource availability, navigation, and fairness stay the same on every tier: anything that blocks movement, conceals a player, or can be gathered or interacted with never scales with quality. A better GPU must never grant a gameplay advantage. Verify with an automated comparison of gameplay objects, collision, and resources across tiers, and measure frame time per tier.
 
+Minimum machine (owner, 2026-11-02): the game must at least run and be testable on the owner's GeForce GTX 1660 Super (6 GB video memory, no ray-tracing hardware) at 1920×1080 on the Low tier, within about 4.5 GB of video memory. Nothing may assume the whole world is resident: islands stream (World Partition, HLOD for distant islands) and dense foliage exists only near the player. Measure a packaged build on that card before a phase is accepted.
+
 ## 10. Audio production standard
 
 Audio communicates material, distance, weather, danger, and ship condition. Preserve quiet and dynamic space; do not fill every moment with music or animal calls. Claude may validate files and implementation but must mark selections Owner audio audition pending until the owner listens.

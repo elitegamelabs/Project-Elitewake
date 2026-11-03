@@ -1,19 +1,22 @@
-"""The canonical five-island world: where each island lies, which region it belongs to, and its shape.
+"""The canonical twenty-island world (CLAUDE.md 5.7; owner, November 1): where each island lies, which region it
+belongs to, and its shape.
 
 Plain Python (no Unreal), shared by the world setup scripts and checked on its own:
     python Scripts/Setup/world_layout.py          # prints the layout and checks it; exit code 1 if a rule fails
 
-Current owner direction:
+Owner direction:
   - five regions: Plains in the centre, Winter north (+Y), Swamp south (-Y), Desert east (-X), Jungle west (+X).
     North is +Y and east -X, a quarter turn clockwise as Unreal's yaw turns, so the compass, the map and the sun agree
     (Source/EW/World/EWNorth.h; owner, November 1: Desert and Jungle swapped sides to match);
-  - exactly one large, distinct island per region during the current production phase;
-  - the Plains island is the universal starting island;
+  - four islands per region (world_islands.py has each one's specialty, wildlife and village), each its own shape and
+    land area; the Plains four round the centre, each other region's four together in its direction;
+  - the Plains starter island is the universal start and keeps its exact shape and place (Saltreach, the arrival);
+  - one village per region, on the region's island nearest the centre (world_islands.VILLAGES);
   - islands separated by open sea, 800 m to 2,000 m between shorelines.
 
 Units are Unreal centimetres (1 m = 100). Every other island is generated from a seed and has its own silhouette
-(harmonics), size, orientation, height and cove. Island sizes and heights are tuning. There is no alternate
-high-island-count build path in this module.
+(harmonics), size, orientation, height and cove. Island sizes and heights are tuning; a walk across each should take
+6-17 minutes (measure in game: Scripts/Verification/measure_walking_routes_play.py).
 """
 import math
 import random
@@ -23,8 +26,17 @@ M = 100.0                       # cm per metre
 MIN_GAP, MAX_GAP = 800 * M, 2000 * M
 REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
                   'Desert': (-7000 * M, 0.0), 'Jungle': (7000 * M, 0.0)}
-ISLANDS_PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
-DESERT_X, JUNGLE_X = -390000.0, 280000.0     # cm: centres along X (tuning; the Plains island reaches about 2 km toward -X)
+ISLANDS_PER_REGION = {'Plains': 4, 'Winter': 4, 'Swamp': 4, 'Desert': 4, 'Jungle': 4}
+# Each outer region's four islands, by (along, aside) km from the centre in its own direction: the village island nearest
+# the centre, two flanks, the far island (tuning). The order of keys puts each region's village (world_islands.VILLAGES) first.
+REGION_AXES = {'Winter': (0.0, 1.0), 'Swamp': (0.0, -1.0), 'Desert': (-1.0, 0.0), 'Jungle': (1.0, 0.0)}
+REGION_SLOTS = [(5.3, 0.2), (8.5, -2.7), (8.6, 2.6), (11.3, -0.2)]
+REGION_ORDER = {'Winter': ('Winter2', 'Winter1', 'Winter3', 'Winter4'), 'Swamp': ('Swamp1', 'Swamp2', 'Swamp3', 'Swamp4'),
+                'Desert': ('Desert1', 'Desert2', 'Desert3', 'Desert4'), 'Jungle': ('Jungle1', 'Jungle2', 'Jungle3', 'Jungle4')}
+# The three Plains islands round the starter, on the diagonals between the regions (x, y in m).
+PLAINS_AROUND = {'Plains2': (-3200.0, 3100.0), 'Plains3': (-3100.0, -3200.0), 'Plains4': (3200.0, 3100.0)}
+# Each region's tallest hill, cm (tuning): several smaller hills spread over each island, never one dominant mountain.
+REGION_PEAKS = {'Plains': 2400.0, 'Winter': 10500.0, 'Swamp': 250.0, 'Desert': 4400.0, 'Jungle': 6400.0}
 
 
 class Island:
@@ -100,31 +112,55 @@ def quick_gap(a, b):
     return math.hypot(a.cx - b.cx, a.cy - b.cy) - a.reach() - b.reach()
 
 
-def _organic(key, region, cx, cy, rx, ry, turn, seed, peak, hills, cove):
-    """An island with a hand-set size and an irregular shore: eight harmonics of its own, a cove or two, ridges and hills of its own."""
+def _organic(key, region, cx, cy, rx, ry, turn, seed, peak, hills, cove, spread=True):
+    """An island with a hand-set size and an irregular shore: eight harmonics of its own, a cove or two, ridges and hills of its own.
+    Spread (CLAUDE.md 5.1): several smaller hills round the island, none in its middle and none dominant, the tallest at
+    `peak`; the starter's west half keeps its original draw (spread=False) so its ground does not change."""
     rng = random.Random(seed)
     harmonics = [(k, rng.uniform(0.035, 0.11) / (1 + 0.12 * k), rng.uniform(0, 2 * math.pi)) for k in (2, 3, 4, 5, 6, 8, 11, 14)]
     features = []
+    base = rng.uniform(0, 2 * math.pi)
     for n in range(hills):
-        fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0.05, 0.6) * min(rx, ry)
-        features.append((fd * math.cos(fa), fd * math.sin(fa), rng.uniform(0.18, 0.34) * min(rx, ry), peak * (1.0 if n == 0 else rng.uniform(0.35, 0.8))))
+        if spread:
+            fa = base + 2 * math.pi * n / hills + rng.uniform(-0.35, 0.35)
+            fd = rng.uniform(0.3, 0.68) * min(rx, ry)
+            height = peak * rng.uniform(0.55, 1.0)
+        else:
+            fa, fd = rng.uniform(0, 2 * math.pi), rng.uniform(0.05, 0.6) * min(rx, ry)
+        radius = rng.uniform(0.18, 0.34) * min(rx, ry)
+        if not spread:
+            height = peak * (1.0 if n == 0 else rng.uniform(0.35, 0.8))
+        features.append((fd * math.cos(fa), fd * math.sin(fa), radius, height))
     return Island(key, region, cx, cy, rx, ry, turn, rng.uniform(0.04, 0.07), harmonics, cove, features, peak)
 
 
 def generate():
-    """The Plains island (the starter, grown to about 2 km) in the middle and one island each for Winter (north), Swamp (south), Desert (east) and Jungle (west)."""
+    """The Plains starter island in the middle with three more Plains islands round it, and four islands each for Winter
+    (north), Swamp (south), Desert (east) and Jungle (west), every one its own shape, size and hills."""
     old = Island('Starter', 'Plains', -800.0, -100.0, 5100.0, 4100.0, wobble=0.03,
                  features=[(-2500, -1600, 1600, 700), (-2700, 1400, 1200, 420)], peak=700.0)
     # The old east end keeps the beach spawn, dock, pond and sloop mooring; the island grows west from it, about 2 km across, with a notched, irregular shore.
-    west = _organic('StarterWest', 'Plains', -99000.0, -400.0, 101000.0, 82000.0, 0.15, 7101, 2600.0, 6, (math.pi * 0.9, 0.3, 0.22))
+    west = _organic('StarterWest', 'Plains', -99000.0, -400.0, 101000.0, 82000.0, 0.15, 7101, 2600.0, 6, (math.pi * 0.9, 0.3, 0.22), spread=False)
     west.cx = 3000.0 - west.radius(0.0)      # its east shore lands 30 m east of the old centre, just inside the old east end
     west.features = [(x + west.cx - old.cx, y + west.cy - old.cy, r, h) for x, y, r, h in west.features]
     islands = [StarterIsland(old, west)]
-    islands.append(_organic('Winter1', 'Winter', -60000.0, 280000.0, 118000.0, 82000.0, 0.45, 7202, 11000.0, 5, (-math.pi / 2, 0.35, 0.25)))
-    islands.append(_organic('Swamp1', 'Swamp', -30000.0, -270000.0, 100000.0, 80000.0, 2.6, 7303, 260.0, 4, (math.pi / 3, 0.4, 0.3)))
-    # Desert east (-X) and Jungle west (+X), each keeping its own shape, seed and size; their coves still face the Plains.
-    islands.append(_organic('Desert1', 'Desert', DESERT_X, -30000.0, 110000.0, 84000.0, 1.2, 7404, 4600.0, 5, (0.0, 0.3, 0.2)))
-    islands.append(_organic('Jungle1', 'Jungle', JUNGLE_X, 20000.0, 102000.0, 92000.0, 0.9, 7505, 6800.0, 6, (math.pi - 0.3, 0.35, 0.24)))
+    places = {key: ('Plains', x * M, y * M) for key, (x, y) in PLAINS_AROUND.items()}
+    for region, keys in REGION_ORDER.items():
+        ax, ay = REGION_AXES[region]
+        for (along, aside), key in zip(REGION_SLOTS, keys):
+            places[key] = (region, (ax * along - ay * aside) * 1000 * M, (ay * along + ax * aside) * 1000 * M)
+    # Each island its own land area (owner, November 1): sizes stepped evenly from small to large in a fixed shuffled order,
+    # about 2.2-2.9 km long and 1.8-2.4 km wide before the shore's own wobble, for a 6-17 minute walk across.
+    order = sorted(places)
+    random.Random(4321).shuffle(order)
+    for key, (region, cx, cy) in places.items():
+        rng = random.Random(sum(map(ord, key)) * 7)
+        size = .94 + .26 * order.index(key) / (len(order) - 1)
+        rx, ry = size * rng.uniform(1180, 1260) * M, size * rng.uniform(980, 1040) * M
+        # The cove faces the world's centre: the sheltered side, where a region's village has its harbour.
+        cove = (math.atan2(-cy, -cx), rng.uniform(0.25, 0.4), rng.uniform(0.2, 0.3))
+        islands.append(_organic(key, region, cx, cy, rx, ry, rng.uniform(0, math.pi), 7000 + sum(map(ord, key)),
+                                REGION_PEAKS[region], rng.randint(5, 8), cove))
     return islands
 
 
@@ -164,9 +200,9 @@ ISLANDS = generate()
 
 
 # ---- Ports ----------------------------------------------------------------------------------------------------
-# One Port in each region. With one island per region, every island carries its regional Port. Waterfronts face
-# the world's centre except Saltreach Freeport on the Plains starter island, whose established approach faces
-# south-west.
+# One Port in each region, at its village (CLAUDE.md 5.7: Saltreach on the starter island, W2, S1, D1, J1); every other
+# island has landings, not a Port. Waterfronts face the world's centre except Saltreach Freeport on the Plains starter
+# island, whose established approach faces south-west.
 PORT_PAD = 3800.0        # cm: radius of the level, paved Port site (tuning)
 PORT_INLAND = 2600.0     # cm: how far inland of the shore the site's middle lies
 
@@ -194,8 +230,13 @@ class Port:
         return self.cx + along * c - across * s, self.cy + along * s + across * c
 
 
+def _village_island(region):
+    from world_islands import VILLAGES        # the region's one village (CLAUDE.md 5.7)
+    return next(i for i in ISLANDS if i.key == VILLAGES[region])
+
+
 def _ports():
-    ports = {region: Port(region, i) for region in REGION_CENTRES for i in ISLANDS if i.region == region}
+    ports = {region: Port(region, _village_island(region)) for region in REGION_CENTRES}
     starter_port = ports['Plains']
     starter_port.facing = -2.3
     r = starter_port.island.radius(starter_port.facing)

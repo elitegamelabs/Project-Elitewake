@@ -79,7 +79,9 @@ def advance():
             return
         if not lib.start_verification_play_session(players):
             raise RuntimeError('Could not start Play')
-        state.update(step='wait_play', at=now + 120.0)
+        # A big world takes a while to load into each Play world (the twenty-island map: well over two minutes for a
+        # listen server and client); EW_PLAY_START_WAIT overrides, seconds.
+        state.update(step='wait_play', at=now + float(os.environ.get('EW_PLAY_START_WAIT', '360')))
     elif step == 'wait_play':
         worlds = lib.get_play_worlds()
         pawns = [unreal.GameplayStatics.get_player_controller(w, 0) for w in worlds]

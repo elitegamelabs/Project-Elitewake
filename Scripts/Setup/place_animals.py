@@ -1,4 +1,4 @@
-"""Place the land animals across the five-region world. Safe to run again. Run in the editor after build_animals.py
+"""Place the land animals across the twenty-island world, each island its own planned mix (wildlife_distribution.py). Safe to run again. Run in the editor after build_animals.py
 (which makes the animals' models and definitions) and the world scripts, outside Play:
     UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
 
@@ -21,7 +21,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
-from wildlife_distribution import HABITAT, target_counts  # noqa: E402
+from wildlife_distribution import HABITAT, CLEAR_AGGRESSIVE, CLEAR_PASSIVE, target_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
@@ -29,6 +29,9 @@ MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/Wildlife/Animals'
 LEVEL_FOLDER = 'Coast/Wildlife/Animals'
 SPAWN, DOCK = (150.0, 0.0), (4000.0, 900.0)
+SQUARE, SHARE_PER_SQUARE = 20000.0, .15        # cm, CLAUDE.md 5.7
+# Where people are (CLAUDE.md 5.6): the starter's spawn and dock, and every village's Port and its waterfront.
+PEOPLE = [SPAWN, DOCK] + [xy for p in W.PORTS.values() for xy in ((p.cx, p.cy), p.shore)]
 # Per island of each region: {animal: how many} (tuning). Habitats: shore (the beach band), trees (near trees),
 # low (wet low ground of the swamp), inland.
 def fits(habitat, island, x, y, z, trees):
@@ -65,6 +68,10 @@ def main():
         near_trees = [(tx, ty) for tx, ty in trees if abs(tx - island.cx) < reach and abs(ty - island.cy) < reach]
         taken = [(a.get_actor_location().x, a.get_actor_location().y) for a in existing_animals
                  if f' {island.key} ' in f' {a.get_actor_label()} ']
+        # CLAUDE.md 5.7: no 200 m square holds more than 15 % of an island's animals. Refusing a spot whose 200 m box
+        # (200 m either way on both axes) already holds that share guarantees it: in any crowded square, the last animal
+        # placed would have seen all the others within its box.
+        crowd = max(1, int(SHARE_PER_SQUARE * sum(plan.values())))
         for name, count in plan.items():
             if count == 0:
                 continue
@@ -80,9 +87,11 @@ def main():
                 z = ground(x, y)
                 if not fits(HABITAT[name], island, x, y, z, near_trees) or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
                     continue
-                if min(math.hypot(x - px, y - py) for px, py in (SPAWN, DOCK)) < (2600 if aggressive else 700):
+                if min(math.hypot(x - px, y - py) for px, py in PEOPLE) < (CLEAR_AGGRESSIVE if aggressive else CLEAR_PASSIVE):
                     continue
                 if any(math.hypot(x - px, y - py) < 400 for px, py in taken):
+                    continue
+                if sum(1 for px, py in taken if abs(x - px) <= SQUARE and abs(y - py) <= SQUARE) >= crowd:
                     continue
                 animal = actors.spawn_actor_from_class(unreal.EWAnimal, unreal.Vector(x, y, z + radius),
                                                        unreal.Rotator(0, 0, rng.uniform(-180, 180)))

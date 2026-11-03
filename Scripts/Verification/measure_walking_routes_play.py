@@ -5,7 +5,9 @@ decided; owner, November 1: 6-17 minutes across each island). Single player (EW_
 For every island in Scripts/Setup/world_layout.py, two routes: coast to coast along its longest axis through the middle, and
 across it at right angles; each starts and ends 20 m inland of the shore. The survivor walks them by ordinary movement input at
 walking speed (no sprint, no teleport along the way), steering for the far end; when it stalls (a cliff, a tree, a building)
-it sidesteps at an angle for a few seconds and carries on. Time is game time, with the game run faster (slomo) to save real time.
+it sidesteps at an angle for a few seconds and carries on. It follows the quickest walkable path the offline estimate
+finds (Scripts/Setup/estimate_walking_times.py, same routes), a waypoint some 30 m ahead at a time, so a hill it could walk
+round does not stop it; the time is still its own, walked in the game. Time is game time, with the game run faster (slomo) to save real time.
 Per route: minutes, metres walked, straight-line metres, metres climbed, seconds swimming, detours, and whether it arrived.
 Writes the result named by EW_PLAY_RESULT (default: Saved/WalkingRoutesResult.json). Set EW_WALK_ISLAND and
 EW_WALK_ROUTE to run one route without rerunning all islands.
@@ -21,6 +23,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Setup'))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+import estimate_walking_times as E  # noqa: E402
 
 SLOMO = 4.0
 INLAND = 2000.0          # cm: route ends this far inside the shore
@@ -39,36 +42,24 @@ survival = pawn.get_survival_component()
 report = {'routes': [], 'slomo': SLOMO, 'walk_speed_cm_s': move.get_editor_property('max_walk_speed')}
 
 
-def centroid(island):
-    pts = island.outline(240)
-    return sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
-
-
-def reach(island, x, y, angle):
-    """From (x, y), how far along angle the land runs (stops INLAND short of the shore), cm."""
-    c, s, d = math.cos(angle), math.sin(angle), 0.0
-    while island.distance(x + (d + 500) * c, y + (d + 500) * s) < -INLAND:
-        d += 500
-    return d
-
-
 def routes():
     out = []
     for island in W.ISLANDS:
-        x, y = centroid(island)
-        a = max((math.pi * k / 72 for k in range(72)), key=lambda t: reach(island, x, y, t) + reach(island, x, y, t + math.pi))
-        for name, angle in (('long axis', a), ('across', a + math.pi / 2)):
-            r1, r2 = reach(island, x, y, angle), reach(island, x, y, angle + math.pi)
-            c, s = math.cos(angle), math.sin(angle)
-            out.append({'island': island.key, 'region': island.region, 'route': name,
-                        'start': (x + r1 * c, y + r1 * s), 'end': (x - r2 * c, y - r2 * s)})
+        for name, start, end in E.routes(island):
+            out.append({'island': island.key, 'region': island.region, 'route': name, 'start': start, 'end': end})
     return out
 
 
+LOOKAHEAD = 3            # waypoints (10 m apart) ahead of the nearest one
 ROUTES = [r for r in routes() if (not os.environ.get('EW_WALK_ISLAND') or r['island'] == os.environ['EW_WALK_ISLAND'])
           and (not os.environ.get('EW_WALK_ROUTE') or r['route'] == os.environ['EW_WALK_ROUTE'])]
 if not ROUTES:
     raise ValueError('No walking routes match EW_WALK_ISLAND and EW_WALK_ROUTE')
+# The path to follow on each route, found before Play starts walking (a few seconds a route).
+for r in ROUTES:
+    estimate, path = E.walk_time(W.island(r['island']), r['start'], r['end'])
+    r['path'] = path or [r['end']]
+    r['estimate_min'] = None if estimate is None else round(estimate / 60.0, 1)
 
 
 def ground(x, y):
@@ -92,7 +83,7 @@ def begin(i):
     ex, ey = r['end']
     state.update(i=i, route=dict(r, t0=now(), last=(sx, sy), walked=0.0, climbed=0.0, last_z=None, swim=0.0,
                                  start_terrain_cm=T.built_height(sx, sy), end_terrain_cm=T.built_height(ex, ey),
-                                 detours=0, check_t=now() + STALL_EVERY, check_d=None, detour_until=0.0, detour_sign=1,
+                                 detours=0, waypoint=0, check_t=now() + STALL_EVERY, check_d=None, detour_until=0.0, detour_sign=1,
                                  last_t=now(), settle_until=now() + 2.0))
 
 
@@ -110,7 +101,7 @@ def end_route(arrived):
                              'end_terrain_cm': round(r['end_terrain_cm'], 1), 'sea_cm': T.SEA,
                              'minutes': round(minutes, 2), 'walked_m': round(r['walked'] / 100.0),
                              'straight_m': round(math.hypot(ex - sx, ey - sy) / 100.0), 'climbed_m': round(r['climbed'] / 100.0),
-                             'swim_s': round(r['swim']), 'detours': r['detours']})
+                             'swim_s': round(r['swim']), 'detours': r['detours'], 'estimate_min': r['estimate_min']})
     save()
 
 
@@ -174,7 +165,14 @@ def tick(delta):
                 r['detour_sign'] = -r['detour_sign']
                 r['detour_until'] = t + DETOUR
             r['check_d'], r['check_t'] = to_end, t + STALL_EVERY
-        heading = math.atan2(ey - p.y, ex - p.x)
+        # The nearest waypoint at or past the last one, then aim a few ahead along the walkable path.
+        path = r['path']
+        k = r['waypoint']
+        while k + 1 < len(path) and math.hypot(path[k + 1][0] - p.x, path[k + 1][1] - p.y) <= math.hypot(path[k][0] - p.x, path[k][1] - p.y):
+            k += 1
+        r['waypoint'] = k
+        tx, ty = path[min(k + LOOKAHEAD, len(path) - 1)] if k + 1 < len(path) else (ex, ey)
+        heading = math.atan2(ty - p.y, tx - p.x)
         if t < r['detour_until']:
             heading += r['detour_sign'] * math.radians(70)
         direction = unreal.Vector(math.cos(heading), math.sin(heading), 0)

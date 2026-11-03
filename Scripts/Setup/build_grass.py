@@ -27,7 +27,16 @@ from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Grass'
 # Per region: clumps per square metre where the ground is fully grassed, and the clump scale range (tuning).
-DENSITY = {'Plains': (7.0, (.8, 1.35)), 'Jungle': (1.4, (.8, 2.0))}      # Plains 2.5 on the old islands; the five-island Plains island is mostly open ground and needs about 7 to stay at least 1.5 times as thick as the Jungle
+DENSITY = {'Plains': (.4, (.8, 1.35)), 'Jungle': (.25, (.8, 2.0))}
+# The starter island keeps its own, thicker grass (the first 30 minutes' look; 7 on the five-island world). Twenty islands at
+# the old densities made about 24 million clumps and ran the 12 GB graphics card out of memory (November 2): every instance
+# of a foliage type is held at once until grass streams per island (World Partition, a later slice), so the other islands
+# are thinner (measured November 2 on a 2 % sample with spots' own rules: about 6.8 million in all, the starter 2.5 of them),
+# Plains still thicker than the Jungle. Tuning; owner visual review pending.
+ISLAND_DENSITY = {'Starter': 7.0}
+UNDERSTORY_SCALE = .2          # the Jungle understory thinned with its grass
+# Stop before laying more than this many plants in all (graphics memory: 4.3 million fitted, 24 million did not).
+MAX_INSTANCES = 9_000_000
 # The Jungle's understory (owner, October 16, BIOME_TERRAIN_FOLIAGE_AND_GLOBAL_SUN: dense bushes, grass of varying
 # heights, understory plants and flowers, layered, with navigable paths and performance-aware density): ferns, leafy
 # bushes and flowering plants among its grass, per square metre, with their scale ranges (tuning). None of it blocks.
@@ -230,6 +239,7 @@ def patchy(x, y):
 def spots(island, rng, density=None, scales=None):
     if density is None:
         density, scales = DENSITY[island.region]
+        density = ISLAND_DENSITY.get(island.key, density)
     reach = island.reach()
     area = math.pi * island.rx * island.ry / 1e4
     out = []
@@ -282,6 +292,7 @@ def main():
             continue
         rng = random.Random(sum(map(ord, island.key)) * 6151)
         placed = spots(island, rng)
+        assert total + len(placed) <= MAX_INSTANCES, f'grass would reach {total + len(placed)} instances at {island.key} (budget {MAX_INSTANCES})'
         for k, kind in enumerate(kinds):
             share = placed[k::CLUMPS]
             if share:
@@ -309,7 +320,8 @@ def main():
                 if island.region != region:
                     continue
                 rng = random.Random(sum(map(ord, island.key + name)) * 7919)
-                placed = spots(island, rng, density, scales)
+                placed = spots(island, rng, density * UNDERSTORY_SCALE, scales)
+                assert total + len(placed) <= MAX_INSTANCES, f'plants would reach {total + len(placed)} instances at {island.key} (budget {MAX_INSTANCES})'
                 for k, kind in enumerate(looks):
                     share = placed[k::len(looks)]
                     if share:

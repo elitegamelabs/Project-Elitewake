@@ -1,34 +1,34 @@
-"""Pure-Python population rules for the canonical five-island world."""
+"""Pure-Python population rules for the twenty-island world (CLAUDE.md 5.6 and 5.7; owner, November 1).
+
+Each island carries its own planned mix (world_islands.ISLANDS[key]['wildlife']), so the islands of a region differ and every
+species stays in its region. Only species that exist in the game today are placed (EXISTING); the others arrive later as
+realistic, rigged assets (Phase 5) and join their islands then. Counts are a placement plan, not a cap on wild animals.
+"""
 from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
+from world_islands import ISLANDS as PLAN, REGION_SPECIES  # noqa: E402
 
-
-PER_ISLAND = {'Swamp': {'Alligator': 2, 'Cottonmouth': 2},
-              'Jungle': {'SquirrelMonkey': 3, 'Tortoise': 1},
-              'Desert': {'Tortoise': 2, 'Flamingo': 2, 'Pelican': 1},
-              'Plains': {'Pelican': 2, 'Flamingo': 1},
-              'Winter': {}}
-STARTER = {'Pelican': 2, 'Flamingo': 2, 'Tortoise': 1, 'SquirrelMonkey': 2}
+# The animals built today (Content/Elitewake/Wildlife/Animals/DA_Animal_*). Spiders are placed by add_spiders.py.
+EXISTING = {'Alligator', 'Bear', 'Boar', 'Cottonmouth', 'Elephant', 'Flamingo', 'GiantCrocodile', 'Lion', 'Pelican',
+            'SquirrelMonkey', 'Tortoise'}
+# How many of each species an island carries (tuning): herds, prides and flocks at a believable size for about 2.5 km2.
+PER_SPECIES = {'Alligator': 10, 'Bear': 3, 'Boar': 8, 'Cottonmouth': 10, 'Elephant': 6, 'Flamingo': 10, 'GiantCrocodile': 1,
+               'Lion': 4, 'Pelican': 10, 'SquirrelMonkey': 16, 'Tortoise': 8}
 HABITAT = {'Alligator': 'low', 'Cottonmouth': 'low', 'SquirrelMonkey': 'trees', 'Tortoise': 'inland',
            'Flamingo': 'shore', 'Pelican': 'shore', 'Bear': 'inland', 'Lion': 'inland', 'GiantCrocodile': 'low',
-           'Elephant': 'inland'}
-# The five islands are about 2 km across: use the same species in larger numbers (tuning).
-FIVE_ISLAND_DENSITY = 7
-# The four approved large animals (counts per island are tuning, not scaled by the density above; the only Plains
-# island is the starter, so its lion is placed 26 m or more from the spawn and dock by place_animals.py):
-# bears in Winter, lions on the Plains, giant crocodiles in the Swamp, elephants in the Jungle (owner, October 16 correction).
-LARGE_FIVE_ISLAND = {'Winter': {'Bear': 2}, 'Plains': {'Lion': 1}, 'Swamp': {'GiantCrocodile': 1}, 'Jungle': {'Elephant': 2}}
+           'Elephant': 'inland', 'Boar': 'inland'}
+# Wildlife keeps clear of people (CLAUDE.md 5.6): cm from safe landings and villages.
+CLEAR_PASSIVE, CLEAR_AGGRESSIVE = 15000.0, 25000.0
 
 
 def target_counts(island):
-    """The population plan for one of the five large islands."""
-    base = STARTER if island.key == 'Starter' else PER_ISLAND[island.region]
-    counts = {k: v * FIVE_ISLAND_DENSITY for k, v in base.items()}
-    counts.update(LARGE_FIVE_ISLAND.get(island.region, {}))
-    return counts
+    """The placement plan for one island: its planned species that exist today, each at its usual number."""
+    planned = PLAN[island.key]['wildlife']
+    assert set(planned) <= REGION_SPECIES[island.region], f'{island.key} plans species from outside its region'
+    return {kind: PER_SPECIES[kind] for kind in planned if kind in EXISTING and kind != 'Spider'}
 
 
 def missing_counts(island, existing_counts):

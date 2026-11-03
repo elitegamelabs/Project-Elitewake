@@ -13,6 +13,7 @@ Run in the editor outside Play, after build_first_resources.py:
 The boars and herbs do not regrow. build_animals.py's own placement leaves boars out (it would remove them with the other
 animals: run this again after it). Every amount is tuning.
 """
+import importlib
 import json
 import math
 import random
@@ -162,6 +163,9 @@ def main():
     meat = unreal.load_asset(BA.RAW_MEAT)
     herb = unreal.load_asset(HERB)
     assert meat and herb, 'run build_fish.py and create_food_items.py first'
+    # A fresh copy of build_animals first: the rebuild runs every step in one editor, and another step may have narrowed
+    # its ANIMALS to its own kind (add_spiders and build_plains_threat each do).
+    importlib.reload(BA)
     BA.ANIMALS = {'Boar': BA.ANIMALS['Boar']}
     shared = unreal.load_asset(f'{BA.FOLDER}/M_Animal_v1')
     assert shared, 'run build_animals.py first'
@@ -173,7 +177,9 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     for actor in actors.get_all_level_actors():
-        if (isinstance(actor, unreal.EWAnimal) and actor.get_editor_property('definition') == boar) \
+        # Only its own two arrival boars: place_animals.py's island herds ("Wild Boar <island> n") stay.
+        if (isinstance(actor, unreal.EWAnimal) and actor.get_editor_property('definition') == boar
+                and actor.get_actor_label().startswith('Wild Boar Plains ')) \
                 or str(actor.get_folder_path()).startswith(FOLDER):
             report['removed'].append(actor.get_actor_label())
             actors.destroy_actor(actor)

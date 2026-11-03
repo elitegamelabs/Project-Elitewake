@@ -153,7 +153,7 @@ def wandered():
         if c.get_shown_speed() > 10 and before is not None and abs(c.get_stride_phase() - before) > .05:
             m['strode'].add(kind(a))
         m['phase'][a.get_name()] = c.get_stride_phase()
-    if time.monotonic() - m['t'] < 14.0:
+    if time.monotonic() - m['t'] < 30.0:      # idles (graze, look, rest) last up to about 20 s: watch long enough
         return False
     # Wildlife rests more than 200 m from every survivor (FEWWildlifeRest, October 15 night): those within it wander.
     peaceful = [a for a in animals if not a.get_editor_property('definition').get_editor_property('aggressive')
@@ -285,7 +285,7 @@ def harvested():
 STEPS = [
     ('The client has every animal the server has, all twelve kinds, across the islands of the world, each standing on the ground',
      begin_count, all_present, 4),
-    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', to_animals, wandered, 20),
+    ('Left alone they wander; on the client their legs stride as they walk, each copy close to the server', to_animals, wandered, 45),
     ('A survivor right beside a pelican is ignored: docile, it carries on unhurried and does no harm', beside_pelican, pelican_ignores, 8),
     ('Struck with Left Mouse, a flamingo is hurt', strike('Flamingo', 110), flamingo_hit, 8),
     ('The struck flamingo runs off faster than it walks', lambda: None, flamingo_ran, 4),

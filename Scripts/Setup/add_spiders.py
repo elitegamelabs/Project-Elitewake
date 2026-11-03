@@ -4,6 +4,7 @@ Run in the editor outside Play:
 Builds the Cave Spider (model, material instance, definition from build_animals.py), removes any spiders already in the map, then
 places CAVE_SPIDERS in the chamber of each island's cave (T.CAVES, they stay in it: roam radius 450 cm) and SWAMP_SPIDERS on each
 swamp island's wet low ground. Counts are tuning (DECIDED delegated, TBD owner)."""
+import importlib
 import json
 import math
 import random
@@ -27,6 +28,9 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     meat = unreal.load_asset(BA.RAW_MEAT)
     assert meat, 'Run build_fish.py first (it makes Raw Meat).'
+    # A fresh copy of build_animals first: the rebuild runs every step in one editor, and another step may have narrowed
+    # its ANIMALS to its own kind (add_spiders and build_plains_threat each do).
+    importlib.reload(BA)
     BA.ANIMALS = {'Spider': BA.ANIMALS['Spider']}
     definition = BA.build_definitions(meat)['Spider']
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)

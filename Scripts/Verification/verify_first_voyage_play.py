@@ -448,10 +448,10 @@ STEPS = [
     ('It fits the headsail', work('Headsail'), fitted('Headsail', headsail), 6),
     ('It raises the anchor at the capstan', work('Anchor'), anchor_up, 8),
     ('It takes the helm', work('Helm'), at_helm, 6),
-    ('Four forward taps set full sail', full_sail, sails_full, 6),
+    ('Four forward taps set full sail', full_sail, sails_full, 30),   # taps are counted in frames: slow two-player Play needs time
     ('Shift with A or D trims the sails to the wind', trim, trimmed, 8),
     ('The sloop sails for 4 s and the client keeps up', lambda: None, sailed, 8),
-    ('Four back taps lower every sail and she stops dead (owner, October 18)', lower_sails, sails_down, 6),
+    ('Four back taps lower every sail and she stops dead (owner, October 18)', lower_sails, sails_down, 30),
     ('It leaves the helm', leave_helm, left_helm, 6),
     ('It drops the anchor and the sloop stays put', work('Anchor'), anchored_again, 45),
     ('Over the side, it fights a manta ray with the axe in hand until the ray dies, on server and client', over_the_side, manta_dead, 75),

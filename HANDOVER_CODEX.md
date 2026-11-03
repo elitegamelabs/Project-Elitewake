@@ -1,5 +1,10 @@
 # Elitewake — handover plan for Codex (2026-11-01)
 
+> **Owner, 2026-11-02 ~12:00: "Claude finishes it."** Claude owns finishing the twenty-island rebuild: verification,
+> Play checks, walking measurement, captures and the commit. Codex: read-only watching is fine; do not verify, run Play
+> checks, open an editor, edit, commit or push in EW_CLEAN until the owner hands it back.
+
+
 The owner asked for this handover on 2026-11-01. **CLAUDE.md is still the one production authority**: read all of it first
 (it supersedes this file wherever they differ; its section 1.2 "no agent handoffs" rule was overridden by the owner for this
 pass-over only). This file only says where the work stands and what comes next. Delete it once the work below is picked up.
@@ -203,3 +208,62 @@ verify_water (and verify_food) are written for the retired Lvl_M5PickupTest map 
 
 Next, if continuing: nothing is blocked. Owner review at 9 am of section 8; a real DualSense / Xbox pad test on hardware
 (the Raw Input path has only been exercised with no pad connected); then CLAUDE.md Phase 2 work as section 4 lists.
+
+## 10. Phase 2 twenty-island world — RESUME HERE (2026-11-02)
+
+Owner (2026-11-02): "work on the next milestone or phase". Done in plain Python, NOT committed, NOT yet in the map:
+- `Scripts/Setup/world_layout.py`: 20 islands (4 per region; keys = world_islands.py). Plains: Starter unchanged plus
+  Plains2-4 on the diagonals ~4.5 km out; each other region's four in its direction (REGION_SLOTS: village island 5.3 km
+  out, flanks ~9 km, far island ~11 km). Sizes stepped so every island has its own land area. Ports only on the villages
+  (Starter, Winter2, Swamp1, Desert1, Jungle1), harbours facing the centre. `_organic(..., spread=True)` spreads hills
+  round the ring; the Starter's west half keeps `spread=False` so its ground is unchanged (its height tests pass).
+- `Scripts/Setup/world_terrain.py`: terrain plans of 2-4 raised shapes on a ring 35-70 % out, ridges running round the
+  island; no central mountain. Winter tops ~230-275 m, Jungle ~140-245 m, Desert 60-85 m, Plains 35-45 m.
+- `Scripts/Setup/estimate_walking_times.py` (new): quickest walkable path (10 m grid, 38 degrees, 4.5 m/s) on the same
+  routes as `measure_walking_routes_play.py`. All 19 generated islands 6-13 min both ways; calibrated within ~1 min of the
+  November 1 in-game walks. The in-game walker steers straight and gets stuck on hills: next, make it follow the
+  estimator's path (`walk_time` returns it) so the in-game number is a real measurement.
+- `Scripts/Setup/wildlife_distribution.py` + `place_animals.py`: each island's planned species that exist today
+  (world_islands), 150 m / 250 m clear of spawn, dock and villages. Seven islands have no existing species yet.
+- Tests: `Scripts/Tests/test_twenty_islands.py` (renamed from test_five_islands), wildlife tests rewritten; 55/55 pass.
+  `Content/Elitewake/Data/BuildZones.json` re-exported (103 zones) — it describes the NEW world, so commit it only with
+  the rebuilt map.
+- Picture: `Saved/TwentyIslandLayout.png`.
+
+OWNER APPROVED the rebuild 2026-11-02 ("Yes, rebuild"), including overwriting the 15 matching old meshes. Rebuild
+started ~10:55 local: `Saved/Logs/TwentyIslandRebuild.log`, progress in `Saved/WorldRebuildResult.json` (expect ~6-7 h;
+if it stops, resume with EW_REBUILD_FROM=<failed step>). The previous five-island result is kept as
+`Saved/WorldRebuildResult_fiveisland_final.json`. `measure_walking_routes_play.py` now follows the estimator's path.
+Background (was the question): it overwrites 15 old October-22 island meshes whose names match new keys
+(`SM_Island_{Plains,Winter,Swamp,Desert,Jungle}{2,3,4}_v1`, CLAUDE.md 3 says not to reuse them without approval); the
+`...5-8` meshes stay untouched. Then: rebuild_world.py from the start with `-SCCProvider=None` (hours; terrain for 20
+islands), automation, Play checks, in-game walking measurement, captures, one commit.
+
+### 10a. Grass ran the graphics card out of memory (2026-11-02, 18:25)
+First run: terrain (2 h 50 min), caves, webs, landmarks passed and were saved (map saved 13:47). build_grass at the old
+densities tried ~24 million instances; D3D12 E_OUTOFMEMORY on an 804 MB buffer (RTX 4070, 12 GB) and the editor sat idle
+on the error. Fix in `build_grass.py`: Starter keeps 7 clumps/m2 (unchanged), other Plains 1.0, Jungle 0.35, understory
+x0.25, about 6.9 M in all; MAX_INSTANCES = 9 M stops it before the card fills. Stuck editor closed; rebuild resumed
+19:02 with EW_REBUILD_FROM=build_grass (log `Saved/Logs/TwentyIslandRebuild2.log`; first run's result kept as
+`Saved/WorldRebuildResult_twenty_run1.json`). Later: stream grass per island (World Partition) so density can rise.
+- 20:22: the second grass run stopped on its own budget check (9.59 M at Jungle2): new Plains islands are open grassland,
+  ~2 M clumps each at 1.0/m2. Measured with spots' own rules on a 2 % sample (scratch script): densities now Plains 0.4,
+  Jungle 0.25, understory x0.2, Starter 7 -> 6.76 M total. Third run from build_grass started 20:37
+  (`Saved/Logs/TwentyIslandRebuild3.log`); run 2's result kept as `Saved/WorldRebuildResult_twenty_run2.json`.
+
+### 10b. Minimum PC (owner, 2026-11-02)
+"I have a geforce 1660 super ... that will need to be able to at least run and test the game on." GTX 1660 Super = 6 GB
+VRAM, no ray-tracing hardware. Target 1080p Low within about 4.5 GB VRAM. Next slice after the twenty-island commit:
+World Partition streaming + HLOD, grass only near the player, Foliage detail wired to plant counts, packaged build measured
+on that card. CLAUDE.md should record this (Phase 6 target machine) when the guide is next edited.
+
+### 10c. Rebuild done; verification state (2026-11-03 ~01:00)
+Rebuild complete (all 23 steps; grass 6.8 M at measured densities). Fixed on the way: add_spiders/build_plains_threat
+narrowed build_animals.ANIMALS in the shared editor process (now importlib.reload), committed 2fa63cc9 for a unity-build
+clash in EWControllerIcons.cpp (not pushed). Play runner now waits up to 6 min for Play to start (EW_PLAY_START_WAIT);
+the 2.1 GB map takes minutes to load per Play world. Results: map scan passes except cave spiders outside the Swamp
+(owner decision pending: October "spiders in every cave" vs November "species stay in region"); animals placement now
+enforces the 200 m / 15 % rule. Play: arrival, Saltreach arrival, voyage ready, elephant, directions PASS. Two-player Play
+runs at 2-5 fps (three world copies on one GPU); single player ~30 fps in the editor (spawn, Saltreach, sea). first_voyage
+and animals failed on timing at that speed: their frame-counted steps now get 30 s, animals watched 30 s. Island terrain
+check updated for 20 islands. Running: island terrain, build mode, walking routes (Saved/TwentyChecks2.log).

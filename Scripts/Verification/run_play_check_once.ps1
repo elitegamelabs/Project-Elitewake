@@ -1,6 +1,6 @@
 # Run one Play check through run_play_check.py with an outside time limit, and print its result JSON.
 # The runner's own timeout lives in Python and cannot fire if the runner fails to load, so this stops the editor itself after
-# Timeout + 420 seconds (editor load, the check, a margin). Never run two editors on the project at once.
+# Timeout + 720 seconds (editor load, up to 6 minutes for Play to start on the big world, the check, a margin). Never run two editors on the project at once.
 #   .\Scripts\Verification\run_play_check_once.ps1 -Check verify_elephant_play.py -Result ElephantPlayResult.json -Players 2 -Kit 1
 # -Standalone 1 plays one survivor with no network (single-player checks such as verify_options_menu_play.py).
 # -Yard held keeps the yard's sloop held (verify_voyage_ready_play.py); the default 'sold' releases it for older ship checks.
@@ -21,7 +21,7 @@ $out = Join-Path $Project "Saved\$Result"
 Remove-Item $out -ErrorAction SilentlyContinue
 $runner = (Join-Path $PSScriptRoot 'run_play_check.py') -replace '\\', '/'
 $editor = Start-Process -PassThru -WindowStyle Hidden -FilePath $Editor -ArgumentList @("`"$Project\EW.uproject`"", '/Game/Elitewake/Maps/Lvl_CoastalPlayground', '-unattended', "-ExecCmds=`"py $runner`"")
-$limit = [int]$Timeout + 420
+$limit = [int]$Timeout + 720
 if (-not $editor.WaitForExit($limit * 1000)) {
     Stop-Process -Id $editor.Id -Force
     "$Check : editor stopped after $limit s with no finish"

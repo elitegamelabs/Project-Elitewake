@@ -6,7 +6,7 @@ or just:
     python -m unittest
 
 These only import `world_layout` and `world_terrain` (Scripts/Setup) and never edit them; a failing rule here means
-those scripts drifted from the canonical five-island rules, not that this file should be changed to match.
+those scripts drifted from the canonical world rules, not that this file should be changed to match.
 """
 import math
 import os
@@ -25,7 +25,7 @@ M = W.M  # cm per metre
 
 
 class WorldLayoutRuleTests(unittest.TestCase):
-    """The canonical five-island spacing and region rules."""
+    """The canonical spacing and region rules."""
 
     @classmethod
     def setUpClass(cls):

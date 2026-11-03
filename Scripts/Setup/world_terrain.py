@@ -67,15 +67,19 @@ def cliff_of(island):
 
 CLIFFS = {i.key: cliff_of(i) for i in W.ISLANDS}
 
-# Every island is individually designed with its own combination of mountains, hills, ridges, valleys and plateaus,
-# so none is a resized copy of another. Each non-starter island outside the Swamp draws a terrain plan from its
-# region's list; its own seed sets each shape's size, place and heading. Peaks are mountain massifs, ridges long
-# spines, plateaus flat-topped mesas with steep sides, and valleys cut across the island without reaching the sea.
-# The Swamp stays low wetland, varied by its pools and channels.
-PLANS = {'Winter': [('peak', 'ridge'), ('peak', 'valley'), ('ridge', 'valley', 'peak'), ('peak', 'peak'), ('ridge', 'plateau')],
-         'Jungle': [('ridge', 'valley'), ('peak', 'valley'), ('plateau', 'valley'), ('ridge', 'ridge'), ('peak', 'ridge', 'valley')],
-         'Desert': [('plateau',), ('plateau', 'valley'), ('ridge', 'plateau'), ('plateau', 'plateau'), ('ridge', 'valley')],
-         'Plains': [('valley',), ('plateau', 'valley'), ('ridge',), ('peak', 'valley'), ('plateau', 'ridge')]}
+# Every island is individually designed with its own combination of hills, ridges, valleys and plateaus, so none is a
+# resized copy of another. Each non-starter island outside the Swamp draws a terrain plan from its region's list; its own
+# seed sets each shape's size, place and heading. CLAUDE.md 5.1 (owner, November 1): several smaller, plausibly shaped
+# hills, peaks or ridges spread round each island, never one dominant central mountain to trek over, so a walk across
+# takes 6-17 minutes (estimate_walking_times.py). Shapes stand on a ring 35-70 % of the way out, spaced round the island;
+# peaks are hill massifs, ridges spines running round the island rather than across it, plateaus flat-topped mesas with
+# steep sides, and a valley cuts across near the middle without reaching the sea.
+PLANS = {'Winter': [('peak', 'ridge', 'peak'), ('peak', 'valley', 'ridge'), ('ridge', 'peak', 'ridge', 'valley'), ('peak', 'peak', 'ridge'), ('ridge', 'plateau', 'peak')],
+         'Jungle': [('ridge', 'valley', 'peak'), ('peak', 'valley', 'ridge'), ('plateau', 'valley', 'ridge'), ('ridge', 'ridge', 'peak'), ('peak', 'ridge', 'valley')],
+         'Desert': [('plateau', 'ridge'), ('plateau', 'valley', 'plateau'), ('ridge', 'plateau', 'ridge'), ('plateau', 'plateau', 'valley'), ('ridge', 'valley', 'plateau')],
+         'Plains': [('valley', 'ridge', 'plateau'), ('plateau', 'valley', 'ridge'), ('ridge', 'peak'), ('peak', 'valley', 'plateau'), ('plateau', 'ridge', 'valley')]}
+RING = (0.35, 0.7)          # how far out from the middle a plan's raised shapes stand (share of the island's radius)
+
 
 def _plans():
     plans = {}
@@ -83,22 +87,31 @@ def _plans():
         order = list(options)
         random.Random(sum(map(ord, region)) * 31).shuffle(order)
         islands = [i for i in W.ISLANDS if i.region == region and i.key != 'Starter']
-        for isl, plan in zip(islands, order):
+        for n, isl in enumerate(islands):
+            plan = order[n % len(order)]
             rng = random.Random(sum(map(ord, isl.key)) * 104723)
-            shapes = []
+            raised = sum(1 for k in plan if k != 'valley')
+            base = rng.uniform(0, 2 * math.pi)
+            shapes, slot = [], 0
             for kind in plan:
-                a = rng.uniform(0, 2 * math.pi)
-                u, v = rng.uniform(-.35, .35) * isl.rx, rng.uniform(-.35, .35) * isl.ry
+                if kind == 'valley':   # a valley runs right across, near the middle
+                    a = rng.uniform(0, 2 * math.pi)
+                    shapes.append(('valley', rng.uniform(-.1, .1) * isl.rx, rng.uniform(-.1, .1) * isl.ry, a,
+                                   rng.uniform(.16, .26) * isl.ry, isl.peak * rng.uniform(.3, .5)))
+                    continue
+                at = base + 2 * math.pi * slot / raised + rng.uniform(-.3, .3)     # spaced evenly round the ring
+                slot += 1
+                d = rng.uniform(*RING)
+                u, v = d * isl.rx * math.cos(at), d * isl.ry * math.sin(at)
                 if kind == 'peak':
-                    shapes.append(('peak', u, v, rng.uniform(.4, .6) * isl.rx, isl.peak * rng.uniform(.9, 1.4),
+                    shapes.append(('peak', u, v, rng.uniform(.24, .34) * isl.rx, isl.peak * rng.uniform(.6, 1.0),
                                    rng.randint(4, 7), rng.uniform(0, 2 * math.pi)))
                 elif kind == 'ridge':
-                    shapes.append(('ridge', u, v, a, rng.uniform(.45, .8) * isl.rx, rng.uniform(.25, .4) * isl.ry,
-                                   isl.peak * rng.uniform(.5, .9), rng.uniform(0, 2 * math.pi)))
-                elif kind == 'plateau':
-                    shapes.append(('plateau', u, v, rng.uniform(.25, .4) * isl.ry, isl.peak * rng.uniform(.45, .8)))
-                else:   # a valley runs right across, near the middle
-                    shapes.append(('valley', u * .4, v * .4, a, rng.uniform(.16, .26) * isl.ry, isl.peak * rng.uniform(.4, .7)))
+                    # Along the ring (a quarter turn from the way out), so the spine rounds the island instead of crossing it.
+                    shapes.append(('ridge', u, v, at + math.pi / 2 + rng.uniform(-.4, .4), rng.uniform(.3, .45) * isl.rx,
+                                   rng.uniform(.14, .22) * isl.ry, isl.peak * rng.uniform(.4, .7), rng.uniform(0, 2 * math.pi)))
+                else:
+                    shapes.append(('plateau', u, v, rng.uniform(.16, .26) * isl.ry, isl.peak * rng.uniform(.35, .6)))
             plans[isl.key] = (plan, shapes)
     return plans
 
