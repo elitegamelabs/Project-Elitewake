@@ -16,8 +16,9 @@ class UCanvasPanel;
 class USizeBox;
 
 /**
- * Navigable square map of the world (owner, October 22). The picture is a top-down capture of the world; over it lies grey mist with drifting cloud wherever the
- * survivor has not been, cleared in a circle round them as they explore and staying clear. A scale bar and the compass heading give the basic navigation.
+ * Navigable square map of the world (owner, October 22). The picture is a top-down capture of the world, all of it open from
+ * the start (owner, November 3: no fog of war); the explored area only sets how far the map zooms out. The sea is
+ * painted deep blue, lighter over the shelves (owner, November 1), from a depth capture of the same view. A scale bar and the compass heading give the basic navigation.
  * On the map, up is +X and right is +Y (the top-down camera's own orientation).
  */
 UCLASS()
@@ -39,7 +40,8 @@ public:
     /** The colour of the captured map at a point of it (0..1 across and down), for tests: a map that is all one colour is a broken map. */
     UFUNCTION(BlueprintCallable, Category="Map") FLinearColor ProbeMapPixel(FVector2D Uv) const;
     /** True once the mist is drawn over the map. */
-    UFUNCTION(BlueprintPure, Category="Map") bool HasFog() const { return FogTexture != nullptr && FogImage != nullptr; }
+    /** False: the map has no fog (owner, November 3). Kept for the checks. */
+    UFUNCTION(BlueprintPure, Category="Map") bool HasFog() const { return false; }
     /** The mist's opacity over a place in the world, 0 clear to 1 thick, as last drawn; 1 where there is no mist image yet. */
     UFUNCTION(BlueprintPure, Category="Map") float GetFogAlphaAtWorld(FVector Location) const;
     /** Moves the map's view to a world place (tests, and recentring on the survivor). */
@@ -55,11 +57,17 @@ protected:
     virtual FReply NativeOnMouseWheel(const FGeometry& Geometry, const FPointerEvent& Event) override;
 private:
     UPROPERTY(Transient) TObjectPtr<ASceneCapture2D> Capture;
+    /** The same view's depth, which tells the sea from the land (the water surface is hidden from both). */
+    UPROPERTY(Transient) TObjectPtr<ASceneCapture2D> DepthCapture;
+    UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> DepthTarget;
+    /** What the map shows: the land as captured, the sea painted deep blue. */
+    UPROPERTY(Transient) TObjectPtr<UTexture2D> MapTexture;
+    TArray<FColor> ColourPixels;
+    TArray<FLinearColor> DepthPixels;
+    void ComposeMap();
     UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> RenderTarget;
     UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> MapMaterial;
-    UPROPERTY(Transient) TObjectPtr<UTexture2D> FogTexture;
     UPROPERTY(Transient) TObjectPtr<UImage> MapImage;
-    UPROPERTY(Transient) TObjectPtr<UImage> FogImage;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> Heading;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> RegionTitle;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> MapHint;
@@ -77,10 +85,6 @@ private:
     FVector2D ControllerPanInput = FVector2D::ZeroVector;
     float ControllerZoomInput = 0.f;
     float CaptureRemaining = 0.f;
-    float FogClock = 0.f;
-    int32 FogRevisionDrawn = -1;
-    TArray<FColor> FogPixels;
-    static constexpr int32 FogSize = 256;
     bool bHasInitializedView = false;
     bool bMousePanning = false;
     FVector2D LastMousePosition = FVector2D::ZeroVector;
@@ -89,7 +93,8 @@ private:
     bool IsPointerOverMap(const FVector2D& ScreenPosition) const;
     void PositionPlayerMarker(const APawn* Pawn);
     void InitializeWorldOverview();
-    void UpdateFog(float DeltaSeconds);
+    /** How far out the whole-world view reaches, from the explored square. */
+    void UpdateWorldExtent();
     void UpdateScaleBar();
     UEWExplorationComponent* GetExploration() const;
 };

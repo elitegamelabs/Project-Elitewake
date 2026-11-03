@@ -28,6 +28,8 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 #include "World/EWClimateRegion.h"
+#include "WaterBodyActor.h"
+#include "WaterZoneActor.h"
 
 namespace
 {
@@ -36,6 +38,11 @@ namespace
     constexpr float MaxMapViewWidth = 40000000.f;
     // A top-down scene capture draws nothing past about 2.5 km from the camera, and the sea floor lies 1.5 km under the sea: 600 m up sees both.
     constexpr float MapCaptureHeight = 60000.f;
+    // The sea on the map (owner, November 1: a deep blue ocean round the islands): below the sea surface the map shows
+    // water, lighter over the shelves and darkening with depth to the open ocean (tuning).
+    constexpr float SeaSurfaceZ = -65.f;                 // world_terrain.SEA
+    constexpr float FullDepth = 6000.f;                  // cm below the surface where the deep colour is reached
+    const FLinearColor ShallowSea(.07f, .26f, .45f), DeepSea(.012f, .06f, .17f);
 }
 
 UEWExplorationComponent* UEWMapWidget::GetExploration() const
@@ -75,9 +82,6 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
 
         MapImage = WidgetTree->ConstructWidget<UImage>();
         Overlay->AddChildToOverlay(MapImage);
-        FogImage = WidgetTree->ConstructWidget<UImage>();
-        FogImage->SetVisibility(ESlateVisibility::HitTestInvisible);
-        Overlay->AddChildToOverlay(FogImage);
         MapCanvas = WidgetTree->ConstructWidget<UCanvasPanel>();
         Overlay->AddChildToOverlay(MapCanvas);
 
@@ -141,12 +145,40 @@ void UEWMapWidget::NativeConstruct()
     Camera->bCaptureOnMovement = false;
     Camera->ShowFlags.SetAtmosphere(false);
     Camera->ShowFlags.SetFog(false);
+    // The water surface is left out of the picture: under it the seabed's depth tells sea from land.
+    for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+        if (It->IsA<AWaterBody>() || It->IsA<AWaterZone>()) Camera->HiddenActors.Add(*It);
+
+    // How far down the camera sees at every point, from a second capture of the same view.
+    DepthTarget = NewObject<UTextureRenderTarget2D>(this);
+    DepthTarget->RenderTargetFormat = RTF_R32f;
+    DepthTarget->InitAutoFormat(1024, 1024);
+    DepthTarget->UpdateResourceImmediate(true);
+    DepthCapture = GetWorld()->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator(-90.f, EWNorth::NorthYaw, 0.f), Params);
+    if (DepthCapture)
+    {
+        DepthCapture->SetReplicates(false);
+        auto* Depth = DepthCapture->GetCaptureComponent2D();
+        Depth->TextureTarget = DepthTarget;
+        Depth->ProjectionType = ECameraProjectionMode::Orthographic;
+        Depth->OrthoWidth = CurrentViewWidth;
+        Depth->CaptureSource = ESceneCaptureSource::SCS_SceneDepth;
+        Depth->bCaptureEveryFrame = false;
+        Depth->bCaptureOnMovement = false;
+        Depth->HiddenActors = Camera->HiddenActors;
+    }
+    // The picture shown: the captured land with the sea painted over it (ComposeMap).
+    MapTexture = UTexture2D::CreateTransient(1024, 1024, PF_B8G8R8A8);
+    MapTexture->SRGB = false;            // the capture's bytes are linear, as the old capture material showed them
+    MapTexture->NeverStream = true;
+    MapTexture->UpdateResource();
 
     // The capture's alpha is 0, which an image would draw as nothing: a UI material shows its colour at full opacity.
     FSlateBrush Brush;
     Brush.DrawAs = ESlateBrushDrawType::Image;
     Brush.ImageSize = FVector2D(1024, 1024);
-    if (UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Elitewake/UI/Map/M_MapCapture_v1.M_MapCapture_v1")))
+    if (DepthCapture && MapTexture) Brush.SetResourceObject(MapTexture);
+    else if (UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Elitewake/UI/Map/M_MapCapture_v1.M_MapCapture_v1")))
     {
         MapMaterial = UMaterialInstanceDynamic::Create(Base, this);
         MapMaterial->SetTextureParameterValue(TEXT("Map"), RenderTarget);
@@ -155,23 +187,8 @@ void UEWMapWidget::NativeConstruct()
     else Brush.SetResourceObject(RenderTarget);
     MapImage->SetBrush(Brush);
 
-    // The mist: a texture redrawn from what the survivor has seen. Its edge texels clamp, so past the world the mist simply goes on.
-    FogTexture = UTexture2D::CreateTransient(FogSize, FogSize, PF_B8G8R8A8);
-    FogTexture->SRGB = true;
-    FogTexture->Filter = TF_Bilinear;
-    FogTexture->AddressX = TA_Clamp; FogTexture->AddressY = TA_Clamp;
-    FogTexture->NeverStream = true;
-    FogTexture->UpdateResource();
-    FSlateBrush FogBrush;
-    FogBrush.DrawAs = ESlateBrushDrawType::Image;
-    FogBrush.ImageSize = FVector2D(1024, 1024);
-    FogBrush.SetResourceObject(FogTexture);
-    FogImage->SetBrush(FogBrush);
-
     InitializeWorldOverview();
     CaptureRemaining = 0.f;
-    FogClock = 10.f;
-    FogRevisionDrawn = -1;
 }
 
 void UEWMapWidget::InitializeWorldOverview()
@@ -298,25 +315,12 @@ FText UEWMapWidget::GetScaleText() const
     return ScaleLabel ? ScaleLabel->GetText() : FText::GetEmpty();
 }
 
-void UEWMapWidget::UpdateFog(float DeltaSeconds)
+void UEWMapWidget::UpdateWorldExtent()
 {
+    // The whole map is open (owner, November 3: no fog): the explored square only sets how far the map zooms out.
     UEWExplorationComponent* Exploration = GetExploration();
-    if (!Exploration || !FogTexture || !FogImage) return;
+    if (!Exploration) return;
     Exploration->EnsureBounds();
-    // Redraw the mist when something new is cleared, and a few times a second for the drifting cloud.
-    FogClock += DeltaSeconds;
-    if (FogClock >= .2f || Exploration->GetRevision() != FogRevisionDrawn)
-    {
-        FogClock = 0.f;
-        FogRevisionDrawn = Exploration->GetRevision();
-        Exploration->BuildFog(FogSize, GetWorld()->GetTimeSeconds(), FogPixels);
-        FTexture2DMipMap& Mip = FogTexture->GetPlatformData()->Mips[0];
-        void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
-        FMemory::Memcpy(Data, FogPixels.GetData(), FogPixels.Num() * sizeof(FColor));
-        Mip.BulkData.Unlock();
-        FogTexture->UpdateResource();
-    }
-    // The part of the mist image under the picture: the world square the mist covers, and the window the map shows within it.
     const float Size = Exploration->GetBoundsSize();
     if (Size <= 0.f) return;
     // The edge has grown: a map showing the whole world grows with it.
@@ -328,25 +332,11 @@ void UEWMapWidget::UpdateFog(float DeltaSeconds)
         if (bWhole) { TargetViewWidth = Size; CurrentViewWidth = Size * CurrentViewWidth / Old; }
         else TargetViewWidth = FMath::Min(TargetViewWidth, Size);
     }
-    const FVector2D Min = Exploration->GetBoundsMin();
-    const float Half = CurrentViewWidth * .5f;
-    // The mist image runs east to the right (-X) and north up (+Y), as the picture does.
-    const float U0 = (Min.X + Size - MapCenter.X - Half) / Size, U1 = (Min.X + Size - MapCenter.X + Half) / Size;
-    const float V0 = 1.f - (MapCenter.Y + Half - Min.Y) / Size, V1 = 1.f - (MapCenter.Y - Half - Min.Y) / Size;
-    FSlateBrush Brush = FogImage->GetBrush();
-    Brush.SetUVRegion(FBox2f(FVector2f(U0, V0), FVector2f(U1, V1)));
-    FogImage->SetBrush(Brush);
 }
 
 float UEWMapWidget::GetFogAlphaAtWorld(FVector Location) const
 {
-    const UEWExplorationComponent* Exploration = GetExploration();
-    if (!Exploration || FogPixels.Num() != FogSize * FogSize || Exploration->GetBoundsSize() <= 0.f) return 1.f;
-    const FVector2D Min = Exploration->GetBoundsMin();
-    const float Size = Exploration->GetBoundsSize();
-    const int32 X = FMath::Clamp(int32((Min.X + Size - Location.X) / Size * FogSize), 0, FogSize - 1);
-    const int32 Y = FMath::Clamp(int32((1.f - (Location.Y - Min.Y) / Size) * FogSize), 0, FogSize - 1);
-    return FogPixels[Y * FogSize + X].A / 255.f;
+    return 0.f;      // the map has no fog (owner, November 3)
 }
 
 void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
@@ -366,6 +356,7 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
 
     CurrentViewWidth = FMath::FInterpTo(CurrentViewWidth, TargetViewWidth, DeltaSeconds, 8.f);
     if (auto* Camera = Capture->GetCaptureComponent2D()) Camera->OrthoWidth = CurrentViewWidth;
+    if (DepthCapture) DepthCapture->GetCaptureComponent2D()->OrthoWidth = CurrentViewWidth;
 
     const FEWClimate Sample = AEWClimateRegion::SampleClimate(GetWorld(), Pawn->GetActorLocation());
     RegionTitle->SetText(AEWClimateRegion::RegionName(Sample.Region));
@@ -373,7 +364,7 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
         FText::AsNumber(FMath::RoundToInt(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw)) % 360)));
     PositionPlayerMarker(Pawn);
     UpdateScaleBar();
-    UpdateFog(DeltaSeconds);
+    UpdateWorldExtent();
 
     CaptureRemaining -= DeltaSeconds;
     if (CaptureRemaining > 0.f) return;
@@ -381,15 +372,55 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
     // Straight down, up the page being north.
     Capture->SetActorLocationAndRotation(MapCenter + FVector(0, 0, MapCaptureHeight), FRotator(-90.f, EWNorth::NorthYaw, 0.f));
     Capture->GetCaptureComponent2D()->CaptureScene();
+    if (DepthCapture)
+    {
+        DepthCapture->SetActorLocationAndRotation(Capture->GetActorLocation(), Capture->GetActorRotation());
+        DepthCapture->GetCaptureComponent2D()->CaptureScene();
+        ComposeMap();
+    }
+}
+
+void UEWMapWidget::ComposeMap()
+{
+    // Read back both captures (only while the map is open, twice a second) and paint the sea where the ground lies
+    // below the surface: the land keeps its own colours.
+    FTextureRenderTargetResource* ColourResource = RenderTarget ? RenderTarget->GameThread_GetRenderTargetResource() : nullptr;
+    FTextureRenderTargetResource* DepthResource = DepthTarget ? DepthTarget->GameThread_GetRenderTargetResource() : nullptr;
+    if (!ColourResource || !DepthResource || !MapTexture) return;
+    if (!ColourResource->ReadPixels(ColourPixels) || !DepthResource->ReadLinearColorPixels(DepthPixels)) return;
+    if (ColourPixels.Num() != DepthPixels.Num() || ColourPixels.Num() != 1024 * 1024) return;
+    const float CameraZ = Capture->GetActorLocation().Z;
+    for (int32 i = 0; i < ColourPixels.Num(); ++i)
+    {
+        const float Below = SeaSurfaceZ - (CameraZ - DepthPixels[i].R);     // cm under the sea surface (negative: land)
+        FColor& Pixel = ColourPixels[i];
+        if (Below > 0.f)
+        {
+            // A soft edge at the shore, then shallow to deep.
+            const float Shore = FMath::Clamp(Below / 150.f, 0.f, 1.f);
+            const FLinearColor Sea = FMath::Lerp(ShallowSea, DeepSea, FMath::Clamp(FMath::Sqrt(Below / FullDepth), 0.f, 1.f));
+            const FLinearColor Land(Pixel.R / 255.f, Pixel.G / 255.f, Pixel.B / 255.f);
+            Pixel = FMath::Lerp(Land, Sea, Shore).ToFColor(false);
+        }
+        Pixel.A = 255;
+    }
+    FTexture2DMipMap& Mip = MapTexture->GetPlatformData()->Mips[0];
+    void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+    FMemory::Memcpy(Data, ColourPixels.GetData(), ColourPixels.Num() * sizeof(FColor));
+    Mip.BulkData.Unlock();
+    MapTexture->UpdateResource();
 }
 
 void UEWMapWidget::NativeDestruct()
 {
     if (Capture) Capture->Destroy();
     Capture = nullptr;
+    if (DepthCapture) DepthCapture->Destroy();
+    DepthCapture = nullptr;
+    DepthTarget = nullptr;
+    MapTexture = nullptr;
     RenderTarget = nullptr;
     MapMaterial = nullptr;
-    FogTexture = nullptr;
     Super::NativeDestruct();
 }
 
@@ -400,6 +431,12 @@ bool UEWMapWidget::HasMapCapture() const
 
 FLinearColor UEWMapWidget::ProbeMapPixel(FVector2D Uv) const
 {
+    if (MapTexture && ColourPixels.Num() == 1024 * 1024)
+    {
+        const int32 X = FMath::Clamp(int32(Uv.X * 1024), 0, 1023), Y = FMath::Clamp(int32(Uv.Y * 1024), 0, 1023);
+        const FColor& C = ColourPixels[Y * 1024 + X];
+        return FLinearColor(C.R / 255.f, C.G / 255.f, C.B / 255.f, 1.f);
+    }
     if (!RenderTarget || !GetWorld()) return FLinearColor::Black;
     const int32 X = FMath::Clamp(int32(Uv.X * RenderTarget->SizeX), 0, RenderTarget->SizeX - 1), Y = FMath::Clamp(int32(Uv.Y * RenderTarget->SizeY), 0, RenderTarget->SizeY - 1);
     return UKismetRenderingLibrary::ReadRenderTargetPixel(const_cast<UEWMapWidget*>(this), RenderTarget, X, Y);

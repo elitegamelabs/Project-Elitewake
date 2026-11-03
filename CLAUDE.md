@@ -135,7 +135,7 @@ The advanced five-island branch is the source from which the cleaned project was
 | Multiplayer | Hosted/listen and separate-process checks exist; survivor reconnect and Company/ship-sharing paths exist | Public Internet is untested; direct-IP/session identity is transitional; in-game ship give/abandon is missing |
 | Companies | Company screen and sharing policy exist | Company state is not fully persisted; roles and edge cases require authority tests |
 | Crew | Sailhands, hired gunners, and service NPC paths exist | Wages, limits, target lead, lifecycle, and full persistence are incomplete |
-| UI | Title, HUD, inventory, hotbar, crafting, skills, objectives, journal, map/fog, options, Company, and port feedback have checks | Visual hierarchy, accessibility, controller consistency, and 1080p readability need one accepted standard. Options has brightness, look sensitivity, and volume only: no graphics quality settings exist (section 9.6). The controller hotbar and Build Mode bindings differ from the owner layout in section 6.5 |
+| UI | Title, HUD, inventory, hotbar, crafting, skills, objectives, journal, map (all open, no fog, owner 2026-11-03; deep blue ocean, owner 2026-11-01), options, Company, and port feedback have checks | Visual hierarchy, accessibility, controller consistency, and 1080p readability need one accepted standard. Options has brightness, look sensitivity, and volume only: no graphics quality settings exist (section 9.6). The controller hotbar and Build Mode bindings differ from the owner layout in section 6.5 |
 | Audio | Generated/imported placeholder ambience, wildlife, work, town, ship, and UI sounds exist | Technical presence is not human audition; provenance and final mix remain incomplete |
 
 Treat this table as a starting audit, not permission to skip verification.
@@ -268,7 +268,7 @@ Village islands have a sheltered harbor, their own fresh water, buildable ground
 
 Acceptance checks for the island world: exactly 20 islands, 4 per region, and 5 villages, one per region (layout test and map scan); a measured coast-to-coast walk of 6–17 minutes on every island in every direction tried (at least the long axis and across it), landing to forest in 3 minutes or less, and no empty stretch over 2 minutes; the basics within 3 minutes of each safe landing; each island's specialty present on it and absent from the rest of its region; every species placed only in its allowed region; no 200 m square holding more than 15% of an island's animals; the island mixes within a region all different; the landing and village distances above; server and client frame time measured at full populations.
 
-After the islands, the map screen shows a deep blue ocean around the islands (owner, 2026-11-01).
+The map screen shows a deep blue ocean around the islands (owner, 2026-11-01; done 2026-11-03) and the whole world with no fog of war (owner, 2026-11-03).
 
 ## 6. Player, survival, progression, and land systems
 
