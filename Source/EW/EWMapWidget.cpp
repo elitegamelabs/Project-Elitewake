@@ -2,6 +2,7 @@
 
 #include "EWExplorationComponent.h"
 #include "EWPlayerController.h"
+#include "EWGameState.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/CanvasPanel.h"
@@ -93,6 +94,7 @@ TSharedRef<SWidget> UEWMapWidget::RebuildWidget()
         PlayerMarkerSlot = MapCanvas->AddChildToCanvas(PlayerMarker);
         PlayerMarkerSlot->SetAlignment(FVector2D(.5f, .5f));
         PlayerMarkerSlot->SetAutoSize(true);
+        PlayerMarkerSlot->SetZOrder(20);
 
         // A scale bar in the lower left corner of the picture.
         ScaleBar = WidgetTree->ConstructWidget<UBorder>();
@@ -295,6 +297,62 @@ void UEWMapWidget::PositionPlayerMarker(const APawn* Pawn)
     PlayerMarker->SetRenderTransformAngle(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw));
 }
 
+void UEWMapWidget::PositionShipMarkers()
+{
+    if (!MapCanvas || !MapImage || !WidgetTree || !GetWorld()) return;
+    const AEWGameState* State = GetWorld()->GetGameState<AEWGameState>();
+    const int32 Count = State ? State->ShipsOnMap.Num() : 0;
+    const FVector2D Size = MapImage->GetCachedGeometry().GetLocalSize();
+    if (Size.X <= 1.f || Size.Y <= 1.f || CurrentViewWidth <= 0.f) return;
+
+    while (ShipMarkers.Num() < Count)
+    {
+        UTextBlock* Marker = WidgetTree->ConstructWidget<UTextBlock>();
+        Marker->SetText(FText::FromString(TEXT("▲")));
+        Marker->SetColorAndOpacity(FLinearColor(1.f, .67f, .13f));
+        Marker->SetShadowOffset(FVector2D(1.5f, 1.5f));
+        Marker->SetShadowColorAndOpacity(FLinearColor::Black);
+        Marker->SetVisibility(ESlateVisibility::HitTestInvisible);
+        auto Font = Marker->GetFont();
+        Font.Size = 22;
+        Marker->SetFont(Font);
+        UCanvasPanelSlot* MarkerSlot = MapCanvas->AddChildToCanvas(Marker);
+        MarkerSlot->SetAlignment(FVector2D(.5f, .5f));
+        MarkerSlot->SetAutoSize(true);
+        MarkerSlot->SetZOrder(10);
+        ShipMarkers.Add(Marker);
+    }
+
+    for (int32 Index = 0; Index < ShipMarkers.Num(); ++Index)
+    {
+        UTextBlock* Marker = ShipMarkers[Index];
+        if (Index >= Count)
+        {
+            Marker->SetVisibility(ESlateVisibility::Collapsed);
+            continue;
+        }
+        const FEWShipMapEntry& Ship = State->ShipsOnMap[Index];
+        const FVector2D Off = EWNorth::EastNorth(Ship.Location - MapCenter);
+        const float X = (Off.X / CurrentViewWidth + .5f) * Size.X;
+        const float Y = (.5f - Off.Y / CurrentViewWidth) * Size.Y;
+        if (X < 0.f || X > Size.X || Y < 0.f || Y > Size.Y)
+        {
+            Marker->SetVisibility(ESlateVisibility::Collapsed);
+            continue;
+        }
+        if (UCanvasPanelSlot* MarkerSlot = Cast<UCanvasPanelSlot>(Marker->Slot))
+            MarkerSlot->SetPosition(FVector2D(X, Y));
+        Marker->SetRenderTransformAngle(EWNorth::BearingOfYaw(Ship.Yaw));
+        Marker->SetVisibility(ESlateVisibility::HitTestInvisible);
+    }
+}
+
+int32 UEWMapWidget::GetShipMarkerCount() const
+{
+    const AEWGameState* State = GetWorld() ? GetWorld()->GetGameState<AEWGameState>() : nullptr;
+    return State ? State->ShipsOnMap.Num() : 0;
+}
+
 void UEWMapWidget::UpdateScaleBar()
 {
     if (!ScaleBarSlot || !ScaleLabel || !MapImage) return;
@@ -363,6 +421,7 @@ void UEWMapWidget::NativeTick(const FGeometry& Geometry, float DeltaSeconds)
     Heading->SetText(FText::Format(NSLOCTEXT("Elitewake", "MapHeading", "Current region  |  Facing {0}°"),
         FText::AsNumber(FMath::RoundToInt(EWNorth::BearingOfYaw(Pawn->GetActorRotation().Yaw)) % 360)));
     PositionPlayerMarker(Pawn);
+    PositionShipMarkers();
     UpdateScaleBar();
     UpdateWorldExtent();
 

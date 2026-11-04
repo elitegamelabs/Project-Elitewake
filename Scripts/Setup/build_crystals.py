@@ -263,7 +263,7 @@ def main():
 
     # Caves: points on the chamber's own lumpy wall (the same formula build_caves.py cuts it with), oriented out of the wall into the chamber.
     for key, cave in T.CAVES.items():
-        if not cave:
+        if not cave or cave.kind == 'sea':
             continue
         noise = lattice(sum(map(ord, cave.island.key)) * 31)
         cu, cv, cz = cave.chamber

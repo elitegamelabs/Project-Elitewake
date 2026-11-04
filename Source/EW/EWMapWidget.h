@@ -33,6 +33,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Map") FText GetHeadingText() const;
     UFUNCTION(BlueprintPure, Category="Map") FText GetMapHintText() const;
     UFUNCTION(BlueprintPure, Category="Map") FText GetScaleText() const;
+    /** Number of boats currently represented by map markers (including hidden-by-terrain boats). */
+    UFUNCTION(BlueprintPure, Category="Map") int32 GetShipMarkerCount() const;
     UFUNCTION(BlueprintCallable, Category="Map") void AdjustZoom(float Direction);
     UFUNCTION(BlueprintCallable, Category="Map") void SetPanInput(FVector2D Input) { ControllerPanInput = Input; }
     UFUNCTION(BlueprintCallable, Category="Map") void SetPanAxis(bool bHorizontal, float Value) { if (bHorizontal) ControllerPanInput.X = Value; else ControllerPanInput.Y = Value; }
@@ -73,6 +75,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> MapHint;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> PlayerMarker;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> PlayerMarkerSlot;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> ShipMarkers;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanel> MapCanvas;
     UPROPERTY(Transient) TObjectPtr<UBorder> ScaleBar;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> ScaleBarSlot;
@@ -92,6 +95,7 @@ private:
     void PanByScreenDelta(const FVector2D& Delta);
     bool IsPointerOverMap(const FVector2D& ScreenPosition) const;
     void PositionPlayerMarker(const APawn* Pawn);
+    void PositionShipMarkers();
     void InitializeWorldOverview();
     /** How far out the whole-world view reaches, from the explored square. */
     void UpdateWorldExtent();

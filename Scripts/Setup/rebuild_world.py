@@ -13,13 +13,18 @@ yard. Reefs are not rebuilt here: the owner's three open-ocean reefs (October 31
 import json
 import os
 import runpy
+import sys
 import time
 import traceback
 from pathlib import Path
 import unreal
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from rebuild_safety import check_map_and_space  # noqa: E402
+
 RESULT = Path(unreal.Paths.project_saved_dir(), 'WorldRebuildResult.json')
+MAP_FILE = Path(unreal.Paths.project_content_dir(), 'Elitewake', 'Maps', 'Lvl_CoastalPlayground.umap')
 STEPS = ['build_coastal_terrain', 'build_caves', 'build_cave_webs', 'build_landmarks', 'build_grass', 'build_coastal_flora',
          'build_coastal_rocks', 'build_seabed_life', 'build_fish', 'place_animals', 'add_spiders', 'build_crystals', 'build_regions',
          'build_ports', 'add_port_merchants', 'build_freeport', 'build_saltreach_welcome', 'restore_sloop', 'build_voyage_ready',
@@ -36,7 +41,9 @@ def main():
         began = time.time()
         unreal.log(f'EWREBUILD starting {step}')
         try:
+            check_map_and_space(MAP_FILE)
             runpy.run_path(str(HERE / f'{step}.py'), run_name='__main__')
+            check_map_and_space(MAP_FILE)
         except BaseException as failure:   # an assert or SystemExit stops the rebuild where it failed
             error = f'{step}: {failure!r}\n{traceback.format_exc()[-2000:]}'
         done.append({'step': step, 'seconds': round(time.time() - began, 1), 'ok': error is None})

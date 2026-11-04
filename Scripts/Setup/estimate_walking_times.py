@@ -1,29 +1,47 @@
-"""Offline estimate of how long a walk across each island takes (CLAUDE.md 5.1 and 5.7: 6-17 minutes, preferably in every
-direction), from the terrain the world is generated from (world_terrain.height). Plain Python, no Unreal:
+"""Offline estimate of how long a walk across each compact island takes. The owner accepted the current
+roughly 5-14 minute scale on November 3; this screen allows a little measurement variation without resizing islands.
+Plain Python, no Unreal:
     python Scripts/Setup/estimate_walking_times.py [island keys...]
 
-The quickest path on a 10 m grid from one shore to the opposite one, along the island's long axis and across it: a step
-is walkable when its slope is under WALKABLE degrees (the character's walkable floor is 44.76 degrees; the grid smooths
-the 3 m terrain mesh, so the limit here is lower), water below the sea surface is swum at SWIM_SPEED, and flat ground is
-walked at WALK_SPEED. A screening tool before the expensive world rebuild; the in-game measurement
-(Scripts/Verification/measure_walking_routes_play.py) is the evidence.
+The quickest path from one shore to the opposite one, along the island's long axis and across it, on the island mesh's own
+grid (world_terrain.GRIDS: 3-4 m between vertices, the heights the game's ground has): a step between neighbouring vertices
+is walkable when its slope is under WALKABLE degrees (the character's walkable floor is 44.76); water below the sea surface
+is swum at SWIM_SPEED, and a swimmer climbs out only where the bank stands no more than STEP_OUT above the water (the
+character's 45 cm step); flat ground is walked at WALK_SPEED. Route ends slide to the nearest dry ground. Trees and rocks
+are not counted. A screening tool before the expensive world rebuild, run one island per process; it also writes the paths
+to Saved/WalkingPaths.json for the in-game measurement (Scripts/Verification/measure_walking_routes_play.py), which walks
+them and is the evidence.
 """
+import hashlib
 import heapq
 import json
 import math
 import sys
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W   # noqa: E402
 import world_terrain as T  # noqa: E402
 
-CELL = 1000.0           # cm
-WALKABLE = 38.0         # degrees
+WALKABLE = 44.0         # degrees: just under the character's walkable floor
+STEP_OUT = 45.0         # cm: the highest bank a swimmer climbs out onto
 WALK_SPEED = 450.0      # cm/s on open ground (measured October-November: 4-5 m/s in a straight line)
 SWIM_SPEED = 250.0      # cm/s
 INSET = 2000.0          # cm inland of the shore where a route starts and ends (as measure_walking_routes_play.py)
-TARGET_MINUTES = (6.0, 17.0)
+TARGET_MINUTES = (4.0, 16.0)
+PATHS = Path(__file__).resolve().parents[2] / 'Saved' / 'WalkingPaths.json'
+
+
+def signature():
+    """What the paths were worked out from: the layout and terrain sources."""
+    here = Path(__file__).resolve().parent
+    digest = hashlib.sha1()
+    for name in ('world_layout.py', 'world_terrain.py', 'world_islands.py', 'estimate_walking_times.py'):
+        digest.update((here / name).read_bytes())
+    return digest.hexdigest()
+
+
 # The starter island keeps its exact shape (Saltreach, the arrival). Its across route starts beside a cove inlet here; in
 # game it measured 6.65 min along and 6.2 min across (November 1), so it is reported, not judged.
 KEPT = {'Starter'}
@@ -56,83 +74,104 @@ def routes(island):
 
 
 def walk_time(island, start, end):
-    """(seconds, path) along the quickest walkable path, the path as world (x, y) points every CELL; (None, []) when no
-    path joins them on the island."""
-    reach = island.reach() + 2 * CELL
-    n = int(2 * reach / CELL) + 1
-    x0, y0 = island.cx - reach, island.cy - reach
+    """(seconds, path) along the quickest walkable path on the island mesh's grid, the path as world (x, y) points, one per
+    vertex; (None, []) when no path joins them."""
+    x0, y0, sx, sy, nx, ny = T.GRIDS[island.key]
     heights = {}
 
     def z(i, j):
-        key = (i, j)
-        if key not in heights:
-            x, y = x0 + i * CELL, y0 + j * CELL
-            heights[key] = T.height(x, y) if island.distance(x, y) < 0 else None    # off the island: no route
-        return heights[key]
+        key = i * (ny + 1) + j
+        h = heights.get(key)
+        if h is None:
+            h = heights[key] = T.height(x0 + i * sx, y0 + j * sy)
+        return h
 
-    def cell(p):
-        return (round((p[0] - x0) / CELL), round((p[1] - y0) / CELL))
-
-    def on_land(c):
-        """The nearest cell to c that is dry land on the island (a route end can sit by an inlet)."""
-        for radius in range(0, 12):
-            ring = [(c[0] + di, c[1] + dj) for di in range(-radius, radius + 1) for dj in range(-radius, radius + 1)
-                    if max(abs(di), abs(dj)) == radius]
-            dry = [r for r in ring if z(*r) is not None and z(*r) > T.SEA]
+    def on_land(p):
+        """The nearest dry vertex to p (a route end can sit by an inlet or on a beach below a cliff)."""
+        ci, cj = round((p[0] - x0) / sx), round((p[1] - y0) / sy)
+        for radius in range(0, 40):
+            ring = [(ci + di, cj + dj) for di in range(-radius, radius + 1) for dj in range(-radius, radius + 1)
+                    if max(abs(di), abs(dj)) == radius and 0 <= ci + di <= nx and 0 <= cj + dj <= ny]
+            dry = [c for c in ring if z(*c) > T.SEA]
             if dry:
-                return min(dry, key=lambda r: math.hypot(r[0] - c[0], r[1] - c[1]))
-        return c
+                return min(dry, key=lambda c: (c[0] - ci) ** 2 + (c[1] - cj) ** 2)
+        return ci, cj
 
-    s, e = on_land(cell(start)), on_land(cell(end))
-    best = {s: 0.0}
+    s0, e0 = on_land(start), on_land(end)
+    s_key, e_key = s0[0] * (ny + 1) + s0[1], e0[0] * (ny + 1) + e0[1]
+    best = {s_key: 0.0}
     came = {}
-    queue = [(0.0, s)]
+    queue = [(0.0, s0[0], s0[1])]
     limit = math.tan(math.radians(WALKABLE))
-    steps = [(di, dj) for di in (-1, 0, 1) for dj in (-1, 0, 1) if di or dj]
+    steps = [(di, dj, math.hypot(di * sx, dj * sy)) for di in (-1, 0, 1) for dj in (-1, 0, 1) if di or dj]
     while queue:
-        t, (i, j) = heapq.heappop(queue)
-        if (i, j) == e:
-            path, at = [], e
-            while at in came or at == s:
-                path.append((x0 + at[0] * CELL, y0 + at[1] * CELL))
-                if at == s:
+        t, i, j = heapq.heappop(queue)
+        key = i * (ny + 1) + j
+        if key == e_key:
+            path, at = [], key
+            while True:
+                path.append((x0 + (at // (ny + 1)) * sx, y0 + (at % (ny + 1)) * sy))
+                if at == s_key:
                     break
                 at = came[at]
             return t, path[::-1]
-        if t > best.get((i, j), 1e18):
+        if t > best.get(key, 1e18):
             continue
         here = z(i, j)
-        if here is None:
-            continue
-        for di, dj in steps:
+        for di, dj, run in steps:
             ni, nj = i + di, j + dj
-            if not (0 <= ni < n and 0 <= nj < n):
+            if not (0 <= ni <= nx and 0 <= nj <= ny):
                 continue
             there = z(ni, nj)
-            if there is None:
-                continue
-            run = CELL * math.hypot(di, dj)
-            wet = max(here, there) < T.SEA
-            if not wet and abs(there - here) / run > limit:
-                continue
-            nt = t + run / (SWIM_SPEED if wet else WALK_SPEED)
-            if nt < best.get((ni, nj), 1e18):
-                best[(ni, nj)] = nt
-                came[(ni, nj)] = (i, j)
-                heapq.heappush(queue, (nt, (ni, nj)))
+            wet_here, wet_there = here < T.SEA, there < T.SEA
+            if wet_here and wet_there:
+                speed = SWIM_SPEED
+            elif wet_here:
+                if there - T.SEA > STEP_OUT:
+                    continue                          # a bank too high to climb out onto
+                speed = SWIM_SPEED
+            elif wet_there:
+                speed = SWIM_SPEED                    # into the water: always possible
+            else:
+                if abs(there - here) / run > limit:
+                    continue
+                speed = WALK_SPEED
+            nt = t + run / speed
+            nkey = ni * (ny + 1) + nj
+            if nt < best.get(nkey, 1e18):
+                best[nkey] = nt
+                came[nkey] = key
+                heapq.heappush(queue, (nt, ni, nj))
     return None, []
 
 
-def estimate(keys=None):
-    result = {}
-    for island in W.ISLANDS:
-        if keys and island.key not in keys:
-            continue
-        result[island.key] = {}
-        for name, start, end in routes(island):
-            t, _ = walk_time(island, start, end)
-            result[island.key][name] = None if t is None else round(t / 60.0, 1)
-    return result
+def _island_routes(key):
+    island = W.island(key)
+    out = {}
+    for name, start, end in routes(island):
+        t, path = walk_time(island, start, end)
+        out[name] = {'minutes': None if t is None else round(t / 60.0, 1), 'start': start, 'end': end,
+                     'path': [[round(x), round(y)] for x, y in path[::3]] + ([[round(path[-1][0]), round(path[-1][1])]] if path else [])}
+    return key, out
+
+
+def estimate(keys=None, workers=8):
+    """Every island's routes, one island per process; writes the paths for the in-game walk."""
+    keys = [i.key for i in W.ISLANDS if not keys or i.key in keys]
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        found = dict(pool.map(_island_routes, keys))
+    if len(keys) == len(W.ISLANDS):
+        PATHS.write_text(json.dumps({'signature': signature(), 'routes': found}))
+    return {k: {name: r['minutes'] for name, r in v.items()} for k, v in found.items()}
+
+
+def saved_paths():
+    """The paths written by the last full estimate, if the layout and terrain have not changed since."""
+    try:
+        data = json.loads(PATHS.read_text())
+    except (OSError, ValueError):
+        return None
+    return data['routes'] if data.get('signature') == signature() else None
 
 
 def judge(minutes):

@@ -316,8 +316,13 @@ def _shore_gap(x, y):
     return min(i.distance(x, y) for i in W.ISLANDS)
 
 
-def _between_islands(x, y, within=150000):
-    """Open water with shores on more than one side: at least three islands within `within` cm."""
+def _between_islands(x, y, within=None):
+    """Open water with shores on more than one side: at least three nearby islands.
+
+    Scale the search with the intended sea gap, so widening the archipelago does not
+    silently remove every candidate for the trench and seamounts.
+    """
+    within = within or max(150000, 1.5 * W.MIN_GAP)
     return sum(1 for i in W.ISLANDS if i.distance(x, y) < within) >= 3
 
 
@@ -352,6 +357,8 @@ def _trench():
             g = _shore_gap(gx, gy)
             if (best is None or g > best[0]) and _between_islands(gx, gy):
                 best = (g, gx, gy)
+    if best is None:
+        raise RuntimeError('No open-water location between three islands for the sea trench')
     _, sx, sy = best
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     dx, dy = sx - cx, sy - cy
@@ -447,8 +454,9 @@ def height_raw(x, y):
 # flat rock floor. The ground under the formation is notched down below that floor so the island's own surface
 # never shows through it. DECIDED (delegated): which kind each island gets (cliff where the island has a cliff;
 # mountain-side in Winter and Jungle; coastal rock in the Swamp; Plains and Desert alternate); every size is tuning.
-TUNNEL = (260.0, 300.0, 150.0)   # passage half-width, half-height, and its centre above the floor (cm)
-CAVE_KINDS = ('inland', 'cliff', 'coastal')
+TUNNEL = (260.0, 300.0, 150.0)   # walking cave: half-width, half-height, centre above floor (cm)
+SEA_TUNNEL = (1400.0, 1700.0, 1800.0)  # provisional 28 m wide, 29 m overhead at fixed sea level
+CAVE_KINDS = ('inland', 'cliff', 'coastal', 'sea')
 
 
 class Cave:
@@ -459,12 +467,15 @@ class Cave:
         self.mx, self.my, self.heading, self.floor, self.scale, self.bend = mx, my, heading, floor, scale, bend
         self.cell = ground_spacing(island)       # the island mesh's grid
         self.margin = 1.5 * self.cell                                  # notch past the hollow
-        self.length = 1400.0 * scale                                   # passage
-        self.chamber = (600.0 * scale, 500.0 * max(scale, .8), 450.0)  # chamber half-sizes (u, v, z)
-        self.chamber_u = self.length + 450.0 * scale
-        self.chamber_z = 200.0                                         # chamber centre above the floor
+        self.tunnel = SEA_TUNNEL if kind == 'sea' else TUNNEL
+        self.face = 4500.0 if kind == 'sea' else 750.0
+        self.crown = 800.0 if kind == 'sea' else 300.0
+        self.length = 8000.0 if kind == 'sea' else 1400.0 * scale
+        self.chamber = (4500.0, 3000.0, 2100.0) if kind == 'sea' else (600.0 * scale, 500.0 * max(scale, .8), 450.0)
+        self.chamber_u = self.length + (3000.0 if kind == 'sea' else 450.0 * scale)
+        self.chamber_z = 2000.0 if kind == 'sea' else 200.0
         self.depth = self.chamber_u + self.chamber[0] + self.margin + self.cell + 200.0   # formation, mouth to back
-        self.half = max(abs(bend) + TUNNEL[0], self.chamber[1]) + self.margin + self.cell + 200.0
+        self.half = max(abs(bend) + self.tunnel[0], self.chamber[1]) + self.margin + self.cell + 200.0
 
     def local(self, x, y):
         dx, dy = x - self.mx, y - self.my
@@ -493,7 +504,7 @@ class Cave:
         q = math.hypot((u - self.chamber_u) / cu, v / cv)
         best = (q - 1.0) * min(cu, cv)
         if -400.0 <= u <= self.length + cu:
-            best = min(best, abs(v - self.centre_v(u)) - TUNNEL[0])
+            best = min(best, abs(v - self.centre_v(u)) - self.tunnel[0])
         return best
 
     def inside(self, x, y, margin=0.0):
@@ -503,12 +514,20 @@ class Cave:
 
     def notch(self, x, y, h):
         u, v = self.local(x, y)
+        if self.kind == 'sea':
+            # Cut a continuous deep-water approach from outside the crescent into the covered berth.
+            # The ordinary walking-cave doorstep must not close this channel at the shoreline.
+            if -6000.0 <= u < 0.0 and abs(v) < self.tunnel[0] + self.cell:
+                return min(h, self.floor - 30.0)
+            if 0.0 <= u <= self.depth and self.hollow(u, v) <= self.margin:
+                return min(h, self.floor - 30.0)
+            return h
         if -2 * self.cell < u < 0:
             # A doorstep: the ground before the mouth rises gently (about 12 cm a metre, tuning) to just under the rock
             # floor, so a survivor walking in meets the floor with a small step even where the island's coarse grid
             # would sag below it (the bigger islands of October 15 night put some mouths at beach level).
             across = abs(v - self.centre_v(0.0))
-            side = 1.0 - min(1.0, max(0.0, (across - TUNNEL[0]) / self.cell))
+            side = 1.0 - min(1.0, max(0.0, (across - self.tunnel[0]) / self.cell))
             if side > 0:
                 return max(h, h + (self.floor - 15.0 + 0.12 * u - h) * side) if self.floor - 15.0 + 0.12 * u > h else h
             return h
@@ -517,7 +536,7 @@ class Cave:
         # Just under the rock floor near the mouth (deeper further in), so the ground before the mouth, which the
         # island mesh's grid joins to these points, stays level with the floor rather than dipping into a ledge; at
         # the mouth itself it is set there even where the hillside lies lower, so the doorstep meets it.
-        if u < 1.5 * self.cell and abs(v - self.centre_v(u)) < TUNNEL[0] + self.cell:
+        if u < 1.5 * self.cell and abs(v - self.centre_v(u)) < self.tunnel[0] + self.cell:
             return self.floor - 15.0
         return min(h, self.floor - 15.0 - 120.0 * min(1.0, max(0.0, u - 1.5 * self.cell) / 300.0))
 
@@ -544,6 +563,12 @@ STARTER_HILLS = [(-3300.0, -1700.0, 1600.0), (-3500.0, 1300.0, 1200.0)]         
 
 def _fits(cave):
     i = cave.island
+    if cave.kind == 'sea':
+        # The rock can project a little into the cove, but its back is rooted well inside the island.
+        # Do not place a concealed berth at a public port or over the island's middle.
+        bx, by = cave.world(cave.depth, 0.0)
+        return (i.distance(bx, by) < -1000.0 and not W.near_port(cave.mx, cave.my, 800)
+                and not cave.inside(i.cx, i.cy, 300))
     for x, y in cave.footprint():
         if i.distance(x, y) > -150 or W.near_port(x, y, 800):
             return False
@@ -608,8 +633,18 @@ def _candidates(island, kind, rng, scale):
 
 def _cave(island, index):
     rng = random.Random(sum(map(ord, island.key)) * 104729)
+    if island.key in W.CRESCENT_COVES:
+        # A sheltered, bent sea passage on selected non-village crescents. The future Cavalier has no
+        # measured hull yet; verify each built ship's beam, draft, mast and turn in Play before acceptance.
+        a = island.turn + island.cove[0]
+        r = island.radius(a) - 300.0
+        mx, my = island.cx + r * math.cos(a), island.cy + r * math.sin(a)
+        cave = Cave(island, 'sea', mx, my, a + math.pi, SEA - 600.0, 1.0, 1200.0)
+        if _fits(cave):
+            return cave
+        raise RuntimeError(f'No safe sea-cavern site on {island.key}')
     first = _cave_kind(island, index)
-    others = tuple(k for k in CAVE_KINDS if k != first and (k != 'cliff' or CLIFFS.get(island.key)))
+    others = tuple(k for k in CAVE_KINDS if k not in (first, 'sea') and (k != 'cliff' or CLIFFS.get(island.key)))
     for scale in (1.0, .8, .65):
         for kind in (first,) + others:
             for cave in _candidates(island, kind, rng, scale):

@@ -34,7 +34,8 @@ class WorldLayoutRuleTests(unittest.TestCase):
     def test_check_reports_no_problems(self):
         self.assertEqual(self.problems, [], f'world_layout.check() found problems: {self.problems}')
 
-    def test_every_pair_at_least_800m_apart(self):
+    def test_every_pair_has_at_least_two_kilometres_of_sea(self):
+        self.assertGreaterEqual(W.MIN_GAP, 2000 * M)
         islands = W.ISLANDS
         for a_i, a in enumerate(islands):
             for b in islands[a_i + 1:]:
@@ -42,13 +43,33 @@ class WorldLayoutRuleTests(unittest.TestCase):
                     continue
                 gap = W.shore_gap(a, b)
                 self.assertGreaterEqual(gap, W.MIN_GAP - 1.0,
-                                         f'{a.key} and {b.key} are {gap / M:.0f} m apart (< 800 m)')
+                                         f'{a.key} and {b.key} are {gap / M:.0f} m apart (< 2,000 m)')
 
-    def test_every_island_has_a_neighbour_within_2000m(self):
+    def test_every_island_has_a_neighbour_within_four_kilometres(self):
         for i in W.ISLANDS:
             gap = self.nearest.get(i.key, 1e18)
             self.assertLessEqual(gap, W.MAX_GAP + 1.0,
-                                  f'{i.key} is {gap / M:.0f} m from its nearest island (> 2,000 m)')
+                                  f'{i.key} is {gap / M:.0f} m from its nearest island (> 4,000 m)')
+
+    def test_three_distinct_crescent_islands_have_sea_caverns(self):
+        self.assertEqual(set(W.CRESCENT_COVES), {'Plains3', 'Desert3', 'Jungle3'})
+        for key in W.CRESCENT_COVES:
+            island, cave = W.island(key), T.CAVES[key]
+            self.assertEqual(cave.kind, 'sea')
+            self.assertIsNone(W.port_on(island))
+            angle = island.turn + island.cove[0]
+            inner = min(island.radius(angle + d) for d in (-.4, -.2, 0, .2, .4))
+            shoulders = min(island.radius(angle - .9), island.radius(angle + .9))
+            self.assertLess(inner, .85 * shoulders, f'{key} has no readable crescent inlet')
+            # The currently built Brigantine is 30 m long and 8.4 m wide. This leaves
+            # substantially more than a few metres each side; future Cavalier fit is pending.
+            self.assertGreaterEqual(2 * cave.tunnel[0], 2000.0)
+            self.assertGreaterEqual(T.SEA - cave.floor, 500.0)
+            self.assertGreaterEqual(2 * cave.chamber[0], 4000.0)
+            for u in (-5000.0, -3000.0, 0.0, cave.length / 2, cave.chamber_u):
+                x, y = cave.world(u, cave.centre_v(max(0.0, u)))
+                self.assertLessEqual(T.built_height(x, y), T.SEA - 450.0,
+                                     f'{key} boat approach is too shallow at {u / M:.0f} m')
 
     def test_each_region_on_its_side_of_the_world(self):
         # North is +Y and east -X (Source/EW/World/EWNorth.h; owner, November 1).
@@ -128,8 +149,7 @@ class BeachAndMountainTests(unittest.TestCase):
 
 
 class CaveRuleTests(unittest.TestCase):
-    """Owner addition, October 15 night: one cave per island, all three kinds, footprints clear of the island's
-    shore and every Port, and a walkable approach to the mouth."""
+    """One cave per island. Walking caves stay on land; sea caverns may project into their coves."""
 
     @classmethod
     def setUpClass(cls):
@@ -146,14 +166,17 @@ class CaveRuleTests(unittest.TestCase):
         for key, cave in self.caves.items():
             island = cave.island
             for x, y in cave.footprint():
-                self.assertLess(island.distance(x, y), 0,
-                                 f'{key} cave footprint point ({x:.0f}, {y:.0f}) is off its island {island.key}')
+                if cave.kind != 'sea':
+                    self.assertLess(island.distance(x, y), 0,
+                                     f'{key} cave footprint point ({x:.0f}, {y:.0f}) is off its island {island.key}')
                 self.assertFalse(W.near_port(x, y),
                                   f'{key} cave footprint point ({x:.0f}, {y:.0f}) falls inside a Port site')
 
     def test_approach_to_each_mouth_is_not_too_steep(self):
         # 3 m in front of the mouth: ground no more than 2 m below the floor. 6 m in front: no more than 4 m below.
         for key, cave in self.caves.items():
+            if cave.kind == 'sea':
+                continue  # A boat approach is underwater; depth is checked separately.
             for distance_m, max_drop_m in ((3.0, 2.0), (6.0, 4.0)):
                 fx, fy = cave.world(distance_m * M, 0.0)
                 ground = T.height_raw(fx, fy)

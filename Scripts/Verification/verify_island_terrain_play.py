@@ -5,7 +5,8 @@
      height and size within 1 m).
   2. The built ground matches the plan: at 12 points on each island the ground under a trace is within 1.5 m of the
      height function (world_terrain.built_height), so the meshes in the map are the designed ones.
-  3. Every island has its cave, with a walkable way in (at most a 45 cm step at the mouth).
+  3. Every island has its cave: walking caves have a walkable entrance; the three sea caverns
+     keep at least 4.5 m of water along the approach and into their covered berth.
   4. Screenshots of every island from 25 m above the sea, in Saved/Screenshots/IslandTerrain/
      (a person still has to look at them).
 Writes Saved/IslandTerrainPlayResult.json.
@@ -85,6 +86,13 @@ def caves():
     steep = []
     for key, c in T.CAVES.items():
         assert c, f'{key} has no cave'
+        if c.kind == 'sea':
+            for u in (-5000.0, -3000.0, 0.0, c.length / 2, c.chamber_u):
+                x, y = c.world(u, c.centre_v(max(0.0, u)))
+                floor = T.built_height(x, y)
+                if floor is None or floor > T.SEA - 450.0:
+                    steep.append((key, 'boat channel too shallow', round(u / 100)))
+            continue
         worst = 0.0
         for u in range(-80, 1, 20):
             for v in (-150, 0, 150):
@@ -101,7 +109,7 @@ def caves():
 VIEWS = [(i.key.lower(), i.key) for i in W.ISLANDS]
 STEPS = [('Every island has its own plan and its own size, outline and relief', designed),
          ('The built ground in the map matches every island\'s plan', built),
-         ('Every island has its cave with a walkable way in', caves)]
+         ('Walking caves have land access; sea caverns keep boat depth', caves)]
 state = {'step': 0, 'view': 0, 'phase': 'place', 'at': 0.0, 'handle': None}
 
 
@@ -128,12 +136,13 @@ def tick(delta):
         now = time.monotonic()
         if state['phase'] == 'place':
             i = W.island(key)
-            a = math.atan2(-i.cy, -i.cx) if (i.cx or i.cy) else 0.0
-            d = i.reach() + 25000
+            sea_cavern = key in W.CRESCENT_COVES
+            a = i.turn + i.cove[0] if sea_cavern else (math.atan2(-i.cy, -i.cx) if (i.cx or i.cy) else 0.0)
+            d = i.radius(a) + (8000 if sea_cavern else 25000)
             x, y = i.cx + d * math.cos(a), i.cy + d * math.sin(a)
             yaw = math.degrees(a + math.pi)
-            # 25 m above the water, as from a ship's masthead: the view is taken before the survivor falls far.
-            pawn.teleport(unreal.Vector(x, y, T.SEA + 2500), unreal.Rotator(0, 0, yaw))
+            # The sea-cavern pictures show the boat approach at deck height; the others remain masthead views.
+            pawn.teleport(unreal.Vector(x, y, T.SEA + (800 if sea_cavern else 2500)), unreal.Rotator(0, 0, yaw))
             pc.set_control_rotation(unreal.Rotator(roll=0, pitch=-4, yaw=yaw))
             state.update(phase='shoot', at=now + 0.4)
         elif state['phase'] == 'shoot' and now >= state['at']:

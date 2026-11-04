@@ -76,7 +76,7 @@ def formation(cave, noise):
         u = cave.depth * i / (nu - 1)
         rise = min(1.0, u / cave.chamber_u)
         rise = rise * rise * (3 - 2 * rise)
-        height = FACE + CROWN * rise
+        height = cave.face + cave.crown * rise
         if u > back0:
             height *= max(0.0, 1 - (u - back0) / (cave.depth - back0)) ** .6
         row, frow = [], []
@@ -132,7 +132,7 @@ def passage(cave, noise, sides=22):
     """The passage as a solid to cut away: rings across the way in, flaring at the mouth, from outside the face to
     inside the chamber."""
     p = Piece()
-    hw, hh, cz = T.TUNNEL
+    hw, hh, cz = cave.tunnel
     rings, u = [], -400.0
     end = cave.length + cave.chamber[0] * .6
     while True:
@@ -267,7 +267,9 @@ def main():
         actor.static_mesh_component.set_static_mesh(mesh)
         report[key] = {'kind': cave.kind, 'region': cave.island.region, 'mouth_cm': [round(cave.mx), round(cave.my)],
                        'floor_cm': round(cave.floor), 'heading_deg': round(math.degrees(cave.heading)),
-                       'scale': cave.scale, 'triangles': tris}
+                       'scale': cave.scale, 'entrance_width_cm': round(2 * cave.tunnel[0]),
+                       'water_depth_cm': round(T.SEA - cave.floor) if cave.kind == 'sea' else 0,
+                       'triangles': tris}
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'CavesResult.json').write_text(json.dumps({'success': True, 'caves': report}, indent=2))
     unreal.log(f'Caves built: {len(report)}')

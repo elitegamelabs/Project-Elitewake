@@ -1,5 +1,5 @@
-"""Walking routes, measured in-game (CLAUDE.md 5.1: the island size target is a walking time, measured before dimensions are
-decided; owner, November 1: 6-17 minutes across each island). Single player (EW_PLAY_STANDALONE=1, EW_PLAY_PLAYERS=1) on
+"""Walking routes, measured in-game (owner, November 3: keep the current roughly 5-14 minute island scale).
+Single player (EW_PLAY_STANDALONE=1, EW_PLAY_PLAYERS=1) on
 /Game/Elitewake/Maps/Lvl_CoastalPlayground, run with run_play_check.py (EW_PLAY_TIMEOUT about 3600).
 
 For every island in Scripts/Setup/world_layout.py, two routes: coast to coast along its longest axis through the middle, and
@@ -31,7 +31,7 @@ ARRIVE = 600.0           # cm: close enough to the end
 STALL_EVERY = 2.0        # game seconds between progress checks
 STALL_PROGRESS = 100.0   # cm toward the end in that time, or it is stalled
 DETOUR = 4.0             # game seconds of sidestepping
-GIVE_UP = 30 * 60.0      # game seconds on one route; 30 minutes means a 6-17 minute target has clearly failed
+GIVE_UP = float(os.environ.get('EW_WALK_GIVE_UP_MIN', '30')) * 60.0   # game seconds on one route; a long stop is not a successful crossing
 
 lib = unreal.EWEditorVerificationLibrary
 world = lib.get_play_worlds()[0]
@@ -50,16 +50,27 @@ def routes():
     return out
 
 
-LOOKAHEAD = 3            # waypoints (10 m apart) ahead of the nearest one
+LOOKAHEAD = 1            # waypoints ahead of the nearest one: saved paths keep every third mesh vertex, about 10 m apart
+# EW_WALK_ROUTES: a comma-separated list of island:route (e.g. "Winter2:across,Swamp1:long axis") to run only those.
+_only = [x.split(':', 1) for x in os.environ.get('EW_WALK_ROUTES', '').split(',') if ':' in x]
 ROUTES = [r for r in routes() if (not os.environ.get('EW_WALK_ISLAND') or r['island'] == os.environ['EW_WALK_ISLAND'])
-          and (not os.environ.get('EW_WALK_ROUTE') or r['route'] == os.environ['EW_WALK_ROUTE'])]
+          and (not os.environ.get('EW_WALK_ROUTE') or r['route'] == os.environ['EW_WALK_ROUTE'])
+          and (not _only or [r['island'], r['route']] in _only)]
 if not ROUTES:
     raise ValueError('No walking routes match EW_WALK_ISLAND and EW_WALK_ROUTE')
-# The path to follow on each route, found before Play starts walking (a few seconds a route).
+# The path to follow on each route: from the last full offline estimate (python Scripts/Setup/estimate_walking_times.py,
+# on the island mesh's own grid) when the layout and terrain have not changed since; otherwise worked out here (minutes).
+SAVED = E.saved_paths()
 for r in ROUTES:
-    estimate, path = E.walk_time(W.island(r['island']), r['start'], r['end'])
-    r['path'] = path or [r['end']]
-    r['estimate_min'] = None if estimate is None else round(estimate / 60.0, 1)
+    found = (SAVED or {}).get(r['island'], {}).get(r['route'])
+    if found:
+        r['path'] = [tuple(p) for p in found['path']] or [r['end']]
+        r['estimate_min'] = found['minutes']
+    else:
+        estimate, path = E.walk_time(W.island(r['island']), r['start'], r['end'])
+        r['path'] = path or [r['end']]
+        r['estimate_min'] = None if estimate is None else round(estimate / 60.0, 1)
+report['paths_from'] = 'saved offline estimate' if SAVED else 'worked out in the editor'
 
 
 def ground(x, y):
@@ -87,6 +98,29 @@ def begin(i):
                                  last_t=now(), settle_until=now() + 2.0))
 
 
+def note_stall(r, p):
+    """Where the walker stalled, how far along its path, and what stands in front of it (a knee-high and a chest-high
+    trace 1.5 m ahead along the path), so a stuck route says why."""
+    path, k = r['path'], r['waypoint']
+    tx, ty = path[min(k + LOOKAHEAD, len(path) - 1)] if path else r['end']
+    heading = math.atan2(ty - p.y, tx - p.x)
+    ahead = []
+    for lift in (40.0, 120.0):
+        a = unreal.Vector(p.x, p.y, p.z - 50 + lift)
+        b = unreal.Vector(p.x + 150 * math.cos(heading), p.y + 150 * math.sin(heading), a.z)
+        hit = unreal.SystemLibrary.line_trace_single(world, a, b, unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [pawn],
+                                                     unreal.DrawDebugTrace.NONE, True)
+        if hit:
+            t = hit.to_tuple()
+            actor = t[9]
+            ahead.append(actor.get_actor_label() if actor else '?')
+        else:
+            ahead.append(None)
+    r.setdefault('stalls', []).append({'at_m': [round(p.x / 100), round(p.y / 100), round(p.z / 100)],
+                                       'along': round(k / max(1, len(path) - 1), 2), 'ahead_knee': ahead[0], 'ahead_chest': ahead[1],
+                                       'ground_ahead_m': round((T.built_height(p.x + 150 * math.cos(heading), p.y + 150 * math.sin(heading)) - p.z) / 100, 1)})
+
+
 def end_route(arrived):
     r = state['route']
     ex, ey = r['end']
@@ -96,12 +130,13 @@ def end_route(arrived):
     on_foot = arrived and dry_endpoints and r['swim'] < 0.5
     report['routes'].append({'island': r['island'], 'region': r['region'], 'route': r['route'], 'arrived': arrived,
                              'dry_endpoints': dry_endpoints, 'on_foot': on_foot,
-                             'meets_crossing_target': on_foot and 6.0 <= minutes <= 17.0,
+                             'meets_crossing_target': on_foot and E.TARGET_MINUTES[0] <= minutes <= E.TARGET_MINUTES[1],
                              'start_terrain_cm': round(r['start_terrain_cm'], 1),
                              'end_terrain_cm': round(r['end_terrain_cm'], 1), 'sea_cm': T.SEA,
                              'minutes': round(minutes, 2), 'walked_m': round(r['walked'] / 100.0),
                              'straight_m': round(math.hypot(ex - sx, ey - sy) / 100.0), 'climbed_m': round(r['climbed'] / 100.0),
-                             'swim_s': round(r['swim']), 'detours': r['detours'], 'estimate_min': r['estimate_min']})
+                             'swim_s': round(r['swim']), 'detours': r['detours'], 'estimate_min': r['estimate_min'],
+                             'stalls': r.get('stalls', [])[:12] + r.get('stalls', [])[-6:] if len(r.get('stalls', [])) > 18 else r.get('stalls', [])})
     save()
 
 
@@ -158,20 +193,26 @@ def tick(delta):
             else:
                 begin(state['i'] + 1)
             return
-        # Stalled? Then sidestep at an angle for a while, alternating sides.
-        if t >= r['check_t']:
-            if r['check_d'] is not None and r['check_d'] - to_end < STALL_PROGRESS and t >= r['detour_until']:
-                r['detours'] += 1
-                r['detour_sign'] = -r['detour_sign']
-                r['detour_until'] = t + DETOUR
-            r['check_d'], r['check_t'] = to_end, t + STALL_EVERY
-        # The nearest waypoint at or past the last one, then aim a few ahead along the walkable path.
+        # Advance along the walkable route before judging progress. A winding path can temporarily
+        # lead away from the far shore; straight-line distance to that shore is not a stall signal.
         path = r['path']
         k = r['waypoint']
         while k + 1 < len(path) and math.hypot(path[k + 1][0] - p.x, path[k + 1][1] - p.y) <= math.hypot(path[k][0] - p.x, path[k][1] - p.y):
             k += 1
         r['waypoint'] = k
-        tx, ty = path[min(k + LOOKAHEAD, len(path) - 1)] if k + 1 < len(path) else (ex, ey)
+        target = min(k + LOOKAHEAD, len(path) - 1)
+        remaining = math.hypot(path[target][0] - p.x, path[target][1] - p.y)
+        remaining += sum(math.hypot(path[j + 1][0] - path[j][0], path[j + 1][1] - path[j][1])
+                         for j in range(target, len(path) - 1))
+        # Stalled? Then sidestep at an angle for a while, alternating sides.
+        if t >= r['check_t']:
+            if r['check_d'] is not None and r['check_d'] - remaining < STALL_PROGRESS and t >= r['detour_until']:
+                r['detours'] += 1
+                note_stall(r, p)
+                r['detour_sign'] = -r['detour_sign']
+                r['detour_until'] = t + DETOUR
+            r['check_d'], r['check_t'] = remaining, t + STALL_EVERY
+        tx, ty = path[target] if k + 1 < len(path) else (ex, ey)
         heading = math.atan2(ty - p.y, tx - p.x)
         if t < r['detour_until']:
             heading += r['detour_sign'] * math.radians(70)

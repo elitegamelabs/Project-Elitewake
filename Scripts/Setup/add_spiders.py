@@ -56,7 +56,7 @@ def main():
         placed.append((where, round(x), round(y), round(z)))
 
     for key, cave in T.CAVES.items():
-        if not cave:
+        if not cave or cave.kind == 'sea':
             continue
         for k in range(CAVE_SPIDERS):
             v = (-1 if k % 2 else 1) * rng.uniform(120, 260)

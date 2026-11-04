@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWGameMode.h"
+#include "EWGameState.h"
 #include "EWExplorationComponent.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -15,6 +16,7 @@
 
 AEWGameMode::AEWGameMode()
 {
+    GameStateClass = AEWGameState::StaticClass();
 	WorldEdge = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("WorldEdge"));
 }
 

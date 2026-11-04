@@ -98,6 +98,8 @@ def placements():
     """(x, y, z, yaw, pitch, scale y, scale z, where) for every web in every cave."""
     webs = []
     for key, cave in T.CAVES.items():
+        if cave.kind == 'sea':
+            continue  # Keep the navigable water and boat berth clear of spider-web meshes.
         # Across the passage, wall to wall and floor to above head height: walking in tears them.
         for f in (.35, .75):
             u = cave.length * f

@@ -1,6 +1,6 @@
-"""Draw the canonical five-island layout as a reference picture. Safe to run again.
+"""Draw the canonical twenty-island layout as a reference picture. Safe to run again.
     python Scripts/Art/draw_world_layout.py
-Writes Art/World/WorldLayout_FiveIslands.png: every island's real outline in its region's colour, labelled, the region
+Writes Art/World/WorldLayout_TwentyIslands.png: every island's real outline in its region's colour, labelled, the region
 names at their centres, each Port (site centre plus a quay line along its waterfront) and each cave mouth
 (an arrow along its heading, coloured by kind), a legend, a 1 km scale bar and north up. A reference picture, not
 the in-game map. Does not edit world_layout.py or world_terrain.py.
@@ -15,12 +15,13 @@ sys.path.insert(0, str(ROOT / 'Scripts/Setup'))
 import world_layout as W   # noqa: E402
 import world_terrain as T  # noqa: E402
 
-OUT = ROOT / 'Art/World/WorldLayout_FiveIslands.png'
+OUT = ROOT / 'Art/World/WorldLayout_TwentyIslands.png'
 SIZE = 1600
 COLOURS = {'Plains': (122, 160, 70), 'Winter': (225, 235, 245), 'Swamp': (90, 105, 60), 'Desert': (222, 196, 130),
            'Jungle': (40, 110, 60)}
 PORT_COLOUR = (235, 60, 60)
-CAVE_COLOURS = {'inland': (210, 170, 40), 'cliff': (160, 90, 220), 'coastal': (60, 190, 230)}
+CAVE_COLOURS = {'inland': (210, 170, 40), 'cliff': (160, 90, 220), 'coastal': (60, 190, 230),
+                'sea': (60, 225, 235)}
 
 
 def main():

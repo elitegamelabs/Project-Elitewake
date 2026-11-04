@@ -12,29 +12,33 @@ Owner direction:
     land area; the Plains four round the centre, each other region's four together in its direction;
   - the Plains starter island is the universal start and keeps its exact shape and place (Saltreach, the arrival);
   - one village per region, on the region's island nearest the centre (world_islands.VILLAGES);
-  - islands separated by open sea, 800 m to 2,000 m between shorelines.
+  - islands separated by broad open sea, at least 2 km between shorelines.
 
 Units are Unreal centimetres (1 m = 100). Every other island is generated from a seed and has its own silhouette
-(harmonics), size, orientation, height and cove. Island sizes and heights are tuning; a walk across each should take
-6-17 minutes (measure in game: Scripts/Verification/measure_walking_routes_play.py).
+(harmonics), size, orientation, height and cove. Keep the current compact island footprints; measure walks in game
+instead of enlarging islands to hit a fixed travel-time number.
 """
 import math
 import random
 import sys
 
 M = 100.0                       # cm per metre
-MIN_GAP, MAX_GAP = 800 * M, 2000 * M
-REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 7000 * M), 'Swamp': (0.0, -7000 * M),
-                  'Desert': (-7000 * M, 0.0), 'Jungle': (7000 * M, 0.0)}
+MIN_GAP, MAX_GAP = 2000 * M, 4000 * M
+REGION_CENTRES = {'Plains': (0.0, 0.0), 'Winter': (0.0, 9800 * M), 'Swamp': (0.0, -9800 * M),
+                  'Desert': (-9800 * M, 0.0), 'Jungle': (9800 * M, 0.0)}
 ISLANDS_PER_REGION = {'Plains': 4, 'Winter': 4, 'Swamp': 4, 'Desert': 4, 'Jungle': 4}
 # Each outer region's four islands, by (along, aside) km from the centre in its own direction: the village island nearest
 # the centre, two flanks, the far island (tuning). The order of keys puts each region's village (world_islands.VILLAGES) first.
 REGION_AXES = {'Winter': (0.0, 1.0), 'Swamp': (0.0, -1.0), 'Desert': (-1.0, 0.0), 'Jungle': (1.0, 0.0)}
-REGION_SLOTS = [(5.3, 0.2), (8.5, -2.7), (8.6, 2.6), (11.3, -0.2)]
+REGION_SLOTS = [(7.42, 0.28), (11.9, -3.78), (12.04, 3.64), (15.82, -0.28)]
 REGION_ORDER = {'Winter': ('Winter2', 'Winter1', 'Winter3', 'Winter4'), 'Swamp': ('Swamp1', 'Swamp2', 'Swamp3', 'Swamp4'),
                 'Desert': ('Desert1', 'Desert2', 'Desert3', 'Desert4'), 'Jungle': ('Jungle1', 'Jungle2', 'Jungle3', 'Jungle4')}
 # The three Plains islands round the starter, on the diagonals between the regions (x, y in m).
-PLAINS_AROUND = {'Plains2': (-3200.0, 3100.0), 'Plains3': (-3100.0, -3200.0), 'Plains4': (3200.0, 3100.0)}
+PLAINS_AROUND = {'Plains2': (-4480.0, 4340.0), 'Plains3': (-4340.0, -4480.0), 'Plains4': (4480.0, 4340.0)}
+# These non-village islands have a deeper, asymmetric bite in the shore, creating a recognizable crescent silhouette.
+# They are also the candidate islands for sheltered, ship-accessible sea caverns; the caves need a separate build/test gate.
+CRESCENT_COVES = {'Plains3': (0.48, 0.58, 0.34), 'Desert3': (0.53, 0.54, -0.39),
+                   'Jungle3': (0.56, 0.62, 0.42)}  # depth, angular width, offset from the centre-facing bearing
 # Each region's tallest hill, cm (tuning): several smaller hills spread over each island, never one dominant mountain.
 REGION_PEAKS = {'Plains': 2400.0, 'Winter': 10500.0, 'Swamp': 250.0, 'Desert': 4400.0, 'Jungle': 6400.0}
 
@@ -158,8 +162,12 @@ def generate():
         size = .94 + .26 * order.index(key) / (len(order) - 1)
         rx, ry = size * rng.uniform(1180, 1260) * M, size * rng.uniform(980, 1040) * M
         # The cove faces the world's centre: the sheltered side, where a region's village has its harbour.
-        cove = (math.atan2(-cy, -cx), rng.uniform(0.25, 0.4), rng.uniform(0.2, 0.3))
-        islands.append(_organic(key, region, cx, cy, rx, ry, rng.uniform(0, math.pi), 7000 + sum(map(ord, key)),
+        inward = math.atan2(-cy, -cx)
+        base_cove = (inward, rng.uniform(0.25, 0.4), rng.uniform(0.2, 0.3))
+        turn = rng.uniform(0, math.pi)
+        cove = ((inward + CRESCENT_COVES[key][2] - turn, *CRESCENT_COVES[key][:2]) if key in CRESCENT_COVES
+                else base_cove)
+        islands.append(_organic(key, region, cx, cy, rx, ry, turn, 7000 + sum(map(ord, key)),
                                 REGION_PEAKS[region], rng.randint(5, 8), cove))
     return islands
 
@@ -181,12 +189,12 @@ def check(islands):
                 continue
             g = shore_gap(a, b)
             if g < MIN_GAP:
-                problems.append(f'{a.key} and {b.key} are {g / M:.0f} m apart (less than 800 m)')
+                problems.append(f'{a.key} and {b.key} are {g / M:.0f} m apart (less than 2,000 m)')
             nearest[a.key] = min(nearest.get(a.key, 1e18), g)
             nearest[b.key] = min(nearest.get(b.key, 1e18), g)
     for i in islands:
         if nearest.get(i.key, 1e18) > MAX_GAP:
-            problems.append(f'{i.key} is {nearest.get(i.key, 1e18) / M:.0f} m from its nearest island (more than 2,000 m)')
+            problems.append(f'{i.key} is {nearest.get(i.key, 1e18) / M:.0f} m from its nearest island (more than 4,000 m)')
     for i in islands:
         cx, cy = REGION_CENTRES[i.region]
         if i.region != 'Plains':
