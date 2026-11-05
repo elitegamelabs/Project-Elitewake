@@ -53,6 +53,8 @@ class WorldLayoutRuleTests(unittest.TestCase):
 
     def test_three_distinct_crescent_islands_have_sea_caverns(self):
         self.assertEqual(set(W.CRESCENT_COVES), {'Plains3', 'Desert3', 'Jungle3'})
+        self.assertEqual(W.SEA_CAVERN_ACCESS, {
+            'Plains3': 'inland_exit', 'Desert3': 'shore_bridge', 'Jungle3': 'inland_exit'})
         for key in W.CRESCENT_COVES:
             island, cave = W.island(key), T.CAVES[key]
             self.assertEqual(cave.kind, 'sea')
@@ -70,6 +72,78 @@ class WorldLayoutRuleTests(unittest.TestCase):
                 x, y = cave.world(u, cave.centre_v(max(0.0, u)))
                 self.assertLessEqual(T.built_height(x, y), T.SEA - 450.0,
                                      f'{key} boat approach is too shallow at {u / M:.0f} m')
+
+    def test_each_sea_cavern_fits_and_hides_a_brigantine(self):
+        # The brigantine (DA_Ship_Brigantine: hull half 1490 x 425 cm, draft 230, deck 300, mast top 2200 over the sea).
+        # Against the passage's oval at its narrowest rock lumps (SEA_NOISE), her hull and mast follow the centre line;
+        # no straight line at deck height from the mouth to her hull at the berth stays inside it at its widest.
+        hx, hy, draft, deck, mast = 1490.0, 425.0, 230.0, 300.0, 2200.0
+        lumps = T.SEA_NOISE[0]
+        for key in W.SEA_CAVERN_ACCESS:
+            cave = T.CAVES[key]
+            hw, hh, cz = cave.tunnel
+
+            def half_width(z, scale):
+                d = (z - cave.floor - cz) / (hh * scale)
+                return hw * scale * math.sqrt(max(0.0, 1 - d * d))
+
+            for u in range(0, int(cave.length) + 1, 200):
+                slope = (cave.centre_v(u + 50) - cave.centre_v(u - 50)) / 100
+                c, s = 1 / math.hypot(1, slope), slope / math.hypot(1, slope)
+                for a, b, z in [(a, b, z) for a in (-hx, 0.0, hx) for b in (-hy, hy)
+                                for z in (T.SEA - draft, T.SEA, T.SEA + deck)] + [(0.0, 0.0, T.SEA + mast)]:
+                    pu, pv = u + a * c - b * s, cave.centre_v(u) + a * s + b * c
+                    if 0 <= pu <= cave.length:
+                        self.assertLessEqual(abs(pv - cave.centre_v(pu)), half_width(z, 1 - lumps),
+                                             f'{key}: the brigantine scrapes the passage {pu / M:.0f} m in')
+            bu, bv = cave.berth()
+            z = T.SEA + deck
+            mouth = half_width(z, (1 + lumps) * 1.3)
+            for v0 in [mouth * k / 10 for k in range(-10, 11)]:
+                for u1, v1 in [(bu + a, bv + b) for a in (-hx, 0.0, hx) for b in (-hy, hy)]:
+                    blocked = any(abs(v0 + (v1 - v0) * u / u1 - cave.centre_v(u)) > half_width(z, 1 + lumps)
+                                  for u in range(100, int(cave.length), 100))
+                    self.assertTrue(blocked, f'{key}: the berthed hull can be seen from the mouth')
+
+    def test_each_sea_cavern_has_a_dry_walk_to_existing_island_ground(self):
+        # Plains3 and Desert3 run straight out through the back; Jungle3, under a 50 m plateau, spirals up its wall.
+        for key in W.SEA_CAVERN_ACCESS:
+            cave = T.CAVES[key]
+            path = cave.exit_path()
+            self.assertGreater(len(path), 20, key)
+            self.assertLessEqual(path[0][2], T.SEA + 160.0, f'{key}: the walk does not start at the berth')
+            previous = None
+            landing = path[-1]
+            for u, v, surface, outward in path:
+                self.assertGreater(surface, T.SEA + 100.0)
+                # On the open landing (its last 7 m) the deck meets the ground, which may come level with it.
+                clear = 5.0 if math.hypot(u - landing[0], v - landing[1]) > 700.0 else -25.0
+                for side in (-225.0, 0.0, 225.0):
+                    if previous:
+                        du, dv = u - previous[0], v - previous[1]
+                        run = math.hypot(du, dv)
+                        x, y = cave.world(u + dv / run * side, v - du / run * side)
+                    else:
+                        x, y = cave.world(u, v)
+                    self.assertGreaterEqual(surface - T.built_height(x, y), clear,
+                                            f'{key} exit intersects terrain at {u:.0f}, {v:.0f} cm')
+                if previous:
+                    run = math.hypot(u - previous[0], v - previous[1])
+                    self.assertLessEqual(abs(surface - previous[2]) / run, .40, f'{key}: the cave exit is too steep to walk')
+                previous = (u, v, surface)
+            u, v, surface, _ = path[-1]
+            x, y = cave.world(u, v)
+            # It ends on island ground, past the rock formation, with a step a survivor can take (45 cm).
+            self.assertLessEqual(surface - T.built_height(x, y), 45.0, f'{key}: the walk ends above the ground')
+            self.assertGreater(T.built_height(x, y), T.SEA + 50.0, f'{key}: the walk ends in the water')
+            self.assertFalse(cave.inside(x, y) and abs(v) < cave.half and u < cave.depth,
+                             f'{key}: the walk ends inside the rock formation')
+        # Jungle3's spiral keeps the boat entrance clear: it never crosses in front of the passage's end below 30 m.
+        cave = T.CAVES['Jungle3']
+        for u, v, surface, _ in cave.exit_path():
+            if surface < T.SEA + 3000.0:
+                self.assertFalse(u < cave.chamber_u and abs(v) < cave.tunnel[0] + 300.0,
+                                 f'Jungle3 walk blocks the entrance at {u:.0f}, {v:.0f}')
 
     def test_each_region_on_its_side_of_the_world(self):
         # North is +Y and east -X (Source/EW/World/EWNorth.h; owner, November 1).

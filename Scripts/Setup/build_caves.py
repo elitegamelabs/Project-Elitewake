@@ -78,7 +78,9 @@ def formation(cave, noise):
         rise = rise * rise * (3 - 2 * rise)
         height = cave.face + cave.crown * rise
         if u > back0:
-            height *= max(0.0, 1 - (u - back0) / (cave.depth - back0)) ** .6
+            taper = max(0.0, 1 - (u - back0) / (cave.depth - back0)) ** .6
+            # Keep a rock wall around the landward portal rather than tapering its roof to ground.
+            height *= .6 + .4 * taper if cave.island.key in ('Plains3', 'Desert3') else taper
         row, frow = [], []
         for j in range(nv):
             t = -1 + 2 * j / (nv - 1)
@@ -133,6 +135,7 @@ def passage(cave, noise, sides=22):
     inside the chamber."""
     p = Piece()
     hw, hh, cz = cave.tunnel
+    lumps = T.SEA_NOISE[0] if cave.kind == 'sea' else .14
     rings, u = [], -400.0
     end = cave.length + cave.chamber[0] * .6
     while True:
@@ -143,7 +146,7 @@ def passage(cave, noise, sides=22):
             a = 2 * math.pi * k / sides
             bx, by = cave.world(u, vc + hw * math.cos(a))
             bz = cz + hh * math.sin(a)
-            r = flare * (1 + .14 * noise(bx / 230, by / 230, bz / 230 + 2.2))
+            r = flare * (1 + lumps * noise(bx / 230, by / 230, bz / 230 + 2.2))
             x, y = cave.world(u, vc + hw * math.cos(a) * r)
             ring.append(p.add((x - cave.mx, y - cave.my, cz + hh * math.sin(a) * r)))
         rings.append(ring)
@@ -168,11 +171,12 @@ def chamber(cave, noise, rows=16, sides=28):
     p = Piece()
     cu, cv, cz = cave.chamber
     centre_u, centre_z = cave.chamber_u, cave.chamber_z
+    lumps = T.SEA_NOISE[1] if cave.kind == 'sea' else .16
 
     def point(theta, phi):
         u, v, z = cu * math.sin(theta) * math.cos(phi), cv * math.sin(theta) * math.sin(phi), cz * math.cos(theta)
         bx, by = cave.world(centre_u + u, v)
-        r = 1 + .16 * noise(bx / 300, by / 300, (centre_z + z) / 300 + 5.5)
+        r = 1 + lumps * noise(bx / 300, by / 300, (centre_z + z) / 300 + 5.5)
         x, y = cave.world(centre_u + u * r, v * r)
         return p.add((x - cave.mx, y - cave.my, centre_z + z * r))
 
@@ -185,6 +189,95 @@ def chamber(cave, noise, rows=16, sides=28):
     for k in range(sides):
         p.tris.append((top, rings[0][k], rings[0][(k + 1) % sides]))
         p.tris.append((low, rings[-1][(k + 1) % sides], rings[-1][k]))
+    return p.outward()
+
+
+def exit_frames(cave):
+    """Along the walk out (world_terrain.Cave.exit_path): (u, v, surface, nu, nv, outward) with (nu, nv) the walk's
+    right-hand normal in the cave's frame."""
+    pts = cave.exit_path()
+    out = []
+    for i, (u, v, z, o) in enumerate(pts):
+        a, b = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
+        length = math.hypot(b[0] - a[0], b[1] - a[1])
+        out.append((u, v, z, (b[1] - a[1]) / length, -(b[0] - a[0]) / length, o))
+    return out
+
+
+def at(cave, frame, lateral, z):
+    """A point `lateral` cm to the walk's right of a frame, at world height z, relative to the cave's mouth."""
+    u, v, _, nu, nv, _ = frame
+    x, y = cave.world(u + nu * lateral, v + nv * lateral)
+    return x - cave.mx, y - cave.my, z - cave.floor
+
+
+def inland_exit_tunnel(cave, sides=20):
+    """Bore the walk out through the rock: from the berth chamber's rear on the straight exits, and the whole way on
+    Jungle3's spiral, which runs along and then through the chamber's wall."""
+    p = Piece()
+    frames = exit_frames(cave)
+    if cave.island.key not in cave.SPIRAL:
+        frames = [f for f in frames if f[0] >= cave.chamber_u + .4 * cave.chamber[0]]
+    rings = []
+    for frame in frames:
+        ring = []
+        for k in range(sides):
+            a = 2 * math.pi * k / sides
+            ring.append(p.add(at(cave, frame, 350.0 * math.cos(a), frame[2] + 235.0 + 325.0 * math.sin(a))))
+        rings.append(ring)
+    for i in range(len(rings) - 1):
+        for k in range(sides):
+            a, b = rings[i][k], rings[i][(k + 1) % sides]
+            c, d = rings[i + 1][k], rings[i + 1][(k + 1) % sides]
+            p.tris += [(a, c, b), (b, c, d)]
+    for ring, sign in ((rings[0], -1), (rings[-1], 1)):
+        centre = p.add(tuple(sum(p.verts[v][n] for v in ring) / sides for n in range(3)))
+        for k in range(sides):
+            a, b = ring[k], ring[(k + 1) % sides]
+            p.tris.append((centre, b, a) if sign > 0 else (centre, a, b))   # wound to match the sides
+    return p.outward()
+
+
+def inland_exit_ramp(cave):
+    """Colliding 4.5 m wide walk to existing island ground: a causeway (Plains3), a deck on piers (Desert3), or a
+    ledge cut from the chamber wall with its rock sloping back into the wall beneath it (Jungle3)."""
+    p = Piece()
+    frames = exit_frames(cave)
+    spiral = cave.island.key in cave.SPIRAL
+
+    def strip(chosen, left, right, top_of, bottom_of, bottom_right=None):
+        """A solid strip between `left` and `right` of the walk; `bottom_right` sets the lower outer edge apart."""
+        sections = []
+        for f in chosen:
+            low_right = bottom_right or (lambda z: (right, bottom_of(z)))
+            lr, lz = low_right(f[2])
+            section = [p.add(at(cave, f, left * f[5], top_of(f[2]))), p.add(at(cave, f, right * f[5], top_of(f[2]))),
+                       p.add(at(cave, f, left * f[5], bottom_of(f[2]))), p.add(at(cave, f, lr * f[5], lz))]
+            sections.append(section)
+        for a, b in zip(sections, sections[1:]):
+            p.tris += [(a[0], b[0], b[1]), (a[0], b[1], a[1]),
+                       (a[2], b[3], b[2]), (a[2], a[3], b[3]),
+                       (a[0], a[2], b[2]), (a[0], b[2], b[0]),
+                       (a[1], b[1], b[3]), (a[1], b[3], a[3])]
+        for a, sign in ((sections[0], -1), (sections[-1], 1)):
+            p.tris += ([(a[0], a[1], a[3]), (a[0], a[3], a[2])] if sign < 0 else
+                       [(a[0], a[3], a[1]), (a[0], a[2], a[3])])
+
+    if spiral:
+        # The ledge: its outer side runs 10 m back into the wall, falling 15 m, so from the water it reads as rock.
+        strip(frames, -225, 225, lambda z: z, lambda z: z - 150, lambda z: (1225, z - 1500))
+    else:
+        bottom = (lambda z: z - 60) if cave.island.key == 'Desert3' else (lambda z: cave.floor - 40)
+        strip(frames, -225, 225, lambda z: z, bottom)
+    # Low stone parapets keep walkers away from the drop (on a spiral, its inner side only). The first 6 m and last
+    # 7 m stay open so a crew can step from the boat and onto shore.
+    travelled, along = 0.0, [0.0]
+    for a, b in zip(frames, frames[1:]):
+        travelled += math.hypot(b[0] - a[0], b[1] - a[1])
+        along.append(travelled)
+    guarded = [f for f, d in zip(frames, along) if 600.0 <= d <= travelled - 700.0]
+    for left, right in ((-225, -195),) if spiral else ((-225, -195), (195, 225)):
+        strip(guarded, left, right, lambda z: z + 95, lambda z: z)
     return p.outward()
 
 
@@ -218,6 +311,8 @@ def hollow(cave, noise):
     for flip in (False, True):
         tool = dynamic(passage(cave, noise), 1)
         boolean(tool, dynamic(chamber(cave, noise), 1), unreal.GeometryScriptBooleanOperation.UNION)
+        if T.W.SEA_CAVERN_ACCESS.get(cave.island.key):
+            boolean(tool, dynamic(inland_exit_tunnel(cave), 1), unreal.GeometryScriptBooleanOperation.UNION)
         options = unreal.GeometryScriptMeshPlaneCutOptions()
         options.set_editor_property('fill_holes', True)
         options.set_editor_property('flip_cut_side', flip)
@@ -249,6 +344,20 @@ def cave_mesh(cave):
     return asset, unreal.GeometryScript_MeshQueries.get_num_triangle_i_ds(mesh)
 
 
+def exit_ramp_mesh(cave):
+    mesh = dynamic(inland_exit_ramp(cave), 0)
+    uvs = unreal.GeometryScript_UVs
+    uvs.set_num_uv_sets(mesh, 1)
+    box = unreal.Transform(unreal.Vector(0, 0, 0), unreal.Rotator(0, 0, 0), unreal.Vector(4, 4, 4))
+    uvs.set_mesh_u_vs_from_box_projection(mesh, 0, box, unreal.GeometryScriptMeshSelection(), 2)
+    unreal.GeometryScript_Normals.compute_split_normals(mesh, unreal.GeometryScriptSplitNormalsOptions(),
+                                                        unreal.GeometryScriptCalculateNormalsOptions())
+    stone = STONE[cave.island.region][1]
+    material = unreal.load_asset(f'{ROCKS}/MI_Rock_{stone}_v1')
+    assert material
+    return save_dynamic_mesh(mesh, f'{FOLDER}/SM_Cave_{cave.island.key}_ExitRamp_v1', [material])
+
+
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -265,11 +374,34 @@ def main():
         actor.set_actor_label(f'Cave of {key}: rock')
         actor.set_folder_path(LEVEL_FOLDER)
         actor.static_mesh_component.set_static_mesh(mesh)
+        if T.W.SEA_CAVERN_ACCESS.get(key):
+            ramp = actors.spawn_actor_from_class(unreal.StaticMeshActor,
+                                                 unreal.Vector(cave.mx, cave.my, cave.floor), unreal.Rotator())
+            ramp.set_actor_label(f'Cave of {key}: {"shore bridge" if key == "Desert3" else "inland exit ramp"}')
+            ramp.set_folder_path(LEVEL_FOLDER)
+            ramp.static_mesh_component.set_static_mesh(exit_ramp_mesh(cave))
+            if key == 'Desert3':
+                block = unreal.load_asset('/Engine/BasicShapes/Cube')
+                stone = unreal.load_asset(f'{ROCKS}/MI_Rock_{STONE[cave.island.region][1]}_v1')
+                assert block and stone
+                path = [f for f in cave.exit_path() if f[0] <= cave.depth]
+                for n in range(7):
+                    u, lateral, surface, _ = path[round(n * (len(path) - 1) / 6)]
+                    for side in (-180.0, 180.0):
+                        x, y = cave.world(u, lateral + side)
+                        bottom, top = cave.floor - 40.0, surface - 60.0
+                        support = actors.spawn_actor_from_class(
+                            unreal.StaticMeshActor, unreal.Vector(x, y, (bottom + top) / 2), unreal.Rotator())
+                        support.set_actor_label(f'Cave of {key}: bridge support {n}-{int(side)}')
+                        support.set_folder_path(LEVEL_FOLDER)
+                        support.static_mesh_component.set_static_mesh(block)
+                        support.static_mesh_component.set_material(0, stone)
+                        support.set_actor_scale3d(unreal.Vector(.7, .7, (top - bottom) / 100.0))
         report[key] = {'kind': cave.kind, 'region': cave.island.region, 'mouth_cm': [round(cave.mx), round(cave.my)],
                        'floor_cm': round(cave.floor), 'heading_deg': round(math.degrees(cave.heading)),
                        'scale': cave.scale, 'entrance_width_cm': round(2 * cave.tunnel[0]),
                        'water_depth_cm': round(T.SEA - cave.floor) if cave.kind == 'sea' else 0,
-                       'triangles': tris}
+                       'triangles': tris, 'access': T.W.SEA_CAVERN_ACCESS.get(key)}
     assert level.save_current_level()
     Path(unreal.Paths.project_saved_dir(), 'CavesResult.json').write_text(json.dumps({'success': True, 'caves': report}, indent=2))
     unreal.log(f'Caves built: {len(report)}')

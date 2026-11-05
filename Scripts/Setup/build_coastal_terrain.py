@@ -313,8 +313,24 @@ SEAMOUNT_SPACING = 500.0
 FINE_PATCHES = [(i.cx, i.cy, i.reach() + T.SHELF) for i in W.ISLANDS] + [(mx, my, r * 2) for mx, my, _, r in T.SEAMOUNT_SITES]
 
 
+def reusable_mesh(path, x0, x1, y0, y1):
+    """With EW_TERRAIN_REUSE_MESHES=1, an existing mesh at `path` whose bounds cover exactly this rectangle (within 1 m):
+    the ground generation already done for this layout (hours for twenty islands) need not be repeated. None otherwise."""
+    if os.environ.get('EW_TERRAIN_REUSE_MESHES') != '1' or not unreal.EditorAssetLibrary.does_asset_exist(path):
+        return None
+    asset = unreal.load_asset(path)
+    box = asset.get_bounding_box() if asset else None
+    if not box or max(abs(box.min.x - x0), abs(box.max.x - x1), abs(box.min.y - y0), abs(box.max.y - y1)) > 100.0:
+        return None
+    return asset
+
+
 def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True, height=height):
-    """A height-field mesh over a rectangle (world cm) from world_terrain, written to `path`."""
+    """A height-field mesh over a rectangle (world cm) from world_terrain, written to `path` (or the same mesh already
+    there, reused: reusable_mesh)."""
+    reused = reusable_mesh(path, x0, x1, y0, y1)
+    if reused:
+        return reused, 'reused'
     nx, ny = max(2, int(round((x1 - x0) / spacing))), max(2, int(round((y1 - y0) / spacing)))
     mesh = unreal.DynamicMesh()
     unreal.GeometryScript_Primitives.append_rectangle_xy(mesh, unreal.GeometryScriptPrimitiveOptions(), unreal.Transform(

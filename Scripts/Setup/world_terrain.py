@@ -455,7 +455,20 @@ def height_raw(x, y):
 # never shows through it. DECIDED (delegated): which kind each island gets (cliff where the island has a cliff;
 # mountain-side in Winter and Jungle; coastal rock in the Swamp; Plains and Desert alternate); every size is tuning.
 TUNNEL = (260.0, 300.0, 150.0)   # walking cave: half-width, half-height, centre above floor (cm)
-SEA_TUNNEL = (1400.0, 1700.0, 1800.0)  # provisional 28 m wide, 29 m overhead at fixed sea level
+# Sea caverns (owner, November 4): a ship sails in from open water and lies hidden from the sea. DECIDED (delegated,
+# November 5), after the brigantine failed the Play fit check on the first shape (an oval centred 12 m above the water,
+# too narrow at the keel for its bend, and a bend too shallow to hide anything). The passage is widest at the waterline
+# (centred 1 m above it, roof 29 m up) and swings SEA_BEND to one side and back over SEA_LENGTH, leaving and rejoining the
+# axis straight, deep enough that no straight line from the sea reaches the pool. The pool is widest at the waterline
+# too. All of it stays inside the formation footprint of the first build (SEA_FOOTPRINT), which the grass, flora, rocks
+# and animals were already placed around. Sized for the brigantine (30 x 8.5 m, 2.3 m draft, mast top 22 m above the
+# water); the Cavalier is not built.
+SEA_TUNNEL = (1100.0, 2800.0, 700.0)   # half-width, half-height, centre above the floor (the floor is 6 m under the sea)
+SEA_LENGTH, SEA_BEND = 11000.0, 2300.0
+SEA_CHAMBER, SEA_CHAMBER_Z = (2200.0, 2900.0, 3500.0), 700.0
+SEA_FOOTPRINT = (16450.0, 3950.0)      # the formation's depth and half-width (cm)
+SEA_NOISE = (.07, .10)                 # rock lumps on the passage and pool walls (walking caves: .14 and .16)
+SEA_APPROACH = 1400.0                  # half-width of the deep channel cut before the mouth (as first built; the world was dressed around it)
 CAVE_KINDS = ('inland', 'cliff', 'coastal', 'sea')
 
 
@@ -470,10 +483,15 @@ class Cave:
         self.tunnel = SEA_TUNNEL if kind == 'sea' else TUNNEL
         self.face = 4500.0 if kind == 'sea' else 750.0
         self.crown = 800.0 if kind == 'sea' else 300.0
-        self.length = 8000.0 if kind == 'sea' else 1400.0 * scale
-        self.chamber = (4500.0, 3000.0, 2100.0) if kind == 'sea' else (600.0 * scale, 500.0 * max(scale, .8), 450.0)
-        self.chamber_u = self.length + (3000.0 if kind == 'sea' else 450.0 * scale)
-        self.chamber_z = 2000.0 if kind == 'sea' else 200.0
+        if kind == 'sea':
+            self.length, self.chamber, self.chamber_z = SEA_LENGTH, SEA_CHAMBER, SEA_CHAMBER_Z
+            self.chamber_u = self.length + self.chamber[0]
+            self.depth, self.half = SEA_FOOTPRINT
+            return
+        self.length = 1400.0 * scale
+        self.chamber = (600.0 * scale, 500.0 * max(scale, .8), 450.0)
+        self.chamber_u = self.length + 450.0 * scale
+        self.chamber_z = 200.0
         self.depth = self.chamber_u + self.chamber[0] + self.margin + self.cell + 200.0   # formation, mouth to back
         self.half = max(abs(bend) + self.tunnel[0], self.chamber[1]) + self.margin + self.cell + 200.0
 
@@ -487,8 +505,102 @@ class Cave:
         return self.mx + u * c - v * s, self.my + u * s + v * c
 
     def centre_v(self, u):
-        """The passage's centre line: it swings `bend` to one side and back before the chamber."""
-        return self.bend * math.sin(math.pi * min(1.0, max(0.0, u / self.length)))
+        """The passage's centre line: it swings `bend` to one side and back before the chamber. A sea passage leaves
+        and rejoins the axis straight, so a ship's bow meets no angle at the mouth or the pool."""
+        t = min(1.0, max(0.0, u / self.length))
+        if self.kind == 'sea':
+            return self.bend * (1 - math.cos(2 * math.pi * t)) / 2
+        return self.bend * math.sin(math.pi * t)
+
+    def berth(self):
+        """Where a ship lies in a sea cavern, (u, v): the pool's middle, moved 7 m off a straight exit (which runs along
+        the pool's side at v = +12 m) so a brigantine can still swing right round there."""
+        return self.chamber_u, (0.0 if self.island.key in self.SPIRAL else -700.0)
+
+    EXIT_LATERAL = 1200.0   # cm off the axis: a straight exit's walk
+
+    def inland_exit_profile(self, u):
+        """A straight exit's walk at u: (lateral offset, world surface height), from exit_path."""
+        if self.kind != 'sea' or self.island.key in self.SPIRAL or self.island.key not in W.SEA_CAVERN_ACCESS:
+            raise ValueError(f'{self.island.key} has no straight inland exit')
+        pts = self.exit_path()
+        if u <= pts[0][0]:
+            return self.EXIT_LATERAL, pts[0][2]
+        for a, b in zip(pts, pts[1:]):
+            if u <= b[0]:
+                return self.EXIT_LATERAL, a[2] + (b[2] - a[2]) * (u - a[0]) / (b[0] - a[0])
+        return self.EXIT_LATERAL, pts[-1][2]
+
+    # Jungle3's berth lies under a 50 m jungle plateau with cliffs on every side and no low shore near it, so a straight
+    # exit through the back would climb at about 40 degrees. Its walk out is a rock-cut ramp spiralling up the chamber's
+    # wall instead (DECIDED, November 4, delegated; redone November 5 for the smaller pool): from beside the entrance at
+    # the front-left, round the left side, the back, the right and the front (by then 40 m up, over the entrance), once
+    # more along the left 45 m above its own start, then out through the formation's left side onto level plateau (about
+    # 19 degrees, 58 m up; the ending was chosen offline for a step under 45 cm onto gentle ground past the formation). In
+    # degrees round the chamber (0 = the back, 90 = the right): it starts at START, keeps to RING of the chamber's radii
+    # until TURN, then widens to REACH by END, past the formation's side. Low down, the entrance (about 133-227 degrees)
+    # stays clear for boats.
+    SPIRAL = {'Jungle3': {'start': 227.0, 'turn': 640.0, 'end': 650.0, 'ring': .86, 'reach': 1.7}}
+    EXIT_FLAT = 600.0     # cm level at the berth, to step off a boat
+    EXIT_WIDTH = 300.0    # cm either side of the walk's centre kept clear of the ground under it
+
+    def exit_path(self):
+        """The walk from the berth to island ground: [(u, v, surface z, outward)], about a metre apart; `outward` is +1
+        when the walk's right-hand side (v increasing on a straight exit) faces away from the chamber's middle. Plains3
+        and Desert3 run straight out through the back, along the pool's side from its front quarter; Jungle3 spirals
+        (SPIRAL). Either way the walk is the lowest that stays 30 cm over the ground under it, level for EXIT_FLAT at
+        the berth, at the gentlest grade that allows."""
+        cached = getattr(self, '_exit_path', None)
+        if cached is not None:
+            return cached
+        cu, cv, _ = self.chamber
+        pts = []
+        spec = self.SPIRAL.get(self.island.key)
+        if spec is None:
+            start, end = self.chamber_u - .75 * cu, self.depth + 700.0
+            count = max(2, math.ceil((end - start) / 100.0))
+            pts = [(start + (end - start) * i / count, self.EXIT_LATERAL) for i in range(count + 1)]
+        else:
+            count = int(spec['end'] - spec['start'])
+            for i in range(count + 1):
+                phi = spec['start'] + (spec['end'] - spec['start']) * i / count
+                f = 0.0 if phi <= spec['turn'] else (phi - spec['turn']) / (spec['end'] - spec['turn'])
+                k = spec['ring'] + (spec['reach'] - spec['ring']) * f * f * (3 - 2 * f)
+                r = math.radians(phi)
+                pts.append((self.chamber_u + k * cu * math.cos(r), k * cv * math.sin(r)))
+        s = [0.0]
+        for p, q in zip(pts, pts[1:]):
+            s.append(s[-1] + math.hypot(q[0] - p[0], q[1] - p[1]))
+        need, outward = [], []
+        for i, (u, v) in enumerate(pts):
+            a, b = pts[max(i - 1, 0)], pts[min(i + 1, len(pts) - 1)]
+            length = math.hypot(b[0] - a[0], b[1] - a[1])
+            nu, nv = (b[1] - a[1]) / length, -(b[0] - a[0]) / length      # right-hand normal
+            outward.append(1.0 if spec is None or nu * (u - self.chamber_u) + nv * v > 0 else -1.0)
+            need.append(30.0 + max(height(*self.world(u + nu * w, v + nv * w))
+                                   for w in (-self.EXIT_WIDTH, -self.EXIT_WIDTH / 2, 0.0, self.EXIT_WIDTH / 2, self.EXIT_WIDTH)))
+
+        def climb(grade):
+            """The lowest walk that stays 30 cm over the ground and never climbs or falls faster than `grade`."""
+            z, best = [0.0] * len(pts), -1e18
+            for i in range(len(pts) - 1, -1, -1):
+                best = max(best - (grade * (s[i + 1] - s[i]) if i + 1 < len(pts) else 0.0), need[i])
+                z[i] = max(best, SEA + 150.0)
+            for i in range(1, len(pts)):
+                z[i] = max(z[i], z[i - 1] - grade * (s[i] - s[i - 1]))
+            return z
+
+        low, high = .05, 1.0          # the gentlest grade that still leaves the first EXIT_FLAT level
+        for _ in range(40):
+            mid = (low + high) / 2
+            z = climb(mid)
+            if all(z[i] <= SEA + 151.0 for i in range(len(pts)) if s[i] <= self.EXIT_FLAT):
+                high = mid
+            else:
+                low = mid
+        z = climb(high)
+        self._exit_path = [(u, v, h, o) for (u, v), h, o in zip(pts, z, outward)]
+        return self._exit_path
 
     def path(self, step=150.0):
         """The walk in, world (x, y) from just outside the mouth to the chamber's middle."""
@@ -517,7 +629,7 @@ class Cave:
         if self.kind == 'sea':
             # Cut a continuous deep-water approach from outside the crescent into the covered berth.
             # The ordinary walking-cave doorstep must not close this channel at the shoreline.
-            if -6000.0 <= u < 0.0 and abs(v) < self.tunnel[0] + self.cell:
+            if -6000.0 <= u < 0.0 and abs(v) < SEA_APPROACH + self.cell:
                 return min(h, self.floor - 30.0)
             if 0.0 <= u <= self.depth and self.hollow(u, v) <= self.margin:
                 return min(h, self.floor - 30.0)
@@ -639,7 +751,7 @@ def _cave(island, index):
         a = island.turn + island.cove[0]
         r = island.radius(a) - 300.0
         mx, my = island.cx + r * math.cos(a), island.cy + r * math.sin(a)
-        cave = Cave(island, 'sea', mx, my, a + math.pi, SEA - 600.0, 1.0, 1200.0)
+        cave = Cave(island, 'sea', mx, my, a + math.pi, SEA - 600.0, 1.0, SEA_BEND)
         if _fits(cave):
             return cave
         raise RuntimeError(f'No safe sea-cavern site on {island.key}')

@@ -900,6 +900,20 @@ Before every commit:
 
 Use one row per product or generated family, with child rows when files have different licenses/restrictions. Required columns already exist in the repository ledger. Boolean fields use TRUE/FALSE/UNKNOWN, not prose. PricePaid is 0.00 only when acquisition was actually zero cost. SourceURL points to the listing or model card, not a search result. LicenseURL and acquisition evidence must remain retrievable. Scenario rows include exact model ID, output ID, input-rights verification, and owner approver. Unknown rights means the asset stays out of production/package.
 
+## November 4 recovery and island layout decision
+
+The owner has returned development to Codex after the saved WIP checkpoint `4b01a28c`. This section supersedes earlier handoff restrictions and island crossing targets. Keep the existing 20 islands: four in each of Plains, Winter, Swamp, Desert, and Jungle. Preserve their distinct proportions and resource/wildlife assignments, exactly one village per region, the existing compact footprints, and broad open-water lanes. The intended walking experience is the current roughly 5–14 minutes across an island; do not enlarge islands to meet the older 15–20, 30–45, or 6–17 minute targets. Measure real playable routes when the map is restored.
+
+Keep the three crescent coves on Plains3, Desert3, and Jungle3, with different silhouettes. Each sea cavern must accept a ship from open water, conceal a parked ship from direct sea sight, and permit a player to leave the berth on foot. Make Plains3 and Jungle3 walk-through caverns with safe inland exits onto explorable island ground. Make Desert3 a covered shore berth with a safe bridge or walkway onto the island. These assignments are provisional if terrain proves unsuitable; preserve the two-through/one-bridge mix. Verify ship clearance, water depth, walkable collision, entry and exit in Play. A boat remains visible on the game map even under a roof. Built November 5 (delegated; `world_terrain` SEA_* constants, `Cave.berth`, `Cave.exit_path`):
+- Each cavern has a 110 m passage that is widest at the waterline (22 m wide, 29 m roof) and swings 23 m aside and back, so no straight sightline from the sea reaches the 44 × 58 m pool.
+- The formation footprint is unchanged.
+- Plains3 has a walkway along the pool and up through the back (56 m, rising 15 m).
+- Desert3 has a level walkway out the back onto the sand.
+- Jungle3 has a rock ledge looping the pool one and a sixth times up to the plateau (181 m, rising 57 m, about 19°).
+- Verified in Play for the brigantine: entry, a half turn at the berth, and hidden from every sea viewpoint (`verify_cavern_ship_fit_play.py`). A survivor walks out of each berth and back (`verify_cavern_walks_play.py`). The Cavalier's fit stays pending until it is built.
+
+The November 3 full rebuild stopped at `build_saltreach_welcome`: the map failed to load after earlier world steps reported success. The November 4 checkpoint restored a usable prior map and preserved recovery files in `C:\ELITEWAKE\Recovery_20261104_MapSaveFailure`; do not treat the failed result as a playable 20-island rebuild. First inspect map integrity, free space and recovery state. Then fix the smallest reproducible blocker, build and verify cavern access, and use the narrowest safe rebuild steps rather than rerunning hours of terrain by default. Keep generated work and recovery copies. Verify Python, C++, Play, map markers, routes, and screenshots before claiming the world playable. Do not commit or push until the resulting state is coherent and verified.
+
 ## 16. The next correct build order
 
 After cleanup, do not wander across the backlog. Work in this order:

@@ -37,8 +37,13 @@ def main():
     if only:
         steps = [s for s in STEPS if s in only.split(',')]
     done, error = [], None
-    for step in steps:
+    # A progress window in the editor naming each step, so the owner can follow along (owner, November 4). The editor
+    # redraws it only between steps: a long step leaves it, and the window, still until that step ends.
+    task = unreal.ScopedSlowTask(len(steps), 'Rebuilding the world')
+    task.make_dialog(True)
+    for n, step in enumerate(steps, 1):
         began = time.time()
+        task.enter_progress_frame(1, f'Rebuilding the world: step {n} of {len(steps)}, {step}')
         unreal.log(f'EWREBUILD starting {step}')
         try:
             check_map_and_space(MAP_FILE)
@@ -50,6 +55,7 @@ def main():
         RESULT.write_text(json.dumps({'success': False if error else None, 'steps': done, 'error': error}, indent=2))
         if error:
             break
+    del task
     RESULT.write_text(json.dumps({'success': error is None, 'steps': done, 'error': error,
                                   'finished_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}, indent=2))
     unreal.log(f'EWREBUILD finished success={error is None}')

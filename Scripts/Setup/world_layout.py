@@ -39,6 +39,10 @@ PLAINS_AROUND = {'Plains2': (-4480.0, 4340.0), 'Plains3': (-4340.0, -4480.0), 'P
 # They are also the candidate islands for sheltered, ship-accessible sea caverns; the caves need a separate build/test gate.
 CRESCENT_COVES = {'Plains3': (0.48, 0.58, 0.34), 'Desert3': (0.53, 0.54, -0.39),
                    'Jungle3': (0.56, 0.62, 0.42)}  # depth, angular width, offset from the centre-facing bearing
+# The owner's two types of concealed landing. These are production requirements, not a claim that the
+# current closed cave meshes have working exits. Plains3 and Jungle3 need walk-through exits; Desert3
+# needs a covered berth and a safe bridge/walkway onto the nearby island shore.
+SEA_CAVERN_ACCESS = {'Plains3': 'inland_exit', 'Desert3': 'shore_bridge', 'Jungle3': 'inland_exit'}
 # Each region's tallest hill, cm (tuning): several smaller hills spread over each island, never one dominant mountain.
 REGION_PEAKS = {'Plains': 2400.0, 'Winter': 10500.0, 'Swamp': 250.0, 'Desert': 4400.0, 'Jungle': 6400.0}
 
