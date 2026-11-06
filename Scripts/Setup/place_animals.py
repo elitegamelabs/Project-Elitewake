@@ -13,6 +13,7 @@ Run this after build_animals.py to lay the approved populations out across the c
 """
 import json
 import math
+import os
 import random
 import sys
 from pathlib import Path
@@ -21,7 +22,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
-from wildlife_distribution import HABITAT, CLEAR_AGGRESSIVE, CLEAR_PASSIVE, target_counts  # noqa: E402
+from wildlife_distribution import HABITAT, CLEAR_AGGRESSIVE, CLEAR_PASSIVE, missing_counts, target_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 
@@ -51,18 +52,27 @@ def main():
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     assert level.load_level(MAP)
     existing_animals = [actor for actor in actors.get_all_level_actors() if isinstance(actor, unreal.EWAnimal)]
-    # This is a deterministic full-world placement pass. Clear the previous placement so re-running it cannot leave
-    # animals at stale terrain positions or multiply a population.
-    for actor in existing_animals:
-        actors.destroy_actor(actor)
-    existing_animals = []
+    # Owner, November 6: no full rebuilds, so this adds only what each island is missing and leaves every animal already
+    # placed where it is (and the spiders and Plains boars other scripts place). EW_ANIMALS_FRESH=1 clears this script's
+    # own animals first, for a world whose ground has been re-cut under them.
+    if os.environ.get('EW_ANIMALS_FRESH') == '1':
+        for actor in existing_animals:
+            if any(f' {i.key} ' in f' {actor.get_actor_label()} ' for i in W.ISLANDS) and str(actor.get_folder_path()) == LEVEL_FOLDER \
+                    and str(actor.get_editor_property('definition').get_name()) != 'DA_Animal_Spider':
+                actors.destroy_actor(actor)
+        existing_animals = [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWAnimal)]
     targets = W.ISLANDS
     trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
              if isinstance(t, unreal.EWHarvestTree)]
     ground = Ground()
     placed, counts = [], {}
     for island in targets:
-        plan = target_counts(island)
+        here = [a for a in existing_animals if f' {island.key} ' in f' {a.get_actor_label()} ' and a.get_editor_property('definition')]
+        have = {}
+        for a in here:
+            kind = a.get_editor_property('definition').get_name().replace('DA_Animal_', '')
+            have[kind] = have.get(kind, 0) + 1
+        plan = missing_counts(island, have)
         rng = random.Random(sum(map(ord, island.key)) * 6151)
         reach = island.reach()
         near_trees = [(tx, ty) for tx, ty in trees if abs(tx - island.cx) < reach and abs(ty - island.cy) < reach]
@@ -71,7 +81,7 @@ def main():
         # CLAUDE.md 5.7: no 200 m square holds more than 15 % of an island's animals. Refusing a spot whose 200 m box
         # (200 m either way on both axes) already holds that share guarantees it: in any crowded square, the last animal
         # placed would have seen all the others within its box.
-        crowd = max(1, int(SHARE_PER_SQUARE * sum(plan.values())))
+        crowd = max(1, int(SHARE_PER_SQUARE * sum(target_counts(island).values())))
         for name, count in plan.items():
             if count == 0:
                 continue
@@ -98,7 +108,7 @@ def main():
                 made += 1
                 counts[name] = counts.get(name, 0) + 1
                 display = str(definition.get_editor_property('display_name'))
-                animal.set_actor_label(f'{display} {island.key} {made}')
+                animal.set_actor_label(f'{display} {island.key} {have.get(name, 0) + made}')
                 animal.set_folder_path(LEVEL_FOLDER)
                 animal.set_editor_property('definition', definition)
                 animal.set_editor_property('surface_z', T.SEA)

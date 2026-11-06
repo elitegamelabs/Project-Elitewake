@@ -485,9 +485,14 @@ def quadruped(b, fur, spec):
     return b
 
 
-def bear():
+def scaled(b, factor):
+    """The same animal, every dimension times factor."""
+    b.verts = [tuple(c * factor for c in v) for v in b.verts]
+    return b
+
+
+def bear(fur_c=(.012, .01, .009), belly=(.02, .016, .012), muzzle=(.2, .14, .08)):
     b = Builder()
-    fur_c, belly, muzzle = (.012, .01, .009), (.02, .016, .012), (.2, .14, .08)
     fur = lambda q, n: mix(fur_c, belly, max(0.0, -n[2]))   # noqa: E731
     spec = dict(torso=[(88, 0, 58, 22, 24), (70, 0, 70, 30, 34), (40, 0, 74, 36, 38), (0, 0, 70, 36, 36), (-40, 0, 66, 34, 34),
                        (-75, 0, 58, 28, 28), (-92, 0, 52, 10, 10)], hip_z=56, knee_z=30, spread=22, bend=6,
@@ -559,9 +564,8 @@ def boar():
     return b
 
 
-def giant_crocodile():
+def giant_crocodile(top=(.03, .028, .016), side=(.07, .06, .03), belly=(.42, .38, .24)):
     b = Builder()
-    top, side, belly = (.03, .028, .016), (.07, .06, .03), (.42, .38, .24)
 
     def skin(q, n):
         c = shade(n, top, side, belly)
@@ -619,6 +623,134 @@ def elephant():
     return b
 
 
+# ---- Wildlife for every island (November 6) -------------------------------------------------------------------
+# Placeholders in the same lofted style as the animals above, so every island carries its planned wildlife; realistic,
+# rigged replacements arrive in Phase 5 (CLAUDE.md 5.6). Sizes are adults of the real species.
+
+def cervid(b, coat, belly, neck, spec):
+    """A deer-family body: a deep chest on long slender legs and small hooves, the neck carried up and forward, a narrow
+    head with a dark muzzle, upright ears and a short pale-backed tail. spec: (length scale, shoulder height, girth)."""
+    k, h, g = spec
+    fur = lambda q, n: mix(neck if q[0] > 42 * k else coat, belly, max(0.0, -n[2] * 1.5))   # noqa: E731
+    quadruped(b, fur, dict(torso=[(58 * k, 0, h * .92, 13 * g, 18 * g), (42 * k, 0, h * .98, 17 * g, 22 * g),
+                                  (10 * k, 0, h * .95, 17 * g, 21 * g), (-25 * k, 0, h * .94, 16 * g, 19 * g),
+                                  (-52 * k, 0, h * .93, 14 * g, 16 * g), (-62 * k, 0, h * .9, 7 * g, 8 * g)],
+                           hip_z=h * .86, knee_z=h * .45, spread=9 * g, bend=4 * k, thigh=6 * g, paw=2.6 * g, reach=3 * k,
+                           pad=(.02, .016, .012), legs=[(42 * k, 1, FL), (42 * k, -1, FR), (-46 * k, 1, BL), (-46 * k, -1, BR)]))
+    path, _ = stations([(56 * k, 0, h * .98, 0, 0), (70 * k, 0, h * 1.18, 0, 0), (78 * k, 0, h * 1.36, 0, 0)], 3)
+    tube(b, path, lambda j: (11 - 4 * j / len(path)) * g, lambda q, n, j: fur(q, n), HEAD,
+         lambda q, j: .5 + .5 * j / len(path), 14)
+    body(b, [(74 * k, 0, h * 1.42, 7 * g, 8 * g), (86 * k, 0, h * 1.38, 6 * g, 6.5 * g), (100 * k, 0, h * 1.3, 3.5 * g, 4 * g),
+             (104 * k, 0, h * 1.28, 2.6 * g, 3 * g)], lambda q, n: (.03, .025, .02) if q[0] > 97 * k else fur(q, n), HEAD,
+         lambda q, j: 1.0, 14)
+    for y in (1, -1):
+        ball(b, (86 * k, 5.5 * g * y, h * 1.43), (1.6, 1.0, 1.4), lambda q, n: (.01, .008, .006), HEAD, 1.0, 8)
+        ball(b, (74 * k, 7 * g * y, h * 1.5), (2.2, 4.5, 7), lambda q, n: fur(q, n), HEAD, 1.0, 10)
+    ball(b, (-62 * k, 0, h * .9), (4 * k, 4 * g, 6 * g), lambda q, n: (.5, .47, .42) if n[0] < 0 else coat, TAIL, .5, 10)
+    return b
+
+
+def antlers(b, head_x, head_z, size):
+    """A pair of swept-back branching antlers (both sexes carry them in caribou)."""
+    tone = lambda q, n, j: (.2, .16, .11)   # noqa: E731
+    for y in (1, -1):
+        beam = [(head_x, 4 * y, head_z), (head_x - 6 * size, 14 * y * size, head_z + 22 * size),
+                (head_x - 4 * size, 20 * y * size, head_z + 48 * size), (head_x + 8 * size, 16 * y * size, head_z + 66 * size),
+                (head_x + 20 * size, 10 * y * size, head_z + 70 * size)]
+        path, _ = stations([(x, yy, z, 0, 0) for x, yy, z in beam], 3)
+        tube(b, path, lambda j: 2.4 - 1.4 * j / len(path), tone, HEAD, lambda q, j: 1.0, 8)
+        for i in (1, 2, 3):
+            bx, by, bz = beam[i]
+            path, _ = stations([(bx, by, bz, 0, 0), (bx + 12 * size, by * .9, bz + 10 * size, 0, 0)], 2)
+            tube(b, path, lambda j: 1.4 - .6 * j / len(path), tone, HEAD, lambda q, j: 1.0, 6)
+        path, _ = stations([(head_x + 2, 5 * y, head_z + 6, 0, 0), (head_x + 14 * size, 6 * y, head_z + 14 * size, 0, 0)], 2)
+        tube(b, path, lambda j: (2.6, 1.2), tone, HEAD, lambda q, j: 1.0, 6)    # the brow tine over the face
+
+
+def deer():
+    """Red deer hind (Plains): about 190 cm long, 110 cm at the shoulder, red-brown with a paler belly."""
+    return cervid(Builder(), (.2, .1, .045), (.42, .34, .24), (.17, .09, .04), (1.0, 110.0, 1.0))
+
+
+def caribou():
+    """Caribou (Winter): about 210 cm long, 120 cm at the shoulder, dark brown with a creamy neck and tall swept antlers."""
+    b = cervid(Builder(), (.11, .08, .055), (.5, .47, .4), (.48, .45, .38), (1.1, 120.0, 1.15))
+    antlers(b, 78 * 1.1, 120 * 1.5, 1.0)
+    return b
+
+
+def wolf():
+    """Grey wolf (Plains' deep wood, Winter): about 150 cm nose to rump, 80 cm at the shoulder, grizzled grey with a pale
+    belly, a long muzzle, upright ears and a bushy tail."""
+    b = Builder()
+    back, side, belly = (.09, .085, .075), (.2, .18, .15), (.5, .47, .4)
+    fur = lambda q, n: mix(mix(side, back, max(0.0, n[2]) * 1.4), belly, max(0.0, -n[2] * 1.6))   # noqa: E731
+    quadruped(b, fur, dict(torso=[(50, 0, 62, 11, 15), (36, 0, 65, 14, 19), (5, 0, 62, 13, 16), (-25, 0, 60, 12, 14),
+                                  (-46, 0, 60, 11, 13), (-55, 0, 60, 6, 7)],
+                           hip_z=56, knee_z=28, spread=8, bend=5, thigh=5.5, paw=3.4, reach=6, pad=(.03, .028, .025),
+                           legs=[(36, 1, FL), (36, -1, FR), (-42, 1, BL), (-42, -1, BR)]))
+    path, _ = stations([(48, 0, 66, 0, 0), (62, 0, 74, 0, 0)], 3)
+    tube(b, path, lambda j: 11 - 2 * j / len(path), lambda q, n, j: fur(q, n), HEAD, lambda q, j: .6 + .4 * j / len(path), 14)
+    ball(b, (68, 0, 76), (11, 9, 9), lambda q, n: fur(q, n), HEAD, 1.0)
+    body(b, [(74, 0, 74, 6, 6), (86, 0, 71, 4.2, 4.4), (96, 0, 69, 2.6, 3)], lambda q, n: belly if n[2] < 0 else fur(q, n),
+         HEAD, lambda q, j: 1.0, 12, steps=2)
+    ball(b, (97, 0, 69.5), (1.8, 2.2, 1.8), lambda q, n: (.01, .01, .01), HEAD, 1.0, 8)
+    for y in (1, -1):
+        ball(b, (78, 5 * y, 79), (1.5, 1.0, 1.0), lambda q, n: (.3, .22, .05), HEAD, 1.0, 8)
+        ball(b, (65, 6 * y, 88), (2.0, 3.0, 6.0), lambda q, n: back, HEAD, 1.0, 10)
+    body(b, [(-54, 0, 60, 4, 4), (-66, 0, 52, 6, 6), (-78, 0, 42, 6, 6), (-86, 0, 34, 3, 3)],
+         lambda q, n: back if q[0] < -82 else fur(q, n), TAIL, lambda q, j: .6, 10, steps=2)
+    return b
+
+
+def hare():
+    """Brown hare (Plains, Winter): about 55 cm long, long black-tipped ears, long hind feet and a white scut."""
+    b = Builder()
+    coat, belly = (.18, .13, .08), (.45, .4, .32)
+    fur = lambda q, n: mix(coat, belly, max(0.0, -n[2] * 1.5))   # noqa: E731
+    body(b, [(20, 0, 22, 5, 6), (14, 0, 22, 8, 9), (0, 0, 21, 9, 10), (-12, 0, 21, 9, 10), (-20, 0, 19, 5, 6)], fur, BODY)
+    for x, y, part, foot in ((12, 1, FL, 1), (12, -1, FR, 1), (-12, 1, BL, 9), (-12, -1, BR, 9)):
+        limb(b, [(x, 5 * y, 18), (x + 2, 5 * y, 8), (x, 5 * y, 1)], 2.6 if x > 0 else 4.2, 1.4, fur, part, 18)
+        limb(b, [(x, 5 * y, .8), (x + foot + 2, 5 * y, .6)], (1.8, .8), (1.4, .6), fur, part, 18)
+    ball(b, (25, 0, 26), (6.5, 4.5, 5), fur, HEAD, 1.0)
+    for y in (1, -1):
+        ball(b, (27, 3.6 * y, 28), (1.2, .7, 1.1), lambda q, n: (.02, .015, .01), HEAD, 1.0, 8)
+        path, _ = stations([(21, 2.2 * y, 30, 0, 0), (18, 3.0 * y, 38, 0, 0), (15, 3.6 * y, 46, 0, 0)], 3)
+        tube(b, path, lambda j: (2.0, .7), lambda q, n, j: (.02, .02, .02) if q[2] > 43 else coat, HEAD, lambda q, j: 1.0, 8)
+    ball(b, (-21, 0, 21), (3, 3, 3), lambda q, n: (.7, .68, .64), TAIL, .5, 8)
+    return b
+
+
+def snake():
+    """A blotched brown snake about 130 cm long: the snake of the Swamp, Desert and Jungle islands."""
+    b = Builder()
+    sand, brown, belly = (.3, .22, .12), (.09, .05, .025), (.45, .4, .3)
+
+    def scales(q, n):
+        if n[2] < -.35:
+            return belly
+        blot = .5 + .5 * math.sin(q[0] * .5)
+        return mix(sand, brown, (blot ** 3) * (1.0 if abs(n[1]) < .8 else .4))
+
+    pts = [(64, 0, 3.0, 2.4, 1.6), (59, 0, 3.4, 4.0, 2.6), (53, 0, 3.8, 4.2, 3.0), (47, 0, 3.8, 3.4, 3.0),
+           (30, 0, 4.0, 4.0, 3.6), (0, 0, 4.4, 4.6, 4.0), (-25, 0, 4.0, 4.2, 3.6), (-45, 0, 3.0, 2.6, 2.4), (-62, 0, 2.2, .5, .5)]
+    path, radii = stations(pts, 5)
+    tube(b, path, lambda j: radii[j], lambda q, n, j: scales(q, n), SNAKE, lambda q, j: 1.0, 16)
+    for y in (1, -1):
+        ball(b, (57, 3.2 * y, 4.6), (1.0, .7, .9), lambda q, n: (.05, .03, .01), SNAKE, 1.0, 8)
+    return b
+
+
+def polar_bear():
+    """Polar bear (Winter's ice): the black bear's build a quarter larger, creamy white with a black nose."""
+    return scaled(bear(fur_c=(.62, .6, .52), belly=(.5, .48, .4), muzzle=(.6, .58, .5)), 1.25)
+
+
+def crocodile():
+    """Crocodile (the Swamp's edges): the giant crocodile's build at about 440 cm, a greyer olive."""
+    return scaled(giant_crocodile(top=(.05, .05, .03), side=(.11, .1, .06), belly=(.45, .42, .3)), .65)
+
+
 # Name, display, builder, size (length, height), stride, gait (0 four legs, 1 two legs, 2 snake), animation
 # (swing, lift, bob, tail sway, nod, snake amplitude, wave), surface (scales, scale size, fur, mottle, roughness),
 # Neutral kinds: never start a fight, but defend themselves when struck instead of fleeing (UEWAnimalDefinition::bDefendsItself).
@@ -665,7 +797,32 @@ ANIMALS = {
     'SquirrelMonkey': dict(display='Squirrel Monkey', build=squirrel_monkey, size=(64, 44), stride=30, gait=0,
                            anim=(7, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
                            behave=(False, 90, 480, 220, 900, 0, 0, 0, 1, 0, '', 35), yield_=(2, 5), live=('trees', 3, 3)),
+    # November 6: wildlife for every island (placed by place_animals.py from wildlife_distribution.py). All tuning.
+    'Deer': dict(display='Red Deer', build=deer, size=(175, 170), stride=85, gait=0,
+                 anim=(16, 6, 1.4, 2, 2, 0, 1), surface=(0, 1, .4, .12, .85),
+                 behave=(False, 80, 800, 180, 1200, 0, 0, 0, 1, 0, '', 90), yield_=(5, 8), live=('world', 0, 0)),
+    'Caribou': dict(display='Caribou', build=caribou, size=(190, 190), stride=95, gait=0,
+                    anim=(17, 6, 1.3, 2, 2, 0, 1), surface=(0, 1, .5, .12, .9),
+                    behave=(False, 75, 700, 150, 1400, 30, 0, 0, 1, 0, '', 140), yield_=(8, 12), live=('world', 0, 0)),
+    # A pack hunter: it goes for a survivor within 9 m; a sprinting survivor (750 cm/s) just outruns it.
+    'Wolf': dict(display='Grey Wolf', build=wolf, size=(185, 95), stride=70, gait=0,
+                 anim=(15, 6, 1.2, 5, 2, 0, 1), surface=(0, 1, .6, .14, .9),
+                 behave=(True, 85, 680, 150, 1100, 0, 900, 14, 1.3, 70, 'bite', 120), yield_=(3, 5), live=('world', 0, 0)),
+    'Hare': dict(display='Hare', build=hare, size=(55, 46), stride=30, gait=0,
+                 anim=(10, 7, 2.0, 0, 1, 0, 1), surface=(0, 1, .5, .1, .9),
+                 behave=(False, 60, 650, 260, 600, 0, 0, 0, 1, 0, '', 20), yield_=(1, 2), live=('world', 0, 0)),
+    'Snake': dict(display='Snake', build=snake, size=(126, 10), stride=45, gait=2,
+                  anim=(0, 0, 0, 0, 0, 7, 45), surface=(.35, 1.3, 0, .15, .45),
+                  behave=(True, 35, 180, 90, 500, 0, 300, 10, 2.0, 45, 'bite', 30), yield_=(1, 3), live=('world', 0, 0)),
+    'PolarBear': dict(display='Polar Bear', build=polar_bear, size=(300, 140), stride=110, gait=0,
+                      anim=(16, 5, 1.2, 3, 2, 0, 1), surface=(0, 1, .6, .08, .9),
+                      behave=(True, 85, 560, 90, 1300, 60, 800, 30, 1.6, 110, 'swipe', 450), yield_=(10, 14), live=('world', 0, 0)),
+    'Crocodile': dict(display='Crocodile', build=crocodile, size=(440, 60), stride=100, gait=0,
+                      anim=(20, 6, .7, 8, 0, 0, 1), surface=(.3, 4.0, 0, .25, .55),
+                      behave=(True, 75, 380, 60, 1000, 80, 750, 30, 2.0, 110, 'bite', 450), yield_=(8, 12), live=('world', 0, 0)),
 }
+# The species added on November 6: add_wildlife_species.py builds only these, so the others keep their generated models.
+NEW_SPECIES = ('Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile')
 
 
 # ---- Material -----------------------------------------------------------------------------------------------
@@ -782,11 +939,15 @@ def data_asset(name, cls):
     return asset
 
 
-def build_definitions(meat):
+def build_definitions(meat, only=None):
+    """Every animal's material instance, model and definition; only those named in `only` when given, keeping the shared
+    material as it is and the other animals' models (some are generated: apply_generated_animals.py)."""
     mel = unreal.MaterialEditingLibrary
-    base = animal_material()
+    base = (only and unreal.load_asset(f'{FOLDER}/M_Animal_v1')) or animal_material()
     defs = {}
     for name, a in ANIMALS.items():
+        if only and name not in only:
+            continue
         mi = unreal.load_asset(f'{FOLDER}/MI_{name}_v1') or unreal.AssetToolsHelpers.get_asset_tools().create_asset(
             f'MI_{name}_v1', FOLDER, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
         mel.set_material_instance_parent(mi, base)
@@ -835,7 +996,7 @@ def place(actors, defs, ground, trees):
     taken, placed = [], []
     for name, a in ANIMALS.items():
         kind, *counts = a['live']
-        if kind in ('cave', 'plains'):
+        if kind in ('cave', 'plains', 'world'):
             continue      # cave and swamp spiders: add_spiders.py; the Plains boars: build_plains_threat.py
         aggressive = a['behave'][0]
         radius = max(a['size'][1] * .5, a['size'][0] * .3, 15.0)

@@ -47,6 +47,8 @@ def main():
         unreal.log(f'EWREBUILD starting {step}')
         try:
             check_map_and_space(MAP_FILE)
+            if step == 'place_animals':
+                os.environ['EW_ANIMALS_FRESH'] = '1'     # the ground was re-cut under the animals: lay them out afresh
             runpy.run_path(str(HERE / f'{step}.py'), run_name='__main__')
             check_map_and_space(MAP_FILE)
         except BaseException as failure:   # an assert or SystemExit stops the rebuild where it failed

@@ -30,6 +30,14 @@ class WildlifeDistributionTests(unittest.TestCase):
         self.assertIn('Elephant', D.target_counts(W.island('Jungle4')))
         self.assertNotIn('SquirrelMonkey', D.target_counts(W.island('Starter')), 'monkeys belong in the Jungle')
 
+    def test_every_island_carries_wildlife(self):
+        """November 6: no island is empty of land animals (spiders are placed apart, in caves)."""
+        for island in W.ISLANDS:
+            self.assertTrue(D.target_counts(island), f'{island.key} has no animals planned')
+        self.assertIn('PolarBear', D.target_counts(W.island('Winter4')))
+        self.assertIn('Caribou', D.target_counts(W.island('Winter2')))
+        self.assertIn('Crocodile', D.target_counts(W.island('Swamp4')))
+
     def test_population_deficits_are_idempotent(self):
         island = W.island('Swamp2')
         self.assertEqual(D.missing_counts(island, {}), D.target_counts(island))

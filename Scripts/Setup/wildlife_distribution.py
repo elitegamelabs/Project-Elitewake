@@ -13,13 +13,18 @@ from world_islands import ISLANDS as PLAN, REGION_SPECIES  # noqa: E402
 
 # The animals built today (Content/Elitewake/Wildlife/Animals/DA_Animal_*). Spiders are placed by add_spiders.py.
 EXISTING = {'Alligator', 'Bear', 'Boar', 'Cottonmouth', 'Elephant', 'Flamingo', 'GiantCrocodile', 'Lion', 'Pelican',
-            'SquirrelMonkey', 'Tortoise'}
+            'SquirrelMonkey', 'Tortoise',
+            # November 6: so every island carries wildlife (build_animals.NEW_SPECIES)
+            'Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile'}
 # How many of each species an island carries (tuning): herds, prides and flocks at a believable size for about 2.5 km2.
 PER_SPECIES = {'Alligator': 10, 'Bear': 3, 'Boar': 8, 'Cottonmouth': 10, 'Elephant': 6, 'Flamingo': 10, 'GiantCrocodile': 1,
-               'Lion': 4, 'Pelican': 10, 'SquirrelMonkey': 16, 'Tortoise': 8}
+               'Lion': 4, 'Pelican': 10, 'SquirrelMonkey': 16, 'Tortoise': 8,
+               'Deer': 12, 'Caribou': 12, 'Wolf': 5, 'Hare': 10, 'Snake': 8, 'PolarBear': 3, 'Crocodile': 4}
 HABITAT = {'Alligator': 'low', 'Cottonmouth': 'low', 'SquirrelMonkey': 'trees', 'Tortoise': 'inland',
            'Flamingo': 'shore', 'Pelican': 'shore', 'Bear': 'inland', 'Lion': 'inland', 'GiantCrocodile': 'low',
-           'Elephant': 'inland', 'Boar': 'inland'}
+           'Elephant': 'inland', 'Boar': 'inland',
+           'Deer': 'inland', 'Caribou': 'inland', 'Wolf': 'inland', 'Hare': 'inland', 'Snake': 'inland', 'PolarBear': 'inland',
+           'Crocodile': 'low'}
 # Wildlife keeps clear of people (CLAUDE.md 5.6): cm from safe landings and villages.
 CLEAR_PASSIVE, CLEAR_AGGRESSIVE = 15000.0, 25000.0
 
