@@ -4,6 +4,7 @@
 #include "EWPlayerController.h"
 #include "EWItemSpawnerWidget.h"
 #include "EWItemDefinition.h"
+#include "EWEquipmentComponent.h"
 #include "Engine/AssetManager.h"
 #include "EWCrewMaster.h"
 #include "Misc/App.h"
@@ -58,6 +59,7 @@
 #include "EWArrivalComponent.h"
 #include "World/EWStrongbox.h"
 #include "Gathering/EWHarvestTree.h"
+#include "Gathering/EWForest.h"
 #include "Gathering/EWMineable.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
@@ -403,6 +405,13 @@ void AEWPlayerController::ServerAttack_Implementation(AActor* Target, int32 Vari
     if (InteractionComponent->IsMenuBlocked() || InteractionComponent->GetHoldState().Target) return;
     LastHarvestAttackTime = Now;
     // The swing the server shows is the one its tool and target call for, whatever the client sent.
+    // A forest's tree (AEWForest) becomes a harvestable tree when a hatchet first meets it, then works like any other.
+    if (auto* Forest = Cast<AEWForest>(Target))
+    {
+        const UEWItemDefinition* Tool = Survivor->GetEquipmentComponent() ? Survivor->GetEquipmentComponent()->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+        if (Tool && Tool->GatheringTool == EEWGatheringTool::Hatchet)
+            if (AEWHarvestTree* Promoted = Forest->PromoteAimed(Survivor)) Target = Promoted;
+    }
     const int32 Kind = Survivor->SwingKindAt(Target);
     Survivor->BroadcastAttack((Variant & ~3) | Kind);
     auto* Tree = Cast<AEWHarvestTree>(Target);

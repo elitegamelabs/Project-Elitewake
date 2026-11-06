@@ -44,6 +44,7 @@
 #include "World/EWClimateRegion.h"
 #include "Gathering/EWMineable.h"
 #include "Gathering/EWHarvestTree.h"
+#include "Gathering/EWForest.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimSequenceBase.h"
 
@@ -1404,7 +1405,7 @@ int32 AEWCharacter::SwingKindAt(const AActor* Target) const
 {
     const UEWItemDefinition* Tool = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
     if (!Tool || !Target) return 0;
-    if (Tool->GatheringTool == EEWGatheringTool::Hatchet && Target->IsA<AEWHarvestTree>()) return 1;
+    if (Tool->GatheringTool == EEWGatheringTool::Hatchet && (Target->IsA<AEWHarvestTree>() || Target->IsA<AEWForest>())) return 1;
     if (Tool->GatheringTool == EEWGatheringTool::Pickaxe && Target->IsA<AEWMineable>()) return 2;
     return 0;
 }

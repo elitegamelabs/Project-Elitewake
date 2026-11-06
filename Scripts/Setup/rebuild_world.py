@@ -26,7 +26,7 @@ from rebuild_safety import check_map_and_space  # noqa: E402
 RESULT = Path(unreal.Paths.project_saved_dir(), 'WorldRebuildResult.json')
 MAP_FILE = Path(unreal.Paths.project_content_dir(), 'Elitewake', 'Maps', 'Lvl_CoastalPlayground.umap')
 STEPS = ['build_coastal_terrain', 'build_caves', 'build_cave_webs', 'build_landmarks', 'build_grass', 'build_coastal_flora',
-         'build_coastal_rocks', 'build_seabed_life', 'build_fish', 'place_animals', 'add_spiders', 'build_crystals', 'build_regions',
+         'build_coastal_rocks', 'build_forests', 'build_seabed_life', 'build_fish', 'place_animals', 'add_spiders', 'build_crystals', 'build_regions',
          'build_ports', 'add_port_merchants', 'build_freeport', 'build_saltreach_welcome', 'restore_sloop', 'build_voyage_ready',
          'build_arrival', 'build_first_resources', 'build_plains_threat', 'tune_rendering', 'clear_climbouts']
 

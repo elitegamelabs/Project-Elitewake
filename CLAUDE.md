@@ -933,6 +933,23 @@ Owner, November 6: two rules replace earlier ones.
 
 Wildlife on every island (November 6). Seven placeholder species were added in the existing lofted style: red deer, caribou, grey wolf, hare, snake, polar bear and crocodile (`build_animals.NEW_SPECIES`, built by `add_wildlife_species.py` without a rebuild). There are now 337 animals, and every island carries land animals from its own region. `place_animals.py` now only adds what each island is missing. Verified in Play: the census, and one of each new species standing on the ground and moving (`verify_wildlife_islands_play.py`). Still missing: wild horse, wading birds, mountain goat, fox, eagle, seal, walrus, heron, turtle, otter, frog, gazelle, scorpion, vulture, jackal, oryx, parrot, tapir, jaguar and monkey. Every animal is still a rigid placeholder (Phase 5); visual review pending.
 
+Forests (owner, November 6: dense, strategically placed forests with lots of bushes and plenty of open ground; every tree its own size, thickness, shape and kind). Built November 6:
+- 231,505 trees in stands with clearings and meadows between, about 40–50% of each island's land (80% in the Jungle), with lone trees in the open. The Desert has palm groves near the shore. Trunks stand at least 5 m apart.
+- Species mix per region (`forest_plan.MIX`): Plains oak with ash and birch; Winter birch and spruce; Swamp spruce and ash; Desert palm; Jungle ash and maravai. Six models per species.
+- Each tree has its own age (saplings to giants), girth, height, lean and turn.
+- 177,567 walk-through bushes, thickest along forest edges.
+- Planned offline by `forest_plan.py` (all cores, about 3 minutes) and placed by `build_forests.py` without a world rebuild. They live in the always-loaded sublevel `Lvl_CoastalPlayground_Forests` (`world_sublevels.py`): GitHub's large-file storage refuses any file over 2 GB, and the map itself is 2.07 GB. World Partition is the lasting fix, with the streaming work. The old one-actor island trees are gone (`build_coastal_flora.ISLAND_TREES = False`); the starter keeps its own authored oaks.
+- Each stand is an `AEWForest` (C++), instanced and cheap. A hatchet's first blow turns the tree into an ordinary `AEWHarvestTree`, which works, falls and fades as before. The stand regrows the tree after 20 minutes if its place is clear. Felled forest trees are not saved yet: a reload regrows them.
+- Verified in Play (`verify_forests_play.py`): the census, a chop that gives wood and leaves the forest tree down, and screenshots in each region. Cost measured by `diagnose_forest_cost_play.py` on the RTX 4070 in a dense Plains stand: 25.4 ms per frame with forests, 20.2 ms without. The GTX 1660 Super is not measured yet. Placeholder tree art; visual review pending.
+
+Ice sheets (owner, November 6: different sheets of ice around the Winter mountains only, like the real Arctic, as tall as the nearest cliff or landing; the ice is solid; not literal blocks). Built November 6:
+- 41 separate sheets around the Winter mountains (Winter1 9, Winter2 8, Winter3 10, Winter4 14), each 0.7–5.5 ha and longer down the slope than across.
+- Each sheet's surface is the slope smoothed and raised by a thickness near the height of the nearest cliff or bank (12–45 m). A high rock can poke through. Each ends in a steep ice wall, about 70°, too steep to climb.
+- Shapes come from `glacier_shapes.py`; `build_glaciers.py` makes one mesh per sheet, in the forests' sublevel.
+- Material: blue ice and crevasses on the walls, snow on the tops.
+- Full collision. Trees, bushes, rocks, plants and animals under the ice were removed.
+- Verified in Play (`verify_ice_play.py`): on each Winter island a survivor walking at a wall is stopped and one dropped on top stands on the ice. Visual review pending.
+
 The November 3 full rebuild stopped at `build_saltreach_welcome`: the map failed to load after earlier world steps reported success. The November 4 checkpoint restored a usable prior map and preserved recovery files in `C:\ELITEWAKE\Recovery_20261104_MapSaveFailure`; do not treat the failed result as a playable 20-island rebuild. First inspect map integrity, free space and recovery state. Then fix the smallest reproducible blocker, build and verify cavern access, and use the narrowest safe rebuild steps rather than rerunning hours of terrain by default. Keep generated work and recovery copies. Verify Python, C++, Play, map markers, routes, and screenshots before claiming the world playable. Do not commit or push until the resulting state is coherent and verified.
 
 ## 16. The next correct build order

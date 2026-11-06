@@ -107,6 +107,7 @@ RECIPES = {'Plains': dict(trees={'Oak': 0.8}, groups=True, plants=(0.45, 0.3, 0.
            'Winter': dict(trees={'Birch': 2.0}, groups=False, plants=(0.15, 0.3, 0.12)),
            'Jungle': dict(trees={'Ash': 4.0, 'Maravai': 0.5}, groups=False, plants=(0.5, 0.4, 0.25)),
            'Swamp': dict(trees={'Spruce': 2.2}, groups=True, plants=(0.7, 0.3, 0.15))}
+ISLAND_TREES = False   # the one-actor island trees, replaced by build_forests.py (November 6)
 MAX_TREES = 800        # per island and kind (the five-island world's islands are about 2 km across; tuning)
 MAX_BY_KIND = {'Maravai': 120}      # the jungle's secondary tree stays a minority beside its Ash
 MAX_PLANTS = 220       # of each kind per island
@@ -879,7 +880,9 @@ def main():
     kinds = {'Veyran Palm': (meshes, PALM_SCALE, 26.0, 160.0, 8), 'Maravai': (broadleaf, MARAVAI_SCALE, 38.0, 220.0, 12),
              'Birch': (birches, BIRCH_SCALE, 20.0, 220.0, 10), 'Spruce': (spruces, SPRUCE_SCALE, 30.0, 260.0, 12),
              'Oak': (oaks, OAK_SCALE, 52.0, 220.0, 12), 'Ash': (ashes, ASH_SCALE, 30.0, 260.0, 12)}
-    whites, dressed = dress_islands(actors, ground, kinds, wood, thatch)
+    # November 6: the islands' trees are forests now (build_forests.py, instanced stands); this script keeps the starter's
+    # own oaks and the gatherable plants.
+    whites, dressed = dress_islands(actors, ground, kinds, wood, thatch) if ISLAND_TREES else ([], {})
     plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials, whites)
     assert level.save_current_level()
     report = {'success': True, 'starter_palms': len(placed), 'starter_oaks': len(hardwoods), 'islands': dressed,
