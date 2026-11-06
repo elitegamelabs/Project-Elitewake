@@ -872,12 +872,27 @@ class Climb:
         return h + (z - h) * w
 
 
+# Rock steps out of Saltreach's harbour (owner, November 6: "Yes, add steps"). The harbour's left side is a 250 m straight wall
+# running out to sea from the town, with 16-25 m of water against its middle (its ends have shallow ways out). Its depths are
+# kept for the piers, so instead of building out into the channel the steps are cut into the headland: a 14 m inlet with a 10
+# degree ramp from 2.3 m under water at the wall's face, a level landing, then the short climb onto the headland. Points in
+# the Port's frame, (along, across) cm: 150 m out from the town's middle, the wall's face at about 30 m across.
+HARBOUR_STEPS = [((15000.0, -4400.0), (15000.0, -5200.0))]
+
+
+def harbour_steps():
+    """The harbour's rock steps as climb-out paths in world (x, y)."""
+    port = W.PORTS['Plains']
+    return [[port.world(a, c) for a, c in path] for path in HARBOUR_STEPS]
+
+
 def _climb_index(climb_outs=None):
     if climb_outs is None:
         try:
-            from world_climbouts import CLIMB_OUTS as climb_outs
+            from world_climbouts import CLIMB_OUTS
         except ImportError:
-            return {}
+            CLIMB_OUTS = {}
+        climb_outs = dict(CLIMB_OUTS, Saltreach=harbour_steps())
     index = {}
     for climbs in climb_outs.values():
         for points in climbs:

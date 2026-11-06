@@ -19,6 +19,10 @@ from world_climbouts import CLIMB_OUTS  # noqa: E402
 
 
 def _along(climb, u):
+    if u < climb.start[1]:
+        (ax, ay), (bx, by) = climb.line[0], climb.line[1]
+        t = (u - climb.start[0]) / (climb.start[1] - climb.start[0])
+        return ax + t * (bx - ax), ay + t * (by - ay)
     for k, (a, b) in enumerate(zip(climb.line, climb.line[1:])):
         if climb.start[k] <= u <= climb.start[k + 1]:
             t = (u - climb.start[k]) / (climb.start[k + 1] - climb.start[k])
@@ -72,12 +76,23 @@ class StarterShoreTests(unittest.TestCase):
 
 class ClimbOutTests(unittest.TestCase):
 
+    def test_harbour_steps_leave_the_piers_water_alone(self):
+        """Saltreach's rock steps are cut into the headland: nothing changes more than 7 m out from the wall into the channel,
+        and the ground under the piers and berths is as it was."""
+        port = W.PORTS['Plains']
+        for a in range(3000, 11001, 500):
+            for c in range(-1500, 4001, 500):
+                x, y = port.world(a, c)
+                self.assertEqual(T.height(x, y), T.height_shaped(x, y), f'harbour ground changed at ({a / 100:.0f}, {c / 100:.0f}) m')
+
     def test_paths_rise_gently_from_the_water(self):
-        for key, paths in CLIMB_OUTS.items():
+        for key, paths in dict(CLIMB_OUTS, Saltreach=T.harbour_steps()).items():
             for points in paths:
                 climb = T.Climb(points)
                 fx, fy = climb.points[0]
                 foot = T.height(fx, fy)
+                ramp = T.height(*_along(climb, -700.0))      # 7 m out, on the ramp: shallow enough to stand
+                self.assertLessEqual(T.SEA - ramp, C.WADE, f'{key}: the ramp 7 m out is {T.SEA - ramp:.0f} cm deep')
                 self.assertLessEqual(foot - T.SEA, C.STEP_OUT, f'{key}: foot at ({fx}, {fy}) stands too high')
                 u, prev = 0.0, foot
                 while u + 300 <= climb.length:

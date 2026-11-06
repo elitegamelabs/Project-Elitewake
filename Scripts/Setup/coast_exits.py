@@ -6,10 +6,10 @@ climb-out points; a swimmer should never be stuck against a steep shore). Plain 
 On the island mesh's own grid (world_terrain.GRIDS, the heights the game's ground has): dry ground is walkable between
 neighbouring vertices up to WALKABLE degrees (under the character's 44.76 degree floor, because the mesh's triangles run
 steeper than its grid edges; the in-game walk of November 5 stalled on 45-51 degree faces where the edges read 44). A
-swimmer climbs out where a bank vertex stands no more than STEP_OUT above the sea and joins the island's main walkable
-ground. Every sea vertex along the coast must lie within EXIT_SWIM of such a climb-out, swimming. Inland ponds,
-Saltreach's harbour (its piers have ladders and a slipway) and the sea caverns' pools (their walkways are checked in
-Play) are not part of this test.
+swimmer climbs out where a bank vertex stands no more than STEP_OUT above the sea, with water no deeper than WADE beside it,
+and joins the island's main walkable ground. Every sea vertex along the coast must lie within EXIT_SWIM of such a climb-out, swimming. Inland ponds,
+and the sea caverns' pools (their walkways are checked in Play) are not part of this test. Saltreach's harbour is (November 6:
+its piers' ladders are not climbable, so it is held to the same rule; its rock steps are world_terrain.HARBOUR_STEPS).
 
 The planner (DECIDED, November 5, delegated): while any of an island's coast is trapped, it takes the farthest-trapped
 stretch and traces climb-outs (world_terrain.Climb, `trace`) from its middle and the coast round it, setting off from
@@ -35,9 +35,10 @@ import world_terrain as T  # noqa: E402
 
 WALKABLE = 38.0          # degrees between grid vertices
 STEP_OUT = 45.0          # cm: the character's step
+WADE = 120.0             # cm: the deepest water beside a way out (a swimmer's feet must find the bottom: a swimming character
+                         # never steps up, so on November 5 a 20 cm landing with deep water in front could not be climbed)
 EXIT_SWIM = 15000.0      # cm: the farthest a swimmer along any coast should have to swim to a climb-out: a minute at 2.5 m/s (tuning)
 BAND = 9000.0            # cm either side of the shore that the test looks at (the main ground is joined through it)
-HARBOUR = 25000.0        # cm round a Port's middle left to its piers' ladders and slipway
 CLIMB_MAX = 40000.0      # cm: the longest climb-out
 CLIMB_CUT = 10000.0      # cm: the deepest cut along a climb-out's line (a ravine into a sheer plateau rim, where no ledge fits)
 CLIMB_FILL = 800.0       # cm: the most it may be built up (a buttressed ledge across a sheer face)
@@ -147,7 +148,6 @@ class Coast:
     def _coast(self):
         h, n = self.h, len(self.h)
         caves = [c for c in T.CAVES.values() if c and c.island is self.island and c.kind == 'sea']
-        port = W.port_on(self.island)
         self.exit = bytearray(n)
         self.coast = []
         for k in range(n):
@@ -157,14 +157,12 @@ class Coast:
             for m, _ in self.neighbours(k):
                 if h[m] >= T.SEA:
                     near_land = True
-                    if self.comp[m] in self.main and h[m] - T.SEA <= STEP_OUT:
+                    if self.comp[m] in self.main and h[m] - T.SEA <= STEP_OUT and T.SEA - h[k] <= WADE:
                         self.exit[k] = 1
             if not near_land:
                 continue
             x, y = self.xy(k)
             if any(c.inside(x, y) and c.local(x, y)[0] >= 0 for c in caves):
-                continue
-            if port and math.hypot(x - port.cx, y - port.cy) < HARBOUR:
                 continue
             self.coast.append(k)
 

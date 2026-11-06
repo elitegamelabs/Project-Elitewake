@@ -12,7 +12,8 @@ skipped). A failed path records what stands in front of the survivor and a scree
 separated list of names ("Jungle4 climb-out 1") to run just those. Run with run_play_check.py, one player:
     .\\Scripts\\Verification\\run_play_check_once.ps1 -Check verify_climbouts_play.py -Result ClimbOutsPlayResult.json
         -Players 1 -Timeout 3600 -Visible
-Writes Saved/ClimbOutsPlayResult.json and two screenshots per path in Saved/Screenshots/ClimbOuts.
+Saltreach's rock steps (world_terrain.HARBOUR_STEPS) are walked like any climb-out (the shipyard slipway is not a way out:
+on November 6 a swimmer stuck halfway up its rails and sleepers). Writes Saved/ClimbOutsPlayResult.json and two screenshots per path in Saved/Screenshots/ClimbOuts.
 """
 import json
 import math
@@ -54,8 +55,9 @@ def densify(points, step=100.0):
 
 def jobs():
     out = []
-    for key in sorted(CLIMB_OUTS):
-        for n, points in enumerate(CLIMB_OUTS[key]):
+    paths = dict(CLIMB_OUTS, Saltreach=T.harbour_steps())     # Saltreach's rock steps (world_terrain.HARBOUR_STEPS)
+    for key in sorted(paths):
+        for n, points in enumerate(paths[key]):
             climb = T.Climb(points)
             (ax, ay), (bx, by) = climb.points[0], climb.points[1]
             d = math.hypot(bx - ax, by - ay)
