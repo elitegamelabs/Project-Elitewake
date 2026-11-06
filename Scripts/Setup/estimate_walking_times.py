@@ -24,10 +24,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W   # noqa: E402
 import world_terrain as T  # noqa: E402
 
-WALKABLE = 44.0         # degrees: just under the character's walkable floor
+WALKABLE = 38.0         # degrees between grid vertices: the mesh's triangles run steeper than its edges, and the in-game
+                        # walk of November 5 stalled on 45-51 degree faces along paths planned at 44 (38 passed in Play)
 STEP_OUT = 45.0         # cm: the highest bank a swimmer climbs out onto
 WALK_SPEED = 450.0      # cm/s on open ground (measured October-November: 4-5 m/s in a straight line)
 SWIM_SPEED = 250.0      # cm/s
+START_SLOPE = 20.0      # degrees: the steepest ground round a route's ends
+FACE_WALKABLE = 44.0    # degrees: the ground surface beside a step (November 5: Desert2's path ran up 51-53 degree cells)
 INSET = 2000.0          # cm inland of the shore where a route starts and ends (as measure_walking_routes_play.py)
 TARGET_MINUTES = (4.0, 16.0)
 PATHS = Path(__file__).resolve().parents[2] / 'Saved' / 'WalkingPaths.json'
@@ -37,7 +40,7 @@ def signature():
     """What the paths were worked out from: the layout and terrain sources."""
     here = Path(__file__).resolve().parent
     digest = hashlib.sha1()
-    for name in ('world_layout.py', 'world_terrain.py', 'world_islands.py', 'estimate_walking_times.py'):
+    for name in ('world_layout.py', 'world_terrain.py', 'world_islands.py', 'world_climbouts.py', 'estimate_walking_times.py'):
         digest.update((here / name).read_bytes())
     return digest.hexdigest()
 
@@ -86,24 +89,77 @@ def walk_time(island, start, end):
             h = heights[key] = T.height(x0 + i * sx, y0 + j * sy)
         return h
 
+    def level(c):
+        """Dry, with dry ground no steeper than START_SLOPE all round it: a survivor set down here stays put."""
+        here = z(*c)
+        if here <= T.SEA:
+            return False
+        for di, dj, run in steps:
+            n = (c[0] + di, c[1] + dj)
+            if not (0 <= n[0] <= nx and 0 <= n[1] <= ny) or z(*n) <= T.SEA or abs(z(*n) - here) / run > start_limit:
+                return False
+        return True
+
     def on_land(p):
-        """The nearest dry vertex to p (a route end can sit by an inlet or on a beach below a cliff)."""
+        """The nearest level dry vertex to p (a route end can sit by an inlet, on a beach below a cliff, or near a cliff's lip,
+        where a survivor set down would slide off into the sea: in-game walk, November 5)."""
         ci, cj = round((p[0] - x0) / sx), round((p[1] - y0) / sy)
-        for radius in range(0, 40):
+        for radius in range(0, 60):
             ring = [(ci + di, cj + dj) for di in range(-radius, radius + 1) for dj in range(-radius, radius + 1)
                     if max(abs(di), abs(dj)) == radius and 0 <= ci + di <= nx and 0 <= cj + dj <= ny]
-            dry = [c for c in ring if z(*c) > T.SEA]
+            dry = [c for c in ring if level(c)]
             if dry:
                 return min(dry, key=lambda c: (c[0] - ci) ** 2 + (c[1] - cj) ** 2)
         return ci, cj
 
+    steps = [(di, dj, math.hypot(di * sx, dj * sy)) for di in (-1, 0, 1) for dj in (-1, 0, 1) if di or dj]
+    start_limit = math.tan(math.radians(START_SLOPE))
     s0, e0 = on_land(start), on_land(end)
     s_key, e_key = s0[0] * (ny + 1) + s0[1], e0[0] * (ny + 1) + e0[1]
     best = {s_key: 0.0}
     came = {}
     queue = [(0.0, s0[0], s0[1])]
     limit = math.tan(math.radians(WALKABLE))
-    steps = [(di, dj, math.hypot(di * sx, dj * sy)) for di in (-1, 0, 1) for dj in (-1, 0, 1) if di or dj]
+    face = math.tan(math.radians(FACE_WALKABLE))
+    cells = {}
+
+    caves = [c for c in T.CAVES.values() if c and c.island is island]
+    rocks = {}
+
+    def rock(i, j):
+        """Inside a cave's rock formation: solid, though the ground under it is cut away (November 5: Desert3's path ran
+        through its sea cavern's rock and the survivor swam into the cove against it)."""
+        key = i * (ny + 1) + j
+        hit = rocks.get(key)
+        if hit is None:
+            x, y = x0 + i * sx, y0 + j * sy
+            hit = rocks[key] = any(c.inside(x, y) for c in caves)
+        return hit
+
+    def gentle(c):
+        """Whether grid cell c (by its low corner) can be walked on: its ground no steeper than FACE_WALKABLE however the
+        mesh splits it into triangles (judged on the gentler split, so only ground steep either way is ruled out)."""
+        ok = cells.get(c)
+        if ok is None:
+            ci, cj = c
+            if not (0 <= ci < nx and 0 <= cj < ny):
+                ok = False
+            else:
+                h00, h10, h01, h11 = z(ci, cj), z(ci + 1, cj), z(ci, cj + 1), z(ci + 1, cj + 1)
+                one = max(math.hypot((h10 - h00) / sx, (h01 - h00) / sy), math.hypot((h11 - h01) / sx, (h11 - h10) / sy))
+                other = max(math.hypot((h10 - h00) / sx, (h11 - h10) / sy), math.hypot((h11 - h01) / sx, (h01 - h00) / sy))
+                ok = min(one, other) <= face
+            cells[c] = ok
+        return ok
+
+    def beside(i, j, ni, nj):
+        """The cells a step from vertex (i, j) to its neighbour (ni, nj) runs along or across."""
+        li, lj = min(i, ni), min(j, nj)
+        if i != ni and j != nj:
+            return ((li, lj),)
+        if i == ni:
+            return ((i - 1, lj), (i, lj))
+        return ((li, j - 1), (li, j))
     while queue:
         t, i, j = heapq.heappop(queue)
         key = i * (ny + 1) + j
@@ -120,7 +176,7 @@ def walk_time(island, start, end):
         here = z(i, j)
         for di, dj, run in steps:
             ni, nj = i + di, j + dj
-            if not (0 <= ni <= nx and 0 <= nj <= ny):
+            if not (0 <= ni <= nx and 0 <= nj <= ny) or rock(ni, nj):
                 continue
             there = z(ni, nj)
             wet_here, wet_there = here < T.SEA, there < T.SEA
@@ -133,7 +189,7 @@ def walk_time(island, start, end):
             elif wet_there:
                 speed = SWIM_SPEED                    # into the water: always possible
             else:
-                if abs(there - here) / run > limit:
+                if abs(there - here) / run > limit or not any(gentle(c) for c in beside(i, j, ni, nj)):
                     continue
                 speed = WALK_SPEED
             nt = t + run / speed

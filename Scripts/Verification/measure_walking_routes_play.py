@@ -5,7 +5,8 @@ Single player (EW_PLAY_STANDALONE=1, EW_PLAY_PLAYERS=1) on
 For every island in Scripts/Setup/world_layout.py, two routes: coast to coast along its longest axis through the middle, and
 across it at right angles; each starts and ends 20 m inland of the shore. The survivor walks them by ordinary movement input at
 walking speed (no sprint, no teleport along the way), steering for the far end; when it stalls (a cliff, a tree, a building)
-it sidesteps at an angle for a few seconds and carries on. It follows the quickest walkable path the offline estimate
+it hops, then sidesteps at an angle for a few seconds and carries on. In water it presses jump as a player does to climb
+out onto a bank (a swimming character never steps up; November 5, the Swamp's channels stopped a walker that did not). It follows the quickest walkable path the offline estimate
 finds (Scripts/Setup/estimate_walking_times.py, same routes), a waypoint some 30 m ahead at a time, so a hill it could walk
 round does not stop it; the time is still its own, walked in the game. Time is game time, with the game run faster (slomo) to save real time.
 Per route: minutes, metres walked, straight-line metres, metres climbed, seconds swimming, detours, and whether it arrived.
@@ -30,7 +31,8 @@ INLAND = 2000.0          # cm: route ends this far inside the shore
 ARRIVE = 600.0           # cm: close enough to the end
 STALL_EVERY = 2.0        # game seconds between progress checks
 STALL_PROGRESS = 100.0   # cm toward the end in that time, or it is stalled
-DETOUR = 4.0             # game seconds of sidestepping
+DETOUR = 4.0             # game seconds of a detour: a hop straight on (HOP), then sidestepping
+HOP = 1.0                # game seconds of hopping straight at whatever stopped it, first
 GIVE_UP = float(os.environ.get('EW_WALK_GIVE_UP_MIN', '30')) * 60.0   # game seconds on one route; a long stop is not a successful crossing
 
 lib = unreal.EWEditorVerificationLibrary
@@ -70,6 +72,10 @@ for r in ROUTES:
         estimate, path = E.walk_time(W.island(r['island']), r['start'], r['end'])
         r['path'] = path or [r['end']]
         r['estimate_min'] = None if estimate is None else round(estimate / 60.0, 1)
+    if len(r['path']) > 1:
+        # Start and end where the path does: the offline estimate moves a route's ends onto level ground nearby (a raw
+        # end 20 m inland can lie on a cliff's lip, and on November 5 a survivor set down there slid off into the sea).
+        r['start'], r['end'] = tuple(r['path'][0]), tuple(r['path'][-1])
 report['paths_from'] = 'saved offline estimate' if SAVED else 'worked out in the editor'
 
 
@@ -137,6 +143,8 @@ def end_route(arrived):
                              'straight_m': round(math.hypot(ex - sx, ey - sy) / 100.0), 'climbed_m': round(r['climbed'] / 100.0),
                              'swim_s': round(r['swim']), 'detours': r['detours'], 'estimate_min': r['estimate_min'],
                              'stalls': r.get('stalls', [])[:12] + r.get('stalls', [])[-6:] if len(r.get('stalls', [])) > 18 else r.get('stalls', [])})
+    unreal.log(f"EWWALKROUTE {r['island']} {r['route']}: {'arrived' if arrived else 'did not arrive'} in {minutes:.1f} min, "
+               f"{'on foot' if on_foot else 'swam ' + str(round(r['swim'])) + ' s'}")
     save()
 
 
@@ -214,13 +222,17 @@ def tick(delta):
             r['check_d'], r['check_t'] = remaining, t + STALL_EVERY
         tx, ty = path[target] if k + 1 < len(path) else (ex, ey)
         heading = math.atan2(ty - p.y, tx - p.x)
-        if t < r['detour_until']:
+        hopping = t < r['detour_until'] and r['detour_until'] - t > DETOUR - HOP
+        if t < r['detour_until'] and not hopping:
             heading += r['detour_sign'] * math.radians(70)
         direction = unreal.Vector(math.cos(heading), math.sin(heading), 0)
         pc.set_control_rotation(unreal.Rotator(0, 0, math.degrees(heading)))
         pawn.add_movement_input(direction, 1.0)
         if move.is_swimming():
             pawn.add_movement_input(unreal.Vector(0, 0, 1), .3)        # keep the head up
+            pawn.jump()          # as a player does to climb out onto a bank (a swimming character never steps up)
+        elif hopping:
+            pawn.jump()          # a stalled player first hops straight at the ledge, then goes round it
     except Exception as error:
         finish(repr(error))
 

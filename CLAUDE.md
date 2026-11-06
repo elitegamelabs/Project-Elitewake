@@ -919,6 +919,12 @@ Climb-outs (owner, November 5: a swimmer must never be stuck against a steep coa
 - The starter's two long straight shores were sheer 57 m underwater walls: its distance was measured along rays from the old east end. They now have a beach and seabed (`StarterIsland.distance`). The shoreline, the arrival end and Saltreach's harbour are unchanged; about 100 m of wall remains by the arrival and 250 m beside the harbour.
 - Verified in Play: a survivor swims in from deep water and walks out and up every climb-out, and ashore across the starter's fixed shores (`verify_climbouts_play.py`, 24/24). Graybox; visual review pending.
 
+Island crossings measured in Play, November 5–6 (`measure_walking_routes_play.py`, along each island's long axis and across it, at walking speed):
+- 39 of 40 routes arrive, taking 4.1–15.9 minutes. Starter across is 4.1 minutes, kept by design.
+- Swamp routes include 5–39 s of swimming across channels; every other route is on foot.
+- Desert3 across does not yet arrive: its path swims the crescent cove and the walker loses it below the 22 m bank near the end. That is open; Desert3's coast itself has ways out within 150 m.
+- The route planner (`estimate_walking_times.py`) uses 38° grid edges and rules out ground surfaces steeper than 44°. It treats cave rock as solid and starts and ends routes on level ground. The walker jumps out of water and hops at banks, as a player does.
+
 The November 3 full rebuild stopped at `build_saltreach_welcome`: the map failed to load after earlier world steps reported success. The November 4 checkpoint restored a usable prior map and preserved recovery files in `C:\ELITEWAKE\Recovery_20261104_MapSaveFailure`; do not treat the failed result as a playable 20-island rebuild. First inspect map integrity, free space and recovery state. Then fix the smallest reproducible blocker, build and verify cavern access, and use the narrowest safe rebuild steps rather than rerunning hours of terrain by default. Keep generated work and recovery copies. Verify Python, C++, Play, map markers, routes, and screenshots before claiming the world playable. Do not commit or push until the resulting state is coherent and verified.
 
 ## 16. The next correct build order
