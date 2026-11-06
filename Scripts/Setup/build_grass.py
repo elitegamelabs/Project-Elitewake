@@ -251,7 +251,7 @@ def spots(island, rng, density=None, scales=None):
         g = T.cover(x, y, z)[1]
         if rng.random() > g * patchy(x, y):
             continue
-        if W.near_port(x, y, 300) or T.near_cave(x, y, 0) or near_landmark(x, y, 0):
+        if W.near_port(x, y, 300) or T.near_cave(x, y, 0) or T.near_climb(x, y) or near_landmark(x, y, 0):
             continue
         if island.key == 'Starter' and math.hypot(x - T.POND[0], y - T.POND[1]) < T.POND_RADIUS + 250:
             continue

@@ -691,7 +691,7 @@ def spots(ground):
             z = ground(x, y)
             if z is None or not (SEA + 60 < z < 70):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 450 for px, py, _ in chosen):
                 continue
@@ -720,7 +720,7 @@ def inland_spots(ground, palms):
             z = ground(x, y)
             if z is None or not (40 < z < 650):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+            if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 450 for px, py in palms) or any(math.hypot(x - px, y - py) < 750 for px, py, _ in chosen):
                 continue
@@ -749,7 +749,7 @@ def starter_grove_spots(ground, taken, count=18):
         z = ground(x, y)
         if z is None or not (25 < z < 650) or steep(ground, x, y):
             continue
-        if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+        if any(math.hypot(x - cx, y - cy) < r + 200 for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
             continue
         if any(math.hypot(x - px, y - py) < 650 for px, py in taken) or any(math.hypot(x - px, y - py) < 650 for px, py, _ in chosen):
             continue
@@ -795,7 +795,7 @@ def dress_islands(actors, ground, kinds, wood, thatch):
                     continue
                 if kind != 'Veyran Palm' and inland < 700:
                     continue
-                if W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
+                if W.near_port(x, y) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                     continue
                 z = ground(x, y)
                 if z < SEA + 60 or steep(ground, x, y):
@@ -932,7 +932,7 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                 z = ground(x, y)
                 if z is None or not (SEA + 70 < z < 160):
                     continue
-                if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+                if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                     continue
                 if any(math.hypot(x - tx, y - ty) < 140 for tx, ty in taken):
                     continue
@@ -964,7 +964,7 @@ def place_plants(actors, ground, palms, materials, island_trees=()):
                     x, y = px + d * math.cos(a), py + d * math.sin(a)
                 else:
                     x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
-                if island.distance(x, y) > -400 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
+                if island.distance(x, y) > -400 or W.near_port(x, y) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                     continue
                 if island.key == 'Starter' and island.old.distance(x, y) < 1500:
                     continue   # the starter's old ground keeps exactly the plants it always had

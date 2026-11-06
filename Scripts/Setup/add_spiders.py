@@ -70,7 +70,7 @@ def main():
             tries += 1
             x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
             z = ground(x, y)
-            if z is None or not fits('low', island, x, y, z, []) or T.near_cave(x, y, 900) or W.near_port(x, y):
+            if z is None or not fits('low', island, x, y, z, []) or T.near_cave(x, y, 900) or T.near_climb(x, y) or W.near_port(x, y):
                 continue
             if any(math.hypot(x - p[1], y - p[2]) < 500 for p in placed):
                 continue

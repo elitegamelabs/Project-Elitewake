@@ -39,7 +39,7 @@ def patches(x, y, kind):
 
 
 def _clear(x, y):
-    return not (W.near_port(x, y, 1200) or T.near_cave(x, y, 600) or near_landmark(x, y, 600)
+    return not (W.near_port(x, y, 1200) or T.near_cave(x, y, 600) or T.near_climb(x, y) or near_landmark(x, y, 600)
                 or any(r.near(x, y, 600) for r in REEFS))
 
 

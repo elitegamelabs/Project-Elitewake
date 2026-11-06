@@ -912,6 +912,13 @@ Keep the three crescent coves on Plains3, Desert3, and Jungle3, with different s
 - Jungle3 has a rock ledge looping the pool one and a sixth times up to the plateau (181 m, rising 57 m, about 19°).
 - Verified in Play for the brigantine: entry, a half turn at the berth, and hidden from every sea viewpoint (`verify_cavern_ship_fit_play.py`). A survivor walks out of each berth and back (`verify_cavern_walks_play.py`). The Cavalier's fit stays pending until it is built.
 
+Climb-outs (owner, November 5: a swimmer must never be stuck against a steep coast). Every stretch of coast lies within a minute's swim (150 m) of a way out onto the island's main ground, checked offline by `Scripts/Setup/coast_exits.py` and its test. Saltreach's harbour is left to its piers' ladders and slipway. Built November 5:
+- 19 climb-outs on Winter1–4, Desert3 and Jungle2–4 (`world_climbouts.py`, placed by `coast_exits.py --plan`; `world_terrain.Climb`).
+- Each is an 8 m path with rock-cut sides: a 10° ramp up out of the water, a level 5 m landing, then 20° up the shore. On a cliff it runs as a ledge along the face, or as a ravine where a sheer rim leaves no room. Each ends on broad walkable ground.
+- Trees, rocks, plants and animals keep off them (`world_terrain.near_climb`).
+- The starter's two long straight shores were sheer 57 m underwater walls: its distance was measured along rays from the old east end. They now have a beach and seabed (`StarterIsland.distance`). The shoreline, the arrival end and Saltreach's harbour are unchanged; about 100 m of wall remains by the arrival and 250 m beside the harbour.
+- Verified in Play: a survivor swims in from deep water and walks out and up every climb-out, and ashore across the starter's fixed shores (`verify_climbouts_play.py`, 24/24). Graybox; visual review pending.
+
 The November 3 full rebuild stopped at `build_saltreach_welcome`: the map failed to load after earlier world steps reported success. The November 4 checkpoint restored a usable prior map and preserved recovery files in `C:\ELITEWAKE\Recovery_20261104_MapSaveFailure`; do not treat the failed result as a playable 20-island rebuild. First inspect map integrity, free space and recovery state. Then fix the smallest reproducible blocker, build and verify cavern access, and use the narrowest safe rebuild steps rather than rerunning hours of terrain by default. Keep generated work and recovery copies. Verify Python, C++, Play, map markers, routes, and screenshots before claiming the world playable. Do not commit or push until the resulting state is coherent and verified.
 
 ## 16. The next correct build order

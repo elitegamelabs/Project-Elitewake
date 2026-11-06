@@ -34,7 +34,7 @@ class Landmark:
 def _clear(island, x, y, room):
     """Somewhere a landmark may stand: off the Ports and the caves, and on the starter island off its spawn, dock and
     spring."""
-    if W.near_port(x, y, room) or T.near_cave(x, y, room):
+    if W.near_port(x, y, room) or T.near_cave(x, y, room) or T.near_climb(x, y, room):
         return False
     if island.key == 'Starter':
         return all(math.hypot(x - cx, y - cy) > r + room for cx, cy, r in T.STARTER_CLEAR)

@@ -781,12 +781,140 @@ def near_cave(x, y, margin=500.0):
     return any(c and c.inside(x, y, margin) for c in CAVES.values())
 
 
-def height(x, y):
-    """Ground (or sea floor) height in cm at (x, y): the islands as shaped, notched under each cave's formation."""
+def height_shaped(x, y):
+    """Ground (or sea floor) height in cm at (x, y): the islands as shaped, notched under each cave's formation, before
+    the climb-outs (coast_exits.py plans them on this ground)."""
     h = height_raw(x, y)
     for c in CAVES.values():
         if c and abs(x - c.mx) < c.depth + c.half + 1000 and abs(y - c.my) < c.depth + c.half + 1000:
             h = c.notch(x, y, h)
+    return h
+
+
+# ---- Climb-outs ---------------------------------------------------------------------------------------------------
+# Owner, November 5: add climb-out points; a swimmer must never be stuck against a steep coast. The in-game walk of
+# November 5 found survivors who slipped off a steep shore unable to get back onto the island anywhere near. A climb-out
+# is a path cut into (or built up on) the shore: CLIMB_HALF either side of its line, level across, rising at CLIMB_GRADE
+# from just above the water to where it meets ground a survivor can walk on, its sides easing back into the hillside
+# over CLIMB_SIDE (a rock cut where the shore is steep). coast_exits.py places them (world_climbouts.CLIMB_OUTS) wherever a
+# stretch of coast is more than coast_exits.EXIT_SWIM of swimming from any way out, and checks the result.
+CLIMB_HALF, CLIMB_SIDE = 400.0, 600.0
+CLIMB_GRADE = math.tan(math.radians(20.0))
+CLIMB_FOOT = 20.0        # cm above the sea where the path leaves the water
+CLIMB_LANDING = 500.0    # cm level at the foot before it climbs
+CLIMB_LEAD = 1400.0      # cm before the foot over which the path runs on into the water as a ramp, cut or built up
+CLIMB_LEAD_GRADE = math.tan(math.radians(10.0))   # its slope: a swimmer's feet find it about 10 m out and they walk up it
+CLIMB_LEAD_FADE = 600.0  # cm past the ramp's end over which it eases into the sea floor
+CLIMB_END = 600.0        # cm past the top over which it eases into the ground
+CLIMB_CELL = 10000.0     # cm: the lookup grid
+
+
+def climb_profile(u):
+    """The path's surface height at u along it (u = 0 at the foot, below it the slope into the water): level for
+    CLIMB_LANDING, where a swimmer steps out (longer than the island mesh's grid step, so the mesh has a vertex on it),
+    then rising at CLIMB_GRADE."""
+    if u < 0:
+        return SEA + CLIMB_FOOT + CLIMB_LEAD_GRADE * max(u, -CLIMB_LEAD)
+    return SEA + CLIMB_FOOT + CLIMB_GRADE * max(0.0, u - CLIMB_LANDING)
+
+
+class Climb:
+    """One climb-out: a path from its foot at the water through `points` [(x, y)], straight or following the shore up a
+    cliff face as a ledge. Before the foot it runs on straight into the water as a ramp for CLIMB_LEAD (in Play on November 5
+    a swimmer could not get onto a landing with deep water in front of it: a swimming character never steps up), past the
+    top for CLIMB_END."""
+
+    def __init__(self, points):
+        self.points = [tuple(p) for p in points]
+        (ax, ay), (bx, by) = self.points[0], self.points[1]
+        n = math.hypot(bx - ax, by - ay)
+        lead = (ax - (bx - ax) / n * (CLIMB_LEAD + CLIMB_LEAD_FADE), ay - (by - ay) / n * (CLIMB_LEAD + CLIMB_LEAD_FADE))
+        (cx, cy), (dx, dy) = self.points[-2], self.points[-1]
+        n = math.hypot(dx - cx, dy - cy)
+        tail = (dx + (dx - cx) / n * CLIMB_END, dy + (dy - cy) / n * CLIMB_END)
+        self.line = [lead] + self.points + [tail]
+        self.start = [-(CLIMB_LEAD + CLIMB_LEAD_FADE)]
+        for (px, py), (qx, qy) in zip(self.line, self.line[1:]):
+            self.start.append(self.start[-1] + math.hypot(qx - px, qy - py))
+        self.length = self.start[-2]           # the top
+        # Past the top the path follows the hillside, raised or lowered to meet it (in Play on November 5 a path that ran on
+        # level into rising ground left a step where it met the hill), so its offset there eases away over CLIMB_END.
+        self.top_offset = climb_profile(self.length) - height_shaped(*self.points[-1])
+        reach = CLIMB_HALF + CLIMB_SIDE
+        xs, ys = [p[0] for p in self.line], [p[1] for p in self.line]
+        self.box = (min(xs) - reach, max(xs) + reach, min(ys) - reach, max(ys) + reach)
+
+    def locate(self, x, y):
+        """(u along the path, v off it): the nearest point of the line."""
+        best = (math.inf, 0.0)
+        for k, ((px, py), (qx, qy)) in enumerate(zip(self.line, self.line[1:])):
+            dx, dy = qx - px, qy - py
+            n2 = dx * dx + dy * dy
+            t = max(0.0, min(1.0, ((x - px) * dx + (y - py) * dy) / n2))
+            v = math.hypot(x - px - t * dx, y - py - t * dy)
+            if v < best[0]:
+                best = (v, self.start[k] + t * math.sqrt(n2))
+        return best[1], best[0]
+
+    def apply(self, x, y, h):
+        """Height at (x, y) with this path cut or built into ground h."""
+        if not (self.box[0] <= x <= self.box[1] and self.box[2] <= y <= self.box[3]):
+            return h
+        u, v = self.locate(x, y)
+        if v > CLIMB_HALF + CLIMB_SIDE:
+            return h
+        z = climb_profile(u) if u <= self.length else h + self.top_offset
+        w = 1.0 - _smooth((v - CLIMB_HALF) / CLIMB_SIDE)
+        if u < -CLIMB_LEAD:
+            w *= 1.0 - _smooth((-u - CLIMB_LEAD) / CLIMB_LEAD_FADE)
+        elif u > self.length:
+            w *= 1.0 - _smooth((u - self.length) / CLIMB_END)
+        return h + (z - h) * w
+
+
+def _climb_index(climb_outs=None):
+    if climb_outs is None:
+        try:
+            from world_climbouts import CLIMB_OUTS as climb_outs
+        except ImportError:
+            return {}
+    index = {}
+    for climbs in climb_outs.values():
+        for points in climbs:
+            climb = Climb(points)
+            x0, x1, y0, y1 = climb.box
+            for gx in range(int(math.floor(x0 / CLIMB_CELL)), int(math.floor(x1 / CLIMB_CELL)) + 1):
+                for gy in range(int(math.floor(y0 / CLIMB_CELL)), int(math.floor(y1 / CLIMB_CELL)) + 1):
+                    index.setdefault((gx, gy), []).append(climb)
+    return index
+
+
+CLIMB_INDEX = _climb_index()
+
+
+def set_climbs(paths):
+    """For the planner: use these climb-outs (a list of paths) in place of world_climbouts', or None to go back to them."""
+    global CLIMB_INDEX
+    CLIMB_INDEX = _climb_index({'planning': paths}) if paths is not None else _climb_index()
+    _corner.clear()
+
+
+def near_climb(x, y, margin=200.0):
+    """True on a climb-out's path or its rock-cut sides (plus a margin): keep trees, rocks, plants and animals off it."""
+    for climb in CLIMB_INDEX.get((int(math.floor(x / CLIMB_CELL)), int(math.floor(y / CLIMB_CELL))), ()):
+        if climb.box[0] - margin <= x <= climb.box[1] + margin and climb.box[2] - margin <= y <= climb.box[3] + margin:
+            u, v = climb.locate(x, y)
+            if v <= CLIMB_HALF + CLIMB_SIDE + margin and -CLIMB_LEAD <= u <= climb.length + CLIMB_END:
+                return True
+    return False
+
+
+def height(x, y):
+    """Ground (or sea floor) height in cm at (x, y): the islands as shaped, notched under each cave's formation, with the
+    coast's climb-outs cut in."""
+    h = height_shaped(x, y)
+    for climb in CLIMB_INDEX.get((int(math.floor(x / CLIMB_CELL)), int(math.floor(y / CLIMB_CELL))), ()):
+        h = climb.apply(x, y, h)
     return h
 
 

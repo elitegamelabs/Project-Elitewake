@@ -241,7 +241,7 @@ def spots(ground, avoid):
             z = ground(x, y)
             if z is None or not (SEA + 75 < z < 1300):
                 continue
-            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or near_landmark(x, y):
+            if any(math.hypot(x - cx, y - cy) < r for cx, cy, r in KEEP_CLEAR) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                 continue
             if any(math.hypot(x - px, y - py) < 300 for px, py in avoid) or any(math.hypot(x - px, y - py) < 450 for px, py, _, _ in chosen):
                 continue
@@ -284,7 +284,7 @@ def main():
         while len(here) < want and tries < want * 60 + 100:
             tries += 1
             x, y = island.cx + irng.uniform(-reach, reach), island.cy + irng.uniform(-reach, reach)
-            if island.distance(x, y) > -300 or W.near_port(x, y) or T.near_cave(x, y) or near_landmark(x, y):
+            if island.distance(x, y) > -300 or W.near_port(x, y) or T.near_cave(x, y) or T.near_climb(x, y) or near_landmark(x, y):
                 continue
             if island.key == 'Starter' and island.old.distance(x, y) < 1500:
                 continue   # the starter's old ground keeps exactly the rocks it always had

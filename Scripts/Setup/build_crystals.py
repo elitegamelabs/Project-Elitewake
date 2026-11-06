@@ -349,7 +349,7 @@ def main():
         while len(samples) < 600 and tries < 20000:
             tries += 1
             x, y = island.cx + rng.uniform(-reach, reach), island.cy + rng.uniform(-reach, reach)
-            if island.distance(x, y) > -500 or T.near_cave(x, y, 700):
+            if island.distance(x, y) > -500 or T.near_cave(x, y, 700) or T.near_climb(x, y):
                 continue
             z = ground(x, y)
             gx, gy = ground(x + 60, y), ground(x, y + 60)

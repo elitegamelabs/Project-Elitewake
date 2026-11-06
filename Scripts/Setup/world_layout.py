@@ -85,6 +85,12 @@ class Island:
         return self._reach
 
 
+def _fade(d, near, far):
+    """1 up to `near`, easing to 0 at `far`."""
+    f = min(1.0, max(0.0, (d - near) / (far - near)))
+    return 1.0 - f * f * (3 - 2 * f)
+
+
 class StarterIsland(Island):
     """The first island: its old shape (build_coastal_terrain.py MAIN_SHORE, the beach spawn, dock, pond and sloop
     on its east end) joined to a larger island to its west. Its shore is whichever of the two reaches farther."""
@@ -108,6 +114,77 @@ class StarterIsland(Island):
                     hi = mid
             best = lo
         return max(self.old.radius(angle), best)
+
+    # Measured along the way out from the old centre, a point beside a stretch of shore that runs nearly along that way
+    # out reads as far from the shore as the ray is long. Two such stretches run 1.2 km out along the island's north-east
+    # and south-east sides (where the ray leaves the western island early and the next bearing reaches its far shore),
+    # so the ground there stood 1-3 m high to the very edge with the 57 m sea floor beside it: a sheer underwater wall
+    # no swimmer could climb out of (in-game walk, November 5). Near those stretches the distance is measured straight
+    # to them instead; the shore itself does not move (owner: the starter keeps its exact shape).
+    OBLIQUE = 60.0      # degrees off the way round at which a stretch of shore is measured straight to
+    OBLIQUE_REACH = 12000.0   # cm from those stretches within which the distance is measured to them (OBLIQUE_SEA)
+    OBLIQUE_LENGTH = 15000.0  # cm: the shortest straight stretch measured to
+    OBLIQUE_LAND = (4000.0, 8000.0)     # cm inland of those stretches: measured to them within the first, as before past the second
+    OBLIQUE_SEA = (6000.0, 12000.0)     # the same offshore
+    HARBOUR_KEPT = (15000.0, 25000.0)   # cm from Saltreach's middle: unchanged within the first, fully measured past the second
+    OLD_END_KEPT = (12000.0, 22000.0)   # the same from the old east end's centre
+
+    def _oblique(self):
+        cached = getattr(self, '_oblique_cache', None)
+        if cached is not None:
+            return cached
+        n = 7200
+        pts = [(self.cx + r * math.cos(a), self.cy + r * math.sin(a))
+               for a, r in ((2 * math.pi * k / n, self.radius(2 * math.pi * k / n)) for k in range(n))]
+        segs = []
+        for k in range(n):
+            (x1, y1), (x2, y2) = pts[k], pts[(k + 1) % n]
+            r1, r2 = math.hypot(x1 - self.cx, y1 - self.cy), math.hypot(x2 - self.cx, y2 - self.cy)
+            run = math.hypot(x2 - x1, y2 - y1)
+            arc = (r1 + r2) / 2 * 2 * math.pi / n
+            if run > 0 and arc / run < math.cos(math.radians(self.OBLIQUE)):
+                if segs and segs[-1][2:] == (x1, y1) and self._collinear(segs[-1], x2, y2):
+                    segs[-1] = segs[-1][:2] + (x2, y2)       # one straight stretch, one segment
+                else:
+                    segs.append((x1, y1, x2, y2))
+        # Only the long straight stretches (the ordinary wobble of the shore is measured well enough along the way out).
+        segs = [s for s in segs if math.hypot(s[2] - s[0], s[3] - s[1]) >= self.OBLIQUE_LENGTH]
+        pad = self.OBLIQUE_REACH
+        box = (min(min(s[0], s[2]) for s in segs) - pad, max(max(s[0], s[2]) for s in segs) + pad,
+               min(min(s[1], s[3]) for s in segs) - pad, max(max(s[1], s[3]) for s in segs) + pad) if segs else None
+        self._oblique_cache = (segs, box)
+        return self._oblique_cache
+
+    @staticmethod
+    def _collinear(seg, x, y, tolerance=50.0):
+        """Whether (x, y) extends the segment within `tolerance` cm of its line."""
+        x1, y1, x2, y2 = seg
+        length = math.hypot(x2 - x1, y2 - y1)
+        return length > 0 and abs((x2 - x1) * (y - y1) - (y2 - y1) * (x - x1)) / length < tolerance
+
+    def distance(self, x, y):
+        base = super().distance(x, y)
+        segs, box = self._oblique()
+        if not box or not (box[0] <= x <= box[1] and box[2] <= y <= box[3]):
+            return base
+        e = math.inf
+        for x1, y1, x2, y2 in segs:
+            dx, dy = x2 - x1, y2 - y1
+            t = max(0.0, min(1.0, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy)))
+            e = min(e, math.hypot(x - x1 - t * dx, y - y1 - t * dy))
+        straight = max(base, -e) if base < 0 else min(base, e)
+        if straight == base:
+            return base
+        # Only the beach and the shelf off it change (the land is level and the sea floor deep beyond them), and not the
+        # old east end (the arrival beach, dock and spring) or Saltreach's harbour (the depths its piers, ladders and
+        # slipway were built for).
+        weight = _fade(e, *(self.OBLIQUE_LAND if base < 0 else self.OBLIQUE_SEA))
+        kept = [((self.old.cx, self.old.cy), self.OLD_END_KEPT)]
+        if 'PORTS' in globals():
+            kept.append(((PORTS['Plains'].cx, PORTS['Plains'].cy), self.HARBOUR_KEPT))
+        for (kx, ky), (near, far) in kept:
+            weight *= 1.0 - _fade(math.hypot(x - kx, y - ky), near, far)
+        return base + (straight - base) * weight
 
 
 def shore_gap(a, b, n=160):
