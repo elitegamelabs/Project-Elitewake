@@ -6,6 +6,8 @@ EW_QUIT_WHEN_DONE=1 closes the editor at the end.
   - DA_IronIngot and DA_CopperIngot (Items/Resources): a Port's resource trader pays 30 and 28 Copper.
   - Recipes (Crafting/Testing), each at a lit fire, 8 s: 2 Iron Ore + 1 Wood make 1 Iron Ingot; 2 Copper Ore + 1 Wood make 1
     Copper Ingot; 3 Bog Iron + 1 Wood make 1 Iron Ingot (poorer ore). The Metalwork skill unlocks them (EWSkillTree.cpp).
+  - The Metal Pickaxe is forged from what smelting makes: 10 Wood + 4 Iron Ingots (it was 10 Wood + 15 of the generic test
+    ore, which could only be bought), so iron ore leads to the pick that opens sulfur, gems and crystals.
 All numbers are tuning. Writes Saved/SmeltingResult.json.
 """
 import json
@@ -55,7 +57,18 @@ def main():
         recipe.set_editor_property('craft_seconds', 8.0)
         recipe.set_editor_property('needs_fire', True)
         assert unreal.EditorAssetLibrary.save_loaded_asset(recipe)
-    report = {'success': True, 'ingots': sorted(INGOTS), 'recipes': sorted(SMELT), 'finished_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+    pick = unreal.load_asset(f'{RECIPES}/DA_RecipeMetalPickaxe')
+    assert pick, 'DA_RecipeMetalPickaxe is missing (create_skill_recipes.py)'
+    parts = []
+    for item, quantity in ((wood, 10), (ingots['IronIngot'], 4)):
+        part = unreal.EWCraftingIngredient()
+        part.set_editor_property('item', item)
+        part.set_editor_property('quantity', quantity)
+        parts.append(part)
+    pick.set_editor_property('ingredients', parts)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(pick)
+    report = {'success': True, 'ingots': sorted(INGOTS), 'recipes': sorted(SMELT), 'metal_pickaxe': '10 Wood + 4 Iron Ingot',
+              'finished_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
     Path(unreal.Paths.project_saved_dir(), 'SmeltingResult.json').write_text(json.dumps(report, indent=2))
     unreal.log('EWSMELTING done')
 

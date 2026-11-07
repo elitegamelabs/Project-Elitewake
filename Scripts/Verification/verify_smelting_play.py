@@ -60,15 +60,27 @@ def tick(_):
                   readiness=pack.get_craft_readiness(recipe))
             pc.request_craft(recipe)
             state.update(phase=2, at=time.monotonic() + recipe.get_editor_property('craft_seconds') + 2.0)
-        else:
+        elif p == 2:
             check('smelting gives an iron ingot', pack.get_item_count(ingot) == 1, ingots=pack.get_item_count(ingot))
             check('and uses 2 iron ore and 1 wood', pack.get_item_count(ore) == 0 and pack.get_item_count(wood) == 0,
                   ore=pack.get_item_count(ore), wood=pack.get_item_count(wood))
-            node = next(n for n in unreal.EWSkillTree.get_nodes() if str(n.get_editor_property('id')) == 'Metalwork') \
-                if hasattr(unreal, 'EWSkillTree') and hasattr(unreal.EWSkillTree, 'get_nodes') else None
-            if node is not None:
-                names = [str(r.get_asset_name()) for r in node.get_editor_property('recipes')]
-                check('Metalwork unlocks the smelting recipes', 'DA_RecipeIronIngot' in names and 'DA_RecipeCopperIngot' in names, recipes=names)
+            pick = load('/Game/Elitewake/Crafting/Testing/DA_RecipeMetalPickaxe')
+            parts = {q.get_editor_property('item').get_name(): q.get_editor_property('quantity') for q in pick.get_editor_property('ingredients')}
+            check('the Metal Pickaxe is forged from 10 wood and 4 iron ingots', parts == {'DA_TestWood': 10, 'DA_IronIngot': 4}, parts=parts)
+            pack.unlock_recipe(pick)
+            pack.add_item(wood, 10)
+            pack.add_item(ingot, 2)         # 3 in all
+            check('with 3 ingots it cannot be made', pack.get_craft_readiness(pick) != unreal.EWCraftResult.SUCCESS)
+            pack.add_item(ingot, 1)         # 4
+            check('with 4 ingots it can', pack.get_craft_readiness(pick) == unreal.EWCraftResult.SUCCESS,
+                  readiness=pack.get_craft_readiness(pick))
+            state.update(pick=pick, before=pack.get_item_count(pick.get_editor_property('output')))
+            pc.request_craft(pick)
+            state.update(phase=3, at=time.monotonic() + pick.get_editor_property('craft_seconds') + 2.0)
+        else:
+            got = pack.get_item_count(state['pick'].get_editor_property('output')) - state['before']
+            check('forging gives a Metal Pickaxe and uses the ingots and wood', got == 1 and pack.get_item_count(ingot) == 0
+                  and pack.get_item_count(wood) == 0, got=got, ingots=pack.get_item_count(ingot), wood=pack.get_item_count(wood))
             finish()
     except Exception as error:      # noqa: BLE001
         finish(repr(error))
