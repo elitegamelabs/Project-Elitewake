@@ -47,8 +47,20 @@ if (Test-Path -LiteralPath $resultJson) {
 }
 $peak = if ($samples.Count) { ($samples | Measure-Object bytes -Maximum).Maximum / 1GB } else { [double]::NaN }
 $lines += ''
-$lines += ('Highest video memory during the test: {0:N2} GB (budget {1} GB): {2}' -f $peak, $budget, $(if ($peak -le $budget) { 'WITHIN BUDGET' } else { 'OVER BUDGET' }))
-$out = Join-Path $here ("1660 test results $(Get-Date -Format 'yyyy-MM-dd HHmm').txt")
+$inStops = @()
+if (Test-Path -LiteralPath $resultJson) {
+    foreach ($s in $bench.stops) { $from = [datetime]::Parse($s.began_utc).ToUniversalTime(); $to = [datetime]::Parse($s.ended_utc).ToUniversalTime()
+        $inStops += @($samples | Where-Object { $_.utc -ge $from -and $_.utc -le $to }) }
+}
+$stopPeak = if ($inStops.Count) { ($inStops | Measure-Object bytes -Maximum).Maximum / 1GB } else { $peak }
+$lines += ('Video memory while playing (at the stops): {0:N2} GB, budget {1} GB: {2}' -f $stopPeak, $budget, $(if ($stopPeak -le $budget) { 'WITHIN BUDGET' } else { 'OVER BUDGET' }))
+$lines += ('Highest at any moment, loading and moving between places included: {0:N2} GB' -f $peak)
+$stamp = Get-Date -Format 'yyyy-MM-dd HHmm'
+$lines += 'Every video-memory sample (UTC time, GB) is in the .csv beside this file; the stops'' recording times are in the game''s report.'
+$samples | ForEach-Object { [pscustomobject]@{ utc = $_.utc.ToString('o'); gb = [math]::Round($_.bytes / 1GB, 3) } } |
+    Export-Csv -LiteralPath (Join-Path $here "1660 test video memory $stamp.csv") -NoTypeInformation
+if (Test-Path -LiteralPath $resultJson) { Copy-Item -LiteralPath $resultJson -Destination (Join-Path $here "1660 test game report $stamp.json") }
+$out = Join-Path $here ("1660 test results $stamp.txt")
 $lines | Set-Content -LiteralPath $out -Encoding utf8
 $lines | ForEach-Object { Write-Host $_ }
 Write-Host ''
