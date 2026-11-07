@@ -16,6 +16,7 @@ import json
 import time
 from pathlib import Path
 import unreal
+POWDER = unreal.load_asset('/Game/Elitewake/Items/Ships/DA_Gunpowder')   # a powder charge with each round shot (CLAUDE.md 7.4, November 7)
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'CannonFightPlayResult.json')
@@ -91,7 +92,7 @@ def stand_at(ship, mount, people):
 def grant_and_place():
     for who, shots in ((owner, 6), (host, 14)):
         inv = who.get_inventory_component()
-        assert inv.add_item(cannon, 1) == 1 and inv.add_item(shot, shots) == shots
+        assert inv.add_item(cannon, 1) == 1 and inv.add_item(shot, shots) == shots and inv.add_item(POWDER, shots) == shots
     assert owner.get_inventory_component().add_item(unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestRailingTwoCannon'), 1) == 1
     for name, n in (('DA_TestStone', 20), ('DA_TestWood', 30), ('DA_TestFiber', 15)):
         sloop.get_cargo().add_item(unreal.load_asset(f'/Game/Elitewake/Items/Testing/{name}'), n)

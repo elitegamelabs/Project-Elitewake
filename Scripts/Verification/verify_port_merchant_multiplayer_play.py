@@ -8,6 +8,8 @@ import json
 import time
 from pathlib import Path
 import unreal
+# The merchant's lines: round shot, powder (November 7), the repair kit, cooked fish, ...
+KIT_LINE = 2
 
 lib = unreal.EWEditorVerificationLibrary
 saved = Path(unreal.Paths.project_saved_dir())
@@ -125,10 +127,10 @@ def tick(delta):
             m = state['merchant']
             names = [str(m.get_editor_property('goods')[i].get_editor_property('item').get_name()) for i in range(m.get_goods_count())]
             report['goods'] = names
-            check('the merchant has goods on the counter', m.get_goods_count() == 5 and names[0] == 'DA_TestRoundShot', goods=names)
+            check('the merchant has goods on the counter', m.get_goods_count() == 6 and names[0] == 'DA_TestRoundShot' and names[1] == 'DA_Gunpowder', goods=names)
             state['shot_stock'] = m.get_stock_left(0)
             state['shot_price'] = m.get_goods_price(0)
-            owner.get_wallet_component().set_copper(state['shot_price'] + m.get_goods_price(1))
+            owner.get_wallet_component().set_copper(state['shot_price'] + m.get_goods_price(KIT_LINE))
             state['shot0'] = count(owner, SHOT)
             state['tries'] = 0
             before_crate(0)
@@ -146,12 +148,12 @@ def tick(delta):
                 state.update(phase=4, at=time.monotonic() + 2.0)
                 return
             check('one request buys a bundle of five round shot', count(owner, SHOT) == state['shot0'] + 5, shot=count(owner, SHOT))
-            check('the price is taken', owner.get_wallet_component().get_copper() == m.get_goods_price(1), copper=owner.get_wallet_component().get_copper())
+            check('the price is taken', owner.get_wallet_component().get_copper() == m.get_goods_price(KIT_LINE), copper=owner.get_wallet_component().get_copper())
             check('the stall holds one bundle fewer', m.get_stock_left(0) == state['shot_stock'] - 1)
             check('the client sees the stock', state['mine'].get_stock_left(0) == state['shot_stock'] - 1)
             kits = count(owner, KIT)
-            check('a repair kit is bought with the rest', m.buy(owner, 1) and count(owner, KIT) == kits + 1 and owner.get_wallet_component().get_copper() == 0)
-            check('goods too dear are refused', not m.buy(owner, 2) and count(owner, '/Game/Elitewake/Items/Food/DA_CookedFish') == 0)
+            check('a repair kit is bought with the rest', m.buy(owner, KIT_LINE) and count(owner, KIT) == kits + 1 and owner.get_wallet_component().get_copper() == 0)
+            check('goods too dear are refused', not m.buy(owner, KIT_LINE + 1) and count(owner, '/Game/Elitewake/Items/Food/DA_CookedFish') == 0)
             check('every bundle costs more than it sells back for', all(m.get_goods_price(i) > m.get_editor_property('goods')[i].get_editor_property('bundle') * m.get_editor_property('goods')[i].get_editor_property('item').get_editor_property('sell_value_copper') for i in range(m.get_goods_count())))
             owner.get_wallet_component().set_copper(10000)
             bought = 0
@@ -160,7 +162,7 @@ def tick(delta):
             check('the round shot sells out', m.get_stock_left(0) == 0 and bought == state['shot_stock'] - 1, bought=bought)
             report['sold_out_prompt'] = str(m.get_interaction_prompt(owner))
             m.restock()
-            check('a restock brings a bundle back', m.get_stock_left(0) == 1 and m.get_stock_left(1) == m.get_editor_property('goods')[1].get_editor_property('max_stock'))
+            check('a restock brings a bundle back', m.get_stock_left(0) == 1 and m.get_stock_left(KIT_LINE) == m.get_editor_property('goods')[KIT_LINE].get_editor_property('max_stock'))
             state.update(phase=6, at=time.monotonic() + 1.0)
         elif p == 6:
             check('the client sees the restock', state['mine'].get_stock_left(0) == 1)

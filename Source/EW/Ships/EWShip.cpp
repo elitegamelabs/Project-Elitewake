@@ -1908,11 +1908,15 @@ void AEWShip::UpdateCannons(float DeltaSeconds)
             if (Left <= 0.f) { Cannon.bLoading = false; Cannon.bLoaded = true; bChanged = true; }
             continue;
         }
-        // Loading takes one round shot from the gunner and a while to ram home.
+        // Loading takes one powder charge and one round shot from the gunner and a while to ram home (CLAUDE.md 7.4).
         UEWItemDefinition* Ammo = GetFitting(Cannon.MountId)->CannonAmmo.LoadSynchronous();
+        UEWItemDefinition* Powder = GetFitting(Cannon.MountId)->CannonPowder.LoadSynchronous();
         // A survivor loads from what they carry; a hired gunner on their own fetches it from the hold.
         UEWInventoryComponent* Carried = Gunner ? Gunner->GetInventoryComponent() : Cargo.Get();
-        if (Ammo && Carried && Carried->GetItemCount(Ammo) > 0 && Carried->RemoveItem(Ammo, 1) == 1)
+        // Both are there before either is taken, so a missing charge never costs a shot.
+        const bool bHasPowder = !Powder || (Carried && Carried->GetItemCount(Powder) > 0);
+        if (Ammo && Carried && bHasPowder && Carried->GetItemCount(Ammo) > 0
+            && (!Powder || Carried->RemoveItem(Powder, 1) == 1) && Carried->RemoveItem(Ammo, 1) == 1)
         {
             Cannon.bLoading = true;
             Cannon.LoadStartedAt = ServerNow();

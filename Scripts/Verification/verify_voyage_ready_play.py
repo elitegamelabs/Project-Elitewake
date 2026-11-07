@@ -345,7 +345,7 @@ STEPS = [
     ('Bess Harrow\'s wood job pays 70 Copper for 20 Wood, on both machines', lambda: go_talk('Bess Harrow', 'Job1'), lambda: talk('Bess Harrow', paid_for_wood), 10),
     ('Elias sells the raft for 60: afloat at the slipway, the client\'s; the boat step is done', lambda: go_talk('Elias Thorne', 'Ship0'), lambda: talk('Elias Thorne', bought_raft), 12),
     ('The prompt says to load her hold; the compass marks the raft', lambda: None, told_to_load, 10),
-    ('Marta Vell sells an empty waterskin for 15', lambda: go_talk('Marta Vell', 'Buy4'), lambda: talk('Marta Vell', bought_skin), 10),
+    ('Marta Vell sells an empty waterskin for 15', lambda: go_talk('Marta Vell', 'Buy5'), lambda: talk('Marta Vell', bought_skin), 10),
     ('Held, E at the town well fills it', to_well, filled, 12),
     ('E at the raft\'s hold, A for each stack: 2 food, the full waterskin and 20 wood loaded; the provisions step is done on both machines', to_hold, loaded, 20),
     ('The prompt names the first voyage, the Swamp island; the compass marks it with its distance', lambda: None, told_of_voyage, 10),

@@ -23,6 +23,7 @@ report = {'checks': []}
 state = {'phase': 0, 'at': time.monotonic() + 14, 'handle': None, 'tries': 0}
 CANNON = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestCannon')
 SHOT = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestRoundShot')
+POWDER = unreal.load_asset('/Game/Elitewake/Items/Ships/DA_Gunpowder')   # a powder charge with each round shot (November 7)
 ARTICLES = unreal.load_asset('/Game/Elitewake/Items/Crew/DA_GunnerArticles')
 LOWER = 20.0
 
@@ -87,6 +88,7 @@ def tick(delta):
                     ship.verification_install_fitting(n, CANNON)
             check('four starboard and one port cannon fitted', len(star) == 4 and len(port) == 1 and all(ship.get_fitting(n) == CANNON for n in star + port), star=star, port=port)
             ship.get_cargo().add_item(SHOT, 12)
+            ship.get_cargo().add_item(POWDER, 12)
             state['hold0'] = count(ship.get_cargo(), SHOT)
             check('round shot in the hold', state['hold0'] >= 12, hold=state['hold0'])
             # Hiring at a Port gunnery master is checked on the coastal map (verify_sail_crew_multiplayer_play); here the articles are given.
@@ -120,6 +122,7 @@ def tick(delta):
             check('their ports are open', all(ship.get_gunport_opening(n) > .99 for n in hired))
             first = state['star'][0]
             owner.get_inventory_component().add_item(SHOT, 2)
+            owner.get_inventory_component().add_item(POWDER, 2)
             behind(first)
             check('the client mans the first starboard cannon', ship.man_cannon(owner, first))
             ship.set_gunport_open(owner, True)
@@ -164,6 +167,7 @@ def tick(delta):
             check('a target ship lies off the broadside', target is not None)
             state['target'] = target
             owner.get_inventory_component().add_item(SHOT, 2)
+            owner.get_inventory_component().add_item(POWDER, 2)
             behind(first)
             state.update(phase=75, at=time.monotonic() + 1.5)
         elif p == 75:

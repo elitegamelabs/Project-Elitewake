@@ -516,7 +516,7 @@ public:
      *  beyond its cannon's swing before it holds fire (degrees). */
     static constexpr float VolleyRange = 20000.f;
     /** The step a loading cannon is at (owner, October 18: powder, ball and ramming): Swab, Powder, Shot or Ram, each a quarter of
-     *  CannonLoadSeconds; None when it is not loading. Only the round shot is taken from a stock (there is no powder item yet). */
+     *  CannonLoadSeconds; None when it is not loading. A load takes a powder charge and a round shot (the fitting's CannonPowder and CannonAmmo). */
     UFUNCTION(BlueprintPure, Category="Ship|Cannon")
     FName GetCannonLoadStep(FName MountId) const;
     /** How far the cannon is thrown back by its last shot now, cm (0 at rest). */

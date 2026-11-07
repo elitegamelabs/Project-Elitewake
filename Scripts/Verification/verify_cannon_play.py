@@ -18,6 +18,7 @@ import json
 import time
 from pathlib import Path
 import unreal
+POWDER = unreal.load_asset('/Game/Elitewake/Items/Ships/DA_Gunpowder')   # a powder charge with each round shot (CLAUDE.md 7.4, November 7)
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'CannonPlayResult.json')
@@ -115,7 +116,7 @@ def interact_at_mount():
 def grant():
     assert not ship.get_installed_fittings(), 'the sloop must start bare'
     inventory = owner.get_inventory_component()
-    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3 and inventory.add_item(railing, 1) == 1
+    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3 and inventory.add_item(railing, 1) == 1      # no powder yet
     state['memo']['shot_start'] = count(owner, shot)
 
 
@@ -136,12 +137,26 @@ def manned():
     return True
 
 
+def no_powder_no_load():
+    """Manned with shot but no powder: after a few seconds it has not loaded and no shot is gone; then the powder comes."""
+    m = state['memo']
+    if time.monotonic() - m['t'] < 4.0:
+        return False
+    assert not ship.is_cannon_loaded(MOUNT) and str(ship.get_cannon_load_step(MOUNT)) == 'None', 'it loaded without powder'
+    assert count(owner, shot) == m['shot_start'], 'a shot was taken without powder'
+    assert owner.get_inventory_component().add_item(POWDER, 3) == 3
+    m['powder_start'] = count(owner, POWDER)
+    m['t'] = time.monotonic()
+    return True
+
+
 def loaded():
     if not (ship.is_cannon_loaded(MOUNT) and peer.is_cannon_loaded(MOUNT)):
         return False
     m = state['memo']
     m['load_seconds'] = round(time.monotonic() - m['t'], 1)
     assert count(owner, shot) == m['shot_start'] - 1 and count(pawn, shot) == m['shot_start'] - 1, 'loading did not take one round shot'
+    assert count(owner, POWDER) == m['powder_start'] - 1, 'loading did not take one powder charge'
     return True
 
 
@@ -225,11 +240,12 @@ def left():
 
 
 STEPS = [
-    ('A two-cannon railing, a cannon and 3 round shot, granted in Play only; the sloop starts bare', grant, lambda: True, 2),
+    ('A two-cannon railing, a cannon and 3 round shot (no powder yet), granted in Play only; the sloop starts bare', grant, lambda: True, 2),
     ('The client fits the two-cannon railing at the starboard railing hardpoint: its two cannon places open', interact_at_railing, railing_fitted, 6),
     ('The client fits the cannon in the first place behind the railing; server and client agree', interact_at_mount, fitted, 6),
     ('It holds Interact at the cannon to man it, standing behind the carriage and riding the ship on both machines', interact_at_mount, manned, 6),
-    ('Carrying round shot, the cannon loads itself in its loading time, taking one shot', lambda: None, loaded, 10),
+    ('Without powder it does not load and keeps its shot (CLAUDE.md 7.4, November 7); then 3 powder are given', lambda: None, no_powder_no_load, 8),
+    ('Carrying round shot and powder, the cannon loads itself in its loading time, taking one of each', lambda: None, loaded, 10),
     ('The view aims it: the server and the client\'s barrel follow', aim, aimed, 5),
     ('Aiming far past the port holds the cannon at the edge of its arc', lambda: None, clamped, 4),
     ('Left Mouse fires: the shot leaves the muzzle on both machines and falls well away from the ship', fire, landed, 10),

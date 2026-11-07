@@ -46,7 +46,8 @@ UEWArrivalComponent::UEWArrivalComponent()
     PrimaryComponentTick.TickInterval = .05f;
     SetIsReplicatedByDefault(true);
     // The first tools, made by hand, then a fire and a berry dish cooked on it (Content/Elitewake/Crafting/Testing; slices 2-3 of Phase 1).
-    for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe"), TEXT("Campfire"), TEXT("CookedBerryDish")})
+    // Gunpowder (November 7): sulfur ore and coal, for the cannons' powder step (CLAUDE.md 7.4).
+    for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe"), TEXT("Campfire"), TEXT("CookedBerryDish"), TEXT("Gunpowder")})
         FirstRecipes.Add(TSoftObjectPtr<UEWCraftingRecipe>(FSoftObjectPath(FString::Printf(TEXT("/Game/Elitewake/Crafting/Testing/DA_Recipe%s.DA_Recipe%s"), Name, Name))));
 }
 

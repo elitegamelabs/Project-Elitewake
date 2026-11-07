@@ -128,7 +128,7 @@ The advanced five-island branch is the source from which the cleaned project was
 | Port | Saltreach Freeport has merchants, buying/selling, service spaces, a safe zone, HUD feedback, and placeholder sound | Other ports are blockouts; merchant stock does not yet have complete persistence |
 | Economy | Starting purse is zero; merchants and shipyard paths exist | Balance needs journey testing and duplicate-transaction protection |
 | Ships | Raft, dinghy, sloop, schooner, and brigantine exist; per-sail controls and crew-dependent helm control work | The Cavalier is not built: no definition, hull, or build script exists, only its class speed in a code comment. The owner will supply the design reference `cavalier.png`. Visual quality, modularization, recipes, complete permissions, and persistence vary by system |
-| Cannon | Sponge, powder-step, shot, ram, recoil, targeting, and fight checks exist | A real powder inventory item and moving-target lead are still required; obstruction rules need acceptance testing |
+| Cannon | Sponge, powder-step, shot, ram, recoil, targeting, and fight checks exist; since November 7 a load takes a real Gunpowder charge with each round shot (sulfur ore + coal, or bought where round shot is sold) | Moving-target lead is still required; obstruction rules need acceptance testing. The cannon-fight, gunports and gunner-volley checks need the schooner or brigantine, which are parked off the map (October 12), so they cannot run until those ships return |
 | Sailing | Individual sails, five deployment positions, crewed helm control, class speeds, sail multipliers, anchor and sinking checks exist | Weighted-sail presentation is placeholder; recipes and complete handling balance are not accepted |
 | Survival | Needs, food, sickness, death/respawn, death bags, gathering, tools, cooking, skills, and building paths exist | Full first-30-minute pacing and owner-facing presentation are not accepted |
 | Persistence | Survivors, ships, resources, death bags, and wreck crates have save behavior | Companies, merchant stock, schema migration, atomic recovery, and full dedicated-server coverage are incomplete |
@@ -358,7 +358,7 @@ Shipwright's Hammer recipe: 30 Wood, 15 Stone, 10 Fiber, 5 Iron. A hole repair r
 
 ### 7.4 Cannon and damage
 
-Cannons use an explicit sponge → powder → shot → ram sequence, then aim/fire/recoil. A real powder inventory item must back the powder step before the loop is complete. Gunners must not fire through obstructions and must lead moving targets before acceptance. Hull damage needs location-readable fresh splintering, a hole, incoming water, temporary patch, and permanent repair. Minor damage must not instantly sink a ship.
+Cannons use an explicit sponge → powder → shot → ram sequence, then aim/fire/recoil. A real powder item backs the powder step (November 7): a load takes one Gunpowder (DA_Gunpowder, the fitting's CannonPowder) and one round shot, both checked before either is taken; Gunpowder is mixed from 1 sulfur ore and 1 coal (a first recipe) or bought, 5 for 40 Copper, wherever round shot is sold (`add_gunpowder.py`). Gunners must not fire through obstructions and must lead moving targets before acceptance. Hull damage needs location-readable fresh splintering, a hole, incoming water, temporary patch, and permanent repair. Minor damage must not instantly sink a ship.
 
 ### 7.5 Port and economy
 

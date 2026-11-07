@@ -17,6 +17,7 @@ import json
 import time
 from pathlib import Path
 import unreal
+POWDER = unreal.load_asset('/Game/Elitewake/Items/Ships/DA_Gunpowder')   # a powder charge with each round shot (CLAUDE.md 7.4, November 7)
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), 'GunportsPlayResult.json')
@@ -85,7 +86,7 @@ def ports():
             assert abs(at.x - mount.x) < 5 and abs(at.y) > abs(mount.y) + 20, f'the {m} cover is not over its port: {at} for {mount}'
     measured['brig_cover_closed_local'] = str(local(brig_peer, cover(brig_peer, GUN).get_world_location()))
     inv = owner.get_inventory_component()
-    assert inv.add_item(cannon, 1) == 1 and inv.add_item(shot, 4) == 4
+    assert inv.add_item(cannon, 1) == 1 and inv.add_item(shot, 4) == 4 and inv.add_item(POWDER, 4) == 4
     return True
 
 

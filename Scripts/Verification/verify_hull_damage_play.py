@@ -15,6 +15,7 @@ import os
 import time
 from pathlib import Path
 import unreal
+POWDER = unreal.load_asset('/Game/Elitewake/Items/Ships/DA_Gunpowder')   # a powder charge with each round shot (CLAUDE.md 7.4, November 7)
 
 lib = unreal.EWEditorVerificationLibrary
 RESULT = Path(unreal.Paths.project_saved_dir(), os.environ.get('EW_PLAY_RESULT', 'HullDamagePlayResult.json'))
@@ -97,7 +98,7 @@ def grant():
     assert not ship.get_installed_fittings(), 'the sloop must start bare'
     inventory = owner.get_inventory_component()
     assert inventory.add_item(railing, 1) == 1
-    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3
+    assert inventory.add_item(cannon, 1) == 1 and inventory.add_item(shot, 3) == 3 and inventory.add_item(POWDER, 3) == 3
     definition = unreal.load_asset('/Game/Elitewake/Ships/DA_Ship_Schooner')
     assert definition, 'Missing schooner ship definition.'
     right, at = ship.get_actor_right_vector(), ship.get_actor_location()

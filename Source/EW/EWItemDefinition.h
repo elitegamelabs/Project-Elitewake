@@ -197,6 +197,10 @@ public:
      *  barrel is the fitting's turning part, aimed rather than turned with the rudder). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     TSoftObjectPtr<UEWItemDefinition> CannonAmmo;
+    /** Cannons: the powder charge a load takes with each round shot (CLAUDE.md 7.4, November 7: a real powder item backs the
+     *  powder step). None: no powder needed. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
+    TSoftObjectPtr<UEWItemDefinition> CannonPowder;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Ship Fitting")
     float CannonMuzzleLength = 150.f;
 
