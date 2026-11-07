@@ -693,7 +693,7 @@ private:
     UPROPERTY(Transient)
     TObjectPtr<UAnimSequenceBase> LastSwingAnimation;
     int32 WorkImpactCount = 0;
-    float ClimateClock = 0.f;
+    float ClimateClock = .5f;      // the first tick samples the climate at once: the HUD never opens on "Open Sea" ashore
     /** The local screen's food-sickness queasiness, 0 to 1: the picture greys and greens and the colours fringe and sway while sick (owner, October 22: nausea). */
     float Nausea = 0.f;
     void UpdateNauseaLook(float DeltaSeconds);
