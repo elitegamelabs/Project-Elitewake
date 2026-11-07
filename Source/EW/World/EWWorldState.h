@@ -19,6 +19,16 @@ struct FEWSavedResource
     UPROPERTY(BlueprintReadOnly, Category="Save") float RespawnLeft = -1.f;
 };
 
+/** A forest tree that is down (November 6): which stand, which tree in it, and how long before it may grow back. */
+USTRUCT(BlueprintType)
+struct FEWSavedForestTree
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly, Category="Save") FName Forest;
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 Index = INDEX_NONE;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float RegrowLeft = 0.f;
+};
+
 /** A bag a survivor left where they died, or a crate floating from a wreck, as a save keeps it: where, what is in it, how long it
  *  has left, and (a crate) the water it floats on. */
 USTRUCT(BlueprintType)
@@ -45,6 +55,8 @@ struct FEWSavedWorldState
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedContainer> Containers;
     /** Campfires survivors laid (October 31), with how long each would still burn. An older save has none. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedCampfire> Campfires;
+    /** Forest trees that are down (November 6), each with its time to regrow. An older save has none: every tree stands. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWSavedForestTree> ForestTrees;
 };
 
 /**

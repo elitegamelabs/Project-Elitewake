@@ -7,6 +7,7 @@
 #include "EngineUtils.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
+#include "Gathering/EWForest.h"
 
 bool UEWWorldStateSubsystem::IsTracked(const AActor* Actor)
 {
@@ -74,6 +75,9 @@ void UEWWorldStateSubsystem::Capture(UWorld* World, FEWSavedWorldState& Out)
         if (!It->IsActorBeingDestroyed() && It->GetContents() && It->GetContents()->GetUsedSlotCount() > 0) Out.Containers.Add(It->CaptureForSave());
     for (TActorIterator<AEWCampfire> It(World); It; ++It)
         if (!It->IsActorBeingDestroyed()) Out.Campfires.Add(It->CaptureForSave());
+    // Forest trees that are down (November 6): instances of a placed stand, so not in Removed above.
+    for (TActorIterator<AEWForest> It(World); It; ++It)
+        if (It->IsNetStartupActor()) It->CaptureDown(Out.ForestTrees);
 }
 
 int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& State)
@@ -96,6 +100,11 @@ int32 UEWWorldStateSubsystem::Restore(UWorld* World, const FEWSavedWorldState& S
         Touch(*Found);
         ++Changed;
     }
+    // Forest trees that were down stay down, with the time they had left to regrow (November 6).
+    TMap<FName, AEWForest*> Forests;
+    for (TActorIterator<AEWForest> It(World); It; ++It) if (It->IsNetStartupActor()) Forests.Add(It->GetFName(), *It);
+    for (const FEWSavedForestTree& Saved : State.ForestTrees)
+        if (AEWForest** Forest = Forests.Find(Saved.Forest); Forest && (*Forest)->RestoreDown(Saved.Index, Saved.RegrowLeft)) ++Changed;
     // Bags and crates from before this load are not the save's: they go, and the save's own come back.
     for (TActorIterator<AEWDeathBag> It(World); It; ++It) It->Destroy();
     for (TActorIterator<AEWWreckCrate> It(World); It; ++It) It->Destroy();

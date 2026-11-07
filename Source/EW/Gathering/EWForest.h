@@ -8,14 +8,16 @@ class AEWCharacter;
 class AEWHarvestTree;
 class UEWItemDefinition;
 class UHierarchicalInstancedStaticMeshComponent;
+struct FEWSavedForestTree;
 
 /** A stand of one tree model on one island, drawn as instances so whole forests stay cheap (owner, November 6: dense,
  *  varied forests with open ground). Every instance is a real tree: the first hatchet blow on one replaces it with an
  *  AEWHarvestTree in the same place, size and lean, which then works, falls and fades exactly like any other tree.
  *  The instance stays hidden until it regrows (RegrowSeconds, CLAUDE.md 5.4), unless something stands in its place.
  *  Instances are laid out in the editor by Scripts/Setup/build_forests.py. Trunks block survivors and animals through a
- *  hidden cylinder per tree; the leaves never do. Which trees are down is replicated; it is not saved yet (a reload
- *  regrows them all). */
+ *  hidden cylinder per tree; the leaves never do. Which trees are down is replicated and saved with the world (November 6):
+ *  a reload keeps them down for the time they had left to regrow. A tree being chopped but still standing at a save comes
+ *  back whole. */
 UCLASS()
 class EW_API AEWForest : public AActor, public IEWInteractable
 {
@@ -45,7 +47,14 @@ public:
      *  stand's standing trees. */
     AEWHarvestTree* PromoteAimed(AEWCharacter* Survivor);
     /** Authority: replace instance Index with a harvestable tree. */
-    AEWHarvestTree* Promote(int32 Index);
+    UFUNCTION(BlueprintCallable, Category="Forest") AEWHarvestTree* Promote(int32 Index);
+    /** Seconds until tree Index may grow back (0 when it may now, -1 when it stands). */
+    UFUNCTION(BlueprintPure, Category="Forest") float GetRegrowLeft(int32 Index) const;
+    /** Authority, saving: the trees that are down, with their time to regrow (a tree still standing as a harvestable actor
+     *  is left out, so it comes back whole). */
+    void CaptureDown(TArray<FEWSavedForestTree>& Out) const;
+    /** Authority, loading: tree Index is down, with RegrowLeft seconds before it may grow back. False if no such tree. */
+    bool RestoreDown(int32 Index, float RegrowLeft);
     UFUNCTION(BlueprintPure, Category="Forest") int32 GetTreeCount() const;
     UFUNCTION(BlueprintPure, Category="Forest") bool IsStanding(int32 Index) const { return !Removed.Contains(Index); }
     UFUNCTION(BlueprintPure, Category="Forest") int32 GetDownCount() const { return Removed.Num(); }
@@ -60,6 +69,8 @@ public:
 private:
     UPROPERTY(ReplicatedUsing=OnRep_Removed) TArray<int32> Removed;
     TMap<int32, double> RemovedAt;
+    /** The harvestable tree each promoted instance became, while it lasts. */
+    TMap<int32, TWeakObjectPtr<AEWHarvestTree>> Promoted;
     TSet<int32> Hidden;
     TArray<FTransform> Authored;
     double NextRegrowCheck = 0.0;

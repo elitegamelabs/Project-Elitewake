@@ -1,6 +1,7 @@
 #include "EWForest.h"
 #include "EWCharacter.h"
 #include "EWHarvestTree.h"
+#include "World/EWWorldState.h"
 #include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -151,9 +152,43 @@ AEWHarvestTree* AEWForest::Promote(int32 Index)
     Actor->FinishSpawning(FTransform(Tree.GetRotation(), Tree.GetLocation()));
     Removed.Add(Index);
     RemovedAt.Add(Index, GetWorld()->GetTimeSeconds());
+    Promoted.Add(Index, Actor);
     ShowInstance(Index, false);
     ForceNetUpdate();
     return Actor;
+}
+
+float AEWForest::GetRegrowLeft(int32 Index) const
+{
+    const double* At = RemovedAt.Find(Index);
+    if (!Removed.Contains(Index) || !At || !GetWorld()) return -1.f;
+    return FMath::Max(0.f, float(RegrowSeconds - (GetWorld()->GetTimeSeconds() - *At)));
+}
+
+void AEWForest::CaptureDown(TArray<FEWSavedForestTree>& Out) const
+{
+    for (const int32 Index : Removed)
+    {
+        // Still standing as a harvestable tree (being chopped): saved as standing, so it comes back whole.
+        const TWeakObjectPtr<AEWHarvestTree>* Tree = Promoted.Find(Index);
+        if (Tree && Tree->IsValid() && !(*Tree)->IsFelled() && !(*Tree)->IsActorBeingDestroyed()) continue;
+        FEWSavedForestTree Saved;
+        Saved.Forest = GetFName();
+        Saved.Index = Index;
+        Saved.RegrowLeft = FMath::Max(0.f, GetRegrowLeft(Index));
+        Out.Add(Saved);
+    }
+}
+
+bool AEWForest::RestoreDown(int32 Index, float RegrowLeft)
+{
+    CaptureAuthored();
+    if (!HasAuthority() || !Authored.IsValidIndex(Index)) return false;
+    Removed.AddUnique(Index);
+    RemovedAt.Add(Index, GetWorld()->GetTimeSeconds() - (RegrowSeconds - FMath::Clamp(RegrowLeft, 0.f, RegrowSeconds)));
+    ShowInstance(Index, false);
+    ForceNetUpdate();
+    return true;
 }
 
 bool AEWForest::PlaceIsClear(int32 Index) const
@@ -184,6 +219,7 @@ void AEWForest::Tick(float DeltaSeconds)
     for (int32 Index : Grown)
     {
         RemovedAt.Remove(Index);
+        Promoted.Remove(Index);
         Removed.Remove(Index);
         ShowInstance(Index, true);
     }
