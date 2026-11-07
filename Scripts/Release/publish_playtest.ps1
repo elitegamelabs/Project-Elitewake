@@ -81,6 +81,8 @@ When the host leaves, everyone is disconnected.
 ## Controls
 WASD move, Space jump, Left Shift sprint, C crouch/prone, E interact (press to talk, hold for fittings and the anchor), Left Mouse attack,
 1-8 hotbar, I inventory and journal, M map, F10 host/join. At a cannon: mouse aims, Left Mouse fires, Right Mouse marks a target.
+A cannon loads one gunpowder with each round shot: buy both from Marta Vell at Saltreach, or mix powder from sulfur ore (Desert)
+and coal (Winter).
 Testing keys: Shift+1..5 jump to a region, Shift+6 to the nearest Port (Saltreach Freeport is the starting hub), F9 opens the item
 spawner (one item per click or A). Escape opens the pause menu: Resume, Options (brightness, mouse and controller look speeds, volume), Main Menu.
 "@ | Set-Content -LiteralPath $readme -Encoding utf8
