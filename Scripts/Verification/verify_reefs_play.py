@@ -1,16 +1,17 @@
-"""Client acceptance for the five major reefs, one per canonical island. Needs Play in
-/Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, after build_reefs.py. Run unattended
-with run_play_check.py.
+"""Client acceptance for the three open-ocean reefs (owner, October 31). Needs Play in
+/Game/Elitewake/Maps/Lvl_CoastalPlayground as a listen server plus one client, after build_reefs.py:
+    Scripts/Verification/run_play_check_once.ps1 -Check verify_reefs_play.py -Result ReefsPlayResult.json -Players 2
 
-  1. Five reefs: one in each region, clear of that island's Port, each with at least 40 corals of all four kinds;
-     the client has them all.
+  1. Three reefs, each out in the open ocean (over 1 km from every shore and over 1.5 km from every port), each with at
+     least 40 corals of all four kinds; the client has them all.
   2. Every coral stands on the sea floor and is wholly under water (at least 50 cm below the surface).
   3. Every coral glows (a glowing coral material), in at least four colours per reef.
   4. Corals are solid: a level trace into each reef's largest mounds and pillar clumps stops on them.
-  5. A reef shark (hammerhead) and a manta ray swim over each reef (they roam, so within 40 m), on the client too.
+  5. A reef shark (hammerhead) and a manta ray swim over each reef (they roam, so within 60 m), on the client too.
 Writes Saved/ReefsPlayResult.json.
 """
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -38,17 +39,19 @@ def corals(world, key):
             if a.get_actor_label().startswith(f'Reef {key}:')]
 
 
-def five():
-    regions = {}
+def three():
+    assert len(REEFS) == 3, f'{len(REEFS)} reefs planned'
     for reef in REEFS:
+        shore = min(math.hypot(i.cx - reef.cx, i.cy - reef.cy) - i.reach() for i in W.ISLANDS)
+        assert shore > 100000, f'{reef.key} is only {shore / 100:.0f} m from a shore'
+        assert not W.near_port(reef.cx, reef.cy, 150000), f'{reef.key} is near a port'
+        state['memo'][f'{reef.key}_shore_m'] = round(shore / 100)
         mine, seen = corals(server_world, reef.key), corals(client_world, reef.key)
         assert len(mine) >= 40, f'{reef.key} has {len(mine)} corals'
         assert len(seen) == len(mine), f'the client has {len(seen)} of {reef.key}\'s {len(mine)} corals'
         kinds = {a.get_actor_label().split(': ')[1].split(' ')[0] for a in mine}
         assert kinds == {'branching', 'mound', 'fan', 'pillar'}, (reef.key, kinds)
-        regions[reef.island.region] = regions.get(reef.island.region, 0) + 1
         state['memo'][f'{reef.key}_corals'] = len(mine)
-    assert regions == {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}, regions
     return True
 
 
@@ -99,13 +102,13 @@ def patrolled():
         fish = unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWFish)
         for reef in REEFS:
             near = {str(f.get_editor_property('definition').get_editor_property('display_name')) for f in fish
-                    if ((f.get_actor_location().x - reef.cx) ** 2 + (f.get_actor_location().y - reef.cy) ** 2) ** .5 < 4000}
+                    if ((f.get_actor_location().x - reef.cx) ** 2 + (f.get_actor_location().y - reef.cy) ** 2) ** .5 < 6000}
             assert {'Hammerhead Shark', 'Manta Ray'} <= near, f'{reef.key}: {sorted(near)}'
     return True
 
 
 STEPS = [
-    ('Five reefs, one per region and clear of its Port; 40+ corals of all four kinds each; the client has them', lambda: None, five, 4),
+    ('Three reefs in the open ocean, far from shores and ports; 40+ corals of all four kinds each; the client has them', lambda: None, three, 4),
     ('Every coral stands on the sea floor, wholly under water', lambda: None, floor_and_water, 6),
     ('Every coral glows, in at least four colours per reef', lambda: None, glowing, 4),
     ("Each reef's largest mounds and pillars are solid", lambda: None, solid, 4),

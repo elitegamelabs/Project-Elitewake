@@ -1,58 +1,49 @@
-"""The five major reefs: one off each canonical island. Plain Python (no Unreal): where each reef lies and where
-its corals grow; build_reefs.py builds them.
+"""The three open-ocean reefs (owner, October 31: "like 3 reefs out in the ocean"). Plain Python (no Unreal): where each
+reef lies and where its corals grow; build_reefs.py builds them.
 
-Each reef sits on the sandy shelf 17 to 30 m from shore where the sea is about 3 to 20 m deep, clear of its island's
-Port, cave and landmarks. A reef is a patch about 45 m long along the shore and 13 m deep across it, thick with
-corals in the middle and thinning at its edges. Sizes and counts are tuning.
+Each reef crowns one of the seamounts that rise in the open water between the islands (world_terrain.SEAMOUNT_SITES): the
+three shallowest, 12 to 20 m under the surface, each more than 2 km from any shore and far from every port, and in
+three different directions from the starter. A reef is a patch about 60 m across on the seamount's top, thick with corals
+in the middle and thinning at its edges. Sizes and counts are tuning.
+(Before November 6 this file placed one reef off each island's shore; that layout was never built into the map.)
 """
 import math
 import random
 
 import world_layout as W
 import world_terrain as T
-from world_landmarks import near_landmark
 
-PER_REGION = {'Plains': 1, 'Winter': 1, 'Swamp': 1, 'Desert': 1, 'Jungle': 1}
+COUNT = 3                         # owner, October 31
 CORALS = 70                       # per reef (tuning)
 KINDS = ('branching', 'mound', 'fan', 'pillar')
-OUT = (1700.0, 3000.0)            # cm beyond the shore
+SPREAD = 1500.0                   # cm: the corals' scatter about the reef's centre (one standard deviation)
+EDGE = 3200.0                     # cm: no coral farther from the centre than this
+SHALLOWEST, DEEPEST = 300.0, 2600.0   # cm under the surface where a coral may stand
 
 
 class Reef:
-    def __init__(self, key, island, angle, corals):
-        self.key, self.island, self.angle, self.corals = key, island, angle, corals
-        r = island.radius(angle) + sum(OUT) / 2
-        self.cx, self.cy = island.cx + r * math.cos(angle), island.cy + r * math.sin(angle)
+    def __init__(self, key, site, corals):
+        self.key = key
+        self.seamount = site[2]          # its index in world_terrain.SEAMOUNT_SITES (mesh SM_Seamount_<index + 1>_v1)
+        self.cx, self.cy = site[0], site[1]
+        self.corals = corals
+        # The nearest island, for the record only (an open-ocean reef belongs to no island).
+        self.island = min(W.ISLANDS, key=lambda i: math.hypot(i.cx - self.cx, i.cy - self.cy))
 
     def near(self, x, y, margin=0.0):
         return any(math.hypot(x - c[0], y - c[1]) < 300 + margin for c in self.corals)
 
 
-def _site_clear(island, a):
-    for along in (-2600, 0, 2600):
-        for out in (OUT[0] - 500, OUT[1] + 500):
-            r = island.radius(a) + out
-            x = island.cx + r * math.cos(a) - along * math.sin(a)
-            y = island.cy + r * math.sin(a) + along * math.cos(a)
-            if W.near_port(x, y, 1500) or T.near_cave(x, y, 1000) or near_landmark(x, y, 1200):
-                return False
-            if not T.SEA - 2600 < T.height(x, y) < T.SEA - 250:
-                return False
-    return True
-
-
-def _corals(island, a, rng):
-    out = []
-    tries = 0
-    while len(out) < CORALS and tries < CORALS * 40:
+def _corals(site, rng):
+    out, tries = [], 0
+    while len(out) < CORALS and tries < CORALS * 60:
         tries += 1
-        along = rng.gauss(0, 1300)
-        across = rng.uniform(*OUT)
-        if abs(along) > 2300:
+        dx, dy = rng.gauss(0, SPREAD), rng.gauss(0, SPREAD)
+        if math.hypot(dx, dy) > EDGE:
             continue
-        r = island.radius(a) + across
-        x = island.cx + r * math.cos(a) - along * math.sin(a)
-        y = island.cy + r * math.sin(a) + along * math.cos(a)
+        x, y = site[0] + dx, site[1] + dy
+        if not T.SEA - DEEPEST < T.height(x, y) < T.SEA - SHALLOWEST:
+            continue
         if any(math.hypot(x - c[0], y - c[1]) < 160 for c in out):
             continue
         kind = rng.choices(KINDS, weights=(4, 3, 2, 2))[0]
@@ -60,24 +51,15 @@ def _corals(island, a, rng):
     return out
 
 
+def _sites():
+    """The shallowest seamount tops, clear of every port."""
+    tops = sorted((T.SEA - T.height(x, y), x, y, n) for n, (x, y, _, _) in enumerate(T.SEAMOUNT_SITES))
+    return [(x, y, n) for depth, x, y, n in tops if depth < DEEPEST and not W.near_port(x, y, 60000)][:COUNT]
+
+
 def _reefs():
     rng = random.Random(6006)
-    found = []
-    for region, count in PER_REGION.items():
-        # Every island has a Port, so choose a different, clear section of its shore.
-        options = [i for i in W.ISLANDS if i.region == region]
-        rng.shuffle(options)
-        for island in options:
-            if sum(1 for r in found if r.island.region == region) >= count:
-                break
-            angles = [2 * math.pi * k / 24 for k in range(24)]
-            rng.shuffle(angles)
-            a = next((a for a in angles if _site_clear(island, a)), None)
-            if a is None:
-                continue
-            n = sum(1 for r in found if r.island.region == region) + 1
-            found.append(Reef(f'{region}{n}', island, a, _corals(island, a, rng)))
-    return found
+    return [Reef(f'Ocean{n + 1}', site, _corals(site, rng)) for n, site in enumerate(_sites())]
 
 
 REEFS = _reefs()
@@ -90,6 +72,7 @@ def near_reef(x, y, margin=500.0):
 if __name__ == '__main__':
     for r in REEFS:
         depths = [T.height(c[0], c[1]) - T.SEA for c in r.corals]
-        print(f'{r.key:8s} off {r.island.key:8s} at ({r.cx / 100:7.0f}, {r.cy / 100:7.0f}) m  {len(r.corals)} corals, '
-              f'{-max(depths) / 100:.1f}-{-min(depths) / 100:.1f} m deep')
+        shore = min(math.hypot(i.cx - r.cx, i.cy - r.cy) - i.reach() for i in W.ISLANDS)
+        print(f'{r.key:7s} at ({r.cx / 100:7.0f}, {r.cy / 100:7.0f}) m, nearest {r.island.key:8s} {shore / 100:5.0f} m off its shore, '
+              f'{len(r.corals)} corals, {-max(depths) / 100:.1f}-{-min(depths) / 100:.1f} m deep, kinds {sorted({c[2] for c in r.corals})}')
     print(len(REEFS), 'reefs')

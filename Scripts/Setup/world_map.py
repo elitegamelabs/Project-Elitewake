@@ -5,6 +5,8 @@ in its own file. A setup script expects the whole world, so:
     open_map(level, path)   opens the map and, if it is partitioned, loads every actor (the ground-cover cells included)
     save_map()              saves the map and every changed actor and foliage cell
     partitioned()           whether the open map is a World Partition map
+    keep_loaded(actor)      always loaded, like everything but the ground cover (setup_world_partition.py); an actor added
+                            to a partitioned map is otherwise streamed, and a client far from it would not have it
 Editor only.
 """
 import unreal
@@ -31,3 +33,12 @@ def open_map(level, path):
 def save_map():
     """Every changed package: the map, and on a World Partition map each changed actor and foliage cell."""
     return unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True)
+
+
+def keep_loaded(actor):
+    """Always loaded (not streamed by distance), the rule for everything but the ground cover (November 6)."""
+    try:
+        actor.set_editor_property('is_spatially_loaded', False)
+    except Exception:      # noqa: BLE001  (not a World Partition map)
+        pass
+    return actor
