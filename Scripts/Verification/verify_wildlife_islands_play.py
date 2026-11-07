@@ -22,7 +22,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'Setup'))
 import world_layout as W  # noqa: E402
 from world_islands import REGION_SPECIES  # noqa: E402
 
-NEW_SPECIES = ('Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile')
+import os  # noqa: E402
+# The species to stand and watch move: the November 6 seven, or with EW_WILDLIFE_SET=MORE the November 7 twenty (or ALL).
+_SEVEN = ('Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile')
+_TWENTY = ('WildHorse', 'WadingBird', 'MountainGoat', 'Fox', 'Eagle', 'Seal', 'Walrus', 'Heron', 'Turtle', 'Otter', 'Frog',
+           'Gazelle', 'Scorpion', 'Vulture', 'Jackal', 'Oryx', 'Parrot', 'Tapir', 'Jaguar', 'Monkey')
+_SET = os.environ.get('EW_WILDLIFE_SET', '')
+NEW_SPECIES = {'MORE': _TWENTY, 'ALL': _SEVEN + _TWENTY}.get(_SET) or (tuple(_SET.split(',')) if _SET else _SEVEN)
 ROOT = Path(unreal.Paths.project_saved_dir())
 RESULT = ROOT / 'WildlifeIslandsPlayResult.json'
 SHOTS = ROOT / 'Screenshots' / 'Wildlife'
@@ -110,14 +116,15 @@ def begin(i):
     at = target.get_actor_location()
     r['animal'], r['island'] = target.get_actor_label(), getattr(island_of(target), 'key', None)
     spot = None
-    for turn in range(0, 360, 30):                      # find dry, open ground about 12 m away
-        x, y = at.x + 1200 * math.cos(math.radians(turn)), at.y + 1200 * math.sin(math.radians(turn))
+    away = max(350.0, min(1200.0, target.get_editor_property('definition').get_editor_property('size').x * 6))   # near enough to see a frog
+    for turn in range(0, 360, 30):                      # find dry, open ground a few body lengths away (12 m at most)
+        x, y = at.x + away * math.cos(math.radians(turn)), at.y + away * math.sin(math.radians(turn))
         g = ground(x, y, at.z, [target])
         if g is not None and g > -40 and abs(g - at.z) < 600:
             spot = (x, y, g)
             break
     if spot is None:
-        spot = (at.x + 1200, at.y, at.z + 200)
+        spot = (at.x + away, at.y, at.z + 200)
     pawn.teleport(unreal.Vector(spot[0], spot[1], spot[2] + 110), unreal.Rotator())
     look_at(target)
     g = ground(at.x, at.y, at.z, [target])

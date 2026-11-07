@@ -15,16 +15,26 @@ from world_islands import ISLANDS as PLAN, REGION_SPECIES  # noqa: E402
 EXISTING = {'Alligator', 'Bear', 'Boar', 'Cottonmouth', 'Elephant', 'Flamingo', 'GiantCrocodile', 'Lion', 'Pelican',
             'SquirrelMonkey', 'Tortoise',
             # November 6: so every island carries wildlife (build_animals.NEW_SPECIES)
-            'Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile'}
+            'Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile',
+            # November 7: the rest of the island plan (build_animals.MORE_SPECIES)
+            'WildHorse', 'WadingBird', 'MountainGoat', 'Fox', 'Eagle', 'Seal', 'Walrus', 'Heron', 'Turtle', 'Otter', 'Frog',
+            'Gazelle', 'Scorpion', 'Vulture', 'Jackal', 'Oryx', 'Parrot', 'Tapir', 'Jaguar', 'Monkey'}
 # How many of each species an island carries (tuning): herds, prides and flocks at a believable size for about 2.5 km2.
 PER_SPECIES = {'Alligator': 10, 'Bear': 3, 'Boar': 8, 'Cottonmouth': 10, 'Elephant': 6, 'Flamingo': 10, 'GiantCrocodile': 1,
                'Lion': 4, 'Pelican': 10, 'SquirrelMonkey': 16, 'Tortoise': 8,
-               'Deer': 12, 'Caribou': 12, 'Wolf': 5, 'Hare': 10, 'Snake': 8, 'PolarBear': 3, 'Crocodile': 4}
+               'Deer': 12, 'Caribou': 12, 'Wolf': 5, 'Hare': 10, 'Snake': 8, 'PolarBear': 3, 'Crocodile': 4,
+               'WildHorse': 10, 'WadingBird': 10, 'MountainGoat': 10, 'Fox': 5, 'Eagle': 4, 'Seal': 10, 'Walrus': 6, 'Heron': 8,
+               'Turtle': 8, 'Otter': 6, 'Frog': 12, 'Gazelle': 12, 'Scorpion': 8, 'Vulture': 5, 'Jackal': 6, 'Oryx': 10,
+               'Parrot': 10, 'Tapir': 5, 'Jaguar': 3, 'Monkey': 14}
 HABITAT = {'Alligator': 'low', 'Cottonmouth': 'low', 'SquirrelMonkey': 'trees', 'Tortoise': 'inland',
            'Flamingo': 'shore', 'Pelican': 'shore', 'Bear': 'inland', 'Lion': 'inland', 'GiantCrocodile': 'low',
            'Elephant': 'inland', 'Boar': 'inland',
            'Deer': 'inland', 'Caribou': 'inland', 'Wolf': 'inland', 'Hare': 'inland', 'Snake': 'inland', 'PolarBear': 'inland',
-           'Crocodile': 'low'}
+           'Crocodile': 'low',
+           'WildHorse': 'inland', 'WadingBird': 'shore', 'MountainGoat': 'inland', 'Fox': 'inland', 'Eagle': 'inland',
+           'Seal': 'shore', 'Walrus': 'shore', 'Heron': 'low', 'Turtle': 'low', 'Otter': 'low', 'Frog': 'low',
+           'Gazelle': 'inland', 'Scorpion': 'inland', 'Vulture': 'inland', 'Jackal': 'inland', 'Oryx': 'inland',
+           'Parrot': 'trees', 'Tapir': 'inland', 'Jaguar': 'inland', 'Monkey': 'trees'}
 # Wildlife keeps clear of people (CLAUDE.md 5.6): cm from safe landings and villages.
 CLEAR_PASSIVE, CLEAR_AGGRESSIVE = 15000.0, 25000.0
 

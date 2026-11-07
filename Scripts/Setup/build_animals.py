@@ -680,11 +680,10 @@ def caribou():
     return b
 
 
-def wolf():
+def wolf(back=(.09, .085, .075), side=(.2, .18, .15), belly=(.5, .47, .4)):
     """Grey wolf (Plains' deep wood, Winter): about 150 cm nose to rump, 80 cm at the shoulder, grizzled grey with a pale
-    belly, a long muzzle, upright ears and a bushy tail."""
+    belly, a long muzzle, upright ears and a bushy tail. (Other colours make the fox and the jackal.)"""
     b = Builder()
-    back, side, belly = (.09, .085, .075), (.2, .18, .15), (.5, .47, .4)
     fur = lambda q, n: mix(mix(side, back, max(0.0, n[2]) * 1.4), belly, max(0.0, -n[2] * 1.6))   # noqa: E731
     quadruped(b, fur, dict(torso=[(50, 0, 62, 11, 15), (36, 0, 65, 14, 19), (5, 0, 62, 13, 16), (-25, 0, 60, 12, 14),
                                   (-46, 0, 60, 11, 13), (-55, 0, 60, 6, 7)],
@@ -752,10 +751,289 @@ def crocodile():
     return scaled(giant_crocodile(top=(.05, .05, .03), side=(.11, .1, .06), belly=(.45, .42, .3)), .65)
 
 
+# ---- The rest of the islands' wildlife (November 7) ---------------------------------------------------------------
+# Every species the island plan names (CLAUDE.md 5.7) that was still missing, as placeholders in the same lofted style
+# (realistic, rigged replacements in Phase 5). Most reuse a body above with the species' own size, colours and marks.
+
+def recolour(b, fn):
+    """Every vertex's colour through fn(position, colour)."""
+    b.colours = [fn(v, c) for v, c in zip(b.verts, b.colours)]
+    return b
+
+
+def squash(b, sx=1.0, sy=1.0, sz=1.0):
+    b.verts = [(v[0] * sx, v[1] * sy, v[2] * sz) for v in b.verts]
+    return b
+
+
+def lum(c):
+    return .3 * c[0] + .59 * c[1] + .11 * c[2]
+
+
+def horns(b, base_x, base_z, rise, sweep, radius, tone=(.03, .025, .02), spread=4.0, curl=0.0):
+    """A pair of horns from the crown: up by `rise` and back by `sweep`, tapering, with an optional forward curl."""
+    for y in (1, -1):
+        pts = []
+        for i in range(5):
+            t = i / 4
+            pts.append((base_x - sweep * t + curl * t * t * 40, (spread + 3 * t) * y, base_z + rise * t, 0, 0))
+        path, _ = stations(pts, 3)
+        tube(b, path, lambda j: radius * (1 - .75 * j / len(path)), lambda q, n, j: tone, HEAD, lambda q, j: 1.0, 8)
+
+
+def wild_horse():
+    """Wild horse (Plains): about 240 cm long, 145 cm at the withers, bay with a black mane, tail and lower legs."""
+    bay, belly, black = (.17, .075, .03), (.2, .1, .05), (.02, .016, .012)
+    b = cervid(Builder(), bay, belly, bay, (1.35, 145.0, 1.45))
+    recolour(b, lambda v, c: black if v[2] < 45 and abs(v[0]) > 40 else c)                  # dark lower legs
+    path, _ = stations([(88, 0, 196, 0, 0), (100, 0, 214, 0, 0), (108, 0, 230, 0, 0)], 3)     # the mane along the neck
+    tube(b, path, lambda j: (3.0, 7.0), lambda q, n, j: black, HEAD, lambda q, j: .6, 8)
+    tail = [(-84, 0, 128), (-96, 0, 112), (-100, 0, 82), (-98, 0, 58)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 3)
+    tube(b, path, lambda j: 6.0 - 2.5 * j / len(path), lambda q, n, j: black, TAIL, lambda q, j: j / (len(path) - 1), 10)
+    return b
+
+
+def mountain_goat():
+    """Mountain goat (Winter's crags): about 150 cm long, 100 cm at the shoulder, shaggy white with short black horns."""
+    white, belly = (.6, .58, .52), (.52, .5, .45)
+    b = cervid(Builder(), white, belly, white, (.82, 98.0, 1.35))
+    recolour(b, lambda v, c: (.03, .03, .03) if v[2] < 6 else c)                           # black hooves
+    horns(b, 62, 150, 18, 10, 2.2)
+    return b
+
+
+def gazelle():
+    """Gazelle (Desert): about 110 cm long, 80 cm at the shoulder, sandy with a white belly, a dark flank stripe and
+    ringed lyre-shaped horns."""
+    sand, white = (.4, .25, .1), (.72, .7, .64)
+    b = cervid(Builder(), sand, white, sand, (.72, 80.0, .72))
+    recolour(b, lambda v, c: (.1, .06, .03) if abs(v[1]) > 6 and 55 < v[2] < 62 else c)
+    horns(b, 54, 116, 30, 8, 1.6, curl=.15)
+    return b
+
+
+def oryx():
+    """Oryx (Desert): about 190 cm long, 115 cm at the shoulder, pale grey with a black face stripe and very long straight
+    horns sweeping back."""
+    grey, white = (.5, .48, .44), (.72, .7, .66)
+    b = cervid(Builder(), grey, white, grey, (1.05, 115.0, 1.08))
+    recolour(b, lambda v, c: (.03, .03, .03) if v[0] > 92 and v[2] > 140 and abs(v[1]) < 5 else c)
+    horns(b, 78, 172, 62, 44, 2.6, tone=(.02, .02, .02))
+    return b
+
+
+def fox():
+    """Red fox (Winter's birch valleys): about 70 cm nose to rump, rusty red with a white belly."""
+    return scaled(wolf(back=(.3, .1, .02), side=(.42, .15, .04), belly=(.62, .6, .55)), .62)
+
+
+def jackal():
+    """Golden jackal (Desert's salt pans): about 85 cm nose to rump, sandy gold with a darker saddle."""
+    return scaled(wolf(back=(.12, .09, .06), side=(.38, .25, .12), belly=(.55, .48, .36)), .72)
+
+
+def jaguar():
+    """Jaguar (Jungle): about 170 cm nose to rump, golden with black rosettes, heavy in the head and shoulders."""
+    b = Builder()
+    gold, belly, black = (.42, .26, .07), (.6, .55, .45), (.015, .012, .01)
+
+    def fur(q, n):
+        c = mix(gold, belly, max(0.0, -n[2] * 1.4))
+        spots = math.sin(q[0] * .42 + q[2] * .1) * math.sin(q[1] * .55 + q[2] * .45) * math.sin(q[0] * .17 - q[1] * .3)
+        return black if spots > .32 and n[2] > -.6 else c
+    quadruped(b, fur, dict(torso=[(60, 0, 58, 17, 22), (44, 0, 66, 22, 27), (14, 0, 66, 23, 27), (-20, 0, 62, 20, 23),
+                                  (-48, 0, 60, 18, 20), (-64, 0, 58, 9, 10)], hip_z=52, knee_z=27, spread=12, bend=6,
+                           thigh=9.5, paw=7.5, reach=10, pad=(.06, .04, .02), legs=[(42, 1, FL), (42, -1, FR), (-44, 1, BL), (-44, -1, BR)]))
+    path, _ = stations([(56, 0, 64, 0, 0), (74, 0, 72, 0, 0)], 3)
+    tube(b, path, lambda j: 15 - 3 * j / len(path), lambda q, n, j: fur(q, n), HEAD, lambda q, j: .6 + .4 * j / len(path), 14)
+    ball(b, (86, 0, 72), (14, 12, 11), lambda q, n: fur(q, n), HEAD, 1.0)
+    ball(b, (98, 0, 68), (6, 6, 5), lambda q, n: (.5, .4, .3), HEAD, 1.0, 10)
+    ball(b, (103, 0, 70), (1.8, 2.6, 1.8), lambda q, n: (.02, .01, .01), HEAD, 1.0, 8)
+    for y in (1, -1):
+        ball(b, (94, 7 * y, 76), (1.8, 1.0, 1.3), lambda q, n: (.5, .35, .05), HEAD, 1.0, 8)
+        ball(b, (80, 10 * y, 84), (2.5, 3, 3.5), lambda q, n: black, HEAD, 1.0, 8)
+    tail = [(-62, 0, 58), (-84, 0, 50), (-104, 0, 40), (-118, 0, 36)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 4)
+    tube(b, path, lambda j: 3.4, lambda q, n, j: fur(q, n), TAIL, lambda q, j: j / (len(path) - 1), 10)
+    return b
+
+
+def tapir():
+    """Tapir (Jungle's waterfall basin): about 210 cm long, black with a pale saddle (the boar's build, larger)."""
+    b = scaled(boar(), 1.2)
+    return recolour(b, lambda v, c: (.45, .44, .42) if -62 < v[0] < 21 and v[2] > 46 else (.02, .02, .022))
+
+
+def monkey():
+    """Capuchin monkey (Jungle's spice island): the squirrel monkey's build half again as large, brown with a cream face
+    and shoulders."""
+    b = scaled(squirrel_monkey(), 1.5)
+
+    def tone(v, c):
+        if lum(c) > .5:
+            return (.55, .48, .35)
+        if lum(c) < .05:
+            return c
+        return (.12, .07, .035) if v[2] < 45 else (.4, .32, .2)
+    return recolour(b, tone)
+
+
+def heron():
+    """Grey heron (Swamp): the flamingo's wading build in blue-grey with a white neck and yellow-brown legs."""
+    b = scaled(flamingo(), .85)
+
+    def tone(v, c):
+        if lum(c) < .03:
+            return (.02, .02, .025)
+        if c[0] > .55 and c[1] < .2:
+            return (.35, .3, .12)
+        return (.62, .63, .62) if v[2] > 110 else (.24, .27, .3)
+    return recolour(b, tone)
+
+
+def wading_bird():
+    """Great egret (Plains' lake shore): the flamingo's wading build in white, with black legs."""
+    b = scaled(flamingo(), .9)
+    return recolour(b, lambda v, c: (.02, .02, .02) if (c[0] > .55 and c[1] < .2) or lum(c) < .03 else (.78, .78, .74))
+
+
+def turtle():
+    """Pond turtle (Swamp): the tortoise's build at half the size and much flatter, olive with a darker shell."""
+    b = squash(scaled(tortoise(), .5), sz=.6)
+    return recolour(b, lambda v, c: (c[0] * .7, c[1] * 1.25 + .006, c[2] * .6))
+
+
+def perched_bird(s, belly, back, head, bill, leg, tail=1.0):
+    """A standing bird of prey or parrot: a body leaning forward, folded wings, a round head with a hooked bill, two legs
+    with talons. s scales it (1.0 is about 75 cm tall)."""
+    b = Builder()
+    feathers = lambda q, n: shade(n, back, mix(back, belly, .4), belly)   # noqa: E731
+    body(b, [(22 * s, 0, 52 * s, 4 * s, 4 * s), (14 * s, 0, 52 * s, 14 * s, 15 * s), (0, 0, 47 * s, 16 * s, 17 * s),
+             (-16 * s, 0, 42 * s, 13 * s, 13 * s), (-30 * s, 0, 37 * s, 6 * s, 5 * s), (-30 * s - 16 * s * tail, 0, 32 * s, 4 * s, 1.5 * s)],
+         feathers, BODY, sides=18)
+    for y in (1, -1):
+        ball(b, (-4 * s, 14 * y * s, 49 * s), (24 * s, 4 * s, 11 * s), lambda q, n: back, BODY, 0.0, 12)
+    ball(b, (22 * s, 0, 64 * s), (9 * s, 8 * s, 9 * s), lambda q, n: head, HEAD, 1.0)
+    path, _ = stations([(30 * s, 0, 65 * s, 0, 0), (37 * s, 0, 63 * s, 0, 0), (40 * s, 0, 58 * s, 0, 0)], 3)
+    tube(b, path, lambda j: (3.0 * s * (1 - .7 * j / len(path)), 3.2 * s * (1 - .6 * j / len(path))), lambda q, n, j: bill, HEAD,
+         lambda q, j: 1.0, 10)
+    for y in (1, -1):
+        ball(b, (27 * s, 5 * s * y, 67 * s), (1.4 * s, .8 * s, 1.4 * s), lambda q, n: (.3, .2, .03), HEAD, 1.0, 8)
+    for y, part in ((1, LEFT), (-1, RIGHT)):
+        limb(b, [(2 * s, 6 * y * s, 36 * s), (4 * s, 6 * y * s, 16 * s), (2 * s, 6 * y * s, 2.0)], 3.0 * s, 1.8 * s,
+             lambda q, n: leg, part, 36 * s, 8)
+        limb(b, [(1 * s, 6 * y * s, 1.2), (12 * s, 6 * y * s, .9)], (3.0 * s, .9), (2.0 * s, .6), lambda q, n: leg, part, 36 * s, 8)
+    return b
+
+
+def eagle():
+    """Golden eagle (Winter's iron cliffs): dark brown with a golden nape and yellow feet."""
+    return perched_bird(1.0, (.05, .03, .018), (.07, .045, .025), (.3, .2, .08), (.12, .1, .06), (.55, .42, .08))
+
+
+def vulture():
+    """Vulture (Desert's sulfur flats): black-brown with a bare greyish-pink head."""
+    return perched_bird(1.05, (.03, .025, .02), (.04, .033, .026), (.42, .3, .28), (.5, .46, .38), (.3, .3, .28))
+
+
+def parrot():
+    """Scarlet macaw (Jungle): red with blue wings and a long tail, a pale bill."""
+    return perched_bird(.55, (.55, .04, .02), (.04, .12, .5), (.6, .05, .02), (.72, .7, .62), (.2, .2, .2), tail=2.2)
+
+
+def seal():
+    """Harbour seal (Winter's ice shore): about 170 cm, a spotted grey spindle that hauls itself along on its belly."""
+    b = Builder()
+    grey, dark = (.3, .3, .3), (.06, .06, .07)
+
+    def skin(q, n):
+        c = mix(grey, (.45, .44, .42), max(0.0, -n[2]))
+        return dark if math.sin(q[0] * .7) * math.sin(q[1] * .9 + q[2] * .6) > .55 and n[2] > -.3 else c
+    pts = [(86, 0, 18, 6, 6), (78, 0, 20, 13, 13), (66, 0, 22, 17, 17), (54, 0, 23, 19, 19), (30, 0, 24, 26, 23), (0, 0, 24, 28, 24),
+           (-30, 0, 22, 24, 20), (-55, 0, 18, 15, 13), (-72, 0, 14, 8, 7), (-84, 0, 12, 3, 3)]
+    path, radii = stations(pts, 4)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: skin(q, n), SNAKE, lambda q, k: 1.0, 18)
+    for y in (1, -1):
+        ball(b, (76, 8 * y, 26), (2.4, 1.6, 2.4), lambda q, n: (.01, .01, .01), SNAKE, 1.0, 8)
+        ball(b, (30, 24 * y, 8), (14, 4, 3), lambda q, n: dark, SNAKE, 1.0, 10)
+        ball(b, (-88, 8 * y, 12), (10, 3, 6), lambda q, n: dark, SNAKE, 1.0, 10)
+    return b
+
+
+def walrus():
+    """Walrus (Winter's ice shore): about 300 cm and massive, cinnamon-brown wrinkled hide, long ivory tusks."""
+    b = Builder()
+    hide = (.3, .17, .11)
+    skin = lambda q, n: mix(hide, (.38, .24, .17), .5 + .5 * math.sin(q[0] * .5 + q[2] * .3))   # noqa: E731
+    pts = [(146, 0, 34, 14, 14), (132, 0, 38, 30, 30), (110, 0, 42, 40, 40), (70, 0, 48, 56, 50), (20, 0, 50, 62, 52),
+           (-40, 0, 44, 54, 44), (-90, 0, 34, 36, 30), (-130, 0, 22, 16, 14), (-150, 0, 16, 5, 5)]
+    path, radii = stations(pts, 4)
+    tube(b, path, lambda k: radii[k], lambda q, n, k: skin(q, n), SNAKE, lambda q, k: 1.0, 20)
+    ball(b, (148, 0, 30), (8, 18, 12), lambda q, n: (.42, .3, .22), SNAKE, 1.0, 12)
+    for y in (1, -1):
+        tusk = [(150, 8 * y, 22), (156, 9 * y, 8), (158, 9 * y, 1)]
+        tp, _ = stations([(x, yy, z, 0, 0) for x, yy, z in tusk], 3)
+        tube(b, tp, lambda k: 3.0 - 2.0 * k / len(tp), lambda q, n, k: (.62, .58, .46), SNAKE, lambda q, k: 1.0, 8)
+        ball(b, (134, 14 * y, 44), (2.0, 1.4, 2.0), lambda q, n: (.01, .01, .01), SNAKE, 1.0, 8)
+        ball(b, (60, 50 * y, 14), (22, 6, 4), lambda q, n: (.2, .12, .08), SNAKE, 1.0, 10)
+    return b
+
+
+def otter():
+    """River otter (Swamp's river): about 120 cm with the tail, long and low, dark brown with a paler throat."""
+    b = Builder()
+    brown, pale = (.07, .045, .025), (.22, .17, .11)
+    fur = lambda q, n: mix(brown, pale, max(0.0, -n[2] * 1.3) if q[0] > 20 else 0.0)   # noqa: E731
+    quadruped(b, fur, dict(torso=[(36, 0, 20, 7, 8), (24, 0, 22, 10, 11), (0, 0, 22, 11, 11.5), (-22, 0, 21, 10, 10.5),
+                                  (-36, 0, 19, 6, 7)], hip_z=18, knee_z=9, spread=6, bend=2, thigh=3.4, paw=2.6, reach=4,
+                           pad=(.03, .02, .012), legs=[(24, 1, FL), (24, -1, FR), (-24, 1, BL), (-24, -1, BR)]))
+    ball(b, (44, 0, 25), (9, 7, 6.5), lambda q, n: fur(q, n), HEAD, 1.0)
+    ball(b, (52, 0, 24), (2.4, 2.6, 2), lambda q, n: (.01, .01, .01), HEAD, 1.0, 8)
+    for y in (1, -1):
+        ball(b, (48, 4.5 * y, 28), (1.2, .7, 1), lambda q, n: (.01, .01, .01), HEAD, 1.0, 8)
+    tail = [(-34, 0, 19), (-50, 0, 15), (-66, 0, 11), (-80, 0, 8)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 4)
+    tube(b, path, lambda j: 5.0 - 3.6 * j / len(path), lambda q, n, j: brown, TAIL, lambda q, j: j / (len(path) - 1), 10)
+    return b
+
+
+def frog():
+    """Bullfrog (Swamp's mushroom hollows): about 20 cm, green-brown with a pale throat, crouched on folded legs."""
+    b = Builder()
+    green, belly = (.07, .1, .03), (.4, .38, .25)
+    skin = lambda q, n: belly if n[2] < -.3 else mix(green, (.03, .04, .015), .5 + .5 * math.sin(q[0] * 1.3 + q[1] * 1.7))   # noqa: E731
+    body(b, [(10, 0, 6, 3, 2.5), (6, 0, 7, 6, 4.5), (0, 0, 7, 7, 5), (-6, 0, 6, 6.5, 4.5), (-9, 0, 5.5, 3, 2.5)], skin, BODY, sides=16)
+    for y in (1, -1):
+        ball(b, (7, 3.4 * y, 10.5), (1.4, 1.4, 1.4), lambda q, n: (.25, .2, .02) if n[0] > .3 else (.01, .01, .01), HEAD, 1.0, 8)
+        limb(b, [(6, 4 * y, 5), (8, 6 * y, 2), (9, 6 * y, 0.5)], 1.2, .9, skin, FL if y > 0 else FR, 6)
+        limb(b, [(-6, 5 * y, 5), (-2, 9 * y, 3), (-10, 8 * y, 0.6), (-4, 9 * y, 0.4)], 2.2, 1.0, skin, BL if y > 0 else BR, 6)
+    return b
+
+
+def scorpion():
+    """Desert scorpion (Desert's sulfur flats; a large placeholder, about 45 cm): a sandy armoured body, two claws held
+    forward, eight legs and a segmented tail curled up over its back to a dark sting."""
+    b = Builder()
+    sand, dark = (.3, .21, .08), (.08, .05, .02)
+    shell = lambda q, n: mix(dark, sand, .4 + .6 * max(0.0, n[2]) * (.7 + .3 * math.sin(q[0] * 1.5)))   # noqa: E731
+    body(b, [(14, 0, 5, 3, 2), (10, 0, 6, 6, 3), (0, 0, 6.5, 7.5, 3.5), (-10, 0, 6, 6.5, 3.2), (-16, 0, 5.5, 4, 2.6)], shell, BODY, sides=14)
+    tail = [(-16, 0, 6), (-22, 0, 10), (-25, 0, 17), (-22, 0, 24), (-14, 0, 28), (-6, 0, 27)]
+    path, _ = stations([(x, y, z, 0, 0) for x, y, z in tail], 3)
+    tube(b, path, lambda j: 2.6 - 1.0 * j / len(path), lambda q, n, j: shell(q, n), TAIL, lambda q, j: j / (len(path) - 1), 10)
+    ball(b, (-3, 0, 25), (2.4, 2.0, 2.4), lambda q, n: dark, TAIL, 1.0, 8)
+    for y in (1, -1):
+        limb(b, [(12, 4 * y, 5), (20, 9 * y, 4), (26, 7 * y, 3)], 1.6, 1.2, shell, FL if y > 0 else FR, 8)
+        ball(b, (31, 7 * y, 3), (5, 2.6, 1.8), shell, FL if y > 0 else FR, 1.0, 10)
+        for i, x in enumerate((6, 1, -4, -9)):
+            part = FL if (i + (0 if y > 0 else 1)) % 2 == 0 else FR
+            limb(b, [(x, 6 * y, 5), (x + 1, 12 * y, 7), (x - 1, 16 * y, 0.5)], 1.0, .6, shell, part, 7, 6)
+    return b
+
 # Name, display, builder, size (length, height), stride, gait (0 four legs, 1 two legs, 2 snake), animation
 # (swing, lift, bob, tail sway, nod, snake amplitude, wave), surface (scales, scale size, fur, mottle, roughness),
 # Neutral kinds: never start a fight, but defend themselves when struck instead of fleeing (UEWAnimalDefinition::bDefendsItself).
-DEFENDERS = ('Elephant',)
+DEFENDERS = ('Elephant', 'Walrus')
 # behaviour (aggressive, walk, run, turn, roam, wade, notice, damage, interval, reach, attack name, health), yield
 # (fewest, most), and where it lives (habitat, count on the island, count on the second island).
 ANIMALS = {
@@ -821,9 +1099,76 @@ ANIMALS = {
     'Crocodile': dict(display='Crocodile', build=crocodile, size=(440, 60), stride=100, gait=0,
                       anim=(20, 6, .7, 8, 0, 0, 1), surface=(.3, 4.0, 0, .25, .55),
                       behave=(True, 75, 380, 60, 1000, 80, 750, 30, 2.0, 110, 'bite', 450), yield_=(8, 12), live=('world', 0, 0)),
+    # November 7: the rest of the island plan's wildlife (CLAUDE.md 5.7), placeholders like the November 6 ones. All tuning.
+    'WildHorse': dict(display='Wild Horse', build=wild_horse, size=(240, 230), stride=120, gait=0,
+                      anim=(18, 6, 1.4, 3, 2, 0, 1), surface=(0, 1, .25, .1, .8),
+                      behave=(False, 90, 900, 150, 1500, 30, 0, 0, 1, 0, '', 200), yield_=(10, 14), live=('world', 0, 0)),
+    'WadingBird': dict(display='Great Egret', build=wading_bird, size=(80, 140), stride=50, gait=1,
+                       anim=(12, 7, 1.2, 0, 3, 0, 1), surface=(0, 1, .25, .08, .8),
+                       behave=(False, 50, 360, 160, 600, 25, 0, 0, 1, 0, '', 30), yield_=(1, 3), live=('world', 0, 0)),
+    'MountainGoat': dict(display='Mountain Goat', build=mountain_goat, size=(143, 168), stride=70, gait=0,
+                         anim=(14, 6, 1.4, 1, 2, 0, 1), surface=(0, 1, .8, .1, .95),
+                         behave=(False, 70, 620, 200, 1000, 0, 0, 0, 1, 0, '', 80), yield_=(4, 7), live=('world', 0, 0)),
+    'Fox': dict(display='Red Fox', build=fox, size=(115, 60), stride=45, gait=0,
+                anim=(12, 6, 1.4, 5, 2, 0, 1), surface=(0, 1, .6, .12, .9),
+                behave=(False, 75, 640, 240, 900, 0, 0, 0, 1, 0, '', 40), yield_=(1, 3), live=('world', 0, 0)),
+    'Eagle': dict(display='Golden Eagle', build=eagle, size=(80, 75), stride=30, gait=1,
+                  anim=(8, 4, 1.4, 0, 2, 0, 1), surface=(0, 1, .35, .12, .85),
+                  behave=(False, 40, 300, 160, 700, 0, 0, 0, 1, 0, '', 40), yield_=(1, 3), live=('world', 0, 0)),
+    'Seal': dict(display='Harbour Seal', build=seal, size=(186, 48), stride=40, gait=2,
+                 anim=(0, 0, 0, 0, 0, 3, 30), surface=(0, 1, .1, .2, .5),
+                 behave=(False, 30, 160, 70, 500, 80, 0, 0, 1, 0, '', 120), yield_=(6, 9), live=('world', 0, 0)),
+    # Neutral like the elephant: it never starts a fight; struck, it defends itself with its tusks (tuning: 25 every 2.2 s).
+    'Walrus': dict(display='Walrus', build=walrus, size=(300, 100), stride=50, gait=2,
+                   anim=(0, 0, 0, 0, 0, 2, 25), surface=(0, 1, .05, .25, .6),
+                   behave=(False, 25, 120, 40, 500, 80, 0, 25, 2.2, 120, 'tusk', 700), yield_=(14, 20), live=('world', 0, 0)),
+    'Heron': dict(display='Grey Heron', build=heron, size=(80, 135), stride=50, gait=1,
+                  anim=(12, 7, 1.2, 0, 3, 0, 1), surface=(0, 1, .25, .1, .8),
+                  behave=(False, 45, 340, 160, 600, 30, 0, 0, 1, 0, '', 30), yield_=(1, 3), live=('world', 0, 0)),
+    'Turtle': dict(display='Pond Turtle', build=turtle, size=(60, 20), stride=16, gait=0,
+                   anim=(5, 2, .2, 0, 1, 0, 1), surface=(.3, 1.2, 0, .2, .6),
+                   behave=(False, 25, 70, 60, 300, 40, 0, 0, 1, 0, '', 40), yield_=(2, 3), live=('world', 0, 0)),
+    'Otter': dict(display='River Otter', build=otter, size=(135, 34), stride=30, gait=0,
+                  anim=(10, 5, .8, 6, 1, 0, 1), surface=(0, 1, .4, .1, .7),
+                  behave=(False, 60, 520, 260, 800, 60, 0, 0, 1, 0, '', 35), yield_=(1, 3), live=('world', 0, 0)),
+    'Frog': dict(display='Bullfrog', build=frog, size=(20, 12), stride=10, gait=0,
+                 anim=(4, 4, .6, 0, 0, 0, 1), surface=(.2, .8, 0, .3, .4),
+                 behave=(False, 20, 160, 200, 300, 20, 0, 0, 1, 0, '', 5), yield_=(1, 1), live=('world', 0, 0)),
+    'Gazelle': dict(display='Gazelle', build=gazelle, size=(123, 146), stride=70, gait=0,
+                    anim=(14, 6, 1.5, 2, 2, 0, 1), surface=(0, 1, .3, .1, .85),
+                    behave=(False, 85, 950, 260, 1200, 0, 0, 0, 1, 0, '', 50), yield_=(3, 5), live=('world', 0, 0)),
+    # A sting for a survivor who comes within 3 m (tuning: 10 every 1.8 s).
+    'Scorpion': dict(display='Desert Scorpion', build=scorpion, size=(63, 30), stride=14, gait=3,
+                     anim=(18, 10, .6, 0, 0, 0, 1), surface=(.2, .6, 0, .2, .5),
+                     behave=(True, 40, 160, 160, 400, 0, 300, 10, 1.8, 40, 'sting', 25), yield_=(1, 1), live=('world', 0, 0)),
+    'Vulture': dict(display='Vulture', build=vulture, size=(85, 80), stride=30, gait=1,
+                    anim=(8, 4, 1.4, 0, 2, 0, 1), surface=(0, 1, .35, .12, .85),
+                    behave=(False, 40, 280, 150, 800, 0, 0, 0, 1, 0, '', 45), yield_=(1, 3), live=('world', 0, 0)),
+    'Jackal': dict(display='Golden Jackal', build=jackal, size=(135, 70), stride=50, gait=0,
+                   anim=(13, 6, 1.3, 5, 2, 0, 1), surface=(0, 1, .55, .12, .9),
+                   behave=(False, 75, 620, 220, 1000, 0, 0, 0, 1, 0, '', 45), yield_=(2, 3), live=('world', 0, 0)),
+    'Oryx': dict(display='Oryx', build=oryx, size=(180, 234), stride=90, gait=0,
+                 anim=(16, 6, 1.4, 2, 2, 0, 1), surface=(0, 1, .25, .1, .85),
+                 behave=(False, 80, 800, 160, 1300, 0, 0, 0, 1, 0, '', 150), yield_=(7, 10), live=('world', 0, 0)),
+    'Parrot': dict(display='Scarlet Macaw', build=parrot, size=(59, 40), stride=18, gait=1,
+                   anim=(6, 3, 1.2, 0, 2, 0, 1), surface=(0, 1, .25, .08, .7),
+                   behave=(False, 35, 260, 200, 500, 0, 0, 0, 1, 0, '', 15), yield_=(1, 1), live=('world', 0, 0)),
+    'Tapir': dict(display='Tapir', build=tapir, size=(218, 117), stride=80, gait=0,
+                  anim=(14, 5, 1.0, 2, 2, 0, 1), surface=(0, 1, .2, .1, .8),
+                  behave=(False, 55, 480, 110, 1000, 60, 0, 0, 1, 0, '', 250), yield_=(10, 14), live=('world', 0, 0)),
+    # A stalker: it goes for a survivor within 8 m; a sprinting survivor only just outruns it (tuning).
+    'Jaguar': dict(display='Jaguar', build=jaguar, size=(224, 94), stride=80, gait=0,
+                   anim=(16, 6, 1.0, 5, 1.5, 0, 1), surface=(0, 1, .4, .1, .85),
+                   behave=(True, 85, 720, 140, 1100, 30, 800, 22, 1.4, 80, 'bite', 280), yield_=(6, 9), live=('world', 0, 0)),
+    'Monkey': dict(display='Capuchin Monkey', build=monkey, size=(148, 63), stride=40, gait=0,
+                   anim=(8, 4, .8, 4, 1, 0, 1), surface=(0, 1, .35, .12, .85),
+                   behave=(False, 95, 500, 220, 900, 0, 0, 0, 1, 0, '', 45), yield_=(2, 4), live=('world', 0, 0)),
 }
 # The species added on November 6: add_wildlife_species.py builds only these, so the others keep their generated models.
 NEW_SPECIES = ('Deer', 'Caribou', 'Wolf', 'Hare', 'Snake', 'PolarBear', 'Crocodile')
+# And on November 7: the rest of the island plan (CLAUDE.md 5.7).
+MORE_SPECIES = ('WildHorse', 'WadingBird', 'MountainGoat', 'Fox', 'Eagle', 'Seal', 'Walrus', 'Heron', 'Turtle', 'Otter', 'Frog',
+                'Gazelle', 'Scorpion', 'Vulture', 'Jackal', 'Oryx', 'Parrot', 'Tapir', 'Jaguar', 'Monkey')
 
 
 # ---- Material -----------------------------------------------------------------------------------------------

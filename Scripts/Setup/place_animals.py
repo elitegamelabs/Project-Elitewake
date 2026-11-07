@@ -65,6 +65,12 @@ def main():
     targets = W.ISLANDS
     trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
              if isinstance(t, unreal.EWHarvestTree)]
+    # The forests are stands of instanced trees (November 6): every 25th tree of each stand marks where trees are.
+    for stand in actors.get_all_level_actors():
+        if isinstance(stand, unreal.EWForest):
+            for i in range(0, stand.get_tree_count(), 25):
+                at = stand.get_tree_transform(i).translation
+                trees.append((at.x, at.y))
     ground = Ground()
     placed, counts = [], {}
     for island in targets:
@@ -113,6 +119,7 @@ def main():
                 animal.set_folder_path(LEVEL_FOLDER)
                 animal.set_editor_property('definition', definition)
                 animal.set_editor_property('surface_z', T.SEA)
+                world_map.keep_loaded(animal)          # every client has it (the map streams only its ground cover)
                 taken.append((x, y))
                 placed.append((name, island.key, island.region, round(x), round(y), round(z)))
             if made < count:
