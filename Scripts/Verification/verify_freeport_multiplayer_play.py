@@ -118,8 +118,14 @@ def talks():
             ('Buy0', lambda: check('Marta sells a bundle of five round shot for 50 Copper', count('Testing/DA_TestRoundShot') == 5 and copper() == 1150,
                                    shot=count('Testing/DA_TestRoundShot'), copper=copper()))]),
         ('Oskar Brann', 230, [
-            (None, lambda: state['owner'].get_inventory_component().add_item(item('Testing/DA_TestWood'), 10)),
-            ('SellAll', lambda: check('Oskar buys the wood', count('Testing/DA_TestWood') == 0 and copper() == 1150 + 10 * item('Testing/DA_TestWood').get_editor_property('sell_value_copper'),
+            (None, lambda: [state['owner'].get_inventory_component().add_item(item(p), n)
+                            for p, n in (('Testing/DA_TestWood', 10), ('Resources/DA_CopperOre', 5), ('Resources/DA_SulfurOre', 3))]),
+            # November 7: the islands' mined specialties sell too.
+            ('SellAll', lambda: check('Oskar buys the wood, copper ore and sulfur ore',
+                                      count('Testing/DA_TestWood') == 0 and count('Resources/DA_CopperOre') == 0 and count('Resources/DA_SulfurOre') == 0
+                                      and copper() == 1150 + sum(n * item(p).get_editor_property('sell_value_copper') for p, n in
+                                                                 (('Testing/DA_TestWood', 10), ('Resources/DA_CopperOre', 5), ('Resources/DA_SulfurOre', 3)))
+                                      and item('Resources/DA_CopperOre').get_editor_property('sell_value_copper') > 0,
                                       copper=copper()))]),
         ('Lucia Fane', 230, [
             (None, lambda: shot0.update(c=copper())),

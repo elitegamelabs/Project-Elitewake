@@ -36,6 +36,8 @@ LOOKS = {'CopperOre': ((.03, .04, .035), (.06, .22, .17), .8, .6, 1.0),
          'Salt': ((.4, .4, .38), (.75, .75, .72), .6, 1.0, .7),
          'Amber': ((.2, .08, .01), (.7, .35, .04), .25, 1.5, .75),
          'BogIron': ((.03, .02, .012), (.14, .06, .02), .9, .2, .8)}
+# What a Port's resource trader pays for one (Copper; tuning, beside the generic ore's 12, coal's 6 and a gem's 60).
+PRICES = {'CopperOre': 10, 'IronOre': 10, 'SulfurOre': 18, 'Salt': 6, 'Amber': 40, 'BogIron': 6}
 
 
 def outcrop(seed, size):
@@ -60,7 +62,7 @@ def item(key):
         factory.set_editor_property('data_asset_class', unreal.EWItemDefinition)
         asset = unreal.AssetToolsHelpers.get_asset_tools().create_asset(f'DA_{key}', ITEM_FOLDER, unreal.EWItemDefinition, factory)
     for k, v in {'item_id': key, 'display_name': name, 'description': description, 'category': unreal.EWItemCategory.RESOURCE,
-                 'max_stack_size': 50, 'unit_weight': .5 if key != 'Salt' else .2}.items():
+                 'max_stack_size': 50, 'unit_weight': .5 if key != 'Salt' else .2, 'sell_value_copper': PRICES[key]}.items():
         asset.set_editor_property(k, v)
     assert unreal.EditorAssetLibrary.save_loaded_asset(asset)
     return asset
