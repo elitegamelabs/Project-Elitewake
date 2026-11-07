@@ -39,6 +39,7 @@ bool UEWEditorVerificationLibrary::SendVerificationCompanyPolicy(AEWPlayerContro
 #include "EWStation.h"
 #include "EWResourceNode.h"
 #include "Survival/EWWaterSource.h"
+#include "World/EWCampfire.h"
 #include "Gathering/EWHandGatherable.h"
 #include "Gathering/EWHarvestTree.h"
 #include "Gathering/EWMineable.h"
@@ -144,6 +145,16 @@ AEWWaterSource* UEWEditorVerificationLibrary::SpawnVerificationWaterSource(UWorl
     auto* Source = World->SpawnActor<AEWWaterSource>(Location, FRotator::ZeroRotator, Spawn);
     if (Source) { Source->WaterQuality = bFresh ? EEWWaterQuality::Fresh : EEWWaterQuality::Salt; Source->ForceNetUpdate(); }
     return Source;
+}
+
+AEWCampfire* UEWEditorVerificationLibrary::SpawnVerificationCampfire(UWorld* World, FVector Location, float FuelSeconds)
+{
+    if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client) return nullptr;
+    FActorSpawnParameters Spawn;
+    Spawn.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    auto* Fire = World->SpawnActor<AEWCampfire>(Location, FRotator::ZeroRotator, Spawn);
+    if (Fire) Fire->SetFuel(FuelSeconds);
+    return Fire;
 }
 
 AEWStation* UEWEditorVerificationLibrary::SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource, bool bHold, bool bSingleUse, float Duration)

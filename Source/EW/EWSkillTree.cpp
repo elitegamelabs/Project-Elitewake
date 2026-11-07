@@ -30,7 +30,8 @@ const TArray<FEWSkillNode>& FEWSkillTree::Nodes()
         Node(TEXT("FieldRepair"), TEXT("Field Repair"), TEXT("Patch a hull with what you carry. Unlocks the Repair Kit recipe."), .40, .46, 1, {TEXT("Gatherer")}, {TEXT("PrologueRepairKit")}),
         Node(TEXT("StrongBack"), TEXT("Strong Back"), TEXT("Carry more for the same effort. +10 kg carrying capacity."), .84, .44, 1, {TEXT("Torchbearer")}, {}, 0.f, 0.f, 10.f),
         Node(TEXT("SecondWind"), TEXT("Second Wind"), TEXT("Breath comes back sooner and runs deeper. +10 maximum stamina."), .62, .46, 1, {TEXT("Torchbearer")}, {}, 0.f, 10.f),
-        Node(TEXT("Metalwork"), TEXT("Metalwork"), TEXT("Shape ore into a pickaxe that bites into harder rock. Unlocks the Metal Pickaxe recipe."), .30, .20, 2, {TEXT("FieldRepair")}, {TEXT("MetalPickaxe")}),
+        // November 7: smelting the islands' ores into ingots at a fire (copper ore, iron ore, bog iron; add_smelting.py).
+        Node(TEXT("Metalwork"), TEXT("Metalwork"), TEXT("Smelt ore into ingots at a fire, and shape metal into a pickaxe that bites into harder rock. Unlocks the Iron Ingot, Copper Ingot and Metal Pickaxe recipes."), .30, .20, 2, {TEXT("FieldRepair")}, {TEXT("MetalPickaxe"), TEXT("IronIngot"), TEXT("CopperIngot"), TEXT("IronIngotFromBogIron")}),
         Node(TEXT("DeepReserves"), TEXT("Deep Reserves"), TEXT("Strength held back for when it counts. +10 maximum health and +10 maximum stamina."), .72, .20, 2, {TEXT("Hardy"), TEXT("SecondWind")}, {}, 10.f, 10.f),
     };
     return Tree;

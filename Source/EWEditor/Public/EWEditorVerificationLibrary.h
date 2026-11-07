@@ -21,6 +21,7 @@ class UWorld;
 class AActor;
 class AEWStation;
 class AEWWaterSource;
+class AEWCampfire;
 class AEWHandGatherable;
 class AEWHarvestTree;
 class AEWMineable;
@@ -68,6 +69,9 @@ public:
     /** PIE-only source; never adds water to a saved map. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWWaterSource* SpawnVerificationWaterSource(UWorld* World, FVector Location, bool bFresh = true);
+    /** PIE-only lit campfire (smelting and cooking checks); never adds a fire to a saved map. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AEWCampfire* SpawnVerificationCampfire(UWorld* World, FVector Location, float FuelSeconds = 600.f);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWStation* SpawnVerificationInteractable(UWorld* World, FVector Location, bool bResource = false, bool bHold = false, bool bSingleUse = false, float Duration = 1.f);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
