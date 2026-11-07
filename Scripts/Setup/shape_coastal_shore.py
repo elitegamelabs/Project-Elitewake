@@ -2,6 +2,10 @@
 import math, json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 assert not unreal.EWEditorVerificationLibrary.get_play_worlds()
 assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages()
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -58,7 +62,7 @@ for actor in actors.get_all_level_actors():
     elif actor.get_actor_label() == 'Distant islet beach':
         actor.static_mesh_component.set_static_mesh(mesh)
         actor.set_actor_scale3d(unreal.Vector(.337,.347,1)); actor.set_actor_location(unreal.Vector(9500,2600,0),False,False)
-assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
+assert world_map.save_map()
 (Path(unreal.Paths.project_saved_dir())/'CoastalShoreResult.json').write_text(json.dumps({'success':True,
     'mesh':path,'description':'Original irregular shoreline with sloped water entry; retained flat interior/resource locations',
     'limits':'Prototype island layout; full landscape/vegetation art remains open'},indent=2))

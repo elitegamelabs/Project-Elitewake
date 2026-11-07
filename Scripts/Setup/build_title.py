@@ -18,6 +18,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, material_builder, make_timber_material, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 ART = ROOT / 'Art/UI/Title/Elitewake-Title-v1.png'
@@ -126,7 +127,7 @@ def build_map():
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     if unreal.EditorAssetLibrary.does_asset_exist(MAP):
-        assert level.load_level(MAP)
+        assert world_map.open_map(level, MAP)
         for actor in actors.get_all_level_actors():
             if not isinstance(actor, unreal.WorldSettings):
                 actors.destroy_actor(actor)
@@ -177,7 +178,7 @@ def build_map():
     look.set_editor_property('override_auto_exposure_bias', True)
     look.set_editor_property('auto_exposure_bias', -1.5)
     camera.camera_component.set_editor_property('post_process_settings', look)
-    assert level.save_current_level()
+    assert world_map.save_map()
 
 
 def main():

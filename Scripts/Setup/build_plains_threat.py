@@ -28,6 +28,7 @@ import import_audio as IA  # noqa: E402
 from build_coastal_flora import MAP, Ground, easy_to_aim_at  # noqa: E402
 from build_first_resources import aim_box  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = 'World/RiskAndRecovery'
 ASSETS = '/Game/Elitewake/World/Arrival'
@@ -175,7 +176,7 @@ def main():
 
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         # Only its own two arrival boars: place_animals.py's island herds ("Wild Boar <island> n") stay.
         if (isinstance(actor, unreal.EWAnimal) and actor.get_editor_property('definition') == boar
@@ -218,7 +219,7 @@ def main():
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     report['grass_cleared'] = unreal.EWWorldEditorLibrary.remove_foliage_in_circles(world, circles, 'SM_GrassClump')
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'PlainsThreatResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Plains threat built: {len(report["boars"])} boars, {len(report["herbs"])} herb clumps')

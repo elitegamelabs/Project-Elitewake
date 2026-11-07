@@ -290,7 +290,9 @@ def tick(delta):
             # The same, out on the island's far side (well beyond the safe zone).
             x, y = port.world(-12000, 0)
             spot = unreal.Vector(x, y, 20000)
-            ground = unreal.SystemLibrary.line_trace_single(server_world, spot, unreal.Vector(x, y, -5000), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [], unreal.DrawDebugTrace.NONE, True)
+            ground = unreal.SystemLibrary.line_trace_single(server_world, spot, unreal.Vector(x, y, -5000), unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False,
+                                                          list(unreal.GameplayStatics.get_all_actors_of_class(server_world, unreal.EWForest)),   # the ground, not a treetop (forests, November 6)
+                                                          unreal.DrawDebugTrace.NONE, True)
             z = ground.to_tuple()[4].z + 110 if ground else T.PORT_LEVEL + 400
             check('the control spot is outside every safe zone', unreal.EWSafeZone.find_at(server_world, unreal.Vector(x, y, z)) is None)
             state['other'].teleport(unreal.Vector(x, y, z), unreal.Rotator())

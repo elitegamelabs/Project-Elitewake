@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build_ship_fittings as fittings  # noqa: E402
 from ship_geometry import Builder, make_timber_material, write_static_mesh  # noqa: E402
 from ship_hull import plank_tone  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = '/Game/Elitewake/World/Ships'
 SHIPS = '/Game/Elitewake/Ships'
@@ -443,7 +444,7 @@ def moor(definitions):
     other, clear of the swimming checks' lane along Y 0."""
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     # Side by side off the dock with room between them (the dinghy by the dock at Y 650, the raft 3 m deep out).
     for label, d, where in (('Raft', definitions[0], (5300, 60, -65)), ('Dinghy', definitions[1], (5300, 480, -65))):
         ship = next((a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == d), None)
@@ -452,7 +453,7 @@ def moor(definitions):
             ship.set_actor_label(label)
         ship.set_editor_property('definition', d)
         ship.set_actor_location(unreal.Vector(*where), False, False)
-    assert level.save_current_level()
+    assert world_map.save_map()
 
 
 def main():

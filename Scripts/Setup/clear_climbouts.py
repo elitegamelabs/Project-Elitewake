@@ -16,6 +16,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_terrain as T  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 CLEAR = 200.0         # cm past the path's rock-cut sides
@@ -26,7 +27,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     removed = {}
     for actor in actors.get_all_level_actors():
         kind = actor.get_class().get_name()
@@ -62,7 +63,7 @@ def main():
                 mesh = comp.get_editor_property('static_mesh')
                 name = mesh.get_name() if mesh else 'foliage'
                 instances[name] = instances.get(name, 0) + len(doomed)
-    assert level.save_current_level()
+    assert world_map.save_map()
     report = {'success': True, 'actors_removed': removed, 'foliage_instances_removed': instances,
               'finished_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
     Path(unreal.Paths.project_saved_dir(), 'ClearClimbOutsResult.json').write_text(json.dumps(report, indent=2))

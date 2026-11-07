@@ -23,6 +23,7 @@ import arrival_layout as A  # noqa: E402
 import build_held_tools as H  # noqa: E402
 from build_coastal_flora import MAP, Ground, easy_to_aim_at  # noqa: E402
 from ship_geometry import TIMBER_MATERIAL, Builder, make_timber_material, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = 'World/FirstResources'
 ASSETS = '/Game/Elitewake/World/Arrival'
@@ -111,7 +112,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     report = {'removed': [], 'placed': []}
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()).startswith(FOLDER):
@@ -154,7 +155,7 @@ def main():
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     report['grass_cleared'] = unreal.EWWorldEditorLibrary.remove_foliage_in_circles(world, circles, 'SM_GrassClump')
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'FirstResourcesResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'First resources built: {len(report["placed"])} placed')

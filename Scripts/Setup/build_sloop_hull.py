@@ -28,6 +28,7 @@ from ship_geometry import Builder, make_timber_material, write_static_mesh  # no
 from ship_hull import Hull, tar_rope  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, deck_staff, flag_mount  # noqa: E402
 from ship_interior import Room, materials  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MESH = '/Game/Elitewake/World/Ships/SM_SloopHull_v2'
 RIGGING = '/Game/Elitewake/World/Ships/SM_SloopRigging_v1'
@@ -228,14 +229,14 @@ def moor():
     """Moor the sloop clear of the dock with its bow to open water (+Y here: 60 m of deep water ahead; facing +X it
     met the islet's shallows within 10 m). It floats with its waterline (local Z 0) on the sea's surface."""
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     sloop = unreal.load_asset(DEFINITION)
     for ship in [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == sloop]:
         p = ship.get_actor_location()
         ship.set_actor_location_and_rotation(unreal.Vector(p.x, MOORING_Y, -65), unreal.Rotator(roll=0, pitch=0, yaw=MOORING_YAW), False, False)
         ship.set_actor_label('Sloop')
-    assert level.save_current_level()
+    assert world_map.save_map()
 
 
 def main():

@@ -15,6 +15,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import material_builder  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 DOCK_MATERIAL = '/Game/Elitewake/World/Materials/M_DockTimberWeathered_v1'
@@ -105,14 +106,14 @@ def main():
     assert unreal.EditorAssetLibrary.save_loaded_asset(ocean)
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     dock = [a for a in actors.get_all_level_actors()
             if isinstance(a, unreal.StaticMeshActor) and str(a.get_folder_path()) == 'Coast/Dock']
     assert dock, 'no dock actors in Coast/Dock'
     for actor in dock:
         actor.static_mesh_component.set_material(0, material)
     report['dock_actors'] = len(dock)
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'CoastalMaterialsResult.json').write_text(json.dumps(report, indent=2))
     unreal.log('Coastal materials refreshed')

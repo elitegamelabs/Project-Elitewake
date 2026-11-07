@@ -13,6 +13,10 @@ around it and the dock stay; the boats go (the owner then kept the fish). Nothin
 import json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 TEST_MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'
@@ -32,7 +36,7 @@ def main():
     if not library.does_asset_exist(TEST_MAP):
         assert library.duplicate_asset(MAP, TEST_MAP), 'could not keep the ships test map'
         report['kept_test_map'] = TEST_MAP
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     removed = []
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWShip):
@@ -51,7 +55,7 @@ def main():
     kit.set_editor_property('ship_cargo', [])
     kit.set_actor_label('Starter supplies')
     report['starter_supplies'] = [NAMES[n] for n in TOOLS]
-    assert level.save_current_level()
+    assert world_map.save_map()
     for name, display in NAMES.items():
         item = unreal.load_asset(f'{ITEMS}/DA_Test{name}')
         assert item, name

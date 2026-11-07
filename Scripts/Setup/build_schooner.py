@@ -33,6 +33,7 @@ from ship_hull import Hull, tar_rope  # noqa: E402
 from ship_gunports import cover_meshes, gunport  # noqa: E402
 from ship_flags import ENSIGN_FLAG, MASTHEAD_FLAG, deck_staff, flag_mount  # noqa: E402
 from ship_interior import Room, materials  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = '/Game/Elitewake/World/Ships'
 DEFINITION = '/Game/Elitewake/Ships/DA_Ship_Schooner'
@@ -321,7 +322,7 @@ def update_definition(hull, rig, looks, capstan):
 def moor(definition, large_sail):
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     ship = next((a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip) and a.get_editor_property('definition') == definition), None)
     if not ship:
         ship = actors.spawn_actor_from_class(unreal.EWShip, unreal.Vector(*MOORING))
@@ -337,7 +338,7 @@ def moor(definition, large_sail):
             entry.set_editor_property('item', large_sail)
             entry.set_editor_property('quantity', 1)
             kit.set_editor_property('ship_cargo', cargo + [entry])
-    assert level.save_current_level()
+    assert world_map.save_map()
 
 
 def main():

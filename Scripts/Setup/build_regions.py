@@ -15,6 +15,7 @@ import unreal
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = 'World/Regions'
@@ -28,7 +29,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWClimateRegion):
             actors.destroy_actor(actor)
@@ -46,7 +47,7 @@ def main():
         region.set_editor_property('offshore_reach', reach)
         region.set_editor_property('climate', unreal.EWClimateRegion.default_climate(kind))
         placed.append({'label': f'{island.region}: {island.key}', 'centre_m': [round(island.cx / 100), round(island.cy / 100)], 'reach': reach})
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'RegionsResult.json').write_text(json.dumps({'success': True, 'regions': placed}, indent=2))
     unreal.log(f'Regions: {len(placed)}')
 

@@ -12,6 +12,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 ITEMS = '/Game/Elitewake/Items'
@@ -70,7 +71,7 @@ def main():
         assert unreal.EditorAssetLibrary.save_loaded_asset(item)
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWMerchant) and str(actor.get_folder_path()) == 'World/Ports':
             actors.destroy_actor(actor)
@@ -98,7 +99,7 @@ def main():
         gunnery.set_editor_property('crew_role', 'gunner')
         gunnery.set_editor_property('hire_cost', 150)   # tuning
         placed[region] = [round(x), round(y), round(cx), round(cy)]
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'PortMerchantsResult.json').write_text(json.dumps({'success': True, 'merchants': placed}, indent=2))
     unreal.log(f'Port merchants: {placed}')
 

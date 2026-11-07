@@ -26,6 +26,7 @@ import world_layout as W  # noqa: E402
 import world_sublevels as S  # noqa: E402
 import world_terrain as T  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Glaciers'
@@ -89,7 +90,7 @@ def main():
     ice = ice_material()
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()) == LEVEL_FOLDER:
@@ -97,7 +98,7 @@ def main():
     for old in unreal.EditorAssetLibrary.list_assets(FOLDER, recursive=False):
         if 'SM_GlacierBlock_' in old:
             unreal.EditorAssetLibrary.delete_asset(old)         # the first, block-shaped try of November 6
-    S.use(S.FORESTS)        # the ice lives in the forests' sublevel (the map file nears GitHub's 2 GB limit)
+    S.use(S.FORESTS)        # no-op on the World Partition map (November 6); each actor is its own file
     report, spots = {'islands': {}}, []
     for island in [i for i in W.ISLANDS if i.region == 'Winter']:
         sheets = G.plan_island(island, T.height)

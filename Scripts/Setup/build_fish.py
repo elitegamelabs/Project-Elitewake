@@ -25,6 +25,7 @@ from build_coastal_flora import Ground, SEA  # noqa: E402
 from coastal_layout import POND, POND_RADIUS, POND_SURFACE  # noqa: E402
 from world_reefs import REEFS  # noqa: E402
 import world_layout as W  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'  # sea life stays on the island (owner, October 14)
 FOLDER = '/Game/Elitewake/Wildlife/Fish'
@@ -258,7 +259,7 @@ def main():
 
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWFish):
             actors.destroy_actor(actor)
@@ -295,7 +296,7 @@ def main():
             fish.set_actor_label(f'{CREATURES[name]["display"]} {k + 1}')
             fish.set_folder_path(LEVEL_FOLDER)
             report[name].append([round(spot.x), round(spot.y), round(spot.z)])
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'FishResult.json').write_text(json.dumps({'success': True, 'placed': report}, indent=2))
     unreal.log('Fish built and placed')
 

@@ -7,6 +7,10 @@ Their definitions, meshes and build scripts stay: build_schooner.py and build_br
 import json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'  # ships and sea life live in the test map (owner, October 14)
 PARKED = ('Schooner', 'Brigantine')
@@ -16,14 +20,14 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     removed = []
     for ship in [a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip)]:
         definition = ship.get_editor_property('definition')
         if definition and str(definition.get_editor_property('ship_id')) in PARKED:
             removed.append(ship.get_actor_label())
             actors.destroy_actor(ship)
-    assert level.save_current_level()
+    assert world_map.save_map()
     remaining = [str(a.get_editor_property('definition').get_editor_property('ship_id'))
                  for a in actors.get_all_level_actors() if isinstance(a, unreal.EWShip)]
     Path(unreal.Paths.project_saved_dir(), 'ParkLargeShipsResult.json').write_text(json.dumps(

@@ -20,6 +20,7 @@ import world_terrain as T  # noqa: E402
 from build_coastal_flora import MAP, easy_to_aim_at  # noqa: E402
 from build_first_resources import aim_box  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 ASSETS = '/Game/Elitewake/World/Freeport'
 FOLDER = 'World/Freeport'
@@ -124,7 +125,7 @@ def main():
 
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWStrongbox) or actor.get_actor_label().startswith(LABEL):
             report['removed'].append(actor.get_actor_label())
@@ -158,7 +159,7 @@ def main():
     glow.set_editor_property('cast_shadows', False)
     report['lantern'] = [round(lx), round(ly)]
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'SaltreachWelcomeResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Saltreach welcome built: strongbox at {report["strongbox"]}')

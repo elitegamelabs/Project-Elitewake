@@ -4,12 +4,14 @@
 #   .\Scripts\Verification\run_play_check_once.ps1 -Check verify_elephant_play.py -Result ElephantPlayResult.json -Players 2 -Kit 1
 # -Standalone 1 plays one survivor with no network (single-player checks such as verify_options_menu_play.py).
 # -Yard held keeps the yard's sloop held (verify_voyage_ready_play.py); the default 'sold' releases it for older ship checks.
+# -Map plays another map (default the canonical Lvl_CoastalPlayground).
 # -Visible opens the editor normally so the owner can watch the Play check; automated checks remain hidden by default.
 param([string]$Check, [string]$Result, [string]$Players = '2', [string]$Kit = '0', [string]$Timeout = '240',
-      [string]$Window = '', [string]$Yard = 'sold', [string]$Standalone = '', [switch]$Visible)
+      [string]$Window = '', [string]$Yard = 'sold', [string]$Standalone = '', [switch]$Visible,
+      [string]$Map = '/Game/Elitewake/Maps/Lvl_CoastalPlayground')
 $Project = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $Editor = "C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe"
-$env:EW_PLAY_MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+$env:EW_PLAY_MAP = $Map
 $env:EW_PLAY_CHECK = Join-Path $PSScriptRoot $Check
 $env:EW_PLAY_RESULT = $Result
 $env:EW_PLAY_PLAYERS = $Players
@@ -22,7 +24,7 @@ $out = Join-Path $Project "Saved\$Result"
 Remove-Item $out -ErrorAction SilentlyContinue
 $runner = (Join-Path $PSScriptRoot 'run_play_check.py') -replace '\\', '/'
 $windowStyle = if ($Visible) { 'Normal' } else { 'Hidden' }
-$editor = Start-Process -PassThru -WindowStyle $windowStyle -FilePath $Editor -ArgumentList @("`"$Project\EW.uproject`"", '/Game/Elitewake/Maps/Lvl_CoastalPlayground', '-unattended', "-ExecCmds=`"py $runner`"")
+$editor = Start-Process -PassThru -WindowStyle $windowStyle -FilePath $Editor -ArgumentList @("`"$Project\EW.uproject`"", $Map, '-unattended', '-SCCProvider=None', "-ExecCmds=`"py $runner`"")
 $limit = [int]$Timeout + 720
 if (-not $editor.WaitForExit($limit * 1000)) {
     Stop-Process -Id $editor.Id -Force

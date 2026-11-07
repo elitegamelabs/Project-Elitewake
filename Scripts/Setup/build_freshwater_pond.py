@@ -15,6 +15,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_coastal_flora import MAP, Ground  # noqa: E402
 from coastal_layout import POND, POND_DEPTH, POND_RADIUS, POND_SURFACE  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = 'Coast/FreshWater'
 SURFACE_LABEL, VOLUME_LABEL, SOURCE_LABEL = 'Freshwater surface', 'Freshwater pond water', 'Freshwater spring - E to drink'
@@ -25,7 +26,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     found = {a.get_actor_label(): a for a in actors.get_all_level_actors() if str(a.get_folder_path()) == FOLDER}
     surface, source = found.get(SURFACE_LABEL), found.get(SOURCE_LABEL)
     assert surface and source, f'spring actors missing: {sorted(found)}'
@@ -60,7 +61,7 @@ def main():
     ground = Ground()
     source.set_actor_location(unreal.Vector(x, y, ground(x, y) + 10), False, False)
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'FreshwaterPondResult.json').write_text(json.dumps(
         {'success': True, 'drink_at': [round(x), round(y), round(ground(x, y))], 'centre_floor': round(ground(*POND))}, indent=2))
     unreal.log('Freshwater pond filled')

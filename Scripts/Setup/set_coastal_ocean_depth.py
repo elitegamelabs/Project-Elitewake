@@ -2,6 +2,10 @@
 import json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 OCEAN_MAX_DEPTH_METERS = 1500.0  # owner, October 22: the ocean at most 1,500 m deep (was 2,000 m)
 
@@ -37,7 +41,7 @@ def main():
     bed = next(a for a in actors if a.get_actor_label() == 'Coastal seabed')
     sea = next(a for a in actors if a.get_actor_label().startswith('Coastal sea surface'))
     result = apply_depth(volume, bed, sea.get_actor_location().z)
-    assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
+    assert world_map.save_map()
     result.update(success=True, limits='Prototype flat deep seabed; regional bathymetry remains unbuilt')
     Path(unreal.Paths.project_saved_dir(), 'CoastalOceanDepthResult.json').write_text(json.dumps(result,indent=2))
     unreal.log(f'Saved coastal maximum ocean depth: {OCEAN_MAX_DEPTH_METERS:.0f} meters')

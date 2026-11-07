@@ -18,6 +18,7 @@ import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 from place_animals import fits  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 CAVE_SPIDERS = 2
 SWAMP_SPIDERS = 5
@@ -35,7 +36,7 @@ def main():
     definition = BA.build_definitions(meat)['Spider']
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(BA.MAP)
+    assert world_map.open_map(level, BA.MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWAnimal) and actor.get_editor_property('definition') == definition:
             actors.destroy_actor(actor)
@@ -76,7 +77,7 @@ def main():
                 continue
             spawn(x, y, z + lift, f'{island.key} swamp')
             made += 1
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'SpidersResult.json').write_text(json.dumps({'success': True, 'spiders': len(placed), 'placed': placed}, indent=2))
     unreal.log(f'Spiders: {len(placed)}')
 

@@ -29,6 +29,7 @@ from ship_geometry import Builder, make_timber_material, material_builder, write
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Ports'
@@ -433,7 +434,7 @@ def main():
     lantern_mesh = write_static_mesh(lantern(), f'{FOLDER}/SM_PortLantern_v1', [lantern_mat], 120.0, collision=False)
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()).startswith('World/Ports') and not str(actor.get_folder_path()).startswith('World/Ports/Plains'):
             actors.destroy_actor(actor)
@@ -454,7 +455,7 @@ def main():
         made = build_port(actors, port, style, mats, ground)
         report[region] = {'island': port.island.key, 'facing_deg': round(math.degrees(port.facing)),
                           'site_m': [round(port.cx / 100), round(port.cy / 100)], **made}
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'PortsResult.json').write_text(json.dumps({'success': True, 'ports': report}, indent=2))
     unreal.log('Ports built')
 

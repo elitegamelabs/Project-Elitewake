@@ -24,6 +24,7 @@ import world_terrain as T  # noqa: E402
 from build_coastal_flora import MAP, Ground, WOOD, THATCH  # noqa: E402
 from coastal_layout import POND, POND_RADIUS  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = 'World/Arrival'
 ASSETS = '/Game/Elitewake/World/Arrival'
@@ -188,7 +189,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     report = {'removed': [], 'placed': []}
     everything = actors.get_all_level_actors()
     for actor in everything:
@@ -274,7 +275,7 @@ def main():
     circles.append(unreal.Vector(A.SPRING[0], A.SPRING[1], A.SPRING_RADIUS + 90))
     report['grass_cleared'] = unreal.EWWorldEditorLibrary.remove_foliage_in_circles(world, circles, 'SM_GrassClump')
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'ArrivalResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Arrival built: {len(report["placed"])} placed')

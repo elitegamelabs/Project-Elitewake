@@ -7,6 +7,10 @@ Run from the editor console with Play stopped and the current level saved.
 import json, math
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
@@ -107,7 +111,7 @@ actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
 sky=actors.spawn_actor_from_class(unreal.SkyLight,unreal.Vector(0,0,800))
 sky.get_component_by_class(unreal.SkyLightComponent).set_editor_property('real_time_capture',True)
 actors.spawn_actor_from_class(unreal.ExponentialHeightFog,unreal.Vector(0,0,-150))
-assert level.save_current_level()
+assert world_map.save_map()
 unreal.EditorLevelLibrary.set_level_viewport_camera_info(unreal.Vector(5800,-6200,3600),unreal.Rotator(-22,140,0))
 report={'map':MAP,'saved':True,'actors':len(actors.get_all_level_actors()),'resources':len([a for a in spawned if str(a.get_folder_path())=='Coast/Resources']),'limits':['Blockout geometry and provisional finite resource pools','Sea is visual only; no swimming or sailing','No wildlife actors yet','No starter recipe grants or introduction completion','Startup maps unchanged']}
 Path(unreal.Paths.project_saved_dir(),'CoastalCreationResult.json').write_text(json.dumps(report,indent=2))

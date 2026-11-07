@@ -6,6 +6,10 @@ The raft, dinghy, schooner and brigantine stay in /Game/Elitewake/Maps/Test/Lvl_
 import json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 TEST_MAP = '/Game/Elitewake/Maps/Test/Lvl_ShipsTest'
@@ -31,7 +35,7 @@ def main():
     kit = next(a for a in actors.get_all_level_actors() if isinstance(a, unreal.EWStarterKit))
     cargo = [(e.get_editor_property('item'), e.get_editor_property('quantity')) for e in kit.get_editor_property('ship_cargo')]
 
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for old in ships(actors):
         if ship_id(old) == 'Sloop':
             actors.destroy_actor(old)
@@ -47,7 +51,7 @@ def main():
         e.set_editor_property('quantity', quantity)
         entries.append(e)
     kit.set_editor_property('ship_cargo', entries)
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'RestoreSloopResult.json').write_text(json.dumps({
         'success': True, 'location': [location.x, location.y, location.z], 'label': label,
         'cargo': [f'{i.get_name()} x{q}' for i, q in cargo if i]}, indent=2))

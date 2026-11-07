@@ -1,5 +1,9 @@
 """Create a saved, isolated M5D fixture. Does not change the normal startup map."""
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 assets = unreal.AssetToolsHelpers.get_asset_tools()
 path = '/Game/Elitewake/Blueprints/BP_TestWoodPickup'
 if not unreal.EditorAssetLibrary.does_asset_exist(path):
@@ -32,12 +36,12 @@ if not unreal.EditorAssetLibrary.does_asset_exist(map_path):
     light = actors.spawn_actor_from_class(unreal.DirectionalLight, unreal.Vector(0,0,600))
     light.set_actor_rotation(unreal.Rotator(-45,0,0), False)
     actors.spawn_actor_from_class(unreal.SkyLight, unreal.Vector(0,0,600))
-    assert level.save_current_level()
+    assert world_map.save_map()
 else:
     assert level.load_level(map_path)
     for actor in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
         if actor.get_class() == cls:
             actor.set_editor_property('item_definition', item)
             actor.set_editor_property('quantity', 10)
-    assert level.save_current_level()
+    assert world_map.save_map()
 unreal.log('M5D pickup Blueprint and isolated test map ready; normal startup map unchanged.')

@@ -21,6 +21,7 @@ from world_reefs import REEFS  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
 from build_coastal_rocks import boulder  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Reefs'
@@ -128,7 +129,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()).startswith(LEVEL_FOLDER):
             actors.destroy_actor(actor)
@@ -161,7 +162,7 @@ def main():
             depths.append(round((T.SEA - z) / 100, 1))
         report[reef.key] = {'island': reef.island.key, 'centre_m': [round(reef.cx / 100), round(reef.cy / 100)], 'corals': made,
                             'depth_m': [min(depths), max(depths)] if depths else None}
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'ReefsResult.json').write_text(json.dumps({'success': True, 'reefs': report}, indent=2))
     unreal.log(f'Reefs built: {len(report)}')
 

@@ -34,6 +34,7 @@ from build_ports import masonry_material, flat_material  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Freeport'
@@ -682,7 +683,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     ground = Ground()
     MATS = make_materials()
     clear_site()
@@ -698,7 +699,7 @@ def main():
     build_people(stalls, placed, ship_class)
     build_sounds()
     build_safe_zone()
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     report['site'] = {'centre': [round(port.cx), round(port.cy)], 'facing_deg': round(FACING)}
     Path(unreal.Paths.project_saved_dir(), 'FreeportResult.json').write_text(json.dumps(report, indent=2))

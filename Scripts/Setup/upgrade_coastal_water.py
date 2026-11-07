@@ -5,6 +5,10 @@ import json
 import runpy
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 root = Path(unreal.Paths.project_dir()).resolve()
 level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
@@ -12,7 +16,7 @@ actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 lib = unreal.EWEditorVerificationLibrary
 assert not lib.get_play_worlds(), 'Stop Play first'
 assert not unreal.EditorLoadingAndSavingUtils.get_dirty_map_packages(), 'Save current map first'
-assert level.load_level('/Game/Elitewake/Maps/Lvl_CoastalPlayground')
+assert world_map.open_map(level, '/Game/Elitewake/Maps/Lvl_CoastalPlayground')
 world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 all_actors = actors.get_all_level_actors()
 sea = next(a for a in all_actors if a.get_actor_label().startswith('Coastal sea surface'))
@@ -153,7 +157,7 @@ if not bed:
     bed.set_actor_scale3d(unreal.Vector(600,600,.8))
     bed.static_mesh_component.set_material(0, unreal.load_asset('/Game/Elitewake/World/Blockout/M_CoastalSand'))
 depth = runpy.run_path(str(root/'Scripts/Setup/set_coastal_ocean_depth.py'))['apply_depth'](volume, bed, sea.get_actor_location().z)
-assert level.save_current_level()
+assert world_map.save_map()
 report = {'success':True, 'map':'/Game/Elitewake/Maps/Lvl_CoastalPlayground',
     'water_surface_z':-65, 'water_volume':volume.get_path_name(), 'textured_actors':changes, 'depth':depth,
     'limits':['Prototype static swimming waterline; small animated visual waves; no vessel buoyancy',

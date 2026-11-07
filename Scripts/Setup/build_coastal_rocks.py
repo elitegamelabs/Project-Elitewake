@@ -26,6 +26,7 @@ from build_coastal_flora import FLORA_FOLDER, KEEP_CLEAR, MAP, SEA, Ground  # no
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = '/Game/Elitewake/World/Rocks'
 STONE = '/Game/Elitewake/Items/Testing/DA_TestStone'
@@ -262,7 +263,7 @@ def main():
     assert stone
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith('Boulder'):
             actors.destroy_actor(actor)
@@ -320,7 +321,7 @@ def main():
         for channel in (unreal.CollisionChannel.ECC_PAWN, unreal.CollisionChannel.ECC_CAMERA, unreal.CollisionChannel.ECC_WORLD_DYNAMIC):
             mesh.set_collision_response_to_channel(channel, unreal.CollisionResponseType.ECR_BLOCK)
         placed.append([round(x), round(y), round(z), round(scale, 2), shape_index + 1, look])
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'CoastalRocksResult.json').write_text(json.dumps(
         {'success': True, 'rocks': len(placed), 'looks': {n: sum(1 for p in placed if p[5] == n) for n in STONES},
          'positions': placed}, indent=2))

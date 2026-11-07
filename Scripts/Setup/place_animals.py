@@ -25,6 +25,7 @@ import world_terrain as T  # noqa: E402
 from wildlife_distribution import HABITAT, CLEAR_AGGRESSIVE, CLEAR_PASSIVE, missing_counts, target_counts  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/Wildlife/Animals'
@@ -50,7 +51,7 @@ def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     existing_animals = [actor for actor in actors.get_all_level_actors() if isinstance(actor, unreal.EWAnimal)]
     # Owner, November 6: no full rebuilds, so this adds only what each island is missing and leaves every animal already
     # placed where it is (and the spiders and Plains boars other scripts place). EW_ANIMALS_FRESH=1 clears this script's
@@ -116,7 +117,7 @@ def main():
                 placed.append((name, island.key, island.region, round(x), round(y), round(z)))
             if made < count:
                 unreal.log_warning(f'{island.key} could add only {made}/{count} {name} with current habitat constraints')
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'AnimalsExpansionResult.json').write_text(json.dumps({
         'success': True, 'islands_targeted': [i.key for i in targets],
         'existing_animals_untouched': len(existing_animals), 'new_animals': len(placed),

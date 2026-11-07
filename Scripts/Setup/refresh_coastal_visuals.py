@@ -17,6 +17,10 @@ Then run build_coastal_terrain.py.
 import json
 from pathlib import Path
 import unreal
+import sys as _sys  # noqa: E402
+from pathlib import Path as _Path  # noqa: E402
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 SEA_Z = -65.0
@@ -57,7 +61,7 @@ lib = unreal.EWEditorVerificationLibrary
 assert not lib.get_play_worlds(), 'Stop Play first'
 level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-assert level.load_level(MAP)
+assert world_map.open_map(level, MAP)
 world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 placed = actors.get_all_level_actors()
 
@@ -132,7 +136,7 @@ kit.set_editor_property('items', kit_entries(carried))
 kit.set_editor_property('ship_cargo', kit_entries(hold))
 report['starter_kit'] = {'carried': [f'{q} x {n}' for n, q in carried], 'ship_hold': [f'{q} x {n}' for n, q in hold]}
 
-assert level.save_current_level()
+assert world_map.save_map()
 report['success'] = True
 (root / 'Saved/CoastalVisualsResult.json').write_text(json.dumps(report, indent=2))
 unreal.log('Coastal visual pass saved')

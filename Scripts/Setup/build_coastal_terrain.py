@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from set_coastal_ocean_depth import apply_depth  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 MESHES = '/Game/Elitewake/World/Meshes/Islands'
@@ -360,7 +361,7 @@ lib = unreal.EWEditorVerificationLibrary
 assert not lib.get_play_worlds(), 'Stop Play first'
 level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-assert level.load_level(MAP)
+assert world_map.open_map(level, MAP)
 
 # Re-cut only some islands' ground (EW_TERRAIN_ISLANDS=Starter,...): their meshes are rebuilt from world_terrain and their
 # actors pointed at them again; the sea floor, surf, ocean and every other island stay as they are. For local changes such as
@@ -378,7 +379,7 @@ if ONLY:
         actor.static_mesh_component.set_static_mesh(asset)
         report['islands'][island.key] = {'vertices': verts}
     report['ground_cm'] = {'spring_centre': round(height(T.POND[0], T.POND[1]), 1)}
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Island ground re-cut: {ONLY}')
@@ -474,7 +475,7 @@ else:
     report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
         'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
         'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0)}.items()}
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
     unreal.log('World terrain saved')

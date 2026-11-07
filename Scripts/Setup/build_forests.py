@@ -27,6 +27,7 @@ import build_coastal_flora as F  # noqa: E402
 import build_grass as G  # noqa: E402
 import world_layout as W  # noqa: E402
 import world_sublevels as S  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FLORA = '/Game/Elitewake/World/Flora'
@@ -110,7 +111,7 @@ def main():
     meshes = models()
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     keys = [i.key for i in W.ISLANDS]
     removed, taken = 0, Taken()
@@ -130,7 +131,7 @@ def main():
             taken.add(p.x, p.y, 350.0)
         elif isinstance(actor, unreal.EWHandGatherable):
             taken.add(p.x, p.y, 120.0)
-    S.use(S.FORESTS)        # forests and bushes live in their own sublevel (the map file nears GitHub's 2 GB limit)
+    S.use(S.FORESTS)        # no-op on the World Partition map (November 6); each actor is its own file
     wood, thatch = unreal.load_asset(F.WOOD), unreal.load_asset(F.THATCH)
     ground = F.Ground()
     report = {'old_trees_removed': removed, 'islands': {}}

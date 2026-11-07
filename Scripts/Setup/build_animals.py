@@ -32,6 +32,7 @@ import unreal
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from ship_geometry import Builder, cross, material_builder, norm, sub, write_static_mesh  # noqa: E402
 from build_coastal_flora import FLORA_FOLDER, Ground, SEA  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/Wildlife/Animals'
@@ -1032,14 +1033,14 @@ def main():
     defs = build_definitions(meat)
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if isinstance(actor, unreal.EWAnimal):
             actors.destroy_actor(actor)
     trees = [(t.get_actor_location().x, t.get_actor_location().y) for t in actors.get_all_level_actors()
              if str(t.get_folder_path()) == FLORA_FOLDER and t.get_actor_label().startswith('Maravai')]
     placed = place(actors, defs, Ground(), trees)
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'AnimalsResult.json').write_text(json.dumps({
         'success': True, 'animals': len(placed),
         'by_kind': {n: sum(1 for p in placed if p[0] == n) for n in ANIMALS},

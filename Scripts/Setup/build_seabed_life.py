@@ -27,6 +27,7 @@ from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: 
 from build_reefs import branching, fan, pillar, coral_material  # noqa: E402
 from build_coastal_rocks import boulder  # noqa: E402
 from build_coastal_flora import Ground  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Seabed'
@@ -221,7 +222,7 @@ def transforms(spots, kind, rng):
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
 
     plant = plant_material()
@@ -291,7 +292,7 @@ def main():
                 comp.set_collision_enabled(unreal.CollisionEnabled.QUERY_ONLY)
                 report.setdefault('solid_components', 0)
                 report['solid_components'] += 1
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'SeabedLifeResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Seabed life: {report["totals"]}')

@@ -23,6 +23,7 @@ import world_terrain as T  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
 import arrival_layout  # noqa: E402
 from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Grass'
@@ -272,7 +273,7 @@ def spots(island, rng, density=None, scales=None):
 def main():
     assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     material = grass_material()
     kinds = []
@@ -334,7 +335,7 @@ def main():
             mesh = comp.get_editor_property('static_mesh')
             if mesh and any(k in mesh.get_name() for k in ('SM_GrassClump', 'SM_Fern', 'SM_Bush', 'SM_Flowers')):
                 comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-    assert level.save_current_level()
+    assert world_map.save_map()
     Path(unreal.Paths.project_saved_dir(), 'GrassResult.json').write_text(json.dumps({'success': True, 'clumps': report, 'total': total}, indent=2))
     unreal.log(f'Grass clumps: {total}')
 

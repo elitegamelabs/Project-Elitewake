@@ -25,9 +25,10 @@ for m in MAPS:
                 actors_sub.destroy_actor(a)
                 gone += 1
     report['removed'][m] = gone
-    assert level.save_current_level(), m
+    assert world_map.save_map(), m
 
 import create_test_journal
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 create_test_journal.main()          # the journal pages, without the manatee lines
 
 ar = unreal.AssetRegistryHelpers.get_asset_registry()

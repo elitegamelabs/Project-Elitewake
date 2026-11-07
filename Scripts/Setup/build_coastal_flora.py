@@ -54,6 +54,7 @@ from ship_geometry import Builder, cross, material_builder, norm, write_static_m
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from world_landmarks import near_landmark  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
 FOLDER = '/Game/Elitewake/World/Flora'
@@ -829,7 +830,7 @@ def main():
     assert wood and thatch
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     # Replace this script's earlier palms and plants.
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()) == FLORA_FOLDER and actor.get_actor_label().startswith(('Veyran Palm', 'Maravai', 'Birch', 'Spruce', 'Oak', 'Ash', *PLANTS)):
@@ -884,7 +885,7 @@ def main():
     # own oaks and the gatherable plants.
     whites, dressed = dress_islands(actors, ground, kinds, wood, thatch) if ISLAND_TREES else ([], {})
     plants = place_plants(actors, ground, [(p[0], p[1]) for p in placed + hardwoods], materials, whites)
-    assert level.save_current_level()
+    assert world_map.save_map()
     report = {'success': True, 'starter_palms': len(placed), 'starter_oaks': len(hardwoods), 'islands': dressed,
               'positions': placed, 'oak_positions': hardwoods, 'plants': plants}
     Path(unreal.Paths.project_saved_dir(), 'CoastalFloraResult.json').write_text(json.dumps(report, indent=2))

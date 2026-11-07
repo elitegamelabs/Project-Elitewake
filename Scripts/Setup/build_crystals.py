@@ -22,6 +22,7 @@ from build_coastal_flora import MAP, SEA, Ground  # noqa: E402
 from build_coastal_rocks import lattice  # noqa: E402
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 FOLDER = '/Game/Elitewake/World/Crystals'
 ITEM_FOLDER = '/Game/Elitewake/Items/Resources'
@@ -219,7 +220,7 @@ def main():
               'Coal': [write_static_mesh(coal(3), f'{FOLDER}/SM_CoalOre_v1', [coal_material], 100.0)]}
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     for actor in actors.get_all_level_actors():
         if str(actor.get_folder_path()) == LEVEL_FOLDER:
             actors.destroy_actor(actor)
@@ -379,7 +380,7 @@ def main():
                 made += 1
             if made < count:
                 unreal.log_warning(f'{island.key}: only {made}/{count} {kind}')
-    assert level.save_current_level()
+    assert world_map.save_map()
     counts = {}
     for p in placed:
         label = f'{p[0]}/{p[1].split()[-1]}'

@@ -938,17 +938,24 @@ Forests (owner, November 6: dense, strategically placed forests with lots of bus
 - Species mix per region (`forest_plan.MIX`): Plains oak with ash and birch; Winter birch and spruce; Swamp spruce and ash; Desert palm; Jungle ash and maravai. Six models per species.
 - Each tree has its own age (saplings to giants), girth, height, lean and turn.
 - 177,567 walk-through bushes, thickest along forest edges.
-- Planned offline by `forest_plan.py` (all cores, about 3 minutes) and placed by `build_forests.py` without a world rebuild. They live in the always-loaded sublevel `Lvl_CoastalPlayground_Forests` (`world_sublevels.py`): GitHub's large-file storage refuses any file over 2 GB, and the map itself is 2.07 GB. World Partition is the lasting fix, with the streaming work. The old one-actor island trees are gone (`build_coastal_flora.ISLAND_TREES = False`); the starter keeps its own authored oaks.
+- Planned offline by `forest_plan.py` (all cores, about 3 minutes) and placed by `build_forests.py` without a world rebuild. The old one-actor island trees are gone (`build_coastal_flora.ISLAND_TREES = False`); the starter keeps its own authored oaks.
 - Each stand is an `AEWForest` (C++), instanced and cheap. A hatchet's first blow turns the tree into an ordinary `AEWHarvestTree`, which works, falls and fades as before. The stand regrows the tree after 20 minutes if its place is clear. Felled forest trees are not saved yet: a reload regrows them.
 - Verified in Play (`verify_forests_play.py`): the census, a chop that gives wood and leaves the forest tree down, and screenshots in each region. Cost measured by `diagnose_forest_cost_play.py` on the RTX 4070 in a dense Plains stand: 25.4 ms per frame with forests, 20.2 ms without. The GTX 1660 Super is not measured yet. Placeholder tree art; visual review pending.
 
 Ice sheets (owner, November 6: different sheets of ice around the Winter mountains only, like the real Arctic, as tall as the nearest cliff or landing; the ice is solid; not literal blocks). Built November 6:
 - 41 separate sheets around the Winter mountains (Winter1 9, Winter2 8, Winter3 10, Winter4 14), each 0.7–5.5 ha and longer down the slope than across.
 - Each sheet's surface is the slope smoothed and raised by a thickness near the height of the nearest cliff or bank (12–45 m). A high rock can poke through. Each ends in a steep ice wall, about 70°, too steep to climb.
-- Shapes come from `glacier_shapes.py`; `build_glaciers.py` makes one mesh per sheet, in the forests' sublevel.
+- Shapes come from `glacier_shapes.py`; `build_glaciers.py` makes one mesh per sheet.
 - Material: blue ice and crevasses on the walls, snow on the tops.
 - Full collision. Trees, bushes, rocks, plants and animals under the ice were removed.
 - Verified in Play (`verify_ice_play.py`): on each Winter island a survivor walking at a wall is stopped and one dropped on top stands on the ice. Visual review pending.
+
+World Partition streaming (owner, November 6: "Start streaming"). Built November 6:
+- Coastal Playground is now a World Partition map, converted in place (`WorldPartitionConvertCommandlet`). Every actor is its own file under `Content/__ExternalActors__/Elitewake/Maps/Lvl_CoastalPlayground` (22,244 files); the map file itself is 14 KB, which ends the 2 GB GitHub limit. The forests sublevel was merged in and removed.
+- `setup_world_partition.py` streams only the ground-cover foliage (2,906 cells); everything else (islands, forests, animals, ports, ships, ice) stays always loaded for now. Near the player about 12 cells (210,000 instances, out to about 400 m) are loaded instead of all 7.9 million; they unload when the player travels.
+- Setup scripts open and save the map through `world_map.py` (`open_map` loads every actor on a partitioned map; `save_map` saves each changed actor file).
+- Unreal must start with `-SCCProvider=None` (the Play-check runner now does): otherwise it checks each of the 22,000 files against source control at startup and never finishes loading. The local list it keeps is `Saved/SourceControl/UncontrolledChangelists.json`; the 39,000-entry version was moved aside.
+- Verified in Play on the converted map: `verify_streaming_play.py` (cells near the start and at Jungle1, unloading after travel, 21-23 ms per frame on the RTX 4070), and the forests, wildlife and ice checks. Still to do: streaming the islands themselves with HLOD for distant ones, and measuring the GTX 1660 Super.
 
 The November 3 full rebuild stopped at `build_saltreach_welcome`: the map failed to load after earlier world steps reported success. The November 4 checkpoint restored a usable prior map and preserved recovery files in `C:\ELITEWAKE\Recovery_20261104_MapSaveFailure`; do not treat the failed result as a playable 20-island rebuild. First inspect map integrity, free space and recovery state. Then fix the smallest reproducible blocker, build and verify cavern access, and use the narrowest safe rebuild steps rather than rerunning hours of terrain by default. Keep generated work and recovery copies. Verify Python, C++, Play, map markers, routes, and screenshots before claiming the world playable. Do not commit or push until the resulting state is coherent and verified.
 

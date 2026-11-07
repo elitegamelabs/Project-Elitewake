@@ -13,6 +13,9 @@ FORESTS = '/Game/Elitewake/Maps/Lvl_CoastalPlayground_Forests'
 
 
 def use(path=FORESTS):
+    import world_map
+    if world_map.partitioned():
+        return None            # a World Partition map has no sublevels: new actors go into the world itself
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     entry = unreal.GameplayStatics.get_streaming_level(world, path)
     if not entry:
@@ -29,4 +32,5 @@ def use(path=FORESTS):
 
 
 def save():
-    assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_all_dirty_levels()
+    import world_map
+    assert world_map.save_map()

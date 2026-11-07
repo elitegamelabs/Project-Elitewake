@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import world_layout as W  # noqa: E402
 import world_terrain as T  # noqa: E402
 from build_coastal_flora import MAP  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
 
 ITEMS = '/Game/Elitewake/Items'
 FOLDER = 'World/Freeport'
@@ -44,7 +45,7 @@ def main():
 
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    assert level.load_level(MAP)
+    assert world_map.open_map(level, MAP)
     raft = unreal.load_asset('/Game/Elitewake/Ships/DA_Ship_Raft')
     waterskin = unreal.load_asset(f'{ITEMS}/Testing/DA_TestHideWaterFlask')
     held = []
@@ -81,7 +82,7 @@ def main():
     water.set_folder_path(FOLDER)
     report['well'] = [round(x), round(y), round(TOWN + 78)]
 
-    assert level.save_current_level()
+    assert world_map.save_map()
     report['success'] = True
     Path(unreal.Paths.project_saved_dir(), 'VoyageReadyResult.json').write_text(json.dumps(report, indent=2))
     unreal.log(f'Voyage readiness built: {report}')
