@@ -1,0 +1,11 @@
+{
+  "file": "underside.png",
+  "sha256": "d74c3d92cadeb5b76c660aec6385911ae80503b3728e652ccb1a72877d548691",
+  "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult African-style warm grey elephant, large ears, two curved ivory tusks, hanging trunk with softly curled tip, columnar legs. ONE VIEW ONLY: DIRECT VENTRAL ORTHOGRAPHIC view looking UP from below body. Nose toward image TOP, tail toward image BOTTOM. Show belly and underside of paws/feet naturally, neutral extended standing limb pose, no dissection or injury. No body laid on a studio floor. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

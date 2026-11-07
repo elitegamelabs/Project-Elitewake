@@ -1,0 +1,11 @@
+{
+  "file": "back.png",
+  "sha256": "0601ba5cdfae4a7b9ddf9c5a641d2f57e1f248ddc0d41aebfa2f65ec5f0385c0",
+  "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: adult male tawny lion with a dark brown mane, golden outer fringe, pale muzzle/underside, black nose, tufted tail. ONE VIEW ONLY: EXACT REAR view. Tail/rump faces camera; head points directly away and is mostly hidden behind torso. Do not show a front face. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

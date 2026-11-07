@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Confirmed-Crops-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    {
+      "name": "Corn: single ripe ear with partially peeled green husk",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Tomato: ripe red tomato",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Beans: small cluster of green bean pods",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Sugarcane: three cut sugarcane stalk sections",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.5
+        ]
+      }
+    },
+    {
+      "name": "Potato: two soil-dusted potatoes",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.5
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Carrot: orange carrot with green leaves",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.5
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Pumpkin: small orange pumpkin",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.5
+        ],
+        "max": [
+          0.75,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Rye: tied bundle of ripe rye grain stalks",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.5
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "One realistic ELITEWAKE inventory/reference PNG texture atlas. Strict equal-cell 4 columns by 2 rows, reading left-to-right then top-to-bottom. Each listed object isolated, fully visible, centered in central 75% of its cell with empty transparent gutters. Photorealistic physically based natural materials, weathered preindustrial pirate-era props where applicable, consistent neutral soft studio lighting, high-quality original 2026 survival-game art, readable silhouettes. Transparent alpha background. No labels, lettering, numbers, game logos, frames, backdrop, modern objects or characters. Objects in exact order: Corn: single ripe ear with partially peeled green husk; Tomato: ripe red tomato; Beans: small cluster of green bean pods; Sugarcane: three cut sugarcane stalk sections; Potato: two soil-dusted potatoes; Carrot: orange carrot with green leaves; Pumpkin: small orange pumpkin; Rye: tied bundle of ripe rye grain stalks. Empty cells stay fully transparent. Anatomical resources are clean crafting materials without wounds or gore. All visual designs original."
+}

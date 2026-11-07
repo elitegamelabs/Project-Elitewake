@@ -1,0 +1,17 @@
+# Binary files, stored as ordinary Git files (owner, November 7: no Git LFS; GitHub's LFS allowance on the account is
+# full). GitHub takes ordinary files up to 100 MB each; Scripts/Release/push_github.py refuses anything near that.
+*.uasset binary
+*.umap binary
+*.png binary
+*.jpg binary
+*.fbx binary
+*.blend binary
+*.psd binary
+*.tga binary
+*.exr binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.mp4 binary
+*.mov binary
+*.glb binary

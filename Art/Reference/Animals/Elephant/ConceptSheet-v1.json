@@ -1,0 +1,11 @@
+{
+  "file": "ConceptSheet-v1.png",
+  "sha256": "e21f603d44e01db7acc49482b21badd442087dfb6ed832c36a0c1ac725d9dac1",
+  "prompt": "ELITEWAKE realistic animal modeling reference. Adult African-style elephant matching reference, warm grey wrinkled skin, large ears with rounded intact edges, two curved ivory tusks, long trunk hanging with softly curled tip, four columnar legs and sparse tail hair. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

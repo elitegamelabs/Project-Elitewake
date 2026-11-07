@@ -1,0 +1,17 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "LayoutSheet-v2.png",
+      "sha256": "bf0dc6d1b41e619d5629325e2a87691e046f9af466185a9bb9837c872700b52a",
+      "prompt": "Edit the supplied Schooner sheet. Correct gunports to EXACTLY SIX SQUARE empty gunports on EACH BROADSIDE, TWELVE TOTAL, aligned to the lower deck. Main side elevation must show SIX squares, not eight or nine. Fill surplus holes with matching planking. Retain full-width aft captain's quarters about one eighth hull length, wheel on its roof, stairs on BOTH sides with fixed safety rails, two empty sail hardpoints, stern-center ladder. No permanent mast, sail or flag. Preserve material and surrounding proportions. Plain background, no labels/text.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

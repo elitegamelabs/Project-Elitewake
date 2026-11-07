@@ -1,0 +1,260 @@
+"""Grow the three open-ocean reefs (world_reefs.py) on their seamounts. Safe to run again: it replaces only its own corals,
+clears the seabed foliage under each reef, and adds a hammerhead and a manta ray over a reef that has none (the rest of the
+world is left alone; no rebuild). Run in the editor, outside Play:
+    UnrealEditor.exe EW.uproject -SCCProvider=None -ExecCmds="py <this file>"
+EW_QUIT_WHEN_DONE=1 closes the editor at the end.
+
+Owner, October 31: about three reefs out in the open ocean, glowing day and night. Four corals are built here: branching staghorn coral,
+lumpy brain-like mounds, upright sea fans and clusters of pillar coral; in five glows (cyan, magenta, lime, amber,
+violet) whose light breathes slowly, bright enough to find a reef from the surface at night but not to light the
+sea. Each coral stands on the sea floor (the built floor mesh, traced) and stays at least 80 cm under the surface. Corals
+are solid, so a swimmer bumps into them rather than through. Colours, glow strength and sizes are tuning.
+"""
+import json
+import math
+import os
+import random
+import sys
+from pathlib import Path
+import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import world_terrain as T  # noqa: E402
+from world_reefs import REEFS  # noqa: E402
+from ship_geometry import Builder, material_builder, write_static_mesh  # noqa: E402
+from build_coastal_rocks import boulder  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
+
+MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+FOLDER = '/Game/Elitewake/World/Reefs'
+LEVEL_FOLDER = 'World/Reefs'
+GLOWS = {'Cyan': ((.02, .35, .4), (.1, 1.0, 1.2)), 'Magenta': ((.4, .03, .25), (1.2, .1, .8)),
+         'Lime': ((.2, .4, .03), (.6, 1.2, .1)), 'Amber': ((.45, .2, .02), (1.3, .55, .05)),
+         'Violet': ((.15, .05, .4), (.45, .15, 1.2))}
+GLOW = 2.5            # emissive strength (tuning)
+HEIGHT = {'branching': 130.0, 'mound': 70.0, 'fan': 140.0, 'pillar': 160.0}   # at scale 1, cm
+
+
+def branching(seed):
+    """Staghorn: a few trunks that fork twice, tapering to blunt tips."""
+    rng = random.Random(seed)
+    b = Builder()
+
+    def grow(base, direction, length, radius, depth):
+        end = tuple(base[i] + direction[i] * length for i in range(3))
+        mid = tuple((base[i] + end[i]) / 2 + rng.uniform(-6, 6) for i in range(3))
+        b.tube([base, mid, end], lambda q: radius * (1.0, .85, .7)[q], sides=7)
+        if depth < 2:
+            for _ in range(2):
+                a, up = rng.uniform(0, 2 * math.pi), rng.uniform(.5, .9)
+                d = (math.cos(a) * math.sqrt(1 - up * up), math.sin(a) * math.sqrt(1 - up * up), up)
+                grow(end, d, length * rng.uniform(.6, .8), radius * .7, depth + 1)
+    for _ in range(4):
+        a, up = rng.uniform(0, 2 * math.pi), rng.uniform(.55, .85)
+        grow((rng.uniform(-10, 10), rng.uniform(-10, 10), -10), (math.cos(a) * math.sqrt(1 - up * up), math.sin(a) * math.sqrt(1 - up * up), up),
+             rng.uniform(45, 60), 7.0, 0)
+    return b
+
+
+def fan(seed):
+    """A sea fan: a thin, round-topped lattice of branches in one upright plane."""
+    rng = random.Random(seed)
+    b = Builder()
+    for k in range(9):
+        a = math.radians(-60 + 120 * k / 8 + rng.uniform(-5, 5))
+        length = rng.uniform(100, 140)
+        pts = [(0.0, 0.0, -10.0)]
+        for f in (.33, .66, 1.0):
+            pts.append((math.sin(a) * length * f + rng.uniform(-6, 6), rng.uniform(-3, 3), math.cos(a) * length * f))
+        b.tube(pts, lambda q: (5.0, 3.5, 2.5, 1.5)[q], sides=5)
+    for z in (40, 75, 105):
+        ring = [(math.sin(math.radians(a)) * z * 1.1, 0.0, math.cos(math.radians(a)) * z) for a in range(-60, 61, 15)]
+        b.tube(ring, 1.4, sides=4)
+    return b
+
+
+def pillar(seed):
+    """Pillar coral: a clump of upright, round-topped columns."""
+    rng = random.Random(seed)
+    b = Builder()
+    for _ in range(7):
+        x, y = rng.uniform(-35, 35), rng.uniform(-35, 35)
+        h, r = rng.uniform(70, 160), rng.uniform(7, 13)
+        b.tube([(x, y, -10), (x + rng.uniform(-4, 4), y + rng.uniform(-4, 4), h * .5), (x, y, h)], lambda q, r=r: r * (1.1, 1.0, .85)[q], sides=9)
+    return b
+
+
+def coral_material():
+    """Its colour, and a glow of the same hue that slowly breathes, each coral at its own pace."""
+    mel = unreal.MaterialEditingLibrary
+    material, node, custom = material_builder(f'{FOLDER}/M_Coral_v1')
+    base = node(unreal.MaterialExpressionVectorParameter, parameter_name='Colour', default_value=unreal.LinearColor(.1, .3, .3, 1))
+    glow = node(unreal.MaterialExpressionVectorParameter, parameter_name='Glow', default_value=unreal.LinearColor(.1, 1, 1, 1))
+    strength = node(unreal.MaterialExpressionScalarParameter, parameter_name='Strength', default_value=GLOW)
+    shade = custom('float n = frac(sin(dot(floor(P / 9.0), float3(12.9898, 78.233, 37.719))) * 43758.5453);'
+                   ' return C * lerp(.75, 1.15, n);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'P'))
+    breathe = custom('float h = frac(sin(dot(O.xy, float2(12.9898, 78.233))) * 43758.5453);'
+                     ' return G * S * (.65 + .35 * sin(T * (.6 + .5 * h) + h * 6.283));',
+                     unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('G', 'S', 'T', 'O'))
+    position = node(unreal.MaterialExpressionWorldPosition)
+    assert mel.connect_material_expressions(base, '', shade, 'C')
+    assert mel.connect_material_expressions(position, '', shade, 'P')
+    assert mel.connect_material_expressions(glow, '', breathe, 'G')
+    assert mel.connect_material_expressions(strength, '', breathe, 'S')
+    assert mel.connect_material_expressions(node(unreal.MaterialExpressionTime), '', breathe, 'T')
+    assert mel.connect_material_expressions(node(unreal.MaterialExpressionObjectPositionWS), '', breathe, 'O')
+    assert mel.connect_material_property(shade, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(breathe, '', unreal.MaterialProperty.MP_EMISSIVE_COLOR)
+    assert mel.connect_material_property(node(unreal.MaterialExpressionConstant, r=.55), '', unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
+def instances(parent):
+    mel = unreal.MaterialEditingLibrary
+    assets = unreal.AssetToolsHelpers.get_asset_tools()
+    out = []
+    for name, (colour, glow) in GLOWS.items():
+        path = f'{FOLDER}/MI_Coral_{name}_v1'
+        mi = unreal.load_asset(path) or assets.create_asset(f'MI_Coral_{name}_v1', FOLDER, unreal.MaterialInstanceConstant,
+                                                            unreal.MaterialInstanceConstantFactoryNew())
+        mel.set_material_instance_parent(mi, parent)
+        mel.set_material_instance_vector_parameter_value(mi, 'Colour', unreal.LinearColor(*colour, 1))
+        mel.set_material_instance_vector_parameter_value(mi, 'Glow', unreal.LinearColor(*glow, 1))
+        assert unreal.EditorAssetLibrary.save_loaded_asset(mi)
+        out.append(mi)
+    return out
+
+
+_MESHES = {}
+
+
+def _mesh(path):
+    """A built mesh, loaded once, with its ray-casting tree (as build_coastal_flora.Ground does for the islands)."""
+    if path not in _MESHES:
+        asset = unreal.load_asset(path)
+        assert asset, f'{path} is missing'
+        mesh = unreal.DynamicMesh()
+        unreal.GeometryScript_AssetUtils.copy_mesh_from_static_mesh(
+            asset, mesh, unreal.GeometryScriptCopyMeshFromAssetOptions(), unreal.GeometryScriptMeshReadLOD())
+        built = unreal.GeometryScript_MeshSpatial.build_bvh_for_mesh(mesh)
+        built = built if isinstance(built, tuple) else (built,)
+        _MESHES[path] = (mesh, next(v for v in built if isinstance(v, unreal.GeometryScriptDynamicMeshBVH)))
+    return _MESHES[path]
+
+
+def floor_at(reef, x, y):
+    """The built sea floor's height under (x, y): the higher of the reef's seamount mesh and the sea-floor mesh, ray-cast
+    straight down (both are placed at the world origin, so their vertices are world positions)."""
+    best = None
+    for path in (f'/Game/Elitewake/World/Meshes/Islands/SM_Seamount_{reef.seamount + 1}_v1', '/Game/Elitewake/World/Meshes/Islands/SM_SeaFloor_v1'):
+        mesh, bvh = _mesh(path)
+        out = unreal.GeometryScript_MeshSpatial.find_nearest_ray_intersection_with_mesh(
+            mesh, bvh, unreal.Vector(x, y, T.SEA + 1000), unreal.Vector(0, 0, -1), unreal.GeometryScriptSpatialQueryOptions())
+        hit = next((v for v in (out if isinstance(out, tuple) else (out,)) if isinstance(v, unreal.GeometryScriptRayHitResult)), None)
+        if hit and hit.get_editor_property('hit'):
+            z = hit.get_editor_property('hit_position').z
+            best = z if best is None else max(best, z)
+    return best
+
+
+def clear_seabed(world):
+    """Seabed foliage (scattered corals, sponges, plants) under a reef would poke through it: clear it there."""
+    removed = 0
+    for foliage in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.InstancedFoliageActor):
+        for comp in foliage.get_components_by_class(unreal.InstancedStaticMeshComponent):
+            doomed = set()
+            for reef in REEFS:
+                for i in comp.get_instances_overlapping_sphere(unreal.Vector(reef.cx, reef.cy, T.SEA - 1500), 6000.0, True):
+                    t = comp.get_instance_transform(i, True)
+                    t = t[-1] if isinstance(t, tuple) else t
+                    if t and reef.near(t.translation.x, t.translation.y, 250.0):
+                        doomed.add(i)
+            if doomed:
+                comp.remove_instances(sorted(doomed))
+                removed += len(doomed)
+    unreal.log(f'EWREEFS seabed foliage cleared under the reefs: {removed}')
+    return removed
+
+
+REEF_LIFE = {'HammerheadShark': 'Hammerhead Shark', 'MantaRay': 'Manta Ray'}   # build_fish.py's creatures
+
+
+def add_reef_life(world, actors):
+    """A hammerhead and a manta ray over each reef, added only where the reef has none within 30 m."""
+    fish = list(unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWFish))
+    added = []
+    for reef in REEFS:
+        for key, display in REEF_LIFE.items():
+            definition = unreal.load_asset(f'/Game/Elitewake/Wildlife/Fish/DA_Fish_{key}')
+            assert definition, f'DA_Fish_{key} is missing (build_fish.py makes it)'
+            here = [f for f in fish if f.get_editor_property('definition') == definition
+                    and math.hypot(f.get_actor_location().x - reef.cx, f.get_actor_location().y - reef.cy) < 3000]
+            if here:
+                for f in here:
+                    world_map.keep_loaded(f)
+                continue
+            angle = (0.0 if key == 'MantaRay' else math.pi) + len(added)
+            x, y = reef.cx + 1000 * math.cos(angle), reef.cy + 1000 * math.sin(angle)
+            spawned = actors.spawn_actor_from_class(unreal.EWFish, unreal.Vector(x, y, T.SEA - 300), unreal.Rotator(0, 0, math.degrees(angle)))
+            spawned.set_editor_property('definition', definition)
+            spawned.set_editor_property('surface_z', T.SEA)
+            spawned.set_actor_label(f'{display} {reef.key}')
+            world_map.keep_loaded(spawned)
+            spawned.set_folder_path('Coast/Wildlife')     # build_fish.py's folder
+            added.append(f'{display} {reef.key}')
+    return added
+
+
+def main():
+    assert not unreal.EWEditorVerificationLibrary.get_play_worlds(), 'Stop Play first'
+    level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+    actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    assert world_map.open_map(level, MAP)
+    for actor in actors.get_all_level_actors():
+        if str(actor.get_folder_path()).startswith(LEVEL_FOLDER):
+            actors.destroy_actor(actor)
+    glows = instances(coral_material())
+    first = glows[0]
+    shapes = {'branching': [write_static_mesh(branching(10 + k), f'{FOLDER}/SM_CoralBranching_{k + 1}_v1', [first], 60.0) for k in range(3)],
+              'mound': [write_static_mesh(boulder(40 + k, (150.0, 140.0, 140.0), cuts=0), f'{FOLDER}/SM_CoralMound_{k + 1}_v1', [first], 60.0) for k in range(2)],
+              'fan': [write_static_mesh(fan(60 + k), f'{FOLDER}/SM_CoralFan_{k + 1}_v1', [first], 60.0) for k in range(2)],
+              'pillar': [write_static_mesh(pillar(80 + k), f'{FOLDER}/SM_CoralPillar_{k + 1}_v1', [first], 60.0) for k in range(2)]}
+    world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+    clear_seabed(world)
+    report = {}
+    for reef in REEFS:
+        made, depths = 0, []
+        for n, (x, y, kind, scale, yaw, glow) in enumerate(reef.corals):
+            z = floor_at(reef, x, y)
+            if z is None or z > T.SEA - 150:
+                continue
+            # Never breaking the surface: at least 80 cm of water over the top.
+            scale = min(scale, (T.SEA - 80 - z) / HEIGHT[kind])
+            if scale < .4:
+                continue
+            actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x, y, z - 8), unreal.Rotator(0, 0, yaw))
+            actor.set_actor_label(f'Reef {reef.key}: {kind} {n + 1}')
+            world_map.keep_loaded(actor)
+            actor.set_folder_path(f'{LEVEL_FOLDER}/{reef.key}')
+            actor.set_actor_scale3d(unreal.Vector(scale, scale, scale))
+            comp = actor.static_mesh_component
+            comp.set_static_mesh(shapes[kind][n % len(shapes[kind])])
+            comp.set_material(0, glows[glow])
+            made += 1
+            depths.append(round((T.SEA - z) / 100, 1))
+        report[reef.key] = {'nearest_island': reef.island.key, 'centre_m': [round(reef.cx / 100), round(reef.cy / 100)], 'corals': made,
+                            'depth_m': [min(depths), max(depths)] if depths else None}
+    report['reef_life_added'] = add_reef_life(world, actors)
+    assert world_map.save_map()
+    Path(unreal.Paths.project_saved_dir(), 'ReefsResult.json').write_text(json.dumps({'success': True, 'reefs': report}, indent=2))
+    unreal.log(f'Reefs built: {len(report)}')
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    finally:
+        if os.environ.get('EW_QUIT_WHEN_DONE') == '1':
+            unreal.SystemLibrary.quit_editor()

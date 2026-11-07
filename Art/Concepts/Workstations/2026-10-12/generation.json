@@ -1,0 +1,102 @@
+{
+  "method": "ChatGPT built-in image generation",
+  "scope": "Six original workstation concept images based on Docs/DESIGN_REFERENCE.md: Smithy, Loom, Tanner, Forge, Cooking Hearth and Brick Oven. Visual proposals only; not imported meshes, functioning stations, approved dimensions, or new recipe/cost decisions.",
+  "assets": [
+    {
+      "key": "Smithy",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-e0cf5edd-1ac5-4111-a213-1e79fc561e32.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A compact freestanding blacksmith crafting workstation: substantial hand-built weathered oak workbench, a believable forged iron anvil securely supported on a reinforced timber block beside the bench, small manual vise, neatly placed hammer and tongs, a few metal blanks in an under-bench rack. Readable organized footprint and clear working surface. No furnace attached: the forge is a separate station.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Smithy-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "52b11b93b0093b0f7eb0e4abbb341298426b6429d172d9a9427a33edad0e0908"
+    },
+    {
+      "key": "Loom",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-b998081e-3c5b-4913-a057-41fe882319a6.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A believable freestanding traditional wooden treadle floor loom for weaving sailcloth and clothing: sturdy pegged oak frame, cloth and warp beams, visibly separate taut warp threads, heddles and reed with a wooden beater, shuttle on the woven natural linen in progress, foot treadles and small plain weaving bench. Mechanically coherent weave path and clear access to the seated working side, not a spinning wheel.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Loom-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "e4ce8e9dcd968c009f0f9babd339d199e2e3e9e226a31dc754285319bcfb0541"
+    },
+    {
+      "key": "Tanner",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-086b1883-ee8a-4555-a977-45e4c558e935.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A compact traditional hide-processing workstation: robust wooden frame with one large naturally irregular animal hide stretched using small laced ties; immediately beside it within a compact station footprint, a sloped oak fleshing beam with a two-handled scraping blade resting safely, and a small stave-built soaking tub. Weathered timber, natural tan hide, realistic hide edges and stitching ties. Clean organized functional arrangement, no slaughter scene.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Tanner-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "253f3309a6ff543be0f3008f206ed487017adbf59149d7317e0b59d2024fcffc"
+    },
+    {
+      "key": "Forge",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-c7106e11-f174-4bfb-8813-ae7dc31000c5.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A compact standalone preindustrial charcoal forge: rough stone and soot-dark firebrick hearth on a sturdy masonry base, a shallow controlled glowing charcoal fire bed, a side-mounted manually operated leather-and-timber bellows connected visibly to the hearth tuyere, modest masonry smoke hood and short chimney. A few iron fire tools neatly held on an integral side bracket. Believable heat protection and compact freestanding footprint, no electrical machinery and no separate anvil workstation.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Forge-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "5bb706129497c8aee27d1d8182874ed2fe1f7911f48ffbd91560f3b2a90659fb"
+    },
+    {
+      "key": "Cooking-Hearth",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-7f7ba136-b9d4-4b8d-9030-887978356331.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A compact open cooking hearth: low practical rough stone and firebrick fire enclosure, modest wood embers, stout wrought-iron cooking supports and one hanging iron pot safely suspended over the hearth, small side stone ledge and a wooden stirring spoon resting aside. A restrained period cooking workstation with clear usable access, no banquet spread, no hut or room.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Cooking-Hearth-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "0d5786f1cecd00435a74b3153bf7ef83e74fbd39832a9c4d4a86620f7fdd8f51"
+    },
+    {
+      "key": "Brick-Oven",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-fbdb88af-f53a-405f-b6b5-9fe843e26b7b.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake pirate survival game placeable workstation concept, one isolated full asset.\nReference image 1: MATERIAL AND REALISM style reference only. Do not reproduce the boat.\nPrimary request: A freestanding period bread-and-provisions oven: low domed handmade red-clay firebrick baking chamber on a rough stone base, small arched oven mouth, a modest chimney, soot near the opening, a practical flat stone preparation ledge, one long wooden baker's peel neatly resting alongside. Restrained lived-in functional materials, realistic masonry joints, compact construction, no modern appliance or building shell.\nShared visual direction: grounded age-of-sail coastal survival, premium realistic 2026 Unreal game prop rendering, hand-crafted natural weathered oak, restrained oxidized wrought iron, natural leather/linen, rough stone and clay where appropriate. Physically based matte materials, realistic joinery and wear, muted earthy palette, serviceable not ruined. Each station is an original design, no copied game branding. Human-scale proportions, organized practical access and readable silhouette.\nComposition: one complete station with its associated tools only, raised three-quarter view showing front working area and construction, centered in landscape canvas, entirely visible including chimney if present, generous margin. Neutral soft daylight lighting, no environmental scene.\nConstraints: genuine TRANSPARENT alpha outside the station and individual supporting props. No rectangular ground slab, backdrop, building, scenery, person, pirate flags, skulls, fantasy ornaments, oversized mechanisms, steampunk, electricity, plastic, text, labels, logos or watermark. No dramatic sparks, bloom or smoke covering construction. Concept artwork only; do not invent recipe costs or station gameplay roles.",
+      "saved_file": "Brick-Oven-Concept-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "4df361231171ed45f4562e4517f568f388aab2c627eeae03ea2dc6c420a952db"
+    }
+  ]
+}

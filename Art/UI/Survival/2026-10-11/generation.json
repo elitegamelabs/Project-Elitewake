@@ -1,0 +1,74 @@
+{
+  "method": "ChatGPT built-in image generation",
+  "scope": "Four full-state HUD artwork PNGs, not yet imported or connected to depletion. Health red heart; stamina yellow bolt; hunger orange steak; hydration blue leather waterskin. Sails paused.",
+  "assets": [
+    {
+      "key": "Health",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-c1bb6a73-3b09-4ef8-9359-30039d09390d.png",
+      "initial_prompt": "Use case: stylized-concept.\nAsset type: original Elitewake realistic pirate survival HUD status icon, full 100-percent state, individual transparent PNG.\nPrimary request: a recognizable HEART silhouette, two rounded lobes and a tapered lower point, made of finely textured deep red enamel with subtle organic depth. A clean symbolic heart, not an anatomical organ.\nArt direction: premium mature 2026 realistic game UI, physically based 3D material rendering, restrained weathered silver outline encircling the entire recognizable silhouette, dominant deep crimson red fill, elegant and functional. Match a unified set of four icons. Realistic material detail rather than cartoon emoji, flat vector glyph or plastic toy. Front-facing straight-on orthographic view, very shallow relief with consistent soft top-left light, strong silhouette at 48-to-64 pixel display sizes. Keep fine details subordinate to readability.\nComposition: ONE icon only, centered in a SQUARE canvas, silhouette fills roughly 75 percent of canvas, balanced clear margin, sharp outer edge. No tile, frame, badge, circle, panel or pedestal behind the icon. True transparent alpha background.\nConstraints: no words, digits, percentage labels, logos, watermark, scenery, hands, sparkles, glow haze, long cast shadow, separate decorative objects. Do not include empty or half-full variants in the image. This is only artwork; it must not show a gameplay screen.",
+      "edit_prompt": null,
+      "saved_file": "Health-Full-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "1297f5d1ecfd9c1322068a7ee4564e68b3940591516855f3274c27d53dfe035b"
+    },
+    {
+      "key": "Stamina",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-c0ab86f4-55fa-47bd-9d6a-b15c76f8ccef.png",
+      "initial_prompt": "Use case: stylized-concept.\nAsset type: original Elitewake realistic pirate survival HUD status icon, full 100-percent state, individual transparent PNG.\nPrimary request: a single bold LIGHTNING BOLT silhouette, angular zigzag, made of rich yellow enamel with restrained fine surface texture. Crisp energetic shape, no extra electrical effects.\nArt direction: premium mature 2026 realistic game UI, physically based 3D material rendering, restrained weathered silver outline encircling the entire recognizable silhouette, dominant warm golden yellow fill, elegant and functional. Match a unified set of four icons. Realistic material detail rather than cartoon emoji, flat vector glyph or plastic toy. Front-facing straight-on orthographic view, very shallow relief with consistent soft top-left light, strong silhouette at 48-to-64 pixel display sizes. Keep fine details subordinate to readability.\nComposition: ONE icon only, centered in a SQUARE canvas, silhouette fills roughly 75 percent of canvas, balanced clear margin, sharp outer edge. No tile, frame, badge, circle, panel or pedestal behind the icon. True transparent alpha background.\nConstraints: no words, digits, percentage labels, logos, watermark, scenery, hands, sparkles, glow haze, long cast shadow, separate decorative objects. Do not include empty or half-full variants in the image. This is only artwork; it must not show a gameplay screen.",
+      "edit_prompt": null,
+      "saved_file": "Stamina-Full-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "c7330d4b504e0ef688abf892ac2c74b346671346db4fedb92ac46efb5e02035a"
+    },
+    {
+      "key": "Hunger",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-ae19bc29-2cc3-4580-9a4a-6b67b33037aa.png",
+      "initial_prompt": "Use case: stylized-concept.\nAsset type: original Elitewake realistic pirate survival HUD status icon, full 100-percent state, individual transparent PNG.\nPrimary request: one MEAT-ON-BONE icon: a compact roasted drumstick with an orange-brown textured meat body and short ivory bone end. Realistic subtle roast surface, bold recognizable silhouette, no plate or garnish.\nArt direction: premium mature 2026 realistic game UI, physically based 3D material rendering, restrained weathered silver outline encircling the entire recognizable silhouette, dominant warm burnt orange fill, elegant and functional. Match a unified set of four icons. Realistic material detail rather than cartoon emoji, flat vector glyph or plastic toy. Front-facing straight-on orthographic view, very shallow relief with consistent soft top-left light, strong silhouette at 48-to-64 pixel display sizes. Keep fine details subordinate to readability.\nComposition: ONE icon only, centered in a SQUARE canvas, silhouette fills roughly 75 percent of canvas, balanced clear margin, sharp outer edge. No tile, frame, badge, circle, panel or pedestal behind the icon. True transparent alpha background.\nConstraints: no words, digits, percentage labels, logos, watermark, scenery, hands, sparkles, glow haze, long cast shadow, separate decorative objects. Do not include empty or half-full variants in the image. This is only artwork; it must not show a gameplay screen.",
+      "edit_prompt": "Use case: precise-object-edit.\nInput image 1 is the existing HUD icon edit target and material/style reference.\nPrimary request: Replace the chicken drumstick entirely with ONE thick boneless STEAK for a pirate survival game's hunger HUD icon. Recognizable compact oval ribeye steak silhouette, realistically seared orange-brown meat surface, subtle muscle grain, a few natural marbling streaks, restrained fat edge, warm burnt-orange dominant color to preserve hunger identification. No chicken, drumstick, projecting bone, garnish, plate, fork, knife or grill. A restrained thin weathered silver silhouette border matching the other HUD icons. View slightly from above so the steak's face and thickness are readable.\nKeep the premium realistic 2026 UI art style, square transparent canvas, soft upper-left lighting, single centered subject, strong readable silhouette, balanced margins and no text. Realistic textures, not a cartoon or emoji. Scale the whole icon to roughly 80 percent of the canvas. Preserve genuine transparent alpha outside the icon. No background, shadow, glow, framing tile or UI screenshot. Full 100-percent artwork state only.",
+      "saved_file": "Hunger-Full-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "9dcf86802b79cb3b5ff09807089af5e9a317c635df03a7a1d8178e4e899b55d8"
+    },
+    {
+      "key": "Hydration",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-04573fbd-0d19-42d5-a02a-d7dd26d578b3.png",
+      "initial_prompt": "Use case: stylized-concept.\nAsset type: original Elitewake realistic pirate survival HUD status icon, full 100-percent state, individual transparent PNG.\nPrimary request: a small rounded WATER FLASK icon with a short neck and fitted cork, translucent blue glass body completely filled with blue water, restrained highlights and a simple silver rim. Clear readable flask silhouette, not a laboratory beaker.\nArt direction: premium mature 2026 realistic game UI, physically based 3D material rendering, restrained weathered silver outline encircling the entire recognizable silhouette, dominant clear saturated blue fill, elegant and functional. Match a unified set of four icons. Realistic material detail rather than cartoon emoji, flat vector glyph or plastic toy. Front-facing straight-on orthographic view, very shallow relief with consistent soft top-left light, strong silhouette at 48-to-64 pixel display sizes. Keep fine details subordinate to readability.\nComposition: ONE icon only, centered in a SQUARE canvas, silhouette fills roughly 75 percent of canvas, balanced clear margin, sharp outer edge. No tile, frame, badge, circle, panel or pedestal behind the icon. True transparent alpha background.\nConstraints: no words, digits, percentage labels, logos, watermark, scenery, hands, sparkles, glow haze, long cast shadow, separate decorative objects. Do not include empty or half-full variants in the image. This is only artwork; it must not show a gameplay screen.",
+      "edit_prompt": "Use case: precise-object-edit.\nInput image 1 is the existing HUD icon edit target and material/style reference.\nPrimary request: Replace the glass potion bottle entirely with ONE realistic period LEATHER WATERSKIN for a pirate survival game HUD hydration icon. A soft asymmetric teardrop hide pouch with a narrow tied neck, short wooden stopper, visible hand-stitched seam, subtle creases, weathered leather texture and a simple short leather tie at neck. No glass anywhere, no bottle shape, no potion, no flask hardware. The pouch leather should be richly BLUE-DYED to preserve blue hydration identification, with natural darker blue creases, and a restrained thin weathered silver silhouette border matching the other HUD icons. It should feel filled and softly bulging. No hanging shoulder strap or extra objects.\nKeep the premium realistic 2026 UI art style, square transparent canvas, soft upper-left lighting, single centered subject, strong readable silhouette, balanced margins and no text. Realistic textures, not a cartoon or emoji. Scale the whole icon to roughly 80 percent of the canvas. Preserve genuine transparent alpha outside the icon. No background, shadow, glow, framing tile or UI screenshot. Full 100-percent artwork state only.",
+      "saved_file": "Hydration-Full-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "5bc7dad789d9be220f91396f2be2e79a7df61d74ba5106c58faf2b815bf3b4cb"
+    }
+  ]
+}

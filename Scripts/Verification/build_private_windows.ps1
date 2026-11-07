@@ -1,0 +1,72 @@
+<# Build a local Development package with the title screen, the retained test maps and the coastal playground, plus
+a launcher that starts at the title screen for single-player testing.
+Bundles engine-provided prerequisite installers without running them.
+No upload, account, firewall, router or tester invitation operations. #>
+param([string]$EngineRoot='C:/Program Files/Epic Games/UE_5.8')
+$ErrorActionPreference='Stop'
+$projectRoot=(Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
+$project=Join-Path $projectRoot 'EW.uproject'
+$runUAT=Join-Path $EngineRoot 'Engine/Build/BatchFiles/RunUAT.bat'
+if (!(Test-Path $runUAT)) { throw 'Configured Unreal Automation Tool is missing.' }
+if (Get-Process -Name UnrealEditor,EW -ErrorAction SilentlyContinue) { throw 'Close Unreal Editor and EW test games before packaging to avoid Live Coding/build conflicts.' }
+if ((Get-PSDrive -Name ([IO.Path]::GetPathRoot($projectRoot).Substring(0,1))).Free -lt 15GB) { throw 'At least 15 GB free space is required for this diagnostic build.' }
+$buildLabel='local-'+(Get-Date -Format 'yyyyMMdd-HHmmss')
+$archive=Join-Path $projectRoot ('Saved/PrivateBuilds/'+$buildLabel)
+if (Test-Path $archive) { throw 'Build output already exists; do not overwrite a previous package.' }
+$revision=(& git -C $projectRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Cannot record source revision.' }
+$dirty=[bool](& git -C $projectRoot status --porcelain)
+$arguments=@('BuildCookRun',"-project=$project",'-noP4','-unattended','-platform=Win64','-clientconfig=Development',
+    '-build','-cook','-stage','-prereqs','-pak','-iostore','-package','-archive',"-archivedirectory=$archive",
+    '-map=/Game/Elitewake/Maps/Lvl_Title+/Game/ThirdPerson/Lvl_ThirdPerson+/Game/Elitewake/Maps/Lvl_M5PickupTest+/Game/Elitewake/Maps/Lvl_CoastalPlayground',
+    "-AdditionalCookerOptions=-CookDir=$projectRoot/Content/Elitewake",
+    '-utf8output','-ubtargs=-NoUBA')
+& $runUAT @arguments
+if ($LASTEXITCODE -ne 0) { throw "Private package failed with exit code $LASTEXITCODE. Inspect Unreal's packaging log; no upload occurred." }
+$registryPath=Join-Path $projectRoot 'Saved/Cooked/Windows/EW/AssetRegistry.bin'
+$registryText=[Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($registryPath))
+$requiredAssets=@('T_Axe_v1','T_Shovel_v1','T_Pickaxe_v1','T_Flask_v1','T_Torch_v1',
+    'DA_TestWoodenAxe','DA_TestWoodenShovel','DA_TestWoodenPickaxe','DA_TestHideWaterFlask','DA_TestInnTorch',
+    'DA_RecipeWoodenAxe','DA_RecipeWoodenShovel','DA_RecipeWoodenPickaxe','DA_RecipeHideWaterFlask',
+    'DA_TestRepairKit','DA_RecipePrologueRepairKit')
+$missingAssets=@($requiredAssets | Where-Object { !$registryText.Contains($_) })
+if ($missingAssets.Count) { throw "Diagnostic assets absent from cooked registry: $($missingAssets -join ', '). Do not use this archive as starter-content acceptance." }
+$containerCsv=Join-Path $archive 'StarterContainerListing.csv'
+& (Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealPak.exe') $project IoStore "-List=$archive/Windows/EW/Content/Paks/EW-Windows.utoc" "-Csv=$containerCsv"
+if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect archived diagnostic container.' }
+$containerText=[IO.File]::ReadAllText($containerCsv)
+$missingAssets=@($requiredAssets | Where-Object { !$containerText.Contains('/'+$_+'.uasset,') })
+if ($missingAssets.Count) { throw "Diagnostic assets absent from archived container: $($missingAssets -join ', ')." }
+@{success=$true;scope='Cooked registry and archived container presence only; not gameplay or rendering acceptance';assets=$requiredAssets} |
+    ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'CookedStarterContentResult.json') -Encoding utf8
+$runtimeRoot=Join-Path $archive 'Windows/EW'
+if (!(Test-Path -LiteralPath (Join-Path $runtimeRoot 'Binaries/Win64/EW.exe'))) { throw 'Packaged runtime executable is missing.' }
+& (Join-Path $PSScriptRoot 'verify_private_windows_prerequisites.ps1') -ArchiveDirectory $archive -EngineRoot $EngineRoot
+$displayLabel="$buildLabel | $($revision.Substring(0,12)) | Development"
+if ($dirty) { $displayLabel+=' | local changes' }
+Set-Content -LiteralPath (Join-Path $runtimeRoot 'PrivateBuildLabel.txt') -Value $displayLabel -Encoding utf8
+@{label=$buildLabel;sourceRevision=$revision;sourceHasLocalChanges=$dirty;configuration='Development';platform='Win64';released=$false;
+  maps=@('/Game/Elitewake/Maps/Lvl_Title','/Game/ThirdPerson/Lvl_ThirdPerson','/Game/Elitewake/Maps/Lvl_M5PickupTest','/Game/Elitewake/Maps/Lvl_CoastalPlayground');
+  prerequisites='Engine-provided signed VC runtime installers bundled and hash-checked; not installed or clean-PC verified';
+  scope='Local diagnostic package only; no LAN, Internet, Shipping, or distribution acceptance'} |
+  ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $archive 'PrivateBuildInfo.json') -Encoding utf8
+@'
+ELITEWAKE LOCAL DEVELOPMENT BUILD — NOT A RELEASE
+
+Double-click Play Elitewake.bat for the title screen, then use its single-player path to reach Coastal Playground. Keep the entire Windows folder together. F10 opens the diagnostic host/join UI.
+
+This package is not certified for clean-PC, controller, LAN, Internet, Shipping, or distribution use. The project root CLAUDE.md is the sole source of current gameplay and visual requirements. Reef placement in Coastal Playground has not passed its two-player Play check. Do not treat generated content or prior test notes as accepted gameplay.
+
+Engine-provided Windows prerequisites are bundled but not installed. See PrerequisitesResult.json for checks performed; it does not prove portability.
+'@ | Set-Content -LiteralPath (Join-Path $archive 'TEST_NOTES.txt') -Encoding utf8
+# Single-player testing starts on the title screen, which leads through the character creator to the coast.
+Set-Content -LiteralPath (Join-Path $archive 'Play Elitewake.bat') -Encoding ascii -Value @'
+@echo off
+start "" "%~dp0Windows\EW.exe" /Game/Elitewake/Maps/Lvl_Title
+'@
+# The minimum-machine test (owner, November 2): beside the Windows folder, so it travels with the build on a USB stick but
+# stays out of the playtest zip (which holds the Windows folder only).
+foreach ($name in @('Run 1660 test.ps1', 'Run 1660 test.bat')) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot "Scripts/Release/$name") -Destination (Join-Path $archive $name)
+}
+Write-Output "Local package created: $archive"

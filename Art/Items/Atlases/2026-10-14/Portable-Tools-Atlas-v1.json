@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Portable-Tools-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 3,
+  "items": [
+    {
+      "name": "wooden axe with carved wooden cutting head",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "wooden pickaxe with wooden pick head",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "wooden shovel with wooden blade",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "stitched hide water skin with stopper, no glass flask",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "stone axe with bound stone head",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.3333333333333333
+        ],
+        "max": [
+          0.25,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "stone pickaxe with bound chipped stone head",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.3333333333333333
+        ],
+        "max": [
+          0.5,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "forged iron axe with wooden handle",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.3333333333333333
+        ],
+        "max": [
+          0.75,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "forged iron pickaxe with wooden handle",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.3333333333333333
+        ],
+        "max": [
+          1,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "tungsten axe with dense dark grey metal head and reinforced wooden handle",
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.6666666666666666
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "tungsten pickaxe with dense dark grey metal head and reinforced wooden handle",
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.6666666666666666
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "simple cloth-wrapped wooden torch with small natural flame",
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.6666666666666666
+        ],
+        "max": [
+          0.75,
+          1
+        ]
+      }
+    },
+    {
+      "name": "repair kit with wood strips, stone pieces, rope and hand tools bound together",
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.6666666666666666
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "Original realistic pirate survival game ELITEWAKE inventory texture atlas, one PNG asset. Exactly 12 distinct complete item images in a STRICT 4-column by 3-row equal-cell grid. Each object centered in its own cell, entirely contained within central 75% of the cell with transparent empty gutters. Equal lighting and scale, neutral studio light, photorealistic physically based materials, weathered period-appropriate objects, crisp readable silhouettes, high-detail textures. Transparent alpha background, no background scene, NO labels, NO text, NO numbers, NO decorative frames, no modern machinery, no logos, no characters. Read order left-to-right then top-to-bottom: 1: wooden axe with carved wooden cutting head; 2: wooden pickaxe with wooden pick head; 3: wooden shovel with wooden blade; 4: stitched hide water skin with stopper, no glass flask; 5: stone axe with bound stone head; 6: stone pickaxe with bound chipped stone head; 7: forged iron axe with wooden handle; 8: forged iron pickaxe with wooden handle; 9: tungsten axe with dense dark grey metal head and reinforced wooden handle; 10: tungsten pickaxe with dense dark grey metal head and reinforced wooden handle; 11: simple cloth-wrapped wooden torch with small natural flame; 12: repair kit with wood strips, stone pieces, rope and hand tools bound together. Keep all objects separate, do not combine cells or omit items. Purpose: an original reference and inventory atlas with separately addressable UV cells for each listed item."
+}

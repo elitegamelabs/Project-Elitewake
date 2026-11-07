@@ -1,0 +1,10 @@
+{
+  "file": "underside-v2.png",
+  "sha256": "bb44d9c5845556878fbf4842e50485f40af463b4ce7b9abd6f8ae6b389cfd673",
+  "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE EXACT BOTTOM PLAN: camera vertically BELOW looking STRAIGHT UP. Show a THIN LONG HORIZONTAL FOOTPRINT, the BOTTOMS of the socket feet and lower beam, posts foreshortened behind them. No full tall front elevation. Show actual bottom surfaces, no floor plane. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

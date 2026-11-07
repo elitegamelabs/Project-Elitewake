@@ -1,0 +1,18 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "2dc50f6da3c1e0bfc8dd05672e00dc7db1c504fa4573d7de3b7ab48d74701f2e",
+      "prompt": "ELITEWAKE realistic animal modeling reference. A realistic high-domed tortoise with tan polygonal scutes, dark seams, concentric growth rings centered in each polygon and varied plate tones. A single row of FIVE vertebral scutes down the spine, FOUR costal plates on each side, approximately ELEVEN marginal plates around each side of rim. Grey scaly columnar legs and wrinkled neck. Two matching modeling views on one sheet: direct TOP view showing the whole exact scute layout, and true SIDE view showing dome height. No stripes across shell, no banded generic texture.  Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical.",
+        "Exact owner-approved scute counts are not validated by this sheet; T6 model acceptance remains open."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

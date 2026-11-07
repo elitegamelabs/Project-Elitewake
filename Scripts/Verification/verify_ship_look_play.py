@@ -1,0 +1,143 @@
+"""How a ship looks against the owner's design sheet (owner, October 18: Art/Concepts/Boats/2026-10-18/
+Ship-Design-Sheet-v1.webp). Needs Play in /Game/Elitewake/Maps/Test/Lvl_ShipsTest with one player
+(EW_PLAY_PLAYERS=1). Set EW_LOOK_SHIP to the ship's id (default Sloop). Run unattended with run_play_check.py.
+
+The survivor hovers (flying: a camera stand, never in play) at set places round the ship and inside her, looking at
+her: a raised three-quarter view from the bow, her side, her stern and ladder, her deck from above, her hold. Also checks her lanterns' lights are lit inside. Screenshots in Saved/Screenshots/ShipLook/<id>.
+Writes Saved/ShipLookPlayResult.json.
+"""
+import json
+import os
+import time
+from pathlib import Path
+import unreal
+
+lib = unreal.EWEditorVerificationLibrary
+SHIP_ID = os.environ.get('EW_LOOK_SHIP', 'Sloop')
+RESULT = Path(unreal.Paths.project_saved_dir(), 'ShipLookPlayResult.json')
+RIGGED = os.environ.get('EW_LOOK_RIGGED') == '1'   # with her helm and sail assemblies fitted (a configured sailing vessel)
+SHOTS = Path(unreal.Paths.project_saved_dir(), 'Screenshots', 'ShipLook', SHIP_ID + ('_rigged' if RIGGED else ''))
+SHOTS.mkdir(parents=True, exist_ok=True)
+world = next(w for w in lib.get_play_worlds())
+pc = unreal.GameplayStatics.get_player_controller(world, 0)
+pawn = pc.get_controlled_pawn()
+ship = next(s for s in unreal.GameplayStatics.get_all_actors_of_class(world, unreal.EWShip)
+            if str(s.get_editor_property('definition').get_editor_property('ship_id')) == SHIP_ID)
+d = ship.get_editor_property('definition')
+E = d.get_editor_property('hull_extent')
+DECK = d.get_editor_property('deck_height')
+FLOOR = d.get_editor_property('hold_floor_height')
+checks, measured = [], {}
+state = {'index': 0, 'begun': False, 'deadline': 0.0, 'handle': None, 'at': 0.0, 'shot': None, 'view': None}
+
+
+def hold_view():
+    eye_local, target_local, hide, inside = state['view']
+    t = ship.get_actor_transform()
+    move = pawn.get_component_by_class(unreal.CharacterMovementComponent)
+    move.set_movement_mode(unreal.MovementMode.MOVE_FLYING)
+    at = t.transform_location(unreal.Vector(*eye_local))
+    assert pawn.teleport(at, unreal.Rotator()) or (pawn.get_actor_location() - at).length() < 30, f'no room for the camera at {eye_local}'
+    move.stop_movement_immediately()
+    pawn.set_actor_hidden_in_game(hide)
+    # Inside, the camera sits at the survivor's head (no third-person boom behind them, which would be outside the walls).
+    boom = pawn.get_component_by_class(unreal.SpringArmComponent)
+    if boom:
+        boom.set_editor_property('target_arm_length', 0.0 if inside else 400.0)
+    eye = pawn.get_actor_location() + unreal.Vector(0, 0, pawn.get_editor_property('base_eye_height'))
+    pc.set_control_rotation(unreal.MathLibrary.find_look_at_rotation(eye, t.transform_location(unreal.Vector(*target_local))))
+
+
+def view(label, eye, target, hide=False, inside=False):
+    def begin():
+        state.update(view=(eye, target, hide, inside), at=time.monotonic(), shot=None)
+        hold_view()
+
+    def done():
+        hold_view()
+        if time.monotonic() - state['at'] < 2.0:
+            return False
+        if state['shot'] is None:
+            unreal.SystemLibrary.execute_console_command(world, f'Shot filename="{SHOTS / (label + ".png")}"')
+            state['shot'] = time.monotonic()
+            return False
+        return time.monotonic() - state['shot'] > 1.0
+    return label, begin, done
+
+
+def rig():
+    folder = '/Game/Elitewake/Items/Testing'
+    inv = pawn.get_inventory_component()
+    for name in ('DA_TestShipHelm', 'DA_TestSailMedium', 'DA_TestSailSmall', 'DA_TestSailLarge'):
+        item = unreal.load_asset(f'{folder}/{name}')
+        if item:
+            inv.add_item(item, 3)   # enough for every hardpoint of its size (the brigantine takes two Large)
+    measured['fitted'] = lib.fit_out_ship_for_review(ship, pawn, 4)
+    assert measured['fitted'] >= 3, measured['fitted']
+    masts = [c for c in ship.get_components_by_class(unreal.StaticMeshComponent) if c.get_name().startswith('Mast_')]
+    measured['masts_standing'] = len(masts)
+    return True
+
+
+def lanterns():
+    lights = [c for c in ship.get_components_by_class(unreal.PointLightComponent) if c.get_name().startswith('Lantern')]
+    want = len(d.get_editor_property('lantern_lights'))
+    measured['lanterns'] = {'defined': want, 'lit': len(lights)}
+    assert want > 0 and len(lights) == want and all(l.is_visible() for l in lights), measured['lanterns']
+    unreal.SystemLibrary.execute_console_command(world, f'Shot filename="{SHOTS / "warmup.png"}"')
+    return True
+
+
+L, B = E.x, E.y
+RAISED = DECK + 210.0       # the schooner's raised aft deck (her captain's quarters under it)
+OUTSIDE = [
+    ('three_quarter_bow', (L * 1.5, -B * 4.5, DECK + 900), (L * .1, 0, DECK + 300), True),
+    ('side_port', (0, -B * 6.5, DECK + 250), (0, 0, DECK + 350), True),
+    ('stern_ladder', (-L * 2.3, -B * .6, DECK + 120), (-L, 0, DECK - 20), True),
+    ('deck_from_above', (-L * .2, -B * .4, DECK + 1500), (L * .05, 0, DECK), True),
+]
+INSIDE = {
+    'Sloop': [('hold', (-L * .09, -B * .25, FLOOR + 95), (L * .6, 0, FLOOR + 40), True)],
+    # The captain's quarters under the raised aft deck, the gun deck, and the wheel on the quarters' roof from its stairs.
+    'Schooner': [('quarters', (-835.0, 0.0, DECK + 95), (-960.0, 0.0, DECK + 45), True),
+                 ('gun_deck', (-80.0, 0.0, FLOOR + 95), (700.0, 60.0, FLOOR + 70), True),
+                 ('wheel_roof', (-760.0, -110.0, RAISED + 95), (-940.0, 0.0, RAISED + 70), True),
+                 ('stairs_rails', (-460.0, -260.0, DECK + 160), (-700.0, -111.0, DECK + 110), True)],
+    # The wheel inside her captain's quarters, the gun deck, and the stairs up to the raised aft deck.
+    'Brigantine': [('quarters', (-900.0, 120.0, DECK + 95), (-1250.0, -40.0, DECK + 60), True),
+                   ('gun_deck', (-600.0, 0.0, FLOOR + 95), (700.0, 80.0, FLOOR + 70), True),
+                   ('stairs_rails', (-380.0, -330.0, DECK + 180), (-700.0, -287.0, DECK + 120), True)],
+}
+INSIDE_NAMES = {'hold', 'quarters', 'gun_deck'}   # shot from the survivor's head, inside the hull
+STEPS = ([('Her helm and sail assemblies are fitted, masts standing', lambda: None, rig, 5)] if RIGGED else []) + [('Her lanterns are lit inside', lambda: None, lanterns, 5)] + [
+    (f'Screenshot: {label}', begin, done, 12) for label, begin, done in
+    [view(name, eye, target, hide=hide, inside=name in INSIDE_NAMES) for name, eye, target, hide in OUTSIDE + INSIDE.get(SHIP_ID, [])]]
+
+
+def finish(error=None):
+    unreal.unregister_slate_post_tick_callback(state['handle'])
+    pawn.set_actor_hidden_in_game(False)
+    RESULT.write_text(json.dumps({'success': error is None, 'checks': checks, 'error': error, 'measured': measured}, indent=2))
+    unreal.log(f'EWPLAYCHECK ShipLook success={error is None} error={error}')
+
+
+def tick(delta):
+    description, begin, done, timeout = STEPS[state['index']]
+    try:
+        if not state['begun']:
+            begin()
+            state.update(begun=True, deadline=time.monotonic() + timeout)
+            return
+        if done():
+            checks.append(description)
+            state.update(index=state['index'] + 1, begun=False)
+            if state['index'] == len(STEPS):
+                finish()
+        elif time.monotonic() > state['deadline']:
+            raise TimeoutError(f'not done within {timeout} s')
+    except Exception as error:
+        finish(f'step {state["index"]} ({description}): {error!r}')
+
+
+unreal.SystemLibrary.execute_console_command(world, 'r.MotionBlurQuality 0')
+state['handle'] = unreal.register_slate_post_tick_callback(tick)

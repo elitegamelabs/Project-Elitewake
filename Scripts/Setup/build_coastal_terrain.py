@@ -1,0 +1,481 @@
+"""Build the world's ground: a terrain for every island of the five-region world and the sea floor between them.
+Safe to run again. Run in the editor (not headless: the ocean has to be rebuilt by a rendering editor after the
+ground changes), outside Play with no unsaved maps:
+    UnrealEditor.exe EW.uproject -ExecCmds="py <this file>"
+
+Owner direction, October 15: Plains in the centre (the starter island and five more round it), Winter to the north,
+Swamp to the south, Desert to the east, Jungle to the west, at least five islands each, 800-2,000 m of sea between
+shores. The islands come from world_layout.py and their ground from world_terrain.py (plain Python, shared with the
+scripts that dress the islands). Each island gets its own mesh (2 m grid on the starter island, 4 m elsewhere) out to
+200 m past its shore, where it dips under one sea-floor mesh covering the whole world; the old -500 m floor stays
+underneath as a backstop. The ground carries what covers it in its vertex colour (red snow, green grass, blue mud)
+and the terrain material paints sand, grass, mud or snow from it. Animated surf washes up every shore. The ocean,
+its water zone and the swimming volume are widened to the whole world. The starter island keeps its exact shape:
+the beach spawn, dock landing, pond and sloop keep their places. All heights are tuning.
+"""
+import json
+import math
+import os
+import sys
+from pathlib import Path
+import unreal
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import world_layout as W  # noqa: E402
+import world_terrain as T  # noqa: E402
+from set_coastal_ocean_depth import apply_depth  # noqa: E402
+import world_map  # noqa: E402  (opens and saves the map, World Partition or not)
+
+MAP = '/Game/Elitewake/Maps/Lvl_CoastalPlayground'
+MESHES = '/Game/Elitewake/World/Meshes/Islands'
+SEA = T.SEA
+root = Path(unreal.Paths.project_dir()).resolve()
+height = T.height
+
+
+def make_material():
+    path = '/Game/Elitewake/World/Materials/M_CoastalTerrain_v1'
+    assets = unreal.AssetToolsHelpers.get_asset_tools()
+    mel = unreal.MaterialEditingLibrary
+    material = unreal.load_asset(path) or assets.create_asset('M_CoastalTerrain_v1', '/Game/Elitewake/World/Materials',
+                                                              unreal.Material, unreal.MaterialFactoryNew())
+    mel.delete_all_material_expressions(material)
+    sand = unreal.load_asset('/Game/Elitewake/World/Materials/T_Sand_v1')
+    # Ground textures need mipmaps; the icon setting it was imported with has none and shimmers at distance.
+    sand.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_DEFAULT)
+    sand.set_editor_property('mip_gen_settings', unreal.TextureMipGenSettings.TMGS_FROM_TEXTURE_GROUP)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(sand)
+
+    def node(cls, **props):
+        n = mel.create_material_expression(material, cls)
+        for k, v in props.items():
+            n.set_editor_property(k, v)
+        return n
+
+    def link(a, b, pin='', out=''):
+        assert mel.connect_material_expressions(a, out, b, pin), (b.get_name(), pin)
+
+    def const(v):
+        return node(unreal.MaterialExpressionConstant, r=v)
+
+    # The terrain mesh's UVs span its 504 m once; repeat the sand every 4 m.
+    # The sand repeats every 4 m, in world space (each island's mesh has its own UVs).
+    position = node(unreal.MaterialExpressionWorldPosition)
+    uv = node(unreal.MaterialExpressionCustom, code='return P.xy / 400.0;', output_type=unreal.CustomMaterialOutputType.CMOT_FLOAT2)
+    pin = unreal.CustomInput(); pin.set_editor_property('input_name', 'P'); uv.set_editor_property('inputs', [pin])
+    link(position, uv, 'P')
+    sample = node(unreal.MaterialExpressionTextureSample, texture=sand)
+    link(uv, sample, 'UVs')
+    dry = sample  # its first output is RGB
+    # Wet sand from just above the waterline down.
+    z = node(unreal.MaterialExpressionDotProduct)  # world height as a single value
+    link(position, z, 'A')
+    link(node(unreal.MaterialExpressionConstant3Vector, constant=unreal.LinearColor(0, 0, 1, 0)), z, 'B')
+    below = node(unreal.MaterialExpressionSubtract)
+    link(const(-25.0), below, 'A'); link(z, below, 'B')
+    wet_ramp = node(unreal.MaterialExpressionDivide)
+    link(below, wet_ramp, 'A'); link(const(60.0), wet_ramp, 'B')
+    wet = node(unreal.MaterialExpressionSaturate)
+    link(wet_ramp, wet)
+    damp = node(unreal.MaterialExpressionMultiply)
+    link(dry, damp, 'A'); link(node(unreal.MaterialExpressionConstant3Vector, constant=unreal.LinearColor(0.6, 0.57, 0.52, 1)), damp, 'B')
+    colour = node(unreal.MaterialExpressionLinearInterpolate)
+    link(dry, colour, 'A'); link(damp, colour, 'B'); link(wet, colour, 'Alpha')
+    rough = node(unreal.MaterialExpressionLinearInterpolate)
+    link(const(0.92), rough, 'A'); link(const(0.55), rough, 'B'); link(wet, rough, 'Alpha')
+    # Snow where the ground's vertex colour says so (red = snow cover), above the tideline; fine sparkle in it.
+    def custom(code, kind, inputs):
+        n = node(unreal.MaterialExpressionCustom, code=code, output_type=kind)
+        pins = []
+        for name in inputs:
+            pin = unreal.CustomInput()
+            pin.set_editor_property('input_name', name)
+            pins.append(pin)
+        n.set_editor_property('inputs', pins)
+        return n
+    paint = node(unreal.MaterialExpressionVertexColor)
+    normal = node(unreal.MaterialExpressionVertexNormalWS)
+    # Above the tideline the vertex colour lays grass (green), mud (blue) or snow (red) over the sand. Grass keeps
+    # off steep faces, which show bare earth; all of it is broken up by noise at two scales so it never reads flat.
+    noise = ('float h(float2 c) { return frac(sin(dot(c, float2(12.9898, 78.233))) * 43758.5453); }'
+             ' float n2(float2 q) { float2 i = floor(q), f = frac(q); f = f * f * (3 - 2 * f);'
+             ' return lerp(lerp(h(i), h(i + float2(1, 0)), f.x), lerp(h(i + float2(0, 1)), h(i + float2(1, 1)), f.x), f.y); }')
+    # Each region's own soils (owner, October 16: REGIONAL_SOIL_TEXTURE_REQUIREMENTS): the vertex alpha names the
+    # region (world_terrain.REGION_CODES); bare earth, grass and mud take its colours, and the Desert's sand gets
+    # wind ripples, gravel, cracked hardpan on its flats and sandstone on its slopes. All colours are tuning.
+    regions = (' float w = saturate(1 - abs(A - .1) * 8), pl = saturate(1 - abs(A - .3) * 8), j = saturate(1 - abs(A - .5) * 8),'
+               ' sw = saturate(1 - abs(A - .7) * 8), d = saturate(1 - abs(A - .9) * 8);')
+    snowy = custom('struct G { ' + noise + ' }; G g;'
+                   ' float up = saturate(P.z / 100.0);'   # soil and grass start 65 cm above the waterline, full by 1 m: a beach strip of sand some 15-30 m wide (owner, October 27)
+                   
+                   ' float big = g.n2(P.xy / 900.0), mid = g.n2(P.xy / 140.0), fine = g.n2(P.xy / 6.0), speck = g.n2(P.xy / 1.7);'
+                   ' float flat = saturate((N.z - .72) * 5.0);' + regions +
+                   # Grass: lush on the Plains, deep and saturated in the Jungle, olive moss in the Swamp.
+                   ' float3 grass = lerp(float3(.035, .075, .015), float3(.1, .13, .03), big) * lerp(.7, 1.2, mid) * lerp(.88, 1.08, fine);'
+                   ' grass = grass * (1 + pl * .15) * (1 - j * .35) + j * float3(-.006, .012, -.003) + sw * float3(.012, -.01, -.004);'
+                   # Bare earth: pale frozen soil (Winter), rich brown loam (Plains), dark wet loam with leaf litter and
+                   # moss (Jungle), black saturated peat (Swamp), sandstone (Desert slopes).
+                   ' float3 earth = float3(.16, .12, .08) * lerp(.8, 1.1, mid);'
+                   ' float3 frozen = lerp(float3(.30, .29, .28), float3(.42, .43, .45), saturate(fine * 1.5 - .4)) * lerp(.85, 1.05, mid);'
+                   ' float3 loam = float3(.19, .12, .065) * lerp(.8, 1.15, mid);'
+                   ' float3 litter = lerp(float3(.06, .045, .028), float3(.16, .085, .03), step(.72, speck)) ;'
+                   ' litter = lerp(litter, float3(.05, .08, .025), saturate((big - .55) * 4));'
+                   ' float3 peat = lerp(float3(.03, .024, .017), float3(.05, .04, .026), mid);'
+                   ' float3 stone = lerp(float3(.55, .37, .21), float3(.68, .5, .32), mid) * lerp(.85, 1.05, fine);'
+                   ' earth = earth * (1 - w - pl - j - sw - d) + frozen * w + loam * pl + litter * j + peat * sw + stone * d;'
+                   # Inland the region's soil lies under everything (bare patches show it, not beach sand), and
+                   # grass covers it in patches.
+                   ' float3 c = lerp(C, earth, V.g * up * (w + pl + j + sw));'
+                   ' c = lerp(c, lerp(earth, grass, flat), V.g * up * saturate(mid * 2.5 + .45));'
+                   # Steep ground everywhere shows its region's bare earth, not only where grass grows.
+                   ' c = lerp(c, earth, (1 - flat) * up * (w + pl + j + sw + d) * .85);'
+                   ' float3 mud = lerp(float3(.035, .03, .02), float3(.05, .06, .025), mid) * lerp(.8, 1.2, big);'
+                   ' mud = lerp(mud, float3(.022, .017, .012), sw * saturate(.4 + (1 - big)));'
+                   ' c = lerp(c, mud, V.b * saturate(up + .3));'
+                   # Desert flats away from the tide: wind ripples, dusty gravel and patches of cracked hardpan.
+                   ' float ripple = sin(dot(P.xy, float2(.031, .017)) + g.n2(P.xy / 300.0) * 6.0) * .5 + .5;'
+                   ' float crack = smoothstep(.06, .0, abs(frac(g.n2(P.xy / 55.0) * 7.0) - .5) - .44);'
+                   ' float pan = saturate((g.n2(P.xy / 700.0) - .55) * 5) * flat;'
+                   ' float3 hardpan = lerp(float3(.62, .5, .37), float3(.36, .28, .2), crack);'
+                   ' float3 dune = C * lerp(.9, 1.06, ripple) * lerp(1, .82, step(.86, speck));'
+                   ' c = lerp(c, lerp(dune, hardpan, pan), d * up);'
+                   # Under the sea (owner, October 17: deeper sand, dynamic sea-floor scenery): sand in wave ripples
+                   # with shell grit in the shallows, fine grey-green silt as it deepens, bare rock on steep faces,
+                   # and the sun's caustics drifting over the shallows (brightening the lit sand, so gone at night).
+                   ' float depth = -65.0 - P.z;'
+                   ' float sub = saturate((depth - 120.0) / 400.0), silty = saturate((depth - 2500.0) / 20000.0);'
+                   ' float wave = sin(dot(P.xy, float2(.042, .019)) + g.n2(P.xy / 180.0) * 5.0) * .5 + .5;'
+                   ' float3 sandy = C * lerp(.8, 1.08, wave) * lerp(.9, 1.05, mid);'
+                   ' sandy = lerp(sandy, float3(.72, .68, .6), step(.9, speck) * .55);'
+                   ' float3 silt = lerp(float3(.25, .26, .22), float3(.17, .19, .18), big) * lerp(.9, 1.1, fine);'
+                   ' float3 rock = lerp(float3(.16, .15, .14), float3(.27, .25, .21), mid) * lerp(.8, 1.1, fine);'
+                   ' float3 bed = lerp(lerp(sandy, silt, silty), rock, saturate((.78 - N.z) * 5.0));'
+                   ' float2 q = P.xy / 260.0; float t = T * .5;'
+                   ' float k = abs(sin(q.x * 1.7 + sin(q.y * 1.3 + t) + t * .7) * sin(q.y * 1.9 + sin(q.x * 1.1 - t * .8)));'
+                   ' k = pow(saturate(1.0 - k), 7.0) + pow(saturate(1.0 - abs(sin(q.x * 2.3 - q.y * 1.4 + t * 1.3))), 9.0) * .5;'
+                   ' bed *= 1.0 + k * .9 * saturate(1.0 - depth / 2500.0);'
+                   ' c = lerp(c, bed, sub);'
+                   ' float3 snow = float3(.8, .84, .9) * lerp(.9, 1.05, fine) * lerp(.94, 1.02, big);'
+                   ' return lerp(c, snow, V.r * up);', unreal.CustomMaterialOutputType.CMOT_FLOAT3, ('C', 'V', 'A', 'P', 'N', 'T'))
+    # Roughness: the Swamp's mud glistens, with glossy puddles in its hollows; the Desert is bone dry.
+    snow_rough = custom('struct G { ' + noise + ' }; G g;'
+                        ' float up = saturate(P.z / 100.0);'   # soil and grass start 65 cm above the waterline, full by 1 m: a beach strip of sand some 15-30 m wide (owner, October 27)
+                    + regions +
+                        ' float r = lerp(lerp(lerp(R, .95, V.g * up), .45, V.b), .62, V.r * up);'
+                        ' float puddle = smoothstep(.62, .7, g.n2(P.xy / 260.0)) * sw * up;'
+                        ' r = lerp(r, .35, sw * up * .7); r = lerp(r, .08, puddle);'
+                        ' return lerp(r, .97, d * up);',
+                        unreal.CustomMaterialOutputType.CMOT_FLOAT1, ('R', 'V', 'A', 'P'))
+    link(colour, snowy, 'C'); link(paint, snowy, 'V'); link(position, snowy, 'P'); link(normal, snowy, 'N')
+    link(node(unreal.MaterialExpressionTime), snowy, 'T')
+    link(rough, snow_rough, 'R'); link(paint, snow_rough, 'V'); link(position, snow_rough, 'P')
+    link(paint, snowy, 'A', 'A'); link(paint, snow_rough, 'A', 'A')   # the vertex colour's alpha: the region
+    assert mel.connect_material_property(snowy, '', unreal.MaterialProperty.MP_BASE_COLOR)
+    assert mel.connect_material_property(snow_rough, '', unreal.MaterialProperty.MP_ROUGHNESS)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
+# Shared by the surf material's two outputs. P is world position in cm, Foam a foam texture sample.
+SWASH_HLSL = '''
+float t = Time / 8.0 + 0.25 * sin(P.x / 450.0 + 0.3) + 0.25 * sin(P.y / 610.0 + 1.7) + 0.15 * sin((P.x + P.y) / 230.0);
+float ph = frac(t);
+float drain = ph < 0.5 ? 1.0 : (1.0 - ph) * 2.0;
+float v = saturate((P.z + 70.0) / 40.0);
+float reach = 0.08 + 0.62 * pow(sin(ph * 3.14159), 0.7);
+float behind = 1.0 - smoothstep(reach - 0.1, reach, v);
+float bubbles = smoothstep(0.25, 0.75, Foam);
+float band = exp(-pow((v - reach) / 0.05, 2.0)) * (0.35 + 0.65 * bubbles);
+float lace = behind * bubbles * 0.35 * drain;
+float fringe = exp(-pow((v - 0.05) / 0.05, 2.0)) * bubbles * 0.7;
+float white = saturate(band + lace + fringe);
+float sheet = behind * 0.75 * drain;
+'''
+
+
+def make_swash_material():
+    """Surf washing up the beach: a broken foam front climbs up to about 1.6 m of sand on an 8 s cycle (tuning),
+    leaving a glossy sheet of water laced with foam that drains back, over a foam fringe at the waterline.
+    Each stretch of coast runs out of step with its neighbours."""
+    path = '/Game/Elitewake/World/Materials/M_ShoreSwash_v1'
+    assets = unreal.AssetToolsHelpers.get_asset_tools()
+    mel = unreal.MaterialEditingLibrary
+    material = unreal.load_asset(path) or assets.create_asset('M_ShoreSwash_v1', '/Game/Elitewake/World/Materials',
+                                                              unreal.Material, unreal.MaterialFactoryNew())
+    mel.delete_all_material_expressions(material)
+    # Masked with dithered coverage, so the surf is lit exactly like the sand under it.
+    material.set_editor_property('blend_mode', unreal.BlendMode.BLEND_MASKED)
+
+    def node(cls, **props):
+        n = mel.create_material_expression(material, cls)
+        for k, v in props.items():
+            n.set_editor_property(k, v)
+        return n
+
+    def custom(code, kind, inputs):
+        n = node(unreal.MaterialExpressionCustom, code=code, output_type=kind)
+        pins = []
+        for name in inputs:
+            pin = unreal.CustomInput()
+            pin.set_editor_property('input_name', name)
+            pins.append(pin)
+        n.set_editor_property('inputs', pins)
+        return n
+
+    position = node(unreal.MaterialExpressionWorldPosition)
+    clock = node(unreal.MaterialExpressionTime)
+    # Foam texture drifting slowly so the surf never looks stamped.
+    uv = custom('return P.xy / 200.0 + float2(T * 0.02, T * 0.013);', unreal.CustomMaterialOutputType.CMOT_FLOAT2, ('P', 'T'))
+    assert mel.connect_material_expressions(position, '', uv, 'P') and mel.connect_material_expressions(clock, '', uv, 'T')
+    foam = node(unreal.MaterialExpressionTextureSample,
+                texture=unreal.load_asset('/Water/Textures/Foam/T_WaterFlow_01_Foam_Tiled'))
+    assert mel.connect_material_expressions(uv, '', foam, 'UVs')
+    outputs = {
+        unreal.MaterialProperty.MP_BASE_COLOR: (unreal.CustomMaterialOutputType.CMOT_FLOAT3,
+            'return lerp(float3(0.16, 0.34, 0.34), float3(0.92, 0.94, 0.94), white);'),
+        unreal.MaterialProperty.MP_ROUGHNESS: (unreal.CustomMaterialOutputType.CMOT_FLOAT1,
+            'return lerp(0.05, 0.6, white);'),
+        # Coverage dithered per pixel and frame (interleaved gradient noise); temporal AA blends it smooth.
+        unreal.MaterialProperty.MP_OPACITY_MASK: (unreal.CustomMaterialOutputType.CMOT_FLOAT1,
+            'float a = saturate(sheet + white) * saturate(v * 10.0);'
+            ' float n = frac(52.9829189 * frac(dot(Parameters.SvPosition.xy + View.StateFrameIndexMod8 * 5.588238,'
+            ' float2(0.06711056, 0.00583715))));'
+            ' return a - n + 0.3333;'),
+    }
+    for prop, (kind, tail) in outputs.items():
+        n = custom(SWASH_HLSL + tail, kind, ('P', 'Time', 'Foam'))
+        for pin, src, out in (('P', position, ''), ('Time', clock, ''), ('Foam', foam, 'R')):
+            assert mel.connect_material_expressions(src, out, n, pin), (prop, pin)
+        assert mel.connect_material_property(n, '', prop)
+    mel.recompile_material(material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(material)
+    return material
+
+
+def build_swash(island, material):
+    """A strip lying 3 cm over the sand from 1.2 m offshore to 4.8 m up the beach, all the way round a shore."""
+    label = f'{island.key} surf'
+    asset = f'{MESHES}/SM_Surf_{island.key}_v1'
+    segments = max(240, int(2 * math.pi * island.reach() / 150))
+    mesh = unreal.DynamicMesh()
+    unreal.GeometryScript_Primitives.append_rectangle_xy(mesh, unreal.GeometryScriptPrimitiveOptions(), unreal.Transform(),
+                                                         1000.0, 1000.0, segments, 8)
+    flat = unreal.GeometryScript_List.convert_vector_list_to_array(
+        unreal.GeometryScript_MeshQueries.get_all_vertex_positions(mesh, False)[1])
+    points = []
+    for p in flat:
+        angle = (p.x / 1000.0 + 0.5) * 2 * math.pi
+        r = island.radius(angle) + 120 - (p.y / 1000.0 + 0.5) * 600
+        x, y = island.cx + r * math.cos(angle), island.cy + r * math.sin(angle)
+        points.append(unreal.Vector(x, y, height(x, y) + 3))
+    unreal.GeometryScript_MeshEdits.set_all_mesh_vertex_positions(
+        mesh, unreal.GeometryScript_List.convert_array_to_vector_list(points))
+    unreal.GeometryScript_Normals.recompute_normals(mesh, unreal.GeometryScriptCalculateNormalsOptions())
+    if unreal.EditorAssetLibrary.does_asset_exist(asset):
+        assert unreal.EditorAssetLibrary.delete_asset(asset)
+    strip, outcome = unreal.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(
+        mesh, asset, unreal.GeometryScriptCreateNewStaticMeshAssetOptions(enable_collision=False))
+    assert strip, outcome
+    strip.set_material(0, material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(strip)
+    actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+    actor.set_actor_label(label)
+    actor.set_folder_path('World/Surf')
+    component = actor.static_mesh_component
+    component.set_static_mesh(strip)
+    component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    component.set_cast_shadow(False)
+    return actor
+
+
+FLOOR_SPACING = 5000.0   # the sea floor mesh's grid, cm: fine enough for its canyons, ridges and sand waves
+FLOOR_TUCK = 400.0       # how far it sinks under an island's own finer mesh, cm, so the two never flicker
+
+
+def sea_floor_height(x, y):
+    """The sea floor mesh's height: the sea floor everywhere, but held 15 m under the sea wherever an island's land
+    is, so its coarser grid never pokes up through the land (or into a cave) of the bigger islands, and tucked a
+    little under each island's own mesh where that carries the ground."""
+    h = height(x, y)
+    if any(i.distance(x, y) < 0 for i in W.ISLANDS if abs(x - i.cx) < i.reach() + 1 and abs(y - i.cy) < i.reach() + 1):
+        h = min(h, SEA - 1500.0)
+    for cx, cy, reach in FINE_PATCHES:
+        inset = min(reach - abs(x - cx), reach - abs(y - cy))
+        if inset > 0:
+            h -= FLOOR_TUCK * min(1.0, inset / FLOOR_SPACING)
+            break
+    return h
+
+
+# Where a finer mesh carries the ground over the coarse floor: each island's, and each seamount's (its own 5 m mesh,
+# so its rock and flat top read up close; a dive spot).
+SEAMOUNT_SPACING = 500.0
+FINE_PATCHES = [(i.cx, i.cy, i.reach() + T.SHELF) for i in W.ISLANDS] + [(mx, my, r * 2) for mx, my, _, r in T.SEAMOUNT_SITES]
+
+
+def reusable_mesh(path, x0, x1, y0, y1):
+    """With EW_TERRAIN_REUSE_MESHES=1, an existing mesh at `path` whose bounds cover exactly this rectangle (within 1 m):
+    the ground generation already done for this layout (hours for twenty islands) need not be repeated. None otherwise."""
+    if os.environ.get('EW_TERRAIN_REUSE_MESHES') != '1' or not unreal.EditorAssetLibrary.does_asset_exist(path):
+        return None
+    asset = unreal.load_asset(path)
+    box = asset.get_bounding_box() if asset else None
+    if not box or max(abs(box.min.x - x0), abs(box.max.x - x1), abs(box.min.y - y0), abs(box.max.y - y1)) > 100.0:
+        return None
+    return asset
+
+
+def ground_mesh(path, x0, x1, y0, y1, spacing, material, colour=True, height=height):
+    """A height-field mesh over a rectangle (world cm) from world_terrain, written to `path` (or the same mesh already
+    there, reused: reusable_mesh)."""
+    reused = reusable_mesh(path, x0, x1, y0, y1)
+    if reused:
+        return reused, 'reused'
+    nx, ny = max(2, int(round((x1 - x0) / spacing))), max(2, int(round((y1 - y0) / spacing)))
+    mesh = unreal.DynamicMesh()
+    unreal.GeometryScript_Primitives.append_rectangle_xy(mesh, unreal.GeometryScriptPrimitiveOptions(), unreal.Transform(
+        location=unreal.Vector((x0 + x1) / 2, (y0 + y1) / 2, 0)), x1 - x0, y1 - y0, nx, ny)
+    flat = unreal.GeometryScript_List.convert_vector_list_to_array(
+        unreal.GeometryScript_MeshQueries.get_all_vertex_positions(mesh, False)[1])
+    heights = [height(p.x, p.y) for p in flat]
+    unreal.GeometryScript_MeshEdits.set_all_mesh_vertex_positions(mesh, unreal.GeometryScript_List.convert_array_to_vector_list(
+        [unreal.Vector(p.x, p.y, z) for p, z in zip(flat, heights)]))
+    if colour:
+        unreal.GeometryScript_VertexColors.set_mesh_per_vertex_colors(mesh, unreal.GeometryScript_List.convert_array_to_color_list(
+            [unreal.LinearColor(*T.cover(p.x, p.y, z), T.region_code(p.x, p.y)) for p, z in zip(flat, heights)]))
+    unreal.GeometryScript_Normals.recompute_normals(mesh, unreal.GeometryScriptCalculateNormalsOptions())
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        assert unreal.EditorAssetLibrary.delete_asset(path)
+    asset, outcome = unreal.GeometryScript_NewAssetUtils.create_new_static_mesh_asset_from_mesh(
+        mesh, path, unreal.GeometryScriptCreateNewStaticMeshAssetOptions(enable_collision=True,
+        enable_recompute_normals=False, enable_recompute_tangents=True))
+    assert asset, outcome
+    asset.get_editor_property('body_setup').set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+    asset.set_material(0, material)
+    assert unreal.EditorAssetLibrary.save_loaded_asset(asset)
+    return asset, (nx + 1) * (ny + 1)
+
+
+lib = unreal.EWEditorVerificationLibrary
+assert not lib.get_play_worlds(), 'Stop Play first'
+level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+assert world_map.open_map(level, MAP)
+
+# Re-cut only some islands' ground (EW_TERRAIN_ISLANDS=Starter,...): their meshes are rebuilt from world_terrain and their
+# actors pointed at them again; the sea floor, surf, ocean and every other island stay as they are. For local changes such as
+# the spring pond's depth (owner, November 1).
+ONLY = [k for k in os.environ.get('EW_TERRAIN_ISLANDS', '').split(',') if k]
+if ONLY:
+    material = unreal.load_asset('/Game/Elitewake/World/Materials/M_CoastalTerrain_v1')
+    report = {'only': ONLY, 'islands': {}}
+    for island in [i for i in W.ISLANDS if i.key in ONLY]:
+        reach = island.reach() + T.SHELF
+        asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
+                                   island.cy - reach, island.cy + reach, T.ground_spacing(island), material)
+        actor = next(a for a in actors.get_all_level_actors()
+                     if str(a.get_folder_path()) == 'World/Islands' and a.get_actor_label() == f'{island.key} ({island.region})')
+        actor.static_mesh_component.set_static_mesh(asset)
+        report['islands'][island.key] = {'vertices': verts}
+    report['ground_cm'] = {'spring_centre': round(height(T.POND[0], T.POND[1]), 1)}
+    assert world_map.save_map()
+    report['success'] = True
+    (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
+    unreal.log(f'Island ground re-cut: {ONLY}')
+else:
+
+    # The single 504 m terrain and its surf, and any earlier run of this script.
+    retired_labels = ['Main beach', 'Distant islet beach', 'Island interior', 'Distant islet interior', 'Freshwater basin rim',
+                      'Coastal island terrain', 'Main island surf', 'Islet surf', 'Second island surf', 'Winter island surf', 'Sea floor']
+    removed = []
+    for actor in actors.get_all_level_actors():
+        if actor.get_actor_label() in retired_labels or str(actor.get_folder_path()) in ('World/Islands', 'World/Surf'):
+            removed.append(actor.get_actor_label())
+            actors.destroy_actor(actor)
+
+    material = make_material()
+    surf_material = make_swash_material()
+    report = {'removed': len(removed), 'islands': {}}
+    terrains = []
+    for island in W.ISLANDS:
+        reach = island.reach() + T.SHELF
+        spacing = T.ground_spacing(island)
+        asset, verts = ground_mesh(f'{MESHES}/SM_Island_{island.key}_v1', island.cx - reach, island.cx + reach,
+                                   island.cy - reach, island.cy + reach, spacing, material)
+        actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+        actor.set_actor_label(f'{island.key} ({island.region})')
+        actor.set_folder_path('World/Islands')
+        actor.static_mesh_component.set_static_mesh(asset)
+        terrains.append(actor)
+        build_swash(island, surf_material)
+        report['islands'][island.key] = {'region': island.region, 'centre_m': [round(island.cx / 100), round(island.cy / 100)], 'vertices': verts}
+
+    # The sea floor between the islands, over the whole world and a margin.
+    x0, x1, y0, y1 = W.bounds(3000 * 100)
+    floor_asset, floor_verts = ground_mesh(f'{MESHES}/SM_SeaFloor_v1', x0, x1, y0, y1, FLOOR_SPACING, material,
+                                          height=sea_floor_height)
+    floor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+    floor.set_actor_label('Sea floor')
+    floor.set_folder_path('World/Islands')
+    floor.static_mesh_component.set_static_mesh(floor_asset)
+    floor.static_mesh_component.set_cast_shadow(False)
+    terrains.append(floor)
+    report['sea_floor'] = {'vertices': floor_verts, 'size_km': [round((x1 - x0) / 100000, 1), round((y1 - y0) / 100000, 1)]}
+    report['seamounts'] = []
+    for n, (mx, my, top, r) in enumerate(T.SEAMOUNT_SITES):
+        asset, verts = ground_mesh(f'{MESHES}/SM_Seamount_{n + 1}_v1', mx - 2 * r, mx + 2 * r, my - 2 * r, my + 2 * r, SEAMOUNT_SPACING, material)
+        actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(0, 0, 0))
+        actor.set_actor_label(f'Seamount {n + 1}')
+        actor.set_folder_path('World/Islands')
+        actor.static_mesh_component.set_static_mesh(asset)
+        terrains.append(actor)
+        report['seamounts'].append({'centre_m': [round(mx / 100), round(my / 100)], 'top_m': round(top / 100, 1), 'vertices': verts})
+
+    # Keep the fixed places on the ground (the starter island did not change).
+    start = next(a for a in actors.get_all_level_actors() if isinstance(a, unreal.PlayerStart))
+    spawn_ground = height(start.get_actor_location().x, start.get_actor_location().y)
+    start.set_actor_location(unreal.Vector(start.get_actor_location().x, start.get_actor_location().y, spawn_ground + 100), False, False)
+    report['spawn_ground_cm'] = round(spawn_ground, 1)
+    deck_bottom = 7.0
+    for post in [a for a in actors.get_all_level_actors() if a.get_actor_label() == 'Dock support']:
+        p = post.get_actor_location()
+        bottom = height(p.x, p.y) - 40
+        post.set_actor_location(unreal.Vector(p.x, p.y, (deck_bottom + bottom) / 2), False, False)
+        s3 = post.get_actor_scale3d()
+        post.set_actor_scale3d(unreal.Vector(s3.x, s3.y, (deck_bottom - bottom) / 100))
+
+    # The sea over the whole world: the ocean and its water zone, the swimming volume, and the old floor as a backstop.
+    half = max(x1 - x0, y1 - y0) / 2 + 200000
+    all_actors = actors.get_all_level_actors()
+    zone = next(a for a in all_actors if isinstance(a, unreal.WaterZone))
+    zone.set_editor_property('zone_extent', unreal.Vector2D(half * 2, half * 2))
+    zone.set_editor_property('render_target_resolution', unreal.IntPoint(4096, 4096))
+    for terrain in terrains:
+        assert unreal.EWWorldEditorLibrary.add_water_terrain(terrain)
+    ocean = next(a for a in all_actors if isinstance(a, unreal.WaterBodyOcean))
+    oc = ocean.get_water_body_component()
+    oc.set_editor_property('ocean_extents', unreal.Vector2D(half * 2, half * 2))
+    oc.set_editor_property('collision_extents', unreal.Vector(half, half, SEA - T.DEEP + 5000))
+    SEA_MATERIAL = '/Game/Elitewake/World/Water/MI_CoastalOcean_v1'
+    sea = unreal.load_asset(SEA_MATERIAL)
+    if sea:
+        oc.set_water_material(sea)
+    for label in ('Coastal ocean swimming volume', 'Coastal seabed'):
+        thing = next(a for a in all_actors if a.get_actor_label() == label)
+        centre, extent = thing.get_actor_bounds(False)
+        sc = thing.get_actor_scale3d()
+        thing.set_actor_scale3d(unreal.Vector(sc.x * half / extent.x, sc.y * half / extent.y, sc.z))
+        thing.set_actor_location(unreal.Vector(0, 0, thing.get_actor_location().z), False, False)
+    # The swimming volume reaches down to the deepest floor, and the old flat seabed lies just under it as a backstop.
+    report['ocean_depth'] = apply_depth(next(a for a in all_actors if a.get_actor_label() == 'Coastal ocean swimming volume'),
+                                        next(a for a in all_actors if a.get_actor_label() == 'Coastal seabed'), SEA)
+    report['sea_half_extent_km'] = round(half / 100000, 1)
+    report['ocean'] = unreal.EWWorldEditorLibrary.rebuild_water_body(ocean)
+    report['ground_cm'] = {name: round(height(x, y), 1) for name, (x, y) in {
+        'dock_landing': (4000, 900), 'dock_end': (6090, 900), 'sloop': (6200, 1400), 'spring': (-1700, 1500),
+        'swim_check_start': (6200, 0), 'swim_check_shore': (5500, 0)}.items()}
+    assert world_map.save_map()
+    report['success'] = True
+    (root / 'Saved/CoastalTerrainResult.json').write_text(json.dumps(report, indent=2))
+    unreal.log('World terrain saved')

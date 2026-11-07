@@ -1,0 +1,11 @@
+{
+  "file": "LayoutSheet-v1.png",
+  "sha256": "0f6802087ef76a4c1dc789d9251f14867b087532c6de2d84be0ee5c2f1dcce51",
+  "prompt": "ELITEWAKE NEW bare-hull architectural reference sheet for Cavalier. Input reference is a historical approved STYLE/SILHOUETTE reference; apply the following newer owner corrections exactly. Cavalier comparable OVERALL size to brigantine, distinct silhouette, not a scaled-up brigantine. Exactly THREE separate traversable deck levels: upper open weather deck, second deck below, and third lower interior floor reached by ladder from second. Captain's quarters same LENGTH as brigantine's, wheel INSIDE. Clear stair/ladder openings and supports; do not invent cannon counts, exact dimensions or stats. Three sail-location hardpoints corresponding to reference mast positions, all empty. Stern-center boarding ladder. Warm dark weathered oak, restrained brass/iron, detailed natural timber joinery, high-definition realistic game materials. Six clear separated views of SAME hull: side elevation, front bow, rear stern with exact centered ladder, top deck plan, underside, one long side CUTAWAY showing actual interior levels and access. Bare hull only: absolutely NO MASTS, poles, sail cloth, rigging, flags, mounted cannons, crew or scenery. Empty sail sockets visibly distinct from permanent structure. Preserve modular outer railing system separately from fixed staircase safety rails. No text, labels, dimensions, numbers or watermark. Plain light studio background, neutral illumination, readable interior cutaway. Do not copy the input collage as a whole; show ONLY the requested Cavalier class. This sheet is a reversible reference study, not proof of constructed mesh or approved statistics.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "source": "Provided by the owner in chat, October 18, 2026: \"THE NEW SHIP DESIGN\". Generator not stated.",
+  "owner_selection": "The design base for every ship (owner, October 18). Columns left to right: raft, sloop, schooner, brigantine, Cavalier. Mast counts follow the sheet: raft 1, sloop 2, schooner 2, brigantine 3, Cavalier as drawn.",
+  "scope": "2D design reference: exterior views (three-quarter, side, bow, top deck, underside, stern with centred ladder) and interior cutaways per ship. Not 3D models; the ships are rebuilt to match it one at a time, each verified in Play.",
+  "assets": [
+    {
+      "file": "Ship-Design-Sheet-v1.webp",
+      "size": [1536, 1024],
+      "sha256": "4cfb655ab5a9c4a4fa23112cefb12372f0ab99bdc249d22963df68cf07110197"
+    }
+  ]
+}

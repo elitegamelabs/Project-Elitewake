@@ -1,0 +1,70 @@
+{
+  "method": "ChatGPT built-in image generation",
+  "scope": "Four 2D sail concepts, not imported meshes or gameplay changes. Small triangular headsail, Medium gaff mainsail, Large square sail and Large dark-red prologue variant. Shapes are visual proposals; dimensions, recipes and balance unchanged.",
+  "assets": [
+    {
+      "key": "Small",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-9754adb0-0d52-45c5-af66-bf8ac0b3aba7.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake modular sail concept, individual transparent cutout.\nReference image 1 is weathered realistic historical craftsmanship STYLE reference only, do not reproduce the boat.\nPrimary request: ONE compact triangular jib / headsail cloth, off-white natural linen, reinforced corners and rope boltrope perimeter. A practical triangular silhouette for small craft or the sloop headsail.\nStyle: premium 2026 realistic game asset, physically based fabric, detailed woven flax cloth, believable seams, subtle salt weathering, few modest stitched repairs. Strong serviceable sail, not tattered. One entire fully unfurled sail, isolated centered with all corners fully visible and generous margin. Almost front-facing with slight three-quarter depth and gentle wind-filled belly. Neutral soft studio light.\nConstraints: ONLY sail cloth and its sewn-in rope edging and corner attachment loops. No mast, spars, yard, boom, gaff, pole, stand, hull, socket, backdrop, scenery, crew, text, logo, watermark or pirate skull. True transparent alpha background, no painted shadow or glow. No new speed/handling/cargo roles. Shapes are visual concepts, not balance decisions.",
+      "saved_file": "Small-Sail-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "ac5690af365e22619b6d583614ac2f526c8579914691e90c76f58327c22736eb"
+    },
+    {
+      "key": "Medium",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-df2310a7-6687-40d5-acb0-2e338af04182.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake modular sail concept, individual transparent cutout.\nReference image 1 is weathered realistic historical craftsmanship STYLE reference only, do not reproduce the boat.\nPrimary request: ONE medium four-sided gaff mainsail cloth, tall trapezoid profile with outer peak higher, off-white natural linen, stitched vertical cloth panels, reinforced corners and rope boltrope perimeter. Cloth alone, no gaff or boom.\nStyle: premium 2026 realistic game asset, physically based fabric, detailed woven flax cloth, believable seams, subtle salt weathering, few modest stitched repairs. Strong serviceable sail, not tattered. One entire fully unfurled sail, isolated centered with all corners fully visible and generous margin. Almost front-facing with slight three-quarter depth and gentle wind-filled belly. Neutral soft studio light.\nConstraints: ONLY sail cloth and its sewn-in rope edging and corner attachment loops. No mast, spars, yard, boom, gaff, pole, stand, hull, socket, backdrop, scenery, crew, text, logo, watermark or pirate skull. True transparent alpha background, no painted shadow or glow. No new speed/handling/cargo roles. Shapes are visual concepts, not balance decisions.",
+      "saved_file": "Medium-Sail-v1.png",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        254
+      ],
+      "sha256": "5909f9efbfa874104e4c93612c463cc1e54ee4c265f88ce55cf683bb896732aa"
+    },
+    {
+      "key": "Large",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-ad27315a-a68e-4481-acce-b215f2d71c6a.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake modular sail concept, individual transparent cutout.\nReference image 1 is weathered realistic historical craftsmanship STYLE reference only, do not reproduce the boat.\nPrimary request: ONE broad large square-rig sail cloth, cream natural linen, gently curved foot, vertical stitched cloth panels, reinforced corners and rope boltrope perimeter. Broad horizontal silhouette.\nStyle: premium 2026 realistic game asset, physically based fabric, detailed woven flax cloth, believable seams, subtle salt weathering, few modest stitched repairs. Strong serviceable sail, not tattered. One entire fully unfurled sail, isolated centered with all corners fully visible and generous margin. Almost front-facing with slight three-quarter depth and gentle wind-filled belly. Neutral soft studio light.\nConstraints: ONLY sail cloth and its sewn-in rope edging and corner attachment loops. No mast, spars, yard, boom, gaff, pole, stand, hull, socket, backdrop, scenery, crew, text, logo, watermark or pirate skull. True transparent alpha background, no painted shadow or glow. No new speed/handling/cargo roles. Shapes are visual concepts, not balance decisions.",
+      "saved_file": "Large-Sail-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "0ab39fe9cc0c266d1e7eeaa44be01a9ef4ae55c8e8a117c6ff44c8f32b86fdc6"
+    },
+    {
+      "key": "Large-Dark-Red",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-d7a638ed-b023-4043-b8c0-e050ea4caa9f.png",
+      "prompt": "Use case: stylized-concept.\nAsset type: original Elitewake modular sail concept, individual transparent cutout.\nReference image 1 is weathered realistic historical craftsmanship STYLE reference only, do not reproduce the boat.\nPrimary request: ONE broad large square-rig sail cloth, deeply dyed dark burgundy-red natural linen, gently curved foot, vertical stitched cloth panels, reinforced corners and rope boltrope perimeter. The dark-red visual variant for the prologue brigantine, same silhouette as Large.\nStyle: premium 2026 realistic game asset, physically based fabric, detailed woven flax cloth, believable seams, subtle salt weathering, few modest stitched repairs. Strong serviceable sail, not tattered. One entire fully unfurled sail, isolated centered with all corners fully visible and generous margin. Almost front-facing with slight three-quarter depth and gentle wind-filled belly. Neutral soft studio light.\nConstraints: ONLY sail cloth and its sewn-in rope edging and corner attachment loops. No mast, spars, yard, boom, gaff, pole, stand, hull, socket, backdrop, scenery, crew, text, logo, watermark or pirate skull. True transparent alpha background, no painted shadow or glow. No new speed/handling/cargo roles. Shapes are visual concepts, not balance decisions.",
+      "saved_file": "Large-Dark-Red-Sail-v1.png",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "sha256": "55c56c3e8d3cdfa8cb9e363a43db726ee34b80deb7cee6a459799d825b861cf7"
+    }
+  ]
+}

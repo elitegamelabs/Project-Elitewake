@@ -1,0 +1,38 @@
+{
+  "tool": "ChatGPT built-in image generation",
+  "status": "temporary inventory artwork; not final art or 3D meshes",
+  "assets": [
+    {
+      "name": "Axe",
+      "prompt": "Use case: stylized-concept. Asset type: square game inventory item icon, temporary art for Elitewake, an original mid-1700s pirate survival game. Subject: ONE primitive wooden axe, entire handle and broad sharpened wooden wedge head visible, bound with natural cord; no metal cutting head. Semi-realistic hand-painted game prop illustration, readable silhouette and restrained weathered wood texture, soft directional light. Centered isolated object, diagonal orientation, generous clear padding, no cast shadow outside the object. Genuine transparent background. No text, frame, panel, scenery, logo, watermark or additional objects. Intended to remain legible at 64 pixels.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-204cfdff-6301-4e19-ab43-392300ce84f4.png"
+    },
+    {
+      "name": "Shovel",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory icon for Elitewake, original mid-1700s pirate survival game. Semi-realistic hand-painted prop, crisp silhouette legible at 64 pixels, restrained weathering, soft directional light. ONE complete centered object on genuine transparent background, diagonal composition with generous clear padding. No text, scenery, frame, panel, watermark, logo, extra objects or external cast shadow. Subject: primitive wooden shovel with a broad flat carved wooden spade blade, long wooden handle, natural cord binding; no metal blade.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-e0dbe045-0fc0-4356-aa16-87a51a5797da.png"
+    },
+    {
+      "name": "Pickaxe",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory icon for Elitewake, original mid-1700s pirate survival game. Semi-realistic hand-painted prop, crisp silhouette legible at 64 pixels, restrained weathering, soft directional light. ONE complete centered object on genuine transparent background, diagonal composition with generous clear padding. No text, scenery, frame, panel, watermark, logo, extra objects or external cast shadow. Subject: primitive wooden pickaxe with a sturdy long wooden handle and transverse pointed wooden head secured with cord; no metal or stone head.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-7c5ce36e-35e3-400f-846a-b9594548ad8d.png"
+    },
+    {
+      "name": "Flask",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory icon for Elitewake, original mid-1700s pirate survival game. Semi-realistic hand-painted prop, crisp silhouette legible at 64 pixels, restrained weathering, soft directional light. ONE complete centered object on genuine transparent background, diagonal composition with generous clear padding. No text, scenery, frame, panel, watermark, logo, extra objects or external cast shadow. Subject: small hand-sewn hide water flask, tan leather waterskin with visible seam stitching, narrow cork-stoppered neck and short leather strap; no glass, modern plastic or metal flask.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-02e03c17-daa6-4986-b482-9ce061d46c61.png"
+    },
+    {
+      "name": "Torch",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory icon for Elitewake, original mid-1700s pirate survival game. Semi-realistic hand-painted prop, crisp silhouette legible at 64 pixels, restrained weathering, soft directional light. ONE complete centered object on genuine transparent background, diagonal composition with generous clear padding. No text, scenery, frame, panel, watermark, logo, extra objects or external cast shadow. Subject: unlit wooden hand torch, a wooden handle and compact dark cloth wrapping around the top held with cord; no flame, sparks or glow, no wall bracket.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-2a5e2288-67a1-4f05-832e-698d4f624e37.png"
+    },
+    {
+      "name": "RepairKit",
+      "prompt": "Use case: stylized-concept. Asset type: square inventory icon for Elitewake, original mid-1700s pirate survival game. Match the existing icon set's semi-realistic hand-painted prop style, crisp silhouette legible at 64 pixels, restrained weathering, soft directional light. Subject: ONE compact portable repair-material bundle: three short weathered wooden timber offcuts and two flat grey stones neatly bound together with simple natural cord, a single unified silhouette. The wood and stone should both be clearly recognizable. Centered isolated complete bundle in a slight diagonal three-quarter view with generous clear padding, on a genuine transparent background. No tools, toolbox, nails, metal parts, text, scenery, frame, panel, watermark, logo, extra loose objects or external cast shadow. Temporary symbolic inventory art only; this illustration does not define crafting ingredients beyond the already confirmed Wood and Stone, repair mechanics or final item construction.",
+      "source": "C:\\Users\\elite\\.codex\\generated_images\\01a10b1d-cebd-7c30-bcc5-f3c2bf4f9635\\exec-5cfccf92-c06c-4979-8df2-f41f529ad148.png",
+      "workspaceFile": "RepairKit-v1.png",
+      "status": "Source PNG visually reviewed; Unreal texture import and assignment pending"
+    }
+  ]
+}

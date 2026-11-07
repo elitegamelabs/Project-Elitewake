@@ -1,0 +1,60 @@
+# Local connector configuration; never commit tokens or machine-specific endpoints.
+/.mcp.json
+
+# Visual Studio and IDE state
+.vs/
+.vscode/
+.idea/
+*.sln
+*.slnx
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+# Unreal generated build products and caches
+Binaries/
+Build/*
+!Build/**/
+!Build/**/*.ico
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Unreal transient files
+*.tmp
+*.log
+*.pdb
+*.obj
+*.dll
+*.exe
+*.modules
+*.target
+*.version
+*.manifest
+
+# Local user and platform files
+*.user
+*.userprefs
+*.sln.docstates
+Desktop.ini
+.DS_Store
+Thumbs.db
+
+# Optional local plugins marketplace cache/build output
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
+
+# Local source bundles and Marketplace content. Keep their extracted/imported
+# project assets separate from redistributable Elitewake source.
+Art/**/*.zip
+/Content/Blacksmith_Setup/
+/Content/Burlap_Sacks/
+
+# Python caches from running setup scripts
+__pycache__/
+
+# The world map's per-object files (World Partition, November 6) stay on this PC only (owner, November 7):
+# GitHub's large-file allowance is full. Copies: C:/ELITEWAKE/WorldActors_<date>. See CLAUDE.md "GitHub and large files".
+/Content/__ExternalActors__/

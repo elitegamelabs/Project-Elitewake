@@ -1,0 +1,30 @@
+{
+  "key": "trees1",
+  "name": "Named trees and woody plants 1",
+  "columns": 4,
+  "rows": 4,
+  "items": [
+    "Veyrpine",
+    "Keldren Fir",
+    "Rimebark",
+    "Harrowpine",
+    "Thalenbrush",
+    "Savar Palm",
+    "Drevan Thorn",
+    "Caldris Tree",
+    "Orakai Palm",
+    "Vask Thornbrush",
+    "Serewood",
+    "Mirewillow",
+    "Duskroot",
+    "Velmangrove",
+    "Brackenspine",
+    "Morren Cypress"
+  ],
+  "kind": "one complete rooted tree or bush concept cutout appropriate to the botanical name, natural realistic branch structure and distinct silhouette, no ground disk or backdrop",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/trees1-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "One original ELITEWAKE full-tree and shrub concept reference atlas: exactly 16 complete individual plant silhouettes in a STRICT 4-column by 4-row grid. Each specimen occupies only its own equal cell with large empty gutters. Names in row-major order, do NOT print labels: Veyrpine; Keldren Fir; Rimebark; Harrowpine; Thalenbrush; Savar Palm; Drevan Thorn; Caldris Tree; Orakai Palm; Vask Thornbrush; Serewood; Mirewillow; Duskroot; Velmangrove; Brackenspine; Morren Cypress. Each is one complete rooted tree or bush concept cutout appropriate to the botanical name, natural realistic branch structure and distinct silhouette, no ground disk or backdrop. Named palms must read as palms; willow, mangrove, cypress and fir forms should have believable corresponding anatomy; thornbrush is a shrub; deadwood is a leafless dead tree. Owner's Spruce entry is a tall dense evergreen; owner's Birch entry has white mottled bark and winter snow settled on branches. For other fictional botanical names choose plausible original natural plant appearances without neon fantasy features. Photorealistic premium realistic Unreal-style natural wood bark, leaves, needles, branches and roots. Full crown and trunk and roots visible, no cut-off tips, no planter or soil disk. Soft neutral studio lighting. Entire background and gutters TRANSPARENT ALPHA, absolutely no landscape, no forest backdrop, no bokeh, no ground plane, no labels, frames, text, numbers or logos. Unused cells fully transparent. These images are art references for model creation, not finished rigged 3D assets.",
+  "status": "Illustrative 2D plant model reference; no species-specific Wood inventory types"
+}

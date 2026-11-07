@@ -1,0 +1,11 @@
+{
+  "file": "DeploymentSheet-v1.png",
+  "sha256": "f50990cb2ded87865bd3935001a9ad60de25d6df5b9160c9994a750bb19e63f2",
+  "prompt": "ELITEWAKE sail deployment reference sheet using input image for identity. Five evenly spaced complete FRONT elevations left to right of the SAME sail assembly at 0%,25%,50%,75%,100% exposed canvas. Zero: cloth tightly bundled at spar, no exposed sail area. Each next view progressively lowers/unfurls more cloth, preserving total cloth, poles, base connector and rigging. Full: all cloth deployed. Medium rectangular draped sail, square-yard assembly with horizontal spar, hanging rectangular canvas, no ballast or weights. More substantial intermediate assembly; same visual family as small. Keep mast/spar identical height in every panel. Pale natural canvas, weathered warm brown oak, dark iron/brass. No flags. No labels, text, numbers, scenery, hull, water or people. Five states on ONE wide landscape studio sheet, no extra views. This is reference art, not animation.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+  ]
+}

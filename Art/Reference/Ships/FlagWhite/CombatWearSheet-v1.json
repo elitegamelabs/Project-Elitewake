@@ -1,0 +1,10 @@
+{
+  "file": "CombatWearSheet-v1.png",
+  "sha256": "d34e7b7c6f08618ee47b443686749ae2b956b5023fa8be312e3b67ab6a5635ef",
+  "prompt": "Use case: stylized-concept. ELITEWAKE original realistic game asset reference sheet. Five matching views left to right of ONE separate white ship ensign mounted on its simple flagstaff, showing combat damage progression: pristine plain WHITE rectangle, slight grey wear/frayed fly, visible tears and small holes, severely torn fabric remnants, FINAL EMPTY FLAGSTAFF with NO fabric. All wear represents COMBAT only. No printed emblem or color symbol. Pole remains intact in final. Flags are separate from sail assemblies; no sail or mast assembly. Even diffuse studio illumination, plain pale neutral background, full requested object visible in all views, clear separated panels. No scenery, water, sky, human, text, labels, numbers, watermark or scale bars. Construction is a reversible proposed modeling reference, no runtime implementation claimed.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

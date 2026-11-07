@@ -1,0 +1,24 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "97d34c2c3a2f07ad01f5bcf24aca0ac62e6abd2ca15cdcf9cdfc34829ede79b7",
+      "prompt": "Use case: stylized-concept. ELITEWAKE realistic game-asset reference design sheet. Show one complete removable sail assembly in six views, arranged front/back/left/right/top/underside; add small mast-base socket attachment inset. Each view same object. Pale natural canvas, believable stitching, hemp rigging, natural weathered warm brown oak mast and spar, restrained iron and brass fittings. Same straight removable mast in every view, complete mast-to-deck locking connector, NO ship hull or permanent ship structure. Neutral off-white studio background, even illumination, no scenery, water, sky, people, flags, lettering, labels, dimensions, watermark. Keep all views fully visible with margins. This is concept art, no invented exact measurements. Subject: Large triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Tall heavy assembly, reinforced mast and spar, same family as smaller sails.",
+      "status": "concept reference"
+    },
+    {
+      "file": "DeploymentSheet-v1.png",
+      "sha256": "05c33b5b41acaed2860c540e39c540e2f5153bb2fae6393f69f4c80350ce58ce",
+      "prompt": "ELITEWAKE sail deployment reference sheet using input image for identity. Five evenly spaced complete FRONT elevations left to right of the SAME sail assembly at 0%,25%,50%,75%,100% exposed canvas. Zero: cloth tightly bundled at spar, no exposed sail area. Each next view progressively lowers/unfurls more cloth, preserving total cloth, poles, base connector and rigging. Full: all cloth deployed. Large triangular weighted sail with a supported diagonal spar, triangular canvas, clearly sewn-in weighted hem securely restrained without loose dangling ballast. Tall heavy assembly, reinforced mast and spar, same family as smaller sails. Keep mast/spar identical height in every panel. Pale natural canvas, weathered warm brown oak, dark iron/brass. No flags. No labels, text, numbers, scenery, hull, water or people. Five states on ONE wide landscape studio sheet, no extra views. This is reference art, not animation.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+      ]
+    }
+  ],
+  "limits": "Mild perspective and detail differences remain. Relative size and mating geometry are not validated. Not a mesh, animation, or in-game asset."
+}

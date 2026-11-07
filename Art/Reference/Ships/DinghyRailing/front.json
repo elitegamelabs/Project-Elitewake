@@ -1,0 +1,10 @@
+{
+  "file": "front.png",
+  "sha256": "82825e4c51cbad7ab5817714ef04b2e161847b31a2923bf66ba7a3dbbe98b166",
+  "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, front elevation. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: One removable ship-side wooden railing module with exactly two sturdy curved timber dinghy davit arms, reinforced dark iron brackets, rope guide pulleys and secured ropes, compatible base socket footings. Do not depict the dinghy itself. No cannon. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

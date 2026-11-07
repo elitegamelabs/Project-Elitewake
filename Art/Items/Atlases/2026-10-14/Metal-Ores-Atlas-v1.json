@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Metal-Ores-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 3,
+  "rows": 3,
+  "items": [
+    {
+      "name": "copper ore rock with green oxidation and copper inclusions",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.3333333333333333,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "tin ore cassiterite in grey stone",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.3333333333333333,
+          0
+        ],
+        "max": [
+          0.6666666666666666,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "iron ore hematite reddish dark rough rock",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.6666666666666666,
+          0
+        ],
+        "max": [
+          1,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "silver ore with silvery metallic inclusions in stone",
+      "index": 3,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.3333333333333333
+        ],
+        "max": [
+          0.3333333333333333,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "gold ore with small gold veins through quartz",
+      "index": 4,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.3333333333333333,
+          0.3333333333333333
+        ],
+        "max": [
+          0.6666666666666666,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "lead ore galena dark grey cubic crystalline rock",
+      "index": 5,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.6666666666666666,
+          0.3333333333333333
+        ],
+        "max": [
+          1,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "zinc ore sphalerite dark brown sparkling rock",
+      "index": 6,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.6666666666666666
+        ],
+        "max": [
+          0.3333333333333333,
+          1
+        ]
+      }
+    },
+    {
+      "name": "nickel ore grey-green metallic mineral rock",
+      "index": 7,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.3333333333333333,
+          0.6666666666666666
+        ],
+        "max": [
+          0.6666666666666666,
+          1
+        ]
+      }
+    },
+    {
+      "name": "tungsten ore wolframite dense dark grey black prismatic crystals",
+      "index": 8,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.6666666666666666,
+          0.6666666666666666
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "Original realistic pirate survival game ELITEWAKE inventory texture atlas, one PNG asset. Exactly 9 distinct complete item images in a STRICT 3-column by 3-row equal-cell grid. Each object centered in its own cell, entirely contained within central 75% of the cell with transparent empty gutters. Equal lighting and scale, neutral studio light, photorealistic physically based materials, weathered period-appropriate objects, crisp readable silhouettes, high-detail textures. Transparent alpha background, no background scene, NO labels, NO text, NO numbers, NO decorative frames, no modern machinery, no logos, no characters. Read order left-to-right then top-to-bottom: 1: copper ore rock with green oxidation and copper inclusions; 2: tin ore cassiterite in grey stone; 3: iron ore hematite reddish dark rough rock; 4: silver ore with silvery metallic inclusions in stone; 5: gold ore with small gold veins through quartz; 6: lead ore galena dark grey cubic crystalline rock; 7: zinc ore sphalerite dark brown sparkling rock; 8: nickel ore grey-green metallic mineral rock; 9: tungsten ore wolframite dense dark grey black prismatic crystals. Keep all objects separate, do not combine cells or omit items. Purpose: an original reference and inventory atlas with separately addressable UV cells for each listed item."
+}

@@ -1,0 +1,21 @@
+{
+  "key": "forage3",
+  "name": "Named berries and regional fruits 3",
+  "columns": 4,
+  "rows": 2,
+  "items": [
+    "Taluma",
+    "Veyran Fruit",
+    "Korali",
+    "Selvara",
+    "Maruva",
+    "Talandra Pod",
+    "Orrakai"
+  ],
+  "kind": "small natural cluster of fruit/berries appropriate to this fictional botanical name, distinctly shaped and colored per cell; Azren MUST be azure blue, Marad MUST be burgundy with subtle stripes",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/forage3-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "Original ELITEWAKE photorealistic inventory/reference atlas: strict 4 columns by 2 rows. 7 distinct separate botanical items in exact reading order, centered in equal cells with 20% transparent gutters. For each named item render small natural cluster of fruit/berries appropriate to this fictional botanical name, distinctly shaped and colored per cell; Azren MUST be azure blue, Marad MUST be burgundy with subtle stripes. This is illustrative visual development, not official botanical anatomy. Special fruit identities where present: Orvena oval orange-red fruit, Kalavai segmented yellow fruit, Taluma purple pear-shaped fruit, Veyran Fruit green thick shell, Korali crimson star-shaped fruit, Selvara golden citrus-like fruit, Maruva water-rich rounded fruit, Talandra Pod sweet seeded pod, Orrakai clustered violet fruit. Natural microtexture, leaf veins and fruit skin, varied realistic silhouettes, neutral soft studio light, premium 2026 original pirate survival art. Transparent alpha background; no text, labels, numerals, frames, scenery, hands, logos, glow or cartoon look. Row-major objects: Taluma; Veyran Fruit; Korali; Selvara; Maruva; Talandra Pod; Orrakai. Any remaining cells fully transparent. Do not blend neighboring objects.",
+  "status": "Generated 2D reference atlas; no gameplay balance or biome distribution implied"
+}

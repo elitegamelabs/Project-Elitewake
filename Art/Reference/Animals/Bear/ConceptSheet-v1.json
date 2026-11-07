@@ -1,0 +1,11 @@
+{
+  "file": "ConceptSheet-v1.png",
+  "sha256": "7b545bfa0125de70ca8c7f92ef680697a076ebc95cb4daab9a81aa118ece84f6",
+  "prompt": "ELITEWAKE realistic animal modeling reference. Adult brown/grizzly bear, dense warm brown fur with lighter shoulder tips, shoulder hump, rounded ears, dark nose, heavy plantigrade paws with five claws, neutral standing pose, mouth closed. Use input image only as exact identity reference. Six clean separated orthographic views of SAME individual: front and back, left and right profile, direct overhead and ventral underside. Underbody view is a nonviolent modeling camera, not dissection. Neutral planted stance, exact same proportions and markings across views. Plain light studio background, even neutral illumination, full animal visible in every panel, no scenery, water, plants, people, gear, labels, text or watermark. High anatomical clarity.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

@@ -1,0 +1,380 @@
+[
+  {
+    "name": "Black Bear",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "black_bear.png"
+  },
+  {
+    "name": "Grizzly Bear",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "grizzly_bear.png"
+  },
+  {
+    "name": "Snow Leopard",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "snow_leopard.png"
+  },
+  {
+    "name": "Elk",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "elk.png"
+  },
+  {
+    "name": "Moose",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "moose.png"
+  },
+  {
+    "name": "Reindeer",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "reindeer.png"
+  },
+  {
+    "name": "Arctic Hare",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "arctic_hare.png"
+  },
+  {
+    "name": "Arctic Fox",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "arctic_fox.png"
+  },
+  {
+    "name": "Wolf",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "wolf.png"
+  },
+  {
+    "name": "Mountain Goat",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "mountain_goat.png"
+  },
+  {
+    "name": "Eagle",
+    "category": "Northern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "eagle.png"
+  },
+  {
+    "name": "Monkey",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "monkey.png"
+  },
+  {
+    "name": "Rhino",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "rhino.png"
+  },
+  {
+    "name": "Elephant",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "elephant.png"
+  },
+  {
+    "name": "Warthog",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "warthog.png"
+  },
+  {
+    "name": "Camel",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "camel.png"
+  },
+  {
+    "name": "Gazelle",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "gazelle.png"
+  },
+  {
+    "name": "Ostrich",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "ostrich.png"
+  },
+  {
+    "name": "Jackal",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "jackal.png"
+  },
+  {
+    "name": "Hyena",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "hyena.png"
+  },
+  {
+    "name": "Desert Tortoise",
+    "category": "Southern",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "desert_tortoise.png"
+  },
+  {
+    "name": "American Alligator",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "american_alligator.png"
+  },
+  {
+    "name": "Crocodile",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "crocodile.png"
+  },
+  {
+    "name": "Wild Boar",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "wild_boar.png"
+  },
+  {
+    "name": "Water Buffalo",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "water_buffalo.png"
+  },
+  {
+    "name": "Capybara",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "capybara.png"
+  },
+  {
+    "name": "Beaver",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "beaver.png"
+  },
+  {
+    "name": "Otter",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "otter.png"
+  },
+  {
+    "name": "Raccoon",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "raccoon.png"
+  },
+  {
+    "name": "Python",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "python.png"
+  },
+  {
+    "name": "Cottonmouth",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "cottonmouth.png"
+  },
+  {
+    "name": "Bullfrog",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "bullfrog.png"
+  },
+  {
+    "name": "Heron",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "heron.png"
+  },
+  {
+    "name": "Giant Spider",
+    "category": "Swamp",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "giant_spider.png"
+  },
+  {
+    "name": "Tiger",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "tiger.png"
+  },
+  {
+    "name": "Lion",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "lion.png"
+  },
+  {
+    "name": "Gorilla",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "gorilla.png"
+  },
+  {
+    "name": "Horse",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "horse.png"
+  },
+  {
+    "name": "Tapir",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "tapir.png"
+  },
+  {
+    "name": "Jaguar",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "jaguar.png"
+  },
+  {
+    "name": "Parrot",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "parrot.png"
+  },
+  {
+    "name": "Toucan",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "toucan.png"
+  },
+  {
+    "name": "Iguana",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "iguana.png"
+  },
+  {
+    "name": "Giant Tortoise",
+    "category": "Tropical",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "giant_tortoise.png"
+  },
+  {
+    "name": "House Cat",
+    "category": "Port wildlife",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "house_cat.png"
+  },
+  {
+    "name": "Bass",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "bass.png"
+  },
+  {
+    "name": "Catfish",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "catfish.png"
+  },
+  {
+    "name": "Piranha",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "piranha.png"
+  },
+  {
+    "name": "Manta Ray",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "manta_ray.png"
+  },
+  {
+    "name": "Manatee",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "manatee.png"
+  },
+  {
+    "name": "Great White Shark",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "great_white_shark.png"
+  },
+  {
+    "name": "Hammerhead Shark",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "hammerhead_shark.png"
+  },
+  {
+    "name": "Squid",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "squid.png"
+  },
+  {
+    "name": "Siren",
+    "category": "Aquatic creature",
+    "sourceGuide": "Elitewake World Resource & Ecology Guide v1 / DESIGN_REFERENCE where noted",
+    "status": "Concept reference; guide roster placement remains candidate/pending design approval",
+    "file": "siren.png"
+  }
+]

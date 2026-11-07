@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Currency/2026-10-14/Currency-Coin-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 3,
+  "rows": 1,
+  "items": [
+    {
+      "name": "Copper currency",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.3333333333333333,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Silver currency",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.3333333333333333,
+          0
+        ],
+        "max": [
+          0.6666666666666666,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Gold currency",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.6666666666666666,
+          0
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "Create one production-quality transparent inventory-art atlas for the original realistic pirate survival game ELITEWAKE. Exactly THREE separate complete coin objects, in one horizontal row, equally spaced in three equal cells, generous clear margins and no overlaps. Left: aged warm copper coin. Middle: worn bright silver coin. Right: weathered muted gold coin. Each coin is the same displayed diameter, viewed almost face-on with a slight three-quarter tilt to show real thickness and engraved edges. Physically based realistic metal roughness and fine wear, crisp silhouette readable at small UI size, consistent soft neutral studio lighting. Original simple engraved nautical compass and rope ornament, no existing game designs, no logos, no text, no numbers, no denomination labels, no backdrop, no scene, no hands, no frames. These are game reference and inventory imagery for Copper, Silver and Gold currency, not mineral ore. Transparent alpha background, no baked checkerboard."
+}

@@ -1,0 +1,10 @@
+{
+  "file": "top-v2.png",
+  "sha256": "cb42458a21cd4e07e27032dba3e23b47fc723ba84a9b6dc94af9c47fdee52ccf",
+  "prompt": "ELITEWAKE modeling reference from input image. Preserve SAME railing identity, weathered warm brown oak, restrained brass/dark iron, all post/baluster counts and fittings. The input is an identity sheet, not layout. REQUIRED CAMERA AND COMPOSITION: ONE EXACT TOP PLAN: camera vertically ABOVE looking STRAIGHT DOWN. The object is a THIN LONG HORIZONTAL FOOTPRINT with the square TOPS of the two end posts at its ends and the slim TOP surface of the handrail spanning between them. Balusters lie underneath rail and are hidden. No tall front elevation visible. Davit arms if present project outward in plan; show top faces/pulley tops, not frontal arch elevations. One object/view only, no grid, no inset, no text, no labels, no dimensions. Pale plain studio background and diffuse light. No scenery, water, ship, people, flags, cannon or dinghy.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+  ]
+}

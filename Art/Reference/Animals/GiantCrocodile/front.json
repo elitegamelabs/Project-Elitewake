@@ -1,0 +1,11 @@
+{
+  "file": "front.png",
+  "sha256": "c4d02fd1f5e445ad9453a2e879772ef1c57210bebaa2197557946306e23f98e5",
+  "prompt": "ELITEWAKE ONE animal modeling reference image. Identity reference is supplied image, preserve exact individual and colors. Subject: giant olive-grey crocodile, dark dorsal armor and bands, cream ventral scales, long tapering tail, four legs, closed jaws. ONE VIEW ONLY: HEAD-ON FRONT view. Face/nose points directly at camera; bilateral symmetry. Entire body fits, body extends directly away behind face. Photorealistic natural anatomy, consistent proportions and markings, mouth closed, neutral stance. Entire animal visible with margins. Strict orthographic camera. Pale plain neutral background and diffuse even light. No collage, grid, labels, text, water, scenery, plants, people, equipment or watermark. This is a reference view, not a new animal variant.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Camera direction reviewed; profiles may use slight three-quarter perspective. Separate images are not guaranteed geometrically identical."
+  ]
+}

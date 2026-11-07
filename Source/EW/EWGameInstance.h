@@ -1,0 +1,76 @@
+#pragma once
+#include "CoreMinimal.h"
+#include "Engine/GameInstance.h"
+#include "Engine/EngineBaseTypes.h"
+#include "Containers/Ticker.h"
+#include "Characters/EWAppearance.h"
+#include "EWGameInstance.generated.h"
+
+class AEWPlayerController;
+class UEWLoadingWidget;
+class UNetDriver;
+
+/** Private-test direct connection lifecycle; no account/session-service integration. */
+UCLASS()
+class EW_API UEWGameInstance : public UGameInstance
+{
+    GENERATED_BODY()
+public:
+    virtual void Init() override;
+    virtual void Shutdown() override;
+    UFUNCTION(BlueprintCallable, Category="Multiplayer") bool HostLocalGame();
+    UFUNCTION(BlueprintCallable, Category="Multiplayer") bool JoinLocalGame(const FString& Address);
+    UFUNCTION(BlueprintCallable, Category="Multiplayer") bool LeaveLocalGame();
+    UFUNCTION(BlueprintPure, Category="Multiplayer") FText GetConnectionStatus() const { return Status; }
+    UFUNCTION(BlueprintPure, Category="Multiplayer") bool IsConnectionPending() const { return bPending; }
+    UFUNCTION(BlueprintPure, Category="Multiplayer") FText GetPrivateBuildLabel() const { return PrivateBuildLabel; }
+    void LocalControllerReady(AEWPlayerController* Controller);
+    /** The look chosen in the character creator, kept for this run and saved for the next. */
+    UFUNCTION(BlueprintCallable, Category="Appearance") void SetChosenAppearance(const FEWAppearance& Appearance);
+    UFUNCTION(BlueprintPure, Category="Appearance") FEWAppearance GetChosenAppearance() const { return ChosenAppearance; }
+    UFUNCTION(BlueprintPure, Category="Appearance") bool HasChosenAppearance() const { return bHasChosenAppearance; }
+    /** Single Player from the title: the next survivor to arrive in local play picks up from the save, if any. */
+    UFUNCTION(BlueprintCallable, Category="Save") void ResumeSavedSurvivorOnArrival() { bResumeSurvivor = true; }
+    UFUNCTION(BlueprintPure, Category="Save") bool WillResumeSavedSurvivor() const { return bResumeSurvivor; }
+    /** Set Sail from the front end (owner, November 7): resume the saved survivor, or start a new one at this Freeport
+     *  (EWFreeports id: Plains, Winter, Swamp, Desert, Jungle). The next arrival in local play carries it out. */
+    UFUNCTION(BlueprintCallable, Category="Front end") void PrepareVoyage(bool bResume, FName Freeport);
+    UFUNCTION(BlueprintPure, Category="Front end") FName GetChosenFreeport() const { return ChosenFreeport; }
+    UFUNCTION(BlueprintPure, Category="Front end") bool WillStartAtFreeport() const { return bStartAtFreeport; }
+    /** The loading screen over everything until the world is ready (also held by the movie player while a map loads). */
+    UFUNCTION(BlueprintCallable, Category="Front end") void ShowLoadingScreen();
+    UFUNCTION(BlueprintPure, Category="Front end") bool IsLoadingScreenShown() const;
+    UFUNCTION(BlueprintPure, Category="Front end") UEWLoadingWidget* GetLoadingWidget() const { return Loading; }
+    static inline const TCHAR* VoyageArt = TEXT("/Game/Elitewake/UI/FrontEnd/T_LoadingVoyage.T_LoadingVoyage");
+    /** Accept only local/private IPv4 addresses, optional port, or localhost. Never arbitrary travel URLs. */
+    static bool NormalizePrivateAddress(const FString& Input, FString& Output);
+    /** This PC's player, the same every time the game starts (a hash of the Windows login): a host keeps a joining player's survivor
+     *  under it (the online identity of a direct-IP game changes every launch). Sent with Join as the EWId option. */
+    static FString StablePlayerId();
+private:
+    void NetworkFailed(UWorld* World, UNetDriver* Driver, ENetworkFailure::Type Type, const FString& Error);
+    void TravelFailed(UWorld* World, ETravelFailure::Type Type, const FString& Error);
+    void ReturnAfterFailure();
+    void CompleteArrival(AEWPlayerController* Controller);
+    void PreLoadMap(const FString& MapName);
+    void PostLoadMap(UWorld* World);
+    /** Waits for the world round the survivor to stream in, then lets the loading screen go. */
+    void FinishLoadingWhenReady();
+    UPROPERTY(Transient) TObjectPtr<UEWLoadingWidget> Loading;
+    FName ChosenFreeport;
+    bool bStartAtFreeport = false;
+    bool bVoyageLoading = false;
+    double ReadyAt = 0.0;
+    bool CanStart();
+    FText Status;
+    FText PrivateBuildLabel;
+    FEWAppearance ChosenAppearance;
+    bool bHasChosenAppearance = false;
+    bool bPending = false;
+    bool bJoinedHost = false;
+    bool bHasConnectionError = false;
+    bool bShowMenuOnArrival = false;
+    bool bResumeSurvivor = false;
+    FDelegateHandle NetworkFailureHandle, TravelFailureHandle, PreLoadHandle, PostLoadHandle;
+    FTSTicker::FDelegateHandle RecoveryHandle, ArrivalHandle, LoadingHandle;
+};

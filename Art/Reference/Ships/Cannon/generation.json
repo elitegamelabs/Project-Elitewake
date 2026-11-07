@@ -1,0 +1,16 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "ConceptSheet-v1.png",
+      "sha256": "4dd7485b046b670541242347210e82a326fd7e8c756ced0cc94781404b63ed4e",
+      "prompt": "Use case: stylized-concept. ELITEWAKE original realistic game asset reference sheet. One mid-1700s ship cannon external appearance on compact weathered oak wheeled carriage with restrained iron fasteners and dark cast-iron barrel. Six consistent views front/back/left/right/top/underside, same cannon, plausible carriage, no ammo, powder, loading steps, dimensions or sectional mechanism. Entire standalone removable cannon, no railing or hull. High-definition material reference only. Even diffuse studio illumination, plain pale neutral background, full requested object visible in all views, clear separated panels. No scenery, water, sky, human, text, labels, numbers, watermark or scale bars. Construction is a reversible proposed modeling reference, no runtime implementation claimed.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

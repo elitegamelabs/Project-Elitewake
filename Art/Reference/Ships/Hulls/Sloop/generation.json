@@ -1,0 +1,17 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "assets": [
+    {
+      "file": "LayoutSheet-v1.png",
+      "sha256": "bf2ca7ceec213a3825ed2b0f95fe65f27f5244d0bc8212b4343632988e5d8773",
+      "prompt": "ELITEWAKE NEW bare-hull architectural reference sheet for Sloop. Input reference is a historical approved STYLE/SILHOUETTE reference; apply the following newer owner corrections exactly. Compact sloop, hull height approximately three raft hull heights (a visual ratio, no meter dimension). Walkable lower hold with access hatch/stairs; NO captain's quarters, NO raised enclosed captain's cabin or bed. Empty modular sail hardpoints in two approved sail locations. NO hull gunports; port/starboard modular outer railing openings, default plain rails. Stern-center boarding ladder. Warm dark weathered oak, restrained brass/iron, detailed natural timber joinery, high-definition realistic game materials. Six clear separated views of SAME hull: side elevation, front bow, rear stern with exact centered ladder, top deck plan, underside, one long side CUTAWAY showing actual interior levels and access. Bare hull only: absolutely NO MASTS, poles, sail cloth, rigging, flags, mounted cannons, crew or scenery. Empty sail sockets visibly distinct from permanent structure. Preserve modular outer railing system separately from fixed staircase safety rails. No text, labels, dimensions, numbers or watermark. Plain light studio background, neutral illumination, readable interior cutaway. Do not copy the input collage as a whole; show ONLY the requested Sloop class. This sheet is a reversible reference study, not proof of constructed mesh or approved statistics.",
+      "generator": "ChatGPT built-in image generation",
+      "status": "Visually reviewed concept reference; production geometry validation pending",
+      "reviewNotes": [
+        "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+        "Layout study only. Owner source sheet and written rules take priority. Cross-class scale, cutaway consistency, full-width cabin geometry and exact gunport counts across all views remain unvalidated."
+      ]
+    }
+  ],
+  "status": "Visually reviewed concept reference; production geometry validation pending"
+}

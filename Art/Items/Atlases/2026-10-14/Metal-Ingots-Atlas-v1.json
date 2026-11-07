@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Metal-Ingots-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 3,
+  "items": [
+    {
+      "name": "Copper Ingot: weathered reddish copper bar",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Tin Ingot: dull pale silver cast bar",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Iron Ingot: rough dark grey iron bar",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Silver Ingot: worn luminous silver bar",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Gold Ingot: warm yellow gold bar",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.3333333333333333
+        ],
+        "max": [
+          0.25,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Lead Ingot: soft dull bluish grey lead bar",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.3333333333333333
+        ],
+        "max": [
+          0.5,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Zinc Ingot: light grey zinc bar",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.3333333333333333
+        ],
+        "max": [
+          0.75,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Nickel Ingot: muted pale metallic nickel bar",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.3333333333333333
+        ],
+        "max": [
+          1,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Tungsten Ingot: dense dark graphite grey bar",
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.6666666666666666
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Bronze Ingot: reddish bronze alloy bar",
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.6666666666666666
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Brass Ingot: muted yellow brass alloy bar",
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.6666666666666666
+        ],
+        "max": [
+          0.75,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Steel Ingot: forged steel bar with hammer marks",
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.6666666666666666
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "One realistic ELITEWAKE inventory/reference PNG texture atlas. Strict equal-cell 4 columns by 3 rows, reading left-to-right then top-to-bottom. Each listed object isolated, fully visible, centered in central 75% of its cell with empty transparent gutters. Photorealistic physically based natural materials, weathered preindustrial pirate-era props where applicable, consistent neutral soft studio lighting, high-quality original 2026 survival-game art, readable silhouettes. Transparent alpha background. No labels, lettering, numbers, game logos, frames, backdrop, modern objects or characters. Objects in exact order: Copper Ingot: weathered reddish copper bar; Tin Ingot: dull pale silver cast bar; Iron Ingot: rough dark grey iron bar; Silver Ingot: worn luminous silver bar; Gold Ingot: warm yellow gold bar; Lead Ingot: soft dull bluish grey lead bar; Zinc Ingot: light grey zinc bar; Nickel Ingot: muted pale metallic nickel bar; Tungsten Ingot: dense dark graphite grey bar; Bronze Ingot: reddish bronze alloy bar; Brass Ingot: muted yellow brass alloy bar; Steel Ingot: forged steel bar with hammer marks. Empty cells stay fully transparent. Anatomical resources are clean crafting materials without wounds or gore. All visual designs original."
+}

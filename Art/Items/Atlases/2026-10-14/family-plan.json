@@ -1,0 +1,140 @@
+[
+  {
+    "key": "materials",
+    "name": "Processed crafting-material families",
+    "columns": 4,
+    "rows": 4,
+    "items": [
+      "Rope: coiled natural hemp rope",
+      "Cloth: folded rough woven linen",
+      "Leather: rolled tanned brown leather",
+      "Nails: handful of hand-forged iron nails",
+      "Planks: three weathered timber planks",
+      "Tar: small earthenware bowl of black tar",
+      "Charcoal: irregular wood charcoal pieces",
+      "Gunpowder reference: closed plain small powder horn, no open composition or labels",
+      "Fertilizer: small tied coarse sack of compost",
+      "Soil: small mound of dark fertile soil",
+      "Ceramic: simple unfinished clay jug",
+      "Paper: stack of rough handmade blank paper",
+      "Dye: small clay pot with muted red pigment",
+      "Antler: shed branching deer antler",
+      "Teeth: small cluster of clean animal teeth",
+      "Shell: one natural spiral seashell"
+    ],
+    "status": "Material-family concept references; does not approve new recipes"
+  },
+  {
+    "key": "weapons",
+    "name": "Confirmed weapon and traversal families",
+    "columns": 4,
+    "rows": 2,
+    "items": [
+      "Sailor Sword: original plain iron cutlass with worn wooden grip",
+      "Period Pistol: original wood-and-steel flintlock pistol, no modern handgun",
+      "Rifle: original long wood-and-steel preindustrial firearm",
+      "Longbow: simple tall wooden longbow with string",
+      "Crossbow: wood stock and steel bow original period crossbow",
+      "Harpoon: simple long wooden shaft with steel harpoon point",
+      "Climbing Axe: compact original mountaineering axe, aged metal head and wooden handle",
+      "Glider: folded simple cloth-and-wood hand glider reference"
+    ],
+    "status": "Confirmed families; period pistol name, weapon stats and glider engineering remain TBD"
+  },
+  {
+    "key": "ammo",
+    "name": "Ammunition-family visual references",
+    "columns": 3,
+    "rows": 2,
+    "items": [
+      "Bullets: small handful of plain round lead musket balls",
+      "Tranquilizer Darts: small plain fictional wooden and metal darts, no chemical recipe or mechanical details",
+      "Regular Arrows: three wooden shafts with iron points and feather fletching",
+      "Tranquilizer Arrows: three visually distinct banded wooden arrows, no formula or mechanism diagram",
+      "Harpoon Ammo: compact detachable plain barbed iron harpoon bolt",
+      "Cannon Ammo: two dark cast-iron round cannonballs"
+    ],
+    "status": "Family references only; specific ammunition variants not defined"
+  },
+  {
+    "key": "medicine",
+    "name": "Medical and spoiled-resource families",
+    "columns": 4,
+    "rows": 2,
+    "items": [
+      "Bandage: rolled clean off-white cloth bandage",
+      "Antidote: sealed simple opaque ceramic medicine bottle",
+      "Sickness Serum: second distinct sealed plain clay medicine bottle",
+      "Medkit: period wooden medical supply box with cloth and basic tools, no red-cross logo",
+      "Gauze: folded loose clean gauze cloth",
+      "Splint: two smooth wooden slats and cloth ties",
+      "Stitches: plain needle and loop of thread on folded cloth, no wound or procedure",
+      "Spoiled Berries: small dark shriveled rotten berry cluster with subtle mold, not edible-looking"
+    ],
+    "status": "Existing medical families and toxic spoiled berries; balance not assigned"
+  },
+  {
+    "key": "placeables",
+    "name": "Confirmed placeable families",
+    "columns": 4,
+    "rows": 2,
+    "items": [
+      "Campfire: small stone-ring wood campfire with natural modest flame",
+      "Storage Chest: simple weathered timber chest with iron bands",
+      "Food Cabinet: plain wooden cupboard with closed doors",
+      "Ammo Bin: simple iron-banded wooden storage bin",
+      "Rain Barrel: period wooden barrel with rain-catching opening",
+      "Planter: simple rectangular wooden crop planter",
+      "Platform Railing: short modular wooden railing section",
+      "Ship Decoration: simple nautical hanging lantern on a wood bracket"
+    ],
+    "status": "Placeable reference art only; inventory-first rules retained; no material cost or unlock invented"
+  },
+  {
+    "key": "fittings",
+    "name": "Ship fitting families",
+    "columns": 4,
+    "rows": 2,
+    "items": [
+      "Helm: original spoked wooden ship wheel on a simple mount",
+      "Cannon: original period iron ship cannon on wooden carriage, no caliber marking",
+      "Diving Platform: realistic timber ship-side platform with wooden hoist and diving line attachment, no modern scuba equipment",
+      "Docking Platform: realistic timber hoist platform for a dinghy, no dinghy already fitted",
+      "Small Sail: compact bundled natural canvas sail",
+      "Medium Sail: larger bundled natural canvas sail",
+      "Large Sail: big bundled natural canvas sail",
+      "Anchor: simple weathered iron ship anchor with short rope coil"
+    ],
+    "status": "Fitting concepts, original ship/sail references remain authoritative; anchor currently built-in, no crafted-anchor recipe implied"
+  },
+  {
+    "key": "blueprints",
+    "name": "Builder and crafting presentation references",
+    "columns": 2,
+    "rows": 2,
+    "items": [
+      "Builder's Plan: open period parchment on wooden writing board with faint original building sketches",
+      "Wooden Tool Recipe presentation: blank parchment with a small ink wooden axe silhouette sketch",
+      "Campfire Recipe presentation: blank parchment with a small ink stone-ring campfire silhouette sketch",
+      "Storage Chest Recipe presentation: blank parchment with a small ink simple chest silhouette sketch"
+    ],
+    "status": "Visual presentation references, not new physical blueprint items, recipe unlocks or functional engineering plans"
+  },
+  {
+    "key": "climate",
+    "name": "Climate and clothing visual references",
+    "columns": 4,
+    "rows": 2,
+    "items": [
+      "Warm Winter Coat concept: realistic fur-lined wool coat on invisible mannequin, full garment without body",
+      "Light Clothing concept: plain linen sailor shirt, folded or suspended without person",
+      "Leather Boots concept: worn period leather boots",
+      "Wool Trousers concept: original thick wool trousers without body",
+      "Humidity Indicator reference: simple realistic condensation droplets, original neutral graphic",
+      "Overheating Indicator reference: original simple heat-wave motif without text",
+      "Freezing Indicator reference: realistic ice crystal motif without text",
+      "Winter Berry Bush reference: compact complete natural berry bush with patches of snow on branches and red berries"
+    ],
+    "status": "Clothing and indicator concepts; not approved equipment recipes or final HUD assets"
+  }
+]

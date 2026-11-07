@@ -1,0 +1,773 @@
+{
+  "status": "Pending generation and species-identity QA; only first draft board saved",
+  "berryExclusion": "Wild berry bushes remain static, no berry seeds or planted growth stages",
+  "plans": [
+    {
+      "key": "Trees-Growth-1",
+      "category": "Trees",
+      "species": [
+        "Veyrpine",
+        "Keldren Fir",
+        "Rimebark",
+        "Harrowpine"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Veyrpine",
+          "stage": "Young"
+        },
+        {
+          "name": "Veyrpine",
+          "stage": "Growing"
+        },
+        {
+          "name": "Veyrpine",
+          "stage": "Mature"
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Young"
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Growing"
+        },
+        {
+          "name": "Keldren Fir",
+          "stage": "Mature"
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Young"
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Growing"
+        },
+        {
+          "name": "Rimebark",
+          "stage": "Mature"
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Young"
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Growing"
+        },
+        {
+          "name": "Harrowpine",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Veyrpine; Keldren Fir; Rimebark; Harrowpine. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-2",
+      "category": "Trees",
+      "species": [
+        "Thalenbrush",
+        "Savar Palm",
+        "Drevan Thorn",
+        "Caldris Tree"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Thalenbrush",
+          "stage": "Young"
+        },
+        {
+          "name": "Thalenbrush",
+          "stage": "Growing"
+        },
+        {
+          "name": "Thalenbrush",
+          "stage": "Mature"
+        },
+        {
+          "name": "Savar Palm",
+          "stage": "Young"
+        },
+        {
+          "name": "Savar Palm",
+          "stage": "Growing"
+        },
+        {
+          "name": "Savar Palm",
+          "stage": "Mature"
+        },
+        {
+          "name": "Drevan Thorn",
+          "stage": "Young"
+        },
+        {
+          "name": "Drevan Thorn",
+          "stage": "Growing"
+        },
+        {
+          "name": "Drevan Thorn",
+          "stage": "Mature"
+        },
+        {
+          "name": "Caldris Tree",
+          "stage": "Young"
+        },
+        {
+          "name": "Caldris Tree",
+          "stage": "Growing"
+        },
+        {
+          "name": "Caldris Tree",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Thalenbrush; Savar Palm; Drevan Thorn; Caldris Tree. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-3",
+      "category": "Trees",
+      "species": [
+        "Orakai Palm",
+        "Vask Thornbrush",
+        "Serewood",
+        "Mirewillow"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Orakai Palm",
+          "stage": "Young"
+        },
+        {
+          "name": "Orakai Palm",
+          "stage": "Growing"
+        },
+        {
+          "name": "Orakai Palm",
+          "stage": "Mature"
+        },
+        {
+          "name": "Vask Thornbrush",
+          "stage": "Young"
+        },
+        {
+          "name": "Vask Thornbrush",
+          "stage": "Growing"
+        },
+        {
+          "name": "Vask Thornbrush",
+          "stage": "Mature"
+        },
+        {
+          "name": "Serewood",
+          "stage": "Young"
+        },
+        {
+          "name": "Serewood",
+          "stage": "Growing"
+        },
+        {
+          "name": "Serewood",
+          "stage": "Mature"
+        },
+        {
+          "name": "Mirewillow",
+          "stage": "Young"
+        },
+        {
+          "name": "Mirewillow",
+          "stage": "Growing"
+        },
+        {
+          "name": "Mirewillow",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Orakai Palm; Vask Thornbrush; Serewood; Mirewillow. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-4",
+      "category": "Trees",
+      "species": [
+        "Duskroot",
+        "Velmangrove",
+        "Brackenspine",
+        "Morren Cypress"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Duskroot",
+          "stage": "Young"
+        },
+        {
+          "name": "Duskroot",
+          "stage": "Growing"
+        },
+        {
+          "name": "Duskroot",
+          "stage": "Mature"
+        },
+        {
+          "name": "Velmangrove",
+          "stage": "Young"
+        },
+        {
+          "name": "Velmangrove",
+          "stage": "Growing"
+        },
+        {
+          "name": "Velmangrove",
+          "stage": "Mature"
+        },
+        {
+          "name": "Brackenspine",
+          "stage": "Young"
+        },
+        {
+          "name": "Brackenspine",
+          "stage": "Growing"
+        },
+        {
+          "name": "Brackenspine",
+          "stage": "Mature"
+        },
+        {
+          "name": "Morren Cypress",
+          "stage": "Young"
+        },
+        {
+          "name": "Morren Cypress",
+          "stage": "Growing"
+        },
+        {
+          "name": "Morren Cypress",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Duskroot; Velmangrove; Brackenspine; Morren Cypress. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-5",
+      "category": "Trees",
+      "species": [
+        "Siltwood",
+        "Talora",
+        "Veyran Palm",
+        "Korava"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Siltwood",
+          "stage": "Young"
+        },
+        {
+          "name": "Siltwood",
+          "stage": "Growing"
+        },
+        {
+          "name": "Siltwood",
+          "stage": "Mature"
+        },
+        {
+          "name": "Talora",
+          "stage": "Young"
+        },
+        {
+          "name": "Talora",
+          "stage": "Growing"
+        },
+        {
+          "name": "Talora",
+          "stage": "Mature"
+        },
+        {
+          "name": "Veyran Palm",
+          "stage": "Young"
+        },
+        {
+          "name": "Veyran Palm",
+          "stage": "Growing"
+        },
+        {
+          "name": "Veyran Palm",
+          "stage": "Mature"
+        },
+        {
+          "name": "Korava",
+          "stage": "Young"
+        },
+        {
+          "name": "Korava",
+          "stage": "Growing"
+        },
+        {
+          "name": "Korava",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Siltwood; Talora; Veyran Palm; Korava. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-6",
+      "category": "Trees",
+      "species": [
+        "Selkai",
+        "Orvena",
+        "Maravai",
+        "Talandra"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Selkai",
+          "stage": "Young"
+        },
+        {
+          "name": "Selkai",
+          "stage": "Growing"
+        },
+        {
+          "name": "Selkai",
+          "stage": "Mature"
+        },
+        {
+          "name": "Orvena",
+          "stage": "Young"
+        },
+        {
+          "name": "Orvena",
+          "stage": "Growing"
+        },
+        {
+          "name": "Orvena",
+          "stage": "Mature"
+        },
+        {
+          "name": "Maravai",
+          "stage": "Young"
+        },
+        {
+          "name": "Maravai",
+          "stage": "Growing"
+        },
+        {
+          "name": "Maravai",
+          "stage": "Mature"
+        },
+        {
+          "name": "Talandra",
+          "stage": "Young"
+        },
+        {
+          "name": "Talandra",
+          "stage": "Growing"
+        },
+        {
+          "name": "Talandra",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Selkai; Orvena; Maravai; Talandra. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Trees-Growth-7",
+      "category": "Trees",
+      "species": [
+        "Spruce (owner's jungle tree direction)",
+        "Birch (owner's winter tree direction)"
+      ],
+      "columns": 3,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Spruce (owner's jungle tree direction)",
+          "stage": "Young"
+        },
+        {
+          "name": "Spruce (owner's jungle tree direction)",
+          "stage": "Growing"
+        },
+        {
+          "name": "Spruce (owner's jungle tree direction)",
+          "stage": "Mature"
+        },
+        {
+          "name": "Birch (owner's winter tree direction)",
+          "stage": "Young"
+        },
+        {
+          "name": "Birch (owner's winter tree direction)",
+          "stage": "Growing"
+        },
+        {
+          "name": "Birch (owner's winter tree direction)",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 2 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Spruce (owner's jungle tree direction); Birch (owner's winter tree direction). Exactly 6 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Orchard-Growth-1",
+      "category": "Orchard",
+      "species": [
+        "Apple",
+        "Pear",
+        "Peach",
+        "Plum"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Apple",
+          "stage": "Young"
+        },
+        {
+          "name": "Apple",
+          "stage": "Growing"
+        },
+        {
+          "name": "Apple",
+          "stage": "Mature"
+        },
+        {
+          "name": "Pear",
+          "stage": "Young"
+        },
+        {
+          "name": "Pear",
+          "stage": "Growing"
+        },
+        {
+          "name": "Pear",
+          "stage": "Mature"
+        },
+        {
+          "name": "Peach",
+          "stage": "Young"
+        },
+        {
+          "name": "Peach",
+          "stage": "Growing"
+        },
+        {
+          "name": "Peach",
+          "stage": "Mature"
+        },
+        {
+          "name": "Plum",
+          "stage": "Young"
+        },
+        {
+          "name": "Plum",
+          "stage": "Growing"
+        },
+        {
+          "name": "Plum",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Apple; Pear; Peach; Plum. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Orchard-Growth-2",
+      "category": "Orchard",
+      "species": [
+        "Cherry",
+        "Orange",
+        "Lemon",
+        "Lime"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Cherry",
+          "stage": "Young"
+        },
+        {
+          "name": "Cherry",
+          "stage": "Growing"
+        },
+        {
+          "name": "Cherry",
+          "stage": "Mature"
+        },
+        {
+          "name": "Orange",
+          "stage": "Young"
+        },
+        {
+          "name": "Orange",
+          "stage": "Growing"
+        },
+        {
+          "name": "Orange",
+          "stage": "Mature"
+        },
+        {
+          "name": "Lemon",
+          "stage": "Young"
+        },
+        {
+          "name": "Lemon",
+          "stage": "Growing"
+        },
+        {
+          "name": "Lemon",
+          "stage": "Mature"
+        },
+        {
+          "name": "Lime",
+          "stage": "Young"
+        },
+        {
+          "name": "Lime",
+          "stage": "Growing"
+        },
+        {
+          "name": "Lime",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Cherry; Orange; Lemon; Lime. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Orchard-Growth-3",
+      "category": "Orchard",
+      "species": [
+        "Coconut palm",
+        "Banana plant",
+        "Mango",
+        "Pomegranate"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Coconut palm",
+          "stage": "Young"
+        },
+        {
+          "name": "Coconut palm",
+          "stage": "Growing"
+        },
+        {
+          "name": "Coconut palm",
+          "stage": "Mature"
+        },
+        {
+          "name": "Banana plant",
+          "stage": "Young"
+        },
+        {
+          "name": "Banana plant",
+          "stage": "Growing"
+        },
+        {
+          "name": "Banana plant",
+          "stage": "Mature"
+        },
+        {
+          "name": "Mango",
+          "stage": "Young"
+        },
+        {
+          "name": "Mango",
+          "stage": "Growing"
+        },
+        {
+          "name": "Mango",
+          "stage": "Mature"
+        },
+        {
+          "name": "Pomegranate",
+          "stage": "Young"
+        },
+        {
+          "name": "Pomegranate",
+          "stage": "Growing"
+        },
+        {
+          "name": "Pomegranate",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Coconut palm; Banana plant; Mango; Pomegranate. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Orchard-Growth-4",
+      "category": "Orchard",
+      "species": [
+        "Date palm",
+        "Fig"
+      ],
+      "columns": 3,
+      "rows": 2,
+      "items": [
+        {
+          "name": "Date palm",
+          "stage": "Young"
+        },
+        {
+          "name": "Date palm",
+          "stage": "Growing"
+        },
+        {
+          "name": "Date palm",
+          "stage": "Mature"
+        },
+        {
+          "name": "Fig",
+          "stage": "Young"
+        },
+        {
+          "name": "Fig",
+          "stage": "Growing"
+        },
+        {
+          "name": "Fig",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 2 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Date palm; Fig. Exactly 6 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Crops-Growth-1",
+      "category": "Crops",
+      "species": [
+        "Corn",
+        "Tomato",
+        "Beans",
+        "Sugarcane"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Corn",
+          "stage": "Young"
+        },
+        {
+          "name": "Corn",
+          "stage": "Growing"
+        },
+        {
+          "name": "Corn",
+          "stage": "Mature"
+        },
+        {
+          "name": "Tomato",
+          "stage": "Young"
+        },
+        {
+          "name": "Tomato",
+          "stage": "Growing"
+        },
+        {
+          "name": "Tomato",
+          "stage": "Mature"
+        },
+        {
+          "name": "Beans",
+          "stage": "Young"
+        },
+        {
+          "name": "Beans",
+          "stage": "Growing"
+        },
+        {
+          "name": "Beans",
+          "stage": "Mature"
+        },
+        {
+          "name": "Sugarcane",
+          "stage": "Young"
+        },
+        {
+          "name": "Sugarcane",
+          "stage": "Growing"
+        },
+        {
+          "name": "Sugarcane",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Corn; Tomato; Beans; Sugarcane. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    },
+    {
+      "key": "Crops-Growth-2",
+      "category": "Crops",
+      "species": [
+        "Potato",
+        "Carrot",
+        "Pumpkin",
+        "Rye"
+      ],
+      "columns": 3,
+      "rows": 4,
+      "items": [
+        {
+          "name": "Potato",
+          "stage": "Young"
+        },
+        {
+          "name": "Potato",
+          "stage": "Growing"
+        },
+        {
+          "name": "Potato",
+          "stage": "Mature"
+        },
+        {
+          "name": "Carrot",
+          "stage": "Young"
+        },
+        {
+          "name": "Carrot",
+          "stage": "Growing"
+        },
+        {
+          "name": "Carrot",
+          "stage": "Mature"
+        },
+        {
+          "name": "Pumpkin",
+          "stage": "Young"
+        },
+        {
+          "name": "Pumpkin",
+          "stage": "Growing"
+        },
+        {
+          "name": "Pumpkin",
+          "stage": "Mature"
+        },
+        {
+          "name": "Rye",
+          "stage": "Young"
+        },
+        {
+          "name": "Rye",
+          "stage": "Growing"
+        },
+        {
+          "name": "Rye",
+          "stage": "Mature"
+        }
+      ],
+      "prompt": "Original ELITEWAKE realistic botanical modeling reference sheet. STRICT THREE COLUMNS and 4 ROWS. Each row is ONE species shown at THREE successive growth stages left to right: young sapling or seedling, halfway-grown, mature harvest-ready. Row species top to bottom: Potato; Carrot; Pumpkin; Rye. Exactly 12 plant cutouts. Consistent botanical identity across each row. Complete plants, roots/stems and full crown visible, ample clear gutters, no overlap or cropped tips. Mature trees have THICK substantial trunks with sturdy main branches, naturally varied thickness and taper toward smaller branches/twigs. Palms have thick realistic trunks with coarse overlapping retained leaf bases like pineapple scales; palm young stages retain same species identity. Birch shows white mottled bark with light winter snow; spruce tall dense evergreen. Shrub species remain believable shrubs. Crops mature into identifiable harvest produce, banana is a herbaceous plant not a wooden tree. Photorealistic bark foliage needles leaves and produce, grounded natural proportions, neutral studio lighting, premium realistic game art. Fully TRANSPARENT background alpha, no landscape, soil disk, planter, horizon, bokeh, labels, writing, UI, numbers, logos or border. These are 2D modeling references, not meshes. Do not include berries."
+    }
+  ]
+}

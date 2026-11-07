@@ -1,0 +1,11 @@
+{
+  "file": "deployment-0.png",
+  "sha256": "2ac9d979136f56c502e817738c9bf80a16f4df4f98b9022abbd5b76b26dfbce0",
+  "prompt": "Use case: stylized-concept. ELITEWAKE single-view modeling reference, derived from reference image 1. The supplied contact sheet is an IDENTITY AND MATERIAL REFERENCE, not an edit target. Render ONE isolated object only, FRONT ELEVATION at exactly 0% sail cloth deployment. Cloth tightly furled/lowered, no canvas catching area; mast and spar remain. Preserve mast/spar and total cloth identity. This is a visual state, no text percentage labels.. Strict orthographic projection for elevations/profiles, no perspective exaggeration. Do not reproduce the grid, other views, text or inset. Preserve exact original object's materials, post/leg counts, cloth shape, seams and connector; do not redesign. Subject: Small rectangular draped sail, square-yard assembly with horizontal spar, hanging rectangular canvas, no ballast or weights. Compact light assembly. Even neutral studio illumination, pale plain background, entire requested object visible with generous margin. No scenery, ship, water, sky, people, flags, labels, text or watermark. Railing cannon sockets stay empty. Construction is proposed reference geometry, no exact dimensions.",
+  "generator": "ChatGPT built-in image generation",
+  "status": "Visually reviewed concept reference; production geometry validation pending",
+  "reviewNotes": [
+    "Concept reference only; dimensions, mating geometry and cross-view identity require modeling review. No mesh, rig, animation or runtime integration.",
+    "Deployment states illustrate intent; cloth exposure percentages and spar continuity are approximate, not animation validation."
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "asset": "Art/Items/Atlases/2026-10-14/Animal-Marine-Materials-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "status": "Original 2D reference/inventory atlas; not a 3D model or imported gameplay asset",
+  "columns": 4,
+  "rows": 3,
+  "items": [
+    {
+      "name": "Hide: rolled untreated brown animal hide",
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0
+        ],
+        "max": [
+          0.25,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Fur: folded soft thick winter animal pelt",
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0
+        ],
+        "max": [
+          0.5,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Bone: clean sun-bleached long bone",
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0
+        ],
+        "max": [
+          0.75,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Animal Fat: small pale fat pieces in rough clay dish",
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0
+        ],
+        "max": [
+          1,
+          0.3333333333333333
+        ]
+      }
+    },
+    {
+      "name": "Feathers: three natural grey brown feathers",
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.3333333333333333
+        ],
+        "max": [
+          0.25,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Scales: a small pile of reptile scales",
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.3333333333333333
+        ],
+        "max": [
+          0.5,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Horn: one hollow curved horn",
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.3333333333333333
+        ],
+        "max": [
+          0.75,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Tusk: one curved ivory animal tusk",
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.3333333333333333
+        ],
+        "max": [
+          1,
+          0.6666666666666666
+        ]
+      }
+    },
+    {
+      "name": "Fish Pieces: small cut fish flesh pieces",
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "uv": {
+        "min": [
+          0,
+          0.6666666666666666
+        ],
+        "max": [
+          0.25,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Fish Bait: earthworms and insect larvae in small wooden bait cup",
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "uv": {
+        "min": [
+          0.25,
+          0.6666666666666666
+        ],
+        "max": [
+          0.5,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Chitin: dark brown insect shell fragments",
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "uv": {
+        "min": [
+          0.5,
+          0.6666666666666666
+        ],
+        "max": [
+          0.75,
+          1
+        ]
+      }
+    },
+    {
+      "name": "Toxin Gland: small sealed opaque clay vial with a plain stopper, no labels",
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "uv": {
+        "min": [
+          0.75,
+          0.6666666666666666
+        ],
+        "max": [
+          1,
+          1
+        ]
+      }
+    }
+  ],
+  "prompt": "One realistic ELITEWAKE inventory/reference PNG texture atlas. Strict equal-cell 4 columns by 3 rows, reading left-to-right then top-to-bottom. Each listed object isolated, fully visible, centered in central 75% of its cell with empty transparent gutters. Photorealistic physically based natural materials, weathered preindustrial pirate-era props where applicable, consistent neutral soft studio lighting, high-quality original 2026 survival-game art, readable silhouettes. Transparent alpha background. No labels, lettering, numbers, game logos, frames, backdrop, modern objects or characters. Objects in exact order: Hide: rolled untreated brown animal hide; Fur: folded soft thick winter animal pelt; Bone: clean sun-bleached long bone; Animal Fat: small pale fat pieces in rough clay dish; Feathers: three natural grey brown feathers; Scales: a small pile of reptile scales; Horn: one hollow curved horn; Tusk: one curved ivory animal tusk; Fish Pieces: small cut fish flesh pieces; Fish Bait: earthworms and insect larvae in small wooden bait cup; Chitin: dark brown insect shell fragments; Toxin Gland: small sealed opaque clay vial with a plain stopper, no labels. Empty cells stay fully transparent. Anatomical resources are clean crafting materials without wounds or gore. All visual designs original."
+}

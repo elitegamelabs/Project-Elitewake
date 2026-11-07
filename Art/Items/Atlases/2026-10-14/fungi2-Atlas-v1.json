@@ -1,0 +1,21 @@
+{
+  "key": "fungi2",
+  "name": "Named mushrooms and fungi 2",
+  "columns": 3,
+  "rows": 2,
+  "items": [
+    "Silt Puff",
+    "Koracap",
+    "Goldveil",
+    "Veyrspore",
+    "Talora Shelf",
+    "Dreamveil"
+  ],
+  "kind": "one small specimen of a distinct fictional natural mushroom or shelf fungus, varied cap shape and natural pigmentation, no faces or magical aura",
+  "provenance": "Names from World Resource & Ecology Guide; visual appearances illustrative, current five-region distributions not implied",
+  "asset": "Art/Items/Atlases/2026-10-14/fungi2-Atlas-v1.png",
+  "mode": "built-in image_gen",
+  "prompt": "Original ELITEWAKE realistic game resource reference texture atlas. Exactly 6 separate complete specimens in a STRICT 4 by 2 equal-cell grid, row-major order. For every name show one small specimen of a distinct fictional natural mushroom or shelf fungus, varied cap shape and natural pigmentation, no faces or magical aura. Distinct natural forms and colors, detailed real-world anatomy and surface texture, realistic neutral studio lighting. Each specimen fully inside its cell with generous empty alpha gutters; do not connect different cells. Insect legs, wings and antennae must be complete and anatomically plausible. Names in order, NOT printed: Silt Puff; Koracap; Goldveil; Veyrspore; Talora Shelf; Dreamveil. Unused cells stay empty. Fully transparent alpha background, no bokeh or gradients, no ground, no text or numbers, no logos, no frames, no magical aura, no cartoon eyes. These are illustrative original fantasy-species visual references, not real specimen identification or production-ready 3D models.",
+  "status": "Illustrative 2D resource atlas; visual references do not set recipes or effects",
+  "layoutNote": "Observed output is three columns by two rows; mappings follow inspected artwork."
+}
