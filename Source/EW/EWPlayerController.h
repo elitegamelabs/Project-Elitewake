@@ -135,6 +135,9 @@ public:
     /** Testing only (owner, October 24): Shift + 1 to 5 carries the survivor to Plains, Jungle, Desert, Swamp or Winter. Does nothing in a shipping build. */
     UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToRegion(int32 RegionIndex) { ServerDebugTeleportToRegion(RegionIndex); }
     UFUNCTION(Server, Reliable) void ServerDebugTeleportToRegion(int32 RegionIndex);
+    /** Dry, level ground near the middle of a region's island (0 Plains, the starter; 1 Jungle; 2 Desert; 3 Swamp; 4 Winter):
+     *  the region's island nearest the world's centre. Used by the test teleport and the benchmark tour. */
+    static bool FindRegionLanding(UWorld* World, int32 RegionIndex, FVector& OutSpot, const AActor* Ignore = nullptr);
     /** Testing only (owner, October 30): Shift + 6 carries the survivor to the nearest Port, in front of its merchant. Does nothing in a shipping build. */
     UFUNCTION(BlueprintCallable, Category="Debug") void DebugTeleportToPort() { ServerDebugTeleportToPort(); }
     /** F9's item spawner (testing only, owner, October 30): every craftable item, then the rest; each click or A gives one. */

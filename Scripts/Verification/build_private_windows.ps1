@@ -64,4 +64,9 @@ Set-Content -LiteralPath (Join-Path $archive 'Play Elitewake.bat') -Encoding asc
 @echo off
 start "" "%~dp0Windows\EW.exe" /Game/Elitewake/Maps/Lvl_Title
 '@
+# The minimum-machine test (owner, November 2): beside the Windows folder, so it travels with the build on a USB stick but
+# stays out of the playtest zip (which holds the Windows folder only).
+foreach ($name in @('Run 1660 test.ps1', 'Run 1660 test.bat')) {
+    Copy-Item -LiteralPath (Join-Path $projectRoot "Scripts/Release/$name") -Destination (Join-Path $archive $name)
+}
 Write-Output "Local package created: $archive"

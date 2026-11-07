@@ -19,7 +19,7 @@ public class EW : ModuleRules
             "SlateCore"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Water", "Json" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Water", "Json", "RHI" });
 
 		PublicIncludePaths.AddRange(new string[] {
 			"EW"

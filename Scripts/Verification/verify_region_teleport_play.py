@@ -1,41 +1,51 @@
-"""Play: the testing-phase region teleport (owner, October 24): Shift + 1 to 5 carries the survivor to Plains, Jungle, Desert, Swamp, Winter.
-Calls the same server RPC the keys call (the key chord itself is not synthesised). One player (EW_PLAY_PLAYERS=1). Writes Saved/RegionTeleportPlayResult.json."""
-import unreal, json, time
+"""The testing teleport (Shift + 1..5) lands on each region's island, on dry ground (November 6: it still used the old
+five-island centres and dropped the survivor in deep sea). One player, standalone:
+    Scripts/Verification/run_play_check_once.ps1 -Check verify_region_teleport_play.py -Result RegionTeleportPlayResult.json -Players 1 -Standalone 1
+Writes Saved/RegionTeleportPlayResult.json.
+"""
+import json
+import time
 from pathlib import Path
-lib = unreal.EWEditorVerificationLibrary
-world = lib.get_play_worlds()[0]
+import unreal
+
+world = unreal.EWEditorVerificationLibrary.get_play_worlds()[0]
 pc = unreal.GameplayStatics.get_player_controller(world, 0)
 pawn = pc.get_controlled_pawn()
-CENTRES = [('Plains', -800, -100), ('Jungle', -380000, 20000), ('Desert', 280000, -30000), ('Swamp', -30000, -270000), ('Winter', -60000, 280000)]
-checks, phase = [], 0
-next_at = time.monotonic() + 2
-handle = None
+RESULT = Path(unreal.Paths.project_saved_dir(), 'RegionTeleportPlayResult.json')
+WANT = ['PLAINS', 'JUNGLE', 'DESERT', 'SWAMP', 'WINTER']
+state = {'i': 0, 'phase': 'go', 'at': time.monotonic() + 1.0, 'h': None}
+report = {'stops': []}
 
 
 def finish(error=None):
-    unreal.unregister_slate_post_tick_callback(handle)
-    Path(unreal.Paths.project_saved_dir(), 'RegionTeleportPlayResult.json').write_text(json.dumps({'success': error is None, 'checks': checks, 'error': error}, indent=2))
+    unreal.unregister_slate_post_tick_callback(state['h'])
+    report.update(success=error is None, error=error, finished_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()))
+    RESULT.write_text(json.dumps(report, indent=2))
+    unreal.log(f'EWPLAYCHECK RegionTeleport success={error is None} error={error}')
 
 
-def tick(delta):
-    global phase, next_at
-    if time.monotonic() < next_at:
+def tick(_):
+    if time.monotonic() < state['at']:
         return
-    next_at = time.monotonic() + 1.5
     try:
-        if phase > 0:
-            name, x, y = CENTRES[phase - 1]
-            at = pawn.get_actor_location()
-            assert abs(at.x - x) < 51000 and abs(at.y - y) < 51000, f'{name}: survivor is at {at.x:.0f},{at.y:.0f}, expected {x},{y}'
-            assert at.z > -65, f'{name}: survivor is at z={at.z:.0f}, under the sea (nearest dry ground is searched for within 500 m of the centre)'
-            checks.append(f'{name}: arrived at ({at.x:.0f},{at.y:.0f}) z={at.z:.0f}')
-        if phase == len(CENTRES):
+        if state['i'] >= len(WANT):
             finish()
             return
-        pc.debug_teleport_to_region(phase)
-        phase += 1
-    except Exception as exc:
-        finish(f'Phase {phase}: {exc!r}')
+        if state['phase'] == 'go':
+            pc.debug_teleport_to_region(state['i'])
+            state.update(phase='look', at=time.monotonic() + 4.0)
+            return
+        at = pawn.get_actor_location()
+        region = str(unreal.EWClimateRegion.sample_climate(world, at).get_editor_property('region')).upper()
+        swimming = pawn.get_movement_component().is_swimming()
+        falling = pawn.get_movement_component().is_falling()
+        stop = {'index': state['i'], 'at_m': [round(at.x / 100), round(at.y / 100), round(at.z / 100, 1)], 'region': region,
+                'swimming': swimming, 'falling': falling}
+        report['stops'].append(stop)
+        assert WANT[state['i']] in region and not swimming and not falling and at.z > -40, stop
+        state.update(i=state['i'] + 1, phase='go', at=time.monotonic() + .5)
+    except Exception as error:      # noqa: BLE001
+        finish(repr(error))
 
 
-handle = unreal.register_slate_post_tick_callback(tick)
+state['h'] = unreal.register_slate_post_tick_callback(tick)
