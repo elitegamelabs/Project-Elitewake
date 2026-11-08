@@ -326,7 +326,7 @@ void AEWAnimal::PressAttack(AEWCharacter* Target, float DeltaSeconds)
     if (AttackCooldown <= 0.f && FVector::Dist(Nose, Target->GetActorLocation()) < Definition->AttackReach + 70.f)
     {
         AttackCooldown = Definition->AttackInterval;
-        Target->GetSurvivalComponent()->ApplyDamage(Definition->AttackDamage);
+        Target->TakePhysicalDamage(Definition->AttackDamage);
         Target->ReactToHit();
         MulticastCue(1);
     }
@@ -522,6 +522,7 @@ void AEWAnimal::Die()
     Action = EEWAnimalAction::Wander;
     LieShown = GrazeShown = 0.f;
     YieldLeft = FMath::RandRange(Definition->YieldMin, FMath::Max(Definition->YieldMin, Definition->YieldMax));
+    PeltLeft = Definition->Pelt ? FMath::RandRange(Definition->PeltMin, FMath::Max(Definition->PeltMin, Definition->PeltMax)) : 0;
     Quarry = nullptr;
     DeadSeconds = 0.f;
     Dismount();
@@ -534,6 +535,7 @@ void AEWAnimal::Respawn()
     bDead = bHarvested = false;
     Health = Definition->MaxHealth;
     YieldLeft = 0;
+    PeltLeft = 0;
     FleeSeconds = 0.f;
     DefendSeconds = 0.f;
     Quarry = nullptr;
@@ -571,11 +573,22 @@ bool AEWAnimal::Interact_Implementation(AEWCharacter* Character)
         return true;
     }
     if (!Character->GetInventoryComponent()) return false;
-    // Nothing is lost: whatever does not fit stays on the body for later.
-    const int32 Taken = Character->GetInventoryComponent()->AddItem(Definition->Yield, YieldLeft);
+    // Nothing is lost: whatever does not fit stays on the body for later. The meat first, then the pelt.
+    int32 Taken = 0;
+    if (YieldLeft > 0 && Definition->Yield)
+    {
+        const int32 Meat = Character->GetInventoryComponent()->AddItem(Definition->Yield, YieldLeft);
+        YieldLeft -= Meat;
+        Taken += Meat;
+    }
+    if (YieldLeft <= 0 && PeltLeft > 0 && Definition->Pelt)
+    {
+        const int32 Skins = Character->GetInventoryComponent()->AddItem(Definition->Pelt, PeltLeft);
+        PeltLeft -= Skins;
+        Taken += Skins;
+    }
     if (Taken <= 0) return false;
-    YieldLeft -= Taken;
-    if (YieldLeft > 0) return true;
+    if (YieldLeft > 0 || PeltLeft > 0) return true;
     bHarvested = true;
     OnRep_State();
     ForceNetUpdate();

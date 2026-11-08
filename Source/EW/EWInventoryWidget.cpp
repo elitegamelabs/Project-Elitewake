@@ -1026,7 +1026,16 @@ void UEWInventoryWidget::RefreshSummary()
         const FString Name = State ? State->GetPlayerName() : FString();
         NameText->SetText(FText::FromString(Name.IsEmpty() ? TEXT("Survivor") : Name));
     }
-    if (ArmorText) ArmorText->SetText(FText::FromString(TEXT("Armor  \u2014")));
+    if (ArmorText)
+    {
+        // What the worn armor adds up to (owner, November 8): damage stopped, warmth, and the overheating it brings.
+        const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn());
+        const float Stop = Me ? Me->GetArmorReduction() : 0.f, Heat = Me ? Me->GetOverheatMultiplier() : 1.f;
+        const float Warm = Me ? Me->GetClothingInsulation() : 0.f;
+        ArmorText->SetText(FText::FromString(Stop <= 0.f && Heat <= 1.f && Warm <= 0.f ? FString(TEXT("Armor  \u2014"))
+            : FString::Printf(TEXT("Armor  %d%% damage stopped   Cold protection %d%%   Overheating x%.2f"),
+                FMath::RoundToInt(Stop * 100.f), FMath::RoundToInt(FMath::Min(Warm, 1.f) * 100.f), Heat)));
+    }
     RefreshProgression();
 
 }
@@ -1072,8 +1081,21 @@ void UEWInventoryWidget::ConfirmSelection()
     ItemPreview->SetBrushFromTexture(ResolveIcon(Item)); ItemPreview->GetParent()->SetVisibility(ESlateVisibility::HitTestInvisible);
     FoodActionButton->SetVisibility(Item->bFoodConsumptionEnabled ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     RefreshHotbarAssignments();
-    DetailsText->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s\nQuantity %d    Unit weight %.1f kg    Stack limit %d"),
-        *Item->DisplayName.ToString(), *Item->Description.ToString(), Quantity,
+    FString ArmorLines;
+    if (Item->ArmorKind != EEWArmorKind::None)
+    {
+        // Armor (owner, November 8): its category, what it covers and what it does.
+        const TCHAR* Kind = Item->ArmorKind == EEWArmorKind::Cloth ? TEXT("Cloth") : Item->ArmorKind == EEWArmorKind::Fur ? TEXT("Fur") : TEXT("Metal");
+        const TCHAR* Covers = Item->EquipmentSlot == EEWEquipmentSlot::Head ? TEXT("Helmet: head, face and neck")
+            : Item->EquipmentSlot == EEWEquipmentSlot::Chest ? TEXT("Chest: torso, arms and hands (gloves included)")
+            : TEXT("Pants: legs and feet (footwear included)");
+        ArmorLines = FString::Printf(TEXT("\n%s armor   %s\nDamage stopped %.1f%%    Cold protection %s    Overheating +%.1f%%"),
+            Kind, Covers, Item->ArmorReduction * 100.f,
+            Item->Insulation > 0.f ? *FString::Printf(TEXT("%d%%"), FMath::RoundToInt(Item->Insulation * 100.f)) : TEXT("none"),
+            Item->OverheatPenalty * 100.f);
+    }
+    DetailsText->SetText(FText::FromString(FString::Printf(TEXT("%s\n%s%s\nQuantity %d    Unit weight %.1f kg    Stack limit %d"),
+        *Item->DisplayName.ToString(), *Item->Description.ToString(), *ArmorLines, Quantity,
         Item->UnitWeight, Item->MaxStackSize)));
     EquipmentActionButton->SetVisibility(Item->EquipmentSlot != EEWEquipmentSlot::None ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));

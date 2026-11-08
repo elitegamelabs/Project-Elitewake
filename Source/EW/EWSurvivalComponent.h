@@ -161,7 +161,10 @@ public:
 	bool IsOverheating() const { return BodyTemperatureCelsius >= OverheatingAbove; }
 	/** Authority: a step of time in this climate. Cold below comfort pulls the body down, and clothing
 	 *  (Insulation) holds it up; heat in humid air with clothing on pushes it up. Freezing and overheating harm. */
-	void UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds);
+	void UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds, float HeatMultiplier = 1.f);
+    /** The armor heat multiplier last applied while overheating (for checks). */
+    UFUNCTION(BlueprintPure, Category="Survival|Temperature") float GetLastHeatMultiplier() const { return LastHeatMultiplier; }
+    float LastHeatMultiplier = 1.f;
 
 	/** Working climate rules (tuning; the owner's thresholds and damage rates are open). */
 	static constexpr float NormalBody = 37.f;

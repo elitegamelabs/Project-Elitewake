@@ -132,6 +132,14 @@ public:
     int32 YieldMin = 2;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest", meta=(ClampMin="1"))
     int32 YieldMax = 5;
+    /** Its pelt (November 8, for armor): Fur from a furred animal, Hide from the rest; none for birds, reptiles' meat only
+     *  and the like. Harvested after the meat, PeltMin to PeltMax of it. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
+    TObjectPtr<UEWItemDefinition> Pelt;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest", meta=(ClampMin="0"))
+    int32 PeltMin = 1;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest", meta=(ClampMin="0"))
+    int32 PeltMax = 2;
     /** Seconds before a killed animal returns to its home, harvested or not. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Harvest")
     float RespawnSeconds = 300.f;

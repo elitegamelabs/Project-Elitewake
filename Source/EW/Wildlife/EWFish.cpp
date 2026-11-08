@@ -222,7 +222,7 @@ void AEWFish::Think(float DeltaSeconds)
             if (AttackCooldown <= 0.f && FVector::Dist(Nose, Target->GetActorLocation()) < Definition->AttackReach + 45.f)
             {
                 AttackCooldown = Definition->AttackInterval;
-                Target->GetSurvivalComponent()->ApplyDamage(Definition->AttackDamage);
+                Target->TakePhysicalDamage(Definition->AttackDamage);
                 Target->ReactToHit();
             }
             return;

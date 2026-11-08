@@ -33,6 +33,11 @@ enum class EEWItemCategory : uint8
 	Miscellaneous
 };
 
+/** The three armor categories (owner, November 8): one helmet, one chest piece (gloves included) and one pair of pants
+ *  (footwear included) each. */
+UENUM(BlueprintType)
+enum class EEWArmorKind : uint8 { None, Cloth, Fur, Metal };
+
 UENUM(BlueprintType)
 enum class EEWEquipmentSlot : uint8
 {
@@ -122,6 +127,18 @@ public:
 	 *  traps heat in humid regions (owner: overheating is relieved by removing clothing). Values are open. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
 	float Insulation = 0.0f;
+
+	/** Armor (owner, November 8): Cloth, Fur or Metal. Only fur carries Insulation, so only fur keeps out the cold. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing")
+	EEWArmorKind ArmorKind = EEWArmorKind::None;
+	/** This piece's share of physical damage stopped (blows, bites), 0-1. A set's pieces add up (helmet 20%, chest 45%,
+	 *  pants 35% of the set's total); the sum is capped at AEWCharacter::MaxArmorReduction. Never thirst, hunger, heat or cold. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0", ClampMax="1.0"))
+	float ArmorReduction = 0.0f;
+	/** This piece's addition to the health lost while overheating (0.1 = 10% more). The pieces add up: a full cloth set
+	 *  1.10x, fur 1.30x, metal 1.50x. Applies only once the body is already overheating. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
+	float OverheatPenalty = 0.0f;
 
 	/** None means this item is not directly equippable. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Equipment")

@@ -145,6 +145,7 @@ private:
     float DeadSeconds = 0.f;
     float FlinchSeconds = 0.f;
     int32 YieldLeft = 0;
+    int32 PeltLeft = 0;
     /** Every screen: where it was last frame, its smoothed speed and its stride, for the legs. */
     FVector LastShown = FVector::ZeroVector;
     float ShownSpeed = 0.f;

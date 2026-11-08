@@ -266,6 +266,18 @@ PART 7 - DONE (move items here with their commit when finished)
   17 and 18) and verify_ladder_play.py (the markers). Still to do: threat cues (no enemy or danger markers exist yet), and an
   owner look at the palettes in play.
 
+2026-11-08 Armor, functional with placeholder looks (owner's armor prompt), commit "Armor: nine craftable pieces in cloth, fur
+  and metal". Helmet (Head slot: head, face, neck), chest piece (Chest: torso, arms, gloves) and pants (Legs: legs, footwear) in
+  each of cloth, fur and metal (add_armor.py; values per slot 20/45/35% of the set). Full sets stop 10/8/40% of physical
+  damage (blows, bites, punches; capped at 60%) and raise heat damage while overheating 1.10/1.30/1.50x; only fur insulates
+  (a full set 1.0). New materials: Cloth (3 fiber), Leather (2 hide + fiber at a fire), Fur (pelts from 12 furred animals;
+  11 others give Hide). Cloth and fur pieces are known from the start; Metalwork unlocks metal (at a fire). Equipment
+  saves and replicates as before; the inventory shows the armor total and each piece's numbers; icons cut from the owner's
+  sheets. Verified: verify_armor_play.py (92 checks: crafting, failed craft, each piece alone, sets, mixed, blows, Winter
+  cold, Desert heat, save/load, pelts). NOT DONE: production garments (the shapes on the body are placeholders fixed to
+  bones; real skinned clothing for both bodies needs 3D art), a two-player replication check, reconnect, the GTX 1660 measure,
+  Hands and Feet slots still exist beside the armor (the owner's armor rules have none; left for the owner to decide).
+
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
 -------------------------------------------------------------------------

@@ -216,7 +216,7 @@ void UEWSurvivalComponent::SetHydration(float NewHydration)
 	}
 }
 
-void UEWSurvivalComponent::UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds)
+void UEWSurvivalComponent::UpdateClimate(const FEWClimate& Here, bool bInWater, float Insulation, float DeltaSeconds, float HeatMultiplier)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority() || DeltaSeconds <= 0.f) return;
     const bool bRegionChanged = Climate.Region != Here.Region;
@@ -230,7 +230,10 @@ void UEWSurvivalComponent::UpdateClimate(const FEWClimate& Here, bool bInWater, 
         + Excess * HeatPush * Insulation * Here.Humidity / 100.f;
     BodyTemperatureCelsius = FMath::FInterpConstantTo(BodyTemperatureCelsius, TargetBodyTemperature, DeltaSeconds, BodyRate);
     if (IsFreezing()) ApplyDamage(FreezeDamage * DeltaSeconds * (1.f - ClimateResistance));
-    if (IsOverheating()) ApplyDamage(HeatDamage * DeltaSeconds * (1.f - ClimateResistance));
+    // Armor makes overheating worse once it has begun (owner, November 8: cloth 1.1x, fur 1.3x, metal 1.5x for a full set);
+    // it never starts it. The multiplier is read here, when the damage is dealt, so equipping between ticks gains nothing.
+    LastHeatMultiplier = FMath::Max(1.f, HeatMultiplier);
+    if (IsOverheating()) ApplyDamage(HeatDamage * DeltaSeconds * (1.f - ClimateResistance) * LastHeatMultiplier);
     // The condition notices, held while they last.
     auto Notice = [this](FName Id, bool bOn, const FText& Label)
     {

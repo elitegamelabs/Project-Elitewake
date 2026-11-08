@@ -556,6 +556,15 @@ public:
     UFUNCTION(BlueprintPure, Category="Combat") int32 GetWorkImpactCount() const { return WorkImpactCount; }
     /** The warmth of everything worn (clothing insulation; none is made yet). */
     UFUNCTION(BlueprintPure, Category="Survival|Temperature") float GetClothingInsulation() const;
+    /** Armor (owner, November 8): the share of physical damage the worn pieces stop (capped), and the multiplier on health
+     *  lost while overheating (1 with nothing worn). */
+    UFUNCTION(BlueprintPure, Category="Survival|Armor") float GetArmorReduction() const;
+    UFUNCTION(BlueprintPure, Category="Survival|Armor") float GetOverheatMultiplier() const;
+    /** Authority: a blow, bite or punch, reduced by the armor worn. Heat, cold, hunger and thirst never pass through here. */
+    UFUNCTION(BlueprintCallable, Category="Survival|Armor") void TakePhysicalDamage(float Amount);
+    static constexpr float MaxArmorReduction = .6f;
+    /** How many armor shapes are drawn on this survivor on this machine (checks: replication and coverage). */
+    UFUNCTION(BlueprintPure, Category="Survival|Armor") int32 GetArmorPieceCount() const;
     /** The hatchet's chop and the pickaxe's blow, the hand gathers, and when in each swing the blow lands. */
     UPROPERTY(EditDefaultsOnly, Category="Tools")
     TObjectPtr<UAnimSequenceBase> ChopAnimation;
@@ -663,6 +672,11 @@ private:
     /** Shows the main-hand item in the right hand; runs whenever equipment changes, on every machine. */
     UFUNCTION()
     void RefreshHeldItem();
+    /** Draws the worn armor (placeholder shapes, EWArmorLook); runs whenever equipment changes, on every machine. */
+    UFUNCTION()
+    void RefreshArmorLook();
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<UStaticMeshComponent>> ArmorPieces;
     UPROPERTY(ReplicatedUsing=OnRep_Appearance)
     FEWAppearance Appearance;
     UFUNCTION()

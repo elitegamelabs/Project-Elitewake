@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "EWCharacter.h"
+#include "Characters/EWArmorLook.h"
 #include "World/EWSafeZone.h"
 #include "World/EWFootprintComponent.h"
 #include "EWWalletComponent.h"
@@ -189,7 +190,9 @@ void AEWCharacter::BeginPlay()
 	SetFirstPerson(false);
 	ApplyMovementSpeed();
     EquipmentComponent->OnEquipmentChanged.AddUniqueDynamic(this, &AEWCharacter::RefreshHeldItem);
+    EquipmentComponent->OnEquipmentChanged.AddUniqueDynamic(this, &AEWCharacter::RefreshArmorLook);
     RefreshHeldItem();
+    RefreshArmorLook();
     OnRep_Appearance();
 }
 
@@ -208,6 +211,20 @@ void AEWCharacter::OnRep_Appearance()
     Appearance.ApplyTo(GetMesh(), BodyRoster.LoadSynchronous());
     // A new body brings its head back; hide it again from its own first-person camera.
     if (bIsFirstPerson) ShowFirstPersonBody();
+}
+
+void AEWCharacter::RefreshArmorLook()
+{
+    if (!EquipmentComponent) return;
+    EWArmorLook::Rebuild(GetMesh(), EquipmentComponent->GetEquipmentEntries(), ArmorPieces);
+    ShowFirstPersonBody();
+}
+
+int32 AEWCharacter::GetArmorPieceCount() const
+{
+    int32 Count = 0;
+    for (const UStaticMeshComponent* Piece : ArmorPieces) if (Piece) ++Count;
+    return Count;
 }
 
 void AEWCharacter::RefreshHeldItem()
@@ -570,7 +587,8 @@ void AEWCharacter::Tick(float DeltaSeconds)
 		if (ClimateClock >= .5f)
 		{
 			SurvivalComponent->UpdateClimate(AEWClimateRegion::SampleClimate(this, GetActorLocation()),
-				GetCharacterMovement() && GetCharacterMovement()->IsSwimming(), GetClothingInsulation(), ClimateClock);
+				GetCharacterMovement() && GetCharacterMovement()->IsSwimming(), GetClothingInsulation(), ClimateClock,
+				GetOverheatMultiplier());
 			ClimateClock = 0.f;
 		}
 
@@ -1095,6 +1113,10 @@ void AEWCharacter::ShowFirstPersonBody()
 	if (!Body) return;
 	Body->SetOwnerNoSee(false);
 	const bool bHide = bIsFirstPerson && IsLocallyControlled();
+	// A worn helmet goes with the head (it would close round the camera); chest and pants stay in view.
+	for (UStaticMeshComponent* Piece : ArmorPieces)
+		if (Piece && (Piece->GetAttachSocketName() == Neck || Piece->GetAttachSocketName() == FName(TEXT("head"))))
+			Piece->SetVisibility(!bHide);
 	if (Body->GetBoneIndex(Neck) == INDEX_NONE) return;
 	if (bHide && !Body->IsBoneHiddenByName(Neck)) Body->HideBoneByName(Neck, PBO_None);
 	else if (!bHide && Body->IsBoneHiddenByName(Neck)) Body->UnHideBoneByName(Neck);
@@ -1401,6 +1423,31 @@ float AEWCharacter::GetClothingInsulation() const
     return Total;
 }
 
+float AEWCharacter::GetArmorReduction() const
+{
+    float Total = 0.f;
+    if (EquipmentComponent)
+        for (const FEWEquipmentEntry& Worn : EquipmentComponent->GetEquipmentEntries())
+            if (Worn.ItemDefinition) Total += Worn.ItemDefinition->ArmorReduction;
+    return FMath::Clamp(Total, 0.f, MaxArmorReduction);
+}
+
+float AEWCharacter::GetOverheatMultiplier() const
+{
+    float Total = 1.f;
+    if (EquipmentComponent)
+        for (const FEWEquipmentEntry& Worn : EquipmentComponent->GetEquipmentEntries())
+            if (Worn.ItemDefinition) Total += Worn.ItemDefinition->OverheatPenalty;
+    return Total;
+}
+
+void AEWCharacter::TakePhysicalDamage(float Amount)
+{
+    // Server side: armor takes its share of a blow or a bite before it reaches health (owner, November 8).
+    if (!HasAuthority() || !SurvivalComponent || Amount <= 0.f) return;
+    SurvivalComponent->ApplyDamage(Amount * (1.f - GetArmorReduction()));
+}
+
 int32 AEWCharacter::SwingKindAt(const AActor* Target) const
 {
     const UEWItemDefinition* Tool = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
@@ -1526,7 +1573,7 @@ AEWCharacter* AEWCharacter::MeleeStrike()
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
     // A free port: nobody hurts anybody inside its bounds (either of them inside is enough).
     if (AEWSafeZone::IsPvPBlocked(this, GetActorLocation()) || AEWSafeZone::IsPvPBlocked(this, Victim->GetActorLocation())) return nullptr;
-    Victim->SurvivalComponent->ApplyDamage(FistDamage);
+    Victim->TakePhysicalDamage(FistDamage);
     Victim->MulticastHitReact();
     return Victim;
 }
