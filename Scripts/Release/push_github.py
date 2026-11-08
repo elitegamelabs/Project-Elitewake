@@ -39,7 +39,7 @@ def added_bytes(commit):
 
 
 def main():
-    if git('status', '--porcelain').strip():
+    if git('status', '--porcelain', '--untracked-files=no').strip():
         sys.exit('Commit or set aside the changes in the work tree first.')
     remote = git('ls-remote', 'origin', 'refs/heads/main').split()
     base = remote[0] if remote else None
