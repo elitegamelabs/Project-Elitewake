@@ -6,7 +6,7 @@ Project: EW.uproject
 Canonical playable map: /Game/Elitewake/Maps/Lvl_CoastalPlayground
 Title map: /Game/Elitewake/Maps/Lvl_Title
 
-This is the only human-readable production authority in the repository. It replaces the previous READMEs, game bibles, agent charters, delegation files, owner-decision fragments, reports, prompt collections, and phase packets. Historical material remains recoverable in Git history and the verified offline repository bundle; it must not be reintroduced as a competing instruction set.
+This is the only human-readable production authority in the repository. Its companion work list is `FUTURE_IMPLEMENTATIONS.txt` (section 16). It replaces the previous READMEs, game bibles, agent charters, delegation files, owner-decision fragments, reports, prompt collections, and phase packets. Historical material remains recoverable in Git history and the verified offline repository bundle; it must not be reintroduced as a competing instruction set.
 
 The document tells Claude what Elitewake is, what is already real, which older statements lost conflicts, how to work safely, how to judge evidence, and how to execute each production phase. A requirement in this file is not proof that it is implemented. Source, assets, automated tests, Play checks, screenshots, packaged builds, and human review are separate evidence.
 
@@ -1014,3 +1014,5 @@ After cleanup, do not wander across the backlog. Work in this order:
 7. Run Phase 6 only when the full core loop is stable enough to harden instead of redesign.
 
 If uncertain what to do next, choose the earliest unmet exit criterion in this order and propose the smallest testable slice that advances it.
+
+The work list (owner, November 7): `FUTURE_IMPLEMENTATIONS.txt` at the repository root lists everything still to build for gameplay and the world, in order, with what exists and what the owner has decided, plus the full history of additions and changes. Read it after this file at the start of every session; move items to its Done part, with their commit, when they are verified. This file stays the rulebook; the owner's newest instruction outranks both.

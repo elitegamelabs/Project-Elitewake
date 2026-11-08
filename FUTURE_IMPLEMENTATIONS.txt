@@ -1,0 +1,679 @@
+ELITEWAKE - FUTURE IMPLEMENTATIONS
+==================================
+Written November 7, 2026, at the owner's request, from the whole project history (645 commits, September 20 to
+November 7), the deleted planning records (milestones, owner decisions, open questions) and the code as it stands.
+
+What this file is
+-----------------
+The single list of everything still to build for gameplay and the world, in the order to build it, with what already
+exists and what the owner has already decided for each piece. Read it at the start of every session after CLAUDE.md.
+
+- CLAUDE.md stays the rulebook (how to work, evidence, the world bible). This file is the work list that follows from it.
+  If they disagree, the owner's newest instruction wins, then CLAUDE.md; fix this file to match.
+- When something here is built and verified, move it to "Done" (part 7) with its commit, in the same commit as the work.
+  When the owner decides something listed under "Waiting on the owner" (part 6), write the decision where it belongs.
+- Each new feature is its own commit (owner, November 7), so every change stays separate.
+- Status words are CLAUDE.md's: Implemented, Verified, Owner visual review pending, Owner audio audition pending, Accepted,
+  Deferred, Blocked. Nothing here is done because it is written down.
+
+
+PART 1 - STANDING RULES FROM THE OWNER (apply to everything below)
+-----------------------------------------------------------------
+1. Content pause (November 7): no new world, animal or tool content until the owner lifts it. Front-end and character
+   work first.
+2. No exe builds or playtest publishes unless the owner asks in that session (November 7). Compiling to develop and test is fine.
+3. No full world rebuilds without the owner's go-ahead; run only the script or rebuild step a task touches, on only the
+   islands it touches (November 6). Placement scripts add what is missing rather than clearing the world.
+4. No walking-route testing (November 6). Work toward playable gameplay milestones, not re-verifying finished world shape.
+5. GitHub (November 7): history starts fresh; no Git LFS; every file ordinary; push only with
+   `python Scripts/Release/push_github.py` (refuses files of 95 MB or more, pushes in parts, never force-pushes).
+   The world map's object files (Content/__ExternalActors__) are local only: after any world change add a dated copy to
+   C:\ELITEWAKE\WorldActors_<date>.
+6. Minimum machine: GeForce GTX 1660 Super, 6 GB, 1920x1080 Low, about 4.5 GB of video memory. Better graphics settings
+   never give a gameplay advantage.
+7. Visual target: high-definition naturalistic realism, 1740-1760 maritime frontier. Placeholders are labelled as such.
+8. Every third-party or generated asset gets an ASSET_LEDGER.csv row before it is used.
+9. Decide details yourself and explain plainly; ask the owner only for destructive, outward-facing or money decisions,
+   and for the open decisions in part 6.
+
+
+PART 2 - WHERE THE GAME STANDS (November 7)
+-------------------------------------------
+Built and verified in Play unless marked otherwise. Visuals and audio are placeholders awaiting owner review.
+
+Front end: title splash and menu; Single Player opens the Freeport choice (whole world, all 20 islands, five Freeports);
+  Resume Game only after playing before; Create New Survivor; character creator (male/female, 6 presets, 68 sliders,
+  8 choice lists, up to 6 composed tattoos; mouse, keyboard, controller); Set Sail; the loading screen ChatGPT designed;
+  a new survivor starts at the chosen Freeport.
+World: 20 islands (4 per region: Plains centre, Winter north, Swamp south, Desert west, Jungle east as built), one Port
+  per region at its village, Saltreach Freeport as the working hub; caves, sea caverns (Plains3, Desert3, Jungle3),
+  climb-outs on every coast, landmarks, regional soils, 231,505 forest trees and 177,567 bushes, Winter ice sheets,
+  three open-ocean reefs, a 1.5-2 km deep sea floor with seamounts, day/night (90 minutes each), Winter snowfall,
+  climate and body temperature. World Partition streaming for ground cover.
+Resources: wood, stone, fibre, berries, water; crystals, obsidian, coal in caves and Winter mountains; island specialty
+  ores (copper, iron, sulfur, salt, amber, bog iron) and gathered goods (clay, sand, reeds, peat, resin, mushrooms, dates,
+  coconuts, wild fruit, spices, vines) on their planned islands; smelting iron and copper ingots; gunpowder.
+Wildlife: 38 species, 509 animals, roaming, grazing, resting, three temperaments; cave and swamp spiders (rideable);
+  elephants push trees over; reef sharks and manta rays; fish in the starter pond and the sea. All rigid placeholder models.
+Survival: hunger, thirst, sickness, cooking at a campfire, death, same-region respawn, 30-minute death bag, needs HUD,
+  skills (Wayfarer constellation), stats, level 50 cap, journal.
+Tools and combat: stone hatchet, pickaxes (wooden, metal), waterskin, torch, bare-hand punches (first and third person).
+Building: Build Mode with foundations, walls, doorways, windows, doors that open, ceilings, roofs, three staircases;
+  saved in single player and on the server.
+Ships: raft, dinghy, sloop, schooner, brigantine, Cavalier (built November 7, not yet sold or moored); fittings, helm,
+  per-sail control, crew-dependent helm, sailhands and gunners for hire, anchor and capstan, cargo hold and weight, wake
+  and bow waves, cannons with sponge-powder-shot-ram loading, recoil, gunports with covers, gunners who lead a moving
+  mark, hull health, holes, leaking, bailing, sinking into wreck crates, flags, railings, ship surgeon, ship ownership and
+  Company sharing, ships saved.
+Economy: Copper purse (starts at zero), Port merchants buy and sell, restock, Freeport shipwright, crew masters.
+Multiplayer and saving: hosted/listen games, direct IP join (F10), rejoining players keep their survivor, Company screen,
+  survivor, ship, world resource, structure, death bag and wreck saves.
+Tools for development: Play-check runner and ~150 Play checks, native automation tests, benchmark mode and the GTX 1660 test.
+
+
+PART 3 - NEXT, IN THIS ORDER (owner-approved November 7)
+--------------------------------------------------------
+3.1 A pirate survivor with a real face, replacing the faceless mannequin (owner, November 7).
+    - Make male and female base survivors with MetaHuman Creator (built into Unreal 5.8, free for Unreal games). Their faces
+      and bodies have bones, so the creator's face sliders (head, brows, eyes, nose, cheeks, mouth, jaw, ears) and body
+      sliders drive them the same way the mannequin's body sliders work now. Hair and beards from MetaHuman's hair library;
+      skin colour and makeup through its skin material.
+    - Period pirate clothing (shirt, waistcoat, coat, breeches, boots, sash, tricorn or headscarf): MetaHuman ships none.
+      Source a free Fab outfit with a licence fit for the game (isolated intake map, ledger row) or build it ourselves.
+    - The owner may need to sign in to their Epic account in the editor for MetaHuman Creator; Claude never enters passwords.
+    - Retarget the existing animations to the new body; measure the cost on the GTX 1660 Super budget.
+    - Tattoos: a tattoo layer on the skin material using the six composed tattoos already saved in the look.
+3.2 The body you make shows in the game too: the creator's bone shaping applied to the survivor in play and seen by other
+    players (today only height, build and skin carry over).
+3.3 Creator lighting that shows skin colour truthfully (soft neutral light on the survivor in the creator only).
+3.4 Resume Game end to end: save, return to the title, Resume, and arrive where you were with your things.
+3.5 The loading screen as a player sees it, through the map load (standalone game, no exe build).
+3.6 Then ask the owner whether to lift the content pause, and carry on with part 4 in order.
+
+
+PART 4 - THE BACKLOG BY AREA
+----------------------------
+Ordered by CLAUDE.md's phases: finish the first 30 minutes (Phase 1), the islands (Phase 2), one full voyage (Phase 3),
+trustworthy multiplayer and saving (Phase 4), production art and audio (Phase 5), private alpha (Phase 6).
+
+4.1 FIRST 30 MINUTES (Phase 1; built as six slices October 31-November 1, not yet accepted)
+    - An uninterrupted playthrough by a new player in 25-40 minutes with no developer commands, keyboard and controller.
+    - Captures and the owner's visual and audio review of every slice (spawn, first resources, fire, risk, Saltreach, voyage).
+    - Note: a new survivor now starts at the chosen Freeport; decide with the owner whether a Plains start still opens on the
+      arrival beach (the first-30-minutes route) or at Saltreach.
+
+4.2 WORLD AND ISLANDS (Phase 2)
+    - Per-island evidence set (CLAUDE.md Phase 2): 1 km offshore views, landings, landmarks, day/night/weather, profiling.
+    - Stream the islands themselves with HLOD for distant ones (today only ground cover streams); measure on a GTX 1660 Super.
+    - Weather: rain, storms, Winter blizzards, Desert sandstorms, poor visibility; storms affect sailing. Only Winter snowfall
+      exists. Night climate.
+    - The Swamp river (CLAUDE.md 5.5) sized and sailed for the Cavalier: measure her turning circle, then a coast-to-coast voyage.
+    - Bases on hills and cliff shelves: supported foundations and terrain-marked shelves instead of the flat-ground limit.
+    - Gathered specialties regrow; uses for clay, peat, reeds and vines; pitch from resin for ship repair.
+    - Felled forest logs saved while lying (standing felled trees already are).
+    - Landmarks readable at 1-2 km; safe and difficult landings per island; freshwater on every island where it belongs.
+    - Map: drifting grey clouds over the map art (owner, October 22); no fog of war (owner, November 3).
+    - Decorative PCG separate from persistent resources; authored items never move when decoration is regenerated.
+
+4.3 WILDLIFE
+    - Realistic rigged models with walk, run, idle, attack, hit, death and sounds, species by species (Phase 5). Today every
+      animal is a rigid lofted model. The generated (Meshy/Scenario) statues were removed November 7 as unusable.
+    - Recognisable attacks and warning behaviour; bites synced with sound; large predators need preparation or a crew.
+    - Food chains: predators hunt prey, not always the player; prey flees unless cornered; feeding, drinking, territory.
+    - Taming: the Tames screen and the caps (25 per player, 75 per Company) exist; taming itself is not built.
+    - Marine life by depth and habitat: schools, shore creatures, predators, large animals. The manatee stays out of the game.
+    - Elephants: other obstacles, crack sounds, push animation, never built pieces; navigation round fallen logs.
+    - Spiders: turning, hit, death and web-spinning animations; a seated rider pose.
+    - Saving the wildlife the game needs (not every decorative animal).
+
+4.4 SURVIVAL AND CHARACTER
+    - Fall damage on solid ground; stamina-limited climbing.
+    - Clothing with warmth and protection; humidity and heat in Desert, Jungle and Swamp; freezing in Winter.
+    - More skill constellations (Hunter, Cook, Builder were proposed October 28, not approved): only with the owner's
+      approval, UI, save migration and tests. Respec rule still to be decided.
+    - Blocking, dodging, stamina and reach in land combat.
+    - The explorer's journal entries (12 were drafted October 28 for owner approval; not in the game).
+
+4.5 CRAFTING, ECONOMY AND PORTS
+    Owner's ship recipe specification (October 22; values for when shipbuilding resumes):
+      Small sail 80 Fiber, 40 Cloth, 25 Wood, 10 Rope. Medium sail 150 Fiber, 80 Cloth, 60 Wood, 25 Rope.
+      Large sail 300 Fiber, 160 Cloth, 120 Wood, 50 Rope, 20 Iron. Ship wheel 100 Wood, 30 Iron, 20 Fiber, 10 Leather.
+      Cannon 120 Iron, 40 Wood, 30 Bronze, 20 Fiber.
+      Tier 1 shipyard 500 Wood, 250 Fiber, 150 Stone, 80 Rope. Tier 2 1,200 Wood, 600 Stone, 400 Fiber, 250 Iron, 100 Rope.
+      Tier 3 2,500 Wood, 1,200 Stone, 800 Iron, 500 Fiber, 300 Rope, 150 Bronze. Small yard: raft, sloop; medium: schooner,
+      brigantine; large: Cavalier; a larger yard does not build smaller ships.
+    - Needed items that do not exist yet: Rope, Cloth, Leather, Bronze (and tin or a bronze recipe), Pitch.
+    - Recipes for flags and railings; a Claim Banner (part 4.7).
+    - Merchant stock, restock and transactions saved (Phase 4); regional goods and prices per Port; buying in quantity.
+    - Retry-proof purchases, sales, crew hire and repair (no duplicates under lag or reconnect).
+    - Port services beyond Saltreach: storage, notice boards, contracts and missions, crafting stations.
+    - Crew wages, crew limits per hull, dismissing and losing hands.
+    - Copper -> Silver -> Gold exchange in use (500 Copper = 1 Silver, 30 Silver = 1 Gold exist in the purse).
+
+4.6 SHIPS AND SAILING (Phase 3: one complete Saltreach-to-region-and-back voyage with the sloop)
+    - Repair (CLAUDE.md 7.3): a craftable Shipwright's Hammer (30 Wood, 15 Stone, 10 Fiber, 5 Iron); a hole repair takes
+      20 Wood, 10 Fiber, 5 Resin, 5 Iron; 5 s minor, 10 s major; materials used only on success; emergency patch vs.
+      permanent repair with a different look; repair aboard, also while sailing. Today only the shipyard repairs.
+    - Damage you can read: fresh splinters, the hole, water coming in, patch, finished repair.
+    - The Cavalier: a Large yard to sell her, a mooring on the map, a sailing and turning check, multi-yard sails as on
+      the owner's sheet, her ornate stern and figurehead. Her gun layout: built with 11 cannons from the sheet; an older
+      October 17 note asked for 22 cannon places over three decks; CLAUDE.md calls the layout approval work (part 6).
+    - Rope and cloth animation on sails and lines; weighted sails' own look; the survivor's hauling pose.
+    - Gunners: acceptance against a ship under way; gunner sounds and animations; no firing through obstructions.
+    - Reverse (astern) bow waves when ships can go astern.
+    - Split the AEWShip class one tested part at a time (sailing, helm and sails, fittings, hull and repair, cargo,
+      ownership, crew, saving).
+    - Board from the water, recover floating items, currents that never make swimming or recovery frustrating.
+    - In-game ship give and abandon.
+
+4.7 BUILDING AND CLAIMS
+    - Costs, art, cancel and refund, demolition rules, controller use, locks and ownership for doors.
+    - Claims (multiplayer only; CLAUDE.md 6.4): a Company is required; Plains is always neutral; Claim Banner + 500 Gold
+      and 30 minutes to establish; upkeep 100 Gold per 24 hours, up to 7 days prepaid; abandoned after 72 hours unpaid;
+      a daily 2-hour vulnerability window; capture takes 30 minutes; 48 hours protection after; no hostile takeover on
+      PvE servers. Single player builds without claims.
+
+4.8 MULTIPLAYER AND SAVING (Phase 4)
+    - Versioned save envelope, atomic save generations with a fallback to the last good one, old-save fixtures.
+    - Companies saved fully; merchant stock saved; dedicated server with two clients; two PCs on a LAN; 100-200 ms latency;
+      duplicate and lost requests; shutdown just before and after a save.
+    - Replace the ThirdPerson session harness with the real maps only after every session test passes on them.
+    - Multiplayer from the main menu (today "Coming soon"); a stable player identity (EOS) instead of direct IP.
+    - Public Internet testing only with the owner's go-ahead.
+
+4.9 CONTROLS AND INTERFACE
+    - The owner's controller layout (CLAUDE.md 6.5): D-pad Left/Up/Right/Down = slots 1-4, LB + X/Y/B/A = slots 5-8;
+      Build Mode by B or LB + D-pad Right, radial at once, R3 demolish. The game's bindings still differ in places.
+    - Gamepad-only checks of jump, sprint and stance; a rebinding screen; one readable standard at 1080p.
+    - A licensed serif font for the front end's headlines (the loading screen design used Georgia, which cannot ship).
+
+4.10 AUDIO
+    - Owner audition of every sound family; regional day/night beds; landmark emitters; crossfades of 2.5 s or more.
+    - Missing: crystal mining, tree thud, door, treatment, gunner, wildlife attacks and calls per species, weather.
+
+4.11 PRODUCTION ART (Phase 5)
+    - One coherent look along the routes that already work: Plains spawn and first 30 minutes, Saltreach, the sloop inside
+      and out, one hero route per other region; replace placeholders only after the replacement is integrated, packaged,
+      profiled and approved.
+
+4.12 PRIVATE ALPHA (Phase 6)
+    - Only when the whole loop is stable: clean install, two PCs through the first session and a voyage, saves, rollback.
+
+
+PART 5 - TECHNICAL HOUSEKEEPING
+-------------------------------
+- Content audit: `Scripts/Setup/audit_unused_content.py` lists content the game never reaches; code that builds asset
+  paths from pieces (sounds, tree detail meshes) is invisible to it, so check by hand before removing anything.
+- Removed November 7 and kept on disk: C:\ELITEWAKE\Removed_20261107. Old history (code only):
+  C:\ELITEWAKE\OldHistory_20261107.bundle. Neither goes back into the project unless the owner asks.
+- The FreeAnimationLibrary pack has no ASSET_LEDGER row yet: add one (source, licence) or remove the pack.
+- The editor sometimes hangs on "Waiting for ZenServer" after a Play check: wait or retry; never two editors at once.
+
+
+PART 6 - WAITING ON THE OWNER
+-----------------------------
+- Lift the content pause (world, animals, tools)?
+- Pirate clothing source: a free Fab outfit (licence checked) or our own.
+- Where a new Plains survivor starts: the arrival beach or Saltreach.
+- The Cavalier's cannons: 11 as on the sheet, or the 22 places of the October 17 note.
+- Coal: on all four Winter islands' mountains (as built) or W1 Coal Spine only (CLAUDE.md 5.7).
+- Gathered specialties: should they regrow, and how fast?
+- Fallen-tree cleanup after harvesting (owner deferred October 16; CLAUDE.md 5.4 says logs last 5 minutes).
+- Hunter, Cook and Builder constellations and the respec rule.
+- Wildlife food chains and the 12 journal entries drafted October 28.
+- GitHub: raising the LFS limit is no longer needed (history restarted without LFS).
+
+
+PART 7 - DONE (move items here with their commit when finished)
+---------------------------------------------------------------
+(Empty: the history below records everything before November 7.)
+
+
+APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
+-------------------------------------------------------------------------
+From the full commit history (bookkeeping commits left out). Earlier designs that were later replaced are marked by what
+replaced them: the 26- and 40-island worlds became the five-island world on October 22 and the twenty-island world on
+November 3; the six regional reefs became three open-ocean reefs; the agent teams became one workload.
+
+2026-09-20
+  - Establish clean Unreal Engine project baseline
+
+2026-09-22
+  - Establish Elitewake project foundation
+  - Add sprint locomotion foundation
+  - Add crouch and prone stance foundation
+
+2026-09-23
+  - Add camera toggle and locomotion state foundation
+  - Add temporary third-person stance visuals
+  - Add survival stats and stamina foundation
+
+2026-09-29
+  - Enable Unreal MCP and Git editor integrations
+  - Configure Unreal MCP clients and auto-start
+  - Add Scenario MCP integration
+
+2026-09-30
+  - Add replicated inventory and item foundation
+
+2026-10-05
+  - Fix and verify native inventory panel
+  - Add and verify persisted inventory test item
+  - Configure M2 crouch and prone animations on UE 5.8.3
+  - Implement M2 stance collision and clearance
+  - Implement M5D authoritative world pickups
+  - Implement M5E inventory selection and navigation
+  - Implement M5F authoritative equipment transfers
+
+2026-10-06
+  - Implement M5G owned hotbar shortcuts
+  - Add verified M4 survival HUD and exhaustion notices
+  - Clean repository layout and remove unused template variants
+  - Generalize validated pickup interaction and reconcile design authority
+  - Add verified interaction prompts and authoritative held actions
+  - Add verified fresh-water drinking and close M6 interaction foundation
+
+2026-10-07
+  - Add verified finite hand gathering for plants and loose sticks
+  - Add verified equipped-hatchet tree harvesting through Attack
+  - Add verified pickaxe mining and track deferred harvesting animations
+  - Add verified hand-gathered berry food foundation
+  - Verify continuous inventory and gathering acceptance flow
+  - Add opt-in food consumption and real-time freshness foundation
+  - Connect Azren berry consumption and freshness to inventory and hotbar
+
+2026-10-09
+  - Add crafting, objectives, map UI and private multiplayer test foundations
+
+2026-10-11
+  - Add session Company membership and the seven-section menu
+  - Harden private multiplayer recovery and survival number guards
+  - Add placeholder item art, starter tool loop and Repair Kit fixture
+  - Add the coastal playground map with swimming and a 500 m ocean
+  - Update docs after removing the sloop prototype and committing local work
+  - Add data-driven ship hulls with installable fittings
+  - Add helm control and server-owned sailing
+  - Verify client sailing in real Play and add an unattended Play runner
+  - Let crew ride and walk moving decks and climb aboard by ladder
+  - Add the ship anchor capstan
+  - Add the shared ship's cargo hold
+  - Add ship weight, load-based speed and overload
+  - Rebuild the coastal test map's look and wire in the HUD art
+  - Float swimmers at the surface and add surf to the coast
+
+2026-10-12
+  - Give the sloop a real hull built from the owner's art
+  - Rig the sloop: mast, rigging, wheel and the owner's sails
+  - Double-ended 14 m sloop, swim animations and level swimming
+  - Add the raft and the dinghy from the owner's art
+  - Add the schooner from the owner's art, on a shared hull builder
+  - Fix playtest issues: ladders, ship smoothness, ocean, dock and Attack
+  - Give the ships a captain's cabin and a real ship's working detail
+  - Grow harvestable Veyran Palms on the coast
+  - Set minable boulders on the coast
+  - Add hand-gathered plants to the coast and darken the boulders
+  - Add the brigantine from the owner's art
+  - Paddle the raft, add playtest guides to the Journal, add the owner's fish art
+  - Park the schooner and brigantine off the map pending new designs
+  - Climb ladders with E and the arrows, and label ship places on screen
+  - Trim sails to the wind, add a compass strip, and pull the helm camera back
+  - Give HUD colour constants unique names so unity builds never clash
+
+2026-10-13
+  - Add the owner's fish and sea creatures, harvestable for Raw Fish
+  - Hold tools in the hand, chop with them, and animate ladder climbing
+  - Open on the owner's title art and make your survivor before setting sail
+  - Build title splash and single-player menu flow
+  - Use owner title art with water-only motion
+  - Set out the project milestones from here to a private release
+  - Trail a foam wake behind moving ships and moor the sloop toward open water
+  - Rock ships on the swell and heel them under sail
+  - Swing the rudder over gradually so ships ease into turns
+  - Turn the sloop's wheel and the dinghy's tiller with the rudder
+  - Paddle the raft with a paddle in hand and hold the helm with both hands
+  - Turn the island's spring into a freshwater pond with bass, catfish and piranhas
+  - Refine title and menu input, cyan hover glow, and shoreline water motion
+  - Fix title Slate focus and mouse hit testing with routed-input regression
+  - Work the anchor at a turning capstan: a 3 s hold with the survivor pushing its bars
+  - See your own body in first person: arms, hands, legs and feet
+
+2026-10-14
+  - Finish pass on the small craft: drop the raft's leftover rigging, moor it clear of the dinghy
+  - Walk the whole First Voyage in one Play check
+  - Publish original art catalog and reconcile five-region world milestones
+  - Show the inventory as a full grid of item pictures, with needs and their icons
+  - Fit, man, aim, load and fire a ship's cannon
+  - Give hulls health that round shot takes away, leaving shot holes
+
+2026-10-15
+  - Clean the island and make the four core tools work in the hand
+  - Carry killed fish ashore and harvest them on land for the owner's yields
+  - Escape opens OPTIONS: save the single-player survivor or return to the title
+  - Bring the sloop back to the island
+  - Add a second island, more and varied trees and rock, and round sea creatures
+  - Put six land animals from the owner's photos on both islands
+  - Gather with the hands, chop and mine with real strokes, and show each blow landing
+  - Add climate regions, body temperature and a first Winter island
+  - Add a delegated-task queue for another agent and a detailed October 15 work report
+  - Verify current title menu to coastal play flow
+  - Add native coverage for climate rules
+  - Add the first sounds: work blows, gathering, footsteps, region ambience and animal calls
+  - Verify complete survivor save and restore
+  - Verify pickaxe first swings without retries
+  - Document map zoom, player location, and world overview requirements
+  - Build the five-region world: 26 islands across Plains, Winter, Swamp, Desert and Jungle
+  - Document persistent tortoise asset lock
+  - Build a stone Port in each of the five regions
+  - Ask the map overview to mark the five Ports
+  - Give every island a cave, a natural landmark, and the grassy islands real grass
+  - Turn day into night every 90 minutes, with a moving sun, a moon and dark nights
+  - Let it snow in the Winter region, and lay snow on its plants and berry bushes
+  - Grow six glowing reefs, one in each region and a second in the Plains
+  - Set a reef shark and a manta ray to patrol each reef
+  - Let water in through holes below the waterline, and bail it out with a bucket
+  - Sink ships whose hulls are destroyed or full of water, leaving wreck crates
+  - Prove the two-cannon fight: two survivors trade fire until the sloop sinks
+  - Let the audio check skip survivors nobody plays (WIP: alligator step needs dry land in the new world)
+  - Loop the surf and wind without a seam, and keep the audio check passing in the five-region world
+  - Give the ships, decks, swimming, nights and caves their sounds
+  - WIP: bigger islands rebuilt and cave webs (checks not yet passing; not pushed)
+  - WIP: Play check runner waits for every survivor's PlayerState and allows 120 s to start
+  - Hold the coarse sea floor 15 m under island land so it never shows through the bigger islands or their caves
+  - Let rebuild_world.py run only chosen steps
+  - Document wildlife turnaround, model, and animation upgrade requirements
+  - Add wildlife turnaround sheet manifest and import checklist
+  - Add craftable and placeable item turnaround requirements
+  - Document modular ship hulls and removable sail attachments
+  - Add always-on Cursor rules for island world design
+  - Document owner decision for Cavalier as largest high-definition ship
+  - Document Cavalier modular sail compatibility
+  - Specify Cavalier's confirmed three-level deck layout
+  - Make the islands big enough to explore, hang cobwebs in the caves, and let distant wildlife rest
+
+2026-10-16
+  - Grow each region's own trees: Plains oak, Jungle ash, Swamp spruce, with Winter birch and Desert palm
+  - WIP: a terrain plan for every island (peaks, ridges, plateaus, valleys); webs in the rebuild order
+  - Document regional resources and six-view reference requirements
+  - Document animal reference, animation, model, and audio requirements
+  - Add species-specific animal appearance guidance and reference locations
+  - Add six-view resource and animal reference asset index
+  - Document region-specific island soil textures
+  - Specify detailed biome terrain foliage and shared world sun
+  - Confirm ash trees for jungle and birch for winter
+  - Document first- and third-person directional swimming animation rules
+  - Confirm default swimming animation for sideways movement
+  - Restrict swimming propulsion to forward and backward only
+  - Document helm-only sail rotation controls and 180-degree range
+  - Specify realistic 20-meter ship wake and water turbulence trail
+  - Specify wind-reactive filled and slack sail animations
+  - WIP: rugged peaks with spurs and crags, wandering ridges; island terrain check and its screenshots
+  - Document wind-driven sail propulsion behavior
+  - Give every island its own terrain, and the grass, stone and wooded regions their sounds
+  - Swim only forward and backward: left and right add no sideways drift in the water
+  - Swing the sails with the arrows or LB/RB at the helm, through 180 degrees
+  - Document directional ship displacement waves for forward reverse and turning
+  - Document anchor chain tension animation and rattling catch audio
+  - Add anchor deployment chain rattling animation and audio
+  - Specify shoreline sound fade with inland distance
+  - Set ocean surf to fully fade out 20 meters inland
+  - Leave a 20 m foam wake that follows the ship's turns and fades when she stops
+  - Fade the surf out 20 m inland and sound the anchor's chain
+  - Document owner direction: oak starter island, palms on desert islands
+  - Add pending oak, desert palm, foliage, snow and centered stern ladder milestones
+  - Document animal bite and growl animation/audio milestone and proposed regional fauna
+  - Correct elephant habitat to tropical jungle islands per owner
+  - Replace the starter island's palms with oaks
+  - Document elephant tree pushing, island animal roaming, and cave/swamp spider milestones
+  - T12: plain-Python tests for the world layout and cave rules
+  - T17: world map picture with Ports and caves, record T12's commit hash
+  - Generate the tree-fall, elephant step, bite and claw sounds (Scenario S2, S4)
+  - Move the boarding ladder to the centre of the stern
+  - Fill out every non-palm tree's crown and give the Winter trees partial snow
+  - Sails fill with the wind and go slack when it runs along them
+  - Hold an anchored ship by her chain, and sail faster between islands
+  - Fewer trees on the Plains
+
+2026-10-17
+  - Push water aside from a moving ship's bow and along her sides
+  - Give each region its own soils
+  - Document owner-approved ship system milestones and verification criteria
+  - Dunes, sandstone pillars and a Jungle understory
+  - Clear the ray tracing and shadow warnings: Nanite for the world, foliage out of ray tracing
+  - Fix a unity-build clash between the bow wave and wake trail constants
+  - Railing hardpoints and modules; the sloop loses her hull gunports
+  - Railing hardpoints on the schooner and brigantine; the brigantine's six round gunports
+  - A plain railing stands at every railing hardpoint until another module replaces it
+  - Show where a placeable would go: blue if it can be placed, red if not
+  - The ocean floor: 2 km deep, with canyons, seamounts, sand, corals and sea plants
+
+2026-10-18
+  - Ship flags: hoisted at the halyards, streaming downwind, torn only by combat
+  - Gunport covers: sliding glass covers, run-out, and no firing through a shut port
+  - The sloop rebuilt to the owner's new ship design sheet
+  - Add surgeon brief and eleven modular ship reference sheets
+  - Deliver delegated wildlife designs and expanded visual references
+  - Mark seabed art deferred under current scenery exclusion
+  - Document owner-approved additive wildlife distribution across 26 islands
+  - Expand approved wildlife plan to eight islands in each of five regions (40 total)
+
+2026-10-19
+  - The sloop reworked to the owner's written ship rules: a bare hull with two sail sockets
+  - The schooner reworked to the owner's written ship rules: a bare hull with full-width aft quarters
+  - First-voyage check holds Interact again until the anchor is down
+  - The game's icon is a capital EW in a silver box, and the download is Elite_Wake.exe
+  - Elite_Wake.exe starts without an administrator prompt
+
+2026-10-20
+  - feat: improve map, hotbar, and pause options
+  - feat: add tiered respawning resource mining
+  - feat: define sealed glass panes for ship cabins
+  - feat: add versioned ship window and interior generation
+  - feat: expand procedural world to forty islands
+  - feat: add wildlife populations to new islands
+  - feat: make felled trees persistent harvest logs
+  - feat: define individual tortoise shell scutes
+  - T6: the tortoise's plated shell saved in Unreal and verified in Play
+  - The tortoise's shell is a darker brown, like the owner's photo
+
+2026-10-22
+  - Brigantine rebuilt to the written ship rules (saved on this branch only; not on main)
+  - Move 108 unused Unreal assets out of the project (to C:\ELITEWAKE\QUARANTINE)
+  - Gameplay fixes: menu sections, death and respawn, stats, 1,500 m ocean, manatee removed
+  - Timed crafting, constellation skill tree, aged-paper journal, survivor portrait
+  - World edge: wrap-around teleports that move outward as the map is cleared (owner choice)
+  - Five-island world: one organic 1.5-2.5 km island per region, rebuilt and verified; controller map button; controls table
+
+2026-10-23
+  - Save level, stat and skill points, lit stars and the explored map in the survivor save
+  - Hotbar: left trigger + d-pad selects slots 5 to 8; hotbar check clears the starter kit
+  - Hotbar check: bring four stale expectations up to the current slot layout
+  - Clarify survival UI and journal copy
+  - Repair verify_hotbar_play: spawn its own pickup at eye height, hold X, current slot layout; it passes
+  - Title input test skips when the run cannot render; all 32 native tests pass
+  - Check fixes: starter kit, fast crafting, swim braking horizontal only, audio surf bands
+  - Five-island world: reefs off Port-free shores, bigger tree caps, climate overlap, check updates
+
+2026-10-24
+  - Check updates for the five-island world; sealed-window hulls generated
+  - More Play-check repairs for the five-island world; thicker Plains grass
+  - Grass rebuilt thicker; grass and pickup checks sample/wait properly; audio and coastal pass
+  - Repair inn torch, interaction, objective and repair-recipe checks for the starter kit and slower framesnCo-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>
+  - Felled-tree check: aim at the log, walk into its flank, write its result where the sweep reads it
+  - Check repairs: animals start among animals, pickup/stance re-look, schooner front panes no longer exist
+  - Rebuilt Plains grass at the thicker density; regenerated sealed-window hull meshes
+  - Leaks check counts the inflow frame by frame (the leak count rises as she settles); all Play checks pass
+  - Measure frame rate with the thick grass: about 70 fps at the start; correct the log
+  - Hunger and thirst deplete, zero drains health; food values, food sickness, medicinal herb, cooked fish and meat recipes
+  - Hotbar slot picker for controller, world-edge size saved, needs depletion switch for checks
+  - Shift+1-5 region teleport for testing; animals-stay-on-island check (C2)
+  - Add the herbal remedy recipe asset
+  - Swim braking Play check (owner list item 11)
+
+2026-10-25
+  - Native tests for wildlife rest and cobweb (T29); herb source note
+  - Native test for world edge growth and wrap
+  - Nausea look while food sick (tint and colour fringe on own camera)
+  - Menu rework: Options tab, five-tab inventory layout, Company and Tames screens, controller cursor ring, no prompt on trees and rocks
+  - Stone six views built in code (consistent orthographic set) with renderer script
+  - Left stick steps the highlight on every tab; A opens tabs from a tab-bar highlight; ship hold and pause menu by controller
+  - Code-built six views for Flint, Coal, Iron ore, Copper ore, Sulfur ore, Sandstone and Bog iron; one rock renderer with presets
+  - Skills tab reaches the tab bar with Up; manager log for Oct 25
+  - Code-built six views for Oak, Birch, Ash, Palm and Spruce wood
+  - Code-built six views for Clay, Salt, Ice, Amber, Dark and Green gemstones, Peat
+
+2026-10-26
+  - Bear, Lion, Giant Crocodile and Elephant: models, definitions, regional counts and placement; animals check covers ten kinds
+  - Calls for the bear, lion, giant crocodile and elephant; M5 roster first pass logged
+  - Generated (Scenario/Meshy) models for the lion, bear and giant crocodile; definitions carry mesh rotation, scale and foot lift; stick click no longer starts stat picking
+  - Elephant and alligator generated models; smooth Winter and Jungle hills (no more abs-sine creases that sawed the peaks)
+  - Rebuilt world (smoothed Winter/Jungle hills), nine generated animal models applied, HUD icon fill runs over the painted icon, one click of L3 latches sprint, rigid-mesh gait
+  - Gentle beaches above and below the water, Winter massifs and noise hills, footprint component and material (terrain not yet rebuilt)
+  - Verified rebuilt terrain: footprints beach case, island terrain, ports, sailing; footprint check waits out first-Play hitching
+  - Rebuilt world with beaches, Winter massifs and noise hills
+
+2026-10-27
+  - Smooth seabed off every beach (no flat shelf edge), beach capture script, rebuilt terrain
+  - Build Mode design for building on every island outside Ports and obstruction zones (design only)
+  - Build Mode milestone 1: build zones data, UEWBuildZones rule, tests and Play check
+  - Wider sand strip on every shore; wade-ashore measurement check; beach capture aimed away from ports
+  - Build Mode milestone 2: build component, ghost, place and demolish foundations, Play check
+  - Tune build zones: cave margin 300 cm, dock beach radius 3000 cm (tuning, owner to confirm)
+  - Build Mode design: record owner's radial piece dial direction
+  - Build Mode milestone 3: radial piece dial, fixed-slot attached pieces, material cycling, cascade demolish
+  - Build Mode: wall stacking, doorway design, walkable stairs
+  - Trees fall slowly when cut down and disappear after landing
+  - Fix felled-tree Play check: aim at the log axis, wait for the slower fall and removal, retry swallowed strikes
+  - Trees: per-species fall styles, lie a few seconds then fade over 3 s
+  - Trees: smooth translucent fade after lying a few seconds
+  - Design doc: 12 dial slots, scroll wheel is an input
+  - Trees: fade leaves keep closer to normal brightness
+  - Trees: darker fade leaves (glow 0.04)
+  - Build Mode: Play-check ceilings and a wall on a ceiling
+  - Build Mode: real stair shapes with steps and a cut-out in the ceiling over them
+  - Build Mode: doors and windows wheel, semi-transparent wheel options, window design
+  - Build Mode: doors open and close on interact
+  - Build Mode: single-player save keeps built pieces and restores them
+  - Build Mode: multiplayer Play check and server structure saving
+  - Wildlife: natural roaming with graze, look, rest postures and separation; Play check
+
+2026-10-28
+  - Wildlife: elephants push standing trees over; felled trees stay and yield wood; Play check
+  - Wildlife: cave spiders in every cave and the swamp; Play check
+  - Map: cave and swamp spiders placed
+  - Repo: remove Grok and Cursor files, record solo-work rule, take Grok's open tasks as Claude's
+  - Crystals, obsidian and coal: items, meshes, gem material, 62 mineable nodes in caves and Winter mountains; Play check
+  - Options: master volume slider (saved in the user settings), SAVE GAME and MAIN MENU move down one; Play check
+  - Spider: bigger banded-leg model with a dark palette (vertex colours were reading pale); map and milestone note
+  - Rideable spider: Interact climbs on, move input steers, Jump gets off; replicated; Play check
+  - GR1 review of the October 22 gameplay code; saving refuses while dead or carried; options check keeps the saved volume at 1
+  - GR2, GR4, GR5 drafts: skill-tree proposal, wildlife food chains, explorer's journal
+  - Crystal, obsidian and coal inventory icons (drawn placeholders)
+  - Two-player Play check for the rideable spider
+  - Two-player Play check for crystal mining
+  - Every cave hung with decorative glowing crystals and coloured lights; Play check counts them and shoots a cave overview; daily report
+  - Resume keeps every equipped item even when the pack has shrunk
+  - Crystals Play check also looks at Winter mountain emerald and coal
+  - Crystals rebuilt as large chunky gem clusters (fat tall crystal, thick ring, stubby foot) instead of spiky balls; first draft of two-player elephant tree-push check
+  - Two-player elephant tree-push check passes; report
+  - Cave crystal lights halved; fewer blue ones
+
+2026-10-29
+  - Spider: hairy body and legs, thicker four-part legs ending on the ground, alternating-tetrapod crawl in the material; spider look check
+  - Copper purse and the permanent ship surgeon: wallet component (saved, on the HUD), a placeholder surgeon aboard the sloop, schooner and brigantine, 15 Copper for 25% health over 10 s; two-player Play check
+  - Port general merchant: sells pack resources for Copper (placeholder prices), five Port merchants, zero starting purse; two-player Play check
+  - Sail control and crew dependency: per-sail settings, Port crew masters hire sailhands (Sailhand Articles), helm sets only crewed sails, any sail worked by hand at its lines; Port/surgeon figures no longer block hulls; two-player Play check
+  - Hired gunners and volleys: Port gunnery masters (Gunner Articles), gunners signed on at cannons load from the hold and fire with the survivor's shot when they bear and have a clear line; two-player Play check on the ships test map
+
+2026-10-30
+  - Port merchant buying: a counter of goods crates beside each merchant, aim and press E to buy a bundle; five placeholder goods lines per Port, restock every 300 s, a bundle never costs less than it sells back for; two-player Play check extended
+  - Shift + 6 testing teleport to the nearest Port, in front of its merchant (owner request); compiled out of shipping builds; Play check over all five Ports
+  - Saltreach Freeport: the Plains Port rebuilt as an explorable harbor town and starting hub
+  - Freeport polish: HUD announces entering and leaving the safe zone; walkers stop for a survivor in the way and while talked to; townsfolk face whoever talks to them; two-player Play check extended
+  - Freeport sounds: synthesized placeholder tavern and market voices, shipyard work, water at the piles and a harbor bell (make_town_sounds.py, free and original), placed with the existing hull and rigging loops; AEWTownSound plays them by hour; Play check
+  - Ships are saved (M7): the single-player Save Game and the server's world save keep every ship afloat (place, fittings, hold, hull and holes, anchor, sail settings and hired hands, cannons and gunners, ports); placed ships by name, bought ones relaunched, lost ones stay lost; Play check both ways
+  - World resources are saved (M7): trees cut down, plants picked and items taken stay gone; partly used trees and deposits, a deposit's respawn wait and knocked-over trees lying come back as left (UEWWorldStateSubsystem, both saves); two-session Play check
+  - Death bags and wreck crates are saved (M7): place, goods and time left, in both saves; two-session Play check extended
+  - Cannon operation: loading in four steps (sponge, powder, shot, ram), recoil on every shot, target lock for hired gunners (Right Mouse / LB marks a ship); aim lines pass through invisible volumes; volley Play check extended
+  - Sailing rules (owner, October 18): class base speeds, the best drawing sail's deployment x multiplier (no stacking), every sail down holds a ship dead, weighted sails steady her; three weighted sails; the raft's Small sail hardpoint; sail trim and fill checks crew their ships; Play check
+  - Bring back faster (owner, October 30): a 1.6x crossing pace on the October 18 class speeds, under sail and paddles; the first voyage lowers its sails before anchoring; tests updated
+  - Freeport shipwright sells the six sail assemblies and cannons; his raft comes with a small sail; Play check extended
+  - Spider sounds (synthesized placeholders: chitter, bite hiss-and-snap, death rattle) and attack/death sound slots for every species, heard by every player; spider check hears the bite and the death
+  - Internet playtests: F10 Join accepts a public IPv4 address or a host name (UDP 7777); publish_playtest.ps1 packages, zips and publishes a build to the private playtest repository
+  - Playtest publishing: Windows tar for the zip; docs for the private playtest releases
+  - Playtest publishing: a Combine-parts.bat beside split zips for friends without 7-Zip
+  - Hosted games keep each player's survivor: saved when they leave and every minute, given back when they rejoin, keyed by a stable id their game sends with Join (EWId); two-player Play check and a standalone rejoin
+  - Playtest builds carry no source details: no debug symbols or internal reports in the zip, plain release notes (owner)
+  - Playtest zip leaves out the debug-file manifest; its README says hosted games keep each player's survivor
+  - Playtest repo holds only the client and a README: zip the Windows folder alone (no manifests, debug tools, launcher), README.md written to the repository, older releases deleted on publish
+  - Ships have owners: a bought ship is her buyer's, an unclaimed one the first helmsman's; only shipmates (owner, or the owner's Company when its ship policy shares) sail, open the hold, work anchor, sails and cannons, sign on crew and fit; others board, bail and see whose she is; Freeport services serve your own ships; owner saved (verify_ship_owner_multiplayer_play)
+  - Company screen is live: the menu's Company section shows the real Company (create, invite players here, accept with Enter, promote/demote, remove, transfer, leave with confirmation, the Leader's ship policy) so friends can share ships; playtest README explains sharing (verify_company_screen_multiplayer_play)
+  - Pause menu as buttons (RESUME GAME, SAVE GAME, OPTIONS, MAIN MENU); OPTIONS page with BACK: brightness now sets the display gamma for the whole picture, mouse and controller look speed each split into horizontal (left-right) and vertical (up-down), master volume with a turnable dial (owner); verify_options_menu_play updated
+  - F9 item spawner (testing only, compiled out of shipping): every craftable item, then every other item, as icon tiles; one per click or A, given by the server; d-pad/arrows move, B/F9/Escape close (verify_item_spawner_multiplayer_play)
+
+2026-10-31
+  - Fix UI color constants in Unreal unity build
+  - Remove stale private-build test notes
+  - Point canonical guide at verified owner checkout
+  - Phase 0 baseline truth captures: title, Plains spawn, Saltreach from sea and market at night, five islands at 1 km, two connected players (capture_phase0_baseline.py)
+  - Document local folders, verified backup contents and restore rules in the canonical guide
+  - Phase 1 slice 1: Plains arrival on the south shore with one-at-a-time prompts
+  - Phase 1 slice 2: first resources by hand and the Stone Hatchet
+
+2026-11-01
+  - Phase 1 slice 3: campfire and the first cooked meal
+  - Phase 1 slice 4: risk and recovery on the Plains
+  - Phase 1 slice 5: reaching Saltreach
+  - Phase 1 slice 6: the first voyage made ready
+  - Controller hotbar and Build Mode controls (owner, November 1)
+  - Neutral elephants that defend themselves (owner, November 1)
+  - Graphics quality tiers that stay fair (owner, November 1; CLAUDE.md 9.6)
+  - 15 ft starter pond, 6-17 minute crossings, walking routes measured
+  - Verify island walking routes against on-foot target
+  - Rebuild the five-island world with north at +Y; fix the rebuild's two crashes
+  - Show the connected controller's own buttons: Xbox or PlayStation (owner, November 1)
+
+2026-11-02
+  - Fix the unity build: rename the controller button table
+
+2026-11-03
+  - Build the twenty-island world (Phase 2; owner-approved November 1-2)
+  - Bare-hand punches by arm, in third and first person (owner, November 3)
+  - Open the whole map and paint the sea deep blue (owner, November 1 and 3)
+
+2026-11-04
+  - Checkpoint world rebuild work, recovery safeguards, and ship map markers
+
+2026-11-05
+  - Sea caverns a brigantine can enter and hide in, with walks out (Phase 2; owner, November 4)
+  - Climb-outs so no coast traps a swimmer, and the starter's sheer underwater walls fixed (Phase 2; owner, November 5)
+
+2026-11-06
+  - Island crossings measured in Play: 39 of 40 arrive in 4.1-15.9 minutes (Phase 2; November 5-6)
+  - Rock steps out of Saltreach's harbour, and climb-outs kept clear (Phase 2; owner, November 6)
+  - Wildlife on every island: seven new species, add-only placement (Phase 2; owner, November 6)
+  - Dense, varied forests and Winter ice sheets, in a sublevel under GitHub's 2 GB limit (Phase 2; owner, November 6)
+  - World Partition streaming: the map split into one file per actor, ground cover streamed near the player (Phase 2; owner, November 6)
+  - Three open-ocean reefs on seamount tops, verified in two-player Play (Phase 2; owner, October 31)
+  - Felled forest trees saved with the world: a reload keeps them down for the time they had left (Phase 2, CLAUDE.md 5.4)
+  - The survivor samples the climate on the first frame: the HUD no longer opens on "Open Sea" ashore
+  - Test teleport finds the twenty-island world's islands; benchmark mode and a one-click 1660 test
+  - 1660 test: video memory while playing vs at any moment, and every sample saved beside the results
+  - The island plan's other twenty species, placed on their islands: 509 animals, every island's full mix (Phase 2, CLAUDE.md 5.7)
+
+2026-11-07
+  - Mined island specialties: copper, iron, sulfur, salt, amber and bog iron on their planned islands only (Phase 2, CLAUDE.md 5.7)
+  - The islands' new ores sell to a Port's resource trader; the Saltreach two-player check sells copper and sulfur ore
+  - Specialty ore deposits as re-placed with their prices (the same 138 deposits, new actor files)
+  - Gathered island specialties: clay, sand, reeds, peat, resin, mushrooms, dates, coconuts, fruit, spices and vines (Phase 2, 5.7)
+  - Gunpowder backs the cannon's powder step: a load takes one charge and one round shot (CLAUDE.md 7.4)
+  - Smelting: iron and copper ingots from the islands' ores at a lit fire, unlocked by Metalwork
+  - Playtest README: cannons need gunpowder with each round shot
+  - The Metal Pickaxe is forged from 10 wood and 4 iron ingots: iron ore leads to the pick that opens sulfur and gems
+  - Sloop yard diagnostic records the Play path too
+  - First-voyage check passes: checks declare the runner settings they need (the sloop was never unsellable)
+  - Cannon checks run again with spawned ships; hired gunners lead a moving target (CLAUDE.md 7.4)
+  - The Cavalier, from the owner's design sheet: three traversable levels, helm inside, 14 knots (CLAUDE.md 7.1)
+  - Clean up outdated files and stale guide text
+  - Delete the 40 unused island and surf meshes of the old 40-island layout (owner, November 7)
+  - Single-player front end: Freeport choice, Resume or New, the full character creator, Set Sail and the loading screen
+  - Keep the world map's object files on this PC only, and push to GitHub without large-file uploads
