@@ -5,6 +5,7 @@
 #include "EWInteractable.h"
 #include "EWShipTypes.h"
 #include "EWInventoryComponent.h"
+#include "Ships/EWLogbook.h"
 #include "EWShip.generated.h"
 
 class AEWCharacter;
@@ -114,6 +115,8 @@ struct FEWSavedShip
     UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerName;
     /** Her registered name (November 8); empty in an older save. */
     UPROPERTY(BlueprintReadOnly, Category="Save") FString ShipName;
+    /** Her captain's log (November 8); empty in an older save. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWLogEntry> Logbook;
     /** Still the shipyard's, for sale (November 1, AEWShip::bHeldByYard): 1 or 0; -1 in an older save, which leaves her as the map has her. */
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 YardHeld = -1;
 };
@@ -621,6 +624,23 @@ public:
     /** A period name for a ship nobody in this world bears, for "Suggest a name" (and controller players). */
     static FString SuggestName(const UWorld* World, int32 Seed);
     static constexpr int32 MaxNameLength = 24;
+    /** The captain's log (Part 8, 13; November 8): written by the server as she sails, newest last, read in the Journal. */
+    UFUNCTION(BlueprintPure, Category="Ship|Logbook")
+    const TArray<FEWLogEntry>& GetLogbook() const { return Logbook; }
+    /** Authority: writes a line in her log. */
+    void AddLog(EEWLogKind Kind, const FString& Text);
+    /** Authority: a discovery made aboard her goes in her log too. */
+    void LogDiscovery(const FText& What);
+    /** The ship a survivor is aboard (held at a station, or standing on her deck), or none. */
+    static AEWShip* FindShipCarrying(const AActor* Who);
+    /** Her hold's largest loads, as a log line. */
+    FString DescribeHold() const;
+    /** The Freeport whose harbour she lies in now (none at sea). */
+    UFUNCTION(BlueprintPure, Category="Ship|Logbook")
+    FString GetPortCallName() const { return PortCallName; }
+    static constexpr int32 MaxLogEntries = 80;
+    /** How near a Freeport's site counts as in its harbour, cm (tuning). */
+    static constexpr float HarbourReach = 45000.f;
     /** The shipyard's, for sale (owner, November 1: a moored ship no longer claims herself; the first boat is bought). Nobody takes
      *  her helm, hold, anchor, sails or cannons, single player included, until the shipwright sells her (AEWShipwright::BuyShip hands
      *  over a held ship of the class bought before launching a new one). Anyone may still climb aboard and look. */
@@ -691,6 +711,14 @@ private:
     UPROPERTY(Replicated) FGuid OwnerCompanyId;
     float OwnerRefreshIn = 0.f;
     UPROPERTY(ReplicatedUsing=OnRep_ShipName) FString ShipName;
+    UPROPERTY(Replicated) TArray<FEWLogEntry> Logbook;
+    /** The harbour she lies in (server): watched every couple of seconds for departures and arrivals. */
+    FName PortCall;
+    FString PortCallName;
+    bool bPortKnown = false;
+    float PortCheckIn = 0.f;
+    double LastDamageLogAt = -1000.0;
+    void UpdatePortCall();
     UFUNCTION() void OnRep_ShipName();
     /** Her name painted on both bows (none while she has no name). The stern carries the boarding ladder. */
     UPROPERTY(Transient) TArray<TObjectPtr<class UTextRenderComponent>> NameBoards;

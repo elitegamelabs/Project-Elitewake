@@ -6,6 +6,7 @@
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "Ships/EWShip.h"
 #include "Wildlife/EWAnimal.h"
 #include "Wildlife/EWAnimalDefinition.h"
 
@@ -51,6 +52,8 @@ bool UEWDiscoveryComponent::Discover(FName Id, EEWPlaceKind Kind, const FText& N
     if (const AEWCharacter* Survivor = PC ? Cast<AEWCharacter>(PC->GetPawn()) : nullptr)
         if (UEWProgressionComponent* Progress = Survivor->GetProgressionComponent())
             Progress->GrantExperience(Kind == EEWPlaceKind::Island ? XpIsland : Kind == EEWPlaceKind::Creature ? XpCreature : XpPlace);
+    // Found from aboard a ship: her log has it too (Part 8, 13).
+    if (AEWShip* Ship = PC ? AEWShip::FindShipCarrying(PC->GetPawn()) : nullptr) Ship->LogDiscovery(Name);
     GetOwner()->ForceNetUpdate();
     // A listen server's own player gets no replication: announce here.
     if (PC && PC->IsLocalController()) { SeenCount = Discoveries.Num(); Announce(Discoveries.Num() - 1); }

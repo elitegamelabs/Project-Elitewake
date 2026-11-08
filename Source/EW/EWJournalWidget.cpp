@@ -16,6 +16,9 @@
 #include "EWPlayerController.h"
 #include "World/EWClimateRegion.h"
 #include "World/EWPlaces.h"
+#include "EWCharacter.h"
+#include "EngineUtils.h"
+#include "Ships/EWShip.h"
 
 namespace
 {
@@ -118,8 +121,19 @@ void UEWJournalWidget::RefreshDiscoveries()
     const auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
     const UEWDiscoveryComponent* Found = PC ? PC->GetDiscoveries() : nullptr;
     const int32 Count = Found ? Found->GetDiscoveries().Num() : 0;
-    if (Count == ShownDiscoveries && Pages.Num() > 0) return;
-    ShownDiscoveries = Count;
+    // The logs of this player's ships within sight (Part 8, 13): a ship far away is not on this machine.
+    const auto* Me = PC ? Cast<AEWCharacter>(PC->GetPawn()) : nullptr;
+    TArray<const AEWShip*> Ships;
+    uint32 Signature = GetTypeHash(Count);
+    if (Me && GetWorld())
+        for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
+            if (It->IsOwned() && !It->bHeldByYard && It->IsShipmate(Me) && (It->GetLogbook().Num() > 0 || !It->GetShipName().IsEmpty()))
+            {
+                Ships.Add(*It);
+                Signature = HashCombine(Signature, HashCombine(GetTypeHash(It->GetLogbook().Num()), GetTypeHash(It->GetShipName())));
+            }
+    if (int32(Signature) == ShownDiscoveries && Pages.Num() > 0) return;
+    ShownDiscoveries = int32(Signature);
     const FText Section = NSLOCTEXT("Elitewake", "JournalDiscoveries", "Discoveries");
     TArray<FEWJournalEntry> Built;
     // The summary: how much of the world has been found, kind by kind.
@@ -150,6 +164,19 @@ void UEWJournalWidget::RefreshDiscoveries()
                     if (Place->Region != EEWRegion::OpenSea) Body = AEWClimateRegion::RegionName(Place->Region).ToString() + TEXT(". ");
                 Page.Body = FText::FromString(Body + D.Note.ToString());
             }
+    for (const AEWShip* Ship : Ships)
+    {
+        FEWJournalEntry& Page = Built.AddDefaulted_GetRef();
+        Page.Section = NSLOCTEXT("Elitewake", "JournalLogbooks", "Logbooks");
+        Page.Title = FText::Format(NSLOCTEXT("Elitewake", "JournalLogOf", "The {0}'s log"), Ship->GetShipTitle());
+        FString Body;
+        for (const FEWLogEntry& Line : Ship->GetLogbook())
+        {
+            const int32 Minutes = FMath::FloorToInt(FMath::Fmod(Line.Hour, 24.f) * 60.f);
+            Body += FString::Printf(TEXT("%02d:%02d   %s\n"), Minutes / 60, Minutes % 60, *Line.Text);
+        }
+        Page.Body = FText::FromString(Body.IsEmpty() ? FString(TEXT("Nothing written yet. Her log fills as she sails.")) : Body.TrimEnd());
+    }
     const FText Shown = GetShownTitle();
     Pages = MoveTemp(Built);
     Pages.Append(GuidePages);

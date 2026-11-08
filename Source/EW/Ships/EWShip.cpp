@@ -34,6 +34,8 @@
 #include "GameFramework/Volume.h"
 #include "Components/TextRenderComponent.h"
 #include "Misc/ConfigCacheIni.h"
+#include "World/EWDayNight.h"
+#include "World/EWPlaces.h"
 
 namespace
 {
@@ -154,6 +156,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
     DOREPLIFETIME(AEWShip, OwnerName);
     DOREPLIFETIME(AEWShip, ShipName);
+    DOREPLIFETIME(AEWShip, Logbook);
     DOREPLIFETIME(AEWShip, bHeldByYard);
     DOREPLIFETIME(AEWShip, OwnerPlayerId);
     DOREPLIFETIME(AEWShip, OwnerCompanyId);
@@ -1963,7 +1966,93 @@ void AEWShip::TakeRoundShot(const FVector& Where, const FVector& Normal, AEWChar
     Hole.Normal = GetActorTransform().InverseTransformVectorNoScale(Normal.GetSafeNormal());
     Holes.Add(Hole);
     OnRep_Holes();
+    // One line for a volley, not one per ball.
+    if (const UWorld* World = GetWorld(); World && World->GetTimeSeconds() - LastDamageLogAt > 30.0)
+    {
+        LastDamageLogAt = World->GetTimeSeconds();
+        AddLog(EEWLogKind::Damage, FString::Printf(TEXT("Holed by round shot. Hull at %d%%."),
+            FMath::RoundToInt(100.f * HullHealth / FMath::Max(1.f, GetMaxHullHealth()))));
+    }
     ForceNetUpdate();
+}
+
+// ---- The captain's log (Part 8, 13) -----------------------------------------------------------------------------------
+
+void AEWShip::AddLog(EEWLogKind Kind, const FString& Text)
+{
+    if (!HasAuthority() || Text.IsEmpty()) return;
+    FEWLogEntry& Entry = Logbook.AddDefaulted_GetRef();
+    Entry.Kind = Kind;
+    Entry.Text = Text.Left(160);
+    const UEWDayNightSubsystem* Time = UEWDayNightSubsystem::GetForWorld(this);
+    Entry.Hour = Time ? Time->GetHour() : 0.f;
+    // The newest lines are kept; the oldest go once the book is full.
+    if (Logbook.Num() > MaxLogEntries) Logbook.RemoveAt(0, Logbook.Num() - MaxLogEntries);
+    ForceNetUpdate();
+}
+
+FString AEWShip::DescribeHold() const
+{
+    if (!Cargo || Cargo->Entries.IsEmpty()) return TEXT("The hold is empty.");
+    // The three largest loads by worth, then by count.
+    TArray<const FEWInventoryEntry*> Loads;
+    for (const FEWInventoryEntry& Entry : Cargo->Entries) if (Entry.ItemDefinition && Entry.Quantity > 0) Loads.Add(&Entry);
+    if (Loads.IsEmpty()) return TEXT("The hold is empty.");
+    Loads.Sort([](const FEWInventoryEntry& A, const FEWInventoryEntry& B)
+    {
+        const int64 WorthA = int64(A.ItemDefinition->SellValueCopper) * A.Quantity, WorthB = int64(B.ItemDefinition->SellValueCopper) * B.Quantity;
+        return WorthA != WorthB ? WorthA > WorthB : A.Quantity > B.Quantity;
+    });
+    TArray<FString> Parts;
+    for (int32 I = 0; I < FMath::Min(3, Loads.Num()); ++I)
+        Parts.Add(FString::Printf(TEXT("%d %s"), Loads[I]->Quantity, *Loads[I]->ItemDefinition->DisplayName.ToString()));
+    return FString::Printf(TEXT("In the hold: %s%s."), *FString::Join(Parts, TEXT(", ")), Loads.Num() > 3 ? TEXT(" and more") : TEXT(""));
+}
+
+void AEWShip::UpdatePortCall()
+{
+    // Which Freeport's harbour she lies in, if any: within HarbourReach of its site.
+    FName Here;
+    FString HereName;
+    const FVector Location = GetActorLocation();
+    for (const EWPlaces::FPlace& Place : EWPlaces::All())
+        if (Place.Kind == EEWPlaceKind::Freeport && FVector2D::Distance(FVector2D(Location), Place.Centre) < HarbourReach)
+        {
+            Here = FName(Place.Id);
+            HereName = Place.Name;
+            break;
+        }
+    if (Here == PortCall) return;
+    const bool bFirstLook = !bPortKnown;
+    bPortKnown = true;
+    const FName Left = PortCall;
+    const FString LeftName = PortCallName;
+    PortCall = Here;
+    PortCallName = HereName;
+    // Where she starts is not a voyage; only moving between harbour and sea is logged, and only a ship with an owner keeps a log.
+    if (bFirstLook || !IsOwned() || bHeldByYard) return;
+    if (!Left.IsNone()) AddLog(EEWLogKind::Port, FString::Printf(TEXT("Departed %s."), *LeftName));
+    if (!Here.IsNone())
+    {
+        AddLog(EEWLogKind::Port, FString::Printf(TEXT("Arrived at %s."), *HereName));
+        AddLog(EEWLogKind::Cargo, DescribeHold());
+    }
+}
+
+void AEWShip::LogDiscovery(const FText& What)
+{
+    AddLog(EEWLogKind::Discovery, FString::Printf(TEXT("Discovered %s."), *What.ToString()));
+}
+
+AEWShip* AEWShip::FindShipCarrying(const AActor* Who)
+{
+    if (!Who) return nullptr;
+    if (AEWShip* Ship = Cast<AEWShip>(Who->GetAttachParentActor())) return Ship;
+    // Standing on her deck: the ground under the survivor is part of her.
+    if (const auto* Character = Cast<ACharacter>(Who))
+        if (const UPrimitiveComponent* Base = Character->GetMovementBase())
+            return Cast<AEWShip>(Base->GetOwner());
+    return nullptr;
 }
 
 FEWSavedShip AEWShip::CaptureForSave() const
@@ -1989,6 +2078,7 @@ FEWSavedShip AEWShip::CaptureForSave() const
     Saved.OwnerKey = OwnerKey;
     Saved.OwnerName = OwnerName;
     Saved.ShipName = ShipName;
+    Saved.Logbook = Logbook;
     Saved.YardHeld = bHeldByYard ? 1 : 0;
     return Saved;
 }
@@ -2030,6 +2120,9 @@ void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
     OwnerCompanyId.Invalidate();
     RefreshOwner();
     ShipName = Saved.ShipName;
+    Logbook = Saved.Logbook;
+    // Where she lies now is where she starts: a reload is not a voyage.
+    bPortKnown = false;
     UpdateSternName();
     RefreshFittingVisuals();
     OnRep_Holes();
@@ -2111,8 +2204,11 @@ bool AEWShip::TryRename(const AEWCharacter* By, const FString& Proposed, FText& 
                 OutReason = NSLOCTEXT("Elitewake", "ShipNameTaken", "Another ship already bears that name.");
                 return false;
             }
+    const bool bFirst = ShipName.IsEmpty();
     ShipName = Clean;
     UpdateSternName();
+    AddLog(EEWLogKind::Note, bFirst ? FString::Printf(TEXT("Entered in the harbour book as the %s."), *ShipName)
+        : FString::Printf(TEXT("Renamed the %s in the harbour book."), *ShipName));
     ForceNetUpdate();
     return true;
 }
@@ -2253,10 +2349,13 @@ int32 AEWShip::RestoreAll(UWorld* World, const TArray<FEWSavedShip>& Ships)
 void AEWShip::RepairAtShipyard()
 {
     if (!HasAuthority() || bSinking) return;
+    const bool bWasHurt = Holes.Num() > 0 || HullHealth < GetMaxHullHealth();
     HullHealth = GetMaxHullHealth();
     Holes.Reset();
     WaterAboard = 0.f;
     OnRep_Holes();
+    if (bWasHurt) AddLog(EEWLogKind::Repair, PortCallName.IsEmpty() ? FString(TEXT("Repaired by the shipwright."))
+        : FString::Printf(TEXT("Repaired by the shipwright at %s."), *PortCallName));
     ForceNetUpdate();
 }
 
@@ -2905,6 +3004,11 @@ void AEWShip::Tick(float DeltaSeconds)
     UpdateLeaks(DeltaSeconds);
     UpdateLoad(DeltaSeconds);
     UpdateCannons(DeltaSeconds);
+    if ((PortCheckIn -= DeltaSeconds) <= 0.f)
+    {
+        PortCheckIn = 2.f;
+        UpdatePortCall();
+    }
     // An open menu centres the rudder and stops the sails swinging; they keep their setting and trim.
     if (Helmsman)
         if (const auto* PC = Cast<AEWPlayerController>(Helmsman->GetController()); !PC || PC->GetInteractionComponent()->IsMenuBlocked())

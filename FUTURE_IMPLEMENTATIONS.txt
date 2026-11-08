@@ -244,6 +244,14 @@ PART 7 - DONE (move items here with their commit when finished)
   map marker and in the helm prompt; saved with the ship. Verified: two-player Play (verify_ship_names_play.py, 23 checks),
   automation Elitewake.Ships.NameRules, captures capture_ship_names.py (Saved/Screenshots/ShipNames). Visual review pending.
 
+2026-11-08 Captain's logbooks, first part (Part 8, 13), commit "Captain's logbook: ports, damage, repairs, cargo and
+  discoveries". The server writes each owned ship's log as she sails: departures from and arrivals at a Freeport's harbour
+  (within 450 m of its site; where she starts or reloads is not a voyage), the hold's three largest loads on arrival, a
+  line per round-shot volley with the hull's state, the shipwright's repairs, her name registered, and discoveries made
+  aboard. Up to 80 lines, newest last, saved with the ship; shipmates read it in the Journal's Logbooks section. Verified:
+  two-player Play (verify_logbook_play.py, 21 checks). Still to do for 13: day dates (the world keeps no day count yet:
+  lines carry the hour), editable captain's notes, and no capture of the Journal page yet.
+
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
 -------------------------------------------------------------------------
@@ -729,7 +737,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
 [ ] 11. Exterior ship appearance: historically fitting paint, timber, trim, figureheads and cosmetic wear, replicated
           without giving a visibility or combat advantage.
 [x] 12. Ship naming: editable name displayed on hull/UI with length, moderation and duplicate-name rules.
-[ ] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
+[~] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
 [ ] 14. Modular hull upgrades: reinforced hull plating with mass, cost, durability, speed and repair tradeoffs.
 [ ] 15. Improved rigging upgrades: handling and sail-efficiency tradeoffs while retaining approved sail rules.
 [ ] 16. Modular cargo containers: inventory capacity, mass, accessibility, loss on sinking and no duplication.
