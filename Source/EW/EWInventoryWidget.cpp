@@ -517,6 +517,10 @@ void UEWInventoryWidget::RefreshInventory()
     for (int32 SlotIndex = 0; SlotIndex < UE_ARRAY_COUNT(WornSlots); ++SlotIndex)
     {
         const FEWEquipmentEntry* Worn = DisplayedEquipment.FindByPredicate([&](const FEWEquipmentEntry& E) { return E.Slot == WornSlots[SlotIndex]; });
+        // Gloves belong to Chest armor and footwear to Legs. Keep legacy Hands/Feet enum values
+        // readable in old saves, but show those rows only if a survivor actually wears an old item there.
+        if ((WornSlots[SlotIndex] == EEWEquipmentSlot::Hands || WornSlots[SlotIndex] == EEWEquipmentSlot::Feet) && !Worn)
+            continue;
         UImage* ItemImage = nullptr; UProgressBar* NoBar = nullptr;
         if (!Worn) { AddToGrid(EquippedBox, MakeSlotTile(nullptr, FString(), -1.f, ItemImage, NoBar, FString(), WornNames[SlotIndex])); continue; }
         UBorder* Tile = MakeSlotTile(Worn->ItemDefinition, FString(), -1.f, ItemImage, NoBar, FString::Printf(TEXT("%.1f kg"), Worn->ItemDefinition->UnitWeight));
