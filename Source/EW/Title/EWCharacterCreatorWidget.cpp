@@ -4,7 +4,6 @@
 #include "Components/Border.h"
 #include "Input/Events.h"
 
-using namespace EWFrontEnd;
 
 namespace
 {
@@ -35,6 +34,7 @@ bool IsRight(const FKey& K) { return K == EKeys::Right || K == EKeys::D || K == 
 
 TSharedRef<SWidget> UEWCharacterCreatorWidget::RebuildWidget()
 {
+    using namespace EWFrontEnd;
     SetIsFocusable(true);
     SetVisibility(ESlateVisibility::Visible);
     if (WidgetTree && !WidgetTree->RootWidget)
@@ -49,6 +49,7 @@ TSharedRef<SWidget> UEWCharacterCreatorWidget::RebuildWidget()
 
 void UEWCharacterCreatorWidget::NativeConstruct()
 {
+    using namespace EWFrontEnd;
     Super::NativeConstruct();
     Appearance = Appearance.Clamped(Roster);
     Slots = Appearance.Tattoos;
@@ -61,6 +62,7 @@ int32 UEWCharacterCreatorWidget::GetTabCount() const { return TabCount; }
 
 void UEWCharacterCreatorWidget::BuildRows()
 {
+    using namespace EWFrontEnd;
     Rows.Reset();
     auto Header = [this](const TCHAR* Label) { FRow R; R.Kind = ERowKind::Header; R.Label = Label; Rows.Add(R); };
     auto Slider = [this](int32 Index) { FRow R; R.Kind = ERowKind::Slider; R.Slider = Index; R.Label = FEWAppearance::Sliders()[Index].Label; Rows.Add(R); };
@@ -113,6 +115,7 @@ void UEWCharacterCreatorWidget::BuildRows()
 
 TArray<int32> UEWCharacterCreatorWidget::Selectable() const
 {
+    using namespace EWFrontEnd;
     TArray<int32> Out;
     for (int32 I = 0; I < Rows.Num(); ++I) if (Rows[I].Kind != ERowKind::Header) Out.Add(I);
     return Out;
@@ -122,18 +125,21 @@ int32 UEWCharacterCreatorWidget::GetRowCount() const { return Selectable().Num()
 
 FString UEWCharacterCreatorWidget::GetSelectedRowLabel() const
 {
+    using namespace EWFrontEnd;
     const TArray<int32> S = Selectable();
     return S.IsValidIndex(Selected) ? Rows[S[Selected]].Label : FString();
 }
 
 int32 UEWCharacterCreatorWidget::GetTotalOptionCount() const
 {
+    using namespace EWFrontEnd;
     // Every slider and list on every tab, with sex, preset and the tattoo's six settings.
     return FEWAppearance::Sliders().Num() + FEWAppearance::Choices().Num() + 2 + 6;
 }
 
 void UEWCharacterCreatorWidget::ShowTab(int32 NewTab)
 {
+    using namespace EWFrontEnd;
     Tab = (NewTab % TabCount + TabCount) % TabCount;
     Selected = 0;
     Scroll = 0.f;
@@ -142,18 +148,21 @@ void UEWCharacterCreatorWidget::ShowTab(int32 NewTab)
 
 void UEWCharacterCreatorWidget::Changed()
 {
+    using namespace EWFrontEnd;
     Appearance = Appearance.Clamped(Roster);
     OnChanged.ExecuteIfBound();
 }
 
 void UEWCharacterCreatorWidget::SyncTattoos()
 {
+    using namespace EWFrontEnd;
     Appearance.Tattoos.Reset();
     for (const FEWTattoo& T : Slots) if (T.Design != 0) Appearance.Tattoos.Add(T);
 }
 
 void UEWCharacterCreatorWidget::SelectBody(int32 Index)
 {
+    using namespace EWFrontEnd;
     if (!Roster || !Roster->Bodies.IsValidIndex(Index)) return;
     Appearance.Body = static_cast<uint8>(Index);
     Changed();
@@ -161,6 +170,7 @@ void UEWCharacterCreatorWidget::SelectBody(int32 Index)
 
 void UEWCharacterCreatorWidget::SelectPreset(int32 Index)
 {
+    using namespace EWFrontEnd;
     Appearance.ApplyPreset(Index);
     Slots = Appearance.Tattoos;
     Slots.SetNum(FEWAppearance::MaxTattoos);
@@ -169,6 +179,7 @@ void UEWCharacterCreatorWidget::SelectPreset(int32 Index)
 
 void UEWCharacterCreatorWidget::SetSliderValue(const FString& Id, float Value)
 {
+    using namespace EWFrontEnd;
     const int32 Index = FEWAppearance::SliderIndex(*Id);
     if (Index == INDEX_NONE) return;
     Appearance.SetSlider(Index, Value);
@@ -177,12 +188,14 @@ void UEWCharacterCreatorWidget::SetSliderValue(const FString& Id, float Value)
 
 float UEWCharacterCreatorWidget::GetSliderValue(const FString& Id) const
 {
+    using namespace EWFrontEnd;
     const int32 Index = FEWAppearance::SliderIndex(*Id);
     return Index == INDEX_NONE ? -1.f : Appearance.GetSlider(Index);
 }
 
 void UEWCharacterCreatorWidget::SetChoiceValue(const FString& Id, int32 Value)
 {
+    using namespace EWFrontEnd;
     const int32 Index = FEWAppearance::ChoiceIndex(*Id);
     if (Index == INDEX_NONE) return;
     Appearance.SetPick(Index, Value);
@@ -191,6 +204,7 @@ void UEWCharacterCreatorWidget::SetChoiceValue(const FString& Id, int32 Value)
 
 void UEWCharacterCreatorWidget::SetTattoo(int32 TattooIndex, int32 Design, int32 Place, float Size, float Angle, int32 Ink)
 {
+    using namespace EWFrontEnd;
     if (!Slots.IsValidIndex(TattooIndex)) return;
     FEWTattoo& T = Slots[TattooIndex];
     T.Design = static_cast<uint8>(FMath::Clamp(Design, 0, FEWAppearance::TattooDesigns().Num() - 1));
@@ -204,6 +218,7 @@ void UEWCharacterCreatorWidget::SetTattoo(int32 TattooIndex, int32 Design, int32
 
 void UEWCharacterCreatorWidget::Randomise()
 {
+    using namespace EWFrontEnd;
     Appearance.Randomise(int32(FPlatformTime::Cycles()) ^ (RandomSeed++ * 7919));
     Slots = Appearance.Tattoos;
     Slots.SetNum(FEWAppearance::MaxTattoos);
@@ -215,6 +230,7 @@ void UEWCharacterCreatorWidget::GoBack() { OnBack.ExecuteIfBound(); }
 
 int32 UEWCharacterCreatorWidget::RowOptions(const FRow& Row) const
 {
+    using namespace EWFrontEnd;
     switch (Row.Special)
     {
     case ESpecial::Sex: return Roster ? FMath::Max(1, Roster->Bodies.Num()) : 2;
@@ -229,6 +245,7 @@ int32 UEWCharacterCreatorWidget::RowOptions(const FRow& Row) const
 
 float UEWCharacterCreatorWidget::RowValue(const FRow& Row) const
 {
+    using namespace EWFrontEnd;
     const FEWTattoo& T = Slots[TattooSlot];
     switch (Row.Special)
     {
@@ -246,6 +263,7 @@ float UEWCharacterCreatorWidget::RowValue(const FRow& Row) const
 
 FString UEWCharacterCreatorWidget::RowText(const FRow& Row) const
 {
+    using namespace EWFrontEnd;
     const int32 V = FMath::RoundToInt(RowValue(Row));
     const FEWTattoo& T = Slots[TattooSlot];
     switch (Row.Special)
@@ -274,6 +292,7 @@ FString UEWCharacterCreatorWidget::RowText(const FRow& Row) const
 
 void UEWCharacterCreatorWidget::SetRowValue(const FRow& Row, float Value)
 {
+    using namespace EWFrontEnd;
     FEWTattoo& T = Slots[TattooSlot];
     const int32 Options = RowOptions(Row);
     const int32 Pick = ((FMath::RoundToInt(Value) % Options) + Options) % Options;
@@ -299,12 +318,14 @@ void UEWCharacterCreatorWidget::SetRowValue(const FRow& Row, float Value)
 
 void UEWCharacterCreatorWidget::Step(const FRow& Row, int32 Direction, bool bFine)
 {
+    using namespace EWFrontEnd;
     if (Row.Kind == ERowKind::Slider) SetRowValue(Row, RowValue(Row) + Direction * (bFine ? .01f : .04f));
     else if (Row.Kind == ERowKind::Choice) SetRowValue(Row, RowValue(Row) + Direction);
 }
 
 void UEWCharacterCreatorWidget::MoveSelection(int32 Direction)
 {
+    using namespace EWFrontEnd;
     const int32 Count = Selectable().Num();
     if (Count == 0) return;
     Selected = (Selected + Direction + Count) % Count;
@@ -313,6 +334,7 @@ void UEWCharacterCreatorWidget::MoveSelection(int32 Direction)
 
 void UEWCharacterCreatorWidget::KeepSelectionInView()
 {
+    using namespace EWFrontEnd;
     const FLayout L = Layout(LastSize);
     const TArray<int32> S = Selectable();
     if (!S.IsValidIndex(Selected) || !L.Rows.IsValidIndex(S[Selected])) return;
@@ -327,6 +349,7 @@ void UEWCharacterCreatorWidget::KeepSelectionInView()
 
 UEWCharacterCreatorWidget::FLayout UEWCharacterCreatorWidget::Layout(const FVector2D& Size) const
 {
+    using namespace EWFrontEnd;
     FLayout L;
     L.Preview = FSlateRect(Size.X * .025f, Size.Y * .05f, Size.X * .485f, Size.Y * .95f);
     L.Panel = FSlateRect(Size.X * .51f, 0, Size.X, Size.Y);
@@ -351,23 +374,27 @@ UEWCharacterCreatorWidget::FLayout UEWCharacterCreatorWidget::Layout(const FVect
 
 FSlateRect UEWCharacterCreatorWidget::ControlOf(const FSlateRect& Row) const
 {
+    using namespace EWFrontEnd;
     return FSlateRect(Row.Left + Row.GetSize().X * .42f, Row.Top + 6.f, Row.Right - 10.f, Row.Bottom - 6.f);
 }
 
 FSlateRect UEWCharacterCreatorWidget::TrackOf(const FSlateRect& Row) const
 {
+    using namespace EWFrontEnd;
     const FSlateRect C = ControlOf(Row);
     return FSlateRect(C.Left + 8.f, C.GetCenter().Y - 3.f, C.Right - 150.f, C.GetCenter().Y + 3.f);
 }
 
 FVector4 UEWCharacterCreatorWidget::GetPreviewBox() const
 {
+    using namespace EWFrontEnd;
     const FSlateRect R = Layout(LastSize).Preview;
     return FVector4(R.Left, R.Top, R.GetSize().X, R.GetSize().Y);
 }
 
 void UEWCharacterCreatorWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
+    using namespace EWFrontEnd;
     Super::NativeTick(Geometry, DeltaTime);
     LastSize = Geometry.GetLocalSize();
     if (FMath::Abs(TurnAxis) > .15f) OnTurn.ExecuteIfBound(TurnAxis * 160.f * DeltaTime);
@@ -382,6 +409,7 @@ void UEWCharacterCreatorWidget::NativeTick(const FGeometry& Geometry, float Delt
 
 FReply UEWCharacterCreatorWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     bGamepad = false;
     if (Event.GetEffectingButton() != EKeys::LeftMouseButton) return FReply::Handled();
     const FVector2D At = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition());
@@ -418,6 +446,7 @@ FReply UEWCharacterCreatorWidget::NativeOnMouseButtonDown(const FGeometry& Geome
 
 FReply UEWCharacterCreatorWidget::NativeOnMouseButtonUp(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     DragRow = INDEX_NONE;
     bTurning = false;
     return FReply::Handled().ReleaseMouseCapture();
@@ -425,6 +454,7 @@ FReply UEWCharacterCreatorWidget::NativeOnMouseButtonUp(const FGeometry& Geometr
 
 FReply UEWCharacterCreatorWidget::NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     const FVector2D At = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition());
     const FLayout L = Layout(Geometry.GetLocalSize());
     if (!Event.GetCursorDelta().IsNearlyZero()) bGamepad = false;
@@ -446,6 +476,7 @@ FReply UEWCharacterCreatorWidget::NativeOnMouseMove(const FGeometry& Geometry, c
 
 FReply UEWCharacterCreatorWidget::NativeOnMouseWheel(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     const FVector2D At = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition());
     const FLayout L = Layout(Geometry.GetLocalSize());
     if (L.Preview.ContainsPoint(At)) OnZoom.ExecuteIfBound(Event.GetWheelDelta());
@@ -455,12 +486,14 @@ FReply UEWCharacterCreatorWidget::NativeOnMouseWheel(const FGeometry& Geometry, 
 
 FReply UEWCharacterCreatorWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry, const FAnalogInputEvent& Event)
 {
+    using namespace EWFrontEnd;
     if (Event.GetKey() == EKeys::Gamepad_RightX) { TurnAxis = Event.GetAnalogValue(); bGamepad = true; return FReply::Handled(); }
     return Super::NativeOnAnalogValueChanged(Geometry, Event);
 }
 
 FReply UEWCharacterCreatorWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
+    using namespace EWFrontEnd;
     const FKey Key = Event.GetKey();
     if (Key.IsGamepadKey()) bGamepad = true;
     else if (!Key.IsMouseButton()) bGamepad = false;
@@ -488,6 +521,7 @@ FReply UEWCharacterCreatorWidget::NativeOnKeyDown(const FGeometry& Geometry, con
 int32 UEWCharacterCreatorWidget::NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
     FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
+    using namespace EWFrontEnd;
     const int32 Layer = Super::NativePaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
     const FPainter P{AllottedGeometry, OutDrawElements, Layer};
     const FVector2D Size = AllottedGeometry.GetLocalSize();

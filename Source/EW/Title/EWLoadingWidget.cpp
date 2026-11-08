@@ -5,10 +5,10 @@
 #include "Engine/Texture2D.h"
 #include "HAL/PlatformTime.h"
 
-using namespace EWFrontEnd;
 
 TSharedRef<SWidget> UEWLoadingWidget::RebuildWidget()
 {
+    using namespace EWFrontEnd;
     SetVisibility(ESlateVisibility::HitTestInvisible);
     if (WidgetTree && !WidgetTree->RootWidget)
     {
@@ -23,6 +23,7 @@ TSharedRef<SWidget> UEWLoadingWidget::RebuildWidget()
 int32 UEWLoadingWidget::NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
     FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
+    using namespace EWFrontEnd;
     const int32 Layer = Super::NativePaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
     const FPainter P{AllottedGeometry, OutDrawElements, Layer};
     const FVector2D Size = AllottedGeometry.GetLocalSize();

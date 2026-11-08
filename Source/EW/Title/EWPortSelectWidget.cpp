@@ -5,10 +5,10 @@
 #include "Components/Border.h"
 #include "Engine/Texture2D.h"
 
-using namespace EWFrontEnd;
 
 TSharedRef<SWidget> UEWPortSelectWidget::RebuildWidget()
 {
+    using namespace EWFrontEnd;
     SetIsFocusable(true);
     SetVisibility(ESlateVisibility::Visible);
     if (WidgetTree && !WidgetTree->RootWidget)
@@ -23,12 +23,14 @@ TSharedRef<SWidget> UEWPortSelectWidget::RebuildWidget()
 
 void UEWPortSelectWidget::NativeConstruct()
 {
+    using namespace EWFrontEnd;
     Super::NativeConstruct();
     Focus = 0;          // Resume when it is offered, else Create New
 }
 
 void UEWPortSelectWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
+    using namespace EWFrontEnd;
     Super::NativeTick(Geometry, DeltaTime);
     LastSize = Geometry.GetLocalSize();
     Age += DeltaTime;
@@ -38,16 +40,19 @@ FName UEWPortSelectWidget::GetSelectedPortId() const { return FName(EWFreeports:
 
 void UEWPortSelectWidget::SelectPort(int32 Index)
 {
+    using namespace EWFrontEnd;
     if (Index >= 0 && Index < EWFreeports::Count) Port = Index;
 }
 
 void UEWPortSelectWidget::Resume()
 {
+    using namespace EWFrontEnd;
     if (bCanResume && !bAsking) OnResume.ExecuteIfBound();
 }
 
 void UEWPortSelectWidget::CreateNew()
 {
+    using namespace EWFrontEnd;
     if (bAsking) return;
     if (bCanResume) { bAsking = true; AskFocus = 1; return; }
     OnCreateNew.ExecuteIfBound();
@@ -55,6 +60,7 @@ void UEWPortSelectWidget::CreateNew()
 
 void UEWPortSelectWidget::AnswerReplace(bool bYes)
 {
+    using namespace EWFrontEnd;
     if (!bAsking) return;
     bAsking = false;
     if (bYes) OnCreateNew.ExecuteIfBound();
@@ -62,24 +68,28 @@ void UEWPortSelectWidget::AnswerReplace(bool bYes)
 
 void UEWPortSelectWidget::GoBack()
 {
+    using namespace EWFrontEnd;
     if (bAsking) { bAsking = false; return; }
     OnBack.ExecuteIfBound();
 }
 
 void UEWPortSelectWidget::Activate(int32 Button)
 {
+    using namespace EWFrontEnd;
     if (bCanResume && Button == 0) Resume();
     else CreateNew();
 }
 
 FVector2D UEWPortSelectWidget::GetPortMarker(int32 Index) const
 {
+    using namespace EWFrontEnd;
     const FLayout L = Layout(LastSize);
     return L.Markers.IsValidIndex(Index) ? L.Markers[Index] : FVector2D(-1, -1);
 }
 
 UEWPortSelectWidget::FLayout UEWPortSelectWidget::Layout(const FVector2D& Size) const
 {
+    using namespace EWFrontEnd;
     FLayout L;
     L.Box = FSlateRect(Size.X * .05f, Size.Y * .15f, Size.X * .95f, Size.Y * .79f);
     const float ListWidth = FMath::Clamp(L.Box.GetSize().X * .27f, 300.f, 460.f);
@@ -116,6 +126,7 @@ UEWPortSelectWidget::FLayout UEWPortSelectWidget::Layout(const FVector2D& Size) 
 
 FReply UEWPortSelectWidget::NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     bGamepad = false;
     const FVector2D At = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition());
     const FLayout L = Layout(Geometry.GetLocalSize());
@@ -134,6 +145,7 @@ FReply UEWPortSelectWidget::NativeOnMouseMove(const FGeometry& Geometry, const F
 
 FReply UEWPortSelectWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, const FPointerEvent& Event)
 {
+    using namespace EWFrontEnd;
     if (Event.GetEffectingButton() != EKeys::LeftMouseButton) return FReply::Handled();
     const FVector2D At = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition());
     const FLayout L = Layout(Geometry.GetLocalSize());
@@ -153,6 +165,7 @@ FReply UEWPortSelectWidget::NativeOnMouseButtonDown(const FGeometry& Geometry, c
 
 FReply UEWPortSelectWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
+    using namespace EWFrontEnd;
     const FKey Key = Event.GetKey();
     bGamepad = Key.IsGamepadKey();
     const bool Up = Key == EKeys::Up || Key == EKeys::W || Key == EKeys::Gamepad_DPad_Up || Key == EKeys::Gamepad_LeftStick_Up;
@@ -183,6 +196,7 @@ FReply UEWPortSelectWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKe
 int32 UEWPortSelectWidget::NativePaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect,
     FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
 {
+    using namespace EWFrontEnd;
     const int32 Layer = Super::NativePaint(Args, AllottedGeometry, MyCullingRect, OutDrawElements, LayerId, InWidgetStyle, bParentEnabled);
     const FPainter P{AllottedGeometry, OutDrawElements, Layer};
     const FVector2D Size = AllottedGeometry.GetLocalSize();
