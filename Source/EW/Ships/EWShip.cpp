@@ -32,6 +32,8 @@
 #include "Ships/EWShipSurgeon.h"
 #include "GameFramework/GameStateBase.h"
 #include "GameFramework/Volume.h"
+#include "Components/TextRenderComponent.h"
+#include "Misc/ConfigCacheIni.h"
 
 namespace
 {
@@ -151,6 +153,7 @@ void AEWShip::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AEWShip, bSinking);
     DOREPLIFETIME(AEWShip, OverloadSecondsLeft);
     DOREPLIFETIME(AEWShip, OwnerName);
+    DOREPLIFETIME(AEWShip, ShipName);
     DOREPLIFETIME(AEWShip, bHeldByYard);
     DOREPLIFETIME(AEWShip, OwnerPlayerId);
     DOREPLIFETIME(AEWShip, OwnerCompanyId);
@@ -420,6 +423,7 @@ void AEWShip::ApplyDefinition()
         MountTargets.Add(Mount.MountId, Target);
     }
     BuildLineVisuals();
+    UpdateSternName();
 }
 
 void AEWShip::RefreshFittingVisuals()
@@ -1381,7 +1385,8 @@ FText AEWShip::GetInteractionPrompt_Implementation(AEWCharacter* Character) cons
                 : NSLOCTEXT("Elitewake", "ManCannon", "Man the cannon"))
             : Installed->FittingMountType == EEWShipMountType::Helm
             ? (Helmsman ? FText::GetEmpty() : Definition->bPaddled ? NSLOCTEXT("Elitewake", "TakePaddles", "Take up the paddles")
-                : NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm"))
+                : ShipName.IsEmpty() ? NSLOCTEXT("Elitewake", "TakeHelm", "Take the helm")
+                : FText::Format(NSLOCTEXT("Elitewake", "TakeHelmNamed", "Take the helm of the {0}"), FText::FromString(ShipName)))
             : FText::Format(NSLOCTEXT("Elitewake", "RemoveFitting", "Remove {0}"), Installed->DisplayName);
     if (const UEWItemDefinition* Carried = IsValid(Character) && Character->GetInventoryComponent() ? FindCarriedFitting(Character, *Mount) : nullptr)
         return FText::Format(NSLOCTEXT("Elitewake", "InstallFitting", "Install {0}"), Carried->DisplayName);
@@ -1983,6 +1988,7 @@ FEWSavedShip AEWShip::CaptureForSave() const
     Saved.OpenGunports = OpenGunports;
     Saved.OwnerKey = OwnerKey;
     Saved.OwnerName = OwnerName;
+    Saved.ShipName = ShipName;
     Saved.YardHeld = bHeldByYard ? 1 : 0;
     return Saved;
 }
@@ -2023,9 +2029,176 @@ void AEWShip::RestoreFromSave(const FEWSavedShip& Saved)
     OwnerPlayerId = INDEX_NONE;
     OwnerCompanyId.Invalidate();
     RefreshOwner();
+    ShipName = Saved.ShipName;
+    UpdateSternName();
     RefreshFittingVisuals();
     OnRep_Holes();
     ForceNetUpdate();
+}
+
+// ---- Ship names (Part 8, 12) -------------------------------------------------------------------------------------------
+
+FText AEWShip::GetShipTitle() const
+{
+    if (!ShipName.IsEmpty()) return FText::FromString(ShipName);
+    return Definition ? Definition->DisplayName : NSLOCTEXT("Elitewake", "ShipUnnamed", "Ship");
+}
+
+bool AEWShip::IsCaptain(const AEWCharacter* Character) const
+{
+    if (!Character || bHeldByYard) return false;
+    if (GetNetMode() == NM_Standalone) return true;
+    if (!HasAuthority())
+    {
+        const APlayerState* State = Character->GetPlayerState();
+        return State && OwnerPlayerId != INDEX_NONE && State->GetPlayerId() == OwnerPlayerId;
+    }
+    const AEWGameMode* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr;
+    const AController* Controller = Character->GetController();
+    return Mode && Controller && !OwnerKey.IsEmpty() && Mode->PlayerKey(Controller) == OwnerKey;
+}
+
+bool AEWShip::CleanShipName(const FString& Proposed, FString& OutName, FText& OutReason)
+{
+    // One space between words, none at the ends.
+    TArray<FString> Words;
+    Proposed.ParseIntoArrayWS(Words);
+    OutName = FString::Join(Words, TEXT(" "));
+    if (OutName.Len() < 2 || OutName.Len() > MaxNameLength)
+    {
+        OutReason = FText::Format(NSLOCTEXT("Elitewake", "ShipNameLength", "A name runs from 2 to {0} letters."), FText::AsNumber(MaxNameLength));
+        return false;
+    }
+    bool bLetter = false;
+    for (const TCHAR C : OutName)
+    {
+        if (FChar::IsAlpha(C)) { bLetter = true; continue; }
+        if (FChar::IsDigit(C) || C == TEXT(' ') || C == TEXT('\'') || C == TEXT('-') || C == TEXT('.') || C == TEXT(','))
+            continue;
+        OutReason = NSLOCTEXT("Elitewake", "ShipNameChars", "Letters, numbers, spaces and ' - . , only.");
+        return false;
+    }
+    if (!bLetter)
+    {
+        OutReason = NSLOCTEXT("Elitewake", "ShipNameLetter", "A name needs letters in it.");
+        return false;
+    }
+    // Moderation: a word on the blocked list anywhere in the name, ignoring case, spaces and punctuation.
+    FString Squashed;
+    for (const TCHAR C : OutName) if (FChar::IsAlnum(C)) Squashed.AppendChar(FChar::ToLower(C));
+    TArray<FString> Blocked;
+    if (GConfig) GConfig->GetArray(TEXT("/Script/EW.EWShip"), TEXT("BlockedNameWords"), Blocked, GGameIni);
+    for (const FString& Word : Blocked)
+        if (!Word.IsEmpty() && Squashed.Contains(Word.ToLower()))
+        {
+            OutReason = NSLOCTEXT("Elitewake", "ShipNameBlocked", "The harbour will not register that name.");
+            return false;
+        }
+    return true;
+}
+
+bool AEWShip::TryRename(const AEWCharacter* By, const FString& Proposed, FText& OutReason)
+{
+    if (!HasAuthority()) return false;
+    if (IsSinking()) { OutReason = NSLOCTEXT("Elitewake", "ShipNameSinking", "Not while she is going down."); return false; }
+    if (!IsCaptain(By)) { OutReason = NSLOCTEXT("Elitewake", "ShipNameNotYours", "Only her owner may name her."); return false; }
+    FString Clean;
+    if (!CleanShipName(Proposed, Clean, OutReason)) return false;
+    if (GetWorld())
+        for (TActorIterator<AEWShip> It(GetWorld()); It; ++It)
+            if (*It != this && !It->IsActorBeingDestroyed() && It->ShipName.Equals(Clean, ESearchCase::IgnoreCase))
+            {
+                OutReason = NSLOCTEXT("Elitewake", "ShipNameTaken", "Another ship already bears that name.");
+                return false;
+            }
+    ShipName = Clean;
+    UpdateSternName();
+    ForceNetUpdate();
+    return true;
+}
+
+FString AEWShip::SuggestName(const UWorld* World, int32 Seed)
+{
+    // Period names in the manner of the 1740s and 1750s (invented, not any real vessel's list).
+    static const TCHAR* Firsts[] = {TEXT("Good"), TEXT("Swift"), TEXT("Faithful"), TEXT("Bold"), TEXT("Patient"), TEXT("Lively"),
+        TEXT("Prudent"), TEXT("Constant"), TEXT("Brave"), TEXT("Merry"), TEXT("Gallant"), TEXT("Steady")};
+    static const TCHAR* Seconds[] = {TEXT("Hope"), TEXT("Fortune"), TEXT("Endeavour"), TEXT("Providence"), TEXT("Speedwell"), TEXT("Venture"),
+        TEXT("Return"), TEXT("Industry"), TEXT("Friendship"), TEXT("Resolution"), TEXT("Prospect"), TEXT("Diligence")};
+    const int32 A = UE_ARRAY_COUNT(Firsts), B = UE_ARRAY_COUNT(Seconds);
+    FRandomStream Stream(Seed);
+    const int32 Start = Stream.RandRange(0, A * B - 1);
+    for (int32 Step = 0; Step < A * B; ++Step)
+    {
+        const int32 Pick = (Start + Step * 7) % (A * B);
+        const FString Name = FString::Printf(TEXT("%s %s"), Firsts[Pick % A], Seconds[Pick / A]);
+        bool bTaken = false;
+        if (World)
+            for (TActorIterator<AEWShip> It(const_cast<UWorld*>(World)); It && !bTaken; ++It)
+                bTaken = It->ShipName.Equals(Name, ESearchCase::IgnoreCase);
+        if (!bTaken) return Name;
+    }
+    return FString::Printf(TEXT("%s %s"), Firsts[Start % A], Seconds[Start / A]);
+}
+
+void AEWShip::OnRep_ShipName()
+{
+    UpdateSternName();
+}
+
+void AEWShip::UpdateSternName()
+{
+    if (GetNetMode() == NM_DedicatedServer || !HullCollision) return;
+    if (ShipName.IsEmpty() || !Definition)
+    {
+        for (UTextRenderComponent* Board : NameBoards) if (Board) Board->SetVisibility(false);
+        return;
+    }
+    // Painted on both bows below the rail, facing out, as working ships carried their names; the stern holds the ladder.
+    const FVector Extent = Definition->HullExtent;
+    const float Z = Definition->GetDeckHeight() - 45.f;
+    // Forward of midships, aft of where the anchor hangs at the bow.
+    const float X = FMath::Min(Extent.X * .4f, Definition->AnchorPoint.X > 0.f ? Definition->AnchorPoint.X - 250.f : Extent.X * .4f);
+    for (int32 Side = 0; Side < 2; ++Side)
+    {
+        if (!NameBoards.IsValidIndex(Side) || !NameBoards[Side])
+        {
+            auto* Board = NewObject<UTextRenderComponent>(this, MakeUniqueObjectName(this, UTextRenderComponent::StaticClass(),
+                *FString::Printf(TEXT("NameBoard_%d"), Side)), RF_Transient);
+            Board->SetupAttachment(HullCollision);
+            Board->SetHorizontalAlignment(EHTA_Center);
+            Board->SetVerticalAlignment(EVRTA_TextCenter);
+            Board->SetTextRenderColor(FColor(232, 222, 196));
+            Board->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+            Board->SetCastShadow(false);
+            Board->RegisterComponent();
+            if (NameBoards.Num() <= Side) NameBoards.SetNum(Side + 1);
+            NameBoards[Side] = Board;
+        }
+        UTextRenderComponent* Board = NameBoards[Side];
+        const float Sign = Side == 0 ? 1.f : -1.f;
+        // Where the planking is at that point: traced in from outside on a modelled hull, the box's side otherwise.
+        FVector Local(X, Sign * Extent.Y, Z), Normal(0, Sign, 0);
+        if (bModelledHull && HullVisual && HullVisual->GetStaticMesh())
+        {
+            const FTransform Frame = HullCollision->GetComponentTransform();
+            const FVector Outside = Frame.TransformPosition(FVector(X, Sign * (Extent.Y + 400.f), Z));
+            const FVector Middle = Frame.TransformPosition(FVector(X, 0.f, Z));
+            FHitResult Hit;
+            FCollisionQueryParams Params(SCENE_QUERY_STAT(ShipNameBoard), true);
+            if (HullVisual->LineTraceComponent(Hit, Outside, Middle, Params))
+            {
+                Local = Frame.InverseTransformPosition(Hit.ImpactPoint);
+                Normal = Frame.InverseTransformVectorNoScale(Hit.ImpactNormal);
+                Normal.Z = 0.f;
+                if (!Normal.Normalize()) Normal = FVector(0, Sign, 0);
+            }
+        }
+        // A text render reads from in front of its +X: point +X out of the hull, a few cm proud of the planks.
+        Board->SetRelativeLocationAndRotation(Local + Normal * 4.f, Normal.Rotation());
+        Board->SetWorldSize(FMath::Clamp(Extent.Z * .32f, 26.f, 60.f));
+        Board->SetText(FText::FromString(ShipName.ToUpper()));
+        Board->SetVisibility(true);
+    }
 }
 
 void AEWShip::CaptureAll(UWorld* World, TArray<FEWSavedShip>& Out)

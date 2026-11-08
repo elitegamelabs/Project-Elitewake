@@ -236,6 +236,14 @@ PART 7 - DONE (move items here with their commit when finished)
   again on load. Captures: capture_discoveries.py, Saved/Screenshots/Discoveries. Visual review pending. Still to do for
   63: named landmarks (none exist yet), voyages and encounters (with 13, logbooks), optional manual notes.
 
+2026-11-08 Ship names (Part 8, 12), commit "Ship names: registered with the harbor master, shown on both bows, the map
+  and the helm". Her owner registers a name with a Freeport's harbor master (a name box in the dialogue window; Suggest a
+  name gives a period name, so a controller needs no typing). The server tidies it and checks the rules: 2 to 24 letters,
+  digits, spaces and ' - . , only, a letter in it, no blocked word ([/Script/EW.EWShip] BlockedNameWords in DefaultGame.ini,
+  a starting list for the owner to extend), no other ship bearing it, owner only. Shown painted on both bows, beside her
+  map marker and in the helm prompt; saved with the ship. Verified: two-player Play (verify_ship_names_play.py, 23 checks),
+  automation Elitewake.Ships.NameRules, captures capture_ship_names.py (Saved/Screenshots/ShipNames). Visual review pending.
+
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
 -------------------------------------------------------------------------
@@ -720,7 +728,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
           collision/boarding paths, Company permissions and saved layouts.
 [ ] 11. Exterior ship appearance: historically fitting paint, timber, trim, figureheads and cosmetic wear, replicated
           without giving a visibility or combat advantage.
-[ ] 12. Ship naming: editable name displayed on hull/UI with length, moderation and duplicate-name rules.
+[x] 12. Ship naming: editable name displayed on hull/UI with length, moderation and duplicate-name rules.
 [ ] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
 [ ] 14. Modular hull upgrades: reinforced hull plating with mass, cost, durability, speed and repair tradeoffs.
 [ ] 15. Improved rigging upgrades: handling and sail-efficiency tradeoffs while retaining approved sail rules.

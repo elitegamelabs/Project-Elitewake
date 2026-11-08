@@ -249,6 +249,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Dialogue") UEWDialogueWidget* GetDialogueWidget() const { return DialogueWidget; }
     UFUNCTION(Client, Reliable) void ClientOpenDialogue(AEWTownsfolk* Speaker);
     UFUNCTION(Server, Reliable, BlueprintCallable, Category="Dialogue") void ServerChooseDialogue(AEWTownsfolk* Speaker, FName Key);
+    /** A choice that asks for text (a ship's name), with what was typed. */
+    UFUNCTION(Server, Reliable, BlueprintCallable, Category="Dialogue") void ServerChooseDialogueText(AEWTownsfolk* Speaker, FName Key, const FString& Text);
     UFUNCTION(Client, Reliable) void ClientDialogueReply(AEWTownsfolk* Speaker, const FText& Reply);
     UFUNCTION(BlueprintPure, Category="Inventory|Container")
     AActor* GetOpenContainer() const { return OpenContainer; }

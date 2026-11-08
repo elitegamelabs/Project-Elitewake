@@ -231,5 +231,18 @@ FText AEWTownsfolk::ChooseDialogue(AEWCharacter* Character, FName Key)
         ++NextSmallTalk;
         return Line;
     }
+    if (Option->bAsksForText) return FText::GetEmpty();
     return ActOnDialogue(Character, Key);
+}
+
+FText AEWTownsfolk::ChooseDialogueText(AEWCharacter* Character, FName Key, const FString& Text)
+{
+    if (!HasAuthority()) return FText::GetEmpty();
+    if (!IsInReach(Character)) return NSLOCTEXT("Elitewake", "TownsfolkFar", "You are too far away.");
+    const FEWDialogueOption* Option = GetDialogueOptionsFor(Character).FindByPredicate([Key](const FEWDialogueOption& O) { return O.Key == Key; });
+    if (!Option || !Option->bAsksForText) return FText::GetEmpty();
+    StartTalk(Character);
+    if (!Option->bEnabled) return NSLOCTEXT("Elitewake", "TownsfolkNotNow", "That is not open to you now.");
+    // Nothing longer than a line reaches a subclass.
+    return ActOnDialogueText(Character, Key, Text.Left(64));
 }

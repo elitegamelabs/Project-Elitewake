@@ -321,11 +321,27 @@ void UEWMapWidget::PositionShipMarkers()
         MarkerSlot->SetAutoSize(true);
         MarkerSlot->SetZOrder(10);
         ShipMarkers.Add(Marker);
+        // Her name under the marker, upright (the marker itself turns with her heading).
+        UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>();
+        Label->SetColorAndOpacity(FLinearColor(1.f, .9f, .7f));
+        Label->SetShadowOffset(FVector2D(1.5f, 1.5f));
+        Label->SetShadowColorAndOpacity(FLinearColor::Black);
+        Label->SetVisibility(ESlateVisibility::Collapsed);
+        auto LabelFont = Label->GetFont();
+        LabelFont.Size = 15;
+        Label->SetFont(LabelFont);
+        UCanvasPanelSlot* LabelSlot = MapCanvas->AddChildToCanvas(Label);
+        LabelSlot->SetAlignment(FVector2D(.5f, 0.f));
+        LabelSlot->SetAutoSize(true);
+        LabelSlot->SetZOrder(10);
+        ShipNameLabels.Add(Label);
     }
 
     for (int32 Index = 0; Index < ShipMarkers.Num(); ++Index)
     {
         UTextBlock* Marker = ShipMarkers[Index];
+        UTextBlock* Label = ShipNameLabels.IsValidIndex(Index) ? ShipNameLabels[Index].Get() : nullptr;
+        if (Label) Label->SetVisibility(ESlateVisibility::Collapsed);
         if (Index >= Count)
         {
             Marker->SetVisibility(ESlateVisibility::Collapsed);
@@ -344,7 +360,21 @@ void UEWMapWidget::PositionShipMarkers()
             MarkerSlot->SetPosition(FVector2D(X, Y));
         Marker->SetRenderTransformAngle(EWNorth::BearingOfYaw(Ship.Yaw));
         Marker->SetVisibility(ESlateVisibility::HitTestInvisible);
+        if (Label && !Ship.Name.IsEmpty())
+        {
+            Label->SetText(FText::FromString(Ship.Name));
+            if (UCanvasPanelSlot* LabelSlot = Cast<UCanvasPanelSlot>(Label->Slot)) LabelSlot->SetPosition(FVector2D(X, Y + 14.f));
+            Label->SetVisibility(ESlateVisibility::HitTestInvisible);
+        }
     }
+}
+
+TArray<FString> UEWMapWidget::GetShownShipNames() const
+{
+    TArray<FString> Out;
+    for (const UTextBlock* Label : ShipNameLabels)
+        if (Label && Label->GetVisibility() != ESlateVisibility::Collapsed) Out.Add(Label->GetText().ToString());
+    return Out;
 }
 
 int32 UEWMapWidget::GetShipMarkerCount() const

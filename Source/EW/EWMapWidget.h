@@ -35,6 +35,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Map") FText GetScaleText() const;
     /** Number of boats currently represented by map markers (including hidden-by-terrain boats). */
     UFUNCTION(BlueprintPure, Category="Map") int32 GetShipMarkerCount() const;
+    /** The ship names written beside markers now, for the checks. */
+    UFUNCTION(BlueprintPure, Category="Map") TArray<FString> GetShownShipNames() const;
     UFUNCTION(BlueprintCallable, Category="Map") void AdjustZoom(float Direction);
     UFUNCTION(BlueprintCallable, Category="Map") void SetPanInput(FVector2D Input) { ControllerPanInput = Input; }
     UFUNCTION(BlueprintCallable, Category="Map") void SetPanAxis(bool bHorizontal, float Value) { if (bHorizontal) ControllerPanInput.X = Value; else ControllerPanInput.Y = Value; }
@@ -76,6 +78,7 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> PlayerMarker;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> PlayerMarkerSlot;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> ShipMarkers;
+    UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> ShipNameLabels;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanel> MapCanvas;
     UPROPERTY(Transient) TObjectPtr<UBorder> ScaleBar;
     UPROPERTY(Transient) TObjectPtr<UCanvasPanelSlot> ScaleBarSlot;

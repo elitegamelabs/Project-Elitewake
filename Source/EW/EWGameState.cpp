@@ -22,6 +22,7 @@ void AEWGameState::Tick(float DeltaSeconds)
         FEWShipMapEntry Entry;
         Entry.Location = It->GetActorLocation();
         Entry.Yaw = It->GetActorRotation().Yaw;
+        Entry.Name = It->GetShipName();
         Current.Add(Entry);
     }
     ShipsOnMap = MoveTemp(Current);

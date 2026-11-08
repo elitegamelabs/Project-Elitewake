@@ -141,6 +141,7 @@ public:
 protected:
     virtual void GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const override;
     virtual FText ActOnDialogue(AEWCharacter* Character, FName Key) override;
+    virtual FText ActOnDialogueText(AEWCharacter* Character, FName Key, const FString& Text) override;
 };
 
 /**

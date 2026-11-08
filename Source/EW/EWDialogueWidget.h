@@ -28,13 +28,32 @@ public:
     /** Choose the shown choice at Index (0-based); false when it is closed to the survivor now. */
     UFUNCTION(BlueprintCallable, Category="Dialogue") bool Choose(int32 Index);
     UFUNCTION(BlueprintCallable, Category="Dialogue") void Close();
+    /** A choice that asks for text (a ship's name): its box is open. */
+    UFUNCTION(BlueprintPure, Category="Dialogue") bool IsAskingForText() const { return !TextKey.IsNone(); }
+    UFUNCTION(BlueprintPure, Category="Dialogue") FString GetEnteredText() const;
+    /** Fills the box with a ship name nobody bears (the Suggest button, the controller's X). */
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void SuggestText();
+    /** Sends what is in the box (Register, Enter, the controller's A). */
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void SubmitText();
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void CancelText();
+    /** Types into the box (checks). */
+    UFUNCTION(BlueprintCallable, Category="Dialogue") void SetEnteredText(const FString& Text);
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float Delta) override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
 private:
     UFUNCTION() void OnOptionPressed(int32 Index) { Choose(Index); }
+    UFUNCTION() void OnTextButton(int32 Index);
+    UFUNCTION() void OnTextCommitted(const FText& Text, ETextCommit::Type How);
     void RefreshOptions();
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> TextPanel;
+    UPROPERTY(Transient) TObjectPtr<class UEditableTextBox> TextBox;
+    TArray<bool> AsksText;
+    FName TextKey;
+    int32 SuggestSeed = 0;
+    /** The last choice came from a controller: the name box keeps the window's focus so A, X and B work. */
+    bool bChosenByPad = false;
     TWeakObjectPtr<AEWTownsfolk> Speaker;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> NameText;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> LineText;

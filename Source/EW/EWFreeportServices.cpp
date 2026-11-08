@@ -312,7 +312,29 @@ void AEWHarborMaster::GetDialogueOptions(const AEWCharacter* Character, TArray<F
     Out.Add({FName(TEXT("Depart")), Ship
         ? FText::Format(NSLOCTEXT("Elitewake", "HarborDepart", "Clear my {0} for departure (towed to the harbor mouth, you aboard)"), AEWShipwright::ShipName(Ship->Definition))
         : NSLOCTEXT("Elitewake", "HarborDepartNone", "Departure: no ship of yours in the approaches"), Ship != nullptr});
+    // Ship names (Part 8, 12): the harbour registers a name for her owner's ship in the approaches.
+    if (Ship)
+    {
+        FEWDialogueOption Name;
+        Name.Key = FName(TEXT("NameShip"));
+        Name.bAsksForText = true;
+        Name.bEnabled = Ship->IsCaptain(Character);
+        Name.Label = !Name.bEnabled ? NSLOCTEXT("Elitewake", "HarborNameNotYours", "Register a name: only her owner may")
+            : Ship->GetShipName().IsEmpty() ? FText::Format(NSLOCTEXT("Elitewake", "HarborNameAsk", "Register a name for my {0}"), AEWShipwright::ShipName(Ship->Definition))
+            : FText::Format(NSLOCTEXT("Elitewake", "HarborRenameAsk", "Register a new name for the {0}"), Ship->GetShipTitle());
+        Out.Add(Name);
+    }
     Out.Add({FName(TEXT("Rules")), NSLOCTEXT("Elitewake", "HarborRules", "What are the harbor's rules?"), true});
+}
+
+FText AEWHarborMaster::ActOnDialogueText(AEWCharacter* Character, FName Key, const FString& Text)
+{
+    if (Key != FName(TEXT("NameShip"))) return FText::GetEmpty();
+    AEWShip* Ship = FindShipFor(Character);
+    if (!Ship) return NSLOCTEXT("Elitewake", "HarborNameNoShip", "I see no ship of yours in the approaches.");
+    FText Reason;
+    if (!Ship->TryRename(Character, Text, Reason)) return Reason;
+    return FText::Format(NSLOCTEXT("Elitewake", "HarborNamed", "Entered in the harbour book: the {0}. She will answer to it in every port."), Ship->GetShipTitle());
 }
 
 FText AEWHarborMaster::ActOnDialogue(AEWCharacter* Character, FName Key)

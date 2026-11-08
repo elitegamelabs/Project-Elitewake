@@ -10,6 +10,10 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "Components/EditableTextBox.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Ships/EWShip.h"
 
 namespace
 {
@@ -59,6 +63,39 @@ TSharedRef<SWidget> UEWDialogueWidget::RebuildWidget()
     Column->AddChildToVerticalBox(LineText)->SetPadding(FMargin(0, 0, 0, 16));
     OptionList = WidgetTree->ConstructWidget<UVerticalBox>();
     Column->AddChildToVerticalBox(OptionList);
+    // The box for a choice that asks for text (a ship's name), shown in place of the choices.
+    TextPanel = WidgetTree->ConstructWidget<UVerticalBox>();
+    TextPanel->SetVisibility(ESlateVisibility::Collapsed);
+    Column->AddChildToVerticalBox(TextPanel);
+    TextPanel->AddChildToVerticalBox(MakeDialogueText(WidgetTree, FText::Format(NSLOCTEXT("Elitewake", "DialogueNameAsk",
+        "Her name, 2 to {0} letters:"), FText::AsNumber(AEWShip::MaxNameLength)), 16, DialogueBrass))->SetPadding(FMargin(0, 0, 0, 6));
+    TextBox = WidgetTree->ConstructWidget<UEditableTextBox>();
+    {
+        FEditableTextBoxStyle Style = TextBox->WidgetStyle;
+        Style.SetForegroundColor(FSlateColor(DialogueSpeech));
+        Style.SetBackgroundColor(FSlateColor(FLinearColor(.12f, .09f, .06f, 1.f)));
+        Style.TextStyle.Font.Size = 20;
+        TextBox->WidgetStyle = Style;
+    }
+    TextBox->OnTextCommitted.AddDynamic(this, &UEWDialogueWidget::OnTextCommitted);
+    TextPanel->AddChildToVerticalBox(TextBox)->SetPadding(FMargin(0, 0, 0, 10));
+    auto* TextButtons = WidgetTree->ConstructWidget<UHorizontalBox>();
+    TextPanel->AddChildToVerticalBox(TextButtons);
+    const FText TextLabels[] = {NSLOCTEXT("Elitewake", "DialogueRegister", "Register (Enter / A)"),
+        NSLOCTEXT("Elitewake", "DialogueSuggest", "Suggest a name (X)"), NSLOCTEXT("Elitewake", "DialogueCancel", "Cancel (Esc / B)")};
+    for (int32 Index = 0; Index < UE_ARRAY_COUNT(TextLabels); ++Index)
+    {
+        auto* Button = WidgetTree->ConstructWidget<UEWRecipeButton>();
+        Button->Initialize(Index);
+        Button->OnRecipePressed.AddDynamic(this, &UEWDialogueWidget::OnTextButton);
+        FButtonStyle Flat = Button->GetStyle();
+        Flat.Normal.TintColor = FSlateColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .1f));
+        Flat.Hovered.TintColor = FSlateColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .22f));
+        Flat.Pressed.TintColor = FSlateColor(FLinearColor(DialogueBrass.R, DialogueBrass.G, DialogueBrass.B, .35f));
+        Button->SetStyle(Flat);
+        Button->SetContent(MakeDialogueText(WidgetTree, TextLabels[Index], 15, DialogueSpeech));
+        TextButtons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0, 0, 10, 0));
+    }
     Column->AddChildToVerticalBox(MakeDialogueText(WidgetTree, NSLOCTEXT("Elitewake", "DialogueLeave", "Leave: Esc / E / B"), 12, DialogueFaded))->SetPadding(FMargin(0, 12, 0, 0));
     return Super::RebuildWidget();
 }
@@ -97,6 +134,8 @@ void UEWDialogueWidget::RefreshOptions()
         Labels.Add(FString::Printf(TEXT("%d.  %s"), Index + 1, *Options[Index].Label.ToString()));
     TArray<bool> NowEnabled;
     for (const FEWDialogueOption& Option : Options) NowEnabled.Add(Option.bEnabled);
+    AsksText.Reset();
+    for (const FEWDialogueOption& Option : Options) AsksText.Add(Option.bAsksForText);
     if (Labels == ShownLabels && NowEnabled == Enabled) return;
     ShownLabels = Labels;
     Enabled = NowEnabled;
@@ -130,8 +169,66 @@ bool UEWDialogueWidget::Choose(int32 Index)
     if (!Keys.IsValidIndex(Index) || !Enabled.IsValidIndex(Index) || !Enabled[Index]) return false;
     auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
     if (!Controller || !Speaker.IsValid()) return false;
+    if (AsksText.IsValidIndex(Index) && AsksText[Index])
+    {
+        // Show the box in place of the choices. Typing goes to it; a controller keeps the window's own focus (A, X, B).
+        TextKey = Keys[Index];
+        if (TextBox) TextBox->SetText(FText::GetEmpty());
+        if (OptionList) OptionList->SetVisibility(ESlateVisibility::Collapsed);
+        if (TextPanel) TextPanel->SetVisibility(ESlateVisibility::Visible);
+        if (TextBox && !bChosenByPad) TextBox->SetKeyboardFocus();
+        return true;
+    }
     Controller->ServerChooseDialogue(Speaker.Get(), Keys[Index]);
     return true;
+}
+
+FString UEWDialogueWidget::GetEnteredText() const
+{
+    return TextBox ? TextBox->GetText().ToString() : FString();
+}
+
+void UEWDialogueWidget::SetEnteredText(const FString& Text)
+{
+    if (TextBox) TextBox->SetText(FText::FromString(Text.Left(64)));
+}
+
+void UEWDialogueWidget::SuggestText()
+{
+    if (!IsAskingForText()) return;
+    SetEnteredText(AEWShip::SuggestName(GetWorld(), ++SuggestSeed + int32(FPlatformTime::Cycles() & 0xffff)));
+}
+
+void UEWDialogueWidget::SubmitText()
+{
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (!IsAskingForText() || !Controller || !Speaker.IsValid()) return;
+    const FName Key = TextKey;
+    const FString Text = GetEnteredText();
+    CancelText();
+    Controller->ServerChooseDialogueText(Speaker.Get(), Key, Text);
+}
+
+void UEWDialogueWidget::CancelText()
+{
+    TextKey = NAME_None;
+    if (TextPanel) TextPanel->SetVisibility(ESlateVisibility::Collapsed);
+    if (OptionList) OptionList->SetVisibility(ESlateVisibility::Visible);
+    SetKeyboardFocus();
+}
+
+void UEWDialogueWidget::OnTextButton(int32 Index)
+{
+    if (Index == 0) SubmitText();
+    else if (Index == 1) SuggestText();
+    else CancelText();
+}
+
+void UEWDialogueWidget::OnTextCommitted(const FText& Text, ETextCommit::Type How)
+{
+    if (!IsAskingForText()) return;
+    if (How == ETextCommit::OnEnter) SubmitText();
+    else if (How == ETextCommit::OnCleared) CancelText();
 }
 
 void UEWDialogueWidget::Close()
@@ -159,6 +256,15 @@ void UEWDialogueWidget::NativeTick(const FGeometry& Geometry, float Delta)
 FReply UEWDialogueWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
+    bChosenByPad = Key.IsGamepadKey();
+    if (IsAskingForText())
+    {
+        // The box's own keys: register, suggest, cancel. Everything else (typing) belongs to the box.
+        if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) SubmitText();
+        else if (Key == EKeys::Gamepad_FaceButton_Left) SuggestText();
+        else if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right) CancelText();
+        return FReply::Handled();
+    }
     if (Key == EKeys::Escape || Key == EKeys::E || Key == EKeys::Tab || Key == EKeys::Gamepad_FaceButton_Right)
     {
         Close();

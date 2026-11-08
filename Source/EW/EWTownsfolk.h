@@ -19,6 +19,8 @@ struct FEWDialogueOption
     UPROPERTY(BlueprintReadOnly, Category="Dialogue") FName Key;
     UPROPERTY(BlueprintReadOnly, Category="Dialogue") FText Label;
     UPROPERTY(BlueprintReadOnly, Category="Dialogue") bool bEnabled = true;
+    /** The choice asks for a line of text first (a ship's name, November 8): the window shows a box for it. */
+    UPROPERTY(BlueprintReadOnly, Category="Dialogue") bool bAsksForText = false;
 };
 
 /**
@@ -52,6 +54,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Townsfolk") TArray<FEWDialogueOption> GetDialogueOptionsFor(const AEWCharacter* Character) const;
     /** Authority: the survivor chose Key. Checks reach and that the choice is open to them, acts, and returns the answer. */
     UFUNCTION(BlueprintCallable, Category="Townsfolk") FText ChooseDialogue(AEWCharacter* Character, FName Key);
+    /** Authority: the same for a choice that asks for text, with what the survivor typed. */
+    UFUNCTION(BlueprintCallable, Category="Townsfolk") FText ChooseDialogueText(AEWCharacter* Character, FName Key, const FString& Text);
     /** Within reach to talk (and to trade). */
     bool IsInReach(const AEWCharacter* Character) const;
 
@@ -89,6 +93,8 @@ protected:
     virtual void GetDialogueOptions(const AEWCharacter* Character, TArray<FEWDialogueOption>& Out) const {}
     /** Authority: act on a subclass's choice; return the line said back (empty if the key is not theirs). */
     virtual FText ActOnDialogue(AEWCharacter* Character, FName Key) { return FText::GetEmpty(); }
+    /** Authority: act on a choice that asks for text (FEWDialogueOption::bAsksForText). */
+    virtual FText ActOnDialogueText(AEWCharacter* Character, FName Key, const FString& Text) { return FText::GetEmpty(); }
     /** Where along the stroll they are at a time, and which way they face; true while walking. */
     bool StrollPose(double Time, FVector& OutWhere, float& OutYaw) const;
 

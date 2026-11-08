@@ -12,6 +12,8 @@ struct FEWShipMapEntry
 
     UPROPERTY(BlueprintReadOnly, Category="Map") FVector Location = FVector::ZeroVector;
     UPROPERTY(BlueprintReadOnly, Category="Map") float Yaw = 0.f;
+    /** Her registered name (Part 8, 12), shown beside her marker; empty while she has none. */
+    UPROPERTY(BlueprintReadOnly, Category="Map") FString Name;
 };
 
 /** The public map shows boats even when terrain or a sea cavern hides them in the world. */

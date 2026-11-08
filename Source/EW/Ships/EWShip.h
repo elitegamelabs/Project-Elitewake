@@ -112,6 +112,8 @@ struct FEWSavedShip
     /** Her owner: the host's stable key for the player (none: unclaimed) and the name shown. */
     UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerKey;
     UPROPERTY(BlueprintReadOnly, Category="Save") FString OwnerName;
+    /** Her registered name (November 8); empty in an older save. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") FString ShipName;
     /** Still the shipyard's, for sale (November 1, AEWShip::bHeldByYard): 1 or 0; -1 in an older save, which leaves her as the map has her. */
     UPROPERTY(BlueprintReadOnly, Category="Save") int32 YardHeld = -1;
 };
@@ -600,6 +602,25 @@ public:
     bool IsOwned() const { return !OwnerName.IsEmpty() || bHeldByYard; }
     UFUNCTION(BlueprintPure, Category="Ship|Owner")
     FString GetOwnerName() const { return bHeldByYard ? FString(TEXT("Saltreach shipyard")) : OwnerName; }
+    /** Ship names (FUTURE_IMPLEMENTATIONS Part 8, 12; November 8): her registered name, empty until one is given. */
+    UFUNCTION(BlueprintPure, Category="Ship|Name")
+    FString GetShipName() const { return ShipName; }
+    /** What to call her: her name, or her class ("Sloop") while she has none. */
+    UFUNCTION(BlueprintPure, Category="Ship|Name")
+    FText GetShipTitle() const;
+    /** Her owner, the only one who may name her (single player: whoever has her). Server side. */
+    bool IsCaptain(const AEWCharacter* Character) const;
+    /** Tidies a proposed name and checks it against the rules: 2 to MaxNameLength characters of letters, digits, spaces and
+     *  ' - . , at least one letter, no word on the blocked list (Config: [/Script/EW.EWShip] BlockedNameWords). */
+    static bool CleanShipName(const FString& Proposed, FString& OutName, FText& OutReason);
+    /** Authority: names her, if the survivor is her captain, the name passes CleanShipName and no other ship bears it. */
+    bool TryRename(const AEWCharacter* By, const FString& Proposed, FText& OutReason);
+    /** Authority: TryRename for scripts and checks; returns why not, or empty when she was named. */
+    UFUNCTION(BlueprintCallable, Category="Ship|Name")
+    FText RenameOrRefuse(AEWCharacter* By, const FString& Proposed) { FText Why; return TryRename(By, Proposed, Why) ? FText::GetEmpty() : Why; }
+    /** A period name for a ship nobody in this world bears, for "Suggest a name" (and controller players). */
+    static FString SuggestName(const UWorld* World, int32 Seed);
+    static constexpr int32 MaxNameLength = 24;
     /** The shipyard's, for sale (owner, November 1: a moored ship no longer claims herself; the first boat is bought). Nobody takes
      *  her helm, hold, anchor, sails or cannons, single player included, until the shipwright sells her (AEWShipwright::BuyShip hands
      *  over a held ship of the class bought before launching a new one). Anyone may still climb aboard and look. */
@@ -669,6 +690,11 @@ private:
     UPROPERTY(Replicated) int32 OwnerPlayerId = INDEX_NONE;
     UPROPERTY(Replicated) FGuid OwnerCompanyId;
     float OwnerRefreshIn = 0.f;
+    UPROPERTY(ReplicatedUsing=OnRep_ShipName) FString ShipName;
+    UFUNCTION() void OnRep_ShipName();
+    /** Her name painted on both bows (none while she has no name). The stern carries the boarding ladder. */
+    UPROPERTY(Transient) TArray<TObjectPtr<class UTextRenderComponent>> NameBoards;
+    void UpdateSternName();
     /** Authority: finds the owner among the players here (their id, name and Company now). */
     void RefreshOwner();
     FText CrewOnlyPrompt() const;

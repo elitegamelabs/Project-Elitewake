@@ -999,6 +999,15 @@ void AEWPlayerController::ServerChooseDialogue_Implementation(AEWTownsfolk* Spea
     ClientDialogueReply(Speaker, Reply);
 }
 
+void AEWPlayerController::ServerChooseDialogueText_Implementation(AEWTownsfolk* Speaker, FName Key, const FString& Text)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!Survivor || !IsValid(Speaker) || Speaker->GetWorld() != GetWorld()) return;
+    const FText Reply = Speaker->ChooseDialogueText(Survivor, Key, Text);
+    LastDialogueReply = Reply;
+    ClientDialogueReply(Speaker, Reply);
+}
+
 void AEWPlayerController::ClientDialogueReply_Implementation(AEWTownsfolk* Speaker, const FText& Reply)
 {
     LastDialogueReply = Reply;
