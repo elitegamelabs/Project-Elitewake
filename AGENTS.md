@@ -59,11 +59,9 @@ purpose); run two Unreal editors on the project at once.
 Each step: read the item in `FUTURE_IMPLEMENTATIONS.txt` Part 8 and `FEATURE_EXPANSION_PLAN.txt`, build the smallest
 working slice, add a Play check, run it, run the Python tests and both builds, record it, commit, push.
 
-1. **Finish the armor's evidence (start here).**
-   - Run `Scripts/Verification/verify_armor_multiplayer_play.py` (two players). It is written and has never run; fix what
-     fails (the game, or the check if the check is wrong — say which).
-   - Re-run `verify_armor_play.py` (one player) to confirm nothing regressed: 92 checks.
-   - Record both in the armor entry of Part 7.
+1. **Armor evidence: DONE by Codex on November 8** (commits 567193d5, 5d107a18: two-player check 16/16, hosted save and
+   restore 15/15, Hands/Feet rows hidden, image rights confirmed by the owner, playtest build from 9f041a33 published).
+   Left for armor: a real network disconnect and rejoin with armor on (do it if a two-process check exists that can).
 2. **Wave A, 60 — remappable controls.** Use Enhanced Input user settings (player-mappable keys) behind the existing
    Options "Controls" page (`EWOptionsWidget`, `EWControlsList.h`): pick a row, press a key or button, warn on a clash,
    save, "Reset to defaults" restores the owner's layout in CLAUDE.md 6.5. Extend `verify_controller_only_play.py` and
@@ -78,8 +76,7 @@ working slice, add a Play check, run it, run the Python tests and both builds, r
 7. If time remains: the Wave B items in Part 8, in their listed order.
 
 Not yours this week: production 3D garments for the armor (needs art), the pirate MetaHuman skin (needs Epic/Fab access),
-any exe or playtest publish, any world rebuild, the Hands/Feet slot question and the concept-sheet rights question
-(both wait for the owner).
+any further exe or playtest publish unless the owner asks again, and any world rebuild.
 
 ## 4. Before you stop (Wednesday)
 
