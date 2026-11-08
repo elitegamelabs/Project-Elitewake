@@ -65,6 +65,9 @@ private:
 public:
     /** The discovery being announced, as shown, for the checks (empty when none is). */
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedDiscovery() const;
+    /** The sextant's reading shown now (empty with none in hand), for the checks. */
+    UFUNCTION(BlueprintPure, Category="Survival|HUD") FString GetDisplayedLatitude() const { return DisplayedLatitude; }
+    FString DisplayedLatitude;
     /** The climate line and the region last announced, as shown, for the checks. */
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedClimate() const;
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedRegionBanner() const;

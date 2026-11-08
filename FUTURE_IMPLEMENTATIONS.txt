@@ -764,7 +764,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
 [ ] 07. Drifting wreckage from battles and storms: buoyant debris with timed cleanup, salvage ownership and performance caps.
 [ ] 08. Tide changes: readable water-level variations exposing tidal caves, shoals and hazards; protect existing coasts,
           anchor interactions, base placements, inland water and navigable routes.
-[ ] 09. Nautical instruments: usable compass, sextant and nautical charts, with skill-based navigation and discoverable
+[~] 09. Nautical instruments: usable compass, sextant and nautical charts, with skill-based navigation and discoverable
           positions; do not replace the existing map and compass without migration.
 
 8.2 SHIPS, IDENTITY AND CUSTOMIZATION
@@ -885,3 +885,10 @@ open when their precise rules are unresolved. Design/build one verified slice at
   shipmate writes their own line (up to 160 letters, tidied) through the harbor master's text box; it is dated like every
   line. The box now carries its own prompt, and Suggest a name shows only when naming a ship. Verified: verify_ship_names_play.py
   (28 checks, the note on server and client). Item 13 is now complete except notes written at sea (the helm has no text box).
+
+2026-11-08 Sextant (Part 8, 09, first part), commit "Sextant: hold it to read your latitude". A brass sextant (3 copper
+  ingots, 1 iron ingot, 1 wood at a fire; the Metalwork skill unlocks it) held in the main hand puts the latitude on the HUD's
+  climate line, "18°00' N" at Saltreach's island; the chart counts a degree per kilometre north (EWNorth::LatitudeAt;
+  tuning), so Winter reads about 34 N and the Swamp about 2 N; under water it reads "no horizon". Verified:
+  verify_sextant_play.py (9 checks). The HUD compass is left as it was (always shown). Still to do for 09: nautical charts,
+  skill-based accuracy, a held sextant model (it is held empty-handed for now).

@@ -128,6 +128,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing", meta=(ClampMin="0.0"))
 	float Insulation = 0.0f;
 
+	/** A sextant (Part 8, 09): held in the hand, it reads the survivor's latitude on the HUD. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Navigation")
+	bool bSextant = false;
+
 	/** Armor (owner, November 8): Cloth, Fur or Metal. Only fur carries Insulation, so only fur keeps out the cold. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Clothing")
 	EEWArmorKind ArmorKind = EEWArmorKind::None;

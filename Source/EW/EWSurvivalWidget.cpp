@@ -20,6 +20,9 @@
 #include "World/EWSafeZone.h"
 #include "EWDiscoveryComponent.h"
 #include "EWColourVision.h"
+#include "EWEquipmentComponent.h"
+#include "World/EWNorth.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "EWPlayerController.h"
 
 namespace
@@ -239,6 +242,17 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Line += FString::Printf(TEXT("   Body %.1f°C"), Body);
         if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
             if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("   Purse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
+        // A sextant in hand reads the latitude (Part 8, 09); not under water, where there is no horizon.
+        DisplayedLatitude.Reset();
+        if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
+            if (const UEWEquipmentComponent* Worn = Me->GetEquipmentComponent())
+                if (const UEWItemDefinition* Held = Worn->GetEquippedItem(EEWEquipmentSlot::MainHand); Held && Held->bSextant)
+                {
+                    const bool bUnder = Me->GetCharacterMovement() && Me->GetCharacterMovement()->IsSwimming()
+                        && Me->GetActorLocation().Z < -150.f;
+                    DisplayedLatitude = bUnder ? FString(TEXT("no horizon")) : EWNorth::FormatLatitude(EWNorth::LatitudeAt(Me->GetActorLocation()));
+                    Line += FString::Printf(TEXT("   Sextant %s"), *DisplayedLatitude);
+                }
         ClimateLine->SetText(FText::FromString(Line));
         // Blue as the body cools, white when comfortable, orange as it heats.
         const FLinearColor Cold = EWCue::Cold(), Hot = EWCue::Hot();
