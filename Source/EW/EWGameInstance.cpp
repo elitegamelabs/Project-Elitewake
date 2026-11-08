@@ -364,6 +364,10 @@ void UEWGameInstance::SetInterfaceScale(float Scale)
     if (GConfig) { GConfig->SetFloat(TEXT("Elitewake.UserControls"),TEXT("InterfaceScale"),InterfaceScale,GGameUserSettingsIni); GConfig->Flush(false,GGameUserSettingsIni); }
 }
 
+EEWColourVision UEWGameInstance::GetColourVision() { return EWCue::GetMode(); }
+FLinearColor UEWGameInstance::GetGoodCueColour() { return EWCue::Good(); }
+void UEWGameInstance::SetColourVision(EEWColourVision Mode) { EWCue::SetMode(Mode); }
+
 float UEWGameInstance::GetAppliedInterfaceScale()
 {
     const UUserInterfaceSettings* UI=GetDefault<UUserInterfaceSettings>();

@@ -202,8 +202,22 @@ def adjust_settings():
     assert abs(unreal.EWGameInstance.get_applied_interface_scale() - 1.5) < .001, f'Right did not reach 150% ({unreal.EWGameInstance.get_applied_interface_scale()})'
     state['memo']['interface'] = '80% to 150%'
     unreal.EWGameInstance.set_interface_scale(size_found)
+    # Colour vision (Part 8, 61): Standard, Red-green, Blue-yellow, each its own 'good' colour; left as found.
+    assert key('Down') and menu.get_selected() == 16, 'Down did not reach colour vision'
+    vision_found = unreal.EWGameInstance.get_colour_vision()
+    for _ in range(3):
+        key('Left')
+    assert unreal.EWGameInstance.get_colour_vision() == unreal.EWColourVision.STANDARD, 'Left did not reach Standard colours'
+    goods = [unreal.EWGameInstance.get_good_cue_colour()]
+    assert key('Right') and unreal.EWGameInstance.get_colour_vision() == unreal.EWColourVision.RED_GREEN, 'Right did not choose red-green'
+    goods.append(unreal.EWGameInstance.get_good_cue_colour())
+    assert key('Right') and unreal.EWGameInstance.get_colour_vision() == unreal.EWColourVision.BLUE_YELLOW, 'Right did not choose blue-yellow'
+    goods.append(unreal.EWGameInstance.get_good_cue_colour())
+    assert len({(round(c.r, 2), round(c.g, 2), round(c.b, 2)) for c in goods}) == 3, f'the palettes do not differ: {goods}'
+    unreal.EWGameInstance.set_colour_vision(vision_found)
+    state['memo']['colour_vision'] = 'Standard, Red-green, Blue-yellow'
     # Controls (owner, November 7): every control, for the keyboard or the controller in use.
-    assert key('Down') and menu.get_selected() == 16, 'Down did not reach CONTROLS'
+    assert key('Down') and menu.get_selected() == 17, 'Down did not reach CONTROLS'
     assert key('Enter') and menu.get_tab() == 2, 'Enter on CONTROLS did not open the Controls page'
     count = menu.get_controls_count()
     assert count >= 30, f'the Controls page lists only {count} controls'
@@ -213,13 +227,13 @@ def adjust_settings():
     pad_jump = menu.get_control_text(2)
     assert pad_jump in ('A', 'Cross', 'Bottom button'), f'jump is not shown as the controller button: {pad_jump}'
     state['memo']['controls'] = {'count': count, 'pad_jump': pad_jump, 'pad_hotbar_5_8': menu.get_control_text(11)}
-    assert key('Escape') and menu.get_tab() == 1 and menu.get_selected() == 16, 'Escape did not return from Controls to CONTROLS'
-    assert key('Down') and menu.get_selected() == 17, 'Down did not reach BACK'
+    assert key('Escape') and menu.get_tab() == 1 and menu.get_selected() == 17, 'Escape did not return from Controls to CONTROLS'
+    assert key('Down') and menu.get_selected() == 18, 'Down did not reach BACK'
     assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
     state['memo']['settings'] = (after_brightness, looks)
     assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
     checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
-                  'change live by keys; sound effects and ambience volumes too; CONTROLS lists every control, switching to the controller buttons; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; interface size steps 80% to 150%; BACK returns to the buttons')
+                  'change live by keys; sound effects and ambience volumes too; CONTROLS lists every control, switching to the controller buttons; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; interface size steps 80% to 150%; colour vision steps Standard, Red-green, Blue-yellow; BACK returns to the buttons')
 
 
 def save_game():

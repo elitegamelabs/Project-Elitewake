@@ -19,6 +19,7 @@
 #include "World/EWClimateRegion.h"
 #include "World/EWSafeZone.h"
 #include "EWDiscoveryComponent.h"
+#include "EWColourVision.h"
 #include "EWPlayerController.h"
 
 namespace
@@ -240,7 +241,7 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
             if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("   Purse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
         ClimateLine->SetText(FText::FromString(Line));
         // Blue as the body cools, white when comfortable, orange as it heats.
-        const FLinearColor Cold(.45f,.75f,1.f), Hot(1.f,.55f,.2f);
+        const FLinearColor Cold = EWCue::Cold(), Hot = EWCue::Hot();
         const float Off = Body - UEWSurvivalComponent::NormalBody;
         ClimateLine->SetColorAndOpacity(FSlateColor(Off < -.3f ? FMath::Lerp(FLinearColor::White, Cold, FMath::Clamp(-Off / 2.f, 0.f, 1.f))
             : Off > .3f ? FMath::Lerp(FLinearColor::White, Hot, FMath::Clamp(Off / 2.f, 0.f, 1.f)) : FLinearColor::White));

@@ -1,4 +1,5 @@
 #include "EWCompassWidget.h"
+#include "EWColourVision.h"
 #include "EWArrivalComponent.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
@@ -16,7 +17,6 @@ namespace
 const FLinearColor CompassInk(.93f, .9f, .82f);           // bearings
 const FLinearColor CompassNorth(1.f, .55f, .35f);         // N stands out
 const FLinearColor CompassWind(.55f, .8f, 1.f);        // the wind, as the ship markers' working blue
-const FLinearColor CompassGood(.45f, 1.f, .45f);
 const FLinearColor CompassPlace(1.f, .78f, .3f);         // the town step's place: a square, gold, with its distance
 // The same compass strip location with a darker, more opaque plate for sea/sky contrast.
 const FLinearColor CompassBacking(.008f, .014f, .022f, .82f);
@@ -162,14 +162,14 @@ int32 UEWCompassWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
     {
         const float From = AngleX(FMath::Clamp(Best - 18.f, -MaxSailAngle, MaxSailAngle));
         const float To = AngleX(FMath::Clamp(Best + 18.f, -MaxSailAngle, MaxSailAngle));
-        Box(2, FVector2f(From, BarTop), FVector2f(FMath::Max(To - From, 2.f), 10.f), CompassGood.CopyWithNewOpacity(.45f));
+        Box(2, FVector2f(From, BarTop), FVector2f(FMath::Max(To - From, 2.f), 10.f), EWCue::Good().CopyWithNewOpacity(.45f));
     };
     Shade(BestSailAngle);
     if (FMath::Abs(BestSailAngle) > MaxSailAngle - 10.f) Shade(-BestSailAngle);
     Box(2, FVector2f(Centre - .5f, BarTop - 3.f), FVector2f(1.f, 16.f), CompassInk.CopyWithNewOpacity(.5f));
-    const FLinearColor Marker = FMath::Lerp(FLinearColor(1.f, .45f, .3f), CompassGood, TrimQuality);
+    const FLinearColor Marker = FMath::Lerp(EWCue::Warning(), EWCue::Good(), TrimQuality);
     Box(3, FVector2f(AngleX(SailAngle) - 2.5f, BarTop - 4.f), FVector2f(5.f, 18.f), Marker);
     Text(FString::Printf(TEXT("%s  -  %d%%"), *TrimAdvice, FMath::RoundToInt(TrimQuality * 100.f)),
-        FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, BarTop + 16.f), TrimQuality >= .9f ? CompassGood : CompassInk);
+        FCoreStyle::GetDefaultFontStyle("Bold", 10), FVector2f(Centre, BarTop + 16.f), TrimQuality >= .9f ? EWCue::Good() : CompassInk);
     return Layer + 4;
 }

@@ -1,4 +1,5 @@
 #include "EWOptionsWidget.h"
+#include "EWColourVision.h"
 
 #include "EWPlayerController.h"
 #include "EWGameInstance.h"
@@ -29,7 +30,8 @@ namespace
     constexpr float MaxBrightness = .5f;
     constexpr float MinSensitivity = .1f;
     constexpr float MaxSensitivity = 3.f;
-    constexpr int32 SettingCount = 16;
+    constexpr int32 SettingCount = 17;
+constexpr float ColourStep = .5f;    // Standard, Red-green, Blue-yellow
 constexpr float InterfaceStep = .05f / (UEWGameInstance::MaxInterfaceScale - UEWGameInstance::MinInterfaceScale);   // 5% a press
     constexpr float IconsStep = .5f;     // Automatic, Xbox, PlayStation
     constexpr float QualityStep = 1.f / (FEWGraphicsSettings::Levels - 1);
@@ -200,6 +202,10 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             Normalize(UEWGameInstance::GetInterfaceScale(), UEWGameInstance::MinInterfaceScale, UEWGameInstance::MaxInterfaceScale));
         InterfaceSlider->SetStepSize(InterfaceStep);
         InterfaceSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnInterfaceChanged);
+        // Colour vision (Part 8, 61): the palette of the interface's colour cues.
+        ColourVisionSlider = AddSetting(NSLOCTEXT("Elitewake", "ColourVisionLabel", "Colour vision"), int32(EWCue::GetMode()) * ColourStep);
+        ColourVisionSlider->SetStepSize(ColourStep);
+        ColourVisionSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnColourVisionChanged);
         // Controls (owner, November 7): every control, for the keyboard or the controller in use.
         ControlsButton = Button(OptionsPage, NSLOCTEXT("Elitewake", "OptionsControls", "CONTROLS"));
         ControlsButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::OpenControls);
@@ -322,6 +328,14 @@ void UEWOptionsWidget::RefreshSettingLabels()
         : NSLOCTEXT("Elitewake", "IconsAuto", "Automatic"));
     SettingValues[SettingInterface]->SetText(FText::Format(NSLOCTEXT("Elitewake", "InterfaceSizeValue", "{0}%"),
         FText::AsNumber(FMath::RoundToInt(UEWGameInstance::GetInterfaceScale() * 100.f))));
+    SettingValues[SettingColourVision]->SetText(EWCue::ModeName(EWCue::GetMode()));
+}
+
+void UEWOptionsWidget::OnColourVisionChanged(float Value)
+{
+    Selected = SettingColourVision;
+    EWCue::SetMode(static_cast<EEWColourVision>(FMath::Clamp(FMath::RoundToInt(Value / ColourStep), 0, 2)));
+    RefreshSettingLabels();
 }
 
 void UEWOptionsWidget::OnInterfaceChanged(float Value)
@@ -406,16 +420,18 @@ void UEWOptionsWidget::SyncGraphicsSliders()
 void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 {
     USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider, EffectsSlider, AmbienceSlider, QualitySlider,
-        GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4], ButtonIconsSlider, InterfaceSlider};
+        GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4], ButtonIconsSlider, InterfaceSlider,
+        ColourVisionSlider};
     if (Selected < 0 || Selected >= SettingCount || !Sliders[Selected]) return;
     // The graphics settings move a whole level at a time (and the slider's change handler applies it).
-    const float Step = Selected == SettingInterface ? InterfaceStep : Selected == SettingButtonIcons ? IconsStep
+    const float Step = Selected == SettingColourVision ? ColourStep : Selected == SettingInterface ? InterfaceStep : Selected == SettingButtonIcons ? IconsStep
         : Selected >= SettingGraphics ? QualityStep : .02f;
     const float Value = FMath::Clamp(Sliders[Selected]->GetValue() + Direction * Step, 0.f, 1.f);
     Sliders[Selected]->SetValue(Value);
     if (Selected == SettingGraphics) OnQualityChanged(Value);
     else if (Selected == SettingButtonIcons) OnButtonIconsChanged(Value);
     else if (Selected == SettingInterface) OnInterfaceChanged(Value);
+    else if (Selected == SettingColourVision) OnColourVisionChanged(Value);
     else if (Selected > SettingGraphics) OnGraphicsChanged(Selected - SettingGraphics - 1, Value);
 }
 

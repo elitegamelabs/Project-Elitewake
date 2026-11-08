@@ -1,5 +1,6 @@
 #include "EWShipMarkersWidget.h"
 #include "EWCharacter.h"
+#include "EWColourVision.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
 #include "EWPlayerController.h"
@@ -14,8 +15,9 @@
 
 namespace
 {
-const FLinearColor MarkerEmpty(1.f, .72f, .25f);          // a mount waiting for a fitting
-const FLinearColor MarkerFits(.45f, 1.f, .45f);           // a mount a carried fitting fits
+// The waiting and fits colours follow the colour-vision setting (Part 8, 61).
+FLinearColor MarkerEmpty() { return EWCue::Warning(); }    // a mount waiting for a fitting
+FLinearColor MarkerFits() { return EWCue::Good(); }        // a mount a carried fitting fits
 const FLinearColor MarkerFitted(.85f, .87f, .9f);         // something already in place
 const FLinearColor MarkerWorking(.55f, .8f, 1.f);         // the anchor, the hold, the ladders
 
@@ -49,7 +51,8 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
         if (Distance > Range || !PC->ProjectWorldLocationToScreen(Where, Screen, true)) return;
         FEWShipMarker Marker;
         Marker.Position = Screen / Scale;
-        Marker.Label = Label;
+        // A mount a carried fitting fits says so with a mark too, not by its colour alone (Part 8, 61).
+        Marker.Label = bFits ? FString(EWCue::GoodMark()) + Label : Label;
         Marker.Colour = Colour;
         Marker.bAimed = bAimed;
         Marker.bFits = bFits;
@@ -80,7 +83,7 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
                 else
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
-                    Add(Where, bFits ? TEXT("Fit the wheel here") : TEXT("Wheel mount"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                    Add(Where, bFits ? TEXT("Fit the wheel here") : TEXT("Wheel mount"), bFits ? MarkerFits() : MarkerEmpty(), bThis, bFits);
                 }
             }
             else if (Mount.Type == EEWShipMountType::Sail)
@@ -91,12 +94,12 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
                     Add(Where, bFits ? FString::Printf(TEXT("Fit %s sail here"), *Size) : FString::Printf(TEXT("%s sail mount"), *Size),
-                        bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                        bFits ? MarkerFits() : MarkerEmpty(), bThis, bFits);
                 }
             }
             else if (Mount.Type == EEWShipMountType::Cannon && !Installed && FVector::Dist(Here, Where) < Range * .5f)
             {
-                Add(Where, TEXT("Cannon port"), MarkerEmpty * FLinearColor(1, 1, 1, .7f), bThis, false);
+                Add(Where, TEXT("Cannon port"), MarkerEmpty() * FLinearColor(1, 1, 1, .7f), bThis, false);
             }
             else if (Mount.Type == EEWShipMountType::Flag)
             {
@@ -110,7 +113,7 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
                 else
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
-                    Add(Where, bFits ? TEXT("Hoist a flag here") : TEXT("Flag halyard"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                    Add(Where, bFits ? TEXT("Hoist a flag here") : TEXT("Flag halyard"), bFits ? MarkerFits() : MarkerEmpty(), bThis, bFits);
                 }
             }
             else if (Mount.Type == EEWShipMountType::Railing)
@@ -120,7 +123,7 @@ void UEWShipMarkersWidget::NativeTick(const FGeometry& Geometry, float DeltaTime
                 else
                 {
                     const bool bFits = Carried.ContainsByPredicate([&](const UEWItemDefinition* I) { return UEWShipDefinition::Accepts(Mount, I); });
-                    Add(Where, bFits ? TEXT("Fit the railing here") : TEXT("Railing hardpoint"), bFits ? MarkerFits : MarkerEmpty, bThis, bFits);
+                    Add(Where, bFits ? TEXT("Fit the railing here") : TEXT("Railing hardpoint"), bFits ? MarkerFits() : MarkerEmpty(), bThis, bFits);
                 }
             }
         }

@@ -136,7 +136,7 @@ def fit_marked():
     if time.monotonic() - state['memo']['t'] < 0.8:
         return False
     fits = [m for m in markers() if m.get_editor_property('fits')]
-    return any(str(m.get_editor_property('label')) == 'Fit Small sail here' for m in fits)
+    return any(str(m.get_editor_property('label')).endswith('Fit Small sail here') for m in fits)
 
 
 def climb_down():

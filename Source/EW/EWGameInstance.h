@@ -4,6 +4,7 @@
 #include "Engine/EngineBaseTypes.h"
 #include "Containers/Ticker.h"
 #include "Characters/EWAppearance.h"
+#include "EWColourVision.h"
 #include "EWGameInstance.generated.h"
 
 class AEWPlayerController;
@@ -61,6 +62,10 @@ public:
     /** The scale the interface is drawn at now (for checks). */
     UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedInterfaceScale();
     static inline float InterfaceScale = 1.f;
+    /** Colour vision (Part 8, 61): the palette chosen in Options, and the "good" cue colour it gives (for checks). */
+    UFUNCTION(BlueprintPure, Category="Options") static EEWColourVision GetColourVision();
+    UFUNCTION(BlueprintPure, Category="Options") static FLinearColor GetGoodCueColour();
+    UFUNCTION(BlueprintCallable, Category="Options") static void SetColourVision(EEWColourVision Mode);
     static constexpr float MinInterfaceScale = .8f;
     static constexpr float MaxInterfaceScale = 1.5f;
     static void ApplyMasterVolume(float Volume);
