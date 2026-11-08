@@ -278,6 +278,19 @@ PART 7 - DONE (move items here with their commit when finished)
   bones; real skinned clothing for both bodies needs 3D art), a two-player replication check, reconnect, the GTX 1660 measure,
   Hands and Feet slots still exist beside the armor (the owner's armor rules have none; left for the owner to decide).
 
+2026-11-08 HANDOVER (owner: Codex takes over until Wednesday, November 11, 2026). State at commit "Handover: armor multiplayer
+  check written, not yet run": main is clean and pushed; no build or Play check is running. Not yet done:
+  - Scripts/Verification/verify_armor_multiplayer_play.py is written but has NOT been run (two players).
+  - The playtest exe was being packaged when the owner stopped work; nothing new was published. The last published build
+    is the one from November 7.
+  - Armor: production garments, reconnect test, GTX 1660 measure, the owner's choices on the Hands/Feet slots and on the
+    rights to the concept sheets (ASSET_LEDGER EW-ARMOR-REF-001).
+  - Wave A still open: 60 remappable controls, 09 instruments, 64-65 optional tutorials; day dates and captain's notes for
+    the logbook (13).
+  - Content/Elitewake/Characters/MetaHumans and Survivors stay uncommitted on purpose (pirate skin waits on Epic/Fab access).
+  Rules that still hold: push only with Scripts/Release/push_github.py, never force-push, no full world rebuilds, no exe
+  builds unless the owner asks, Content/__ExternalActors__ stays local.
+
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
 -------------------------------------------------------------------------
