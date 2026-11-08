@@ -19,8 +19,8 @@ exists and what the owner has already decided for each piece. Read it at the sta
 
 PART 1 - STANDING RULES FROM THE OWNER (apply to everything below)
 -----------------------------------------------------------------
-1. Content pause (November 7): no new world, animal or tool content until the owner lifts it. Front-end and character
-   work first.
+1. Content pause (November 7): owner lifted it for the additions approved in part 8 later on November 7.
+   Existing first-priority front-end and character work remains; stage new world, animal or tool features incrementally.
 2. No exe builds or playtest publishes unless the owner asks in that session (November 7). Compiling to develop and test is fine.
 3. No full world rebuilds without the owner's go-ahead; run only the script or rebuild step a task touches, on only the
    islands it touches (November 6). Placement scripts add what is missing rather than clearing the world.
@@ -212,7 +212,7 @@ PART 5 - TECHNICAL HOUSEKEEPING
 
 PART 6 - WAITING ON THE OWNER
 -----------------------------
-- Lift the content pause (world, animals, tools)?
+- Content pause lifted for the 70 approved expansion items in part 8; any unrelated scope still needs a decision.
 - Pirate clothing source: a free Fab outfit (licence checked) or our own.
 - Where a new Plains survivor starts: the arrival beach or Saltreach.
 - The Cavalier's cannons: 11 as on the sheet, or the 22 places of the October 17 note.
@@ -677,3 +677,137 @@ November 3; the six regional reefs became three open-ocean reefs; the agent team
   - Delete the 40 unused island and surf meshes of the old 40-island layout (owner, November 7)
   - Single-player front end: Freeport choice, Resume or New, the full character creator, Set Sail and the loading screen
   - Keep the world map's object files on this PC only, and push to GitHub without large-file uploads
+
+PART 8 - OWNER-APPROVED GAMEPLAY EXPANSION (November 7, 2026)
+------------------------------------------------------------
+Owner approved EVERY addition proposed during the November 7 game-design discussion. This is an implementation mandate,
+not a claim any feature below is already coded. Build in small tested commits, preserve the current gameplay, use the
+existing systems wherever practical, and observe the graphics budget and historical 1740-1760 maritime setting.
+"Already" means the repository has a related foundation, NOT the complete proposed feature. Do not silently discard
+any item. Acceptance means a player-facing feature works in Play, survives save/load, and is tested with networking
+where relevant. No EXE or external publication without the owner's explicit session request.
+
+8.1 OCEAN EXPLORATION AND ADVENTURE
+[ ] 01. Navigable ocean currents: geographic current bands, direction and speed feedback, ship drift and swimmer drift;
+          avoid trapping swimmers; persistence and server authority; navigational advantages for knowledgeable captains.
+[ ] 02. Escalating maritime storms: forecast signs, wind and waves, lightning, visibility, ship-handling risk and
+          meaningful shelter/route choices. Coordinate with weather, existing wind subsystem and Winter snowfall.
+[ ] 03. Diveable shipwrecks: handcrafted wreck sites, air/pressure/depth restrictions, accessible early shallow sites,
+          and deeper risk/reward salvage. Avoid implying diving to the world's 2 km floor unaided.
+[ ] 04. Diving bells: ship-deployable equipment, winch, limited safe depth, breathing/return flow, recovery failure
+          handling, multiplayer occupancy and ship movement restrictions.
+[ ] 05. Salvage hooks and grapnels: retrieve nearby floating cargo and safely recover salvage at sea.
+[ ] 06. Underwater treasure hunting: treasure containers, clues, hazards, specialized tools and valuable non-duplicating loot.
+[ ] 07. Drifting wreckage from battles and storms: buoyant debris with timed cleanup, salvage ownership and performance caps.
+[ ] 08. Tide changes: readable water-level variations exposing tidal caves, shoals and hazards; protect existing coasts,
+          anchor interactions, base placements, inland water and navigable routes.
+[ ] 09. Nautical instruments: usable compass, sextant and nautical charts, with skill-based navigation and discoverable
+          positions; do not replace the existing map and compass without migration.
+
+8.2 SHIPS, IDENTITY AND CUSTOMIZATION
+[ ] 10. Interior ship decoration: placeable furniture and practical fittings, snap rules, clearance checks, safe physics,
+          collision/boarding paths, Company permissions and saved layouts.
+[ ] 11. Exterior ship appearance: historically fitting paint, timber, trim, figureheads and cosmetic wear, replicated
+          without giving a visibility or combat advantage.
+[ ] 12. Ship naming: editable name displayed on hull/UI with length, moderation and duplicate-name rules.
+[ ] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
+[ ] 14. Modular hull upgrades: reinforced hull plating with mass, cost, durability, speed and repair tradeoffs.
+[ ] 15. Improved rigging upgrades: handling and sail-efficiency tradeoffs while retaining approved sail rules.
+[ ] 16. Modular cargo containers: inventory capacity, mass, accessibility, loss on sinking and no duplication.
+[ ] 17. Gunport upgrades: permitted layouts and fittings without exceeding hull-specific cannon design decisions.
+[ ] 18. Ship-carried rowboats: storage cradles, launch/lift, rowing, boarding, sea recovery, cargo limits and persistence.
+[ ] 19. Grappling-and-boarding engagements: pull close, board, cut grapples, take control, defend and capture enemy
+          vessels; respect safe zones and PvP rules.
+
+8.3 PIRATES, LAND COMBAT AND NAVAL DANGER
+[ ] 20. Land weapons progression: clubs, cutlasses, flintlock pistols and blunderbusses, crafting/ammo and era-correct
+          reload behavior, first/third-person animation and audio.
+[ ] 21. Melee depth: block, parry, dodge, stamina costs, hit reach, hit reactions and latency-safe damage.
+[ ] 22. AI pirate vessels: patrol/trade routes, spotting, pursuit, attack, retreat, looting and regional difficulty.
+[ ] 23. Maritime factions and reputation: per-faction standing, actions that alter it, recognition, ports/services
+          and save/replicate rules.
+[ ] 24. Bounties: player or NPC targets, lawful issuance, proof of completion, expiration and anti-exploit rewards.
+[ ] 25. Surrender mechanics: offer/accept surrender, confiscation or release outcomes, rules against forced griefing.
+[ ] 26. Ammunition varieties: chain shot for rigging, grape shot for close anti-personnel use, and fire shot with
+          counterplay; weight, reload, resupply and suitable historical feel.
+[ ] 27. Captain orders for NPC crews: helm, sails, gunnery, repair, firefighting, boarding, defend and regroup;
+          clear feedback, AI costs, crew loyalty and server authority.
+
+8.4 ISLAND EXPLORATION AND NARRATIVE
+[ ] 28. Hidden caves with environmental puzzles: clues, mechanisms, multiple solutions, replay rules and discovery logs.
+[ ] 29. Buried treasure charts: clues/landmarks, shovel digging, procedural or authored sites and single-claim rewards.
+[ ] 30. Abandoned settlements and ruins: environmental storytelling, documents, hazards, unique loot and historical coherence.
+[ ] 31. Dynamic island encounters: stranded merchants, stranded sailors and post-storm wrecks with timers, choices,
+          localized spawns and rewards.
+[ ] 32. Climbing tools: rope, hooks and climbing gear with stamina, weight, valid surfaces and safe disengage paths.
+
+8.5 WILDLIFE, TAMING AND ECOLOGY
+[ ] 33. Full taming interactions: species-specific food/trust/time, risk, taming rules, ride/saddle controls and save.
+          Integrate existing Tames UI/caps (25 per player, 75 per Company).
+[ ] 34. Animal companions with cargo: pack equipment, limited inventories, commands and rules for death/recovery.
+[ ] 35. Breeding and inherited traits: mating, gestation/incubation, population caps, lineage and bounded trait inheritance.
+[ ] 36. Predator-prey food chains: hunting, fleeing, feeding, territory, drinking and performance-aware simulation.
+[ ] 37. Tracking via footprints and droppings: age/visibility, habitat and weather effects, identification and hunter play.
+[ ] 38. Rare animal variants: restrained cosmetic and behavioral variation, low occurrence and collectible discovery
+          records; avoid pay-to-win or wildly anachronistic monsters.
+
+8.6 CRAFTING, BUILDING AND ECONOMY
+[ ] 39. Upgradable crafting stations: tiered capabilities, recipes, fuel, placement, repair, access control and save.
+[ ] 40. Rare blueprint loot: learnable and tradable recipes, discovery locations, duplicate handling and progression gating.
+[ ] 41. Player-operated shops: stalls, stock/pricing, permissions, escrow/payment, tax rules, offline visibility and save.
+[ ] 42. Public notice boards: player postings and NPC service/contract listings with expiry and moderation.
+[ ] 43. Regional supply-and-demand pricing: clear trade opportunities, economic safeguards and restock persistence.
+[ ] 44. Town banks/vaults: secure currency/items, withdrawals, permission controls and cross-session safety.
+[ ] 45. Delivery contracts: source, destination, deadlines, cargo loss, payout and multiplayer anti-duplication.
+[ ] 46. Hunting contracts: target species/regions, tracking, proof and reward balancing.
+
+8.7 SURVIVAL AND CREW MANAGEMENT
+[ ] 47. Contaminated-water and wound illnesses: symptoms, threat clarity, prevention, treatments and accessibility.
+[ ] 48. Herbal remedies: forage, recipes, preparation and bounded restorative effects.
+[ ] 49. Bandages and wound treatment: interruption rules, resource costs, first aid and cooperative healing.
+[ ] 50. Ship infirmary mechanics: medical supplies, surgeon/treatment interaction and recovery under way.
+          Extend existing ship-surgeon functionality rather than replacing it.
+[ ] 51. Crew morale: comfort, provisions, pay, danger and leadership affect service, with recovery actions.
+[ ] 52. Crew fatigue: watch rotations, rest, task effectiveness and avoidance of constant micromanagement.
+[ ] 53. Food spoilage: time, storage, temperature and clear inventory indicators; migration for old saves.
+[ ] 54. Preservation techniques: salting, drying and stored rations with resource/crafting tradeoffs.
+
+8.8 MULTIPLAYER AND SOCIAL SYSTEMS
+[ ] 55. Company/guild charters: governance, membership, shared ships, succession and persistence. Extend existing Company.
+[ ] 56. Granular crew/player roles: helm, gunnery, cargo, construction, treasury and ship access permissions.
+[ ] 57. Tavern cards and dice: optional social minigames with fair rules, no real-money wagering and age-appropriate design.
+[ ] 58. Shared public contract/message boards: discovery, player-issued jobs, expiration, reporting and spam controls.
+[ ] 59. Secure player-to-player trade: both parties preview, lock, confirm, atomic item/currency exchange and rollback.
+
+8.9 ACCESSIBILITY AND QUALITY OF LIFE
+[ ] 60. Fully remappable controller and keyboard controls: conflicts, defaults, device switch, saved mapping and hints.
+[ ] 61. Color-vision accessibility: differentiated UI symbols/patterns plus palette options for key threat/status cues.
+[ ] 62. Text/UI scale controls: readable HUD, menu and subtitle sizes tested at minimum 1080p.
+[ ] 63. Captain's discovery journal: automatic discoveries (islands, landmarks, creatures, ports, voyages, encounters)
+          with manual notes optional; use existing journal and exploration component.
+[ ] 64. Optional sailing tutorial: helm, sails, wind, anchoring, cargo and damage, skippable/replayable.
+[ ] 65. Optional combat tutorial: defense, stamina, melee, firearms, cannon sequence and crew orders.
+
+8.10 IMMERSION AND LONG-TERM REWARDS
+[ ] 66. Crew sea shanties: contextual shipboard singing, opt-out, performance-safe voice layering and music licensing.
+[ ] 67. Playable period instruments: simple rhythmic/timed input, cooperative performance and accessible alternative.
+[ ] 68. Photo mode: camera, framing, hide UI, single-player pause only, multiplayer restrictions and capture quality.
+[ ] 69. Figurehead trophies from major hunts: crafting, cosmetic display, proof of achievement and ship persistence.
+[ ] 70. Ambient migrations: species-by-region and season/time movements, sightings and performance-safe wildlife spawns.
+
+IMPLEMENTATION WAVES (approved additions; order proposed, not a promise of simultaneous completion)
+Wave A, small visible upgrades: 63 discovery journal, 64-65 optional tutorials, 12 ship names, 13 logbooks,
+  60-62 accessibility, 09 instruments; all should reuse existing UI, save and input code.
+Wave B, full voyage depth: 01-02 weather/currents, 05-08 salvage/tides, 14-18 ship upgrades and boats,
+  47-50 treatment, 53-54 preservation; profile sailing and save/load before expanding.
+Wave C, enemies and rewards: 20-27 combat/AI, 28-32 discoveries, 39-46 trade, missions and loot.
+Wave D, world simulation: 33-38 taming/ecology, 51-52 crew simulation, 66-70 immersion.
+Wave E, multiplayer-dependent: 19 boarding/capture, 55-59 governance/trading/social, scaled once dedicated
+  server, Company persistence and transaction integrity work are reliable.
+Crosscutting: keep assets licensed in ASSET_LEDGER.csv, use incremental UE commits, budget for GTX 1660 Super,
+  single-player and multiplayer acceptance tests, older save migration and human visual/audio review.
+
+DECISION RECORD (November 7, 2026): The owner said "I like all of the recommendations and I think you should add
+them." This lifts the prior pause for the 70 enumerated approved additions, but does not constitute authorization for
+a world rebuild, an EXE publish, an external release or deletion. Existing separate owner decisions in part 6 remain
+open when their precise rules are unresolved. Design/build one verified slice at a time.
