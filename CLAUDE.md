@@ -32,7 +32,7 @@ Do not start a broad rewrite because several systems touch the same class. Extra
 
 ### 1.3 Canonical local state
 
-The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout encountered a Windows file lock during retirement; do not use it for testing. On October 31 only its locked .claude worktree remnant (about 1 MB) remained; the owner deleted C:\UnrealProjects\EW_RETIRED_20261031. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. Keep the retired fragments only until they can be safely removed; a future rename to C:\UnrealProjects\EW must update this guide and every project shortcut in the same change.
+The normal owner-facing project location is C:\UnrealProjects\EW_CLEAN and the normal branch is main after cleanup promotion. The old C:\UnrealProjects\EW checkout is gone: its last empty remnant was deleted with the owner's approval on November 8, 2026 (it had been left as Codex's trusted project, so Codex could open an empty folder instead of EW_CLEAN). The owner deleted C:\UnrealProjects\EW_RETIRED_20261031 on October 31. The desktop test shortcut opens C:\UnrealProjects\EW_CLEAN\EW.uproject with /Game/Elitewake/Maps/Lvl_CoastalPlayground. A future rename to C:\UnrealProjects\EW must update this guide and every project shortcut in the same change.
 
 Local folders outside the repository (each has a plain-English README.txt that is the detailed record):
 
