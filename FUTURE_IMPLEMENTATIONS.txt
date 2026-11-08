@@ -266,30 +266,27 @@ PART 7 - DONE (move items here with their commit when finished)
   17 and 18) and verify_ladder_play.py (the markers). Still to do: threat cues (no enemy or danger markers exist yet), and an
   owner look at the palettes in play.
 
-2026-11-08 Armor, functional with placeholder looks (owner's armor prompt), commit "Armor: nine craftable pieces in cloth, fur
-  and metal". Helmet (Head slot: head, face, neck), chest piece (Chest: torso, arms, gloves) and pants (Legs: legs, footwear) in
-  each of cloth, fur and metal (add_armor.py; values per slot 20/45/35% of the set). Full sets stop 10/8/40% of physical
-  damage (blows, bites, punches; capped at 60%) and raise heat damage while overheating 1.10/1.30/1.50x; only fur insulates
-  (a full set 1.0). New materials: Cloth (3 fiber), Leather (2 hide + fiber at a fire), Fur (pelts from 12 furred animals;
-  11 others give Hide). Cloth and fur pieces are known from the start; Metalwork unlocks metal (at a fire). Equipment
-  saves and replicates as before; the inventory shows the armor total and each piece's numbers; icons cut from the owner's
-  sheets. Verified: verify_armor_play.py (92 checks: crafting, failed craft, each piece alone, sets, mixed, blows, Winter
-  cold, Desert heat, save/load, pelts). NOT DONE: production garments (the shapes on the body are placeholders fixed to
-  bones; real skinned clothing for both bodies needs 3D art), a two-player replication check, reconnect, the GTX 1660 measure,
-  Hands and Feet slots still exist beside the armor (the owner's armor rules have none; left for the owner to decide).
-
-2026-11-08 HANDOVER (owner: Codex takes over until Wednesday, November 11, 2026). State at commit "Handover: armor multiplayer
-  check written, not yet run": main is clean and pushed; no build or Play check is running. Not yet done:
-  - Scripts/Verification/verify_armor_multiplayer_play.py is written but has NOT been run (two players).
-  - The playtest exe was being packaged when the owner stopped work; nothing new was published. The last published build
-    is the one from November 7.
-  - Armor: production garments, reconnect test, GTX 1660 measure, the owner's choices on the Hands/Feet slots and on the
-    rights to the concept sheets (ASSET_LEDGER EW-ARMOR-REF-001).
-  - Wave A still open: 60 remappable controls, 09 instruments, 64-65 optional tutorials; day dates and captain's notes for
-    the logbook (13).
-  - Content/Elitewake/Characters/MetaHumans and Survivors stay uncommitted on purpose (pirate skin waits on Epic/Fab access).
-  Rules that still hold: push only with Scripts/Release/push_github.py, never force-push, no full world rebuilds, no exe
-  builds unless the owner asks, Content/__ExternalActors__ stays local.
+2026-11-08 Armor: nine craftable cloth, fur and metal items, three slots per set (Head, Chest and Legs).
+  Gameplay values and recipes are in data assets; all pieces can be mixed. Full sets stop 10/8/40% of physical damage
+  (cloth/fur/metal) and increase overheating damage 1.10/1.30/1.50x; only fur insulates against cold. Armor is saved
+  and replicated. The equipment panel shows armor totals and item details; the nine icons come from the owner's sheets.
+  Verified in Unreal Play: verify_armor_play.py (92 checks), verify_armor_multiplayer_play.py (16 checks), and
+  verify_server_survivor_multiplayer_play.py (15 checks, including a client-equipped fur jacket saved and restored on
+  the host, visible again to the client, with no spare jacket duplicated in the pack). The last check calls the same
+  server save/restore functions; an actual network disconnect and rejoin with armor remains untested.
+  Hands and Feet enum values remain for compatibility with older saves, but their empty inventory rows are hidden.
+  The owner confirmed rights to the three reference images, including their ChatGPT generation inputs and game use;
+  ASSET_LEDGER.csv records this. No rigged production garments have been imported. Current in-game armor is still
+  bone-attached primitive placeholder shapes, which do not meet the 1740s naturalistic visual target. A locally made
+  Blender cloth-head experiment was rejected after visual inspection and was never imported into Unreal.
+  Remaining gates: nine production-quality garment meshes, fitted male/female rigs, PBR textures, LODs, animation and
+  clipping review, first/third-person review, real disconnect/rejoin with armor, GTX 1660 Super measurement, and owner
+  visual acceptance. The current machine has an RTX 4070, so it cannot stand in for the minimum GPU test.
+  The two-part local-20261108-103823 playtest was published to Elitewake-Playtest-Setup at the owner's earlier
+  request. Its source revision is 9f041a33, before the follow-up inventory UI and hosted-save test changes. No new EXE
+  is authorized by this status entry. Preserve uncommitted MetaHuman and Survivor assets: they belong to separate work.
+  Wave A remains open: remappable controls, instruments, optional tutorials, and logbook dates/captain's notes.
+  Keep using Scripts/Release/push_github.py for source pushes; no force-push or full-world rebuild.
 
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026

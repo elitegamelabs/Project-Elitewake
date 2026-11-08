@@ -6,6 +6,7 @@ so the check calls the same server functions:
   - the client's survivor (four wood, 77 Copper, standing on the Freeport's high street) is saved on the host, without the world;
   - everything changes (pack emptied, purse emptied, carried off elsewhere);
   - the host gives the survivor back: the wood, the purse and the place return, and the client sees its purse.
+  - a client-equipped fur jacket returns after server save/restore, without a spare copy in the pack.
 The test slot is deleted afterwards. Writes Saved/ServerSurvivorMultiplayerPlayResult.json."""
 import json
 import time
@@ -27,6 +28,8 @@ server_world = next(w for w, c in zip(worlds, pcs) if c.has_authority())
 report = {'checks': []}
 state = {'phase': 'start', 'at': time.monotonic() + 14, 'handle': None}
 WOOD = unreal.load_asset('/Game/Elitewake/Items/Testing/DA_TestWood')
+JACKET = unreal.load_asset('/Game/Elitewake/Items/Armor/DA_FurJacket')
+CHEST = unreal.EWEquipmentSlot.CHEST
 
 
 def check(label, ok, **values):
@@ -52,6 +55,15 @@ def wood(owner):
     return sum(e.quantity for e in owner.get_inventory_component().get_inventory_entries() if e.item_definition == WOOD)
 
 
+def jacket_in_pack(owner):
+    return sum(e.quantity for e in owner.get_inventory_component().get_inventory_entries() if e.item_definition == JACKET)
+
+
+def jacket_equipped(owner):
+    return any(e.get_editor_property('item_definition') == JACKET and e.get_editor_property('slot') == CHEST
+               for e in owner.get_equipment_component().get_equipment_entries())
+
+
 def tick(delta):
     if time.monotonic() < state['at']:
         return
@@ -70,18 +82,25 @@ def tick(delta):
             for e in list(pack.get_inventory_entries()):
                 pack.remove_item(e.item_definition, e.quantity)
             pack.add_item(WOOD, 4)
+            pack.add_item(JACKET, 1)
+            check('the client requests its jacket through the equipment interface',
+                  lib.send_verification_equipment_request(client, JACKET, CHEST))
             owner.get_wallet_component().set_copper(77)
             x, y = W.PORTS['Plains'].world(0, -200)
             owner.teleport(unreal.Vector(x, y, T.PORT_LEVEL + 120), unreal.Rotator())
             state.update(phase='save', at=time.monotonic() + 2.0)
         elif p == 'save':
             owner, remote = state['owner'], state['remote']
+            check('the host sees the client jacket before saving', jacket_equipped(owner))
+            check('the client sees its jacket before saving', jacket_equipped(client.get_controlled_pawn()))
             state['spot'] = owner.get_actor_location()
             check('the host saves the client survivor', mode.save_player_survivor(remote))
             save = unreal.EWSurvivorSave.load_save(state['slot'])
             check('only the survivor is kept (the world is the host\'s own save)', save and not save.get_editor_property('has_ships')
                   and not save.get_editor_property('has_world_state') and len(save.get_editor_property('built_pieces')) == 0)
             owner.get_inventory_component().remove_item(WOOD, 4)
+            check('the client removes its jacket after the saved checkpoint',
+                  lib.send_verification_equipment_request(client, None, CHEST, True))
             owner.get_wallet_component().set_copper(0)
             x, y = W.PORTS['Plains'].world(-12000, 0)
             owner.teleport(unreal.Vector(x, y, 20000), unreal.Rotator())
@@ -89,14 +108,19 @@ def tick(delta):
         elif p == 'changed':
             owner, remote = state['owner'], state['remote']
             check('the survivor has lost it all', wood(owner) == 0 and owner.get_wallet_component().get_copper() == 0)
+            check('the jacket was taken off after saving', not jacket_equipped(owner))
             check('the host gives the survivor back', mode.restore_player_survivor(remote))
             check('the wood and the purse are back', wood(owner) == 4 and owner.get_wallet_component().get_copper() == 77,
                   wood=wood(owner), copper=owner.get_wallet_component().get_copper())
             gap = (owner.get_actor_location() - state['spot']).length()
             check('and the survivor stands where they were', gap < 50, gap=gap)
+            check('the jacket is equipped again with no duplicate in the pack',
+                  jacket_equipped(owner) and jacket_in_pack(owner) == 0,
+                  equipped=jacket_equipped(owner), spare=jacket_in_pack(owner))
             state.update(phase='client', at=time.monotonic() + 1.5)
         elif p == 'client':
             check('the client sees its purse back', client.get_controlled_pawn().get_wallet_component().get_copper() == 77)
+            check('the client sees the restored jacket', jacket_equipped(client.get_controlled_pawn()))
             finish()
     except Exception as error:
         import traceback
