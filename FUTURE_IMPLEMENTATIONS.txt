@@ -226,7 +226,15 @@ PART 6 - WAITING ON THE OWNER
 
 PART 7 - DONE (move items here with their commit when finished)
 ---------------------------------------------------------------
-(Empty: the history below records everything before November 7.)
+(The history below records everything before November 7.)
+
+2026-11-08 Captain's discovery journal, first part (Part 8, 63), commit "Discovery journal: islands, Freeports, reefs, caves and
+  creatures". Verified in two-player Play (verify_discoveries_play.py): the server notes each of the 48 named places
+  (20 islands, 5 Freeports, 3 reefs, 20 caves; table generated from the world data by write_discovery_places.py) and each
+  kind of creature within 30 m, once; the owner's HUD announces it, it earns experience (40 island, 25 other place, 10
+  creature, tuning), the Journal gains a Discoveries summary and a page each; saved with the survivor and not announced
+  again on load. Captures: capture_discoveries.py, Saved/Screenshots/Discoveries. Visual review pending. Still to do for
+  63: named landmarks (none exist yet), voyages and encounters (with 13, logbooks), optional manual notes.
 
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
@@ -786,7 +794,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
 [ ] 60. Fully remappable controller and keyboard controls: conflicts, defaults, device switch, saved mapping and hints.
 [ ] 61. Color-vision accessibility: differentiated UI symbols/patterns plus palette options for key threat/status cues.
 [ ] 62. Text/UI scale controls: readable HUD, menu and subtitle sizes tested at minimum 1080p.
-[ ] 63. Captain's discovery journal: automatic discoveries (islands, landmarks, creatures, ports, voyages, encounters)
+[~] 63. Captain's discovery journal: automatic discoveries (islands, landmarks, creatures, ports, voyages, encounters)
           with manual notes optional; use existing journal and exploration component.
 [ ] 64. Optional sailing tutorial: helm, sails, wind, anchoring, cargo and damage, skippable/replayable.
 [ ] 65. Optional combat tutorial: defense, stamina, melee, firearms, cannon sequence and crew orders.

@@ -7,6 +7,7 @@
 #include "World/EWBuildPiece.h"
 #include "Ships/EWShip.h"
 #include "World/EWWorldState.h"
+#include "EWDiscoveryComponent.h"
 #include "EWSurvivorSave.generated.h"
 
 class AEWCharacter;
@@ -75,4 +76,6 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<uint8> ExploredBits;
     UPROPERTY(BlueprintReadOnly, Category="Save") FVector2D ExploredMin = FVector2D::ZeroVector;
     UPROPERTY(BlueprintReadOnly, Category="Save") float ExploredSize = 0.f;
+    /** Places and creatures discovered (November 7, UEWDiscoveryComponent). Older saves have none: they are found again. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWDiscovery> Discoveries;
 };

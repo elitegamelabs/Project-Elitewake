@@ -58,7 +58,13 @@ private:
     float ZoneCheck = 0.f;
     FString ShownZone;
     bool bZoneKnown = false;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> DiscoveryBanner;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> DiscoveryHeading;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> DiscoveryName;
+    float DiscoverySeconds = 0.f;
 public:
+    /** The discovery being announced, as shown, for the checks (empty when none is). */
+    UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedDiscovery() const;
     /** The climate line and the region last announced, as shown, for the checks. */
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedClimate() const;
     UFUNCTION(BlueprintPure, Category="Survival|HUD") FText GetDisplayedRegionBanner() const;

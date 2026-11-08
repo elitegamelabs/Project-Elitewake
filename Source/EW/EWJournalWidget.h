@@ -49,8 +49,20 @@ public:
     FText GetShownTitle() const;
     UFUNCTION(BlueprintPure, Category="Journal")
     int32 GetPageCount() const { return Pages.Num(); }
+    /** Rewrites the Discoveries pages (Part 8, 63) from the player's discoveries, when they have changed. Ticked while shown. */
+    UFUNCTION(BlueprintCallable, Category="Journal")
+    void RefreshDiscoveries();
+    /** The page titles as listed, for the checks. */
+    UFUNCTION(BlueprintPure, Category="Journal")
+    TArray<FText> GetPageTitles() const { TArray<FText> Out; for (const FEWJournalEntry& P : Pages) Out.Add(P.Title); return Out; }
+protected:
+    virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 private:
+    void FillList();
     UPROPERTY(Transient) TArray<FEWJournalEntry> Pages;
+    UPROPERTY(Transient) TArray<FEWJournalEntry> GuidePages;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> PageList;
+    int32 ShownDiscoveries = -1;
     UPROPERTY(Transient) TArray<TObjectPtr<UButton>> PageButtons;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> PageTitle;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> PageBody;

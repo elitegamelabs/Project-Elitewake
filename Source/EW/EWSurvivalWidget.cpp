@@ -18,6 +18,8 @@
 #include "Components/TextBlock.h"
 #include "World/EWClimateRegion.h"
 #include "World/EWSafeZone.h"
+#include "EWDiscoveryComponent.h"
+#include "EWPlayerController.h"
 
 namespace
 {
@@ -119,6 +121,25 @@ void UEWSurvivalWidget::BuildWidgetTree()
         ZoneSlot->SetAnchors(FAnchors(.5f,0.f)); ZoneSlot->SetAlignment(FVector2D(.5f,0.f)); ZoneSlot->SetAutoSize(true);
         ZoneSlot->SetOffsets(FMargin(0,142,0,0));
         ZoneBanner->SetRenderOpacity(0.f);
+    }
+    // A new discovery (Part 8, 63): a small heading over its name, held a few seconds, then the next in turn.
+    DiscoveryBanner = WidgetTree->ConstructWidget<UVerticalBox>();
+    {
+        DiscoveryHeading = WidgetTree->ConstructWidget<UTextBlock>();
+        DiscoveryName = WidgetTree->ConstructWidget<UTextBlock>();
+        for (UTextBlock* Line : {DiscoveryHeading.Get(), DiscoveryName.Get()})
+        {
+            const bool bHeading = Line == DiscoveryHeading;
+            auto Font = Line->GetFont(); Font.Size = bHeading ? 16 : 30; Font.LetterSpacing = bHeading ? 300 : 80; Line->SetFont(Font);
+            Line->SetJustification(ETextJustify::Center);
+            Line->SetColorAndOpacity(FSlateColor(bHeading ? FLinearColor(.95f, .82f, .5f) : FLinearColor(1.f, .97f, .9f)));
+            Line->SetShadowOffset(FVector2D(2,2)); Line->SetShadowColorAndOpacity(FLinearColor(0,0,0,.75f));
+            DiscoveryBanner->AddChildToVerticalBox(Line)->SetHorizontalAlignment(HAlign_Center);
+        }
+        auto* DiscoverySlot = Canvas->AddChildToCanvas(DiscoveryBanner);
+        DiscoverySlot->SetAnchors(FAnchors(.5f,0.f)); DiscoverySlot->SetAlignment(FVector2D(.5f,0.f)); DiscoverySlot->SetAutoSize(true);
+        DiscoverySlot->SetOffsets(FMargin(0,190,0,0));
+        DiscoveryBanner->SetRenderOpacity(0.f);
     }
     auto* Notices = WidgetTree->ConstructWidget<UVerticalBox>();
     NoticePanel=Notices;
@@ -263,6 +284,24 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         ZoneSeconds = FMath::Max(0.f, ZoneSeconds - DeltaTime);
         ZoneBanner->SetRenderOpacity(FMath::Clamp(ZoneSeconds / 1.2f, 0.f, 1.f));
     }
+    {
+        DiscoverySeconds = FMath::Max(0.f, DiscoverySeconds - DeltaTime);
+        const auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
+        if (UEWDiscoveryComponent* Found = PC ? PC->GetDiscoveries() : nullptr)
+        {
+            FEWDiscovery Next;
+            // The next one waits until this one has had its moment.
+            if (DiscoverySeconds <= 1.f && Found->PopAnnouncement(Next))
+            {
+                DiscoverySeconds = 5.f;
+                const FText Kind = Next.Kind == EEWPlaceKind::Creature ? NSLOCTEXT("Elitewake", "NewCreature", "NEW CREATURE")
+                    : NSLOCTEXT("Elitewake", "Discovered", "DISCOVERED");
+                DiscoveryHeading->SetText(Kind);
+                DiscoveryName->SetText(Next.Name);
+            }
+        }
+        DiscoveryBanner->SetRenderOpacity(FMath::Clamp(DiscoverySeconds / 1.2f, 0.f, 1.f));
+    }
     const bool Overweight=Survival->GetCarriedWeight()>Survival->GetMaxCarryWeight();
     Warnings[3]->SetText(Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
     Warnings[3]->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.65f,.2f)));
@@ -296,6 +335,10 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 FText UEWSurvivalWidget::GetDisplayedClimate() const
 {
     return ClimateLine ? ClimateLine->GetText() : FText::GetEmpty();
+}
+FText UEWSurvivalWidget::GetDisplayedDiscovery() const
+{
+    return DiscoveryName && DiscoverySeconds > 0.f ? DiscoveryName->GetText() : FText::GetEmpty();
 }
 FText UEWSurvivalWidget::GetDisplayedZoneBanner() const
 {

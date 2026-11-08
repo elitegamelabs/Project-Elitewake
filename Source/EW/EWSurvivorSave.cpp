@@ -64,6 +64,8 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
                 for (int32 i = 0; i < Cells.Num(); ++i) if (Cells[i]) Save->ExploredBits[i >> 3] |= uint8(1 << (i & 7));
                 Save->ExploredMin = Explored->GetBoundsMin(); Save->ExploredSize = Explored->GetBoundsSize();
             }
+    if (const auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (const UEWDiscoveryComponent* Found = Controller->GetDiscoveries()) Save->Discoveries = Found->GetDiscoveries();
     if (bWithWorld)
     {
         AEWBuildPiece::CaptureAll(Survivor->GetWorld(), Save->BuiltPieces);
@@ -154,6 +156,8 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
                 if (const AEWGameMode* Mode = Survivor->GetWorld() ? Survivor->GetWorld()->GetAuthGameMode<AEWGameMode>() : nullptr)
                     if (Mode->WorldEdge) Mode->WorldEdge->GrowToCover(ExploredSize);
             }
+    if (auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))
+        if (UEWDiscoveryComponent* Found = Controller->GetDiscoveries()) Found->Restore(Discoveries);
     // What was built comes back (a map loaded fresh has none; pieces already standing are left alone).
     if (BuiltPieces.Num() > 0 && Survivor->GetWorld())
     {
