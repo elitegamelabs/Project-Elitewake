@@ -680,6 +680,9 @@ November 3; the six regional reefs became three open-ocean reefs; the agent team
 
 PART 8 - OWNER-APPROVED GAMEPLAY EXPANSION (November 7, 2026)
 ------------------------------------------------------------
+Detailed design for every item (FEAT-001 to FEAT-020: status, classes, assets, authority, persistence, performance,
+acceptance, image manifest, build order): FEATURE_EXPANSION_PLAN.txt at the repository root. Items marked NEW there are
+not in this Part and need the owner's approval first.
 Owner approved EVERY addition proposed during the November 7 game-design discussion. This is an implementation mandate,
 not a claim any feature below is already coded. Build in small tested commits, preserve the current gameplay, use the
 existing systems wherever practical, and observe the graphics budget and historical 1740-1760 maritime setting.
