@@ -34,9 +34,11 @@ public:
     static constexpr int32 ItemSave = 11;
     static constexpr int32 ItemOptions = 12;
     static constexpr int32 ItemMainMenu = 13;
-    // Settings rows: brightness 0, look speeds 1-4, master volume 5, sound effects 6, ambience 7, graphics 8-13, icons 14.
-    static constexpr int32 SettingControls = 15;
-    static constexpr int32 SettingBack = 16;
+    // Settings rows: brightness 0, look speeds 1-4, master volume 5, sound effects 6, ambience 7, graphics 8-13, icons 14,
+    // interface size 15.
+    static constexpr int32 SettingInterface = 15;
+    static constexpr int32 SettingControls = 16;
+    static constexpr int32 SettingBack = 17;
     /** The Controls page (owner, November 7) shows controller buttons rather than keys. */
     UFUNCTION(BlueprintPure, Category="Options") bool AreControlsShownForController() const { return bControlsForPad; }
     /** How many controls the Controls page lists. */
@@ -82,6 +84,7 @@ private:
     UFUNCTION() void OnEffectsChanged(float Value) { OnGraphicsChanged(4, Value); }
     void OnGraphicsChanged(int32 Group, float Value);
     UFUNCTION() void OnButtonIconsChanged(float Value);
+    UFUNCTION() void OnInterfaceChanged(float Value);
     /** Put the graphics sliders where the settings are (after the overall quality changes every group). */
     void SyncGraphicsSliders();
     void AdjustSelectedSetting(float Direction);
@@ -117,6 +120,7 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<USlider>> GraphicsSliders;
     /** Automatic, Xbox, PlayStation: three steps. */
     UPROPERTY(Transient) TObjectPtr<USlider> ButtonIconsSlider;
+    UPROPERTY(Transient) TObjectPtr<USlider> InterfaceSlider;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingLabels;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SettingValues;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> PausePage;

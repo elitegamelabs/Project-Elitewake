@@ -13,6 +13,7 @@
 #include "WorldPartition/WorldPartitionSubsystem.h"
 #include "EW.h"
 #include "Engine/Engine.h"
+#include "Engine/UserInterfaceSettings.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Containers/Ticker.h"
@@ -110,7 +111,12 @@ void UEWGameInstance::Init()
     {
         GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("SoundEffectsVolume"),SoundEffectsVolume,GGameUserSettingsIni);
         GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("AmbienceVolume"),AmbienceVolume,GGameUserSettingsIni);
+        float Scale=1.f;
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("InterfaceScale"),Scale,GGameUserSettingsIni);
+        InterfaceScale=FMath::IsFinite(Scale) ? FMath::Clamp(Scale,MinInterfaceScale,MaxInterfaceScale) : 1.f;
     }
+    // The interface at the saved size from the title screen on.
+    if (UUserInterfaceSettings* UI=GetMutableDefault<UUserInterfaceSettings>()) UI->ApplicationScale=InterfaceScale;
     SoundEffectsVolume=FMath::IsFinite(SoundEffectsVolume) ? FMath::Clamp(SoundEffectsVolume,0.f,1.f) : 1.f;
     AmbienceVolume=FMath::IsFinite(AmbienceVolume) ? FMath::Clamp(AmbienceVolume,0.f,1.f) : 1.f;
     // Brightness too, so the title and the creator show it before any survivor's controller loads (the same formula as
@@ -350,6 +356,20 @@ void UEWGameInstance::ApplyMasterVolume(float Volume)
         if (FAudioDeviceManager* Devices=GEngine->GetAudioDeviceManager())
             Devices->IterateOverAllDevices([Clamped](Audio::FDeviceId, FAudioDevice* Device) { if (Device) Device->SetTransientPrimaryVolume(Clamped); });
 }
+void UEWGameInstance::SetInterfaceScale(float Scale)
+{
+    InterfaceScale=FMath::Clamp(FMath::IsFinite(Scale) ? Scale : 1.f,MinInterfaceScale,MaxInterfaceScale);
+    // The viewport's widgets take the project's DPI scale times this, so every screen follows at once.
+    if (UUserInterfaceSettings* UI=GetMutableDefault<UUserInterfaceSettings>()) UI->ApplicationScale=InterfaceScale;
+    if (GConfig) { GConfig->SetFloat(TEXT("Elitewake.UserControls"),TEXT("InterfaceScale"),InterfaceScale,GGameUserSettingsIni); GConfig->Flush(false,GGameUserSettingsIni); }
+}
+
+float UEWGameInstance::GetAppliedInterfaceScale()
+{
+    const UUserInterfaceSettings* UI=GetDefault<UUserInterfaceSettings>();
+    return UI ? UI->ApplicationScale : 1.f;
+}
+
 void UEWGameInstance::SetSoundEffectsVolume(float Volume)
 {
     SoundEffectsVolume=FMath::Clamp(Volume,0.f,1.f);

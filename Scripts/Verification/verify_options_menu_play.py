@@ -190,8 +190,20 @@ def adjust_settings():
     assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.XBOX, 'Right did not choose Xbox icons'
     assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.PLAY_STATION, 'Right did not choose PlayStation icons'
     pc().set_button_icons_choice(icons_found, True)
+    # Interface size (Part 8, 62; November 8): 80% to 150% in 5% steps, applied to every screen at once; left as found.
+    assert key('Down') and menu.get_selected() == 15, 'Down did not reach interface size'
+    size_found = unreal.EWGameInstance.get_interface_scale()
+    for _ in range(20):
+        key('Left')
+    assert abs(unreal.EWGameInstance.get_applied_interface_scale() - .8) < .001, f'Left did not reach 80% ({unreal.EWGameInstance.get_applied_interface_scale()})'
+    assert key('Right') and abs(unreal.EWGameInstance.get_applied_interface_scale() - .85) < .001, 'Right did not grow the interface 5%'
+    for _ in range(20):
+        key('Right')
+    assert abs(unreal.EWGameInstance.get_applied_interface_scale() - 1.5) < .001, f'Right did not reach 150% ({unreal.EWGameInstance.get_applied_interface_scale()})'
+    state['memo']['interface'] = '80% to 150%'
+    unreal.EWGameInstance.set_interface_scale(size_found)
     # Controls (owner, November 7): every control, for the keyboard or the controller in use.
-    assert key('Down') and menu.get_selected() == 15, 'Down did not reach CONTROLS'
+    assert key('Down') and menu.get_selected() == 16, 'Down did not reach CONTROLS'
     assert key('Enter') and menu.get_tab() == 2, 'Enter on CONTROLS did not open the Controls page'
     count = menu.get_controls_count()
     assert count >= 30, f'the Controls page lists only {count} controls'
@@ -201,13 +213,13 @@ def adjust_settings():
     pad_jump = menu.get_control_text(2)
     assert pad_jump in ('A', 'Cross', 'Bottom button'), f'jump is not shown as the controller button: {pad_jump}'
     state['memo']['controls'] = {'count': count, 'pad_jump': pad_jump, 'pad_hotbar_5_8': menu.get_control_text(11)}
-    assert key('Escape') and menu.get_tab() == 1 and menu.get_selected() == 15, 'Escape did not return from Controls to CONTROLS'
-    assert key('Down') and menu.get_selected() == 16, 'Down did not reach BACK'
+    assert key('Escape') and menu.get_tab() == 1 and menu.get_selected() == 16, 'Escape did not return from Controls to CONTROLS'
+    assert key('Down') and menu.get_selected() == 17, 'Down did not reach BACK'
     assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
     state['memo']['settings'] = (after_brightness, looks)
     assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
     checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
-                  'change live by keys; sound effects and ambience volumes too; CONTROLS lists every control, switching to the controller buttons; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; BACK returns to the buttons')
+                  'change live by keys; sound effects and ambience volumes too; CONTROLS lists every control, switching to the controller buttons; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; interface size steps 80% to 150%; BACK returns to the buttons')
 
 
 def save_game():

@@ -252,6 +252,12 @@ PART 7 - DONE (move items here with their commit when finished)
   two-player Play (verify_logbook_play.py, 21 checks). Still to do for 13: day dates (the world keeps no day count yet:
   lines carry the hour), editable captain's notes, and no capture of the Journal page yet.
 
+2026-11-08 Interface size (Part 8, 62), commit "Options: interface size, 80% to 150%". A row in Options under Button icons:
+  every HUD, menu and screen drawn 80% to 150% (5% a press), applied at once through the engine's UI scale, saved with the
+  other settings and applied from the title screen on. Verified: verify_options_menu_play.py (the row steps 80% to 150% by
+  keys; Controls and Back moved to rows 16 and 17), captures capture_interface_scale.py (HUD and menu at 80/100/150%,
+  Saved/Screenshots/InterfaceScale). There are no subtitles yet; when they come they follow the same scale. Visual review pending.
+
 
 APPENDIX - EVERYTHING ADDED AND CHANGED, SEPTEMBER 20 TO NOVEMBER 7, 2026
 -------------------------------------------------------------------------
@@ -809,7 +815,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
 8.9 ACCESSIBILITY AND QUALITY OF LIFE
 [ ] 60. Fully remappable controller and keyboard controls: conflicts, defaults, device switch, saved mapping and hints.
 [ ] 61. Color-vision accessibility: differentiated UI symbols/patterns plus palette options for key threat/status cues.
-[ ] 62. Text/UI scale controls: readable HUD, menu and subtitle sizes tested at minimum 1080p.
+[~] 62. Text/UI scale controls: readable HUD, menu and subtitle sizes tested at minimum 1080p.
 [~] 63. Captain's discovery journal: automatic discoveries (islands, landmarks, creatures, ports, voyages, encounters)
           with manual notes optional; use existing journal and exploration component.
 [ ] 64. Optional sailing tutorial: helm, sails, wind, anchoring, cargo and damage, skippable/replayable.

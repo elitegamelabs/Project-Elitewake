@@ -54,6 +54,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="Options") static void SetAmbienceVolume(float Volume);
     static inline float SoundEffectsVolume = 1.f;
     static inline float AmbienceVolume = 1.f;
+    /** Interface size (FUTURE_IMPLEMENTATIONS Part 8, 62; November 8): every HUD, menu and screen drawn larger or smaller,
+     *  MinInterfaceScale to MaxInterfaceScale (1 = as designed at 1080p). Saved with the other settings, applied live. */
+    UFUNCTION(BlueprintPure, Category="Options") static float GetInterfaceScale() { return InterfaceScale; }
+    UFUNCTION(BlueprintCallable, Category="Options") static void SetInterfaceScale(float Scale);
+    /** The scale the interface is drawn at now (for checks). */
+    UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedInterfaceScale();
+    static inline float InterfaceScale = 1.f;
+    static constexpr float MinInterfaceScale = .8f;
+    static constexpr float MaxInterfaceScale = 1.5f;
     static void ApplyMasterVolume(float Volume);
     /** The volume last given to the audio devices (for checks). */
     UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedMasterVolume() { return AppliedMasterVolume; }
