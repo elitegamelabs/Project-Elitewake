@@ -51,4 +51,16 @@ bool FEWNorthTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("East and north of a location"), EN.Equals(FVector2D(300.f, 200.f)));
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWDayCountTest, "Elitewake.World.DayCount", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWDayCountTest::RunTest(const FString& Parameters)
+{
+    // November 8: the world counts days for the logbook; a day turns at midnight.
+    const double Hour = FEWSkyClock::SecondsPerHour;
+    TestEqual(TEXT("Day 1 at the start"), FEWSkyClock::DayAfter(1, 8.f, 0.0), 1);
+    TestEqual(TEXT("Still day 1 at 23:00"), FEWSkyClock::DayAfter(1, 8.f, 15.0 * Hour), 1);
+    TestEqual(TEXT("Day 2 after midnight"), FEWSkyClock::DayAfter(1, 8.f, 16.5 * Hour), 2);
+    TestEqual(TEXT("Day 5 three days and more on"), FEWSkyClock::DayAfter(2, 8.f, 3.0 * 24.0 * Hour + Hour), 5);
+    TestEqual(TEXT("No day before the first"), FEWSkyClock::DayAfter(0, 8.f, 0.0), 1);
+    return true;
+}
 #endif

@@ -26,6 +26,8 @@ struct EW_API FEWSkyClock
 
     /** The hour (0 to 24) a given number of real seconds after the clock read Hour. */
     static float HourAfter(float Hour, double Seconds);
+    /** The day (1 = the first) a given number of real seconds after the clock read Day at Hour: it turns at midnight. */
+    static int32 DayAfter(int32 Day, float Hour, double Seconds);
     static bool IsDay(float Hour) { return Hour >= DayStarts && Hour < NightStarts; }
     /** The sun's height above the horizon in degrees: 0 at 06:00 and 18:00, HighestSun at noon, below at night. */
     static float SunElevation(float Hour);
@@ -48,8 +50,11 @@ public:
 
     UPROPERTY(Replicated) float AnchorHour = FEWSkyClock::StartHour;
     UPROPERTY(Replicated) double AnchorServerTime = 0.0;
+    /** The day the clock read at AnchorServerTime (November 8: a count of days for the logbook, saved with the world). */
+    UPROPERTY(Replicated) int32 AnchorDay = 1;
 
     float GetHour() const;
+    int32 GetDay() const;
 
 private:
     void FindLights();
@@ -81,6 +86,12 @@ public:
     /** Server only: set the clock to an hour (for a saved world, or to test). Ignored on a client. */
     UFUNCTION(BlueprintCallable, Category="Time")
     void SetHour(float Hour);
+    /** The day of the world, 1 for the first; it turns at midnight. */
+    UFUNCTION(BlueprintPure, Category="Time")
+    int32 GetDay() const;
+    /** Server only: set the day and the hour together (a saved world). Ignored on a client. */
+    UFUNCTION(BlueprintCallable, Category="Time")
+    void SetDayAndHour(int32 Day, float Hour);
     AEWSkyClock* GetClock() const { return Clock; }
     void SetClock(AEWSkyClock* InClock) { Clock = InClock; }
 

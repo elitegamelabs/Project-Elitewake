@@ -173,7 +173,8 @@ void UEWJournalWidget::RefreshDiscoveries()
         for (const FEWLogEntry& Line : Ship->GetLogbook())
         {
             const int32 Minutes = FMath::FloorToInt(FMath::Fmod(Line.Hour, 24.f) * 60.f);
-            Body += FString::Printf(TEXT("%02d:%02d   %s\n"), Minutes / 60, Minutes % 60, *Line.Text);
+            Body += Line.Day > 0 ? FString::Printf(TEXT("Day %d, %02d:%02d   %s\n"), Line.Day, Minutes / 60, Minutes % 60, *Line.Text)
+                : FString::Printf(TEXT("%02d:%02d   %s\n"), Minutes / 60, Minutes % 60, *Line.Text);
         }
         Page.Body = FText::FromString(Body.IsEmpty() ? FString(TEXT("Nothing written yet. Her log fills as she sails.")) : Body.TrimEnd());
     }

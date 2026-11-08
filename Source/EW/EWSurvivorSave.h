@@ -78,4 +78,7 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") float ExploredSize = 0.f;
     /** Places and creatures discovered (November 7, UEWDiscoveryComponent). Older saves have none: they are found again. */
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWDiscovery> Discoveries;
+    /** The world's day and hour (November 8), saved with the world. 0 in an older save: the clock starts fresh. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") int32 WorldDay = 0;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float WorldHour = 0.f;
 };

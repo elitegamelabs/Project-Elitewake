@@ -14,6 +14,8 @@ struct FEWLogEntry
     GENERATED_BODY()
     UPROPERTY(BlueprintReadOnly, Category="Logbook") EEWLogKind Kind = EEWLogKind::Note;
     UPROPERTY(BlueprintReadOnly, Category="Logbook") FString Text;
-    /** The hour of the day, 0 to 24 (the world keeps no count of days yet). */
+    /** The hour of the day, 0 to 24. */
     UPROPERTY(BlueprintReadOnly, Category="Logbook") float Hour = 0.f;
+    /** The world's day (November 8); 0 in a line written before days were counted. */
+    UPROPERTY(BlueprintReadOnly, Category="Logbook") int32 Day = 0;
 };

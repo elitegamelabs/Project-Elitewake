@@ -182,6 +182,8 @@ def tick(_):
             check('her log is whole and the reload wrote no new lines', len(lines(ships[0])) == state['count'],
                   now=len(lines(ships[0])), before=state['count'], lines=lines(ships[0]))
             report['log'] = lines(ships[0])
+            days = [e.get_editor_property('day') for e in ships[0].get_logbook()]
+            check('every line carries the world''s day', days and all(d >= 1 for d in days), days=days)
             finish()
     except Exception as error:      # noqa: BLE001
         finish(repr(error))

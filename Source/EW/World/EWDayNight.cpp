@@ -14,6 +14,12 @@ float FEWSkyClock::HourAfter(float Hour, double Seconds)
     return static_cast<float>(FMath::Fmod(FMath::Fmod(static_cast<double>(Hour) + Seconds / SecondsPerHour, 24.0) + 24.0, 24.0));
 }
 
+int32 FEWSkyClock::DayAfter(int32 Day, float Hour, double Seconds)
+{
+    const double Hours = static_cast<double>(Hour) + FMath::Max(0.0, Seconds) / SecondsPerHour;
+    return FMath::Max(1, Day) + static_cast<int32>(FMath::FloorToDouble(Hours / 24.0));
+}
+
 float FEWSkyClock::SunElevation(float Hour)
 {
     // A sine over the day, and its mirror under the horizon through the night.
@@ -49,6 +55,14 @@ void AEWSkyClock::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AEWSkyClock, AnchorHour);
     DOREPLIFETIME(AEWSkyClock, AnchorServerTime);
+    DOREPLIFETIME(AEWSkyClock, AnchorDay);
+}
+
+int32 AEWSkyClock::GetDay() const
+{
+    const AGameStateBase* State = GetWorld() ? GetWorld()->GetGameState() : nullptr;
+    const double Now = State ? State->GetServerWorldTimeSeconds() : (GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0);
+    return FEWSkyClock::DayAfter(AnchorDay, AnchorHour, Now - AnchorServerTime);
 }
 
 float AEWSkyClock::GetHour() const
@@ -146,10 +160,25 @@ float UEWDayNightSubsystem::GetHour() const
     return Clock ? Clock->GetHour() : FEWSkyClock::StartHour;
 }
 
+int32 UEWDayNightSubsystem::GetDay() const
+{
+    return Clock ? Clock->GetDay() : 1;
+}
+
+void UEWDayNightSubsystem::SetDayAndHour(int32 Day, float Hour)
+{
+    if (!Clock || !FMath::IsFinite(Hour) || (GetWorld() && GetWorld()->GetNetMode() == NM_Client)) return;
+    SetHour(Hour);
+    Clock->AnchorDay = FMath::Max(1, Day);
+    Clock->ForceNetUpdate();
+}
+
 void UEWDayNightSubsystem::SetHour(float Hour)
 {
     if (!Clock || !FMath::IsFinite(Hour) || (GetWorld() && GetWorld()->GetNetMode() == NM_Client)) return;
     const AGameStateBase* State = GetWorld()->GetGameState();
+    // The day carries on: setting the hour does not change which day it is.
+    Clock->AnchorDay = Clock->GetDay();
     Clock->AnchorHour = FEWSkyClock::HourAfter(Hour, 0.0);
     Clock->AnchorServerTime = State ? State->GetServerWorldTimeSeconds() : GetWorld()->GetTimeSeconds();
     Clock->ForceNetUpdate();

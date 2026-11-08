@@ -874,3 +874,9 @@ DECISION RECORD (November 7, 2026): The owner said "I like all of the recommenda
 them." This lifts the prior pause for the 70 enumerated approved additions, but does not constitute authorization for
 a world rebuild, an EXE publish, an external release or deletion. Existing separate owner decisions in part 6 remain
 open when their precise rules are unresolved. Design/build one verified slice at a time.
+
+2026-11-08 World day count (Part 8, 13: logbook dates), commit "World day count: the logbook reads Day N, HH:MM". The
+  sky clock counts days (a day turns at midnight; FEWSkyClock::DayAfter, UEWDayNightSubsystem::GetDay); each log line
+  keeps its day and the Journal shows "Day 3, 14:05". The world's day and hour are saved with the world (UEWSurvivorSave
+  WorldDay/WorldHour; an older save starts the clock fresh as before). Verified: automation Elitewake.World.DayCount and
+  verify_logbook_play.py (23 checks, every line dated). Still open for 13: the captain's own typed notes.

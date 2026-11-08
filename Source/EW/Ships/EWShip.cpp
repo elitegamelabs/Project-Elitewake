@@ -1986,6 +1986,7 @@ void AEWShip::AddLog(EEWLogKind Kind, const FString& Text)
     Entry.Text = Text.Left(160);
     const UEWDayNightSubsystem* Time = UEWDayNightSubsystem::GetForWorld(this);
     Entry.Hour = Time ? Time->GetHour() : 0.f;
+    Entry.Day = Time ? Time->GetDay() : 0;
     // The newest lines are kept; the oldest go once the book is full.
     if (Logbook.Num() > MaxLogEntries) Logbook.RemoveAt(0, Logbook.Num() - MaxLogEntries);
     ForceNetUpdate();
