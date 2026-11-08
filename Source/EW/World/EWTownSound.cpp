@@ -1,4 +1,5 @@
 #include "World/EWTownSound.h"
+#include "EWGameInstance.h"
 #include "World/EWDayNight.h"
 #include "Components/AudioComponent.h"
 #include "Engine/World.h"
@@ -42,11 +43,13 @@ void AEWTownSound::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!Sound) return;
+    // The town is ambience: its level follows the Options' ambience volume (fades still run on top of it).
+    Audio->SetVolumeMultiplier(Volume * UEWGameInstance::GetAmbienceVolume());
     bActive = WantsToSound();
     if (Interval.Y <= 0.f)
     {
         // A loop: faded in when its hours come, out when they end.
-        if (bActive && !Audio->IsPlaying()) Audio->FadeIn(3.f, Volume, FMath::FRandRange(0.f, 10.f));
+        if (bActive && !Audio->IsPlaying()) Audio->FadeIn(3.f, 1.f, FMath::FRandRange(0.f, 10.f));
         else if (!bActive && Audio->IsPlaying()) Audio->FadeOut(4.f, 0.f);
         return;
     }

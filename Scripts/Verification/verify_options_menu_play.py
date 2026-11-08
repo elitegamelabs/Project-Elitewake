@@ -148,22 +148,33 @@ def adjust_settings():
     assert abs(applied - volume) < .001, f'the audio devices were given {applied}, not the volume {volume}'
     state['memo']['volume_applied'] = round(applied, 3)
     c.set_master_volume(1.0)      # leave the saved setting as found
+    # Sound effects and ambience volumes (owner, November 7), each under the master volume; left at full.
+    gi = unreal.EWGameInstance
+    for row, getter, setter, label in ((6, gi.get_sound_effects_volume, gi.set_sound_effects_volume, 'sound effects'),
+                                       (7, gi.get_ambience_volume, gi.set_ambience_volume, 'ambience')):
+        assert key('Down') and menu.get_selected() == row, f'Down did not reach the {label} volume'
+        setter(1.0)
+        for _ in range(5):
+            assert key('Left')
+        assert getter() < .95, f'the {label} volume did not apply live: 1.0 -> {getter()}'
+        state['memo'][f'{label}_volume_after_keys'] = round(getter(), 3)
+        setter(1.0)
     # Graphics (owner, November 1): the overall quality, then five groups, a whole level per Left / Right.
     gus = unreal.GameUserSettings.get_game_user_settings()
     found = gus.get_overall_scalability_level()
-    assert key('Down') and menu.get_selected() == 6, 'Down did not reach graphics quality'
+    assert key('Down') and menu.get_selected() == 8, 'Down did not reach graphics quality'
     for _ in range(3):
         assert key('Left')
     assert gus.get_overall_scalability_level() == 0, f'three Lefts did not set Low ({gus.get_overall_scalability_level()})'
     for _ in range(3):
         assert key('Right')
     assert gus.get_overall_scalability_level() == 3, f'three Rights did not set Epic ({gus.get_overall_scalability_level()})'
-    assert menu.get_selected() == 6, f'changing the quality moved the selection to {menu.get_selected()}'
-    assert key('Down') and menu.get_selected() == 7, 'Down did not reach textures'
+    assert menu.get_selected() == 8, f'changing the quality moved the selection to {menu.get_selected()}'
+    assert key('Down') and menu.get_selected() == 9, 'Down did not reach textures'
     assert key('Left') and gus.get_texture_quality() == 2, f'Left on textures did not set High ({gus.get_texture_quality()})'
     assert gus.get_overall_scalability_level() == -1, 'a mixed setting is not shown as custom'
     assert key('Right') and gus.get_texture_quality() == 3 and gus.get_overall_scalability_level() == 3, 'Right did not restore Epic textures'
-    for row in range(8, 12):
+    for row in range(10, 14):
         assert key('Down') and menu.get_selected() == row, f'Down did not reach graphics row {row}'
     if found in (0, 1, 2, 3):
         gus.set_overall_scalability_level(found)    # leave the saved setting as found
@@ -171,7 +182,7 @@ def adjust_settings():
         gus.save_settings()
     state['memo']['graphics'] = 'Low, Epic, custom textures, back to Epic'
     # Button icons (owner, November 1): Automatic, Xbox, PlayStation; left as found.
-    assert key('Down') and menu.get_selected() == 12, 'Down did not reach button icons'
+    assert key('Down') and menu.get_selected() == 14, 'Down did not reach button icons'
     icons_found = pc().get_button_icons_choice()
     for _ in range(3):
         assert key('Left')
@@ -179,12 +190,12 @@ def adjust_settings():
     assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.XBOX, 'Right did not choose Xbox icons'
     assert key('Right') and pc().get_button_icons_choice() == unreal.EWButtonIconsChoice.PLAY_STATION, 'Right did not choose PlayStation icons'
     pc().set_button_icons_choice(icons_found, True)
-    assert key('Down') and menu.get_selected() == 13, 'Down did not reach BACK'
+    assert key('Down') and menu.get_selected() == 15, 'Down did not reach BACK'
     assert key('Enter') and menu.get_tab() == 0 and menu.get_selected() == 12, 'BACK did not return to the buttons at OPTIONS'
     state['memo']['settings'] = (after_brightness, looks)
     assert key('Up') and menu.get_selected() == 11, 'Up from OPTIONS did not reach SAVE GAME'
     checks.append('OPTIONS opens the settings: brightness (the display gamma), four look speeds and the volume (its dial following) '
-                  'change live by keys; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; BACK returns to the buttons')
+                  'change live by keys; sound effects and ambience volumes too; graphics quality steps Low to Epic, a group alone makes it custom; button icons step Automatic, Xbox, PlayStation; BACK returns to the buttons')
 
 
 def save_game():

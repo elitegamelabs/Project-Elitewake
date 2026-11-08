@@ -45,6 +45,15 @@ public:
      *  volume, so it scales every sound: world, ambience, interface, music. Unreal resets FApp's volume multiplier itself
      *  when the window gains or loses focus, so that is not used. */
     static float GetSavedMasterVolume();
+    /** Sound effects (owner, November 7): every one-shot through UEWSoundLibrary (work, steps, ships, cannons, animals) and
+     *  the campfire. Ambience: the background loops (sea, wind, insects, caves, regions, a ship's creak and rigging, the town).
+     *  Each 0-1, under the master volume, applied live. */
+    UFUNCTION(BlueprintPure, Category="Options") static float GetSoundEffectsVolume() { return SoundEffectsVolume; }
+    UFUNCTION(BlueprintPure, Category="Options") static float GetAmbienceVolume() { return AmbienceVolume; }
+    UFUNCTION(BlueprintCallable, Category="Options") static void SetSoundEffectsVolume(float Volume);
+    UFUNCTION(BlueprintCallable, Category="Options") static void SetAmbienceVolume(float Volume);
+    static inline float SoundEffectsVolume = 1.f;
+    static inline float AmbienceVolume = 1.f;
     static void ApplyMasterVolume(float Volume);
     /** The volume last given to the audio devices (for checks). */
     UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedMasterVolume() { return AppliedMasterVolume; }

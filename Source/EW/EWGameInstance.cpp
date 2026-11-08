@@ -106,6 +106,13 @@ void UEWGameInstance::Init()
         TravelFailureHandle=GEngine->OnTravelFailure().AddUObject(this,&UEWGameInstance::TravelFailed);
     }
     ApplyMasterVolume(GetSavedMasterVolume());
+    if (GConfig)
+    {
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("SoundEffectsVolume"),SoundEffectsVolume,GGameUserSettingsIni);
+        GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("AmbienceVolume"),AmbienceVolume,GGameUserSettingsIni);
+    }
+    SoundEffectsVolume=FMath::IsFinite(SoundEffectsVolume) ? FMath::Clamp(SoundEffectsVolume,0.f,1.f) : 1.f;
+    AmbienceVolume=FMath::IsFinite(AmbienceVolume) ? FMath::Clamp(AmbienceVolume,0.f,1.f) : 1.f;
     // Brightness too, so the title and the creator show it before any survivor's controller loads (the same formula as
     // AEWPlayerController::ApplyBrightness: 50 on the slider is the engine's 2.2 gamma).
     float Brightness=0.f;
@@ -342,4 +349,14 @@ void UEWGameInstance::ApplyMasterVolume(float Volume)
     if (GEngine)
         if (FAudioDeviceManager* Devices=GEngine->GetAudioDeviceManager())
             Devices->IterateOverAllDevices([Clamped](Audio::FDeviceId, FAudioDevice* Device) { if (Device) Device->SetTransientPrimaryVolume(Clamped); });
+}
+void UEWGameInstance::SetSoundEffectsVolume(float Volume)
+{
+    SoundEffectsVolume=FMath::Clamp(Volume,0.f,1.f);
+    if (GConfig) { GConfig->SetFloat(TEXT("Elitewake.UserControls"),TEXT("SoundEffectsVolume"),SoundEffectsVolume,GGameUserSettingsIni); GConfig->Flush(false,GGameUserSettingsIni); }
+}
+void UEWGameInstance::SetAmbienceVolume(float Volume)
+{
+    AmbienceVolume=FMath::Clamp(Volume,0.f,1.f);
+    if (GConfig) { GConfig->SetFloat(TEXT("Elitewake.UserControls"),TEXT("AmbienceVolume"),AmbienceVolume,GGameUserSettingsIni); GConfig->Flush(false,GGameUserSettingsIni); }
 }

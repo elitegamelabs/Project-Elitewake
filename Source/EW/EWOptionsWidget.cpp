@@ -1,6 +1,7 @@
 #include "EWOptionsWidget.h"
 
 #include "EWPlayerController.h"
+#include "EWGameInstance.h"
 #include "EWVolumeDial.h"
 #include "EWGraphicsSettings.h"
 #include "EWControllerIcons.h"
@@ -25,7 +26,7 @@ namespace
     constexpr float MaxBrightness = .5f;
     constexpr float MinSensitivity = .1f;
     constexpr float MaxSensitivity = 3.f;
-    constexpr int32 SettingCount = 13;
+    constexpr int32 SettingCount = 15;
     constexpr float IconsStep = .5f;     // Automatic, Xbox, PlayStation
     constexpr float QualityStep = 1.f / (FEWGraphicsSettings::Levels - 1);
 
@@ -161,6 +162,11 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             if (auto* Row = Cast<UHorizontalBox>(VolumeSlider->GetParent()))
                 Row->AddChildToHorizontalBox(DialSize)->SetPadding(FMargin(10, 0, 0, 0));
         }
+        // Sound effects and ambience, each under the master volume (owner, November 7).
+        EffectsSlider = AddSetting(NSLOCTEXT("Elitewake", "EffectsVolumeLabel", "Sound effects volume"), UEWGameInstance::GetSoundEffectsVolume());
+        EffectsSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnEffectsVolumeChanged);
+        AmbienceSlider = AddSetting(NSLOCTEXT("Elitewake", "AmbienceVolumeLabel", "Ambience volume"), UEWGameInstance::GetAmbienceVolume());
+        AmbienceSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnAmbienceVolumeChanged);
         // Graphics (owner, November 1; CLAUDE.md 9.6): the overall quality, then each group, Low to Epic.
         QualitySlider = AddSetting(NSLOCTEXT("Elitewake", "GraphicsQualityLabel", "Graphics quality"), 0.f);
         QualitySlider->SetStepSize(QualityStep);
@@ -234,6 +240,8 @@ void UEWOptionsWidget::RefreshSettingLabels()
     for (int32 Which = 0; Which < 4; ++Which)
         SettingValues[1 + Which]->SetText(FText::AsNumber(FMath::RoundToInt((PC ? PC->GetLookSensitivity(Which) : 1.f) * 100.f)));
     SettingValues[5]->SetText(FText::AsNumber(FMath::RoundToInt((PC ? PC->GetMasterVolume() : 1.f) * 100.f)));
+    SettingValues[6]->SetText(FText::AsNumber(FMath::RoundToInt(UEWGameInstance::GetSoundEffectsVolume() * 100.f)));
+    SettingValues[7]->SetText(FText::AsNumber(FMath::RoundToInt(UEWGameInstance::GetAmbienceVolume() * 100.f)));
     SettingValues[SettingGraphics]->SetText(FEWGraphicsSettings::LevelName(FEWGraphicsSettings::GetOverall()));
     for (int32 Group = 0; Group < FEWGraphicsSettings::GroupCount; ++Group)
         SettingValues[SettingGraphics + 1 + Group]->SetText(FEWGraphicsSettings::LevelName(FEWGraphicsSettings::Get(static_cast<FEWGraphicsSettings::EGroup>(Group))));
@@ -265,6 +273,20 @@ void UEWOptionsWidget::OnVolumeChanged(float Value)
 {
     Selected = 5;
     if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetMasterVolume(Value);
+    RefreshSettingLabels();
+}
+
+void UEWOptionsWidget::OnEffectsVolumeChanged(float Value)
+{
+    Selected = 6;
+    UEWGameInstance::SetSoundEffectsVolume(Value);
+    RefreshSettingLabels();
+}
+
+void UEWOptionsWidget::OnAmbienceVolumeChanged(float Value)
+{
+    Selected = 7;
+    UEWGameInstance::SetAmbienceVolume(Value);
     RefreshSettingLabels();
 }
 
@@ -305,7 +327,7 @@ void UEWOptionsWidget::SyncGraphicsSliders()
 
 void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 {
-    USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider, QualitySlider,
+    USlider* Sliders[SettingCount] = {BrightnessSlider, LookSliders[0], LookSliders[1], LookSliders[2], LookSliders[3], VolumeSlider, EffectsSlider, AmbienceSlider, QualitySlider,
         GraphicsSliders[0], GraphicsSliders[1], GraphicsSliders[2], GraphicsSliders[3], GraphicsSliders[4], ButtonIconsSlider};
     if (Selected < 0 || Selected >= SettingCount || !Sliders[Selected]) return;
     // The graphics settings move a whole level at a time (and the slider's change handler applies it).

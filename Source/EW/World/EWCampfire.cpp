@@ -1,4 +1,5 @@
 #include "World/EWCampfire.h"
+#include "EWGameInstance.h"
 #include "EWCharacter.h"
 #include "EWInventoryComponent.h"
 #include "EWItemDefinition.h"
@@ -97,6 +98,7 @@ void AEWCampfire::Tick(float DeltaSeconds)
     if (HasAuthority() && bLit) SetFuel(FuelLeft - DeltaSeconds);
     if (bLit && GetNetMode() != NM_DedicatedServer)
     {
+        if (Crackle) Crackle->SetVolumeMultiplier(UEWGameInstance::GetSoundEffectsVolume());
         // A living fire's light wavers (cosmetic, each machine its own), and in daylight it barely shows.
         const float T = GetWorld()->GetTimeSeconds();
         const UEWDayNightSubsystem* Clock = UEWDayNightSubsystem::GetForWorld(this);

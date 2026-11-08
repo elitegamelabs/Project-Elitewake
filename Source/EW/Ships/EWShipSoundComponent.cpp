@@ -1,4 +1,5 @@
 #include "Ships/EWShipSoundComponent.h"
+#include "EWGameInstance.h"
 #include "Ships/EWShip.h"
 #include "EWSound.h"
 #include "Components/AudioComponent.h"
@@ -71,8 +72,9 @@ void UEWShipSoundComponent::TickComponent(float DeltaSeconds, ELevelTick TickTyp
     CreakLevel = FMath::FInterpConstantTo(CreakLevel, Afloat * FMath::Lerp(CreakAtRest, CreakAtSpeed, Way), DeltaSeconds, 1.f);
     RiggingLevel = FMath::FInterpConstantTo(RiggingLevel, Afloat * SailLevel * FMath::Lerp(.4f, 1.f, Way), DeltaSeconds, 1.f);
     // Never quite silent, so a loop keeps its place instead of stopping while it is faded out.
-    if (Creak) Creak->SetVolumeMultiplier(FMath::Max(CreakLevel, .001f));
-    if (Rigging) Rigging->SetVolumeMultiplier(FMath::Max(RiggingLevel, .001f));
+    const float Ambience = UEWGameInstance::GetAmbienceVolume();      // Options (owner, November 7)
+    if (Creak) Creak->SetVolumeMultiplier(FMath::Max(CreakLevel * Ambience, .001f));
+    if (Rigging) Rigging->SetVolumeMultiplier(FMath::Max(RiggingLevel * Ambience, .001f));
 
     if (Owner->IsSinking() && !bWasSinking)
         UEWSoundLibrary::PlaySoundAt(this, EEWSound::ShipSinking, Owner->GetActorLocation());

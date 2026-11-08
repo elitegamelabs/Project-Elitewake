@@ -1,4 +1,5 @@
 #include "EWSound.h"
+#include "EWGameInstance.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -84,7 +85,7 @@ void UEWSoundLibrary::PlayAssetAt(const UObject* WorldContext, USoundBase* Asset
 {
     UWorld* World;
     if (!CanPlay(WorldContext, Asset, World)) return;
-    UGameplayStatics::PlaySoundAtLocation(World, Asset, Location, Volume, Pitch);
+    UGameplayStatics::PlaySoundAtLocation(World, Asset, Location, Volume * UEWGameInstance::GetSoundEffectsVolume(), Pitch);
     Count(World, Asset);
 }
 
@@ -92,7 +93,7 @@ void UEWSoundLibrary::PlayAsset2D(const UObject* WorldContext, USoundBase* Asset
 {
     UWorld* World;
     if (!CanPlay(WorldContext, Asset, World)) return;
-    UGameplayStatics::PlaySound2D(World, Asset, Volume);
+    UGameplayStatics::PlaySound2D(World, Asset, Volume * UEWGameInstance::GetSoundEffectsVolume());
     Count(World, Asset);
 }
 

@@ -33,9 +33,10 @@ public:
     static constexpr int32 ItemSave = 11;
     static constexpr int32 ItemOptions = 12;
     static constexpr int32 ItemMainMenu = 13;
-    static constexpr int32 SettingBack = 13;
-    static constexpr int32 SettingButtonIcons = 12;
-    static constexpr int32 SettingGraphics = 6;
+    // Settings rows: brightness 0, look speeds 1-4, master volume 5, sound effects 6, ambience 7, graphics 8-13, icons 14.
+    static constexpr int32 SettingBack = 15;
+    static constexpr int32 SettingButtonIcons = 14;
+    static constexpr int32 SettingGraphics = 8;
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float Delta) override;
@@ -58,6 +59,8 @@ private:
     UFUNCTION() void OnControllerVerticalChanged(float Value) { OnLookChanged(3, Value); }
     void OnLookChanged(int32 Which, float Value);
     UFUNCTION() void OnVolumeChanged(float Value);
+    UFUNCTION() void OnEffectsVolumeChanged(float Value);
+    UFUNCTION() void OnAmbienceVolumeChanged(float Value);
     UFUNCTION() void OnQualityChanged(float Value);
     UFUNCTION() void OnTexturesChanged(float Value) { OnGraphicsChanged(0, Value); }
     UFUNCTION() void OnShadowsChanged(float Value) { OnGraphicsChanged(1, Value); }
@@ -85,6 +88,8 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<USlider>> LookSliders;
     UPROPERTY(Transient) TObjectPtr<USlider> VolumeSlider;
     UPROPERTY(Transient) TObjectPtr<UEWVolumeDial> VolumeDial;
+    UPROPERTY(Transient) TObjectPtr<USlider> EffectsSlider;
+    UPROPERTY(Transient) TObjectPtr<USlider> AmbienceSlider;
     /** The overall quality, then textures, shadows, foliage detail, water and reflections, effects. Four steps each. */
     UPROPERTY(Transient) TObjectPtr<USlider> QualitySlider;
     UPROPERTY(Transient) TArray<TObjectPtr<USlider>> GraphicsSliders;

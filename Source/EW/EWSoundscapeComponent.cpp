@@ -1,4 +1,5 @@
 #include "EWSoundscapeComponent.h"
+#include "EWGameInstance.h"
 #include "EWSound.h"
 #include "Components/AudioComponent.h"
 #include "GameFramework/Pawn.h"
@@ -134,22 +135,23 @@ void UEWSoundscapeComponent::TickComponent(float DeltaSeconds, ELevelTick TickTy
     // Insects on warm nights ashore, not in the snow and not out at sea.
     const float InsectTarget = Outside * (bNight && !bWinter && HeardRegion != EEWRegion::OpenSea ? InsectsAtNight : 0.f);
     const float Rate = 1.f / FadeSeconds;
+    const float Ambience = UEWGameInstance::GetAmbienceVolume();      // Options (owner, November 7)
     SurfLevel = FMath::FInterpConstantTo(SurfLevel, SurfTarget, DeltaSeconds, Rate);
     WindLevel = FMath::FInterpConstantTo(WindLevel, WindTarget, DeltaSeconds, Rate);
     InsectLevel = FMath::FInterpConstantTo(InsectLevel, InsectTarget, DeltaSeconds, Rate);
     CaveLevel = FMath::FInterpConstantTo(CaveLevel, bInCave ? CaveDrips : 0.f, DeltaSeconds, Rate);
     // Never quite silent, so a loop keeps its place instead of stopping while it is faded out.
-    if (Surf) Surf->SetVolumeMultiplier(FMath::Max(SurfLevel, .001f));
-    if (Wind) Wind->SetVolumeMultiplier(FMath::Max(WindLevel, .001f));
-    if (Insects) Insects->SetVolumeMultiplier(FMath::Max(InsectLevel, .001f));
-    if (Cave) Cave->SetVolumeMultiplier(FMath::Max(CaveLevel, .001f));
+    if (Surf) Surf->SetVolumeMultiplier(FMath::Max(SurfLevel * Ambience, .001f));
+    if (Wind) Wind->SetVolumeMultiplier(FMath::Max(WindLevel * Ambience, .001f));
+    if (Insects) Insects->SetVolumeMultiplier(FMath::Max(InsectLevel * Ambience, .001f));
+    if (Cave) Cave->SetVolumeMultiplier(FMath::Max(CaveLevel * Ambience, .001f));
     const bool bAshore = HeardRegion != EEWRegion::OpenSea;
     ForestLevel = FMath::FInterpConstantTo(ForestLevel, Outside * (bAshore && HeardRegion == EEWRegion::Plains ? ForestAshore : 0.f), DeltaSeconds, Rate);
     JungleLevel = FMath::FInterpConstantTo(JungleLevel, Outside * (HeardRegion == EEWRegion::Jungle && !bNight ? JungleByDay : 0.f), DeltaSeconds, Rate);
     SwampLevel = FMath::FInterpConstantTo(SwampLevel, Outside * (HeardRegion == EEWRegion::Swamp ? SwampAshore : 0.f), DeltaSeconds, Rate);
-    if (Forest) Forest->SetVolumeMultiplier(FMath::Max(ForestLevel, .001f));
-    if (Jungle) Jungle->SetVolumeMultiplier(FMath::Max(JungleLevel, .001f));
-    if (Swamp) Swamp->SetVolumeMultiplier(FMath::Max(SwampLevel, .001f));
+    if (Forest) Forest->SetVolumeMultiplier(FMath::Max(ForestLevel * Ambience, .001f));
+    if (Jungle) Jungle->SetVolumeMultiplier(FMath::Max(JungleLevel * Ambience, .001f));
+    if (Swamp) Swamp->SetVolumeMultiplier(FMath::Max(SwampLevel * Ambience, .001f));
     RegionLevel = FMath::Max3(ForestLevel, JungleLevel, SwampLevel);
     RegionLoopName = RegionLevel < .01f ? NAME_None : ForestLevel >= RegionLevel ? FName(TEXT("ForestWind"))
         : JungleLevel >= RegionLevel ? FName(TEXT("JungleDay")) : FName(TEXT("SwampFrogs"));
