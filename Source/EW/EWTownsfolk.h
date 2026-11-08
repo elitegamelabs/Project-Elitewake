@@ -21,6 +21,9 @@ struct FEWDialogueOption
     UPROPERTY(BlueprintReadOnly, Category="Dialogue") bool bEnabled = true;
     /** The choice asks for a line of text first (a ship's name, November 8): the window shows a box for it. */
     UPROPERTY(BlueprintReadOnly, Category="Dialogue") bool bAsksForText = false;
+    /** What the box asks for (empty: a ship's name), and whether "Suggest a name" is offered. */
+    UPROPERTY(BlueprintReadOnly, Category="Dialogue") FText TextPrompt;
+    UPROPERTY(BlueprintReadOnly, Category="Dialogue") bool bSuggestsShipName = false;
 };
 
 /**

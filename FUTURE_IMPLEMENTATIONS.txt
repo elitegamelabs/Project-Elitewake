@@ -773,7 +773,7 @@ where relevant. No EXE or external publication without the owner's explicit sess
 [ ] 11. Exterior ship appearance: historically fitting paint, timber, trim, figureheads and cosmetic wear, replicated
           without giving a visibility or combat advantage.
 [x] 12. Ship naming: editable name displayed on hull/UI with length, moderation and duplicate-name rules.
-[~] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
+[x] 13. Captain's ship logbooks: voyage dates, ports, damage, cargo highlights, discoveries and optionally editable entries.
 [ ] 14. Modular hull upgrades: reinforced hull plating with mass, cost, durability, speed and repair tradeoffs.
 [ ] 15. Improved rigging upgrades: handling and sail-efficiency tradeoffs while retaining approved sail rules.
 [ ] 16. Modular cargo containers: inventory capacity, mass, accessibility, loss on sinking and no duplication.
@@ -880,3 +880,8 @@ open when their precise rules are unresolved. Design/build one verified slice at
   keeps its day and the Journal shows "Day 3, 14:05". The world's day and hour are saved with the world (UEWSurvivorSave
   WorldDay/WorldHour; an older save starts the clock fresh as before). Verified: automation Elitewake.World.DayCount and
   verify_logbook_play.py (23 checks, every line dated). Still open for 13: the captain's own typed notes.
+
+2026-11-08 Captain's notes (Part 8, 13), commit "Captain's notes: a line written in her log at the harbor master". A
+  shipmate writes their own line (up to 160 letters, tidied) through the harbor master's text box; it is dated like every
+  line. The box now carries its own prompt, and Suggest a name shows only when naming a ship. Verified: verify_ship_names_play.py
+  (28 checks, the note on server and client). Item 13 is now complete except notes written at sea (the helm has no text box).

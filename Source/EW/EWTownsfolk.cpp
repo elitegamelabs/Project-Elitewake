@@ -244,5 +244,5 @@ FText AEWTownsfolk::ChooseDialogueText(AEWCharacter* Character, FName Key, const
     StartTalk(Character);
     if (!Option->bEnabled) return NSLOCTEXT("Elitewake", "TownsfolkNotNow", "That is not open to you now.");
     // Nothing longer than a line reaches a subclass.
-    return ActOnDialogueText(Character, Key, Text.Left(64));
+    return ActOnDialogueText(Character, Key, Text.Left(160));
 }

@@ -54,6 +54,11 @@ private:
     int32 SuggestSeed = 0;
     /** The last choice came from a controller: the name box keeps the window's focus so A, X and B work. */
     bool bChosenByPad = false;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> TextPrompt;
+    UPROPERTY(Transient) TObjectPtr<UEWRecipeButton> SuggestButton;
+    TArray<FText> Prompts;
+    TArray<bool> Suggests;
+    bool bTextSuggests = false;
     TWeakObjectPtr<AEWTownsfolk> Speaker;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> NameText;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> LineText;

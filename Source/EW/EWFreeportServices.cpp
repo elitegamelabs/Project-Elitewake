@@ -318,19 +318,38 @@ void AEWHarborMaster::GetDialogueOptions(const AEWCharacter* Character, TArray<F
         FEWDialogueOption Name;
         Name.Key = FName(TEXT("NameShip"));
         Name.bAsksForText = true;
+        Name.bSuggestsShipName = true;
         Name.bEnabled = Ship->IsCaptain(Character);
         Name.Label = !Name.bEnabled ? NSLOCTEXT("Elitewake", "HarborNameNotYours", "Register a name: only her owner may")
             : Ship->GetShipName().IsEmpty() ? FText::Format(NSLOCTEXT("Elitewake", "HarborNameAsk", "Register a name for my {0}"), AEWShipwright::ShipName(Ship->Definition))
             : FText::Format(NSLOCTEXT("Elitewake", "HarborRenameAsk", "Register a new name for the {0}"), Ship->GetShipTitle());
         Out.Add(Name);
+        // The captain's own line in her log (Part 8, 13), through the same text box; her shipmates may write too.
+        FEWDialogueOption Note;
+        Note.Key = FName(TEXT("LogNote"));
+        Note.bAsksForText = true;
+        Note.bEnabled = true;
+        Note.TextPrompt = NSLOCTEXT("Elitewake", "HarborNotePrompt", "Your line for her log (up to 160 letters):");
+        Note.Label = FText::Format(NSLOCTEXT("Elitewake", "HarborLogNote", "Write a line in the {0}'s log"), Ship->GetShipTitle());
+        Out.Add(Note);
     }
     Out.Add({FName(TEXT("Rules")), NSLOCTEXT("Elitewake", "HarborRules", "What are the harbor's rules?"), true});
 }
 
 FText AEWHarborMaster::ActOnDialogueText(AEWCharacter* Character, FName Key, const FString& Text)
 {
-    if (Key != FName(TEXT("NameShip"))) return FText::GetEmpty();
     AEWShip* Ship = FindShipFor(Character);
+    if (Key == FName(TEXT("LogNote")))
+    {
+        if (!Ship) return NSLOCTEXT("Elitewake", "HarborNameNoShip", "I see no ship of yours in the approaches.");
+        TArray<FString> Words;
+        Text.ParseIntoArrayWS(Words);
+        const FString Line = FString::Join(Words, TEXT(" "));
+        if (Line.Len() < 2) return NSLOCTEXT("Elitewake", "HarborNoteEmpty", "Nothing to write.");
+        Ship->AddLog(EEWLogKind::Note, Line);
+        return FText::Format(NSLOCTEXT("Elitewake", "HarborNoted", "Written in the {0}'s log."), Ship->GetShipTitle());
+    }
+    if (Key != FName(TEXT("NameShip"))) return FText::GetEmpty();
     if (!Ship) return NSLOCTEXT("Elitewake", "HarborNameNoShip", "I see no ship of yours in the approaches.");
     FText Reason;
     if (!Ship->TryRename(Character, Text, Reason)) return Reason;

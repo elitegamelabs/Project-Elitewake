@@ -165,6 +165,20 @@ def tick(_):
             other.set_ship_owner(owner_pc)
             reason = str(other.rename_or_refuse(owner, 'good hope')); ok = not reason
             check('another ship cannot take her name', not ok and 'already' in str(reason), reason=reason)
+            # The captain's own line in her log (Part 8, 13), through the same window and box.
+            index, options = option_index('LogNote')
+            window().choose(index)
+            check('the log-note box opens without a name suggestion', window().is_asking_for_text())
+            window().suggest_text()
+            check('Suggest does nothing for a note', window().get_entered_text() == '', text=window().get_entered_text())
+            window().set_entered_text('  Fair wind from the  west; all hands well. ')
+            check('Enter writes the line', lib.send_verification_ui_key(client, 'Enter'))
+            state.update(phase=31, at=time.monotonic() + 2.5)
+        elif p == 31:
+            log = [str(e.get_editor_property('text')) for e in state['ship'].get_logbook()]
+            check('her log holds the captain\'s line, tidied', 'Fair wind from the west; all hands well.' in log, log=log)
+            mine = [str(e.get_editor_property('text')) for e in peer(state['ship'], unreal.EWShip).get_logbook()]
+            check('the client sees it in her log', 'Fair wind from the west; all hands well.' in mine)
             client.close_dialogue()
             client.set_map_open(True)
             state.update(phase=4, at=time.monotonic() + 4)

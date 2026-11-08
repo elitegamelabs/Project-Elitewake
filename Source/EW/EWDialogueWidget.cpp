@@ -67,8 +67,8 @@ TSharedRef<SWidget> UEWDialogueWidget::RebuildWidget()
     TextPanel = WidgetTree->ConstructWidget<UVerticalBox>();
     TextPanel->SetVisibility(ESlateVisibility::Collapsed);
     Column->AddChildToVerticalBox(TextPanel);
-    TextPanel->AddChildToVerticalBox(MakeDialogueText(WidgetTree, FText::Format(NSLOCTEXT("Elitewake", "DialogueNameAsk",
-        "Her name, 2 to {0} letters:"), FText::AsNumber(AEWShip::MaxNameLength)), 16, DialogueBrass))->SetPadding(FMargin(0, 0, 0, 6));
+    TextPrompt = MakeDialogueText(WidgetTree, FText::GetEmpty(), 16, DialogueBrass);
+    TextPanel->AddChildToVerticalBox(TextPrompt)->SetPadding(FMargin(0, 0, 0, 6));
     TextBox = WidgetTree->ConstructWidget<UEditableTextBox>();
     {
         FEditableTextBoxStyle Style = TextBox->WidgetStyle;
@@ -95,6 +95,7 @@ TSharedRef<SWidget> UEWDialogueWidget::RebuildWidget()
         Button->SetStyle(Flat);
         Button->SetContent(MakeDialogueText(WidgetTree, TextLabels[Index], 15, DialogueSpeech));
         TextButtons->AddChildToHorizontalBox(Button)->SetPadding(FMargin(0, 0, 10, 0));
+        if (Index == 1) SuggestButton = Button;
     }
     Column->AddChildToVerticalBox(MakeDialogueText(WidgetTree, NSLOCTEXT("Elitewake", "DialogueLeave", "Leave: Esc / E / B"), 12, DialogueFaded))->SetPadding(FMargin(0, 12, 0, 0));
     return Super::RebuildWidget();
@@ -136,6 +137,8 @@ void UEWDialogueWidget::RefreshOptions()
     for (const FEWDialogueOption& Option : Options) NowEnabled.Add(Option.bEnabled);
     AsksText.Reset();
     for (const FEWDialogueOption& Option : Options) AsksText.Add(Option.bAsksForText);
+    Prompts.Reset(); Suggests.Reset();
+    for (const FEWDialogueOption& Option : Options) { Prompts.Add(Option.TextPrompt); Suggests.Add(Option.bSuggestsShipName); }
     if (Labels == ShownLabels && NowEnabled == Enabled) return;
     ShownLabels = Labels;
     Enabled = NowEnabled;
@@ -173,6 +176,10 @@ bool UEWDialogueWidget::Choose(int32 Index)
     {
         // Show the box in place of the choices. Typing goes to it; a controller keeps the window's own focus (A, X, B).
         TextKey = Keys[Index];
+        bTextSuggests = Suggests.IsValidIndex(Index) && Suggests[Index];
+        if (TextPrompt) TextPrompt->SetText(Prompts.IsValidIndex(Index) && !Prompts[Index].IsEmpty() ? Prompts[Index]
+            : FText::Format(NSLOCTEXT("Elitewake", "DialogueNameAsk", "Her name, 2 to {0} letters:"), FText::AsNumber(AEWShip::MaxNameLength)));
+        if (SuggestButton) SuggestButton->SetVisibility(bTextSuggests ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
         if (TextBox) TextBox->SetText(FText::GetEmpty());
         if (OptionList) OptionList->SetVisibility(ESlateVisibility::Collapsed);
         if (TextPanel) TextPanel->SetVisibility(ESlateVisibility::Visible);
@@ -190,12 +197,12 @@ FString UEWDialogueWidget::GetEnteredText() const
 
 void UEWDialogueWidget::SetEnteredText(const FString& Text)
 {
-    if (TextBox) TextBox->SetText(FText::FromString(Text.Left(64)));
+    if (TextBox) TextBox->SetText(FText::FromString(Text.Left(160)));
 }
 
 void UEWDialogueWidget::SuggestText()
 {
-    if (!IsAskingForText()) return;
+    if (!IsAskingForText() || !bTextSuggests) return;
     SetEnteredText(AEWShip::SuggestName(GetWorld(), ++SuggestSeed + int32(FPlatformTime::Cycles() & 0xffff)));
 }
 
