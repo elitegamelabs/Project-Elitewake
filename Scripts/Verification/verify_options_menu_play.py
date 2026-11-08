@@ -11,7 +11,7 @@ unattended with run_play_check.py. Through ordinary keys, the survivor:
      beach: Escape, select SAVE GAME, and verify it writes the survivor as they are;
   4. (the save put back on a survivor who has since changed restores them exactly, with no doubled tools);
   6. Down to MAIN MENU: the ELITEWAKE title screen;
-  6. Single Player from the title: the survivor is back where and as they were saved, tools not doubled.
+  6. Single Player from the title, then Resume Game on the Freeport choice: the survivor is back where and as they were saved, tools not doubled.
 An existing save in Saved/SaveGames is kept aside and put back afterwards. Writes Saved/OptionsMenuPlayResult.json.
 """
 import json
@@ -143,6 +143,10 @@ def adjust_settings():
     volume = c.get_master_volume()
     assert volume < .95, f'master volume did not apply live: 1.0 -> {volume}'
     assert abs(menu.get_dial_value() - volume) < .001, f'the dial ({menu.get_dial_value()}) does not show the volume ({volume})'
+    # The volume reaches the audio devices themselves, so it scales every sound (not only a saved number).
+    applied = unreal.EWGameInstance.get_applied_master_volume()
+    assert abs(applied - volume) < .001, f'the audio devices were given {applied}, not the volume {volume}'
+    state['memo']['volume_applied'] = round(applied, 3)
     c.set_master_volume(1.0)      # leave the saved setting as found
     # Graphics (owner, November 1): the overall quality, then five groups, a whole level per Left / Right.
     gus = unreal.GameUserSettings.get_game_user_settings()
@@ -305,6 +309,10 @@ def single_player():
     title = pc().get_title_widget()
     title.start_journey()
     title.start_single_player()
+    # Single Player opens the Freeport choice (November 7); a survivor was saved, so Resume Game is offered.
+    ports = pc().get_port_select_widget()
+    assert ports and ports.is_resume_shown(), 'Resume Game is not offered after saving'
+    ports.resume()
     state['memo']['t'] = time.monotonic()
 
 

@@ -8,6 +8,8 @@
 #include "Title/EWLoadingWidget.h"
 #include "Engine/Texture2D.h"
 #include "MoviePlayer.h"
+#include "AudioDevice.h"
+#include "AudioDeviceManager.h"
 #include "WorldPartition/WorldPartitionSubsystem.h"
 #include "EW.h"
 #include "Engine/Engine.h"
@@ -103,6 +105,12 @@ void UEWGameInstance::Init()
         NetworkFailureHandle=GEngine->OnNetworkFailure().AddUObject(this,&UEWGameInstance::NetworkFailed);
         TravelFailureHandle=GEngine->OnTravelFailure().AddUObject(this,&UEWGameInstance::TravelFailed);
     }
+    ApplyMasterVolume(GetSavedMasterVolume());
+    // Brightness too, so the title and the creator show it before any survivor's controller loads (the same formula as
+    // AEWPlayerController::ApplyBrightness: 50 on the slider is the engine's 2.2 gamma).
+    float Brightness=0.f;
+    if (GConfig) GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("BrightnessGamma"),Brightness,GGameUserSettingsIni);
+    if (GEngine && FMath::IsFinite(Brightness)) GEngine->DisplayGamma=2.2f*FMath::Exp2(FMath::Clamp(Brightness,-.5f,.5f)*2.f);
     PreLoadHandle=FCoreUObjectDelegates::PreLoadMap.AddUObject(this,&UEWGameInstance::PreLoadMap);
     PostLoadHandle=FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this,&UEWGameInstance::PostLoadMap);
 }
@@ -283,6 +291,8 @@ void UEWGameInstance::PreLoadMap(const FString& MapName)
 void UEWGameInstance::PostLoadMap(UWorld* World)
 {
     // The new map removed every widget; the screen stays up until the survivor has arrived and the world round them is in.
+    // A new map can bring a new audio device (each editor Play world has its own): give it the player's volume too.
+    if (World && World->GetGameInstance()==this) ApplyMasterVolume(GetSavedMasterVolume());
     if (bVoyageLoading && World && World->GetGameInstance()==this) ShowLoadingScreen();
 }
 void UEWGameInstance::FinishLoadingWhenReady()
@@ -317,4 +327,19 @@ void UEWGameInstance::FinishLoadingWhenReady()
         Instance->LoadingHandle.Reset();
         return false;
     }),0.f);
+}
+
+float UEWGameInstance::GetSavedMasterVolume()
+{
+    float Volume=1.f;
+    if (GConfig) GConfig->GetFloat(TEXT("Elitewake.UserControls"),TEXT("MasterVolume"),Volume,GGameUserSettingsIni);
+    return FMath::IsFinite(Volume) ? FMath::Clamp(Volume,0.f,1.f) : 1.f;
+}
+void UEWGameInstance::ApplyMasterVolume(float Volume)
+{
+    const float Clamped=FMath::Clamp(Volume,0.f,1.f);
+    AppliedMasterVolume=Clamped;
+    if (GEngine)
+        if (FAudioDeviceManager* Devices=GEngine->GetAudioDeviceManager())
+            Devices->IterateOverAllDevices([Clamped](Audio::FDeviceId, FAudioDevice* Device) { if (Device) Device->SetTransientPrimaryVolume(Clamped); });
 }

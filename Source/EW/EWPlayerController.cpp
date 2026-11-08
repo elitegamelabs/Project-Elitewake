@@ -113,7 +113,7 @@ void AEWPlayerController::BeginPlay()
         GConfig->GetInt(TEXT("Elitewake.UserControls"), TEXT("ButtonIcons"), Icons, GGameUserSettingsIni);
         ButtonIconsChoice = static_cast<EEWButtonIconsChoice>(FMath::Clamp(Icons, 0, 2));
         MasterVolume = FMath::Clamp(MasterVolume, 0.f, 1.f);
-        if (IsLocalPlayerController()) FApp::SetVolumeMultiplier(MasterVolume);
+        if (IsLocalPlayerController()) UEWGameInstance::ApplyMasterVolume(MasterVolume);
         UserBrightness = FMath::Clamp(UserBrightness, -.5f, .5f);
     }
     ApplyBrightness();
@@ -212,7 +212,7 @@ void AEWPlayerController::SetMasterVolume(float Value)
 {
     if (!IsLocalPlayerController()) return;
     MasterVolume = FMath::Clamp(Value, 0.f, 1.f);
-    FApp::SetVolumeMultiplier(MasterVolume);
+    UEWGameInstance::ApplyMasterVolume(MasterVolume);
     if (GConfig)
     {
         GConfig->SetFloat(TEXT("Elitewake.UserControls"), TEXT("MasterVolume"), MasterVolume, GGameUserSettingsIni);

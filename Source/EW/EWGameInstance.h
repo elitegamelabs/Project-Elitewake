@@ -41,6 +41,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="Front end") void ShowLoadingScreen();
     UFUNCTION(BlueprintPure, Category="Front end") bool IsLoadingScreenShown() const;
     UFUNCTION(BlueprintPure, Category="Front end") UEWLoadingWidget* GetLoadingWidget() const { return Loading; }
+    /** The player's master volume (0-1, Options), saved in the user settings. Applied to every audio device's primary
+     *  volume, so it scales every sound: world, ambience, interface, music. Unreal resets FApp's volume multiplier itself
+     *  when the window gains or loses focus, so that is not used. */
+    static float GetSavedMasterVolume();
+    static void ApplyMasterVolume(float Volume);
+    /** The volume last given to the audio devices (for checks). */
+    UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedMasterVolume() { return AppliedMasterVolume; }
+    static inline float AppliedMasterVolume = 1.f;
     static inline const TCHAR* VoyageArt = TEXT("/Game/Elitewake/UI/FrontEnd/T_LoadingVoyage.T_LoadingVoyage");
     /** Accept only local/private IPv4 addresses, optional port, or localhost. Never arbitrary travel URLs. */
     static bool NormalizePrivateAddress(const FString& Input, FString& Output);

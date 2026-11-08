@@ -1,10 +1,14 @@
-"""Publish a packaged build to the friends' playtest repository as Elitewake-Setup.exe + Elitewake-Data.bin + README
-(owner, November 7: the third playtest repository holds nothing else). Run only when the owner asks for a playtest build:
+"""Publish a packaged build to the friends' playtest repository (owner, November 7: the third playtest repository holds
+nothing but a README; each build's exe and README go out in compressed zips). Release assets:
+  Elitewake-Playtest-<label>-Part1.zip  (Elitewake-Setup.exe and README.md)
+  Elitewake-Playtest-<label>-Part2.zip  (Elitewake-Data.bin)
+Two zips because GitHub refuses any file over 2 GB and the game is about 3 GB. Run only when the owner asks for a playtest build:
     python Scripts/Release/publish_playtest_setup.py Saved/PrivateBuilds/<label>
   1. Zips the game client (the Windows folder, without debug symbols, manifests or engine debug tools) with Windows' tar.
   2. make_playtest_installer.py cuts the zip into the setup exe and the data file (each under GitHub's 2 GB per file).
   3. Writes the repository's README.md (its only file) for this build.
-  4. Deletes the older releases and publishes this one as Latest with the two files.
+  4. Packs the setup exe and README into Part1.zip and the data file into Part2.zip (deflate, best compression).
+  5. Deletes the older releases and publishes this one as Latest with the two zips.
 Needs gh signed in with access to the repository.
 """
 import base64
@@ -40,15 +44,16 @@ things will break. Please do not share the files outside the invited group.
 Current build: **{label}**
 
 ## Set it up
-1. Open **Releases** (right side of this page), pick the one marked **Latest**, and under *Assets* download both files:
-   **Elitewake-Setup.exe** and **Elitewake-Data.bin** (under 2 GB each). Ignore the two "Source code" links GitHub adds.
-2. Put both files in the same folder, with about 8 GB free on that drive.
+1. Open **Releases** (right side of this page), pick the one marked **Latest**, and under *Assets* download both zips:
+   **...-Part1.zip** and **...-Part2.zip** (under 2 GB each). Ignore the two "Source code" links GitHub adds.
+2. Make one folder with about 10 GB free, and extract **both** zips into it (right-click, Extract All, choose that same
+   folder). It then holds Elitewake-Setup.exe, Elitewake-Data.bin and this README.
 3. Double-click **Elitewake-Setup.exe**. Windows may warn that the program is unsigned: click **More info**, then **Run anyway**.
    It puts the game together in an **Elitewake** folder next to it (about a minute) and starts it.
 4. Next time, start the game with **{game}**, or run the setup again (it skips straight to the game).
 5. If Windows says a runtime is missing, run **{redist}** once.
 
-A new build replaces the old one: download the two new files into the same folder and run the setup; it replaces the old game.
+A new build replaces the old one: extract the two new zips into the same folder and run the setup; it replaces the old game.
 
 ## Getting started
 Single Player: choose a Freeport on the world map, then Create New Survivor (or Resume Game after playing before), make your
@@ -85,19 +90,30 @@ def main():
     run('gh', 'api', '-X', 'PUT', f'repos/{REPO}/contents/README.md', '--input', put, capture_output=True)
     put.unlink()
 
+    # The release's downloads: the exe and README in one compressed zip, the data in another.
+    import zipfile
+    zips = []
+    for part, members in ((1, ('Elitewake-Setup.exe', 'README.md')), (2, ('Elitewake-Data.bin',))):
+        target = installer / f'Elitewake-Playtest-{label}-Part{part}.zip'
+        with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=9, allowZip64=True) as z:
+            for name in members:
+                z.write(installer / name, name)
+        assert target.stat().st_size < 1_990_000_000, f'{target.name} is over the 2 GB GitHub limit'
+        zips.append(target)
+
     tags = subprocess.run(['gh', 'release', 'list', '--repo', REPO, '--json', 'tagName', '--jq', '.[].tagName'],
                           capture_output=True, text=True, check=True).stdout.split()
     for tag in tags:
         run('gh', 'release', 'delete', tag, '--repo', REPO, '--yes', '--cleanup-tag')
-    run('gh', 'release', 'create', label, installer / 'Elitewake-Setup.exe', installer / 'Elitewake-Data.bin', '--repo', REPO,
+    run('gh', 'release', 'create', label, *zips, '--repo', REPO,
         '--title', f'Elitewake playtest {label}', '--notes',
-        'Download both files into one folder and run Elitewake-Setup.exe. See the README.', '--latest')
+        'Download both zips, extract them into one folder and run Elitewake-Setup.exe. See the README.', '--latest')
     assets = subprocess.run(['gh', 'release', 'view', label, '--repo', REPO, '--json', 'assets', '--jq',
                              '.assets[] | "\\(.name) \\(.size) \\(.state)"'], capture_output=True, text=True, check=True).stdout
     print(assets)
-    for name in ('Elitewake-Setup.exe', 'Elitewake-Data.bin'):
-        size = (installer / name).stat().st_size
-        assert f'{name} {size} uploaded' in assets, f'{name} did not upload completely'
+    for target in zips:
+        size = target.stat().st_size
+        assert f'{target.name} {size} uploaded' in assets, f'{target.name} did not upload completely'
     print(f'Published {label} to {REPO}')
 
 
