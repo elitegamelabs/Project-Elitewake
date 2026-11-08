@@ -892,3 +892,21 @@ open when their precise rules are unresolved. Design/build one verified slice at
   tuning), so Winter reads about 34 N and the Swamp about 2 N; under water it reads "no horizon". Verified:
   verify_sextant_play.py (9 checks). The HUD compass is left as it was (always shown). Still to do for 09: nautical charts,
   skill-based accuracy, a held sextant model (it is held empty-handed for now).
+
+2026-11-08 STOPPED HERE (owner asked to stop). Optional sailing lessons (Part 8, 64): IMPLEMENTED, NOT YET VERIFIED.
+  Commit "Sailing lessons: optional, from the harbor master (work in progress)". Built: UEWLessonComponent on the player's
+  controller (server-side steps, replicated to its owner): 1 aboard, 2 anchor up, 3 under way (speed over 150 cm/s for 3 s),
+  4 at the helm and steering (rudder over 0.3), 5 the hold opened (AEWShip's hatch calls NoteHoldOpened), 6 anchor down,
+  7 a damage/bailing note read for 12 s. The harbor master offers "Teach me to sail" / "Stop the sailing lessons"; the
+  arrival prompt shows the step, also at the helm. Compiles (editor target).
+  Evidence so far (Scripts/Verification/verify_sailing_lessons_play.py, two players): steps 1-4 pass through real play
+  (she sailed at about 4.4 m/s, steered with the client's D key). The hold step had not yet passed; the last fix was being
+  run when the owner stopped: the interaction request must target the CLIENT'S copy of the ship (peer), standing 140 cm
+  aft of the hatch on deck, as verify_first_voyage_play.py does; the hold opens after its 0.75 s hold.
+  NEXT STEPS, in order: (1) run verify_sailing_lessons_play.py; fix the hold step until all checks pass, including steps 6-7,
+  the replay and the stop; (2) build the EW game target, run the Python tests, record it as Verified here and tick 64;
+  (3) 65, the optional combat lessons, the same way (EEWLesson::Combat in UEWLessonComponent: punches, stamina, the cannon's
+  four-step load), started from a Freeport NPC; (4) 60, remappable controls (see AGENTS.md section 3).
+  Lessons learned for the check: close the dialogue with the UI key Escape, not close_dialogue() from Python (the server keeps
+  the menu blocked otherwise); a sold sloop is bare: fit helm and sails with verification_install_fitting; stand at the
+  helm mount before take_helm; lower sails one step at a time (step_sails(-1)).

@@ -1,4 +1,5 @@
 #include "EWArrivalPromptWidget.h"
+#include "EWLessonComponent.h"
 #include "EWArrivalComponent.h"
 #include "EWCharacter.h"
 #include "EWInteractionWidget.h"
@@ -55,11 +56,16 @@ void UEWArrivalPromptWidget::NativeTick(const FGeometry& Geometry, float DeltaSe
     // One prompt at a time: never over a menu, a death, the helm's controls or the interaction prompt.
     // The arrival's steps first; then, in Saltreach, the town's (slice 5).
     const bool bTown = Arrival && Arrival->IsTownPromptDue();
-    const bool bShow = Arrival && (Arrival->IsPromptDue() || bTown) && !Survivor->IsDead() && !Survivor->GetHelmShip()
+    // An optional lesson (Part 8, 64) takes the place, and stays up at the helm, where it is needed.
+    const UEWLessonComponent* Lessons = PC ? PC->GetLessons() : nullptr;
+    const bool bLesson = Lessons && Lessons->IsInLesson() && Survivor && !Survivor->IsDead()
+        && !PC->IsInventoryOpen() && !PC->IsMapOpen() && !PC->IsOptionsMenuOpen() && !PC->IsDialogueOpen();
+    const bool bShow = bLesson || (Arrival && (Arrival->IsPromptDue() || bTown) && !Survivor->IsDead() && !Survivor->GetHelmShip()
         && !PC->IsInventoryOpen() && !PC->IsMapOpen() && !PC->IsOptionsMenuOpen() && !PC->IsDialogueOpen()
-        && !(Interaction && !Interaction->GetDisplayedPrompt().IsEmpty());
+        && !(Interaction && !Interaction->GetDisplayedPrompt().IsEmpty()));
     Panel->SetVisibility(bShow ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     const FText Words = !bShow ? FText::GetEmpty()
+        : bLesson ? Lessons->GetPrompt(PC->UsesControllerPrompts())
         : bTown ? UEWArrivalComponent::TownPromptFor(Arrival->GetTownStep(), PC->UsesControllerPrompts())
                 : UEWArrivalComponent::PromptFor(Arrival->GetStep(), PC->UsesControllerPrompts());
     const EEWGamepadFamily Family = PC ? PC->GetPromptFamily() : EEWGamepadFamily::Unknown;

@@ -36,6 +36,7 @@
 #include "Misc/ConfigCacheIni.h"
 #include "World/EWDayNight.h"
 #include "World/EWPlaces.h"
+#include "EWLessonComponent.h"
 
 namespace
 {
@@ -1446,6 +1447,7 @@ bool AEWShip::Interact_Implementation(AEWCharacter* Character)
         // The server agrees the hold may be used; the owning client opens its screen.
         auto* PC = Cast<AEWPlayerController>(Character->GetController());
         if (!PC || !CanAccessCargo(Character)) return false;
+        if (UEWLessonComponent* Lessons = PC->GetLessons()) Lessons->NoteHoldOpened();
         PC->ClientOpenContainer(this);
         return true;
     }

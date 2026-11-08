@@ -44,6 +44,7 @@
 #include "EWTownsfolk.h"
 #include "EWExplorationComponent.h"
 #include "EWDiscoveryComponent.h"
+#include "EWLessonComponent.h"
 #include "EWCraftingRecipe.h"
 #include "EWProgressionComponent.h"
 #include "InputKeyEventArgs.h"
@@ -78,6 +79,7 @@ AEWPlayerController::AEWPlayerController()
     BuildComponent = CreateDefaultSubobject<UEWBuildComponent>(TEXT("Build"));
     ExplorationComponent = CreateDefaultSubobject<UEWExplorationComponent>(TEXT("Exploration"));
     DiscoveryComponent = CreateDefaultSubobject<UEWDiscoveryComponent>(TEXT("Discoveries"));
+    LessonComponent = CreateDefaultSubobject<UEWLessonComponent>(TEXT("Lessons"));
     Strongbox = CreateDefaultSubobject<UEWInventoryComponent>(TEXT("Strongbox"));
     Strongbox->MaxSlots = StrongboxSlots;
 }

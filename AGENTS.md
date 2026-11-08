@@ -62,7 +62,9 @@ working slice, add a Play check, run it, run the Python tests and both builds, r
 1. **Armor evidence: DONE by Codex on November 8** (commits 567193d5, 5d107a18: two-player check 16/16, hosted save and
    restore 15/15, Hands/Feet rows hidden, image rights confirmed by the owner, playtest build from 9f041a33 published).
    Left for armor: a real network disconnect and rejoin with armor on (do it if a two-process check exists that can).
-2. **Wave A, 60 — remappable controls.** Use Enhanced Input user settings (player-mappable keys) behind the existing
+0. **FIRST: finish the sailing lessons (64).** Claude stopped mid-check on November 8; read the 2026-11-08 STOPPED HERE
+   entry at the end of FUTURE_IMPLEMENTATIONS.txt for the exact state and next steps. Also done since this brief was written:
+   the world's day count in the logbook, captain's notes at the harbor master, and the sextant (09, first part).. **Wave A, 60 — remappable controls.** Use Enhanced Input user settings (player-mappable keys) behind the existing
    Options "Controls" page (`EWOptionsWidget`, `EWControlsList.h`): pick a row, press a key or button, warn on a clash,
    save, "Reset to defaults" restores the owner's layout in CLAUDE.md 6.5. Extend `verify_controller_only_play.py` and
    `verify_options_menu_play.py`. Keyboard and controller both.

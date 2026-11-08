@@ -23,6 +23,7 @@ class UEWSurvivalWidget;
 class UEWDeathWidget;
 class UEWExplorationComponent;
 class UEWDiscoveryComponent;
+class UEWLessonComponent;
 class UEWInteractionComponent;
 class UEWInteractionWidget;
 class UEWArrivalPromptWidget;
@@ -159,6 +160,8 @@ public:
     UFUNCTION(BlueprintPure, Category="Exploration") UEWExplorationComponent* GetExploration() const { return ExplorationComponent; }
     /** What this player has discovered: places and creatures, for the Journal (Part 8, 63). */
     UFUNCTION(BlueprintPure, Category="Exploration") UEWDiscoveryComponent* GetDiscoveries() const { return DiscoveryComponent; }
+    /** The optional lessons (Part 8, 64-65): started at a harbor master. */
+    UFUNCTION(BlueprintPure, Category="Lessons") UEWLessonComponent* GetLessons() const { return LessonComponent; }
     UFUNCTION(Client, Reliable) void ClientCraftResult(EEWCraftResult Result);
     /** The server accepted the recipe: the work takes this long. */
     UFUNCTION(Client, Reliable) void ClientCraftStarted(UEWCraftingRecipe* Recipe, float Seconds);
@@ -325,6 +328,8 @@ protected:
     TObjectPtr<UEWExplorationComponent> ExplorationComponent;
     UPROPERTY(VisibleAnywhere, Category="Exploration")
     TObjectPtr<UEWDiscoveryComponent> DiscoveryComponent;
+    UPROPERTY(VisibleAnywhere, Category="Lessons")
+    TObjectPtr<UEWLessonComponent> LessonComponent;
     UPROPERTY(Transient)
     TObjectPtr<UEWHotbarWidget> HotbarWidget;
     bool bHotbarModifierHeld = false;

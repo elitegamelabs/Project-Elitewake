@@ -1,4 +1,6 @@
 #include "EWFreeportServices.h"
+#include "EWLessonComponent.h"
+#include "EWPlayerController.h"
 #include "EWCharacter.h"
 #include "EWArrivalComponent.h"
 #include "EWInventoryComponent.h"
@@ -333,6 +335,15 @@ void AEWHarborMaster::GetDialogueOptions(const AEWCharacter* Character, TArray<F
         Note.Label = FText::Format(NSLOCTEXT("Elitewake", "HarborLogNote", "Write a line in the {0}'s log"), Ship->GetShipTitle());
         Out.Add(Note);
     }
+    // The optional sailing lessons (Part 8, 64): begin, begin again, or stop.
+    {
+        const auto* PC = IsValid(Character) ? Cast<AEWPlayerController>(Character->GetController()) : nullptr;
+        const UEWLessonComponent* Lessons = PC ? PC->GetLessons() : nullptr;
+        const bool bSailing = Lessons && Lessons->GetLesson() == EEWLesson::Sailing;
+        Out.Add({FName(bSailing ? TEXT("LessonsStop") : TEXT("LessonsStart")), bSailing
+            ? NSLOCTEXT("Elitewake", "HarborLessonsStop", "Stop the sailing lessons")
+            : NSLOCTEXT("Elitewake", "HarborLessonsStart", "Teach me to sail (lessons, step by step)"), true});
+    }
     Out.Add({FName(TEXT("Rules")), NSLOCTEXT("Elitewake", "HarborRules", "What are the harbor's rules?"), true});
 }
 
@@ -367,6 +378,19 @@ FText AEWHarborMaster::ActOnDialogue(AEWCharacter* Character, FName Key)
     if (Key == FName(TEXT("Depart")))
         return ClearForDeparture(Character) ? NSLOCTEXT("Elitewake", "HarborDeparted", "Cleared. She lies at the harbor mouth, bow to the sea, anchor down until you raise it. Fair winds.")
                                             : NSLOCTEXT("Elitewake", "HarborNoDepart", "I cannot clear her just now.");
+    if (Key == FName(TEXT("LessonsStart")) || Key == FName(TEXT("LessonsStop")))
+    {
+        auto* PC = IsValid(Character) ? Cast<AEWPlayerController>(Character->GetController()) : nullptr;
+        UEWLessonComponent* Lessons = PC ? PC->GetLessons() : nullptr;
+        if (!Lessons) return FText::GetEmpty();
+        if (Key == FName(TEXT("LessonsStop")))
+        {
+            Lessons->StopLesson();
+            return NSLOCTEXT("Elitewake", "HarborLessonsStopped", "As you like. Ask again whenever you want them.");
+        }
+        Lessons->StartLesson(EEWLesson::Sailing);
+        return NSLOCTEXT("Elitewake", "HarborLessonsStarted", "Gladly. Your ship first: get yourself aboard her, and I will tell you the rest as you go.");
+    }
     if (Key == FName(TEXT("Rules")))
         return NSLOCTEXT("Elitewake", "HarborRulesText", "This is a free port. Inside its bounds no one raises a hand or a gun against another, no one builds, and no beast is let in. Trade fair, pay your crew, and take your quarrels out past the harbor mouth.");
     return FText::GetEmpty();
