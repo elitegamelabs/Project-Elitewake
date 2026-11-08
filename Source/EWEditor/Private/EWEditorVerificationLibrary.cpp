@@ -89,6 +89,14 @@ AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* Wor
     return Node;
 }
 
+AActor* UEWEditorVerificationLibrary::SpawnVerificationActor(UWorld* World, TSubclassOf<AActor> ActorClass, FVector Location, FRotator Rotation)
+{
+    if (!World || World->WorldType != EWorldType::PIE || !ActorClass) return nullptr;
+    FActorSpawnParameters Params;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    return World->SpawnActor<AActor>(ActorClass, Location, Rotation, Params);
+}
+
 AEWShip* UEWEditorVerificationLibrary::SpawnVerificationShip(UWorld* World, UEWShipDefinition* Definition, FVector Location, FRotator Rotation)
 {
     if (!World || World->WorldType != EWorldType::PIE || World->GetNetMode() == NM_Client || !IsValid(Definition)) return nullptr;

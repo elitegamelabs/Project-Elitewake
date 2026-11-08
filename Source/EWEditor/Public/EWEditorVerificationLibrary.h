@@ -55,6 +55,9 @@ public:
     static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12,
         int32 PerStrike = 3, EEWPickaxeTier MinimumPickaxeTier = EEWPickaxeTier::None, bool bRespawnWhenDepleted = false,
         float RespawnSeconds = 3600.f, bool bRandomizeStock = false, int32 MinimumStock = 4, int32 MaximumStock = 8);
+    /** Play-only: any actor class at a place (captures and checks that stage something, such as a character blueprint). */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static AActor* SpawnVerificationActor(UWorld* World, TSubclassOf<AActor> ActorClass, FVector Location, FRotator Rotation);
     /** Play-only ship fixture. Definition is assigned before construction and only the authority may spawn it. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AEWShip* SpawnVerificationShip(UWorld* World, UEWShipDefinition* Definition, FVector Location, FRotator Rotation);
