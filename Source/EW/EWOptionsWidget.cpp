@@ -5,6 +5,9 @@
 #include "EWVolumeDial.h"
 #include "EWGraphicsSettings.h"
 #include "EWControllerIcons.h"
+#include "EWControlsList.h"
+#include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
@@ -65,6 +68,7 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
 
         auto* Width = WidgetTree->ConstructWidget<USizeBox>();
         Width->SetWidthOverride(560);
+        PanelWidth = Width;
         Root->SetContent(Width);
         auto* Body = WidgetTree->ConstructWidget<UVerticalBox>();
         Width->SetContent(Body);
@@ -84,6 +88,8 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
         Body->AddChildToVerticalBox(PausePage);
         OptionsPage = WidgetTree->ConstructWidget<UVerticalBox>();
         Body->AddChildToVerticalBox(OptionsPage);
+        ControlsPage = WidgetTree->ConstructWidget<UVerticalBox>();
+        Body->AddChildToVerticalBox(ControlsPage);
 
         auto AddSetting = [&](const FText& Name, float InitialValue) -> USlider*
         {
@@ -188,6 +194,54 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
             (PC ? int32(PC->GetButtonIconsChoice()) : 0) * IconsStep);
         ButtonIconsSlider->SetStepSize(IconsStep);
         ButtonIconsSlider->OnValueChanged.AddDynamic(this, &UEWOptionsWidget::OnButtonIconsChanged);
+        // Controls (owner, November 7): every control, for the keyboard or the controller in use.
+        ControlsButton = Button(OptionsPage, NSLOCTEXT("Elitewake", "OptionsControls", "CONTROLS"));
+        ControlsButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::OpenControls);
+        ControlsButton->OnHovered.AddDynamic(this, &UEWOptionsWidget::HoverControls);
+        {
+            ControlsHeading = WidgetTree->ConstructWidget<UTextBlock>();
+            auto HeadFont = ControlsHeading->GetFont(); HeadFont.Size = 15; HeadFont.LetterSpacing = 150;
+            ControlsHeading->SetFont(HeadFont);
+            ControlsHeading->SetColorAndOpacity(FLinearColor(.93f, .86f, .7f));
+            ControlsHeading->SetJustification(ETextJustify::Center);
+            ControlsPage->AddChildToVerticalBox(ControlsHeading)->SetPadding(FMargin(0, 0, 0, 8));
+            auto* ListHeight = WidgetTree->ConstructWidget<USizeBox>();
+            ListHeight->SetHeightOverride(560);
+            ControlsScroll = WidgetTree->ConstructWidget<UScrollBox>();
+            ListHeight->SetContent(ControlsScroll);
+            ControlsPage->AddChildToVerticalBox(ListHeight);
+            for (int32 Index = 0; Index < EWControls::Count; ++Index)
+            {
+                const EWControls::FControl& Control = EWControls::List[Index];
+                if (Control.Section)
+                {
+                    auto* Section = WidgetTree->ConstructWidget<UTextBlock>();
+                    Section->SetText(FText::FromString(Control.Section));
+                    auto SectionFont = Section->GetFont(); SectionFont.Size = 13; SectionFont.LetterSpacing = 250;
+                    Section->SetFont(SectionFont);
+                    Section->SetColorAndOpacity(FLinearColor(.25f, .88f, 1.f));
+                    ControlsScroll->AddChild(Section);
+                    if (auto* SectionSlot = Cast<UScrollBoxSlot>(Section->Slot)) SectionSlot->SetPadding(FMargin(4, Index == 0 ? 0 : 14, 4, 4));
+                }
+                auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+                auto* ActionText = WidgetTree->ConstructWidget<UTextBlock>();
+                ActionText->SetText(FText::FromString(Control.Action));
+                auto RowFont = ActionText->GetFont(); RowFont.Size = 14; ActionText->SetFont(RowFont);
+                ActionText->SetAutoWrapText(true);
+                Row->AddChildToHorizontalBox(ActionText)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+                auto* Binding = WidgetTree->ConstructWidget<UTextBlock>();
+                Binding->SetFont(RowFont);
+                Binding->SetColorAndOpacity(FLinearColor(.93f, .86f, .7f));
+                Binding->SetJustification(ETextJustify::Right);
+                Binding->SetAutoWrapText(true);
+                Row->AddChildToHorizontalBox(Binding)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+                ControlsScroll->AddChild(Row);
+                if (auto* RowSlot = Cast<UScrollBoxSlot>(Row->Slot)) RowSlot->SetPadding(FMargin(8, 3));
+                ControlTexts.Add(Binding);
+            }
+            ControlsBackButton = Button(ControlsPage, NSLOCTEXT("Elitewake", "OptionsControlsBack", "BACK"));
+            ControlsBackButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::CloseControls);
+        }
         BackButton = Button(OptionsPage, NSLOCTEXT("Elitewake", "OptionsBack", "BACK"));
         BackButton->OnClicked.AddDynamic(this, &UEWOptionsWidget::BackToButtons);
         BackButton->OnHovered.AddDynamic(this, &UEWOptionsWidget::HoverBack);
@@ -208,14 +262,19 @@ TSharedRef<SWidget> UEWOptionsWidget::RebuildWidget()
 
 void UEWOptionsWidget::SetTab(int32 NewTab)
 {
-    Tab = FMath::Clamp(NewTab, 0, 1);
+    Tab = FMath::Clamp(NewTab, 0, 2);
     Selected = Tab == 1 ? 0 : ItemResume;
     if (PausePage) PausePage->SetVisibility(Tab == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     if (OptionsPage) OptionsPage->SetVisibility(Tab == 1 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    if (Title) Title->SetText(Tab == 1 ? NSLOCTEXT("Elitewake", "OptionsPageTitle", "OPTIONS") : NSLOCTEXT("Elitewake", "OptionsTitle", "PAUSED"));
-    if (Hint) Hint->SetText(Tab == 1
-        ? NSLOCTEXT("Elitewake", "OptionsSettingsHint", "Up/Down select · Left/Right adjust · Escape or B back")
+    if (ControlsPage) ControlsPage->SetVisibility(Tab == 2 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    if (PanelWidth) PanelWidth->SetWidthOverride(Tab == 2 ? 820.f : 560.f);
+    if (Title) Title->SetText(Tab == 2 ? NSLOCTEXT("Elitewake", "ControlsPageTitle", "CONTROLS")
+        : Tab == 1 ? NSLOCTEXT("Elitewake", "OptionsPageTitle", "OPTIONS") : NSLOCTEXT("Elitewake", "OptionsTitle", "PAUSED"));
+    if (Hint) Hint->SetText(Tab == 2
+        ? NSLOCTEXT("Elitewake", "ControlsHint", "Up/Down or the wheel to scroll · Escape or B back")
+        : Tab == 1 ? NSLOCTEXT("Elitewake", "OptionsSettingsHint", "Up/Down select · Left/Right adjust · Escape or B back")
         : NSLOCTEXT("Elitewake", "OptionsHint", "Up/Down select · Enter choose · Escape resume"));
+    if (Tab == 2) { RefreshControls(true); if (ControlsScroll) ControlsScroll->ScrollToStart(); }
 }
 
 void UEWOptionsWidget::NativeTick(const FGeometry& Geometry, float Delta)
@@ -227,6 +286,8 @@ void UEWOptionsWidget::NativeTick(const FGeometry& Geometry, float Delta)
     Light(OptionsButton, ItemOptions, 0);
     Light(MenuButton, ItemMainMenu, 0);
     Light(BackButton, SettingBack, 1);
+    Light(ControlsButton, SettingControls, 1);
+    if (Tab == 2) RefreshControls(false);
     for (int32 Index = 0; Index < SettingLabels.Num(); ++Index)
         SettingLabels[Index]->SetColorAndOpacity(Tab == 1 && Selected == Index ? FLinearColor(.25f,.88f,1.f) : FLinearColor::White);
 }
@@ -342,10 +403,15 @@ void UEWOptionsWidget::AdjustSelectedSetting(float Direction)
 FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
     const FKey Key = Event.GetKey();
+    // The menu notices the device in use too (gameplay input does not reach the controller while a menu is up), so the
+    // Controls page and prompts follow a controller picked up mid-menu.
+    if (auto* Owner = Cast<AEWPlayerController>(GetOwningPlayer())) Owner->RecordInputDevice(Key);
+    if (Tab == 2) RefreshControls(false);
     if (Key == EKeys::Escape || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Gamepad_FaceButton_Right)
     {
         // From the settings, back to the buttons; from the buttons, back to the game.
-        if (Tab == 1) BackToButtons();
+        if (Tab == 2) CloseControls();
+        else if (Tab == 1) BackToButtons();
         else if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->SetOptionsMenuOpen(false);
         return FReply::Handled();
     }
@@ -354,6 +420,12 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
     const bool bLeft = Key == EKeys::Left || Key == EKeys::Gamepad_DPad_Left || Key == EKeys::Gamepad_LeftStick_Left;
     const bool bRight = Key == EKeys::Right || Key == EKeys::Gamepad_DPad_Right || Key == EKeys::Gamepad_LeftStick_Right;
     const bool bAccept = Key == EKeys::Enter || Key == EKeys::SpaceBar || Key == EKeys::Gamepad_FaceButton_Bottom;
+    if (Tab == 2)
+    {
+        if ((bUp || bDown) && ControlsScroll) ControlsScroll->SetScrollOffset(FMath::Max(0.f, ControlsScroll->GetScrollOffset() + (bUp ? -60.f : 60.f)));
+        else if (bAccept && !Event.IsRepeat()) CloseControls();
+        return FReply::Handled();
+    }
     if (bUp || bDown)
     {
         if (Tab == 1) Selected = FMath::Clamp(Selected + (bUp ? -1 : 1), 0, SettingBack);
@@ -373,7 +445,7 @@ FReply UEWOptionsWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEv
     if (bAccept)
     {
         if (Event.IsRepeat()) return FReply::Handled();
-        if (Tab == 1) { if (Selected == SettingBack) BackToButtons(); }
+        if (Tab == 1) { if (Selected == SettingBack) BackToButtons(); else if (Selected == SettingControls) OpenControls(); }
         else if (Selected == ItemResume) Resume();
         else if (Selected == ItemSave) SaveGame();
         else if (Selected == ItemOptions) OpenOptions();
@@ -402,4 +474,33 @@ void UEWOptionsWidget::MainMenu()
 {
     Selected = ItemMainMenu;
     if (auto* PC = Cast<AEWPlayerController>(GetOwningPlayer())) PC->ReturnToMainMenu();
+}
+
+FString UEWOptionsWidget::GetControlText(int32 Index) const
+{
+    return ControlTexts.IsValidIndex(Index) && ControlTexts[Index] ? ControlTexts[Index]->GetText().ToString() : FString();
+}
+
+void UEWOptionsWidget::RefreshControls(bool bForce)
+{
+    // The input last used decides (as the prompts do); a controller is named for its make (Xbox, PlayStation).
+    const auto* PC = Cast<AEWPlayerController>(GetOwningPlayer());
+    const bool bPad = PC && PC->UsesControllerPrompts();
+    const EEWGamepadFamily Family = PC ? FEWControllerIcons::Resolve(PC->GetButtonIconsChoice(), FEWControllerIcons::DetectConnected()) : EEWGamepadFamily::Unknown;
+    if (!bForce && bPad == bControlsForPad && Family == ControlsFamily) return;
+    bControlsForPad = bPad;
+    ControlsFamily = Family;
+    if (ControlsHeading)
+        ControlsHeading->SetText(bPad ? FText::Format(NSLOCTEXT("Elitewake", "ControlsForPad", "CONTROLLER ({0})"),
+            FText::FromString(FEWControllerIcons::FamilyName(Family))) : NSLOCTEXT("Elitewake", "ControlsForKeys", "KEYBOARD AND MOUSE"));
+    for (int32 Index = 0; Index < ControlTexts.Num() && Index < EWControls::Count; ++Index)
+        ControlTexts[Index]->SetText(FText::FromString(bPad ? FEWControllerIcons::Expand(FString(EWControls::List[Index].Controller), Family, false)
+            : FString(EWControls::List[Index].Keyboard)));
+}
+
+FReply UEWOptionsWidget::NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if (!Event.GetCursorDelta().IsNearlyZero())
+        if (auto* Owner = Cast<AEWPlayerController>(GetOwningPlayer())) Owner->RecordInputDevice(EKeys::MouseX);
+    return Super::NativeOnMouseMove(Geometry, Event);
 }

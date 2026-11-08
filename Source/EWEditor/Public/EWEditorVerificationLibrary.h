@@ -55,6 +55,9 @@ public:
     static AEWMineable* SpawnVerificationMineable(UWorld* World, FVector Location, UEWItemDefinition* Resource, int32 Quantity = 12,
         int32 PerStrike = 3, EEWPickaxeTier MinimumPickaxeTier = EEWPickaxeTier::None, bool bRespawnWhenDepleted = false,
         float RespawnSeconds = 3600.f, bool bRandomizeStock = false, int32 MinimumStock = 4, int32 MaximumStock = 8);
+    /** The bone names of a skeletal mesh, in skeleton order (inspection scripts). */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static TArray<FName> GetSkeletonBoneNames(USkeletalMesh* Mesh);
     /** Play-only: any actor class at a place (captures and checks that stage something, such as a character blueprint). */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static AActor* SpawnVerificationActor(UWorld* World, TSubclassOf<AActor> ActorClass, FVector Location, FRotator Rotation);

@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "EWControllerIcons.h"
 #include "EWOptionsWidget.generated.h"
 class UButton;
 class UTextBlock;
@@ -34,13 +35,21 @@ public:
     static constexpr int32 ItemOptions = 12;
     static constexpr int32 ItemMainMenu = 13;
     // Settings rows: brightness 0, look speeds 1-4, master volume 5, sound effects 6, ambience 7, graphics 8-13, icons 14.
-    static constexpr int32 SettingBack = 15;
+    static constexpr int32 SettingControls = 15;
+    static constexpr int32 SettingBack = 16;
+    /** The Controls page (owner, November 7) shows controller buttons rather than keys. */
+    UFUNCTION(BlueprintPure, Category="Options") bool AreControlsShownForController() const { return bControlsForPad; }
+    /** How many controls the Controls page lists. */
+    UFUNCTION(BlueprintPure, Category="Options") int32 GetControlsCount() const { return ControlTexts.Num(); }
+    /** One control's shown binding (for checks). */
+    UFUNCTION(BlueprintPure, Category="Options") FString GetControlText(int32 Index) const;
     static constexpr int32 SettingButtonIcons = 14;
     static constexpr int32 SettingGraphics = 8;
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeTick(const FGeometry& Geometry, float Delta) override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
+    virtual FReply NativeOnMouseMove(const FGeometry& Geometry, const FPointerEvent& Event) override;
 private:
     UFUNCTION() void Resume();
     UFUNCTION() void SaveGame();
@@ -52,6 +61,10 @@ private:
     UFUNCTION() void HoverOptions() { Selected = ItemOptions; }
     UFUNCTION() void HoverMenu() { Selected = ItemMainMenu; }
     UFUNCTION() void HoverBack() { Selected = SettingBack; }
+    UFUNCTION() void OpenControls() { SetTab(2); }
+    UFUNCTION() void HoverControls() { Selected = SettingControls; }
+    UFUNCTION() void CloseControls() { SetTab(1); Selected = SettingControls; }
+    void RefreshControls(bool bForce);
     UFUNCTION() void OnBrightnessChanged(float Value);
     UFUNCTION() void OnMouseHorizontalChanged(float Value) { OnLookChanged(0, Value); }
     UFUNCTION() void OnMouseVerticalChanged(float Value) { OnLookChanged(1, Value); }
@@ -89,6 +102,15 @@ private:
     UPROPERTY(Transient) TObjectPtr<USlider> VolumeSlider;
     UPROPERTY(Transient) TObjectPtr<UEWVolumeDial> VolumeDial;
     UPROPERTY(Transient) TObjectPtr<USlider> EffectsSlider;
+    UPROPERTY(Transient) TObjectPtr<class UButton> ControlsButton;
+    UPROPERTY(Transient) TObjectPtr<class UButton> ControlsBackButton;
+    UPROPERTY(Transient) TObjectPtr<class UVerticalBox> ControlsPage;
+    UPROPERTY(Transient) TObjectPtr<class UScrollBox> ControlsScroll;
+    UPROPERTY(Transient) TObjectPtr<class UTextBlock> ControlsHeading;
+    UPROPERTY(Transient) TArray<TObjectPtr<class UTextBlock>> ControlTexts;
+    UPROPERTY(Transient) TObjectPtr<class USizeBox> PanelWidth;
+    bool bControlsForPad = false;
+    EEWGamepadFamily ControlsFamily = EEWGamepadFamily::Unknown;
     UPROPERTY(Transient) TObjectPtr<USlider> AmbienceSlider;
     /** The overall quality, then textures, shadows, foliage detail, water and reflections, effects. Four steps each. */
     UPROPERTY(Transient) TObjectPtr<USlider> QualitySlider;

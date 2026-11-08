@@ -89,6 +89,15 @@ AEWMineable* UEWEditorVerificationLibrary::SpawnVerificationMineable(UWorld* Wor
     return Node;
 }
 
+TArray<FName> UEWEditorVerificationLibrary::GetSkeletonBoneNames(USkeletalMesh* Mesh)
+{
+    TArray<FName> Names;
+    if (!Mesh) return Names;
+    const FReferenceSkeleton& Skeleton = Mesh->GetRefSkeleton();
+    for (int32 Index = 0; Index < Skeleton.GetNum(); ++Index) Names.Add(Skeleton.GetBoneName(Index));
+    return Names;
+}
+
 AActor* UEWEditorVerificationLibrary::SpawnVerificationActor(UWorld* World, TSubclassOf<AActor> ActorClass, FVector Location, FRotator Rotation)
 {
     if (!World || World->WorldType != EWorldType::PIE || !ActorClass) return nullptr;
