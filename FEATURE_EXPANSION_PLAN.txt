@@ -1,0 +1,886 @@
+ELITEWAKE - FEATURE EXPANSION PLAN (FEAT-001 to FEAT-020)
+=========================================================
+Written November 7, 2026 by Claude from the owner's "Master Feature Expansion Prompt", the repository at commit
+6900210f+ (CLAUDE.md, FUTURE_IMPLEMENTATIONS.txt including the owner's Part 8, Source/EW, Scripts, Content) and the
+existing Play checks. A PROPOSAL: nothing below is implemented by being written here.
+
+How this file relates to the others
+- CLAUDE.md is the rulebook and wins on any conflict; FUTURE_IMPLEMENTATIONS.txt is the work list. The owner approved
+  70 additions on November 7 (FUTURE_IMPLEMENTATIONS.txt Part 8, numbered 01-70, Waves A-E). Every FEAT item below names
+  the Part 8 number it falls under ("P8-xx"), or "NEW" where the master prompt asks for something Part 8 does not list.
+  NEW items need the owner's approval before they are built.
+- Preserved without exception: the 20-island, five-region world; the ship classes (raft, dinghy, sloop, schooner,
+  brigantine, Cavalier) and their approved rules (sail multipliers, gunport decisions, yards); the controller layout
+  (CLAUDE.md 6.5); the tame limits (25 per player, 75 per Company); no full world rebuilds; no EXE unless asked.
+- REF-00 (ELITEWAKE_Master_Feature_Reference.png) was not available on this PC when this was written; it is listed in
+  the image manifest (Part C) for when it arrives. Reference images are inspiration, never specification.
+
+Legend
+- Status (repository evidence): EXISTS (built and Play-checked), PARTIAL (a foundation exists), NEW (nothing yet).
+- Priority: ESSENTIAL (the core voyage loop or a stated owner direction needs it), RECOMMENDED (deepens a working loop),
+  OPTIONAL (long-term; kept, with its dependencies).
+- Complexity: S (days), M (one to two weeks), L (several weeks), XL (a season of work; split before starting).
+- Every feature also carries the universal requirements in Part A, which are not repeated under each subfeature.
+
+
+PART A - UNIVERSAL REQUIREMENTS (apply to every feature below)
+-------------------------------------------------------------
+A1 Server authority: clients request; the server validates distance, ownership, cost, cooldown and state, then applies
+   and replicates. Inventory, currency, reputation, crew, damage, ownership and saved state are never client-written.
+   Retries are idempotent (a request id per transaction).
+A2 Persistence: every new persisted object gets a stable id, an owner scope, a payload version, a migration path for
+   older saves, missing-reference behaviour and duplicate detection (CLAUDE.md 8). Single player uses UEWSurvivorSave /
+   the world state; hosted games use the server's world save.
+A3 Performance on the GTX 1660 Super (1080p Low, about 4.5 GB VRAM): anything simulated far from players sleeps or is
+   aggregated; decoration never blocks movement or is gatherable (CLAUDE.md 9.6: quality tiers change looks only);
+   new textures at 1024-2048 with mips; Niagara effects scaled by the Effects quality group; measure frame and GPU time
+   in the benchmark mode (-EWBenchmark) before and after.
+A4 Input: every action on keyboard/mouse and controller, listed on the Options' Controls page (EWControlsList.h),
+   verified by a Play check; the controller-only check (verify_controller_only_play.py) extended for new actions.
+A5 Presentation: 1740-1760 naturalistic realism; placeholders labelled; owner visual and audio review before acceptance;
+   every external or generated asset in ASSET_LEDGER.csv first.
+A6 Evidence: a Play check per feature (single player, plus listen server and client where networked), save/load
+   round trip, controller path, and the fast Python suite; status words from CLAUDE.md 1.5.
+
+
+PART B - FEATURES
+=================
+
+PART B - THE FEATURES
+=====================
+
+FEAT-001 DYNAMIC MARITIME WEATHER                                   Part 8: P8-02 (storms), P8-01 (currents, see FEAT-003)
+------------------------------------------------------------------------------------------------------------------------
+Evidence: UEWWindSubsystem (Ships/EWWindSubsystem.h) owns a replicated wind yaw that drives sails, flags and the compass;
+AEWSnowfall shows Winter snow under the replicated climate; UEWDayNightSubsystem runs a 90 + 90 minute day; the
+soundscape (UEWSoundscapeComponent) mixes wind by region. No rain, storm, lightning, fog bank, wave-height or weather
+state exists; the ocean surface is the Water plugin's with fixed waves.
+Integration: one server-owned weather state per region (and per open-sea zone) feeds the existing wind subsystem (gust
+strength, veering), the ship (heel, speed, sail strain), the climate (cold, wetness from FEAT-009), the soundscape and
+lighting (cloud cover, exposure), wildlife (shelter-seeking, FEAT-008) and the port (warnings, FEAT-010).
+Unreal: UEWWeatherSubsystem (UWorldSubsystem, server authority) with FEWWeatherState {Kind, Intensity 0-1, WindBoost,
+Visibility, Precipitation, Lightning chance, NextChange}; replicated through AEWGameState; UEWWeatherProfile Data Assets per
+region (allowed kinds, odds, durations, seasonal weights); AEWWeatherFront actor for a travelling storm cell (map marker,
+sound, Niagara); Water plugin wave parameters driven by intensity (Gerstner amplitude/choppiness, read the same on every
+machine for fair sailing); Volumetric Cloud and Exponential Height Fog parameters; Niagara rain, spray, lightning;
+UEWLightningComponent for strikes (server picks targets).
+Assets: rain/spray/snow-drift/sand-streak Niagara systems; lightning bolt and flash; storm cloud material instances;
+wet-surface material function (puddle and darkening layer on decks, timber, sand); thunder, rain-on-canvas, rain-on-sea,
+wind-howl and rigging-strain sounds (3+ variations each); weather icons for the HUD and forecast UI.
+References: EW_REF_FEAT-001_StormAtSea, EW_REF_FEAT-001_RegionalWeatherBoard, EW_REF_FEAT-001_WeatherIcons.
+Multiplayer: the server rolls weather and strikes; clients interpolate intensity; lightning and damage events are
+multicast with a seed so effects match; a player's ship damage from weather is applied by the server only.
+Persistence: the current weather per region, the active fronts (position, heading, remaining time) and the forecast
+seed are saved with the world; a load resumes the same storm rather than re-rolling it.
+Performance: rain and spray only within 60-80 m of the camera, GPU particles capped by the Effects tier; one lightning
+light at a time; fog and clouds through existing volumetrics (tier-scaled); no per-raindrop collision.
+Dependencies: none to start (wind and climate exist); FEAT-009 wetness, FEAT-003 sail damage and FEAT-008 behaviour
+consume it later.
+Complexity: L (XL with full wave coupling). Priority: RECOMMENDED overall (Wave B); storms that change sailing are
+ESSENTIAL to the voyage pillar ("weather or threat changed the plan", CLAUDE.md 2).
+Conflicts: CLAUDE.md 2.1 readability first: storms must keep the horizon and landing cues readable (9.3); weather must
+never block a port or trap a swimmer; the Water plugin's wave changes must not break buoyancy checks or the sea caverns.
+Acceptance: each region shows its weather kinds in Play; a storm visibly raises waves and heel and changes speed; the
+weather survives save/load; two clients see the same weather and lightning; frame time measured in a storm on the 1660.
+
+  001.1 Regional thunderstorms, rainfall, lightning, rolling fog                        P8-02   NEW
+        Behaviour: storms build over 5-10 minutes (darkening, rising wind, rain), peak, then clear; fog banks roll in at
+        dawn near coasts and over the Swamp. Classes: UEWWeatherSubsystem, AEWWeatherFront, UEWWeatherProfile.
+        Assets: rain/fog Niagara, cloud and fog material instances, thunder/rain audio. ESSENTIAL (storms), RECOMMENDED
+        (fog). M. Accept: every kind appears in its region within a test-time-scaled day; save/load keeps the state.
+  001.2 Wave response to wind direction and storm intensity                              P8-02   NEW
+        Behaviour: wave height and direction follow the wind and intensity; ships pitch and roll harder. Classes: Water
+        body parameter driver on the server state; AEWShip swell response already reads a swell model. Assets: none
+        new beyond water material tuning. ESSENTIAL. L (buoyancy and network agreement). Accept: measured roll and heave
+        rise with intensity; two clients agree within tolerance.
+  001.3 Storm damage to sails, masts, rigging and exposed cargo                          P8-02   NEW
+        Behaviour: full sail in high wind strains sails (wear), may tear a sail or spring a mast; exposed deck cargo can
+        wash overboard (becomes drifting wreckage, FEAT-004/P8-07); reefing (sail 25-50%) avoids it. Classes: sail wear
+        on FEWSailLine, mast health per sail hardpoint, deck-cargo exposure flag on AEWShip. Assets: torn sail and broken
+        mast meshes or material states, tearing/cracking audio. RECOMMENDED. M. Accept: a storm at full sail tears a sail
+        in a test; reefed it does not; repairs restore it (FEAT-003.6).
+  001.4 Lightning strikes on trees, ships, structures                                    P8-02   NEW
+        Behaviour: rare strikes on the tallest nearby object: a tree splits and can burn briefly, a mast takes damage, a
+        built piece takes damage; never on players in safe zones. Classes: UEWLightningComponent (server), damage via
+        existing hull/structure paths, AEWForest instance promotion for a struck tree. Assets: bolt Niagara, scorch
+        decal, split-tree mesh state, thunder close/far. OPTIONAL. M. Accept: strikes only during storms; the struck
+        object is damaged identically on all machines; no strikes inside Freeport safe zones.
+  001.5 Winter blizzards and Desert sandstorms                                           P8-02   PARTIAL (snowfall only)
+        Behaviour: blizzards reduce visibility to 60-120 m and chill faster; sandstorms reduce visibility, sting
+        exposed survivors (thirst up) and hide footprints. Classes: profiles per region; AEWSnowfall extended to blizzard
+        density; a sand-streak Niagara. RECOMMENDED. M. Accept: landing cues stay visible (CLAUDE.md Winter card); the
+        Controls and HUD stay readable; frame time measured.
+  001.6 Forecasting by instruments and cloud formations                                  P8-02/P8-09  NEW
+        Behaviour: a barometer fitting on the ship and in ports falls before storms; cloud types (cirrus, anvils) are
+        drawn in the sky hours ahead; the journal notes signs once learned. Classes: AEWBarometer fitting (item +
+        mount), forecast query on the weather subsystem, sky cloud presets by upcoming state. Assets: barometer model
+        and gauge UI, cloud presets. RECOMMENDED. M. Accept: a storm is foretold by the barometer at least 10 minutes
+        ahead in every test.
+  001.7 Storm warnings from port authorities                                             P8-02   PARTIAL (harbour master)
+        Behaviour: the harbour master (EWFreeportServices) gives the forecast and flies a storm signal; departing into a
+        warned storm asks for confirmation. Classes: dialogue line from the forecast; a signal flag actor. Assets: storm
+        signal flags/lanterns. RECOMMENDED. S. Accept: the warning appears when a storm is forecast within the window.
+  001.8 Weather-driven animal behaviour and navigation                                   P8-02/P8-36  NEW
+        Behaviour: animals seek cover (forest, caves) and rest in storms; fewer birds; visibility lowers spotting
+        distances for AI (FEAT-013 pirates). Classes: UEWAnimalBehavior reads weather; AI perception scaled by
+        visibility. OPTIONAL. S-M. Accept: animal states shift in a storm; AI spotting range falls with fog.
+
+
+FEAT-002 SHIP INTERIOR AND HOME CUSTOMIZATION                       Part 8: P8-10, P8-11, P8-12, P8-13, P8-69
+------------------------------------------------------------------------------------------------------------------------
+Evidence: hulls are generated (Scripts/Setup/ship_geometry.py, build_cavalier.py) with fixed furnished cabins, lanterns,
+a surgeon's table and a chart room on the Cavalier; Build Mode (UEWBuildComponent, AEWBuildPiece) places pieces on land
+with snapping, saving and multiplayer; ships save fittings, hold and damage (FEWSavedShip). No placeable furniture,
+names, paint or logbook exists.
+Integration: a ship-local variant of Build Mode places furniture on deck/cabin sockets of a hull (snapped to the ship's
+own frame, carried with it, saved in FEWSavedShip); ship identity (name, paint) replicates with the ship; ownership and
+Company sharing (existing AEWShip owner + policy) decide who may decorate.
+Unreal: UEWShipFurnitureComponent on AEWShip (array of FEWShipFurniture {ItemId, Transform in ship space, Colour}); furniture
+Data Assets (UEWItemDefinition with a FurnitureMesh, footprint, sockets, function: storage/bed/light/chart); placement
+validation against hull floor and clearance volumes; UEWShipIdentity (name, paint scheme ids) replicated.
+Assets: period furniture set (cot, hammock, sea chest, writing desk, chart table, chair, bench, lantern, shelf, rug, map
+frames, trophy plaque), modular stern-lettering font meshes or decals, paint/wood-finish material instances.
+References: EW_REF_FEAT-002_CaptainsCabin, EW_REF_FEAT-002_FurnitureSet (six-view), EW_REF_FEAT-002_SternLettering,
+EW_REF_FEAT-002_HullPaintSchemes.
+Multiplayer: placement requests to the server; owner/Company permission check; storage chests use the existing
+inventory replication; names filtered and rate-limited on the server.
+Persistence: furniture list, colours, names and chest contents in FEWSavedShip (payload version bump with migration from
+"no furniture"); sinking leaves chest contents in wreck crates (existing behaviour extended).
+Performance: furniture is static meshes attached to the hull (instanced per ship); interior lights capped at 2-3 per
+cabin with shadows only on Epic; culled when the cabin is not in view.
+Dependencies: Build Mode code, ship saving, ownership. FEAT-004 trophies feed the display.
+Complexity: L. Priority: RECOMMENDED (the ship-is-home pillar); names and logbook ESSENTIAL-small (Wave A).
+Conflicts: never block stairs, ladders, hatches, cannons or the helm (clearance volumes); the Cavalier's stair decision
+stands; furniture adds mass to ship weight (existing load rules).
+Acceptance: place, move and remove furniture at sea; it stays put while sailing; survives save/load and a reconnect;
+blocked placements explain why; a non-owner cannot decorate.
+
+  002.1 Furniture placement in the captain's quarters                                    P8-10   NEW
+        Ship-space Build Mode with snapping to floor and walls. RECOMMENDED. L. Accept: furniture rides the ship at 14
+        knots without jitter and saves.
+  002.2 Beds, tables, chairs, lanterns, chests, maps, decorations                        P8-10   NEW
+        Data-driven furniture items with functions (bed = respawn point option, chest = storage, lantern = light).
+        Assets: the furniture set. RECOMMENDED. M (items) + art. Accept: each function works.
+  002.3 Functional navigation table                                                      P8-09   NEW
+        Opens the map with ship position, course line, logbook and plotting tools (ties to FEAT-003 charts). RECOMMENDED.
+        M. Accept: plotting a course shows on the helm compass.
+  002.4 Customizable cabin colours and wood finishes                                     P8-11   NEW
+        Material instance parameters per surface group (walls, trim, floor) from a period palette. OPTIONAL. S.
+        Accept: colours replicate and save.
+  002.5 Captain's trophy display                                                         P8-69   NEW
+        Plaques/stands that hold trophy items (hunt trophies, artifacts from FEAT-004). OPTIONAL. S. Accept: shows the
+        item mesh; saving keeps it.
+  002.6 Secure storage compartments                                                      P8-10/P8-56  PARTIAL (strongbox exists ashore)
+        Lockable chests aboard with Company role permissions (FEAT-017). RECOMMENDED. M. Accept: a non-permitted
+        player cannot open; contents never duplicate on sinking/reload.
+  002.7 Crew sleeping quarters                                                           P8-52   NEW
+        Hammocks that hired crew use for rest (feeds fatigue, FEAT-007). OPTIONAL. M. Accept: crew rest restores them.
+  002.8 Ship names and decorative stern lettering                                        P8-12   NEW
+        Name entered at purchase or the shipyard; shown on the stern (generated text mesh or decal atlas), map marker
+        and HUD; profanity filter and length limit. ESSENTIAL (Wave A). S-M. Accept: the name shows on all clients and
+        saves; invalid names refused.
+  002.9 Interior lighting affected by ship motion                                        NEW
+        Hanging lanterns swing with roll/pitch (physics constraint or anim), light moves with them. OPTIONAL. S.
+        Accept: lanterns swing in a swell; frame time unchanged within 0.2 ms.
+
+
+FEAT-003 ADVANCED SAILING AND NAVIGATION                            Part 8: P8-01, P8-09, P8-13, P8-15, P8-64
+------------------------------------------------------------------------------------------------------------------------
+Evidence: per-sail settings, trim, class speeds, weighted sails "steady current influence by 10%" in the rules but no
+current field exists; compass strip HUD (UEWCompassWidget); full map (UEWMapWidget, no fog); anchor with chain; ships
+save; repair at the shipyard and repair kits; hull holes and patches.
+Integration: currents and instruments layer on the existing wind/helm model; charts and logbook extend the map and
+journal; sail damage plugs into FEAT-001 storms and FEAT-013 chain shot.
+Unreal: UEWCurrentField (Data Asset + subsystem: bands of direction/speed sampled by position, server authority);
+AEWShip applies current drift to velocity (and the weighted-sail 10% damping already in the rules); swimmer drift capped
+(CLAUDE.md: currents must never make swimming frustrating); instrument items (compass, sextant, chart) with UI widgets;
+UEWLogbookComponent (voyage records); lantern fittings on hardpoints; navigation role in crew orders (FEAT-007).
+Assets: brass compass and sextant models, chart parchment UI, lantern fitting, logbook UI, current arrows on charts.
+References: EW_REF_FEAT-003_Sextant (six-view), EW_REF_FEAT-003_SeaChart, EW_REF_FEAT-003_ShipLantern.
+Multiplayer: currents are deterministic from the field (no replication cost beyond the asset); logbook entries are
+server-written; sextant readings computed client-side from replicated sun/star positions.
+Persistence: logbook per ship (and a captain's copy), known chart hazards per survivor, lantern fittings with the ship.
+Performance: current sampling is a cheap lookup per ship per tick; no fluid simulation.
+Dependencies: FEAT-001 weather for storms; FEAT-011 cartography for hazards.
+Complexity: L. Priority: currents RECOMMENDED (Wave B), instruments and logbook ESSENTIAL-small (Wave A), the rest
+RECOMMENDED/OPTIONAL as listed.
+Conflicts: the map stays fully open (owner, November 3): charts add notes and hazards, never fog; the existing compass
+stays; anchoring restrictions must not break the moored yard ships or the sea caverns.
+Acceptance: a ship drifts in a current band at a measured rate; sextant gives position within tolerance at noon and by a
+star; the logbook records departures/arrivals; lanterns light at night; all survive save/load.
+
+  003.1 Sextant and compass instruments                                                  P8-09   PARTIAL (HUD compass)
+        Held compass shows heading; sextant at noon or a known star gives latitude (a map pin). Assets: two instruments.
+        ESSENTIAL (Wave A). M. Accept: readings within 1 degree of truth.
+  003.2 Sea charts showing known hazards                                                 P8-09   NEW
+        Reefs, shoals, rocks marked once seen or bought; overlays on the existing map. RECOMMENDED. M.
+  003.3 Navigational logbook                                                             P8-13   NEW
+        Automatic entries (date, port, weather, damage, cargo highlights, discoveries) plus optional notes. ESSENTIAL
+        (Wave A). S-M. Accept: entries appear and save; readable by controller.
+  003.4 Ship lanterns for night travel                                                   NEW (fits P8-15)
+        Lantern fittings light the deck and make ships visible at night (also to pirates). RECOMMENDED. S.
+  003.5 Variable ocean currents                                                          P8-01   NEW
+        Bands with direction and speed, stronger between some islands; shown on charts once learned. RECOMMENDED. M-L.
+        Accept: drift measured; swimmers never pinned against a coast (climb-out rule still holds).
+  003.6 Realistic sail damage and repair                                                 P8-02/P8-26  NEW
+        Sail wear/holes reduce the multiplier; repaired with canvas and needle at the lines, or a new sail at the yard.
+        RECOMMENDED. M. Accept: damaged sails slow the ship by the tested amount; repair restores.
+  003.7 Crew-assigned navigation responsibilities                                        P8-27   NEW
+        A navigator crew member holds a course and reports hazards. OPTIONAL. M (needs FEAT-007).
+  003.8 Anchoring restrictions by depth                                                  NEW
+        The anchor holds only within cable length (e.g. 60 m); deeper, it hangs and the ship drifts. RECOMMENDED. S.
+        Accept: deep-water drop refuses or drifts; harbours and caverns still hold.
+  003.9 Emergency steering and jury-rigged sails                                         NEW
+        With a lost rudder or mast, a jury rig (spars + canvas) gives reduced control. OPTIONAL. M.
+  003.10 Optional navigation assistance for casual players                               P8-64   NEW
+        Toggle: course line, wind arrow and drift indicator on the HUD; off by default for purists? (owner decides).
+        RECOMMENDED. S. Accept: toggled in Options; saved.
+
+
+FEAT-004 TREASURE HUNTING AND SALVAGE                               Part 8: P8-03, P8-05, P8-06, P8-07, P8-29
+------------------------------------------------------------------------------------------------------------------------
+Evidence: wreck crates from sunk ships (saved), death bags, strongboxes ashore, shovel item (DA_TestWoodenShovel) and
+digging-free resource gathering; swimming with surface buoyancy; no breath/air limit, no buried caches.
+Integration: treasure caches are world-state objects with stable ids (like resource nodes); clues are items and journal
+entries; salvage uses swimming, a diving system (FEAT-018) and ship equipment; rewards go through the economy.
+Unreal: AEWTreasureCache (buried/hidden container, stable id, dig/unlock interaction); UEWClueItem (map fragment, bottle
+message, chart) Data Assets with a target cache id; UEWTreasureDirector (server: spawns procedural caches within
+authored candidate sites, never moving authored items); AEWShipwreckSite (authored wreck with containers); salvage tools
+(grapnel P8-05, dive equipment FEAT-018); lockpick/key items; artifact items (display in cabins).
+Assets: chest variants, buried mound and dig-hole decal, bottle-with-message, torn map fragment UI, two to four wreck
+hulls (reuse ship kit, broken), artifact set (period compass, pocket watch, porcelain, coins), grapnel and line.
+References: EW_REF_FEAT-004_TreasureChartFragments, EW_REF_FEAT-004_WreckSite, EW_REF_FEAT-004_ArtifactSet (six-view).
+Multiplayer: first claim wins atomically on the server; Company sharing by policy; clues are tradeable items.
+Persistence: caches (claimed/unclaimed, contents), clue chains per survivor, wreck containers, artifacts.
+Performance: caches are dormant actors (no tick); wreck sites stream with their cell; underwater fog limits draw.
+Dependencies: FEAT-018 diving for deep sites; FEAT-011 discovery records; FEAT-010 economy for values.
+Complexity: L. Priority: RECOMMENDED (Wave B salvage/treasure, Wave C clues).
+Conflicts: no duplication across save/reload or reconnect; caches never on climb-outs, landings or villages.
+Acceptance: follow a three-step clue to a cache, dig, claim once; a second player cannot also claim it; reload keeps it
+claimed; a wreck can be salvaged once per container.
+
+  004.1 Buried treasure caches                                  P8-29  NEW     Dig with a shovel at a marked spot.            RECOMMENDED  M
+  004.2 Bottle messages with map fragments                       P8-29  NEW     Washed ashore; fragments combine to a chart.   RECOMMENDED  M
+  004.3 Shipwreck exploration                                    P8-03  NEW     Authored shallow wrecks first.                 RECOMMENDED  L
+  004.4 Underwater salvage tools                                 P8-05  NEW     Grapnel from the deck; bells (P8-04).          RECOMMENDED  M
+  004.5 Rare historical cargo                                    P8-06  NEW     Trade goods with high value (spices, silver).  RECOMMENDED  S
+  004.6 Locked treasure chests                                   P8-06  NEW     Keys/lockpicks; forcing makes noise.           OPTIONAL     S
+  004.7 Procedural treasure clues                                P8-29  NEW     Clues name landmarks (FEAT-011).               OPTIONAL     M
+  004.8 Multi-island expeditions                                 P8-29  NEW     Chains across regions.                         OPTIONAL     M
+  004.9 Artifacts displayed in cabins                            P8-69  NEW     With FEAT-002.5 displays.                      OPTIONAL     S
+  004.10 Treasure ownership and Company sharing                  P8-55  PARTIAL (ship sharing policy)                         RECOMMENDED  S
+        Acceptance for each: Play check claims once, survives save/load, and (multiplayer items) a second client sees the
+        same outcome.
+
+
+FEAT-005 DYNAMIC WORLD EVENTS                                       Part 8: P8-07, P8-31, P8-22, P8-70
+------------------------------------------------------------------------------------------------------------------------
+Evidence: no event director; the tavern keeper offers delivery jobs (FEWDeliveryContract); wildlife roams; hired crew
+exist (sailhands, gunners).
+Integration: a server event director picks events from Data Assets by region, time, weather and player presence, spawns
+them near but not on players, announces them (rumours, signals, journal) and cleans up.
+Unreal: UEWEventDirector (UWorldSubsystem, server), UEWWorldEventDefinition Data Assets (weights, regions, conditions,
+duration, rewards), event actors (AEWDistressShip, AEWStrandedSurvivor, AEWDebrisField, AEWConvoy, AEWMigrationGroup).
+Assets: distress flags and flares, debris pieces (barrels, spars, crates), stranded camp props, survivor NPCs (shared
+character kit), event icons for the map.
+References: EW_REF_FEAT-005_DistressShip, EW_REF_FEAT-005_DebrisField, EW_REF_FEAT-005_StrandedCamp.
+Multiplayer: events are server-owned and relevant by distance; rewards per participant with anti-farm caps.
+Persistence: active events saved with remaining time (or safely cancelled on load with no reward loss); recruited
+survivors become saved crew.
+Performance: at most a few active events; actors sleep outside 2 km; debris uses instanced meshes with a cap.
+Dependencies: FEAT-013 AI ships for ambushes/convoys; FEAT-007 crew for survivors; FEAT-001 weather triggers.
+Complexity: L-XL. Priority: RECOMMENDED (Wave C), with stranded sailors and debris first.
+Conflicts: events never spawn in safe zones, landings or caverns; no unbounded spawning (CLAUDE.md 5.6 server budget).
+Acceptance: each event spawns, can be completed or expires, gives its reward once, and cleans up; save/load mid-event.
+
+  005.1 Merchant ships requesting assistance       P8-31  NEW  Escort or repair for a reward/reputation.        RECOMMENDED  M
+  005.2 Stranded sailors                           P8-31  NEW  Rescue; may join as crew (005.10).               RECOMMENDED  M
+  005.3 Pirate ambushes                            P8-22  NEW  Needs AI ships (FEAT-013).                       RECOMMENDED  L
+  005.4 Travelling merchant convoys                P8-22  NEW  Trade at sea; defend or plunder (rep).           OPTIONAL     L
+  005.5 Wildlife migrations                        P8-70  NEW  Herds/flocks cross regions by season/time.       OPTIONAL     M
+  005.6 Storm-damaged ports                        NEW         Ports show damage; repair contracts (FEAT-014).  OPTIONAL     M
+  005.7 Floating debris fields                     P8-07  NEW  After storms/battles; salvage with grapnel.      RECOMMENDED  M
+  005.8 Rare treasure fleets                       NEW         Heavily guarded convoy; endgame (FEAT-020).      OPTIONAL     XL
+  005.9 Temporary resource opportunities           NEW         A beached whale, a rich fish shoal, a timber raft. OPTIONAL   S-M
+  005.10 Shipwreck survivors who become crew       P8-31  NEW  Ties to FEAT-007 contracts.                     RECOMMENDED  M
+
+
+FEAT-006 REGIONAL FACTIONS AND REPUTATION                           Part 8: P8-23 (and P8-24 bounties, P8-25 surrender)
+------------------------------------------------------------------------------------------------------------------------
+Evidence: none (no faction or reputation code). Ports, merchants and the Company exist; the safe zone forbids PvP.
+Integration: reputation is a per-survivor (and per-Company) standing with each regional faction; merchants, harbour
+masters and recruiters read it for prices, services and access; attacks on faction ships lower it.
+Unreal: UEWFactionDefinition Data Assets (id, region, colours, ports, attitude rules); UEWReputationComponent on the
+player state (map faction -> standing, ranks by thresholds); reputation events raised by the server from trades,
+contracts, combat; faction tags on ports, NPC ships and merchants.
+Assets: faction flags/pennants and banner materials, faction emblem icons (no generated text), uniform tints for NPCs,
+faction ship decorations.
+References: EW_REF_FEAT-006_FactionBanners, EW_REF_FEAT-006_FactionShipDecor.
+Multiplayer: server-only changes; standing replicated to its owner (and Company summary to members).
+Persistence: saved with the survivor and the Company (Company persistence is incomplete today: FEAT-017 dependency).
+Performance: negligible.
+Dependencies: FEAT-010 (prices), FEAT-013 (NPC ships), FEAT-014 (contracts), FEAT-017 (Company persistence).
+Complexity: M (core) to L (with all hooks). Priority: RECOMMENDED (Wave C).
+Conflicts: CLAUDE.md 2.2 non-goal "no claim warfare before persistence": reputation must not gate the core voyage;
+Plains/Saltreach stays neutral and open to all; "rewards without mandatory membership" honoured.
+Acceptance: trading raises standing; attacking a faction ship lowers it; a hostile standing changes prices/access as
+designed; standing survives save/load and is identical on server and owner client.
+
+  006.1 Distinct regional trading factions          P8-23  NEW  One per region, Saltreach neutral.               RECOMMENDED  M
+  006.2 Reputation from trading and contracts       P8-23  NEW  Server events from merchants/contracts.          RECOMMENDED  M
+  006.3 Faction equipment and cosmetics             P8-23  NEW  Unlocked at ranks; cosmetic first.               OPTIONAL     M
+  006.4 Penalties for attacking friendly ships      P8-23  NEW  Needs FEAT-013 NPC ships.                        RECOMMENDED  S
+  006.5 Port access by relationship                 P8-23  NEW  Services refused when hostile (never Saltreach). OPTIONAL     S
+  006.6 Faction ship decorations                    P8-11  NEW  Flags/paint (FEAT-002).                          OPTIONAL     S
+  006.7 Diplomatic missions                         P8-23  NEW  Contracts (FEAT-014).                            OPTIONAL     M
+  006.8 Rewards without mandatory membership        P8-23  NEW  Standing, not joining.                           RECOMMENDED  S
+
+
+FEAT-007 ADVANCED CREW MANAGEMENT                                   Part 8: P8-27, P8-50, P8-51, P8-52
+------------------------------------------------------------------------------------------------------------------------
+Evidence: crew masters hire sailhands (per-sail) and gunners (per-cannon) with Articles items; hired hands are saved with
+their ship; a permanent ship surgeon heals for Copper; CLAUDE.md lists wages, limits, lifecycle and persistence as gaps.
+Integration: a crew roster per ship generalises today's per-fitting hands: each crew member is a record with role,
+skills, morale, needs and contract; stations (sails, cannons, helm, repair, galley, infirmary) take assigned crew.
+Unreal: FEWCrewMember (id, name, portrait seed, role, skills, morale, fatigue, health, wage, contract end); UEWCrewComponent
+on AEWShip (roster, assignments, provisioning from the hold); crew role Data Assets (navigator, carpenter, cook, surgeon,
+gunner, sailhand); crew management widget; daily server tick for wages, food, water, morale.
+Assets: crew character variations (the survivor character kit with outfits), portraits (generated from the character
+creator, no AI images of real people), crew UI, galley and infirmary props, idle/work animations per station.
+References: EW_REF_FEAT-007_CrewRoles, EW_REF_FEAT-007_CrewScreenLayout.
+Multiplayer: server simulation; roster replicated to shipmates; orders from authorised players only (FEAT-017 roles).
+Persistence: roster with every field in FEWSavedShip (migration from today's per-fitting hands).
+Performance: crew simulate at low frequency (1 Hz or less); crew pawns only spawned near players; LOD animation.
+Dependencies: the character model (pirate/MetaHuman or a lighter crew body: MetaHumans are heavy, use a lower-cost body
+for crew), FEAT-009 food, FEAT-017 roles.
+Complexity: XL (split). Priority: wages, limits and roster ESSENTIAL for the voyage loop (CLAUDE.md 3 gap); morale,
+fatigue, skills RECOMMENDED (Wave D); specialists OPTIONAL.
+Conflicts: "a lone player can operate the ship manually" must remain true; crew-only helm sail control stays.
+Acceptance: hire, assign, pay and dismiss crew; unpaid or hungry crew lose morale and eventually desert; all survives
+save/load; a second player sees the same roster.
+
+  007.1 Crew morale                                 P8-51  NEW  Comfort, food, pay, danger, leadership.          RECOMMENDED  M
+  007.2 Food and water for hired sailors            P8-51  NEW  Drawn from the hold daily.                       RECOMMENDED  M
+  007.3 Wages and contracts                         NEW (CLAUDE.md gap)  Paid at ports or from the ship's chest. ESSENTIAL    M
+  007.4 Individual crew skills                      P8-27  NEW  Speed/accuracy per station.                      RECOMMENDED  M
+  007.5 Crew injuries and treatment                 P8-50  PARTIAL (surgeon heals players)                       RECOMMENDED  M
+  007.6 Crew experience progression                 NEW         Skills rise with service.                        OPTIONAL     M
+  007.7 Assigned stations and duty schedules        P8-52  PARTIAL (per-fitting hands)  Watches.                 RECOMMENDED  L
+  007.8 Loyalty and desertion                       P8-51  NEW  Desert at port if loyalty low.                   OPTIONAL     M
+  007.9 Specialists: navigator, carpenter, cook, surgeon P8-27  NEW  Each adds a station effect.               RECOMMENDED  L
+  007.10 Crew screen with portraits and assignments P8-27  NEW  Controller-friendly roster UI.                   ESSENTIAL    M
+
+
+FEAT-008 WILDLIFE ECOLOGY AND TAMING                                Part 8: P8-33 to P8-38, P8-70
+------------------------------------------------------------------------------------------------------------------------
+Evidence: 38 species, 509 animals with roaming, grazing, resting, three temperaments, elephants pushing trees, rideable
+spider; a Tames screen and caps (UEWCompanyComponent::FitsTameCaps); footprints component for players (EWFootprintComponent);
+every animal is a rigid placeholder with no skeleton.
+Integration: ecology runs on the existing UEWAnimal behaviour; taming adds states to the animal and an owner; footprints
+reuse the player footprint system for animals.
+Unreal: species Data Asset additions (diet, prey list, predators, territory radius, nest sites, tame food, tame time,
+saddle type, breed rules); UEWTameComponent (trust, owner, commands); AEWNest; saddle/pack equipment slots; stable/pen
+build pieces (FEAT-012); ship animal cargo slots.
+Assets: for real taming and riding the animals need rigged, animated models (Phase 5): walk, run, idle, eat, drink,
+attack, hit, death, sit/lie, ride poses; saddles and packs; nests; dung/track decals; animal sounds per state.
+References: EW_REF_FEAT-008_<Species>_Turnaround (per tameable species), EW_REF_FEAT-008_Saddles, EW_REF_FEAT-008_TrackSigns.
+Multiplayer: server AI; tame ownership replicated; commands from the owner/Company only.
+Persistence: tamed animals saved individually (stable id, owner, stats, equipment, inventory); wild populations not
+saved per animal (CLAUDE.md 8: "scalable required wildlife state").
+Performance: AI LOD (distance-based tick, sleep beyond range); population budgets per island (CLAUDE.md 5.6 uses
+technical caps, not design caps); breeding capped by tame limits.
+Dependencies: rigged animal models (large art dependency); FEAT-012 pens; FEAT-017 Company caps.
+Complexity: XL. Priority: food chains and warning behaviour RECOMMENDED (Wave D); taming OPTIONAL until rigged models
+exist; breeding OPTIONAL.
+Conflicts: elephants and walrus stay neutral (owner); tame caps unchanged; no fantasy monsters (P8-38).
+Acceptance: a predator hunts prey in Play; a tamed animal follows, carries cargo, survives save/load and a reconnect; caps
+enforced.
+
+  008.1 Predator-prey relationships               P8-36  PARTIAL (temperaments)    RECOMMENDED  L
+  008.2 Species-specific warning behaviour        P8-36  NEW (growls, displays)   RECOMMENDED  M
+  008.3 Feeding and drinking                      P8-36  PARTIAL (graze)          RECOMMENDED  M
+  008.4 Territory and nesting                     P8-36  NEW                      OPTIONAL     M
+  008.5 Trackable footprints and signs            P8-37  PARTIAL (player prints)  RECOMMENDED  M
+  008.6 Taming by species                         P8-33  PARTIAL (screen, caps)   RECOMMENDED  L
+  008.7 Saddles and animal equipment              P8-34  PARTIAL (spider ride)    OPTIONAL     L
+  008.8 Breeding and offspring                    P8-35  NEW                      OPTIONAL     L
+  008.9 Animal transport aboard ships             NEW (needs approval)            OPTIONAL     L
+  008.10 Companion commands and stables           P8-34  NEW                      OPTIONAL     M
+
+
+FEAT-009 EXPANDED SURVIVAL                                          Part 8: P8-47, P8-48, P8-49, P8-53, P8-54
+------------------------------------------------------------------------------------------------------------------------
+Evidence: hunger/thirst/health/stamina, sickness from raw food with herbs and a herbal remedy, cooking at campfires, body
+temperature with clothing insulation (EWSurvivalComponent::UpdateClimate, EWItemDefinition::Insulation), food freshness
+(age) on stacks, Winter cold, death/respawn and death bags.
+Integration: new needs extend UEWSurvivalComponent; effects are data-driven (CLAUDE.md 1.5: balance values out of code).
+Unreal: wetness (0-1, rain/swimming raise, fire/shelter dry) and fatigue (sustained sprint/work) as survival stats; a
+shelter volume component (roofs from Build Mode and caves mark sheltered); sleeping (beds, bedrolls) with time-skip only
+in single player; wound status (bleeding) with bandage items; spoilage rates per storage (hold, chest, salted); curing
+and smoking stations (recipes); a "simplified survival" options toggle (rates scaled, never disables death).
+Assets: bandage, bedroll, smoking rack, salt barrel, curing table, cured meat/fish icons, wet-clothing material layer,
+shivering and drying audio cues.
+References: EW_REF_FEAT-009_PreservationStations, EW_REF_FEAT-009_MedicalSupplies.
+Multiplayer: server-side stats; owner replication (already how needs replicate).
+Persistence: new stats and statuses in UEWSurvivorSave (version bump, defaults for old saves).
+Performance: per-survivor ticks already exist; negligible.
+Dependencies: FEAT-001 weather (wetness); FEAT-012 shelter pieces.
+Complexity: M per item, L together. Priority: wounds/bandages and spoilage storage ESSENTIAL for Phase 1 depth
+(Wave B: P8-47-50, P8-53-54); wetness and fatigue RECOMMENDED; sleep OPTIONAL in multiplayer (no time-skip).
+Conflicts: CLAUDE.md 6.2 food values and sickness rules stay as they are; spoilage already exists as freshness, extend it
+rather than replace (migration).
+Acceptance: each status appears, is explained by a HUD cue, can be treated, and survives save/load; the simplified
+setting scales rates.
+
+  009.1 Clothing insulation and heat protection   PARTIAL (insulation)   Add heat protection and clothing items. RECOMMENDED  M
+  009.2 Wetness and drying                        NEW                    Rain, swimming; fire/shelter dry.         RECOMMENDED  M
+  009.3 Temporary shelter bonuses                 NEW                    Roof volume reduces cold/wet.             RECOMMENDED  M
+  009.4 Fatigue from sustained activity           P8-52 (crew) NEW       Stamina recovery cap.                     OPTIONAL     M
+  009.5 Resting and sleeping                      NEW                    Beds; time-skip single player only.       OPTIONAL     M
+  009.6 Wound treatment and bandages              P8-49  NEW             Bleeding status, bandage item.            ESSENTIAL    M
+  009.7 Food preservation and spoilage            P8-53  PARTIAL (freshness)  Storage modifiers.                   ESSENTIAL    S-M
+  009.8 Salt curing and smoking meat              P8-54  NEW (salt exists on D3)  Stations and recipes.            RECOMMENDED  M
+  009.9 Regional medicinal plants                 P8-48  PARTIAL (herb exists)  One per region.                    RECOMMENDED  M
+  009.10 Optional simplified survival             NEW                    Options toggle scaling rates.             RECOMMENDED  S
+
+
+FEAT-010 PORT LIFE AND ECONOMY                                      Part 8: P8-41 to P8-46, P8-59
+------------------------------------------------------------------------------------------------------------------------
+Evidence: Saltreach Freeport with merchants who buy/sell (UEWMerchant goods lines, restock every 300 s), resource
+traders for ores and goods, tavern keeper rumours/drinks/delivery jobs, shipwright sales and repairs, harbour master,
+recruiters; five Port merchants; starting purse zero; merchant stock not saved (CLAUDE.md gap).
+Integration: a regional price model feeds every merchant; order books, notice boards and contracts sit in the port;
+warehouses extend strongbox storage; player trade is a secure server transaction.
+Unreal: UEWEconomySubsystem (server: per-port price indices by commodity, supply/demand drift, restock), commodity Data
+Assets (base price, region specialties from world_specialty_ores/gathered goods), UEWOrderBook (buy/sell orders per port),
+AEWNoticeBoard (FEAT-014 contracts), AEWWarehouse (per-player/Company storage), UEWTradeSession (player-to-player
+lock-confirm-swap), reputation discounts (FEAT-006).
+Assets: notice board, warehouse interior, market stall dressing per region, ledger/price UI, coin sounds.
+References: EW_REF_FEAT-010_PortMarketBoard, EW_REF_FEAT-010_WarehouseInterior.
+Multiplayer: every exchange atomic and idempotent (request ids); order matching on the server; anti-duplication tests.
+Persistence: prices, stock, orders, warehouse contents, open trades (cancel safely on load).
+Performance: economy updates at low frequency (once a minute); UI pulls on open.
+Dependencies: Phase 4 persistence work (CLAUDE.md 8: merchant stock persistence); FEAT-006 for discounts.
+Complexity: L-XL. Priority: stock persistence and regional pricing ESSENTIAL (CLAUDE.md Phase 4 / 7.5); notice boards,
+contracts, warehouses RECOMMENDED (Wave C); order books and player shops OPTIONAL.
+Conflicts: placeholder prices stay "tuning"; Saltreach is a working Freeport (CLAUDE.md 7.5), not a resort.
+Acceptance: prices differ by region and react to trade; restart keeps stock; a duplicate request never pays twice;
+two players complete a secure trade with both confirmations.
+
+  010.1 Regional commodity pricing           P8-43  PARTIAL (fixed prices)   ESSENTIAL    M
+  010.2 Buy and sell orders                  NEW                             OPTIONAL     L
+  010.3 Merchant supply routes               NEW (convoys FEAT-005)          OPTIONAL     L
+  010.4 Tavern conversations                 PARTIAL (rumours)               RECOMMENDED  M
+  010.5 Notice boards and contracts          P8-42/P8-58  PARTIAL (tavern jobs)  RECOMMENDED  M
+  010.6 Storage warehouses                   P8-44  PARTIAL (strongbox)      RECOMMENDED  M
+  010.7 Ship repair docks                    PARTIAL (shipyard repair)       RECOMMENDED  S
+  010.8 Regional specialty goods             PARTIAL (ores, gathered goods)  ESSENTIAL    S
+  010.9 Player-to-player trade               P8-59  NEW                      RECOMMENDED  M
+  010.10 Trade reputation and discounts      P8-23  NEW                      OPTIONAL     S
+
+
+FEAT-011 EXPLORATION AND DISCOVERY                                  Part 8: P8-28, P8-30, P8-63
+------------------------------------------------------------------------------------------------------------------------
+Evidence: UEWExplorationComponent records explored map areas (saved); the journal (UEWJournalWidget) and objectives
+exist; landmarks are placed per island (world_landmarks.py); caves, sea caverns and reefs exist; the map is fully open.
+Integration: discoveries are named places with trigger volumes; the journal gets entries; cartography adds chart detail.
+Unreal: UEWDiscoveryDefinition Data Assets (id, name, region, kind, journal text, reward); AEWDiscoveryVolume; discovery
+records in the survivor save; discovery toast widget (cinematic presentation, FEAT-019); collection sets per region.
+Assets: names and journal text (owner-written), ruin kits (FEAT-011.3), viewpoint markers, discovery banner UI, a short
+discovery sting (audio).
+References: EW_REF_FEAT-011_RuinKit, EW_REF_FEAT-011_DiscoveryBanner, EW_REF_FEAT-011_ViewpointVista.
+Multiplayer: per survivor; Company shared map notes later (FEAT-017).
+Persistence: discoveries per survivor (and per Company copy).
+Performance: volumes are cheap; ruins stream with cells.
+Dependencies: none for the core; ruins need art; FEAT-015 achievements read records.
+Complexity: M core, L with ruins. Priority: discovery journal ESSENTIAL (Wave A, P8-63); ruins and puzzles RECOMMENDED.
+Conflicts: map stays open (no fog); authored landmarks never move; no full rebuild (place add-only).
+Acceptance: entering a named place announces it once, writes the journal, saves; collections complete with a reward.
+
+  011.1 Island discovery announcements       P8-63  PARTIAL (explored areas)   ESSENTIAL    S
+  011.2 Named natural landmarks              P8-63  PARTIAL (landmarks placed)  ESSENTIAL    S
+  011.3 Discoverable historical ruins        P8-30  NEW                         RECOMMENDED  L
+  011.4 Hidden caves and secret passages     P8-28  PARTIAL (caves)             RECOMMENDED  L
+  011.5 Cartography progression              P8-09  NEW (charts, no fog)        OPTIONAL     M
+  011.6 Journal entries tied to discoveries  P8-63  PARTIAL (journal)           ESSENTIAL    S
+  011.7 Collectible exploration records      P8-63  NEW                         RECOMMENDED  S
+  011.8 Rare scenic viewpoints               NEW                                OPTIONAL     S
+  011.9 Underwater landmarks                 PARTIAL (reefs)                    OPTIONAL     M
+  011.10 Regional collection rewards         NEW                                OPTIONAL     S
+
+
+FEAT-012 BASE BUILDING EXPANSION                                    Part 8: P8-39 (stations); others NEW unless noted
+------------------------------------------------------------------------------------------------------------------------
+Evidence: Build Mode with foundations, walls, doorways, windows, doors, ceilings, roofs, stairs; build zones
+(UEWBuildZones, max_slope_rise 2.5 m); saves in single player and on the server; campfire; CLAUDE.md 6.4 asks for supported
+foundations on slopes and cliff shelves instead of removing the slope check.
+Integration: new pieces join the existing piece table and dial; functional pieces (storage, furnace, farm) reuse the
+inventory and crafting systems; claims stay deferred (CLAUDE.md 6.4).
+Unreal: new EEWBuildPieceType entries and AEWBuildPiece subclasses (pillar/stilt foundation, palisade, gate, watchtower,
+dock piece, furnace/workshop station, farm plot with growth stages, rain barrel, pen/stable, lamp/furniture); support
+graph for raised foundations; crop growth component (saved).
+Assets: period timber/stone kits per region, furnace and workshop meshes, crop stages per plant, rain barrel, pen fence.
+References: EW_REF_FEAT-012_RaisedFoundation, EW_REF_FEAT-012_DefensiveWallGate, EW_REF_FEAT-012_Workshop,
+EW_REF_FEAT-012_FarmPlot, EW_REF_FEAT-012_Dock.
+Multiplayer: existing ServerPlace path; ownership/permissions (claims deferred: Company roles meanwhile).
+Persistence: existing structure saves extended with station inventories and crop stages.
+Performance: instanced pieces per base; crop growth ticked on a timer; furnace effects tiered.
+Dependencies: FEAT-009 shelter, FEAT-008 pens; P8-39 upgradable stations.
+Complexity: L. Priority: raised foundations ESSENTIAL (owner, November 1: bases on hills); stations RECOMMENDED;
+docks/farming OPTIONAL.
+Conflicts: never weaken the 2.5 m slope rule by deletion; docks must not block ship routes, climb-outs or harbours.
+Acceptance: build on a slope with supports; each functional piece works; saves and replicates.
+
+  012.1 Raised foundations and cliffside supports   NEW (owner direction)  ESSENTIAL    L
+  012.2 Defensive walls and gates                   NEW                    RECOMMENDED  M
+  012.3 Storage buildings                           PARTIAL (strongbox)    RECOMMENDED  M
+  012.4 Watchtowers                                 NEW                    OPTIONAL     M
+  012.5 Docks and small piers                       NEW                    OPTIONAL     L
+  012.6 Furnaces and workshops                      P8-39 PARTIAL (smelting at a fire)  RECOMMENDED  M
+  012.7 Farming plots                               NEW                    OPTIONAL     L
+  012.8 Rainwater collection                        NEW                    RECOMMENDED  S
+  012.9 Animal pens and stables                     P8-34  NEW             OPTIONAL     M
+  012.10 Functional lighting and furniture          NEW (shares FEAT-002)  RECOMMENDED  M
+
+
+FEAT-013 COMBAT EXPANSION                                           Part 8: P8-19 to P8-27
+------------------------------------------------------------------------------------------------------------------------
+Evidence: bare-hand punches (first/third person), tool swings that damage animals, cannons with the four-step load,
+recoil, gunpowder, gunports, hull holes, hired gunners with target lead, two-cannon fight checks; no firearms, blocking,
+boarding, ammunition types, armour or AI ships.
+Integration: hand weapons reuse the held-item system (UEWEquipmentComponent, GetHeldMesh) and melee hit paths; firearms
+use the server's hitscan with reload states like the cannon sequence; ship ammunition types extend the cannon load;
+boarding and grappling attach two AEWShips; NPC ships use the existing ship class with an AI controller.
+Unreal: weapon Data Assets (damage, reach, stamina, reload steps, ammo item); UEWCombatComponent (block, parry window,
+dodge, stamina costs, hit reactions, latency-safe server validation with rewind tolerance); AEWNPCShip AI controller and
+behaviour (patrol, spot, pursue, broadside, retreat, surrender) with crew; grapple line constraint between ships;
+ammunition item types (round, chain, grape, fire) with effects; armour clothing slots.
+Assets: cutlass, club, boarding axe, flintlock pistol, musket, blunderbuss (six-view sheets, models, sockets), ammo
+items, first- and third-person attack/block/dodge/reload/hit animations (retargeted to the survivor body), muzzle smoke
+and flash Niagara, impact effects, armour pieces, NPC pirate crews, combat sound sets (3+ variations).
+References: EW_REF_FEAT-013_PeriodWeapons (six-view), EW_REF_FEAT-013_AmmunitionTypes, EW_REF_FEAT-013_BoardingAction,
+EW_REF_FEAT-013_PirateCrew.
+Multiplayer: server-authoritative damage with client prediction for feel; rate limits; safe zones and PvE/PvP rules;
+surrender and capture validated server-side.
+Persistence: weapons/ammo as items; NPC ship state only while active (not saved per patrol unless captured); captured
+ships become owned ships (existing save).
+Performance: AI ships simulate coarsely when far; projectile counts capped; smoke tiered.
+Dependencies: rigged character with weapon animations (the pirate body work); FEAT-007 crew for orders; FEAT-006
+reputation; FEAT-017 PvP rules.
+Complexity: XL (split into melee, firearms, ammo, AI ships, boarding). Priority: blocking/stamina melee and ammunition
+types RECOMMENDED (Wave C); firearms RECOMMENDED; AI ships and boarding OPTIONAL until crew and persistence mature.
+Conflicts: CLAUDE.md non-goal "no claim warfare before persistence"; hull-specific gunport decisions stay (P8-17);
+minor damage must not sink a ship (7.4).
+Acceptance: each weapon in single and two-player Play; block/parry timing measured; ammo effects distinct (chain shot
+damages rigging, grape hits crew); an AI ship engages and can be made to surrender.
+
+  013.1 Period melee weapons                      P8-20  NEW                 RECOMMENDED  L
+  013.2 Blocking, dodging, stamina                P8-21  NEW                 RECOMMENDED  L
+  013.3 Flintlock firearms with real reloads      P8-20  NEW                 RECOMMENDED  L
+  013.4 Boarding combat                           P8-19  NEW                 OPTIONAL     XL
+  013.5 Grappling and boarding                    P8-19  NEW                 OPTIONAL     L
+  013.6 Multiple ammunition types                 P8-26  PARTIAL (round shot + powder)  RECOMMENDED  M
+  013.7 Crew combat commands                      P8-27  PARTIAL (gunner marks)         RECOMMENDED  M
+  013.8 Nonlethal surrender for NPC encounters    P8-25  NEW                 OPTIONAL     M
+  013.9 Armour and protective clothing            NEW                        OPTIONAL     M
+  013.10 Distinct combat animations and sounds    PARTIAL (punches, cannon)  RECOMMENDED  L
+
+
+FEAT-014 QUEST AND CONTRACT SYSTEM                                  Part 8: P8-24, P8-42, P8-45, P8-46, P8-58
+------------------------------------------------------------------------------------------------------------------------
+Evidence: UEWObjectiveComponent drives the first-30-minutes objectives; the tavern keeper's FEWDeliveryContract jobs;
+journal; no contract board, bounties or multi-stage system.
+Integration: a contract is data (giver, type, targets, conditions, deadline, reward, repeat rules) tracked by the
+objective component; notice boards (FEAT-010) list them; reputation and economy pay out.
+Unreal: UEWContractDefinition Data Assets and generated contracts; UEWContractComponent (accepted contracts, progress,
+server validation of completion); condition types (deliver item to port, kill/track species, discover place, salvage,
+rescue, escort); reward table with anti-farm cooldowns.
+Assets: notice board and contract parchment UI, contract item props (sealed letters, crates), map markers.
+References: EW_REF_FEAT-014_NoticeBoard, EW_REF_FEAT-014_ContractParchmentUI.
+Multiplayer: Company-shared contracts with split rewards; server completion only.
+Persistence: accepted contracts with progress and deadlines; generated board state per port.
+Performance: negligible.
+Dependencies: FEAT-010 boards, FEAT-006 reputation, FEAT-005 events, FEAT-008 tracking.
+Complexity: L. Priority: delivery and procurement ESSENTIAL-light (they turn islands into reasons to sail; Wave C);
+others RECOMMENDED/OPTIONAL.
+Conflicts: CLAUDE.md 2.2 non-goal "no large quest chain before the first 30 minutes work": keep contracts short and
+repeatable until Phase 1 is accepted.
+Acceptance: accept, progress, complete, get paid once; expiry and failure handled; save/load mid-contract.
+
+  014.1 Regional exploration contracts     P8-63  NEW                 RECOMMENDED  M
+  014.2 Merchant delivery jobs             P8-45  PARTIAL (tavern)    ESSENTIAL    M
+  014.3 Resource procurement               NEW                        ESSENTIAL    S
+  014.4 Rescue missions                    P8-31  NEW                 OPTIONAL     M
+  014.5 Wildlife research contracts        P8-46  NEW                 OPTIONAL     M
+  014.6 Treasure investigations            P8-29  NEW                 OPTIONAL     M
+  014.7 Bounty missions                    P8-24  NEW                 RECOMMENDED  M
+  014.8 Ship salvage contracts             P8-05  NEW                 OPTIONAL     M
+  014.9 Multi-stage expeditions            NEW (after Phase 1)        OPTIONAL     L
+  014.10 Repeatable activities, controlled rewards  NEW              RECOMMENDED  S
+
+
+FEAT-015 PROGRESSION AND ACHIEVEMENTS                               Part 8: P8-13 (logbook), P8-63 (journal); rest NEW
+------------------------------------------------------------------------------------------------------------------------
+Evidence: levels to 50 with stat and skill points; the Wayfarer constellation; experience from crafting and other
+sources (UEWProgressionComponent); no achievements, titles or statistics.
+Integration: an achievement tracker listens to existing events (discoveries, voyages, crafts, kills, trades); titles are
+cosmetic; statistics are counters in the survivor save.
+Unreal: UEWAchievementDefinition Data Assets; UEWAchievementComponent (server-validated progress); statistics struct;
+title display on the nameplate/journal; Company records (FEAT-017).
+Assets: achievement icons (no generated text), title plaques, presentation sting (FEAT-019).
+References: EW_REF_FEAT-015_AchievementIconSet.
+Multiplayer: server events; per survivor; Company aggregates.
+Persistence: progress and statistics in UEWSurvivorSave (migration default zero).
+Performance: negligible.
+Dependencies: event hooks across systems; FEAT-011 discoveries.
+Complexity: M. Priority: RECOMMENDED (after Wave A).
+Conflicts: no new skill constellations without approval (CLAUDE.md 6.3); cosmetics only, no power from achievements.
+Acceptance: an achievement unlocks once from its real event and survives save/load.
+
+  015.1 Exploration milestones            NEW  RECOMMENDED  S
+  015.2 Sailing achievements              NEW  RECOMMENDED  S
+  015.3 Shipbuilding milestones           NEW  OPTIONAL     S
+  015.4 Crafting mastery                  NEW  OPTIONAL     S
+  015.5 Wildlife discoveries              NEW  RECOMMENDED  S
+  015.6 Regional reputation rewards       NEW (FEAT-006)  OPTIONAL  S
+  015.7 Captain titles                    NEW  OPTIONAL     S
+  015.8 Cosmetic achievement rewards      NEW  OPTIONAL     M
+  015.9 Personal voyage statistics        P8-13  NEW  RECOMMENDED  S
+  015.10 Company achievement records      NEW (FEAT-017)  OPTIONAL  M
+
+
+FEAT-016 QUALITY-OF-LIFE IMPROVEMENTS                               Part 8: P8-60, P8-61, P8-62, P8-64, P8-65
+------------------------------------------------------------------------------------------------------------------------
+Evidence: Options with brightness, look speeds, master/effects/ambience volumes, graphics tiers, button icons
+(Automatic/Xbox/PlayStation, FEWControllerIcons); Controls page (EWControlsList.h); controller-only play verified
+(verify_controller_only_play.py, November 7); inventory with tabs; crafting screen; map with ship markers.
+Integration: everything stays in the existing Options widget and HUD; remapping writes Enhanced Input user settings.
+Unreal: Enhanced Input user settings (UEnhancedInputUserSettings) with player-mappable keys for remapping and conflict
+detection; HUD scale via DPI/scale setting; colour-vision palettes as UI style data; subtitles widget with the sound
+system; map marker component and waypoint UI; inventory sort/filter and recipe search in the inventory widget;
+item comparison tooltip; contextual tutorials through the existing prompt system.
+Assets: UI icons and patterns (shape-coded threat/status), subtitle styling.
+References: EW_REF_FEAT-016_AccessibilityUIPatterns.
+Multiplayer: client-side settings; shared markers via FEAT-017.
+Persistence: user settings file (GGameUserSettingsIni, as Options does today).
+Performance: none.
+Dependencies: none (Wave A).
+Complexity: M each. Priority: remapping, text scale and colour-vision ESSENTIAL (accessibility, Wave A); the rest
+RECOMMENDED.
+Conflicts: remapping must keep the owner's default layout (CLAUDE.md 6.5) as the default and restore it on reset.
+Acceptance: remap a key and a button, conflicts warned, saved, reset works; scale and palettes readable at 1080p.
+
+  016.1 Fully customisable controls       P8-60  NEW  (Controls page exists)  ESSENTIAL    L
+  016.2 Xbox and PlayStation prompts      EXISTS (button icons, November 1)  -            -
+  016.3 Inventory sorting and filtering   NEW                                 RECOMMENDED  M
+  016.4 Crafting recipe search            NEW                                 RECOMMENDED  S
+  016.5 Item comparison                   NEW                                 OPTIONAL     S
+  016.6 Adjustable HUD scaling            P8-62  NEW                          ESSENTIAL    M
+  016.7 Colour-blind accessibility        P8-61  NEW                          ESSENTIAL    M
+  016.8 Subtitle and sound accessibility  NEW                                 RECOMMENDED  M
+  016.9 Map markers and waypoints         PARTIAL (ship markers)              RECOMMENDED  M
+  016.10 Optional contextual tutorials    P8-64/P8-65  PARTIAL (one-at-a-time prompts)  RECOMMENDED  M
+
+
+FEAT-017 MULTIPLAYER SOCIAL SYSTEMS                                 Part 8: P8-55 to P8-59
+------------------------------------------------------------------------------------------------------------------------
+Evidence: Company screen (create, invite, roles promote/demote, transfer, leave, ship policy); ship ownership and
+sharing; hosted games keep each player's survivor; Company state not fully persisted (CLAUDE.md gap); no treasury,
+reporting or chat.
+Integration: extend UEWCompanyComponent with ranks/permissions, treasury and records; all on the server save.
+Unreal: rank Data Asset (permissions bitset: helm, gunnery, cargo, construction, treasury, recruit); treasury inventory;
+voyage history log; shared map markers (replicated to Company); ping/emote wheel for crew communication; report
+submission to a server log file (no external service without owner approval).
+Assets: Company emblems, permission UI, marker icons, ping sounds.
+References: EW_REF_FEAT-017_CompanyCharterUI.
+Multiplayer: server authority throughout; Company data replicated to members.
+Persistence: Company persistence is the blocking dependency (Phase 4).
+Performance: negligible.
+Dependencies: Phase 4 persistence and transaction integrity (P8 Wave E notes this).
+Complexity: L. Priority: RECOMMENDED after Phase 4 (Wave E); ownership transfer ESSENTIAL (CLAUDE.md gap "in-game ship
+give/abandon is missing").
+Conflicts: public-Internet promises need owner authorization (CLAUDE.md 2.2); claims deferred.
+Acceptance: rank permissions enforced per action in two-client tests; Company survives server restart.
+
+  017.1 Company permissions and ranks     P8-56  PARTIAL (roles)        RECOMMENDED  M
+  017.2 Shared ship and storage access    PARTIAL (ship policy)         RECOMMENDED  M
+  017.3 Company treasury                  NEW                           OPTIONAL     M
+  017.4 Cooperative contracts             P8-58  NEW (FEAT-014)         OPTIONAL     M
+  017.5 Crew communication tools          NEW                           RECOMMENDED  M
+  017.6 Shared map markers                NEW                           RECOMMENDED  S
+  017.7 Ship ownership transfer           NEW (CLAUDE.md gap)           ESSENTIAL    S
+  017.8 PvE and PvP rules by server       PARTIAL (safe zones)          RECOMMENDED  M
+  017.9 Company voyage history            NEW                           OPTIONAL     S
+  017.10 Reporting and moderation         NEW (local log only)          RECOMMENDED  M
+
+
+FEAT-018 OCEAN EXPLORATION                                          Part 8: P8-03, P8-04, P8-06
+------------------------------------------------------------------------------------------------------------------------
+Evidence: a 1.5-2 km deep seabed with canyons, seamounts, sand, corals and plants; three glowing reefs with a shark and a
+manta ray; fish and sea creatures harvestable; swimming at the surface with diving; no breath limit or diving gear.
+Integration: a breath/air stat on the survivor; depth bands set visibility and pressure limits; habitats are Data
+Assets read by the existing seabed/reef placement scripts (add-only, no rebuild).
+Unreal: breath/air on UEWSurvivalComponent; UEWDepthBand Data Assets (fog density, light, hazards); diving gear items
+(weighted boots, early helmet; diving bell P8-04 as a ship fitting with an air volume); underwater post-process volume
+driven by depth; marine resource nodes (pearls, coral, sponges) as mineable actors.
+Assets: diving bell, early diving helmet and suit (period-plausible 1740s: diving bells existed; full suits are later, so
+keep gear modest), underwater particles, caustics, resource nodes, wreck dressing.
+References: EW_REF_FEAT-018_DivingBell, EW_REF_FEAT-018_DepthBands, EW_REF_FEAT-018_UnderwaterRuin.
+Multiplayer: server breath/damage; bell occupancy replicated.
+Persistence: marine nodes like other resources (stable ids, respawn).
+Performance: underwater fog limits draw; caustics tiered; fish schools instanced.
+Dependencies: FEAT-004 salvage, FEAT-003 charts.
+Complexity: L. Priority: breath and shallow wrecks RECOMMENDED (Wave B/C); bells and deep sites OPTIONAL.
+Conflicts: avoid implying unaided dives to 2 km (P8-03); reefs stay where built.
+Acceptance: breath runs out and damages; the bell refills air; a shallow wreck is salvageable; frame time underwater
+measured.
+
+  018.1 Habitats by depth                 PARTIAL (reefs, seabed)  RECOMMENDED  M
+  018.2 Underwater caves and ruins        PARTIAL (sea caverns)    OPTIONAL     L
+  018.3 Shipwreck ecosystems              P8-03  NEW               RECOMMENDED  L
+  018.4 Rare marine resources             P8-06  NEW               RECOMMENDED  M
+  018.5 Diving equipment progression      P8-04  NEW               RECOMMENDED  L
+  018.6 Underwater visibility changes     NEW                      RECOMMENDED  S
+  018.7 Marine predators and avoidance    PARTIAL (sharks)         OPTIONAL     M
+  018.8 Seafloor landmarks                PARTIAL (seamounts)      OPTIONAL     S
+  018.9 Salvage expeditions               P8-05  NEW (FEAT-004)    RECOMMENDED  M
+  018.10 Ocean exploration achievements   NEW (FEAT-015)           OPTIONAL     S
+
+
+FEAT-019 IMMERSIVE AUDIO AND PRESENTATION                           Part 8: P8-66, P8-67
+------------------------------------------------------------------------------------------------------------------------
+Evidence: regional soundscape beds with crossfades, surf fade, ship creak and rigging scaled by speed and sail, town
+sounds by hour, footsteps, work blows, wildlife calls, cannon and hull sounds; master/effects/ambience volumes
+(November 7); all placeholders pending owner audition (CLAUDE.md 10); no music or discovery presentation.
+Integration: add a Sound Class/Submix hierarchy (Master > Effects, Ambience, Music, Voice, UI) and route existing sounds
+into it, replacing per-call multipliers with Sound Class volumes; a music system with states (explore, danger, port,
+storm) on MetaSounds/Quartz; weather and behaviour drive layers.
+Unreal: Sound Class assets, Submixes, a Sound Mix for Options; UEWMusicSubsystem (states, stingers, crossfades);
+attenuation/concurrency assets per family (CLAUDE.md 10 rules).
+Assets: music layers (Scenario or licensed, owner audition), distant cannon echo, weather beds, harbour bells, shanty
+recordings or licensed shanties (P8-66 notes music licensing), instrument samples (P8-67).
+References: none (audio); presentation: EW_REF_FEAT-019_DiscoveryPresentation.
+Multiplayer: local playback from replicated state.
+Persistence: settings only.
+Performance: concurrency limits; voices capped.
+Dependencies: FEAT-001 weather, FEAT-011 discoveries, FEAT-008 behaviour.
+Complexity: M-L. Priority: Sound Class routing RECOMMENDED next (it makes the Options volumes engine-native); music
+OPTIONAL until audition.
+Conflicts: "do not fill every moment with music" (CLAUDE.md 10); marks stay "Owner audio audition pending".
+Acceptance: each class volume changes only its sounds; music state changes are smooth; audition by the owner.
+
+  019.1 Regional soundscapes              EXISTS (placeholders)          RECOMMENDED (audition)  S
+  019.2 Ship timber creaking              EXISTS                         -                       -
+  019.3 Rigging and sail sounds           EXISTS                         -                       -
+  019.4 Distant cannon echoes             NEW                            RECOMMENDED             S
+  019.5 Weather-dependent ambience        NEW (FEAT-001)                 RECOMMENDED             M
+  019.6 Port bells and harbour activity   EXISTS (town sounds)           -                       -
+  019.7 Wildlife calls by behaviour       PARTIAL (calls, attack/death)  RECOMMENDED             M
+  019.8 Dynamic music                     NEW                            OPTIONAL                L
+  019.9 Smooth audio transitions          PARTIAL (crossfades)           RECOMMENDED             S
+  019.10 Cinematic discovery/achievement presentation  NEW              RECOMMENDED             M
+
+
+FEAT-020 OPTIONAL LONG-TERM CONTENT                                 Part 8: P8-68 (photo mode), P8-70; rest NEW
+------------------------------------------------------------------------------------------------------------------------
+Evidence: none of these exist; they depend on most features above.
+Integration: built from the event director (FEAT-005), contracts (FEAT-014), economy (FEAT-010), Company (FEAT-017).
+Unreal: season definitions and calendar; legendary voyage definitions; race course actors and timing; trade route claims
+(only after claims: CLAUDE.md 6.4); collectible decoration items; expedition records; procedural contract generator;
+community challenge counters (server-wide).
+Assets: seasonal dressing, race buoys, legendary destination set pieces, decoration collectibles.
+References: EW_REF_FEAT-020_LegendaryVoyage, EW_REF_FEAT-020_RaceCourse.
+Multiplayer: server-wide; anti-exploit; public-Internet scope needs owner authorization.
+Persistence: season state, records.
+Performance: scheduled events only.
+Dependencies: almost all features above.
+Complexity: XL. Priority: OPTIONAL (long-term), kept as proposals.
+Conflicts: claims and territory are deferred until persistence is trustworthy (CLAUDE.md 2.2, 6.4).
+Acceptance: per event, defined when designed.
+
+  020.1 Seasonal world events             NEW  OPTIONAL  L
+  020.2 Rare legendary voyages            NEW  OPTIONAL  XL
+  020.3 Player-organised trade expeditions NEW OPTIONAL  L
+  020.4 Competitive sailing events        NEW  OPTIONAL  L
+  020.5 Company-controlled trade routes   NEW (after claims)  OPTIONAL  XL
+  020.6 Unique collectible ship decorations NEW OPTIONAL M
+  020.7 Historical expedition records     NEW  OPTIONAL  M
+  020.8 Procedural contracts              NEW (FEAT-014)  OPTIONAL  L
+  020.9 Community exploration challenges  NEW  OPTIONAL  M
+  020.10 Endgame maritime expeditions     NEW  OPTIONAL  XL
+  Also from Part 8: P8-68 photo mode (RECOMMENDED, S-M, Wave D), P8-57 tavern games, P8-66/67 shanties and instruments.
+
+
+PART C - IMAGE REFERENCE MANIFEST
+=================================
+Files go in Art/Reference/FeatureExpansion/ named EW_REF_[FEATURE-ID]_[Description].png, each recorded in
+ASSET_LEDGER.csv (source, model or artist, prompt or brief, input rights, owner approver) before use. Generated images are
+references only (CLAUDE.md 9.5): six views for any modelled prop, a 180 cm human and a scale bar, no generated text.
+
+Ref file                                          Feature    Use                                       Unreal implementation
+REF-00 ELITEWAKE_Master_Feature_Reference.png     all        mood, themes, presentation                none directly (not yet supplied)
+EW_REF_FEAT-001_StormAtSea                         001        storm look: sky, waves, rain, light       weather profiles, cloud/fog MIs, water params
+EW_REF_FEAT-001_RegionalWeatherBoard               001        one board per region's weather kinds      UEWWeatherProfile Data Assets
+EW_REF_FEAT-001_WeatherIcons                       001,003    HUD/forecast icons (no text)              UMG icons
+EW_REF_FEAT-002_CaptainsCabin                      002        cabin layout and mood                     furniture placement targets, lighting
+EW_REF_FEAT-002_FurnitureSet (six-view)            002,012    cot, chest, desk, chart table, chair...   static meshes, furniture Data Assets
+EW_REF_FEAT-002_SternLettering                     002        lettering style                           name decal/mesh atlas
+EW_REF_FEAT-002_HullPaintSchemes                   002,006    period paint and trims                    hull material instances
+EW_REF_FEAT-003_Sextant (six-view)                 003        held instrument                           item mesh + UI widget
+EW_REF_FEAT-003_SeaChart                           003,011    chart parchment and hazard marks          map overlay style
+EW_REF_FEAT-003_ShipLantern (six-view)             003        lantern fitting                           fitting mesh, light
+EW_REF_FEAT-004_TreasureChartFragments             004        fragment and bottle-message look          clue item UI
+EW_REF_FEAT-004_WreckSite                          004,018    wreck composition                         wreck site actor dressing
+EW_REF_FEAT-004_ArtifactSet (six-view)             004        artifacts                                 item meshes, display items
+EW_REF_FEAT-005_DistressShip                       005        distress signals                          event actor dressing
+EW_REF_FEAT-005_DebrisField                        005        debris composition                        instanced debris
+EW_REF_FEAT-005_StrandedCamp                       005        camp props                                event actor dressing
+EW_REF_FEAT-006_FactionBanners                     006        five faction identities (no text)         banner materials, emblems
+EW_REF_FEAT-006_FactionShipDecor                   006        faction flags and trims                   ship cosmetics
+EW_REF_FEAT-007_CrewRoles                          007        crew outfits by role                      crew character variations
+EW_REF_FEAT-007_CrewScreenLayout                   007        roster screen layout                      UMG layout (text built in UMG)
+EW_REF_FEAT-008_<Species>_Turnaround (per species) 008        tameable animal anatomy (six-view)        rigged models (Phase 5)
+EW_REF_FEAT-008_Saddles                            008        saddles and packs                         equipment meshes
+EW_REF_FEAT-008_TrackSigns                         008        prints, droppings, scratches              decals
+EW_REF_FEAT-009_PreservationStations               009        salting, smoking, curing                  station meshes
+EW_REF_FEAT-009_MedicalSupplies                    009        bandages, remedies                        item icons and meshes
+EW_REF_FEAT-010_PortMarketBoard                    010,014    market and price board                    board actor, UI style
+EW_REF_FEAT-010_WarehouseInterior                  010        warehouse                                 interior kit
+EW_REF_FEAT-011_RuinKit                            011        ruins per region                          modular ruin meshes
+EW_REF_FEAT-011_DiscoveryBanner                    011,019    discovery presentation (no text)          UMG animation
+EW_REF_FEAT-011_ViewpointVista                     011        scenic viewpoint framing                  camera points
+EW_REF_FEAT-012_RaisedFoundation                   012        stilts and cliff supports                 build pieces
+EW_REF_FEAT-012_DefensiveWallGate                  012        palisade and gate                         build pieces
+EW_REF_FEAT-012_Workshop                           012        furnace and workshop                      station pieces
+EW_REF_FEAT-012_FarmPlot                           012        plot and crop stages                      crop meshes
+EW_REF_FEAT-012_Dock                               012        small dock                                build pieces
+EW_REF_FEAT-013_PeriodWeapons (six-view)           013        cutlass, pistol, musket, blunderbuss      weapon meshes and sockets
+EW_REF_FEAT-013_AmmunitionTypes                    013        round, chain, grape, fire shot            ammo items
+EW_REF_FEAT-013_BoardingAction                     013        boarding composition                      animation and VFX targets
+EW_REF_FEAT-013_PirateCrew                         013,005    NPC pirates                               character variations
+EW_REF_FEAT-014_NoticeBoard                        014        board                                     board actor
+EW_REF_FEAT-014_ContractParchmentUI                014        contract look (no text)                   UMG style
+EW_REF_FEAT-015_AchievementIconSet                 015        icons                                     UMG icons
+EW_REF_FEAT-016_AccessibilityUIPatterns            016        shape-coded status/threat symbols         UI style data
+EW_REF_FEAT-017_CompanyCharterUI                   017        charter and ranks screen                  UMG layout
+EW_REF_FEAT-018_DivingBell (six-view)              018        diving bell                               fitting mesh
+EW_REF_FEAT-018_DepthBands                         018        light and fog by depth                    post-process profiles
+EW_REF_FEAT-018_UnderwaterRuin                     018,011    submerged ruin                            ruin kit variant
+EW_REF_FEAT-019_DiscoveryPresentation              019        cinematic moment framing                  camera and UMG
+EW_REF_FEAT-020_LegendaryVoyage                    020        destination set piece                     authored location
+EW_REF_FEAT-020_RaceCourse                         020        buoys and course                          course actors
+
+
+PART D - RECOMMENDED BUILD ORDER (within the owner's Waves)
+==========================================================
+Wave A (small, visible, reuse existing UI/save/input; start now):
+  1. Discovery journal: announcements for named islands/landmarks, journal entries, records (011.1/011.2/011.6/011.7, P8-63)
+  2. Ship names on the stern, map marker and HUD (002.8, P8-12)
+  3. Captain's logbook, automatic entries (003.3, P8-13) and personal voyage statistics (015.9)
+  4. Accessibility: text/HUD scale (016.6), colour-vision palettes (016.7), then remapping (016.1) (P8-60-62)
+  5. Instruments: held compass and sextant (003.1, P8-09)
+  6. Optional sailing and combat tutorials (016.10, P8-64/65)
+Then the ESSENTIAL items outside Wave A, in this order: wounds and bandages (009.6), spoilage storage (009.7), crew wages
+and roster (007.3/007.10), merchant stock persistence and regional pricing (010.1, Phase 4), ship ownership transfer
+(017.7), raised foundations (012.1), storms that change sailing (001.1/001.2).
+Waves B-E follow FUTURE_IMPLEMENTATIONS.txt Part 8. Each item: one tested commit; Play check; save/load; controller; push.
