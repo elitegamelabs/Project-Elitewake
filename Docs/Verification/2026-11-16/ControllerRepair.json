@@ -1,0 +1,28 @@
+{
+  "date": "2026-11-16",
+  "editor_build": "Succeeded",
+  "windows_development_build": "Succeeded",
+  "input_automation": {
+    "succeeded": 3,
+    "failed": 0,
+    "succeeded_with_warnings": 0,
+    "tests": [
+      {
+        "name": "Elitewake.Input.BuildModeKeys",
+        "state": "Success"
+      },
+      {
+        "name": "Elitewake.Input.ControllerFamilyAndButtonNames",
+        "state": "Success"
+      },
+      {
+        "name": "Elitewake.Input.HotbarKeyboardAndControllerBindings",
+        "state": "Success"
+      }
+    ]
+  },
+  "runtime_backend": "GameInput 3.1.26100.6879 initialized; ControllerAxis|ControllerButton|ControllerSwitch|Controller|Gamepad subscribed",
+  "physical_ps4_test": "Pending; Sony device no longer present during repair",
+  "physical_ps5_test": "Not performed",
+  "publication_type": "GitHub source/assets checkpoint; no packaged release"
+}
