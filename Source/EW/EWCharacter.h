@@ -562,6 +562,7 @@ public:
     UFUNCTION(BlueprintPure, Category="Survival|Armor") float GetOverheatMultiplier() const;
     /** Authority: a blow, bite or punch, reduced by the armor worn. Heat, cold, hunger and thirst never pass through here. */
     UFUNCTION(BlueprintCallable, Category="Survival|Armor") void TakePhysicalDamage(float Amount);
+    void TakeInjuringHit(float Amount, bool bBleeds, bool bPoisons);
     static constexpr float MaxArmorReduction = .6f;
     /** How many armor shapes are drawn on this survivor on this machine (checks: replication and coverage). */
     UFUNCTION(BlueprintPure, Category="Survival|Armor") int32 GetArmorPieceCount() const;

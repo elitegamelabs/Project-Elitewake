@@ -14,6 +14,9 @@ struct FEWCraftingIngredient
     TObjectPtr<UEWItemDefinition> Item = nullptr;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="1"))
     int32 Quantity = 1;
+    /** Use the contents and return the emptied item as part of the same crafting transaction. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool bReturnEmptyContainer = false;
 };
 
 /** Exact-item recipes; species substitution must be explicitly authored later. */

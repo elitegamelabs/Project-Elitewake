@@ -42,11 +42,10 @@ public:
     UFUNCTION(BlueprintPure, Category="Title") AEWCharacterPreview* GetPreview() const { return Preview; }
     /** Where Single Player goes. */
     static inline const TCHAR* JourneyMap = TEXT("/Game/Elitewake/Maps/Lvl_CoastalPlayground");
-    static inline const TCHAR* TitleArt = TEXT("/Game/Elitewake/UI/Title/T_ElitewakeStarterScreen_20261013.T_ElitewakeStarterScreen_20261013");
-    static inline const TCHAR* PromptArt = TEXT("/Game/Elitewake/UI/Title/T_PressAnyKeyToStart_20261013_v2.T_PressAnyKeyToStart_20261013_v2");
-    static inline const TCHAR* MainMenuArt = TEXT("/Game/Elitewake/UI/Title/T_MainMenu_20261013.T_MainMenu_20261013");
-    static inline const TCHAR* TitleWaterMask = TEXT("/Game/Elitewake/UI/Title/T_TitleWaterMask_20261013.T_TitleWaterMask_20261013");
-    static inline const TCHAR* TitleWaterMaterial = TEXT("/Game/Elitewake/UI/Title/M_TitleScreenWater_20261013.M_TitleScreenWater_20261013");
+    static inline const TCHAR* TitleArt = TEXT("/Game/Elitewake/UI/Title/T_SunsetDockTitle.T_SunsetDockTitle");
+    static inline const TCHAR* MainMenuArt = TEXT("/Game/Elitewake/UI/Title/T_SunsetModeMenu.T_SunsetModeMenu");
+    static inline const TCHAR* TitleWaterMask = TEXT("/Game/Elitewake/UI/Title/T_SunsetDockWaterMask.T_SunsetDockWaterMask");
+    static inline const TCHAR* TitleWaterMaterial = TEXT("/Game/Elitewake/UI/Title/M_SunsetDockMotion.M_SunsetDockMotion");
     static inline const TCHAR* WorldMapArt = TEXT("/Game/Elitewake/UI/FrontEnd/T_WorldMap_PortSelect.T_WorldMap_PortSelect");
     static inline const TCHAR* RosterPath = TEXT("/Game/Elitewake/Characters/DA_BodyRoster.DA_BodyRoster");
     /** Set by acceptance tests so Set Sail can be recorded without leaving the title map. */

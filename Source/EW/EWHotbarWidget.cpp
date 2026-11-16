@@ -12,6 +12,7 @@
 #include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
 #include "EWInventoryComponent.h"
+#include "EWEquipmentComponent.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
 #include "Styling/CoreStyle.h"
@@ -129,11 +130,18 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     const float ReadableScale=FMath::Max(1.f,.8f/FMath::Max(Dpi,.01f));
     if (SlotPanel) SlotPanel->SetRenderScale(FVector2D(ReadableScale));
     if (Status) { Status->SetRenderTransformPivot(FVector2D(.5f,1.f));Status->SetRenderScale(FVector2D(ReadableScale)); }
+    CastChecked<UCanvasPanelSlot>(BuildHint->Slot)->SetPosition(FVector2D(304.f * ReadableScale + 14.f, -24.f));
 
     const auto* Pawn = Cast<AEWCharacter>(GetOwningPlayerPawn());
     const auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
     const bool bController = Controller && Controller->UsesControllerPrompts();
     UEWHotbarComponent* Hotbar = Pawn ? Pawn->GetHotbarComponent() : nullptr;
+    const UEWEquipmentComponent* Equipment = Pawn ? Pawn->GetEquipmentComponent() : nullptr;
+    const auto IsEquipped = [Equipment](const UEWItemDefinition* Item)
+    {
+        return Equipment && Item && Item->EquipmentSlot != EEWEquipmentSlot::None
+            && Equipment->GetEquippedItem(Item->EquipmentSlot) == Item;
+    };
     if (PreviousHotbar.Get() != Hotbar)
     {
         PreviousHotbar = Hotbar; MessageRemaining = 0; LastDisplay.Reset();
@@ -145,7 +153,8 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     {
         UEWItemDefinition* Item = Hotbar ? Hotbar->GetBoundItem(i) : nullptr;
         const float Freshness = Pawn ? Pawn->GetInventoryComponent()->GetFoodFreshness(Item) : -1.f;
-        Display += FString::Printf(TEXT("%d:%s:%d:%.4f;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0,Freshness);
+        Display += FString::Printf(TEXT("%d:%s:%d:%.4f:%d;"),i,*GetPathNameSafe(Item),Hotbar ? Hotbar->GetOwnedQuantity(Item) : 0,Freshness,
+            int32(IsEquipped(Item)));
     }
     Display += FString::FromInt(Hotbar ? Hotbar->GetSelectedSlot() : INDEX_NONE);
     // The pad's own buttons (owner, November 1): LB+X on an Xbox pad is L1+Square on a PlayStation pad.
@@ -197,9 +206,12 @@ void UEWHotbarWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Labels[i]->SetText(Item && !AuthoredIcon ? FText::FromString(Item->DisplayName.ToString().Left(3)) : FText::GetEmpty());
         Labels[i]->SetColorAndOpacity(FSlateColor(Quantity>0 ? FLinearColor::White : FLinearColor(.5f,.5f,.5f)));
         Quantities[i]->SetText(Item ? FText::AsNumber(Quantity) : FText::GetEmpty());
+        const bool bEquipped = IsEquipped(Item);
         SelectionMarkers[i]->SetVisibility(Selected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
-        Cells[i]->SetBrushFromTexture(FallbackIcons[Selected ? 6 : 5]);
-        Cells[i]->SetBrushColor(Selected ? FLinearColor(.97f,.98f,1.f,1.f) : FLinearColor(.84f,.87f,.9f,1.f));
+        SelectionMarkers[i]->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.77f,.39f)));
+        Cells[i]->SetBrushFromTexture(FallbackIcons[Selected || bEquipped ? 6 : 5]);
+        Cells[i]->SetBrushColor(Selected ? FLinearColor(1.f,.67f,.28f,.94f)
+            : bEquipped ? FLinearColor(.80f,.53f,.26f,.77f) : FLinearColor(.62f,.42f,.22f,.61f));
         Cells[i]->SetToolTipText(Item ? Item->DisplayName : FText::FromString(TEXT("Empty slot")));
 
     }
@@ -225,6 +237,9 @@ FText UEWHotbarWidget::ResultText(EEWHotbarResult Result)
     switch (Result)
     {
         case EEWHotbarResult::Success: return FText::FromString(TEXT("Hotbar updated"));
+        case EEWHotbarResult::TreatmentStarted: return FText::FromString(TEXT("Applying bandage"));
+        case EEWHotbarResult::TreatmentApplied: return FText::FromString(TEXT("Treatment applied"));
+        case EEWHotbarResult::TreatmentUnneeded: return FText::FromString(TEXT("You do not need this treatment"));
         case EEWHotbarResult::EmptySlot: return FText::FromString(TEXT("That hotbar slot is empty"));
         case EEWHotbarResult::NotOwned: return FText::FromString(TEXT("That item is currently unavailable"));
         case EEWHotbarResult::UnsupportedAction: return FText::FromString(TEXT("That item's action is not available yet"));

@@ -14,6 +14,9 @@ UENUM(BlueprintType)
 enum class EEWFoodKind : uint8 { None, Berry, RawFish, CookedFish, RawMeat, CookedMeat, BerryDish, Remedy };
 
 UENUM(BlueprintType)
+enum class EEWSurvivalTreatment : uint8 { None, Bandage, Antidote };
+
+UENUM(BlueprintType)
 enum class EEWGatheringTool : uint8 { None, Hatchet, Pickaxe };
 
 /** Ordered pickaxe material capability; None keeps older authored tools usable on unrestricted nodes. */
@@ -48,7 +51,20 @@ enum class EEWEquipmentSlot : uint8
 	Legs,
 	Feet,
 	MainHand,
-	OffHand
+	OffHand,
+    // Append only: existing serialized slot values must remain unchanged.
+    Accessory
+};
+
+/** Optional real mesh parts attached to the survivor; shared by the world and live portrait. */
+USTRUCT(BlueprintType)
+struct FEWWornMeshPart
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UStaticMesh> Mesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FName Bone;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) FTransform RelativeTransform;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<class UMaterialInterface> Material;
 };
 
 /** Data-only description shared by every stack of a particular item type. */
@@ -73,6 +89,10 @@ public:
     /** Eating or using one unit ends food sickness early (medicinal herbs, a crafted remedy). */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food")
     bool bCuresFoodSickness = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Survival")
+    EEWSurvivalTreatment SurvivalTreatment = EEWSurvivalTreatment::None;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Combat")
+    bool bBleedsOnMeleeHit = false;
     /** Real elapsed seconds in the running session; berries use 1200. */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Food", meta=(ClampMin="0"))
     float FreshLifetimeSeconds = 0.f;
@@ -147,6 +167,10 @@ public:
 	/** None means this item is not directly equippable. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Equipment")
 	EEWEquipmentSlot EquipmentSlot = EEWEquipmentSlot::None;
+
+    /** Authored wearable meshes take precedence over the legacy procedural clothing look. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
+    TArray<FEWWornMeshPart> WornMeshes;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Presentation")
 	TSoftObjectPtr<UTexture2D> Icon;

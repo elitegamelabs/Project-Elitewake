@@ -54,6 +54,14 @@ inline UTexture2D* Make(int32 Kind, bool Outline)
     FColor* Data=static_cast<FColor*>(Texture->GetPlatformData()->Mips[0].BulkData.Lock(LOCK_READ_WRITE));
     for(int32 Y=0;Y<Size;++Y) for(int32 X=0;X<Size;++X)
     {
+        if (Kind == 11 && Outline)
+        {
+            const float EdgeDistance = float(FMath::Min(FMath::Min(X, Size - 1 - X), FMath::Min(Y, Size - 1 - Y)));
+            const float Band = FMath::Abs(EdgeDistance - 3.f);
+            const float Glow = Band <= 1.f ? 1.f : .38f * FMath::Square(FMath::Max(0.f, 1.f - (Band - 1.f) / 5.f));
+            Data[Y*Size+X] = FColor(255, 255, 255, uint8(FMath::RoundToInt(Glow * 255.f)));
+            continue;
+        }
         int32 Coverage=0;
         for(int32 SY=0;SY<2;++SY) for(int32 SX=0;SX<2;++SX)
         {

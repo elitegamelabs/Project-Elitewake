@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Engine/TimerHandle.h"
 #include "EWInventoryComponent.generated.h"
 
 class FLifetimeProperty;
@@ -16,7 +17,8 @@ enum class EEWCraftResult : uint8 { Success, NotAuthority, Locked, InvalidRecipe
 UENUM(BlueprintType)
 enum class EEWFoodUseResult : uint8
 {
-    Success, NotAuthority, InvalidFood, NotOwned, UnavailableSurvivor, Busy, NoBenefit
+    Success, NotAuthority, InvalidFood, NotOwned, UnavailableSurvivor, Busy, NoBenefit,
+    TreatmentStarted, TreatmentApplied, TreatmentUnneeded
 };
 
 USTRUCT(BlueprintType)
@@ -93,6 +95,7 @@ public:
     /** Consume one owned, explicitly enabled berry on authority. No client grant or RPC. */
     UFUNCTION(BlueprintCallable, Category="Inventory|Food")
     EEWFoodUseResult ConsumeFood(UEWItemDefinition* ItemDefinition);
+    void InterruptBandage();
 
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	int32 GetItemCount(const UEWItemDefinition* ItemDefinition) const;
@@ -126,6 +129,10 @@ protected:
 	void OnRep_Entries();
 
 private:
+    EEWFoodUseResult UseTreatment(UEWItemDefinition* Item, class UEWSurvivalComponent* Survival);
+    void FinishBandage();
+    FTimerHandle BandageTimer;
+    TWeakObjectPtr<UEWItemDefinition> PendingBandage;
     friend class FEWCraftingTest;
     void InitializeStartingRecipes();
     EEWCraftResult StageCraft(UEWCraftingRecipe* Recipe, TArray<FEWInventoryEntry>& Proposed) const;

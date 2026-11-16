@@ -1,0 +1,188 @@
+{
+  "slice": 4,
+  "date": "2026-11-12",
+  "build_success": true,
+  "owner_acceptance": "pending review",
+  "equipment_status": "unresolved; follow-up deferred",
+  "results": {
+    "InventoryAttributesPlayResult.json": {
+      "success": true,
+      "network": false,
+      "checks": [
+        {
+          "check": "Mouse plus is pending only",
+          "passed": true
+        },
+        {
+          "check": "Minus undoes pending only",
+          "passed": true
+        },
+        {
+          "check": "Keyboard drafts two health points",
+          "passed": true
+        },
+        {
+          "check": "Controller cancels without spending",
+          "passed": true
+        },
+        {
+          "check": "Controller confirms batch on both peers",
+          "passed": true
+        },
+        {
+          "check": "Committed points affect real health",
+          "passed": true
+        },
+        {
+          "check": "Confirmed allocation persists",
+          "passed": true
+        },
+        {
+          "check": "Allocation replay cannot spend twice",
+          "passed": true
+        },
+        {
+          "check": "Minus cannot remove committed investment",
+          "passed": true
+        },
+        {
+          "check": "Reset asks before charging",
+          "passed": true
+        },
+        {
+          "check": "Reset cancellation preserves money and points",
+          "passed": true
+        },
+        {
+          "check": "Reset charges exactly five gold",
+          "passed": true
+        },
+        {
+          "check": "Reset refunds points and recalculates health",
+          "passed": true
+        },
+        {
+          "check": "Constellation progression preserved",
+          "passed": true
+        },
+        {
+          "check": "Reset purse and balance persist",
+          "passed": true
+        },
+        {
+          "check": "Reset replay cannot charge again",
+          "passed": true
+        },
+        {
+          "check": "Server changes invalidate stale draft",
+          "passed": true
+        },
+        {
+          "check": "Insufficient funds do not charge or confirm",
+          "passed": true
+        },
+        {
+          "check": "Oxygen and Intelligence stay unallocatable",
+          "passed": true
+        },
+        {
+          "check": "720p cancellation works",
+          "passed": true
+        }
+      ],
+      "error": null,
+      "isolated_save_slot": "EW_AttributeVerification_138f8a84328843e4bd036b5a589e7b30"
+    },
+    "InventoryAttributesNetworkResult.json": {
+      "success": true,
+      "network": true,
+      "checks": [
+        {
+          "check": "Mouse plus is pending only",
+          "passed": true
+        },
+        {
+          "check": "Minus undoes pending only",
+          "passed": true
+        },
+        {
+          "check": "Keyboard drafts two health points",
+          "passed": true
+        },
+        {
+          "check": "Controller cancels without spending",
+          "passed": true
+        },
+        {
+          "check": "Controller confirms batch on both peers",
+          "passed": true
+        },
+        {
+          "check": "Committed points affect real health",
+          "passed": true
+        },
+        {
+          "check": "Confirmed allocation persists",
+          "passed": true
+        },
+        {
+          "check": "Allocation replay cannot spend twice",
+          "passed": true
+        },
+        {
+          "check": "Minus cannot remove committed investment",
+          "passed": true
+        },
+        {
+          "check": "Reset asks before charging",
+          "passed": true
+        },
+        {
+          "check": "Reset cancellation preserves money and points",
+          "passed": true
+        },
+        {
+          "check": "Reset charges exactly five gold",
+          "passed": true
+        },
+        {
+          "check": "Reset refunds points and recalculates health",
+          "passed": true
+        },
+        {
+          "check": "Constellation progression preserved",
+          "passed": true
+        },
+        {
+          "check": "Reset purse and balance persist",
+          "passed": true
+        },
+        {
+          "check": "Reset replay cannot charge again",
+          "passed": true
+        },
+        {
+          "check": "Server changes invalidate stale draft",
+          "passed": true
+        },
+        {
+          "check": "Insufficient funds do not charge or confirm",
+          "passed": true
+        },
+        {
+          "check": "Oxygen and Intelligence stay unallocatable",
+          "passed": true
+        },
+        {
+          "check": "720p cancellation works",
+          "passed": true
+        }
+      ],
+      "error": null,
+      "isolated_save_slot": "EW_AttributeVerification_6289667c06a148e7a76376c83ec47e78"
+    }
+  },
+  "native_report": "Saved/Automation/InventorySlice4/index.json",
+  "native_success": true,
+  "packaged_exe_updated": false
+}

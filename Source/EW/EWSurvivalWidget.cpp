@@ -5,6 +5,7 @@
 #include "EWHudIcon.h"
 #include "GameFramework/GameStateBase.h"
 #include "Components/SizeBox.h"
+#include "Components/Image.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Blueprint/WidgetTree.h"
@@ -39,6 +40,17 @@ namespace
         itself: a small loss of health then shows, and an empty stat shows nothing. Health, stamina, food, hydration, weight. */
     const float ArtBottom[]={.110f,.061f,.147f,.038f,.065f};
     const float ArtTop[]={.135f,.066f,.169f,.042f,.065f};
+    const TCHAR* const MaritimeStats[] = {TEXT("Health"), TEXT("Stamina"), TEXT("Food"), TEXT("Water"), TEXT("Weight")};
+    const FLinearColor Ivory = FLinearColor::FromSRGBColor(FColor(247, 232, 204));
+    UTexture2D* LoadMaritimeIcon(const TCHAR* Name)
+    {
+        return LoadObject<UTexture2D>(nullptr, *FString::Printf(TEXT("/Game/Elitewake/UI/HUD/T_Maritime_%s.T_Maritime_%s"), Name, Name));
+    }
+    void SetWarningText(UTextBlock* Label, const FText& Text)
+    {
+        Label->SetText(Text);
+        Label->GetParent()->SetVisibility(Text.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+    }
 }
 
 TSharedRef<SWidget> UEWSurvivalWidget::RebuildWidget()
@@ -76,8 +88,12 @@ void UEWSurvivalWidget::BuildWidgetTree()
         auto* Bar = WidgetTree->ConstructWidget<UProgressBar>();
         auto Style=Bar->GetWidgetStyle();
         // Painted art: a dark copy shows the empty part and the full-colour copy fills from the bottom.
-        UTexture2D* Art=i<UE_ARRAY_COUNT(StatArt) ? LoadObject<UTexture2D>(nullptr,StatArt[i]) : nullptr;
+        UTexture2D* Art=LoadMaritimeIcon(MaritimeStats[i]);
+        const bool bMaritime = Art != nullptr;
+        if (!Art) Art=LoadObject<UTexture2D>(nullptr,StatArt[i]);
         bHasArt[i]=Art!=nullptr;
+        IconBottom[i] = bMaritime ? (i == 2 ? 15.f : 12.f) / 128.f : Art ? ArtBottom[i] : 0.f;
+        IconSpan[i] = bMaritime ? (i == 2 ? 99.f : 104.f) / 128.f : Art ? 1.f - ArtBottom[i] - ArtTop[i] : 1.f;
         auto* Outline=Art ? Art : EWHudIcon::Make(i,true);auto* Fill=Art ? Art : EWHudIcon::Make(i,false);
         IconTextures.Add(Outline);IconTextures.Add(Fill);
         Style.BackgroundImage.SetResourceObject(Outline);
@@ -92,18 +108,43 @@ void UEWSurvivalWidget::BuildWidgetTree()
         auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
         auto Font = Label->GetFont(); Font.Size=16; Label->SetFont(Font);
         Label->SetJustification(ETextJustify::Center);
+        Label->SetColorAndOpacity(FSlateColor(Ivory));
         Label->SetShadowOffset(FVector2D(1,1));Label->SetShadowColorAndOpacity(FLinearColor::Black);
         Column->AddChildToVerticalBox(Label);
         Labels.Add(Label); Bars.Add(Bar);
     }
-    // Over the stats: the region, the air (or water) and its humidity, and the body's temperature.
+    // The right-side stack leaves the world visible and grows upward as conditions are added.
+    RightPanel = WidgetTree->ConstructWidget<USizeBox>();
+    RightPanel->SetWidthOverride(292.f);
+    auto* RightSlot = Canvas->AddChildToCanvas(RightPanel);
+    RightSlot->SetAnchors(FAnchors(1.f,1.f)); RightSlot->SetAlignment(FVector2D(1,1));
+    RightSlot->SetAutoSize(true); RightSlot->SetPosition(FVector2D(-22.f,-126.f));
+    auto* RightContent = WidgetTree->ConstructWidget<UVerticalBox>();
+    RightPanel->SetContent(RightContent);
+    NoticePanel = WidgetTree->ConstructWidget<UVerticalBox>();
+    RightContent->AddChildToVerticalBox(NoticePanel)->SetPadding(FMargin(0,0,0,10));
+    AirWarning = AddWarningRow(LoadMaritimeIcon(TEXT("Air")));
+    for (const int32 Index : {2,3,1,4}) Warnings.Add(AddWarningRow(IconTextures[Index*2+1]));
+    const auto AddEffectArt = [this](const TCHAR* Id, const TCHAR* Icon)
+    {
+        EffectArt.Add(FName(Id), LoadMaritimeIcon(Icon));
+    };
+    AddEffectArt(TEXT("Bleeding"), TEXT("Bleeding"));
+    AddEffectArt(TEXT("Poison"), TEXT("Poison"));
+    AddEffectArt(TEXT("Bandaging"), TEXT("Bandage"));
+    AddEffectArt(TEXT("Freezing"), TEXT("Cold"));
+    AddEffectArt(TEXT("Cold"), TEXT("Cold"));
+    AddEffectArt(TEXT("Overheating"), TEXT("Heat"));
+    AddEffectArt(TEXT("Warming"), TEXT("Heat"));
+    AddEffectArt(TEXT("FoodSickness"), TEXT("FoodSickness"));
+
     ClimateLine = WidgetTree->ConstructWidget<UTextBlock>();
     {
         auto Font = ClimateLine->GetFont(); Font.Size = 14; ClimateLine->SetFont(Font);
         ClimateLine->SetShadowOffset(FVector2D(1,1)); ClimateLine->SetShadowColorAndOpacity(FLinearColor::Black);
-        auto* LineSlot = Canvas->AddChildToCanvas(ClimateLine);
-        LineSlot->SetAnchors(FAnchors(0.f,1.f)); LineSlot->SetAutoSize(true);
-        LineSlot->SetOffsets(FMargin(22,-150,0,0));
+        ClimateLine->SetJustification(ETextJustify::Right);
+        ClimateLine->SetAutoWrapText(true);
+        RightContent->AddChildToVerticalBox(ClimateLine);
     }
     // Entering a region: its name across the top, fading.
     RegionBanner = WidgetTree->ConstructWidget<UTextBlock>();
@@ -145,21 +186,34 @@ void UEWSurvivalWidget::BuildWidgetTree()
         DiscoverySlot->SetOffsets(FMargin(0,190,0,0));
         DiscoveryBanner->SetRenderOpacity(0.f);
     }
-    auto* Notices = WidgetTree->ConstructWidget<UVerticalBox>();
-    NoticePanel=Notices;
-    auto* NoticeSlot = Canvas->AddChildToCanvas(Notices);
-    NoticeSlot->SetAnchors(FAnchors(1.f,1.f));
-    NoticeSlot->SetAlignment(FVector2D(1,1));
-    NoticeSlot->SetOffsets(FMargin(-18,-24,320,140));
-    for (int32 i=0;i<4;++i)
-    {
-        auto* Warning = WidgetTree->ConstructWidget<UTextBlock>();
-        auto Font=Warning->GetFont(); Font.Size=16; Warning->SetFont(Font);
-        Warning->SetJustification(ETextJustify::Right);
-        Warning->SetAutoWrapText(true);
-        Notices->AddChildToVerticalBox(Warning);
-        Warnings.Add(Warning);
-    }
+}
+
+UTextBlock* UEWSurvivalWidget::AddWarningRow(UTexture2D* Texture, UImage** OutIcon)
+{
+    auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+    auto* RowSlot = NoticePanel->AddChildToVerticalBox(Row);
+    RowSlot->SetHorizontalAlignment(HAlign_Right);
+    RowSlot->SetPadding(FMargin(0,2));
+    auto* Warning = WidgetTree->ConstructWidget<UTextBlock>();
+    auto Font = Warning->GetFont(); Font.Size = 15; Warning->SetFont(Font);
+    Warning->SetJustification(ETextJustify::Right);
+    Warning->SetWrapTextAt(246.f);
+    Warning->SetShadowOffset(FVector2D(1,1));
+    Warning->SetShadowColorAndOpacity(FLinearColor::Black);
+    Warning->SetColorAndOpacity(FSlateColor(Ivory));
+    Row->AddChildToHorizontalBox(Warning)->SetVerticalAlignment(VAlign_Center);
+    auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+    Size->SetWidthOverride(31.f); Size->SetHeightOverride(31.f);
+    auto* IconSlot = Row->AddChildToHorizontalBox(Size);
+    IconSlot->SetPadding(FMargin(5,0,0,0));
+    IconSlot->SetVerticalAlignment(VAlign_Center);
+    auto* Icon = WidgetTree->ConstructWidget<UImage>();
+    Size->SetContent(Icon);
+    if (Texture) Icon->SetBrushFromTexture(Texture);
+    Icon->SetVisibility(Texture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+    if (OutIcon) *OutIcon = Icon;
+    Row->SetVisibility(ESlateVisibility::Collapsed);
+    return Warning;
 }
 
 void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
@@ -168,13 +222,12 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     const float Dpi=UWidgetLayoutLibrary::GetViewportScale(this);
     const float ReadableScale=FMath::Max(1.f,.8f/FMath::Max(Dpi,.01f));
     Panel->SetRenderTransformPivot(FVector2D(0,1));Panel->SetRenderScale(FVector2D(ReadableScale));
-    NoticePanel->SetRenderTransformPivot(FVector2D(1,1));NoticePanel->SetRenderScale(FVector2D(ReadableScale));
+    RightPanel->SetRenderTransformPivot(FVector2D(1,1));RightPanel->SetRenderScale(FVector2D(ReadableScale));
     // On narrow screens put the side HUD above the centered hotbar instead of covering slots.
     const bool Stack=Geometry.GetLocalSize().X*.5f-304.f*ReadableScale < 18.f+320.f*ReadableScale+12.f;
     const float Lift=Stack ? 92.f*ReadableScale+14.f : 0.f;
     CastChecked<UCanvasPanelSlot>(Panel->Slot)->SetOffsets(FMargin(18,-122-Lift,320,104));
-    if (ClimateLine) CastChecked<UCanvasPanelSlot>(ClimateLine->Slot)->SetOffsets(FMargin(22,-150*ReadableScale-Lift,0,0));
-    CastChecked<UCanvasPanelSlot>(NoticePanel->Slot)->SetOffsets(FMargin(-18,-24-Lift,320,140));
+    CastChecked<UCanvasPanelSlot>(RightPanel->Slot)->SetPosition(FVector2D(-22.f,-126.f-Lift));
 
     const auto* Pawn=Cast<AEWCharacter>(GetOwningPlayerPawn());
     auto* Survival=Pawn ? Pawn->GetSurvivalComponent() : nullptr;
@@ -186,12 +239,14 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         LastExhaustionCount=Survival ? Survival->GetStaminaExhaustionCount() : 0;
     }
     Panel->SetVisibility(Survival ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
+    RightPanel->SetVisibility(Survival ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
     if (!Survival)
     {
         DisplayedSummary.Reset();
         for (const auto& Label : Labels) Label->SetText(FText::GetEmpty());
-        for (const auto& Warning : Warnings) Warning->SetText(FText::GetEmpty());
-        for (const auto& Warning : EffectWarnings) Warning->SetText(FText::GetEmpty());
+        SetWarningText(AirWarning, FText::GetEmpty());
+        for (const auto& Warning : Warnings) SetWarningText(Warning, FText::GetEmpty());
+        for (const auto& Warning : EffectWarnings) SetWarningText(Warning, FText::GetEmpty());
         return;
     }
     BlinkTime+=DeltaTime;
@@ -212,8 +267,7 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         Labels[i]->SetText(FText::FromString(FString::Printf(TEXT("%.0f%%"),Fraction*100.f)));
         Bars[i]->SetToolTipText(FText::FromString(Text));
         const float Level=Maxima[i]>0.f ? FMath::Clamp(Values[i]/Maxima[i],0.f,1.f) : 0.f;
-        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
-        Bars[i]->SetPercent(Floor+Level*Span);
+        Bars[i]->SetPercent(IconBottom[i]+Level*IconSpan[i]);
         Bars[i]->SetFillColorAndOpacity(bHasArt[i] ? FLinearColor::White : Colors[i]);
     }
     const int32 Indices[]={2,3,1};
@@ -228,7 +282,7 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         WarningRemaining[i]=FMath::Max(0.f,WarningRemaining[i]-DeltaTime);
         if ((bEmpty && !WasEmpty[i]) || (i==2 && bNewExhaustion)) WarningRemaining[i]=1.5f;
         WasEmpty[i]=bEmpty;
-        Warnings[i]->SetText((i<2 ? bEmpty : WarningRemaining[i]>0.f) ? FText::FromString(Messages[i]) : FText::GetEmpty());
+        SetWarningText(Warnings[i], (i<2 ? bEmpty : WarningRemaining[i]>0.f) ? FText::FromString(Messages[i]) : FText::GetEmpty());
         Warnings[i]->SetColorAndOpacity(FSlateColor(WarningColors[i]));
         Labels[Stat]->SetColorAndOpacity(FSlateColor(bEmpty ? WarningColors[i] : FLinearColor::White));
 
@@ -237,11 +291,13 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         const FEWClimate C = Survival->GetClimate();
         const float Body = Survival->GetBodyTemperature();
         const bool bRegionIsHumid = C.Region == EEWRegion::Desert || C.Region == EEWRegion::Jungle || C.Region == EEWRegion::Swamp;
-        FString Line = FString::Printf(TEXT("%s   %.0f°C"), *AEWClimateRegion::RegionName(C.Region).ToString().ToUpper(), Survival->GetFeltTemperature());
-        if (bRegionIsHumid || C.Humidity >= 70.f) Line += FString::Printf(TEXT("   Humidity %.0f%%"), C.Humidity);
-        Line += FString::Printf(TEXT("   Body %.1f°C"), Body);
+        const bool bSwimming = Pawn->GetCharacterMovement() && Pawn->GetCharacterMovement()->IsSwimming();
+        FString Line = FString::Printf(TEXT("%s\n%s %.0f°C"), *AEWClimateRegion::RegionName(C.Region).ToString().ToUpper(),
+            bSwimming ? TEXT("Water") : TEXT("Air"), Survival->GetFeltTemperature());
+        if (bRegionIsHumid || C.Humidity >= 70.f) Line += FString::Printf(TEXT("\nHumidity %.0f%%"), C.Humidity);
+        Line += FString::Printf(TEXT("\nBody %.1f°C"), Body);
         if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
-            if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("   Purse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
+            if (const UEWWalletComponent* Purse = Me->GetWalletComponent()) Line += FString::Printf(TEXT("\nPurse %s"), *UEWWalletComponent::FormatShort(Purse->GetCopper()));
         // A sextant in hand reads the latitude (Part 8, 09); not under water, where there is no horizon.
         DisplayedLatitude.Reset();
         if (const AEWCharacter* Me = Cast<AEWCharacter>(GetOwningPlayerPawn()))
@@ -251,14 +307,14 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
                     const bool bUnder = Me->GetCharacterMovement() && Me->GetCharacterMovement()->IsSwimming()
                         && Me->GetActorLocation().Z < -150.f;
                     DisplayedLatitude = bUnder ? FString(TEXT("no horizon")) : EWNorth::FormatLatitude(EWNorth::LatitudeAt(Me->GetActorLocation()));
-                    Line += FString::Printf(TEXT("   Sextant %s"), *DisplayedLatitude);
+                    Line += FString::Printf(TEXT("\nSextant %s"), *DisplayedLatitude);
                 }
         ClimateLine->SetText(FText::FromString(Line));
         // Blue as the body cools, white when comfortable, orange as it heats.
         const FLinearColor Cold = EWCue::Cold(), Hot = EWCue::Hot();
         const float Off = Body - UEWSurvivalComponent::NormalBody;
         ClimateLine->SetColorAndOpacity(FSlateColor(Off < -.3f ? FMath::Lerp(FLinearColor::White, Cold, FMath::Clamp(-Off / 2.f, 0.f, 1.f))
-            : Off > .3f ? FMath::Lerp(FLinearColor::White, Hot, FMath::Clamp(Off / 2.f, 0.f, 1.f)) : FLinearColor::White));
+            : Off > .3f ? FMath::Lerp(Ivory, Hot, FMath::Clamp(Off / 2.f, 0.f, 1.f)) : Ivory));
         if (ShownRegion != int32(C.Region))
         {
             // The first reading names where the survivor is, too.
@@ -318,8 +374,20 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         DiscoveryBanner->SetRenderOpacity(FMath::Clamp(DiscoverySeconds / 1.2f, 0.f, 1.f));
     }
     const bool Overweight=Survival->GetCarriedWeight()>Survival->GetMaxCarryWeight();
-    Warnings[3]->SetText(Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
+    SetWarningText(Warnings[3], Overweight ? FText::FromString(TEXT("Over encumbered")) : FText::GetEmpty());
     Warnings[3]->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.65f,.2f)));
+    const float Air = Survival->GetBreathSeconds();
+    FText AirText;
+    if (Survival->IsUnderwater())
+    {
+        const int32 Seconds = FMath::CeilToInt(Air);
+        if (Air <= 0.f) AirText = FText::FromString(TEXT("Out of air — surface now"));
+        else if (Air <= UEWSurvivalComponent::LowBreathSeconds)
+            AirText = FText::FromString(FString::Printf(TEXT("Low air — surface now (%ds)"), Seconds));
+        else AirText = FText::FromString(FString::Printf(TEXT("Air %ds"), Seconds));
+    }
+    SetWarningText(AirWarning, AirText);
+    AirWarning->SetColorAndOpacity(FSlateColor(Air <= UEWSurvivalComponent::LowBreathSeconds ? EWCue::Cold() : Ivory));
     const auto Effects=Survival->GetDebuffNotices();
     const auto* GameState=GetWorld()->GetGameState();
     const double Now=GameState ? GameState->GetServerWorldTimeSeconds() : GetWorld()->GetTimeSeconds();
@@ -329,10 +397,9 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         if (Effect.ExpiresAt>=0. && Effect.ExpiresAt<=Now) continue;
         if (Visible==EffectWarnings.Num())
         {
-            auto* Warning=WidgetTree->ConstructWidget<UTextBlock>();
-            auto Font=Warning->GetFont();Font.Size=16;Warning->SetFont(Font);
-            Warning->SetJustification(ETextJustify::Right);Warning->SetAutoWrapText(true);
-            NoticePanel->AddChildToVerticalBox(Warning);EffectWarnings.Add(Warning);
+            UImage* Icon = nullptr;
+            EffectWarnings.Add(AddWarningRow(nullptr, &Icon));
+            EffectIcons.Add(Icon);
         }
         FString Text=Effect.Label.ToString();
         if (Effect.ExpiresAt>=0.)
@@ -340,11 +407,14 @@ void UEWSurvivalWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
             const int32 Seconds=FMath::CeilToInt(Effect.ExpiresAt-Now);
             Text+=FString::Printf(TEXT(" %02d:%02d"),Seconds/60,Seconds%60);
         }
-        EffectWarnings[Visible]->SetText(FText::FromString(Text));
-        EffectWarnings[Visible++]->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UTexture2D* Texture = EffectArt.FindRef(Effect.Id);
+        UImage* Icon = EffectIcons[Visible];
+        if (Icon->GetBrush().GetResourceObject() != Texture) Icon->SetBrushFromTexture(Texture);
+        Icon->SetVisibility(Texture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+        SetWarningText(EffectWarnings[Visible++], FText::FromString(Text));
     }
     for (int32 I=Visible;I<EffectWarnings.Num();++I)
-    { EffectWarnings[I]->SetText(FText::GetEmpty());EffectWarnings[I]->SetVisibility(ESlateVisibility::Collapsed); }
+        SetWarningText(EffectWarnings[I], FText::GetEmpty());
 }
 
 FText UEWSurvivalWidget::GetDisplayedClimate() const
@@ -373,14 +443,13 @@ TArray<float> UEWSurvivalWidget::GetDisplayedFillFractions() const
     TArray<float> Result;
     for (int32 i=0;i<Bars.Num();++i)
     {
-        const float Floor=bHasArt[i] ? ArtBottom[i] : 0.f, Span=bHasArt[i] ? 1.f-ArtBottom[i]-ArtTop[i] : 1.f;
-        Result.Add(FMath::Clamp((Bars[i]->GetPercent()-Floor)/Span,0.f,1.f));
+        Result.Add(FMath::Clamp((Bars[i]->GetPercent()-IconBottom[i])/IconSpan[i],0.f,1.f));
     }
     return Result;
 }
 FText UEWSurvivalWidget::GetDisplayedWarnings() const
 {
-    FString Summary;
+    FString Summary = AirWarning ? AirWarning->GetText().ToString() : FString();
     for (const auto& Warning : Warnings) if (!Warning->GetText().IsEmpty())
     { if (!Summary.IsEmpty()) Summary+=TEXT("\n"); Summary+=Warning->GetText().ToString(); }
     for (const auto& Warning : EffectWarnings) if (!Warning->GetText().IsEmpty())

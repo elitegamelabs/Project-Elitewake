@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Types/SlateEnums.h"
 #include "Components/Button.h"
+#include "Components/Border.h"
 #include "EWInventoryComponent.h"
 #include "EWEquipmentComponent.h"
 #include "EWHotbarComponent.h"
@@ -29,6 +30,11 @@ class UEWSkillTreeWidget;
 class UEWTamesWidget;
 class UEditableTextBox;
 class UUniformGridPanel;
+class UPoseableMeshComponent;
+class UStaticMeshComponent;
+class UPointLightComponent;
+class UWidgetSwitcher;
+enum class EEWAttributeResult : uint8;
 
 /** Dark, readable styling for the menu's search boxes (the default is a white box with a hint nobody can read). */
 void EWStyleSearchBox(UEditableTextBox* Box);
@@ -62,7 +68,38 @@ public:
     UEWInventoryActionButton() { InitIsFocusable(false); }
 };
 
-/** Functional first-pass inventory screen. Final art and equipment presentation will replace this layout. */
+/** A stable pointer target while a recipe changes between its icon and requirements. */
+UCLASS()
+class UEWCraftingRecipeTile : public UBorder
+{
+    GENERATED_BODY()
+public:
+    int32 RecipeIndex = INDEX_NONE;
+    FEWRecipePressed OnInspect;
+    FEWRecipePressed OnCraft;
+    FEWRecipePressed OnHover;
+protected:
+    virtual void SynchronizeProperties() override;
+private:
+    FReply Inspect(const FGeometry& Geometry, const FPointerEvent& Event);
+    FReply Craft(const FGeometry& Geometry, const FPointerEvent& Event);
+    void Enter(const FGeometry& Geometry, const FPointerEvent& Event);
+    void Leave(const FPointerEvent& Event);
+};
+
+USTRUCT()
+struct FEWRecipeCardView
+{
+    GENERATED_BODY()
+    UPROPERTY(Transient) TObjectPtr<UEWCraftingRecipeTile> Tile;
+    UPROPERTY(Transient) TObjectPtr<UWidgetSwitcher> Faces;
+    UPROPERTY(Transient) TObjectPtr<UScrollBox> Scroll;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> Summary;
+    UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UTextBlock>> Materials;
+    UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> Icons;
+};
+
+/** Inventory, crafting, and the shared survivor menu tabs. */
 UCLASS()
 class EW_API UEWInventoryWidget : public UUserWidget
 {
@@ -102,6 +139,13 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") float GetStatArrowOpacity(int32 StatIndex) const;
     UFUNCTION(BlueprintPure, Category="Menu") FText GetLevelText() const;
     UFUNCTION(BlueprintCallable, Category="Menu") void SetStatFocus(int32 StatIndex);
+    UFUNCTION(BlueprintPure, Category="Menu|Attributes") int32 GetPendingAttributePoints(int32 StatIndex) const { return PendingAttributes.IsValidIndex(StatIndex) ? PendingAttributes[StatIndex] : 0; }
+    UFUNCTION(BlueprintPure, Category="Menu|Attributes") int32 GetPendingAttributeTotal() const;
+    UFUNCTION(BlueprintPure, Category="Menu|Attributes") bool IsAttributeResetConfirmationOpen() const { return bResetConfirmation; }
+    UFUNCTION(BlueprintCallable, Category="Menu|Attributes") void ConfirmAttributeChanges();
+    UFUNCTION(BlueprintCallable, Category="Menu|Attributes") void CancelAttributeChanges();
+    UFUNCTION(BlueprintCallable, Category="Menu|Attributes") void OpenAttributeReset();
+    void ShowAttributeResult(EEWAttributeResult Result, int64 Revision);
     /** The hotbar slot the controller cursor is on while picking where an item goes (owner, October 22: hotbar assignment by controller); INDEX_NONE when not picking. */
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetHotbarPick() const { return HotbarPick; }
     UFUNCTION(BlueprintCallable, Category="Menu") void SetHotbarPick(int32 SlotIndex);
@@ -113,7 +157,12 @@ public:
     UFUNCTION(BlueprintPure, Category="Menu") bool IsCraftingFocused() const { return bCraftingOpen; }
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetSelectedRecipe() const { return SelectedRecipeIndex; }
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetShownRecipeCount() const { return DisplayedRecipes.Num(); }
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting") bool IsRecipeInspected() const { return bCraftingOpen && InspectedRecipe != nullptr; }
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting") FText GetRecipeCardRequirements() const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting") UWidget* GetRecipeTile(int32 Index) const;
+    UFUNCTION(BlueprintPure, Category="Inventory|Crafting") float GetRecipeCardScrollOffset() const;
     UFUNCTION(BlueprintPure, Category="Menu") int32 GetShownItemCount() const { return DisplayedEntries.Num(); }
+    UFUNCTION(BlueprintPure, Category="Menu") UWidget* GetEquipmentSlotWidget(EEWEquipmentSlot EquipmentSlot) const;
     /** Moves the cursor one step: columns left/right, rows up/down, through the inventory grid and on into the crafting list. */
     UFUNCTION(BlueprintCallable, Category="Menu") void MoveCursor(int32 Dx, int32 Dy);
     UFUNCTION(BlueprintCallable, Category="Menu") void SetInventorySearch(const FString& Text);
@@ -172,6 +221,11 @@ private:
     UPROPERTY(Transient) TObjectPtr<UImage> PortraitImage;
     UPROPERTY(Transient) TObjectPtr<ASceneCapture2D> PortraitCapture;
     UPROPERTY(Transient) TObjectPtr<UTextureRenderTarget2D> PortraitTarget;
+    UPROPERTY(Transient) TObjectPtr<AActor> PortraitSubject;
+    UPROPERTY(Transient) TObjectPtr<UPoseableMeshComponent> PortraitBody;
+    UPROPERTY(Transient) TObjectPtr<UPointLightComponent> PortraitKey;
+    UPROPERTY(Transient) TObjectPtr<UPointLightComponent> PortraitFill;
+    UPROPERTY(Transient) TArray<TObjectPtr<UStaticMeshComponent>> PortraitParts;
     float PortraitClock = 0.f;
 public:
     /** True once the Survivor panel has a live picture of the survivor. */
@@ -184,6 +238,17 @@ private:
     UPROPERTY(Transient) TObjectPtr<UTextBlock> CraftBarText;
     UFUNCTION() void HoverRecipe(int32 Index);
     UFUNCTION() void SpendStat(int32 StatIndex);
+    UFUNCTION() void UndoStat(int32 StatIndex);
+    void NavigateAttributeFocus(int32 Direction);
+    UPROPERTY(Transient) TArray<TObjectPtr<UButton>> AllocMinus;
+    UPROPERTY(Transient) TObjectPtr<UButton> AttributeResetButton;
+    UPROPERTY(Transient) TObjectPtr<UWidget> AttributeActions;
+    UPROPERTY(Transient) TObjectPtr<UButton> AttributeConfirmButton;
+    UPROPERTY(Transient) TObjectPtr<UButton> AttributeCancelButton;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> AttributeStatus;
+    TArray<int32> PendingAttributes;
+    int64 AttributeDraftRevision = -1, AttributeResponseRevision = -1;
+    bool bAttributeRequestPending = false, bResetConfirmation = false;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> LevelValue;
     UPROPERTY(Transient) TObjectPtr<UProgressBar> LevelBar;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> PointsValue;
@@ -196,15 +261,17 @@ private:
     UFUNCTION() void OnSearchCommitted(const FText& Text, ETextCommit::Type Method);
     UFUNCTION() void ToggleSort();
     void ApplySectionVisibility();
-    void BuildCharacterPanel(UVerticalBox* Into);
+    void BuildCharacterPanel(UVerticalBox* Into, UVerticalBox* Footer);
     int32 ItemColumns() const;
     int32 RecipeColumns() const;
     UPROPERTY(Transient) TObjectPtr<UEditableTextBox> SearchBox;
     UPROPERTY(Transient) TObjectPtr<UEditableTextBox> RecipeSearchBox;
     UPROPERTY(Transient) TObjectPtr<UButton> SortButton;
     UPROPERTY(Transient) TObjectPtr<UBorder> BrowserHost;
+    UPROPERTY(Transient) TObjectPtr<UBorder> MenuBackdrop;
+    UPROPERTY(Transient) TObjectPtr<UWidget> InventoryLayout;
     UPROPERTY(Transient) TObjectPtr<UWidget> RightHost;
-    UPROPERTY(Transient) TObjectPtr<UBorder> ViewerPanel;
+    UPROPERTY(Transient) TObjectPtr<UWrapBox> HandEquipmentBox;
     UPROPERTY(Transient) TObjectPtr<UScrollBox> SurvivorScroll;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> SectionLabels;
     UPROPERTY(Transient) TArray<TObjectPtr<UBorder>> RowRings;
@@ -229,12 +296,24 @@ private:
     UPROPERTY(Transient) TMap<UEWItemDefinition*, TObjectPtr<UImage>> MaterialImages;
     UFUNCTION() void ToggleCrafting();
     UFUNCTION() void SelectRecipe(int32 Index);
+    UFUNCTION() void InspectRecipe(int32 Index);
+    UFUNCTION() void CraftRecipe(int32 Index);
     UFUNCTION() void PerformCraft();
     void RefreshCrafting();
+    void UpdateRecipeCards();
+    void UpdateCraftActions();
+    void ScrollRecipeCard(float Delta);
     bool bCraftingOpen = false;
+    bool bCraftRequestPending = false;
+    float RecipeScrollAxis = 0.f;
+    float RecipeRefreshRemaining = 0.f;
+    EEWCraftResult ShownCraftReadiness = EEWCraftResult::InvalidRecipe;
+    int32 HoveredRecipeIndex = INDEX_NONE;
     int32 SelectedRecipeIndex = 0;
+    UPROPERTY(Transient) TObjectPtr<UEWCraftingRecipe> InspectedRecipe;
+    UPROPERTY(Transient) TArray<FEWRecipeCardView> RecipeCards;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> CraftingBox;
-    UPROPERTY(Transient) TObjectPtr<UTextBlock> CraftingDetails;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> CraftStatus;
     UPROPERTY(Transient) TObjectPtr<UButton> CraftButton;
     UPROPERTY(Transient) TArray<TObjectPtr<UEWCraftingRecipe>> DisplayedRecipes;
     UFUNCTION()
@@ -298,7 +377,7 @@ private:
     TObjectPtr<UTextBlock> DetailsText;
     UTexture2D* ResolveIcon(UEWItemDefinition* Item);
     UPROPERTY(Transient) TMap<int32,TObjectPtr<UTexture2D>> FallbackIcons;
-    UPROPERTY(Transient) TObjectPtr<UVerticalBox> RecipeDetailsBox;
+    UPROPERTY(Transient) TObjectPtr<UVerticalBox> CraftActions;
     UPROPERTY(Transient) TObjectPtr<UScrollBox> CraftScroll;
 	void BuildWidgetTree();
 	UEWInventoryComponent* ResolveInventory() const;

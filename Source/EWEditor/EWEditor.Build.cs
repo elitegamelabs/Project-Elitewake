@@ -6,5 +6,6 @@ public class EWEditor : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine", "EnhancedInput", "EW", "Slate", "SlateCore", "InputCore", "UnrealEd", "Water", "Foliage" });
+        PrivateDependencyModuleNames.Add("UMG");
     }
 }

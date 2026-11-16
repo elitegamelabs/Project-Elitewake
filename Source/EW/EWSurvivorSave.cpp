@@ -42,6 +42,9 @@ bool UEWSurvivorSave::SaveSurvivor(AEWCharacter* Survivor, const FString& SlotNa
         Save->Health = Needs->GetHealth();
         Save->Hunger = Needs->GetHunger();
         Save->Hydration = Needs->GetHydration();
+        Save->BleedingSeconds = Needs->GetBleedingLeft();
+        Save->PoisonSeconds = Needs->GetPoisonLeft();
+        Save->BreathSeconds = Needs->GetBreathSeconds();
     }
     if (const auto* Pack = Survivor->GetInventoryComponent()) Save->Inventory = Pack->Entries;
     if (const auto* Worn = Survivor->GetEquipmentComponent()) Save->Equipment = Worn->GetEquipmentEntries();
@@ -150,6 +153,7 @@ bool UEWSurvivorSave::ApplyTo(AEWCharacter* Survivor) const
         else if (Change > 0.f) Needs->RestoreHealth(Change);
         Needs->SetHunger(Hunger);
         Needs->SetHydration(Hydration);
+        Needs->RestoreHazards(BleedingSeconds, PoisonSeconds, BreathSeconds >= 0.f ? BreathSeconds : UEWSurvivalComponent::MaxBreathSeconds);
     }
     if (ExploredSize > 0.f)
         if (auto* Controller = Cast<AEWPlayerController>(Survivor->GetController()))

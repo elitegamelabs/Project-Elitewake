@@ -72,7 +72,8 @@ public:
     /** The volume last given to the audio devices (for checks). */
     UFUNCTION(BlueprintPure, Category="Options") static float GetAppliedMasterVolume() { return AppliedMasterVolume; }
     static inline float AppliedMasterVolume = 1.f;
-    static inline const TCHAR* VoyageArt = TEXT("/Game/Elitewake/UI/FrontEnd/T_LoadingVoyage.T_LoadingVoyage");
+    static inline const TCHAR* VoyageArt = TEXT("/Game/Elitewake/UI/FrontEnd/T_LoadingSunsetVoyage.T_LoadingSunsetVoyage");
+    static inline const TCHAR* VoyageWaveMaterial = TEXT("/Game/Elitewake/UI/FrontEnd/M_LoadingSunsetWaves.M_LoadingSunsetWaves");
     /** Accept only local/private IPv4 addresses, optional port, or localhost. Never arbitrary travel URLs. */
     static bool NormalizePrivateAddress(const FString& Input, FString& Output);
     /** This PC's player, the same every time the game starts (a hash of the Windows login): a host keeps a joining player's survivor

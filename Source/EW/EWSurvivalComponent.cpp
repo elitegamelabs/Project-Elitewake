@@ -50,6 +50,8 @@ void UEWSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	DOREPLIFETIME(UEWSurvivalComponent, MaxHealth);
     DOREPLIFETIME_CONDITION(UEWSurvivalComponent, DebuffNotices, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UEWSurvivalComponent, BreathSeconds, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UEWSurvivalComponent, bUnderwater, COND_OwnerOnly);
 	DOREPLIFETIME(UEWSurvivalComponent, Health);
 	DOREPLIFETIME(UEWSurvivalComponent, MaxStamina);
     DOREPLIFETIME_CONDITION(UEWSurvivalComponent, StaminaExhaustionCount, COND_OwnerOnly);
@@ -76,7 +78,7 @@ void UEWSurvivalComponent::UpdateStamina(bool bIsSprinting, float DeltaSeconds)
 	const float PreviousStamina = Stamina;
 	const float Delta = bIsSprinting
 		? -SprintStaminaDrainRate * DeltaSeconds
-		: StaminaRecoveryRate * DeltaSeconds * (IsFoodSick() ? SickStaminaFactor : 1.f);
+		: StaminaRecoveryRate * DeltaSeconds * (IsFoodSick() ? SickStaminaFactor : 1.f) * (IsPoisoned() ? .5f : 1.f);
 	Stamina = FMath::Clamp(Stamina + Delta, 0.0f, MaxStamina);
     if (PreviousStamina > KINDA_SMALL_NUMBER && Stamina <= KINDA_SMALL_NUMBER)
         StaminaExhaustionCount = StaminaExhaustionCount == MAX_int32 ? 0 : StaminaExhaustionCount + 1;
@@ -94,6 +96,7 @@ void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 		return;
 	}
 
+	if (IsDead()) return;
 	const float Before = Health;
 	Health = FMath::Clamp(Health - DamageAmount, 0.0f, MaxHealth);
 	SinceHurt = 0.f;
@@ -105,7 +108,92 @@ void UEWSurvivalComponent::ApplyDamage(float DamageAmount)
 		PendingSmallDamage = 0.f;
 		DamageEventCount = DamageEventCount == MAX_int32 ? 1 : DamageEventCount + 1;
 	}
+	if (IsDead()) ClearHazards();
 	NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::InflictBleeding()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsDead()) return;
+    BleedingLeft = BleedingDuration;
+    SetDebuffNotice(TEXT("Bleeding"), NSLOCTEXT("Elitewake", "Bleeding", "Bleeding · Bandage"), BleedingLeft);
+}
+
+void UEWSurvivalComponent::InflictPoison()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsDead()) return;
+    PoisonLeft = PoisonDuration;
+    SetDebuffNotice(TEXT("Poison"), NSLOCTEXT("Elitewake", "VenomPoison", "Poisoned · Antidote"), PoisonLeft);
+}
+
+void UEWSurvivalComponent::StopBleeding()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    BleedingLeft = 0.f;
+    ClearDebuffNotice(TEXT("Bleeding"));
+}
+
+void UEWSurvivalComponent::CurePoison()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    PoisonLeft = 0.f;
+    ClearDebuffNotice(TEXT("Poison"));
+}
+
+void UEWSurvivalComponent::ClearHazards()
+{
+    bUnderwater = false;
+    BreathSeconds = MaxBreathSeconds;
+    StopBleeding();
+    CurePoison();
+    ClearDebuffNotice(TEXT("Bandaging"));
+}
+
+void UEWSurvivalComponent::RestoreHazards(float BleedingSeconds, float PoisonSeconds, float SavedBreath)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    ClearHazards();
+    if (IsDead()) return;
+    if (FMath::IsFinite(SavedBreath)) BreathSeconds = FMath::Clamp(SavedBreath, 0.f, MaxBreathSeconds);
+    if (FMath::IsFinite(BleedingSeconds) && BleedingSeconds > 0.f)
+    {
+        BleedingLeft = FMath::Min(BleedingSeconds, BleedingDuration);
+        SetDebuffNotice(TEXT("Bleeding"), NSLOCTEXT("Elitewake", "Bleeding", "Bleeding · Bandage"), BleedingLeft);
+    }
+    if (FMath::IsFinite(PoisonSeconds) && PoisonSeconds > 0.f)
+    {
+        PoisonLeft = FMath::Min(PoisonSeconds, PoisonDuration);
+        SetDebuffNotice(TEXT("Poison"), NSLOCTEXT("Elitewake", "VenomPoison", "Poisoned · Antidote"), PoisonLeft);
+    }
+    NotifyStatsChanged();
+}
+
+void UEWSurvivalComponent::UpdateHazards(bool bHeadUnderwater, float DeltaSeconds)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsDead() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f) return;
+    bUnderwater = bHeadUnderwater;
+    float Damage = 0.f;
+    if (IsBleeding())
+    {
+        const float Elapsed = FMath::Min(BleedingLeft, DeltaSeconds);
+        BleedingLeft -= Elapsed;
+        Damage += Elapsed * (12.f / BleedingDuration);
+        if (!IsBleeding()) StopBleeding();
+    }
+    if (IsPoisoned())
+    {
+        const float Elapsed = FMath::Min(PoisonLeft, DeltaSeconds);
+        PoisonLeft -= Elapsed;
+        Damage += Elapsed * (8.f / PoisonDuration);
+        if (!IsPoisoned()) CurePoison();
+    }
+    if (bUnderwater)
+    {
+        Damage += FMath::Max(0.f, DeltaSeconds - BreathSeconds) * 4.f;
+        BreathSeconds = FMath::Max(0.f, BreathSeconds - DeltaSeconds);
+    }
+    else BreathSeconds = FMath::Min(MaxBreathSeconds, BreathSeconds + DeltaSeconds * (MaxBreathSeconds / 3.f));
+    if (Damage > 0.f) ApplyDamage(Damage);
 }
 
 void UEWSurvivalComponent::SetStatBonuses(float MaxHealthBonus, float MaxStaminaBonus, float MaxCarryBonus, float InClimateResistance)
@@ -135,6 +223,7 @@ void UEWSurvivalComponent::Revive(float HealthFraction, float MinNeedFraction)
 	Stamina = FMath::Max(Stamina, MaxStamina * FMath::Clamp(MinNeedFraction, 0.f, 1.f));
 	BodyTemperatureCelsius = NormalBody;
 	PendingSmallDamage = 0.f;
+	ClearHazards();
 	CureFoodSickness();
 	NotifyStatsChanged();
 }

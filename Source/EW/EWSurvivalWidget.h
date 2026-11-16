@@ -9,6 +9,8 @@ class UProgressBar;
 class UBorder;
 class UTexture2D;
 class UVerticalBox;
+class UImage;
+class USizeBox;
 
 /** Local read-only HUD for the possessed survivor's authoritative values. */
 UCLASS()
@@ -30,6 +32,7 @@ protected:
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
 private:
     void BuildWidgetTree();
+    UTextBlock* AddWarningRow(UTexture2D* Icon, UImage** OutIcon = nullptr);
     UPROPERTY(Transient)
     TObjectPtr<UBorder> Panel;
     UPROPERTY(Transient)
@@ -42,9 +45,15 @@ private:
     UPROPERTY(Transient) TArray<TObjectPtr<UTexture2D>> IconTextures;
     FString DisplayedSummary;
     UPROPERTY(Transient) TObjectPtr<UVerticalBox> NoticePanel;
+    UPROPERTY(Transient) TObjectPtr<USizeBox> RightPanel;
+    UPROPERTY(Transient) TObjectPtr<UTextBlock> AirWarning;
+    UPROPERTY(Transient) TArray<TObjectPtr<UImage>> EffectIcons;
+    UPROPERTY(Transient) TMap<FName, TObjectPtr<UTexture2D>> EffectArt;
     UPROPERTY(Transient) TArray<TObjectPtr<UTextBlock>> EffectWarnings;
     bool WasEmpty[3] = {};
     bool bHasArt[5] = {};
+    float IconBottom[5] = {};
+    float IconSpan[5] = {};
     float WarningRemaining[3] = {};
     float BlinkTime = 0.f;
     int32 LastExhaustionCount = 0;

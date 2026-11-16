@@ -56,6 +56,24 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Survival|Health")
 	void ApplyDamage(float DamageAmount);
 
+    static constexpr float BleedingDuration = 30.f;
+    static constexpr float PoisonDuration = 45.f;
+    static constexpr float MaxBreathSeconds = 30.f;
+    static constexpr float LowBreathSeconds = 8.f;
+    static constexpr float BandageSeconds = 2.f;
+    void UpdateHazards(bool bHeadUnderwater, float DeltaSeconds);
+    void InflictBleeding();
+    void InflictPoison();
+    void StopBleeding();
+    void CurePoison();
+    bool IsBleeding() const { return BleedingLeft > 0.f; }
+    bool IsPoisoned() const { return PoisonLeft > 0.f; }
+    bool IsUnderwater() const { return bUnderwater; }
+    float GetBleedingLeft() const { return BleedingLeft; }
+    float GetPoisonLeft() const { return PoisonLeft; }
+    float GetBreathSeconds() const { return BreathSeconds; }
+    void RestoreHazards(float BleedingSeconds, float PoisonSeconds, float SavedBreath);
+
 	UFUNCTION(BlueprintCallable, Category="Survival|Health")
 	void RestoreHealth(float RestoreAmount);
 
@@ -233,6 +251,14 @@ protected:
 	void OnRep_SurvivalStats();
 
 private:
+    friend class UEWProgressionComponent; // Restore exact vitals if an attribute transaction cannot be persisted.
+    float BleedingLeft = 0.f;
+    float PoisonLeft = 0.f;
+    UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
+    float BreathSeconds = MaxBreathSeconds;
+    UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)
+    bool bUnderwater = false;
+    void ClearHazards();
     /** Server only: seconds of food sickness left. */
     float FoodSicknessLeft = 0.f;
     UPROPERTY(ReplicatedUsing=OnRep_SurvivalStats)

@@ -5,8 +5,11 @@
 #include "EWSkillTree.h"
 #include "EWInventoryComponent.h"
 #include "EWCraftingRecipe.h"
+#include "EWWalletComponent.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
+
+static_assert(UEWProgressionComponent::AttributeResetCopper == 5 * UEWWalletComponent::CopperPerSilver * UEWWalletComponent::SilverPerGold);
 
 UEWProgressionComponent::UEWProgressionComponent()
 {
@@ -31,6 +34,7 @@ void UEWProgressionComponent::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     DOREPLIFETIME(UEWProgressionComponent, StatPoints);
     DOREPLIFETIME(UEWProgressionComponent, SkillPoints);
     DOREPLIFETIME(UEWProgressionComponent, UnlockedSkills);
+    DOREPLIFETIME(UEWProgressionComponent, AttributeRevision);
 }
 
 FText UEWProgressionComponent::StatName(EEWStat Stat)
@@ -62,6 +66,7 @@ int32 UEWProgressionComponent::ExperienceForLevel(int32 FromLevel) const
 
 int32 UEWProgressionComponent::GrantExperience(int32 Amount)
 {
+    if (bAttributeTransaction) return 0;
     if (!GetOwner() || !GetOwner()->HasAuthority() || Amount <= 0 || IsAtMaxLevel()) return 0;
     Experience += Amount;
     int32 Gained = 0;
@@ -84,6 +89,7 @@ int32 UEWProgressionComponent::Award(EEWExperienceSource Source, int32 Times)
 
 bool UEWProgressionComponent::SpendPoint(EEWStat Stat)
 {
+    if (bAttributeTransaction) return false;
     if (!GetOwner() || !GetOwner()->HasAuthority() || UnspentPoints <= 0 || !StatPoints.IsValidIndex(int32(Stat))) return false;
     --UnspentPoints; ++StatPoints[int32(Stat)];
     ApplyStats();
@@ -91,8 +97,81 @@ bool UEWProgressionComponent::SpendPoint(EEWStat Stat)
     return true;
 }
 
+EEWAttributeResult UEWProgressionComponent::CommitAttributePoints(const TArray<int32>& Additions, int64 ExpectedRevision, TFunctionRef<bool()> Persist)
+{
+    return AttributeTransaction(Additions, false, ExpectedRevision, Persist);
+}
+
+EEWAttributeResult UEWProgressionComponent::ResetAttributePoints(int64 ExpectedRevision, TFunctionRef<bool()> Persist)
+{
+    return AttributeTransaction({}, true, ExpectedRevision, Persist);
+}
+
+EEWAttributeResult UEWProgressionComponent::AttributeTransaction(const TArray<int32>& Additions, bool bReset, int64 ExpectedRevision, TFunctionRef<bool()> Persist)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return EEWAttributeResult::NotAuthority;
+    if (bAttributeTransaction) return EEWAttributeResult::Busy;
+    if (ExpectedRevision != AttributeRevision) return EEWAttributeResult::Stale;
+    int64 Total = 0;
+    if (bReset)
+    {
+        for (const int32 Points : StatPoints) Total += Points;
+        if (Total <= 0) return EEWAttributeResult::NothingToReset;
+        if (Total > MAX_int32 - int64(UnspentPoints)) return EEWAttributeResult::InvalidAllocation;
+    }
+    else
+    {
+        if (Additions.Num() != StatCount) return EEWAttributeResult::InvalidAllocation;
+        for (int32 Index = 0; Index < StatCount; ++Index)
+        {
+            if (Additions[Index] < 0 || int64(Additions[Index]) + StatPoints[Index] > MAX_int32) return EEWAttributeResult::InvalidAllocation;
+            Total += Additions[Index];
+        }
+        if (Total <= 0) return EEWAttributeResult::InvalidAllocation;
+        if (Total > UnspentPoints) return EEWAttributeResult::NotEnoughPoints;
+    }
+    auto* Wallet = GetOwner()->FindComponentByClass<UEWWalletComponent>();
+    if (bReset && (!Wallet || !Wallet->CanAfford(AttributeResetCopper))) return EEWAttributeResult::NotEnoughGold;
+    TGuardValue<bool> Guard(bAttributeTransaction, true);
+    const auto Before = StatPoints;
+    const int32 BeforeUnspent = UnspentPoints;
+    const int64 BeforeCopper = Wallet ? Wallet->GetCopper() : 0;
+    auto* Survival = GetOwner()->FindComponentByClass<UEWSurvivalComponent>();
+    const float BeforeHealth = Survival ? Survival->GetHealth() : 0.f;
+    const float BeforeStamina = Survival ? Survival->GetStamina() : 0.f;
+    if (bReset)
+    {
+        if (!Wallet->TrySpend(AttributeResetCopper)) return EEWAttributeResult::NotEnoughGold;
+        StatPoints.Init(0, StatCount);
+        UnspentPoints += int32(Total);
+    }
+    else
+    {
+        for (int32 Index = 0; Index < StatCount; ++Index) StatPoints[Index] += Additions[Index];
+        UnspentPoints -= int32(Total);
+    }
+    ApplyStats();
+    if (!Persist())
+    {
+        StatPoints = Before;
+        UnspentPoints = BeforeUnspent;
+        if (Wallet) Wallet->SetCopper(BeforeCopper);
+        ApplyStats();
+        if (Survival)
+        {
+            Survival->Health = BeforeHealth;
+            Survival->Stamina = BeforeStamina;
+            Survival->NotifyStatsChanged();
+        }
+        return EEWAttributeResult::SaveFailed;
+    }
+    Changed();
+    return EEWAttributeResult::Success;
+}
+
 void UEWProgressionComponent::Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints, int32 NewSkillPoints, const TArray<FName>& NewSkills)
 {
+    if (bAttributeTransaction) return;
     if (!GetOwner() || !GetOwner()->HasAuthority()) return;
     Level = FMath::Clamp(NewLevel, 1, MaxLevel);
     Experience = FMath::Max(0, NewExperience);
@@ -123,6 +202,7 @@ bool UEWProgressionComponent::CanUnlockSkill(FName Id) const
 
 bool UEWProgressionComponent::UnlockSkill(FName Id)
 {
+    if (bAttributeTransaction) return false;
     if (!GetOwner() || !GetOwner()->HasAuthority() || !CanUnlockSkill(Id)) return false;
     const FEWSkillNode* Node = FEWSkillTree::Find(Id);
     SkillPoints -= Node->Cost;
@@ -160,5 +240,10 @@ void UEWProgressionComponent::OnRep_Progression()
 
 void UEWProgressionComponent::Changed()
 {
+    if (GetOwner() && GetOwner()->HasAuthority())
+    {
+        ++AttributeRevision;
+        GetOwner()->ForceNetUpdate();
+    }
     OnProgressionChanged.Broadcast();
 }

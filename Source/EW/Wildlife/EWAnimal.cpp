@@ -326,7 +326,7 @@ void AEWAnimal::PressAttack(AEWCharacter* Target, float DeltaSeconds)
     if (AttackCooldown <= 0.f && FVector::Dist(Nose, Target->GetActorLocation()) < Definition->AttackReach + 70.f)
     {
         AttackCooldown = Definition->AttackInterval;
-        Target->TakePhysicalDamage(Definition->AttackDamage);
+        Target->TakeInjuringHit(Definition->AttackDamage, Definition->bAttackCausesBleeding, Definition->bAttackCausesPoison);
         Target->ReactToHit();
         MulticastCue(1);
     }

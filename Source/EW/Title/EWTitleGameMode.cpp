@@ -45,7 +45,6 @@ void AEWTitlePlayerController::ShowTitle()
     Title = CreateWidget<UEWTitleWidget>(this, UEWTitleWidget::StaticClass());
     if (!Title) return;
     Title->Art = Cast<UTexture2D>(FSoftObjectPath(TitleArt).TryLoad());
-    Title->PromptArt = Cast<UTexture2D>(FSoftObjectPath(PromptArt).TryLoad());
     Title->MainMenuArt = Cast<UTexture2D>(FSoftObjectPath(MainMenuArt).TryLoad());
     Title->WaterMaskArt = Cast<UTexture2D>(FSoftObjectPath(TitleWaterMask).TryLoad());
     Title->WaterMaterial = Cast<UMaterialInterface>(FSoftObjectPath(TitleWaterMaterial).TryLoad());

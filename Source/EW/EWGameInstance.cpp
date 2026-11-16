@@ -7,6 +7,7 @@
 #include "Title/EWFreeports.h"
 #include "Title/EWLoadingWidget.h"
 #include "Engine/Texture2D.h"
+#include "Materials/MaterialInterface.h"
 #include "MoviePlayer.h"
 #include "AudioDevice.h"
 #include "AudioDeviceManager.h"
@@ -281,7 +282,8 @@ void UEWGameInstance::ShowLoadingScreen()
     {
         Loading=CreateWidget<UEWLoadingWidget>(this,UEWLoadingWidget::StaticClass());
         if (!Loading) return;
-        Loading->VoyageArt=Cast<UTexture2D>(FSoftObjectPath(VoyageArt).TryLoad());
+        Loading->ConfigureArt(Cast<UTexture2D>(FSoftObjectPath(VoyageArt).TryLoad()),
+            Cast<UMaterialInterface>(FSoftObjectPath(VoyageWaveMaterial).TryLoad()));
     }
     Loading->Restart();
     ReadyAt=0.0;

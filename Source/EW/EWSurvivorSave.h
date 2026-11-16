@@ -45,6 +45,10 @@ public:
     UPROPERTY(BlueprintReadOnly, Category="Save") float Health = 0.f;
     UPROPERTY(BlueprintReadOnly, Category="Save") float Hunger = 0.f;
     UPROPERTY(BlueprintReadOnly, Category="Save") float Hydration = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float BleedingSeconds = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="Save") float PoisonSeconds = 0.f;
+    /** Negative in an older save: start with full breath. */
+    UPROPERTY(BlueprintReadOnly, Category="Save") float BreathSeconds = -1.f;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWInventoryEntry> Inventory;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<FEWEquipmentEntry> Equipment;
     UPROPERTY(BlueprintReadOnly, Category="Save") TArray<TObjectPtr<UEWItemDefinition>> Hotbar;

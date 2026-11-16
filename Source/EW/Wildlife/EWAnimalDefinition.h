@@ -103,6 +103,10 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float AttackDamage = 10.f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    bool bAttackCausesBleeding = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
+    bool bAttackCausesPoison = false;
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float AttackInterval = 1.5f;
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Behaviour")
     float AttackReach = 50.f;

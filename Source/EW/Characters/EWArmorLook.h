@@ -13,7 +13,8 @@ struct FEWEquipmentEntry;
  * the body sliders:
  *   helmet  the head, face and neck;
  *   chest   the torso, shoulders, both arms and both hands (gloves);
- *   pants   the hips, both legs and both feet (footwear).
+ *   pants   the hips, both legs and both feet (included footwear is hidden while separate boots are worn).
+ * Separate boots use the same placeholder shape system; authored WornMeshes attach to their specified bones instead.
  * A shape runs along a bone segment (an upper arm from shoulder to elbow), measured from the skeleton's reference pose, so
  * no angle is typed by hand. Colours by category: cloth beige, fur brown-grey with ears on the hood, metal dark steel over a
  * navy coat with a tricorn brim and leather boots.

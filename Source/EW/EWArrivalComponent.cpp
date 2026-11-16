@@ -50,8 +50,11 @@ UEWArrivalComponent::UEWArrivalComponent()
     // Armor (owner, November 8): cloth woven from fiber, leather tanned from hide, and the cloth and fur pieces; metal armor
     // comes with the Metalwork skill (EWSkillTree.cpp).
     for (const TCHAR* Name : {TEXT("StoneHatchet"), TEXT("WoodenPickaxe"), TEXT("Campfire"), TEXT("CookedBerryDish"), TEXT("Gunpowder"),
-            TEXT("Cloth"), TEXT("Leather"), TEXT("ClothHeadWrap"), TEXT("ClothChest"), TEXT("ClothPants"), TEXT("FurHood"), TEXT("FurJacket"), TEXT("FurPants")})
+            TEXT("Cloth"), TEXT("Leather"), TEXT("ClothHeadWrap"), TEXT("ClothChest"), TEXT("ClothPants"), TEXT("FurHood"), TEXT("FurJacket"), TEXT("FurPants"),
+            TEXT("LeatherSeaBoots"), TEXT("LeatherWristCuff")})
         FirstRecipes.Add(TSoftObjectPtr<UEWCraftingRecipe>(FSoftObjectPath(FString::Printf(TEXT("/Game/Elitewake/Crafting/Testing/DA_Recipe%s.DA_Recipe%s"), Name, Name))));
+    for (const TCHAR* Name : {TEXT("Bandage"), TEXT("Antidote")})
+        FirstRecipes.Add(TSoftObjectPtr<UEWCraftingRecipe>(FSoftObjectPath(FString::Printf(TEXT("/Game/Elitewake/Crafting/Survival/DA_Recipe%s.DA_Recipe%s"), Name, Name))));
 }
 
 void UEWArrivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

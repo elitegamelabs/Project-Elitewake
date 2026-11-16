@@ -1,0 +1,222 @@
+{
+  "slice": 2,
+  "date": "2026-11-12",
+  "results": {
+    "InventoryRecipeCardsPlayResult.json": {
+      "success": true,
+      "network": false,
+      "checks": [
+        {
+          "check": "Three actual unlocked recipes",
+          "passed": true
+        },
+        {
+          "check": "Single mouse click inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "Card has actual material and owned quantities",
+          "passed": true
+        },
+        {
+          "check": "Flip preserves tile and neighboring tile identity",
+          "passed": true
+        },
+        {
+          "check": "Click selected tile restores item face",
+          "passed": true
+        },
+        {
+          "check": "Another recipe restores previous and opens selected",
+          "passed": true
+        },
+        {
+          "check": "Mouse wheel scrolls inside inspected tile",
+          "passed": true
+        },
+        {
+          "check": "Controller right stick scrolls without navigating or crafting",
+          "passed": true
+        },
+        {
+          "check": "Keyboard inspect toggles off",
+          "passed": true
+        },
+        {
+          "check": "Controller X inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "True Slate double-click starts one timed craft",
+          "passed": true
+        },
+        {
+          "check": "Craft start retains tile identity",
+          "passed": true
+        },
+        {
+          "check": "Double-click yields exactly one output and one ingredient charge",
+          "passed": true
+        },
+        {
+          "check": "Card quantities refresh after authoritative inventory change",
+          "passed": true
+        },
+        {
+          "check": "Keyboard Enter crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Controller A crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Missing resources disable crafting and explain why",
+          "passed": true
+        },
+        {
+          "check": "Ineligible double-click grants nothing",
+          "passed": true
+        },
+        {
+          "check": "Station readiness updates without inventory event",
+          "passed": true
+        },
+        {
+          "check": "Search still filters actual recipes",
+          "passed": true
+        },
+        {
+          "check": "720p recipe card remains interactive",
+          "passed": true
+        },
+        {
+          "check": "Final revalidation fixture starts a valid timed craft",
+          "passed": true
+        },
+        {
+          "check": "Materials lost during craft prevent output at completion",
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    "InventoryRecipeCardsNetworkResult.json": {
+      "success": true,
+      "network": true,
+      "checks": [
+        {
+          "check": "Three actual unlocked recipes",
+          "passed": true
+        },
+        {
+          "check": "Single mouse click inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "Card has actual material and owned quantities",
+          "passed": true
+        },
+        {
+          "check": "Flip preserves tile and neighboring tile identity",
+          "passed": true
+        },
+        {
+          "check": "Click selected tile restores item face",
+          "passed": true
+        },
+        {
+          "check": "Another recipe restores previous and opens selected",
+          "passed": true
+        },
+        {
+          "check": "Mouse wheel scrolls inside inspected tile",
+          "passed": true
+        },
+        {
+          "check": "Controller right stick scrolls without navigating or crafting",
+          "passed": true
+        },
+        {
+          "check": "Keyboard inspect toggles off",
+          "passed": true
+        },
+        {
+          "check": "Controller X inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "True Slate double-click starts one timed craft",
+          "passed": true
+        },
+        {
+          "check": "Craft start retains tile identity",
+          "passed": true
+        },
+        {
+          "check": "Double-click yields exactly one output and one ingredient charge",
+          "passed": true
+        },
+        {
+          "check": "Card quantities refresh after authoritative inventory change",
+          "passed": true
+        },
+        {
+          "check": "Keyboard Enter crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Controller A crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Missing resources disable crafting and explain why",
+          "passed": true
+        },
+        {
+          "check": "Ineligible double-click grants nothing",
+          "passed": true
+        },
+        {
+          "check": "Station readiness updates without inventory event",
+          "passed": true
+        },
+        {
+          "check": "Search still filters actual recipes",
+          "passed": true
+        },
+        {
+          "check": "720p recipe card remains interactive",
+          "passed": true
+        },
+        {
+          "check": "Final revalidation fixture starts a valid timed craft",
+          "passed": true
+        },
+        {
+          "check": "Materials lost during craft prevent output at completion",
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    "CraftTimePlayResult.json": {
+      "success": true,
+      "checks": [
+        "Enter starts a craft that takes seconds: progress shows, nothing is used up yet, Craft is off while it runs",
+        "After three seconds the shovel arrives and exactly 20 wood is used up",
+        "Dying mid-craft: no item and no materials lost"
+      ],
+      "error": null
+    }
+  },
+  "screenshots": [
+    "Saved/Screenshots/InventorySlice2/1080p-item-faces.png",
+    "Saved/Screenshots/InventorySlice2/1080p-recipe-card.png",
+    "Saved/Screenshots/InventorySlice2/720p-recipe-card.png"
+  ],
+  "next_slice_started": false,
+  "atomic_transaction_report": "Saved/Automation/InventorySlice2/index.json",
+  "atomic_transaction_success": true,
+  "build_success": true
+}

@@ -9,11 +9,6 @@
 #include "Components/EditableTextBox.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
-#include "Components/SceneCaptureComponent2D.h"
-#include "Engine/SceneCapture2D.h"
-#include "Engine/TextureRenderTarget2D.h"
-#include "Engine/World.h"
-#include "Kismet/KismetRenderingLibrary.h"
 #include "EWCharacter.h"
 #include "EWPlayerController.h"
 #include "EWHotbarWidget.h"
@@ -22,12 +17,14 @@
 #include "EWCraftingRecipe.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
+#include "Components/ScaleBox.h"
 #include "Components/WrapBox.h"
 #include "EWHudIcon.h"
 #include "Components/WrapBoxSlot.h"
 #include "Engine/Texture2D.h"
 #include "EWSurvivalComponent.h"
 #include "EWProgressionComponent.h"
+#include "EWWalletComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/BorderSlot.h"
@@ -35,18 +32,176 @@
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Components/ScrollBox.h"
+#include "Components/ScrollBoxSlot.h"
 #include "Components/Button.h"
+#include "Components/ButtonSlot.h"
 #include "Components/ProgressBar.h"
 #include "Components/HorizontalBox.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Components/ScaleBoxSlot.h"
+#include "Components/WidgetSwitcher.h"
+#include "Widgets/Layout/SBorder.h"
 #include "InputCoreTypes.h"
 #include "Styling/SlateColor.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
+#include "Fonts/CompositeFont.h"
+#include "Materials/MaterialInterface.h"
+#include "Misc/Paths.h"
+
+void UEWCraftingRecipeTile::SynchronizeProperties()
+{
+    Super::SynchronizeProperties();
+    if (!MyBorder) return;
+    MyBorder->SetOnMouseButtonDown(FPointerEventHandler::CreateUObject(this, &UEWCraftingRecipeTile::Inspect));
+    MyBorder->SetOnMouseDoubleClick(FPointerEventHandler::CreateUObject(this, &UEWCraftingRecipeTile::Craft));
+    MyBorder->SetOnMouseEnter(FNoReplyPointerEventHandler::CreateUObject(this, &UEWCraftingRecipeTile::Enter));
+    MyBorder->SetOnMouseLeave(FSimpleNoReplyPointerEventHandler::CreateUObject(this, &UEWCraftingRecipeTile::Leave));
+}
+
+FReply UEWCraftingRecipeTile::Inspect(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if (Event.GetEffectingButton() != EKeys::LeftMouseButton) return FReply::Unhandled();
+    OnInspect.Broadcast(RecipeIndex);
+    return FReply::Handled();
+}
+
+FReply UEWCraftingRecipeTile::Craft(const FGeometry& Geometry, const FPointerEvent& Event)
+{
+    if (Event.GetEffectingButton() != EKeys::LeftMouseButton) return FReply::Unhandled();
+    OnCraft.Broadcast(RecipeIndex);
+    return FReply::Handled();
+}
+
+void UEWCraftingRecipeTile::Enter(const FGeometry& Geometry, const FPointerEvent& Event) { OnHover.Broadcast(RecipeIndex); }
+void UEWCraftingRecipeTile::Leave(const FPointerEvent& Event) { OnHover.Broadcast(INDEX_NONE); }
 
 namespace
 {
-	constexpr float PortraitWidth = 260.f, PortraitHeight = 412.f;      // the survivor picture in the viewer; the capture is 340 x 540
+    constexpr float InventoryWidth = 1856.f, InventoryHeight = 944.f;
+    constexpr float SlotTileWidth = 100.f, SlotTileHeight = 76.f, GridGap = 6.f;
+    constexpr float RecipeTileWidth = 93.f, RecipeGridGap = 1.f;
+    constexpr int32 InventoryColumns = 6, CraftingColumns = 7;
+    const FLinearColor Ivory = FLinearColor::FromSRGBColor(FColor(250, 232, 200));
+    const FLinearColor MutedGold = FLinearColor::FromSRGBColor(FColor(229, 190, 115));
+    const FLinearColor InventoryPanelTint = FLinearColor::FromSRGBColor(FColor(62, 40, 26, 179));
+    const FLinearColor SurvivorPanelTint = FLinearColor::FromSRGBColor(FColor(62, 40, 26, 204));
+    const FLinearColor CursorGold(1.f, .79f, .38f);
+    constexpr float SlotStroke = 2.f;
+    constexpr float HeaderEndInset = 44.f;
+
+    TMap<UEWItemDefinition*, int64> RecipeCosts(const UEWCraftingRecipe& Recipe)
+    {
+        TMap<UEWItemDefinition*, int64> Costs;
+        for (const auto& Ingredient : Recipe.Ingredients)
+            if (Ingredient.Item && Ingredient.Quantity > 0)
+                Costs.FindOrAdd(Ingredient.Item) += Ingredient.Quantity;
+        return Costs;
+    }
+
+    FText CraftReadinessText(EEWCraftResult Result)
+    {
+        switch (Result)
+        {
+        case EEWCraftResult::Success: return NSLOCTEXT("Elitewake", "RecipeReady", "Ready");
+        case EEWCraftResult::MissingIngredients: return NSLOCTEXT("Elitewake", "RecipeMissing", "Not enough materials");
+        case EEWCraftResult::InventoryFull: return NSLOCTEXT("Elitewake", "RecipeFull", "Make room in your inventory");
+        case EEWCraftResult::NeedsFire: return NSLOCTEXT("Elitewake", "RecipeFire", "Requires a lit campfire");
+        case EEWCraftResult::Locked: return NSLOCTEXT("Elitewake", "RecipeLocked", "Recipe is not unlocked");
+        case EEWCraftResult::Busy: return NSLOCTEXT("Elitewake", "RecipeBusy", "Crafting in progress");
+        default: return NSLOCTEXT("Elitewake", "RecipeUnavailable", "Recipe unavailable");
+        }
+    }
+
+    FSlateBrush BrassRect(float Width, const FLinearColor& Edge = MutedGold,
+        const FLinearColor& Fill = FLinearColor::Transparent, float Radius = 5.f)
+    {
+        FSlateRoundedBoxBrush Brush(Fill, Radius);
+        Brush.OutlineSettings.Color = FSlateColor(Edge);
+        Brush.OutlineSettings.Width = Width;
+        Brush.OutlineSettings.bUseBrushTransparency = false;
+        return Brush;
+    }
+
+    FSlateBrush InventoryBrush(const TCHAR* Texture, ESlateBrushDrawType::Type Type, FVector2D Size, FMargin Margin)
+    {
+        FSlateBrush Brush;
+        Brush.SetResourceObject(LoadObject<UTexture2D>(nullptr, *FString::Printf(
+            TEXT("/Game/Elitewake/UI/Inventory/T_Inventory%s.T_Inventory%s"), Texture, Texture)));
+        Brush.DrawAs = Type;
+        Brush.ImageSize = Size;
+        Brush.Margin = Margin;
+        return Brush;
+    }
+
+    FSlateBrush InventoryHeaderBrush()
+    {
+        auto Brush = InventoryBrush(TEXT("SectionHeader"), ESlateBrushDrawType::Box, FVector2D(240, 70), FMargin(.18f));
+        if (auto* Material = LoadObject<UMaterialInterface>(nullptr,
+            TEXT("/Game/Elitewake/UI/Inventory/M_InventoryRoundedHeader.M_InventoryRoundedHeader")))
+        {
+            Brush.SetResourceObject(Material);
+        }
+        return Brush;
+    }
+
+    void StyleText(UTextBlock* Text, int32 Size, const FLinearColor& Tint = Ivory, bool bSerif = false)
+    {
+        auto Font = Text->GetFont();
+        Font.Size = Size;
+        if (bSerif)
+        {
+            const FString Path = FPaths::ProjectContentDir() / TEXT("Slate/Fonts/IMFeENrm28P.ttf");
+            if (FPaths::FileExists(Path)) Font = FSlateFontInfo(Path, Size);
+        }
+        else Font.TypefaceFontName = TEXT("Medium");
+        Font.OutlineSettings.OutlineSize = bSerif ? 1 : 2;
+        Font.OutlineSettings.OutlineColor = FLinearColor(.018f, .010f, .005f, .96f);
+        Text->SetFont(Font);
+        Text->SetColorAndOpacity(FSlateColor(Tint));
+        Text->SetShadowOffset(FVector2D(1, 1));
+        Text->SetShadowColorAndOpacity(FLinearColor(0.f, 0.f, 0.f, .9f));
+    }
+
+    void StyleInventoryButton(UButton* Button, bool bSocket = false)
+    {
+        const auto Normal = bSocket ? BrassRect(SlotStroke)
+            : BrassRect(1.8f, MutedGold, FLinearColor(.085f, .043f, .020f), 8.f);
+        const auto Hover = bSocket ? BrassRect(2.5f, CursorGold)
+            : BrassRect(1.8f, CursorGold, FLinearColor(.15f, .075f, .032f), 8.f);
+        const auto Pressed = bSocket ? BrassRect(SlotStroke, CursorGold)
+            : BrassRect(1.8f, CursorGold, FLinearColor(.055f, .027f, .013f), 8.f);
+        const auto Disabled = bSocket ? Normal
+            : BrassRect(1.5f, MutedGold * .75f, FLinearColor(.052f, .031f, .021f), 8.f);
+        FButtonStyle Style = Button->GetStyle();
+        Style.SetNormal(Normal).SetHovered(Hover).SetPressed(Pressed).SetDisabled(Disabled);
+        const FMargin ContentPadding = bSocket ? FMargin(0, 2) : FMargin(5, 3);
+        Style.SetNormalPadding(ContentPadding).SetPressedPadding(ContentPadding);
+        Button->SetStyle(Style);
+    }
+
+    void StyleInventoryHeading(UTextBlock* Text, int32 Size, const FLinearColor& Tint = Ivory)
+    {
+        static const TSharedRef<const FCompositeFont> HeadingFont = MakeShared<FCompositeFont>(
+            FName(TEXT("Bold")), FPaths::ProjectContentDir() / TEXT("Slate/Fonts/Tinos-Bold.ttf"),
+            EFontHinting::Default, EFontLoadingPolicy::LazyLoad);
+        StyleText(Text, Size, Tint);
+        FSlateFontInfo Font(HeadingFont, Size);
+        Font.OutlineSettings = Text->GetFont().OutlineSettings;
+        Font.OutlineSettings.OutlineSize = 1;
+        Text->SetFont(Font);
+        Text->SetAutoWrapText(false);
+    }
+
+    void StyleInventoryScroll(UScrollBox* Scroll)
+    {
+        auto Style = Scroll->GetWidgetBarStyle();
+        Style.SetNormalThumbImage(BrassRect(1.f, MutedGold, FLinearColor(.22f, .12f, .04f)));
+        Style.SetHoveredThumbImage(BrassRect(1.f, CursorGold, FLinearColor(.32f, .18f, .06f)));
+        Style.SetDraggedThumbImage(Style.HoveredThumbImage);
+        Scroll->SetWidgetBarStyle(Style);
+    }
 }
 
 TSharedRef<SWidget> UEWInventoryWidget::RebuildWidget()
@@ -79,65 +234,9 @@ void UEWInventoryWidget::NativeConstruct()
 	ResetToInventoryPage();
 }
 
-void UEWInventoryWidget::ClosePortrait()
-{
-    if (PortraitCapture) PortraitCapture->Destroy();
-    PortraitCapture = nullptr;
-    PortraitTarget = nullptr;
-}
-
-void UEWInventoryWidget::UpdatePortrait(float DeltaTime)
-{
-    auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
-    UWorld* World = GetWorld();
-    const bool bShown = RightHost && RightHost->GetVisibility() == ESlateVisibility::Visible && PortraitImage;
-    if (!bShown || !Character || !World) return;
-    if (!PortraitCapture)
-    {
-        PortraitTarget = NewObject<UTextureRenderTarget2D>(this);
-        PortraitTarget->RenderTargetFormat = RTF_RGBA8;
-        PortraitTarget->InitAutoFormat(340, 540);
-        PortraitTarget->UpdateResourceImmediate(true);
-        FActorSpawnParameters Params;
-        Params.ObjectFlags |= RF_Transient;
-        PortraitCapture = World->SpawnActor<ASceneCapture2D>(ASceneCapture2D::StaticClass(), FVector::ZeroVector, FRotator::ZeroRotator, Params);
-        if (!PortraitCapture) return;
-        PortraitCapture->SetReplicates(false);
-        auto* Camera = PortraitCapture->GetCaptureComponent2D();
-        Camera->TextureTarget = PortraitTarget;
-        Camera->CaptureSource = ESceneCaptureSource::SCS_FinalColorLDR;
-        Camera->bCaptureEveryFrame = false;
-        Camera->bCaptureOnMovement = false;
-        Camera->FOVAngle = 30.f;
-        Camera->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
-        Camera->ShowFlags.SetAtmosphere(false);
-        Camera->ShowFlags.SetFog(false);
-        Camera->ShowFlags.SetBloom(false);
-        FSlateBrush Brush; Brush.SetResourceObject(PortraitTarget); Brush.ImageSize = FVector2D(PortraitWidth, PortraitHeight); Brush.DrawAs = ESlateBrushDrawType::Image;
-        PortraitImage->SetBrush(Brush);
-        PortraitImage->SetColorAndOpacity(FLinearColor::White);
-        PortraitClock = 10.f;
-    }
-    PortraitClock += DeltaTime;
-    if (PortraitClock < .15f) return;
-    PortraitClock = 0.f;
-    // In front of the survivor, a little above the waist, looking at the chest: the whole figure fits the 190 x 300 frame.
-    auto* Camera = PortraitCapture->GetCaptureComponent2D();
-    Camera->ShowOnlyActors.Reset();
-    Camera->ShowOnlyActors.Add(Character);
-    TArray<AActor*> Attached;
-    Character->GetAttachedActors(Attached);
-    for (AActor* Held : Attached) Camera->ShowOnlyActors.Add(Held);
-    const FVector Body = Character->GetActorLocation();
-    const FVector Facing = Character->GetActorForwardVector();
-    const FVector Front = FVector(Facing.X, Facing.Y, 0.f).GetSafeNormal();
-    const FVector Eye = Body + Front * 250.f + FVector(0.f, 0.f, 12.f);
-    PortraitCapture->SetActorLocationAndRotation(Eye, (Body + FVector(0.f, 0.f, 5.f) - Eye).Rotation());
-    Camera->CaptureScene();
-}
-
 void UEWInventoryWidget::NativeDestruct()
 {
+    CancelAttributeChanges();
     ClosePortrait();
 	if (BoundInventory)
 	{
@@ -173,8 +272,9 @@ void UEWInventoryWidget::BuildWidgetTree()
 	}
 
 	UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("InventoryPanel"));
-	Panel->SetBrushColor(FLinearColor(0.015f, 0.025f, 0.035f, 0.55f));
-	Panel->SetPadding(FMargin(20.0f));
+    MenuBackdrop = Panel;
+	Panel->SetBrushColor(FLinearColor::Transparent);
+	Panel->SetPadding(FMargin(16.f, 8.f, 16.f, 12.f));
 	Panel->SetHorizontalAlignment(HAlign_Fill);
 	Panel->SetVerticalAlignment(VAlign_Fill);
 	WidgetTree->RootWidget = Panel;
@@ -184,17 +284,21 @@ void UEWInventoryWidget::BuildWidgetTree()
 
 	// Top navigation (owner, October 25): INVENTORY, SKILLS, COMPANY, TAMES, JOURNAL. The open tab is light, the rest dark translucent grey.
 	auto* Tabs = WidgetTree->ConstructWidget<UHorizontalBox>();
-	Content->AddChildToVerticalBox(Tabs);
+    auto* TabFrame = WidgetTree->ConstructWidget<UBorder>();
+    TabFrame->SetBrush(InventoryHeaderBrush());
+    TabFrame->SetPadding(FMargin(25.f, 5.f));
+    TabFrame->SetContent(Tabs);
+	Content->AddChildToVerticalBox(TabFrame);
 	const TCHAR* Sections[] = {TEXT("INVENTORY"), TEXT("SKILLS"), TEXT("COMPANY"), TEXT("TAMES"), TEXT("JOURNAL")};
 	for (int32 Index = 0; Index < 5; ++Index)
 	{
 		auto* Button = WidgetTree->ConstructWidget<UEWRecipeButton>(); Button->Initialize(Index);
 		Button->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SelectSection);
 		auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetText(FText::FromString(Sections[Index]));
-		auto Font = Label->GetFont(); Font.Size = 14; Font.LetterSpacing = 140; Label->SetFont(Font);
+        StyleInventoryHeading(Label, 21);
 		Label->SetJustification(ETextJustify::Center); Button->SetContent(Label);
 		auto* NavSlot = Tabs->AddChildToHorizontalBox(Button); NavSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-		NavSlot->SetPadding(FMargin(0, 0, 4, 0)); SectionButtons.Add(Button); SectionLabels.Add(Label);
+		NavSlot->SetPadding(FMargin(2, 0)); SectionButtons.Add(Button); SectionLabels.Add(Label);
 	}
 	auto* Body = WidgetTree->ConstructWidget<UHorizontalBox>();
 	Content->AddChildToVerticalBox(Body)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -214,104 +318,189 @@ void UEWInventoryWidget::BuildWidgetTree()
 	TamesPanel = CreateWidget<UEWTamesWidget>(GetOwningPlayer());
 	FillSlot(TamesPanel, 1.f, FMargin(0, 12, 0, 0)); TamesPanel->SetVisibility(ESlateVisibility::Collapsed);
 
+    // Scale the approved desktop proportions as a unit. Each scroll view keeps its own hit geometry.
+    auto* Scale = WidgetTree->ConstructWidget<UScaleBox>();
+    Scale->SetStretch(EStretch::ScaleToFit);
+    auto* Reference = WidgetTree->ConstructWidget<USizeBox>();
+    Reference->SetWidthOverride(InventoryWidth);
+    Reference->SetHeightOverride(InventoryHeight);
+    auto* Columns = WidgetTree->ConstructWidget<UHorizontalBox>();
+    Reference->SetContent(Columns);
+    auto* ScaledSlot = CastChecked<UScaleBoxSlot>(Scale->AddChild(Reference));
+    ScaledSlot->SetVerticalAlignment(VAlign_Top);
+    InventoryLayout = Scale;
+    FillSlot(Scale, 1.f, FMargin(0, 7, 0, 0));
+    auto Frame = InventoryBrush(TEXT("Frame"), ESlateBrushDrawType::Border, FVector2D(72), FMargin(.20f));
+    if (auto* RoundedFrame = LoadObject<UMaterialInterface>(nullptr,
+        TEXT("/Game/Elitewake/UI/Inventory/M_InventoryRoundedFrame.M_InventoryRoundedFrame")))
+    {
+        Frame.SetResourceObject(RoundedFrame);
+        Frame.ImageSize = FVector2D(288.f);
+    }
+    const auto Header = InventoryHeaderBrush();
+    auto AddColumn = [&](UWidget* In, float Weight, const FMargin& Gap, const FLinearColor& Tint)
+    {
+        auto* Layers = WidgetTree->ConstructWidget<UOverlay>();
+        auto* Backing = WidgetTree->ConstructWidget<UBorder>();
+        Backing->SetBrush(FSlateRoundedBoxBrush(Tint, 13.f));
+        Backing->SetVisibility(ESlateVisibility::HitTestInvisible);
+        auto* BackingSlot = Layers->AddChildToOverlay(Backing);
+        BackingSlot->SetHorizontalAlignment(HAlign_Fill);
+        BackingSlot->SetVerticalAlignment(VAlign_Fill);
+        BackingSlot->SetPadding(FMargin(4.f));
+        auto* ContentSlot = Layers->AddChildToOverlay(In);
+        ContentSlot->SetHorizontalAlignment(HAlign_Fill);
+        ContentSlot->SetVerticalAlignment(VAlign_Fill);
+
+        auto* Slot = Columns->AddChildToHorizontalBox(Layers);
+        FSlateChildSize Size(ESlateSizeRule::Fill); Size.Value = Weight;
+        Slot->SetSize(Size);
+        Slot->SetPadding(Gap);
+    };
 	// Left: the inventory panel, and the crafting section directly beneath it.
 	auto* Browser = WidgetTree->ConstructWidget<UVerticalBox>(); BrowserPanel = Browser;
-	auto* BrowserBorder = WidgetTree->ConstructWidget<UBorder>(); BrowserBorder->SetPadding(FMargin(14));
-	BrowserBorder->SetBrushColor(FLinearColor(.03f, .036f, .042f, .78f)); BrowserBorder->SetContent(Browser);
+	auto* BrowserBorder = WidgetTree->ConstructWidget<UBorder>(); BrowserBorder->SetPadding(FMargin(12, 15, 6, 15));
+	BrowserBorder->SetBrush(Frame); BrowserBorder->SetContent(Browser);
 	BrowserHost = BrowserBorder;
-	FillSlot(BrowserBorder, 1.35f, FMargin(0, 12, 12, 0));
+	AddColumn(BrowserBorder, 37.f, FMargin(0, 0, 6, 0), InventoryPanelTint);
 	// A section's heading, its search box and (for the inventory) a small sort button.
 	auto Heading = [&](UVerticalBox* Into, const TCHAR* Title, UEditableTextBox*& Search, bool bSort)
 	{
 		auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
 		auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetText(FText::FromString(Title));
-		auto Font = Label->GetFont(); Font.Size = 17; Font.LetterSpacing = 200; Label->SetFont(Font);
-		Label->SetColorAndOpacity(FSlateColor(FLinearColor(.88f, .86f, .8f)));
+        StyleInventoryHeading(Label, 23);
 		Row->AddChildToHorizontalBox(Label)->SetVerticalAlignment(VAlign_Center);
 		Search = WidgetTree->ConstructWidget<UEditableTextBox>(); Search->SetHintText(NSLOCTEXT("Elitewake", "SearchHint", "Search"));
+        if (!bSort) Search->SetHintText(NSLOCTEXT("Elitewake", "SearchRecipes", "Search recipes"));
+        FEditableTextBoxStyle SearchStyle = Search->WidgetStyle;
+        const auto SearchFrame = BrassRect(1.5f, MutedGold, FLinearColor(.038f, .021f, .011f));
+        SearchStyle.SetBackgroundImageNormal(SearchFrame).SetBackgroundImageHovered(SearchFrame).SetBackgroundImageFocused(SearchFrame);
+        SearchStyle.SetBackgroundColor(FSlateColor(FLinearColor::White));
+        SearchStyle.SetForegroundColor(FSlateColor(Ivory)).SetFocusedForegroundColor(FSlateColor(Ivory));
+        auto SearchText = SearchStyle.TextStyle;
+        auto SearchFont = SearchText.Font;
+        SearchFont.Size = 16;
+        SearchFont.TypefaceFontName = TEXT("Medium");
+        SearchText.SetFont(SearchFont).SetColorAndOpacity(FSlateColor(Ivory));
+        SearchStyle.SetTextStyle(SearchText);
+        SearchStyle.SetPadding(FMargin(10, 5));
+        Search->SetWidgetStyle(SearchStyle);
 		Search->OnTextCommitted.AddDynamic(this, &UEWInventoryWidget::OnSearchCommitted);
 		auto* SearchSlot = Row->AddChildToHorizontalBox(Search); SearchSlot->SetPadding(FMargin(16, 0, bSort ? 6 : 0, 0));
 		SearchSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); SearchSlot->SetVerticalAlignment(VAlign_Center);
 		if (bSort)
 		{
 			// The small action icon: sorts the grid by name, or back to the order things arrived.
-			auto* Sort = WidgetTree->ConstructWidget<UEWInventoryActionButton>(); Sort->OnClicked.AddDynamic(this, &UEWInventoryWidget::ToggleSort);
+			auto* Sort = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("InventorySort"));
+            Sort->OnClicked.AddDynamic(this, &UEWInventoryWidget::ToggleSort);
 			auto* Glyph = WidgetTree->ConstructWidget<UTextBlock>(); Glyph->SetText(FText::FromString(TEXT("A-Z"))); Glyph->SetJustification(ETextJustify::Center);
-			auto GlyphFont = Glyph->GetFont(); GlyphFont.Size = 11; Glyph->SetFont(GlyphFont); Sort->SetContent(Glyph);
-			Sort->SetBackgroundColor(FLinearColor(.07f, .085f, .1f)); SortButton = Sort;
-			auto* SortSize = WidgetTree->ConstructWidget<USizeBox>(); SortSize->SetWidthOverride(44); SortSize->SetContent(Sort);
+            StyleInventoryHeading(Glyph, 17); Sort->SetContent(Glyph);
+            StyleInventoryButton(Sort); SortButton = Sort;
+			auto* SortSize = WidgetTree->ConstructWidget<USizeBox>(); SortSize->SetWidthOverride(65); SortSize->SetContent(Sort);
 			Row->AddChildToHorizontalBox(SortSize)->SetVerticalAlignment(VAlign_Center);
 		}
-		Into->AddChildToVerticalBox(Row)->SetPadding(FMargin(0, 0, 0, 8));
+        auto* Plaque = WidgetTree->ConstructWidget<UBorder>();
+        Plaque->SetBrush(Header);
+        Plaque->SetPadding(FMargin(HeaderEndInset, 12.f));
+        Plaque->SetVerticalAlignment(VAlign_Center);
+        Plaque->SetContent(Row);
+        auto* HeaderSize = WidgetTree->ConstructWidget<USizeBox>();
+        HeaderSize->SetMinDesiredHeight(54.f);
+        HeaderSize->SetContent(Plaque);
+		Into->AddChildToVerticalBox(HeaderSize)->SetPadding(FMargin(0, 0, 0, 4));
 	};
 	UEditableTextBox* InventorySearchBox = nullptr; UEditableTextBox* CraftSearchBox = nullptr;
 	Heading(Browser, TEXT("INVENTORY"), InventorySearchBox, true); SearchBox = InventorySearchBox;
 	SearchBox->OnTextChanged.AddDynamic(this, &UEWInventoryWidget::OnInventorySearch);
 	SummaryText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventorySummary"));
-	SummaryText->SetColorAndOpacity(FSlateColor(FLinearColor(.7f, .76f, .82f)));
-	{ auto SummaryFont = SummaryText->GetFont(); SummaryFont.Size = 12; SummaryText->SetFont(SummaryFont); }
+    StyleText(SummaryText, 18, Ivory, true);
 	Browser->AddChildToVerticalBox(SummaryText)->SetPadding(FMargin(0, 0, 0, 6));
-	ItemsBox = WidgetTree->ConstructWidget<UWrapBox>(); ItemsBox->SetInnerSlotPadding(FVector2D(4, 4));
-	ItemsScroll = WidgetTree->ConstructWidget<UScrollBox>(); ItemsScroll->AddChild(ItemsBox);
-	Browser->AddChildToVerticalBox(ItemsScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	ItemsBox = WidgetTree->ConstructWidget<UWrapBox>(); ItemsBox->SetInnerSlotPadding(FVector2D(GridGap));
+    ItemsBox->SetExplicitWrapSize(true); ItemsBox->SetWrapSize(InventoryColumns * (SlotTileWidth + GridGap));
+    ItemsScroll = WidgetTree->ConstructWidget<UScrollBox>();
+    auto* InventoryGridSlot = CastChecked<UScrollBoxSlot>(ItemsScroll->AddChild(ItemsBox));
+    InventoryGridSlot->SetHorizontalAlignment(HAlign_Center);
+    auto* PackHeight = WidgetTree->ConstructWidget<USizeBox>();
+    PackHeight->SetHeightOverride(328.f); PackHeight->SetContent(ItemsScroll);
+	Browser->AddChildToVerticalBox(PackHeight)->SetPadding(FMargin(0, 0, 0, 9));
 	Heading(Browser, TEXT("CRAFTING"), CraftSearchBox, false); RecipeSearchBox = CraftSearchBox;
 	RecipeSearchBox->OnTextChanged.AddDynamic(this, &UEWInventoryWidget::OnRecipeSearch);
-	if (auto* CraftHeadingSlot = Cast<UVerticalBoxSlot>(RecipeSearchBox->GetParent() ? RecipeSearchBox->GetParent()->Slot : nullptr)) CraftHeadingSlot->SetPadding(FMargin(0, 12, 0, 8));
 	CraftingBox = WidgetTree->ConstructWidget<UVerticalBox>();
 	CraftScroll = WidgetTree->ConstructWidget<UScrollBox>(); CraftScroll->AddChild(CraftingBox);
-	Browser->AddChildToVerticalBox(CraftScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    StyleInventoryScroll(CraftScroll);
+    CraftScroll->SetScrollbarThickness(FVector2D(4.f, 4.f));
+    auto* RecipeHeight = WidgetTree->ConstructWidget<USizeBox>();
+    RecipeHeight->SetHeightOverride(276); RecipeHeight->SetContent(CraftScroll);
+	Browser->AddChildToVerticalBox(RecipeHeight);
 
 	// Centre: the character, equipment, world, stats and the level-up arrows.
 	auto* SurvivorBorder = WidgetTree->ConstructWidget<UBorder>();
 	SurvivorPanel = SurvivorBorder;
-	SurvivorBorder->SetPadding(FMargin(16)); SurvivorBorder->SetBrushColor(FLinearColor(.03f, .036f, .042f, .78f));
-	FillSlot(SurvivorBorder, 1.25f, FMargin(0, 12, 12, 0));
-	SurvivorScroll = WidgetTree->ConstructWidget<UScrollBox>(); SurvivorBorder->SetContent(SurvivorScroll);
+	SurvivorBorder->SetPadding(FMargin(20, 11, 20, 11)); SurvivorBorder->SetBrush(Frame);
+	AddColumn(SurvivorBorder, 37.f, FMargin(0, 0, 6, 0), InventoryPanelTint);
+    auto* SurvivorColumn = WidgetTree->ConstructWidget<UVerticalBox>();
+    SurvivorBorder->SetContent(SurvivorColumn);
+    SurvivorScroll = WidgetTree->ConstructWidget<UScrollBox>();
+    SurvivorColumn->AddChildToVerticalBox(SurvivorScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    StyleInventoryScroll(SurvivorScroll);
 	auto* SurvivorBody = WidgetTree->ConstructWidget<UVerticalBox>(); SurvivorScroll->AddChild(SurvivorBody);
-	BuildCharacterPanel(SurvivorBody);
+    BuildCharacterPanel(SurvivorBody, SurvivorColumn);
 
-	// Right: the character viewer, and under it the details of whatever is picked.
-	auto* RightColumn = WidgetTree->ConstructWidget<UVerticalBox>();
-	FillSlot(RightColumn, 1.f, FMargin(0, 12, 0, 0));
-	RightHost = RightColumn;
-	auto* ViewerBorder = WidgetTree->ConstructWidget<UBorder>(); ViewerBorder->SetPadding(FMargin(10));
-	ViewerBorder->SetBrushColor(FLinearColor(.02f, .026f, .032f, .85f));
-	ViewerPanel = ViewerBorder;
-	PortraitImage = WidgetTree->ConstructWidget<UImage>(); PortraitImage->SetColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.f));
-	auto* PortraitSize = WidgetTree->ConstructWidget<USizeBox>(); PortraitSize->SetWidthOverride(PortraitWidth); PortraitSize->SetHeightOverride(PortraitHeight); PortraitSize->SetContent(PortraitImage);
-	ViewerBorder->SetContent(PortraitSize); ViewerBorder->SetHorizontalAlignment(HAlign_Center);
-	RightColumn->AddChildToVerticalBox(ViewerBorder)->SetPadding(FMargin(0, 0, 0, 10));
+	// Right: the live survivor render composites over the tinted world.
+	auto* ViewerBorder = WidgetTree->ConstructWidget<UBorder>(); ViewerBorder->SetPadding(FMargin(17));
+	ViewerBorder->SetBrush(Frame);
+    RightHost = ViewerBorder;
+    AddColumn(ViewerBorder, 26.f, FMargin(0), SurvivorPanelTint);
+    PortraitImage = WidgetTree->ConstructWidget<UImage>();
+    PortraitImage->SetColorAndOpacity(FLinearColor::Transparent);
+    PortraitImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+    auto* PortraitScale = WidgetTree->ConstructWidget<UScaleBox>();
+    PortraitScale->SetStretch(EStretch::ScaleToFit);
+    auto* PortraitSize = WidgetTree->ConstructWidget<USizeBox>();
+    PortraitSize->SetWidthOverride(440);
+    PortraitSize->SetHeightOverride(880);
+    PortraitSize->SetContent(PortraitImage);
+    PortraitScale->SetContent(PortraitSize);
+    ViewerBorder->SetContent(PortraitScale);
+
+    // Existing actions remain close to the left grids. Recipe ingredients are available on each tile.
+    CraftActions = WidgetTree->ConstructWidget<UVerticalBox>();
+    Browser->AddChildToVerticalBox(CraftActions)->SetPadding(FMargin(3, 6, 3, 0));
 	auto* DetailBorder = WidgetTree->ConstructWidget<UBorder>();
-	DetailsPanel = DetailBorder; DetailBorder->SetPadding(FMargin(16)); DetailBorder->SetBrushColor(FLinearColor(.035f, .045f, .055f, .95f));
-	RightColumn->AddChildToVerticalBox(DetailBorder)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-	auto* DetailScroll = WidgetTree->ConstructWidget<UScrollBox>(); DetailBorder->SetContent(DetailScroll);
-	auto* DetailPanel = WidgetTree->ConstructWidget<UVerticalBox>(); DetailScroll->AddChild(DetailPanel);
+	DetailsPanel = DetailBorder; DetailBorder->SetPadding(FMargin(3, 6)); DetailBorder->SetBrushColor(FLinearColor::Transparent);
+	Browser->AddChildToVerticalBox(DetailBorder)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* ItemDetailsScroll = WidgetTree->ConstructWidget<UScrollBox>();
+    auto* DetailContent = WidgetTree->ConstructWidget<UVerticalBox>();
+    DetailBorder->SetContent(DetailContent);
+    DetailContent->AddChildToVerticalBox(ItemDetailsScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+	auto* DetailPanel = WidgetTree->ConstructWidget<UVerticalBox>(); ItemDetailsScroll->AddChild(DetailPanel);
 	ItemPreview = WidgetTree->ConstructWidget<UImage>();
 	auto* PreviewSize = WidgetTree->ConstructWidget<USizeBox>();
-	PreviewSize->SetWidthOverride(96); PreviewSize->SetHeightOverride(96); PreviewSize->SetContent(ItemPreview);
+	PreviewSize->SetWidthOverride(38); PreviewSize->SetHeightOverride(38); PreviewSize->SetContent(ItemPreview);
 	DetailPanel->AddChildToVerticalBox(PreviewSize)->SetHorizontalAlignment(HAlign_Center);
 	ItemPreview->GetParent()->SetVisibility(ESlateVisibility::Collapsed);
-	RecipeDetailsBox = WidgetTree->ConstructWidget<UVerticalBox>();
-	DetailPanel->AddChildToVerticalBox(RecipeDetailsBox);
-	RecipeDetailsBox->SetVisibility(ESlateVisibility::Collapsed);
 	DetailsText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryDetails"));
 	DetailsText->SetAutoWrapText(true);
-	auto DetailsFont = DetailsText->GetFont(); DetailsFont.Size = 15; DetailsText->SetFont(DetailsFont);
-	DetailPanel->AddChildToVerticalBox(DetailsText)->SetPadding(FMargin(0, 12));
+    StyleText(DetailsText, 16);
+	DetailPanel->AddChildToVerticalBox(DetailsText)->SetPadding(FMargin(0, 3));
 	EquipmentActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("EquipmentAction"));
 	EquipmentActionText = WidgetTree->ConstructWidget<UTextBlock>();
 	EquipmentActionButton->SetContent(EquipmentActionText);
+    StyleInventoryButton(EquipmentActionButton); StyleText(EquipmentActionText, 17, Ivory, true);
 	EquipmentActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformEquipmentAction);
-	DetailPanel->AddChildToVerticalBox(EquipmentActionButton);
+    // Keep the existing equip/unequip action accessible even when its description needs scrolling.
+	DetailContent->AddChildToVerticalBox(EquipmentActionButton);
 	FoodActionButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("FoodAction"));
 	auto* FoodLabel = WidgetTree->ConstructWidget<UTextBlock>();
 	FoodLabel->SetText(FText::FromString(TEXT("Eat (R / X)")));
 	FoodActionButton->SetContent(FoodLabel);
+    StyleInventoryButton(FoodActionButton); StyleText(FoodLabel, 17, Ivory, true);
 	FoodActionButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformFoodAction);
 	DetailPanel->AddChildToVerticalBox(FoodActionButton);
 	EquipmentResultText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("EquipmentResult"));
 	EquipmentResultText->SetAutoWrapText(true);
-	DetailPanel->AddChildToVerticalBox(EquipmentResultText);
+    StyleText(EquipmentResultText, 16, MutedGold);
+	Browser->AddChildToVerticalBox(EquipmentResultText)->SetPadding(FMargin(17, 2, 3, 0));
 
 	HotbarAssignments = WidgetTree->ConstructWidget<UVerticalBox>();
 	DetailPanel->AddChildToVerticalBox(HotbarAssignments)->SetPadding(FMargin(0, 8));
@@ -327,118 +516,295 @@ void UEWInventoryWidget::BuildWidgetTree()
 		Button->OnSlotPressed.AddDynamic(this, &UEWInventoryWidget::AssignHotbarSlot);
 		auto* Text = WidgetTree->ConstructWidget<UTextBlock>();
 		Button->SetContent(Text);
+        StyleInventoryButton(Button); StyleText(Text, 15, Ivory, true);
 		auto* ButtonSlot = Buttons->AddChildToHorizontalBox(Button);
 		ButtonSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill)); ButtonSlot->SetPadding(FMargin(2));
 		HotbarButtons.Add(Button); HotbarButtonLabels.Add(Text);
 	}
 }
 
-void UEWInventoryWidget::BuildCharacterPanel(UVerticalBox* Into)
+void UEWInventoryWidget::BuildCharacterPanel(UVerticalBox* Into, UVerticalBox* Footer)
 {
-	auto Heading = [&](const TCHAR* Title, float Above)
-	{
-		auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetText(FText::FromString(Title));
-		auto Font = Label->GetFont(); Font.Size = 14; Font.LetterSpacing = 200; Label->SetFont(Font);
-		Label->SetColorAndOpacity(FSlateColor(FLinearColor(.88f, .86f, .8f)));
-		Into->AddChildToVerticalBox(Label)->SetPadding(FMargin(0, Above, 0, 6));
-	};
-	auto Line = [&](int32 Size, const FLinearColor& Colour)
-	{
-		auto* Text = WidgetTree->ConstructWidget<UTextBlock>(); Text->SetAutoWrapText(true); Text->SetColorAndOpacity(FSlateColor(Colour));
-		auto Font = Text->GetFont(); Font.Size = Size; Text->SetFont(Font); return Text;
-	};
-	// Who they are: name, a line under it, level and experience.
-	NameText = Line(26, FLinearColor::White); Into->AddChildToVerticalBox(NameText);
-	SubtitleText = Line(14, FLinearColor(.7f, .76f, .82f)); Into->AddChildToVerticalBox(SubtitleText)->SetPadding(FMargin(0, 0, 0, 10));
-	LevelValue = Line(20, FLinearColor(.95f, .88f, .6f)); Into->AddChildToVerticalBox(LevelValue)->SetPadding(FMargin(0, 0, 0, 4));
-	LevelBar = WidgetTree->ConstructWidget<UProgressBar>(); LevelBar->SetFillColorAndOpacity(FLinearColor(.45f, .78f, .95f));
-	auto* LevelBarSize = WidgetTree->ConstructWidget<USizeBox>(); LevelBarSize->SetHeightOverride(8); LevelBarSize->SetContent(LevelBar);
-	Into->AddChildToVerticalBox(LevelBarSize)->SetPadding(FMargin(0, 0, 0, 4));
-	PointsValue = Line(13, FLinearColor(.75f, .8f, .86f)); Into->AddChildToVerticalBox(PointsValue);
+    const auto Header = InventoryHeaderBrush();
+    auto Plaque = [&](UWidget* Content, float Above)
+    {
+        auto* Border = WidgetTree->ConstructWidget<UBorder>();
+        Border->SetBrush(Header);
+        // Keep content inside the wood face, clear of the trim and corner artwork.
+        Border->SetPadding(FMargin(HeaderEndInset, 10.f));
+        Border->SetVerticalAlignment(VAlign_Center);
+        Border->SetContent(Content);
+        Into->AddChildToVerticalBox(Border)->SetPadding(FMargin(0, Above, 0, 3));
+    };
+    auto Line = [&](int32 Size, const FLinearColor& Colour = Ivory, bool bSerif = false)
+    {
+        auto* Text = WidgetTree->ConstructWidget<UTextBlock>();
+        StyleText(Text, Size, Colour, bSerif);
+        return Text;
+    };
+    auto Heading = [&](const TCHAR* Title, float Above)
+    {
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+        StyleInventoryHeading(Label, 23);
+        Label->SetText(FText::FromString(Title));
+        Plaque(Label, Above);
+    };
+    auto Meter = [&](UVerticalBox* Parent, FLinearColor Colour, float Height)
+    {
+        auto* Bar = WidgetTree->ConstructWidget<UProgressBar>();
+        FProgressBarStyle Style = Bar->GetWidgetStyle();
+        Style.SetBackgroundImage(BrassRect(1.f, MutedGold * .72f, FLinearColor::Transparent, 3.f));
+        Style.SetFillImage(BrassRect(0.f, FLinearColor::Transparent, FLinearColor::White, 3.f));
+        Bar->SetWidgetStyle(Style);
+        Bar->SetFillColorAndOpacity(Colour);
+        auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+        Size->SetHeightOverride(Height);
+        Size->SetContent(Bar);
+        Parent->AddChildToVerticalBox(Size)->SetPadding(FMargin(0, 2));
+        return Bar;
+    };
 
-	Heading(TEXT("EQUIPMENT"), 18);
-	EquippedBox = WidgetTree->ConstructWidget<UWrapBox>(); EquippedBox->SetInnerSlotPadding(FVector2D(4, 4));
-	Into->AddChildToVerticalBox(EquippedBox);
-	ArmorText = Line(13, FLinearColor(.75f, .8f, .86f)); Into->AddChildToVerticalBox(ArmorText)->SetPadding(FMargin(0, 8, 0, 0));
+    auto* Identity = WidgetTree->ConstructWidget<UVerticalBox>();
+    NameText = WidgetTree->ConstructWidget<UTextBlock>();
+    StyleInventoryHeading(NameText, 28);
+    NameText->SetClipping(EWidgetClipping::ClipToBounds);
+    NameText->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis);
+    SubtitleText = WidgetTree->ConstructWidget<UTextBlock>();
+    StyleInventoryHeading(SubtitleText, 17);
+    Identity->AddChildToVerticalBox(NameText);
+    Identity->AddChildToVerticalBox(SubtitleText);
+    Plaque(Identity, 0);
 
-	Heading(TEXT("WORLD"), 18);
-	ClimateValue = Line(14, FLinearColor::White); Into->AddChildToVerticalBox(ClimateValue)->SetPadding(FMargin(0, 0, 0, 4));
-	HumidityBar = WidgetTree->ConstructWidget<UProgressBar>(); HumidityBar->SetFillColorAndOpacity(FLinearColor(.35f, .7f, .75f));
-	auto* HumiditySize = WidgetTree->ConstructWidget<USizeBox>(); HumiditySize->SetHeightOverride(6); HumiditySize->SetContent(HumidityBar);
-	Into->AddChildToVerticalBox(HumiditySize);
+    LevelValue = WidgetTree->ConstructWidget<UTextBlock>();
+    StyleInventoryHeading(LevelValue, 23, CursorGold);
+    Into->AddChildToVerticalBox(LevelValue)->SetPadding(FMargin(3, 2, 3, 0));
+    LevelBar = Meter(Into, FLinearColor(.92f, .62f, .18f), 11);
+    PointsValue = Line(17, Ivory);
+    Into->AddChildToVerticalBox(PointsValue)->SetPadding(FMargin(3, 3));
 
-	// Character stats: two columns, a large white icon, a small label and the value.
-	Heading(TEXT("CHARACTER STATS"), 20);
-	auto* Grid = WidgetTree->ConstructWidget<UUniformGridPanel>(); Grid->SetSlotPadding(FMargin(3));
-	Into->AddChildToVerticalBox(Grid);
-	struct FStatTile { const TCHAR* Name; int32 Icon; };
-	// Icon kinds are EWHudIcon silhouettes; -1 draws the short text in its place.
-	const FStatTile Tiles[] = {{TEXT("HEALTH"), 0}, {TEXT("STAMINA"), 1}, {TEXT("FOOD"), 2}, {TEXT("WATER"), 3}, {TEXT("OXYGEN"), -1}, {TEXT("FORTITUDE"), 4}, {TEXT("WEIGHT"), 8}, {TEXT("INTELLIGENCE"), -2}};
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Tiles); ++Index)
+    Heading(TEXT("EQUIPMENT"), 4);
+    EquippedBox = WidgetTree->ConstructWidget<UWrapBox>();
+    EquippedBox->SetInnerSlotPadding(FVector2D(GridGap));
+    Into->AddChildToVerticalBox(EquippedBox);
+    HandEquipmentBox = WidgetTree->ConstructWidget<UWrapBox>();
+    HandEquipmentBox->SetInnerSlotPadding(FVector2D(GridGap));
+    Into->AddChildToVerticalBox(HandEquipmentBox)->SetPadding(FMargin(0, 5, 0, 0));
+    ArmorText = Line(15, Ivory);
+    ArmorText->SetAutoWrapText(true);
+    Into->AddChildToVerticalBox(ArmorText)->SetPadding(FMargin(3, 4, 3, 0));
+
+    Heading(TEXT("WORLD"), 5);
+    auto* WorldReadout = WidgetTree->ConstructWidget<UBorder>();
+    WorldReadout->SetBrush(BrassRect(1.8f, MutedGold, FLinearColor::Transparent, 10.f));
+    WorldReadout->SetPadding(FMargin(10.f, 7.f));
+    ClimateValue = Line(18);
+    ClimateValue->SetAutoWrapText(true);
+    WorldReadout->SetContent(ClimateValue);
+    Into->AddChildToVerticalBox(WorldReadout)->SetPadding(FMargin(5, 1, 5, 2));
+    HumidityBar = Meter(Into, FLinearColor(.33f, .62f, .64f), 4);
+
+    Heading(TEXT("CHARACTER STATS"), 6);
+    struct FRow
+    {
+        const TCHAR* Name;
+        int32 Icon;
+        int32 Allocation;
+        FLinearColor Colour;
+    };
+    const FRow RowsToBuild[] = {
+        {TEXT("HEALTH"), 0, int32(EEWStat::Vitality), FLinearColor(.72f, .12f, .10f)},
+        {TEXT("STAMINA"), 1, int32(EEWStat::Endurance), FLinearColor(.86f, .68f, .12f)},
+        {TEXT("OXYGEN"), -1, INDEX_NONE, FLinearColor(.18f, .46f, .80f)},
+        {TEXT("FORTITUDE"), -1, int32(EEWStat::Fortitude), FLinearColor(.74f, .44f, .17f)},
+        {TEXT("WEIGHT"), 4, int32(EEWStat::Strength), FLinearColor(.62f, .55f, .43f)},
+        {TEXT("INTELLIGENCE"), -1, INDEX_NONE, FLinearColor::Transparent}
+    };
+    AllocValues.SetNum(UEWProgressionComponent::StatCount);
+    AllocArrows.SetNum(UEWProgressionComponent::StatCount);
+    AllocMinus.SetNum(UEWProgressionComponent::StatCount);
+    PendingAttributes.Init(0, UEWProgressionComponent::StatCount);
+    for (const auto& Definition : RowsToBuild)
+    {
+        auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
+        auto* IconSize = WidgetTree->ConstructWidget<USizeBox>();
+        IconSize->SetWidthOverride(40);
+        IconSize->SetHeightOverride(42);
+        if (Definition.Icon >= 0)
+        {
+            const int32 Key = 200 + Definition.Icon;
+            if (!FallbackIcons.Contains(Key))
+            {
+                const TCHAR* Art = Definition.Allocation == int32(EEWStat::Vitality) ? TEXT("Health")
+                    : Definition.Allocation == int32(EEWStat::Endurance) ? TEXT("Stamina")
+                    : Definition.Allocation == int32(EEWStat::Strength) ? TEXT("Weight") : nullptr;
+                auto* Texture = Art ? LoadObject<UTexture2D>(nullptr, *FString::Printf(
+                    TEXT("/Game/Elitewake/UI/HUD/T_Maritime_%s.T_Maritime_%s"), Art, Art)) : nullptr;
+                FallbackIcons.Add(Key, Texture ? Texture : EWHudIcon::Make(Definition.Icon, false));
+            }
+            auto* Icon = WidgetTree->ConstructWidget<UImage>();
+            Icon->SetBrushFromTexture(FallbackIcons[Key]);
+            IconSize->SetContent(Icon);
+        }
+        else
+        {
+            auto* Glyph = Line(16, MutedGold);
+            Glyph->SetText(FText::FromString(Definition.Allocation == int32(EEWStat::Fortitude) ? TEXT("FRT")
+                : Definition.Colour.A > 0.f ? TEXT("O2") : TEXT("INT")));
+            Glyph->SetJustification(ETextJustify::Center);
+            IconSize->SetContent(Glyph);
+        }
+        Row->AddChildToHorizontalBox(IconSize)->SetPadding(FMargin(2, 0, 9, 0));
+
+        auto* Readout = WidgetTree->ConstructWidget<UVerticalBox>();
+        auto* NameAndValue = WidgetTree->ConstructWidget<UHorizontalBox>();
+        auto* Name = Line(18);
+        Name->SetText(FText::FromString(Definition.Name));
+        auto* NameSlot = NameAndValue->AddChildToHorizontalBox(Name);
+        NameSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        NameSlot->SetPadding(FMargin(0, 0, 8, 0));
+        auto* Value = Line(16, Ivory);
+        NameAndValue->AddChildToHorizontalBox(Value)->SetPadding(FMargin(6, 0, 0, 0));
+        Readout->AddChildToVerticalBox(NameAndValue);
+        TileValues.Add(Value);
+        TileBars.Add(Definition.Colour.A > 0.f ? Meter(Readout, Definition.Colour, 8) : nullptr);
+        auto* ReadoutSlot = Row->AddChildToHorizontalBox(Readout);
+        ReadoutSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        ReadoutSlot->SetVerticalAlignment(VAlign_Center);
+        ReadoutSlot->SetPadding(FMargin(0, 0, 14, 0));
+
+        auto Step = [&](UButton* Button, const TCHAR* Text)
+        {
+            auto Style = Button->GetStyle();
+            const auto Face = FLinearColor::FromSRGBColor(FColor(52, 31, 16));
+            Style.SetNormal(BrassRect(1.8f, MutedGold, Face))
+                .SetHovered(BrassRect(2.1f, CursorGold, Face))
+                .SetPressed(BrassRect(1.8f, CursorGold, Face))
+                .SetDisabled(BrassRect(1.6f, MutedGold, Face));
+            Style.SetNormalPadding(FMargin(2)).SetPressedPadding(FMargin(2));
+            Button->SetStyle(Style);
+            auto* Glyph = Line(20, Ivory);
+            Glyph->SetText(FText::FromString(Text));
+            Glyph->SetJustification(ETextJustify::Center);
+            Glyph->SetVisibility(ESlateVisibility::HitTestInvisible);
+            auto* FaceAndLabel = WidgetTree->ConstructWidget<UOverlay>();
+            auto* FaceSlot = FaceAndLabel->AddChildToOverlay(Button);
+            FaceSlot->SetHorizontalAlignment(HAlign_Fill);
+            FaceSlot->SetVerticalAlignment(VAlign_Fill);
+            auto* GlyphSlot = FaceAndLabel->AddChildToOverlay(Glyph);
+            GlyphSlot->SetHorizontalAlignment(HAlign_Center);
+            GlyphSlot->SetVerticalAlignment(VAlign_Center);
+            auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+            Size->SetWidthOverride(55);
+            Size->SetHeightOverride(31);
+            Size->SetContent(FaceAndLabel);
+            Row->AddChildToHorizontalBox(Size)->SetVerticalAlignment(VAlign_Center);
+        };
+        auto* Minus = WidgetTree->ConstructWidget<UEWRecipeButton>(UEWRecipeButton::StaticClass(),
+            FName(*FString::Printf(TEXT("AttributeMinus_%s"), Definition.Name)));
+        Minus->SetIsEnabled(false);
+        Step(Minus, TEXT("−"));
+        auto* Invested = Line(18);
+        Invested->SetText(FText::FromString(TEXT("—")));
+        Invested->SetJustification(ETextJustify::Center);
+        auto* Count = WidgetTree->ConstructWidget<USizeBox>();
+        Count->SetWidthOverride(43);
+        Count->SetContent(Invested);
+        Row->AddChildToHorizontalBox(Count)->SetVerticalAlignment(VAlign_Center);
+        auto* Plus = WidgetTree->ConstructWidget<UEWRecipeButton>(UEWRecipeButton::StaticClass(),
+            FName(*FString::Printf(TEXT("AttributePlus_%s"), Definition.Name)));
+        Step(Plus, TEXT("+"));
+        Plus->SetIsEnabled(false);
+        if (Definition.Allocation != INDEX_NONE)
+        {
+            Plus->Initialize(Definition.Allocation);
+            Plus->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SpendStat);
+            AllocValues[Definition.Allocation] = Invested;
+            AllocArrows[Definition.Allocation] = Plus;
+            Minus->Initialize(Definition.Allocation);
+            Minus->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::UndoStat);
+            AllocMinus[Definition.Allocation] = Minus;
+        }
+        Into->AddChildToVerticalBox(Row)->SetPadding(FMargin(3, 0, 3, 1));
+    }
+
+    StatPrompt = Line(14, MutedGold);
+    StatPrompt->SetAutoWrapText(true);
+    Into->AddChildToVerticalBox(StatPrompt)->SetPadding(FMargin(3, 1, 3, 6));
+    AttributeStatus = WidgetTree->ConstructWidget<UTextBlock>();
+    StyleText(AttributeStatus, 14, MutedGold);
+    AttributeStatus->SetAutoWrapText(true);
+    Footer->AddChildToVerticalBox(AttributeStatus)->SetPadding(FMargin(12, 2));
+    auto* AttributeActionRow = WidgetTree->ConstructWidget<UHorizontalBox>();
+    AttributeActions = AttributeActionRow;
+    Footer->AddChildToVerticalBox(AttributeActionRow)->SetPadding(FMargin(12, 2, 12, 5));
+    auto Action = [&](const TCHAR* Name, const TCHAR* Caption, bool bConfirm)
+    {
+        auto* Button = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), FName(Name));
+        StyleInventoryButton(Button);
+        auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); StyleInventoryHeading(Label, 17);
+        Label->SetText(FText::FromString(Caption)); Label->SetJustification(ETextJustify::Center);
+        Button->SetContent(Label);
+        AttributeActionRow->AddChildToHorizontalBox(Button)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        if (bConfirm) { AttributeConfirmButton = Button; Button->OnClicked.AddDynamic(this, &UEWInventoryWidget::ConfirmAttributeChanges); }
+        else { AttributeCancelButton = Button; Button->OnClicked.AddDynamic(this, &UEWInventoryWidget::CancelAttributeChanges); }
+    };
+    Action(TEXT("AttributeConfirm"), TEXT("CONFIRM (Enter / A)"), true);
+    Action(TEXT("AttributeCancel"), TEXT("CANCEL (Esc / B)"), false);
+    AttributeActions->SetVisibility(ESlateVisibility::Collapsed);
+    auto* Reset = WidgetTree->ConstructWidget<UEWInventoryActionButton>(UEWInventoryActionButton::StaticClass(), TEXT("ResetAttributePoints"));
+    AttributeResetButton = Reset;
+    Reset->OnClicked.AddDynamic(this, &UEWInventoryWidget::OpenAttributeReset);
+    StyleInventoryButton(Reset);
+    auto ResetStyle = Reset->GetStyle();
+    auto ResetHover = Header;
+    ResetHover.TintColor = FSlateColor(FLinearColor(1.08f, 1.08f, 1.08f, 1.f));
+    ResetStyle.SetNormal(Header).SetHovered(ResetHover).SetPressed(Header);
+    ResetStyle.SetDisabled(Header);
+    Reset->SetStyle(ResetStyle);
+    Reset->SetIsEnabled(false);
+    auto* ResetText = WidgetTree->ConstructWidget<UTextBlock>();
+    StyleInventoryHeading(ResetText, 22);
+    ResetText->SetJustification(ETextJustify::Center);
+    ResetText->SetText(NSLOCTEXT("Elitewake", "ResetStatPoints", "RESET STAT POINTS (5 GOLD)"));
+    auto* ResetFace = WidgetTree->ConstructWidget<UOverlay>();
+    auto* ResetPlate = ResetFace->AddChildToOverlay(Reset);
+    ResetPlate->SetHorizontalAlignment(HAlign_Fill);
+    ResetPlate->SetVerticalAlignment(VAlign_Fill);
+    auto* ResetLabel = ResetFace->AddChildToOverlay(ResetText);
+    ResetLabel->SetHorizontalAlignment(HAlign_Center);
+    ResetLabel->SetVerticalAlignment(VAlign_Center);
+    ResetLabel->SetPadding(FMargin(HeaderEndInset, 10.f));
+    ResetText->SetVisibility(ESlateVisibility::HitTestInvisible);
+    auto* ResetSize = WidgetTree->ConstructWidget<USizeBox>();
+    ResetSize->SetMinDesiredHeight(59.f);
+    ResetSize->SetContent(ResetFace);
+    ResetSize->SetRenderTranslation(FVector2D(0.f, -8.f));
+    auto* ResetFooterSlot = Footer->AddChildToVerticalBox(ResetSize);
+    ResetFooterSlot->SetPadding(FMargin(11, 3, 11, 8));
+    ResetFooterSlot->SetHorizontalAlignment(HAlign_Center);
+}
+
+namespace
+{
+    FString ItemNameOf(const UEWItemDefinition* Item)
 	{
-		auto* Cell = WidgetTree->ConstructWidget<UBorder>(); Cell->SetPadding(FMargin(10, 8)); Cell->SetBrushColor(FLinearColor(.045f, .055f, .066f, .9f));
-		auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>(); Cell->SetContent(Row);
-		auto* IconSize = WidgetTree->ConstructWidget<USizeBox>(); IconSize->SetWidthOverride(44); IconSize->SetHeightOverride(44);
-		if (Tiles[Index].Icon >= 0)
-		{
-			const int32 Key = 200 + Tiles[Index].Icon;
-			if (!FallbackIcons.Contains(Key)) FallbackIcons.Add(Key, EWHudIcon::Make(Tiles[Index].Icon, false));
-			auto* Image = WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(FallbackIcons[Key]); Image->SetColorAndOpacity(FLinearColor::White);
-			IconSize->SetContent(Image);
-		}
-		else
-		{
-			auto* Glyph = Line(Tiles[Index].Icon == -1 ? 22 : 17, FLinearColor::White); Glyph->SetText(FText::FromString(Tiles[Index].Icon == -1 ? TEXT("O2") : TEXT("INT")));
-			Glyph->SetJustification(ETextJustify::Center); Glyph->SetAutoWrapText(false);
-			auto* GlyphBox = WidgetTree->ConstructWidget<UBorder>(); GlyphBox->SetBrushColor(FLinearColor(0, 0, 0, 0)); GlyphBox->SetHorizontalAlignment(HAlign_Center); GlyphBox->SetVerticalAlignment(VAlign_Center);
-			GlyphBox->SetContent(Glyph); IconSize->SetContent(GlyphBox);
-		}
-		Row->AddChildToHorizontalBox(IconSize)->SetPadding(FMargin(0, 0, 10, 0));
-		auto* Words = WidgetTree->ConstructWidget<UVerticalBox>(); Row->AddChildToHorizontalBox(Words)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-		auto* Name = Line(10, FLinearColor(.6f, .66f, .72f)); Name->SetText(FText::FromString(Tiles[Index].Name)); Name->SetAutoWrapText(false); Words->AddChildToVerticalBox(Name);
-		auto* Value = Line(16, FLinearColor::White); Value->SetAutoWrapText(false); Words->AddChildToVerticalBox(Value);
-		UProgressBar* Bar = nullptr;
-		if (Index < 4)
-		{
-			static const FLinearColor Fill[] = {FLinearColor(.72f, .12f, .1f), FLinearColor(.86f, .68f, .12f), FLinearColor(.78f, .42f, .14f), FLinearColor(.18f, .46f, .8f)};
-			Bar = WidgetTree->ConstructWidget<UProgressBar>(); Bar->SetFillColorAndOpacity(Fill[Index]);
-			auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(5); BarSize->SetContent(Bar);
-			Words->AddChildToVerticalBox(BarSize)->SetPadding(FMargin(0, 3, 0, 0));
-		}
-		if (auto* GridSlot = Grid->AddChildToUniformGrid(Cell, Index / 2, Index % 2)) { GridSlot->SetHorizontalAlignment(HAlign_Fill); GridSlot->SetVerticalAlignment(VAlign_Fill); }
-		TileValues.Add(Value); TileBars.Add(Bar);
-	}
-
-	// Stat points (owner, October 22 and 25): faint and dead until a point can be spent; then C, a left-stick click or RT starts picking a stat.
-	Heading(TEXT("STAT POINTS"), 20);
-	StatPrompt = Line(13, FLinearColor(.95f, .85f, .45f)); Into->AddChildToVerticalBox(StatPrompt)->SetPadding(FMargin(0, 0, 0, 8));
-	for (int32 Stat = 0; Stat < UEWProgressionComponent::StatCount; ++Stat)
-	{
-		auto* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
-		auto* Label = Line(15, FLinearColor::White);
-		Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-		auto* Arrow = WidgetTree->ConstructWidget<UEWRecipeButton>(); Arrow->Initialize(Stat);
-		Arrow->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SpendStat);
-		auto* Glyph = WidgetTree->ConstructWidget<UTextBlock>(); Glyph->SetText(FText::FromString(TEXT("▲"))); Glyph->SetJustification(ETextJustify::Center);
-		{ auto F = Glyph->GetFont(); F.Size = 18; Glyph->SetFont(F); }
-		Arrow->SetContent(Glyph);
-		auto* ArrowSize = WidgetTree->ConstructWidget<USizeBox>(); ArrowSize->SetWidthOverride(44); ArrowSize->SetHeightOverride(40); ArrowSize->SetContent(Arrow);
-		auto* ArrowSlot = Row->AddChildToHorizontalBox(ArrowSize); ArrowSlot->SetVerticalAlignment(VAlign_Center); ArrowSlot->SetPadding(FMargin(8, 0, 0, 0));
-		Into->AddChildToVerticalBox(Row)->SetPadding(FMargin(0, 0, 0, 6));
-		AllocValues.Add(Label); AllocArrows.Add(Arrow);
+		return !Item ? FString() : (Item->DisplayName.IsEmpty() ? Item->ItemId.ToString() : Item->DisplayName.ToString());
 	}
 }
 
 namespace
 {
-	constexpr float SlotTileSize = 92.f, RecipeTileWidth = 88.f, GridGap = 4.f;
-	const FLinearColor CursorGold(1.f, .85f, .35f, 1.f);
-	const FLinearColor NoRing(0.f, 0.f, 0.f, 0.f);
+    // Match the display order so the inventory cursor, click targets, and equipped selection share indices.
+    constexpr EEWEquipmentSlot ShownEquipment[] = {EEWEquipmentSlot::Head, EEWEquipmentSlot::Chest, EEWEquipmentSlot::Legs,
+        EEWEquipmentSlot::Feet, EEWEquipmentSlot::Accessory, EEWEquipmentSlot::MainHand, EEWEquipmentSlot::OffHand, EEWEquipmentSlot::Hands};
+    const TCHAR* const EquipmentNames[] = {TEXT("HAT"), TEXT("CHEST"), TEXT("LEGS"), TEXT("BOOTS"), TEXT("ACCESSORY"), TEXT("MAIN HAND"), TEXT("OFF HAND"), TEXT("HANDS")};
 
-	FString ItemNameOf(const UEWItemDefinition* Item)
-	{
-		return !Item ? FString() : (Item->DisplayName.IsEmpty() ? Item->ItemId.ToString() : Item->DisplayName.ToString());
-	}
+    int32 EquipmentOrder(EEWEquipmentSlot Slot)
+    {
+        for (int32 Index = 0; Index < UE_ARRAY_COUNT(ShownEquipment); ++Index)
+            if (ShownEquipment[Index] == Slot) return Index;
+        return MAX_int32;
+    }
 }
 
 void UEWInventoryWidget::RefreshInventory()
@@ -452,7 +818,8 @@ void UEWInventoryWidget::RefreshInventory()
 	if (!Inventory)
 	{
 		SummaryText->SetText(FText::FromString(TEXT("Inventory unavailable")));
-        ItemsBox->ClearChildren(); EquippedBox->ClearChildren(); Rows.Reset(); RowRings.Reset(); RowFreshness.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
+        ItemsBox->ClearChildren(); EquippedBox->ClearChildren(); HandEquipmentBox->ClearChildren();
+        Rows.Reset(); RowRings.Reset(); RowFreshness.Reset(); DisplayedEntries.Reset(); DisplayedEquipment.Reset();
         InventoryImages.Reset(); MaterialImages.Reset();
         SelectedIndex = INDEX_NONE; bShowingDetails = false;
         DetailsText->SetText(FText::FromString(TEXT("No item selected")));
@@ -476,16 +843,28 @@ void UEWInventoryWidget::RefreshInventory()
         DisplayedEntries.StableSort([](const FEWInventoryEntry& A, const FEWInventoryEntry& B) { return ItemNameOf(A.ItemDefinition) < ItemNameOf(B.ItemDefinition); });
     DisplayedEquipment = BoundEquipment ? BoundEquipment->GetEquipmentEntries() : TArray<FEWEquipmentEntry>();
     DisplayedEquipment.RemoveAll([](const FEWEquipmentEntry& Entry) { return Entry.Slot == EEWEquipmentSlot::None || !Entry.ItemDefinition; });
-    DisplayedEquipment.Sort([](const FEWEquipmentEntry& A, const FEWEquipmentEntry& B) { return A.Slot < B.Slot; });
+    for (int32 SlotIndex = 0; SlotIndex < 5; ++SlotIndex)
+        if (!DisplayedEquipment.ContainsByPredicate([&](const FEWEquipmentEntry& Entry) { return Entry.Slot == ShownEquipment[SlotIndex]; }))
+        {
+            auto& Empty = DisplayedEquipment.AddDefaulted_GetRef();
+            Empty.Slot = ShownEquipment[SlotIndex];
+        }
+    DisplayedEquipment.Sort([](const FEWEquipmentEntry& A, const FEWEquipmentEntry& B) { return EquipmentOrder(A.Slot) < EquipmentOrder(B.Slot); });
     int32 Match = INDEX_NONE, Ordinal = 0;
     for (int32 i = 0; i < DisplayedEntries.Num(); ++i)
         if (PreviousSlot == EEWEquipmentSlot::None && DisplayedEntries[i].ItemDefinition == PreviousItem && Ordinal++ == PreviousOrdinal) { Match = i; break; }
     if (PreviousSlot != EEWEquipmentSlot::None)
         for (int32 i=0; i<DisplayedEquipment.Num(); ++i) if (DisplayedEquipment[i].Slot == PreviousSlot) { Match = DisplayedEntries.Num()+i; break; }
-    SelectedIndex = SelectionCount() == 0 ? INDEX_NONE : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, SelectionCount()-1));
+    // A removed inventory stack clamps within Inventory; empty equipment positions must not steal its cursor.
+    if (Match == INDEX_NONE && PreviousItem && PreviousSlot == EEWEquipmentSlot::None && !DisplayedEntries.IsEmpty())
+        Match = FMath::Clamp(SelectedIndex, 0, DisplayedEntries.Num() - 1);
+    const bool bHasItems = !DisplayedEntries.IsEmpty() || DisplayedEquipment.ContainsByPredicate([](const FEWEquipmentEntry& Entry) { return Entry.ItemDefinition != nullptr; });
+    SelectedIndex = !bHasItems && PreviousSlot == EEWEquipmentSlot::None ? INDEX_NONE
+        : (Match != INDEX_NONE ? Match : FMath::Clamp(SelectedIndex, 0, SelectionCount()-1));
     if (PreviousItem && SelectedItem() != PreviousItem) bShowingDetails = false;
     ItemsBox->ClearChildren();
     EquippedBox->ClearChildren();
+    HandEquipmentBox->ClearChildren();
     InventoryImages.Reset();
     Rows.Reset();
     RowRings.Reset();
@@ -511,23 +890,22 @@ void UEWInventoryWidget::RefreshInventory()
             UImage* None = nullptr; UProgressBar* NoBar = nullptr;
             AddToGrid(ItemsBox, MakeSlotTile(nullptr, FString(), -1.f, None, NoBar));
         }
-    // The equipment slots: worn items are tiles that can be picked, bare slots are named and empty. DisplayedEquipment is in slot order, as this loop is.
-    static const EEWEquipmentSlot WornSlots[] = {EEWEquipmentSlot::Head, EEWEquipmentSlot::Chest, EEWEquipmentSlot::Hands, EEWEquipmentSlot::Legs, EEWEquipmentSlot::Feet, EEWEquipmentSlot::MainHand, EEWEquipmentSlot::OffHand};
-    static const TCHAR* WornNames[] = {TEXT("HEAD"), TEXT("CHEST"), TEXT("HANDS"), TEXT("LEGS"), TEXT("FEET"), TEXT("MAIN HAND"), TEXT("OFF HAND")};
-    for (int32 SlotIndex = 0; SlotIndex < UE_ARRAY_COUNT(WornSlots); ++SlotIndex)
+    // Keep hands reachable as existing equipment, below the five approved wearable positions.
+    for (int32 SlotIndex = 0; SlotIndex < UE_ARRAY_COUNT(ShownEquipment); ++SlotIndex)
     {
-        const FEWEquipmentEntry* Worn = DisplayedEquipment.FindByPredicate([&](const FEWEquipmentEntry& E) { return E.Slot == WornSlots[SlotIndex]; });
-        // Gloves belong to Chest armor and footwear to Legs. Keep legacy Hands/Feet enum values
-        // readable in old saves, but show those rows only if a survivor actually wears an old item there.
-        if ((WornSlots[SlotIndex] == EEWEquipmentSlot::Hands || WornSlots[SlotIndex] == EEWEquipmentSlot::Feet) && !Worn)
+        const FEWEquipmentEntry* Worn = DisplayedEquipment.FindByPredicate([&](const FEWEquipmentEntry& E) { return E.Slot == ShownEquipment[SlotIndex]; });
+        if (SlotIndex >= 5 && !Worn)
             continue;
+        auto* Grid = SlotIndex < 5 ? EquippedBox.Get() : HandEquipmentBox.Get();
         UImage* ItemImage = nullptr; UProgressBar* NoBar = nullptr;
-        if (!Worn) { AddToGrid(EquippedBox, MakeSlotTile(nullptr, FString(), -1.f, ItemImage, NoBar, FString(), WornNames[SlotIndex])); continue; }
-        UBorder* Tile = MakeSlotTile(Worn->ItemDefinition, FString(), -1.f, ItemImage, NoBar, FString::Printf(TEXT("%.1f kg"), Worn->ItemDefinition->UnitWeight));
-        if (ItemImage) InventoryImages.Add(Worn->ItemDefinition, ItemImage);
-        UBorder* Ring = AddToGrid(EquippedBox, Tile);
+        if (!Worn) { AddToGrid(Grid, MakeSlotTile(nullptr, FString(), -1.f, ItemImage, NoBar, FString(), EquipmentNames[SlotIndex])); continue; }
+        UBorder* Tile = MakeSlotTile(Worn->ItemDefinition, FString(), -1.f, ItemImage, NoBar, FString(), EquipmentNames[SlotIndex]);
+        Tile->SetToolTipText(Worn->ItemDefinition ? Worn->ItemDefinition->DisplayName : FText::FromString(FString(EquipmentNames[SlotIndex]) + TEXT(" — empty")));
+        if (ItemImage && Worn->ItemDefinition) InventoryImages.Add(Worn->ItemDefinition, ItemImage);
+        UBorder* Ring = AddToGrid(Grid, Tile);
         Rows.Add(Tile); RowRings.Add(Ring); RowFreshness.Add(nullptr);
     }
+    HandEquipmentBox->SetVisibility(HandEquipmentBox->GetChildrenCount() ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     if (SelectionCount() == 0) bShowingDetails = false;
     UpdateSelection();
     RefreshCrafting();
@@ -535,7 +913,13 @@ void UEWInventoryWidget::RefreshInventory()
 
 void UEWInventoryWidget::ResetToInventoryPage()
 {
+    bAttributeRequestPending = false;
+    AttributeResponseRevision = -1;
+    CancelAttributeChanges();
     SelectedSection = 0; bCraftingOpen = false; StatFocus = INDEX_NONE; HotbarPick = INDEX_NONE; SelectedRecipeIndex = 0; bShowingDetails = false;
+    InspectedRecipe = nullptr;
+    bCraftRequestPending = false;
+    RecipeScrollAxis = 0.f;
     InventoryFilter.Reset(); RecipeFilter.Reset(); bSortByName = false;
     if (SearchBox) SearchBox->SetText(FText::GetEmpty());
     if (RecipeSearchBox) RecipeSearchBox->SetText(FText::GetEmpty());
@@ -571,7 +955,7 @@ void UEWInventoryWidget::OnSearchCommitted(const FText& Text, ETextCommit::Type 
 void UEWInventoryWidget::ToggleSort()
 {
     bSortByName = !bSortByName;
-    if (SortButton) SortButton->SetBackgroundColor(bSortByName ? FLinearColor(.5f, .45f, .2f) : FLinearColor(.07f, .085f, .1f));
+    if (SortButton) SortButton->SetBackgroundColor(bSortByName ? CursorGold * 1.45f : FLinearColor::White);
     RefreshInventory();
     SetUserFocus(GetOwningPlayer());
 }
@@ -592,38 +976,97 @@ void UEWInventoryWidget::ToggleCrafting()
 }
 void UEWInventoryWidget::FocusCrafting()
 {
+    if (GetPendingAttributeTotal() > 0 || bResetConfirmation) CancelAttributeChanges();
     if (DisplayedRecipes.IsEmpty()) return;
     bCraftingOpen = true; bShowingDetails = false; HotbarPick = INDEX_NONE;
     RefreshCrafting();
+    if (RecipeCards.IsValidIndex(SelectedRecipeIndex))
+        CraftScroll->ScrollWidgetIntoView(RecipeCards[SelectedRecipeIndex].Tile, false);
     SetUserFocus(GetOwningPlayer());
 }
 void UEWInventoryWidget::FocusInventory()
 {
     bCraftingOpen = false; bShowingDetails = false;
+    InspectedRecipe = nullptr;
+    RecipeScrollAxis = 0.f;
     RefreshCrafting();
     SetUserFocus(GetOwningPlayer());
 }
 void UEWInventoryWidget::SelectSection(int32 Index)
 {
+    CancelAttributeChanges();
     if (!SectionButtons.IsValidIndex(Index)) return;
     SelectedSection = Index; TabCursor = Index; bTabFocus = false; bCraftingOpen = false; bShowingDetails = false; StatFocus = INDEX_NONE; HotbarPick = INDEX_NONE;
+    InspectedRecipe = nullptr;
+    RecipeScrollAxis = 0.f;
     RefreshCrafting(); SetUserFocus(GetOwningPlayer());
 }
 void UEWInventoryWidget::SelectRecipe(int32 Index)
 {
+    if (!DisplayedRecipes.IsValidIndex(Index)) return;
+    if (Index != SelectedRecipeIndex && InspectedRecipe)
+        InspectedRecipe = DisplayedRecipes[Index];
     SelectedRecipeIndex = Index; SelectedSection = 0; bCraftingOpen = true; bShowingDetails = false; HotbarPick = INDEX_NONE;
     RefreshCrafting();
+    if (RecipeCards.IsValidIndex(Index)) CraftScroll->ScrollWidgetIntoView(RecipeCards[Index].Tile, false);
+    SetUserFocus(GetOwningPlayer());
+}
+
+void UEWInventoryWidget::InspectRecipe(int32 Index)
+{
+    if (!DisplayedRecipes.IsValidIndex(Index)) return;
+    const bool bClose = bCraftingOpen && InspectedRecipe == DisplayedRecipes[Index];
+    SelectRecipe(Index);
+    InspectedRecipe = bClose ? nullptr : DisplayedRecipes[Index].Get();
+    RecipeScrollAxis = 0.f;
+    UpdateRecipeCards();
+    if (InspectedRecipe) RecipeCards[Index].Scroll->ScrollToStart();
+}
+
+void UEWInventoryWidget::CraftRecipe(int32 Index)
+{
+    if (!DisplayedRecipes.IsValidIndex(Index)) return;
+    SelectRecipe(Index);
+    InspectedRecipe = DisplayedRecipes[Index];
+    UpdateRecipeCards();
+    PerformCraft();
+}
+
+UWidget* UEWInventoryWidget::GetRecipeTile(int32 Index) const
+{
+    return RecipeCards.IsValidIndex(Index) ? RecipeCards[Index].Tile.Get() : nullptr;
+}
+
+float UEWInventoryWidget::GetRecipeCardScrollOffset() const
+{
+    return IsRecipeInspected() && RecipeCards.IsValidIndex(SelectedRecipeIndex)
+        ? RecipeCards[SelectedRecipeIndex].Scroll->GetScrollOffset() : 0.f;
+}
+
+FText UEWInventoryWidget::GetRecipeCardRequirements() const
+{
+    if (!IsRecipeInspected() || !RecipeCards.IsValidIndex(SelectedRecipeIndex)) return FText::GetEmpty();
+    const auto& Card = RecipeCards[SelectedRecipeIndex];
+    FString Text;
+    for (const auto& Label : Card.Materials) Text += Label.Value->GetText().ToString() + TEXT("\n");
+    Text += Card.Summary->GetText().ToString();
+    return FText::FromString(Text);
+}
+
+void UEWInventoryWidget::ScrollRecipeCard(float Delta)
+{
+    if (!IsRecipeInspected() || !RecipeCards.IsValidIndex(SelectedRecipeIndex)) return;
+    auto* Scroll = RecipeCards[SelectedRecipeIndex].Scroll.Get();
+    Scroll->SetScrollOffset(FMath::Clamp(Scroll->GetScrollOffset() + Delta, 0.f, Scroll->GetScrollOffsetOfEnd()));
 }
 
 int32 UEWInventoryWidget::ItemColumns() const
 {
-    const float Width = ItemsScroll ? ItemsScroll->GetCachedGeometry().GetLocalSize().X : 0.f;
-    return Width < 120.f ? 6 : FMath::Max(1, FMath::FloorToInt((Width - 20.f) / (SlotTileSize + GridGap)));
+    return InventoryColumns;
 }
 int32 UEWInventoryWidget::RecipeColumns() const
 {
-    const float Width = CraftScroll ? CraftScroll->GetCachedGeometry().GetLocalSize().X : 0.f;
-    return Width < 120.f ? 6 : FMath::Max(1, FMath::FloorToInt((Width - 20.f) / (RecipeTileWidth + GridGap)));
+    return CraftingColumns;
 }
 
 void UEWInventoryWidget::MoveCursor(int32 Dx, int32 Dy)
@@ -645,7 +1088,11 @@ void UEWInventoryWidget::MoveCursor(int32 Dx, int32 Dy)
     {
         // The equipment tiles: left and right (or up and down) step along them; up from the first returns to the last item.
         const int32 Step = Dx + Dy;
-        if (SelectedIndex + Step < ItemCount) { if (ItemCount > 0 && Step < 0) Select(ItemCount - 1); }
+        if (SelectedIndex + Step < ItemCount)
+        {
+            if (ItemCount > 0 && Step < 0) Select(ItemCount - 1);
+            else if (Step < 0) SetTabFocus(true);
+        }
         else Select(SelectedIndex + Step);
         return;
     }
@@ -666,11 +1113,25 @@ void UEWInventoryWidget::ApplySectionVisibility()
     {
         const bool bActive = Index == SelectedSection;
         const bool bCursor = bTabFocus && Index == TabCursor;
-        SectionButtons[Index]->SetBackgroundColor(bCursor ? FLinearColor(1.f, .85f, .35f) : bActive ? FLinearColor(.82f, .84f, .86f) : FLinearColor(.07f, .08f, .09f, .85f));
-        if (SectionLabels.IsValidIndex(Index)) SectionLabels[Index]->SetColorAndOpacity(FSlateColor(bActive || bCursor ? FLinearColor(.05f, .06f, .07f) : FLinearColor(.82f, .84f, .86f)));
+        const auto GoldFace = FLinearColor::FromSRGBColor(FColor(233, 192, 113));
+        FButtonStyle Style;
+        Style.SetNormal(bActive ? BrassRect(1.5f, CursorGold, GoldFace, 8.f)
+            : BrassRect(1.f, bCursor ? CursorGold : MutedGold * .55f, FLinearColor::Transparent, 8.f));
+        Style.SetHovered(BrassRect(1.5f, CursorGold, bActive ? GoldFace : FLinearColor::Transparent, 8.f));
+        Style.SetPressed(BrassRect(1.5f, CursorGold, bActive ? GoldFace * .82f : FLinearColor::Transparent, 8.f));
+        Style.SetNormalPadding(FMargin(6, 2)).SetPressedPadding(FMargin(6, 2));
+        SectionButtons[Index]->SetStyle(Style);
+        auto* Label = SectionLabels[Index].Get();
+        Label->SetColorAndOpacity(FSlateColor(bActive ? FLinearColor(.055f, .029f, .013f) : Ivory));
+        Label->SetShadowColorAndOpacity(bActive ? FLinearColor::Transparent : FLinearColor(0, 0, 0, .9f));
+        auto Font = Label->GetFont();
+        Font.OutlineSettings.OutlineSize = bActive ? 0 : 1;
+        Label->SetFont(Font);
     }
     const ESlateVisibility InventoryPage = SelectedSection == 0 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed;
+    InventoryLayout->SetVisibility(InventoryPage);
     BrowserHost->SetVisibility(InventoryPage); SurvivorPanel->SetVisibility(InventoryPage); RightHost->SetVisibility(InventoryPage);
+    MenuBackdrop->SetBrushColor(SelectedSection == 0 ? FLinearColor::Transparent : FLinearColor(.015f, .025f, .035f, .55f));
     SkillsPanel->SetVisibility(SelectedSection == 1 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     CompanyPanel->SetVisibility(SelectedSection == 2 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     TamesPanel->SetVisibility(SelectedSection == 3 ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
@@ -682,171 +1143,275 @@ void UEWInventoryWidget::RefreshCrafting()
     if (!CraftingBox || !ItemsScroll) return;
     ApplySectionVisibility();
     ItemPreview->GetParent()->SetVisibility(ESlateVisibility::Collapsed);
-    RecipeDetailsBox->SetVisibility(bCraftingOpen ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-    DetailsText->SetVisibility(bCraftingOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
-    if (bCraftingOpen)
-    {
-        EquipmentActionButton->SetVisibility(ESlateVisibility::Collapsed);
-        FoodActionButton->SetVisibility(ESlateVisibility::Collapsed);
-        HotbarAssignments->SetVisibility(ESlateVisibility::Collapsed);
-    }
-    else UpdateSelection();
-    CraftingBox->ClearChildren(); RecipeDetailsBox->ClearChildren(); CraftButton=nullptr; DisplayedRecipes.Reset(); MaterialImages.Reset();
+    UEWCraftingRecipe* Previous = GetShownRecipe();
+    TArray<TObjectPtr<UEWCraftingRecipe>> Recipes;
     bool bAnyRecipe = false;
     if (BoundInventory) for (auto* Recipe : BoundInventory->GetAvailableRecipes())
         if (Recipe && Recipe->Output)
         {
             bAnyRecipe = true;
-            if (RecipeFilter.IsEmpty() || ItemNameOf(Recipe->Output).Contains(RecipeFilter, ESearchCase::IgnoreCase)) DisplayedRecipes.Add(Recipe);
+            if (RecipeFilter.IsEmpty() || ItemNameOf(Recipe->Output).Contains(RecipeFilter, ESearchCase::IgnoreCase)) Recipes.Add(Recipe);
         }
+    if (Recipes != DisplayedRecipes || RecipeCards.Num() != Recipes.Num())
+    {
+        CraftingBox->ClearChildren();
+        RecipeCards.Reset();
+        HoveredRecipeIndex = INDEX_NONE;
+        DisplayedRecipes = MoveTemp(Recipes);
+        const int32 PreviousIndex = DisplayedRecipes.IndexOfByKey(Previous);
+        SelectedRecipeIndex = PreviousIndex != INDEX_NONE ? PreviousIndex
+            : FMath::Clamp(SelectedRecipeIndex, 0, DisplayedRecipes.Num() - 1);
+        if (!DisplayedRecipes.Contains(InspectedRecipe)) InspectedRecipe = nullptr;
+    }
     if (DisplayedRecipes.IsEmpty())
     {
-        if (bCraftingOpen) { bCraftingOpen = false; RecipeDetailsBox->SetVisibility(ESlateVisibility::Collapsed); DetailsText->SetVisibility(ESlateVisibility::Visible); UpdateSelection(); }
+        bCraftingOpen = false;
+        InspectedRecipe = nullptr;
+        UpdateSelection();
+        CraftingBox->ClearChildren();
         auto* Empty = WidgetTree->ConstructWidget<UTextBlock>();
-        Empty->SetText(FText::FromString(bAnyRecipe ? TEXT("No recipe matches that search.") : TEXT("Recipes unlock after the innkeeper introduction.")));
-        Empty->SetColorAndOpacity(FSlateColor(FLinearColor(.6f, .66f, .72f)));
-        CraftingBox->AddChildToVerticalBox(Empty); return;
+        StyleText(Empty, 17);
+        Empty->SetText(FText::FromString(bAnyRecipe ? TEXT("No recipes match this search.") : TEXT("No recipes learned.")));
+        CraftingBox->AddChildToVerticalBox(Empty)->SetPadding(FMargin(6));
+        UpdateCraftActions();
+        return;
     }
-    SelectedRecipeIndex = FMath::Clamp(SelectedRecipeIndex, 0, DisplayedRecipes.Num()-1);
-    auto* RecipeGrid = WidgetTree->ConstructWidget<UWrapBox>(); RecipeGrid->SetInnerSlotPadding(FVector2D(GridGap, GridGap));
-    CraftingBox->AddChildToVerticalBox(RecipeGrid);
-    UWidget* SelectedTile = nullptr;
-    for (int32 Index=0; Index<DisplayedRecipes.Num(); ++Index)
+
+    SelectedRecipeIndex = FMath::Clamp(SelectedRecipeIndex, 0, DisplayedRecipes.Num() - 1);
+    DetailsPanel->SetVisibility(bCraftingOpen ? ESlateVisibility::Collapsed : ESlateVisibility::Visible);
+    if (!bCraftingOpen) UpdateSelection();
+    if (RecipeCards.IsEmpty())
     {
-        auto* Recipe = DisplayedRecipes[Index].Get();
-        const bool bPicked = Index == SelectedRecipeIndex;
-        auto* Ring = WidgetTree->ConstructWidget<UBorder>(); Ring->SetPadding(FMargin(2));
-        Ring->SetBrushColor(bPicked && bCraftingOpen ? CursorGold : NoRing);
-        auto* Button = WidgetTree->ConstructWidget<UEWRecipeButton>(); Button->Initialize(Index);
-        Button->SetBackgroundColor(bPicked ? FLinearColor(.2f, .22f, .25f, 1.f) : FLinearColor(.05f, .06f, .075f, 1.f));
-        Button->OnRecipePressed.AddDynamic(this, &UEWInventoryWidget::SelectRecipe);
-        Button->OnRecipeHovered.AddDynamic(this, &UEWInventoryWidget::HoverRecipe);
-        Button->EnableHover();
-        auto* Row = WidgetTree->ConstructWidget<UVerticalBox>();
-        if (auto* Texture = ResolveIcon(Recipe->Output))
+        auto* RecipeGrid = WidgetTree->ConstructWidget<UWrapBox>();
+        RecipeGrid->SetInnerSlotPadding(FVector2D(RecipeGridGap, GridGap));
+        RecipeGrid->SetExplicitWrapSize(true);
+        RecipeGrid->SetWrapSize(CraftingColumns * (RecipeTileWidth + RecipeGridGap));
+        CraftingBox->AddChildToVerticalBox(RecipeGrid);
+        for (int32 Index = 0; Index < DisplayedRecipes.Num(); ++Index)
         {
-            auto* Icon = WidgetTree->ConstructWidget<UImage>(); Icon->SetBrushFromTexture(Texture);
-            auto* Size = WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(46); Size->SetHeightOverride(46);
-            Size->SetContent(Icon); Row->AddChildToVerticalBox(Size)->SetHorizontalAlignment(HAlign_Center);
+            auto* Recipe = DisplayedRecipes[Index].Get();
+            FEWRecipeCardView& Card = RecipeCards.AddDefaulted_GetRef();
+            Card.Tile = WidgetTree->ConstructWidget<UEWCraftingRecipeTile>(
+                UEWCraftingRecipeTile::StaticClass(), FName(*FString::Printf(TEXT("CraftRecipeTile_%d"), Index)));
+            Card.Tile->RecipeIndex = Index;
+            Card.Tile->SetPadding(FMargin(3));
+            Card.Tile->OnInspect.AddDynamic(this, &UEWInventoryWidget::InspectRecipe);
+            Card.Tile->OnCraft.AddDynamic(this, &UEWInventoryWidget::CraftRecipe);
+            Card.Tile->OnHover.AddDynamic(this, &UEWInventoryWidget::HoverRecipe);
+            Card.Faces = WidgetTree->ConstructWidget<UWidgetSwitcher>();
+            Card.Tile->SetContent(Card.Faces);
+
+            auto* Row = WidgetTree->ConstructWidget<UVerticalBox>();
+            if (auto* Texture = ResolveIcon(Recipe->Output))
+            {
+                auto* Icon = WidgetTree->ConstructWidget<UImage>();
+                Icon->SetBrushFromTexture(Texture);
+                auto* Size = WidgetTree->ConstructWidget<USizeBox>();
+                Size->SetWidthOverride(47);
+                Size->SetHeightOverride(47);
+                Size->SetContent(Icon);
+                Row->AddChildToVerticalBox(Size)->SetHorizontalAlignment(HAlign_Center);
+            }
+            auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
+            const FText& DisplayName = Recipe->Output->DisplayName;
+            // Keep a long compound caption readable at the approved card width.
+            Name->SetText(DisplayName.ToString() == TEXT("Gunpowder")
+                ? NSLOCTEXT("Elitewake", "GunpowderTileCaption", "Gun-\npowder") : DisplayName);
+            Name->SetJustification(ETextJustify::Center);
+            Name->SetAutoWrapText(true);
+            Name->SetWrapTextAt(RecipeTileWidth - 2.f);
+            Name->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
+            Name->SetClipping(EWidgetClipping::ClipToBounds);
+            StyleText(Name, 13, Ivory, true);
+            auto* Caption = WidgetTree->ConstructWidget<USizeBox>();
+            Caption->SetHeightOverride(73.f);
+            Caption->SetContent(Name);
+            Row->AddChildToVerticalBox(Caption);
+            Card.Faces->AddChild(Row);
+
+            Card.Scroll = WidgetTree->ConstructWidget<UScrollBox>();
+            StyleInventoryScroll(Card.Scroll);
+            Card.Scroll->SetScrollbarThickness(FVector2D(3.f, 3.f));
+            Card.Scroll->SetScrollbarPadding(FMargin(0));
+            Card.Scroll->SetConsumeMouseWheel(EConsumeMouseWheel::Always);
+            auto* Requirements = WidgetTree->ConstructWidget<UVerticalBox>();
+            Card.Scroll->AddChild(Requirements);
+            for (const auto& Cost : RecipeCosts(*Recipe))
+            {
+                auto* MaterialRow = WidgetTree->ConstructWidget<UVerticalBox>();
+                auto* Icon = WidgetTree->ConstructWidget<UImage>();
+                Icon->SetBrushFromTexture(ResolveIcon(Cost.Key));
+                auto* IconSize = WidgetTree->ConstructWidget<USizeBox>();
+                IconSize->SetWidthOverride(23);
+                IconSize->SetHeightOverride(23);
+                IconSize->SetContent(Icon);
+                MaterialRow->AddChildToVerticalBox(IconSize)->SetHorizontalAlignment(HAlign_Center);
+                auto* MaterialLabel = WidgetTree->ConstructWidget<UTextBlock>();
+                MaterialLabel->SetAutoWrapText(true);
+                StyleText(MaterialLabel, 13);
+                MaterialRow->AddChildToVerticalBox(MaterialLabel);
+                Requirements->AddChildToVerticalBox(MaterialRow)->SetPadding(FMargin(0, 0, 0, 6));
+                Card.Materials.Add(Cost.Key, MaterialLabel);
+                Card.Icons.Add(Cost.Key, Icon);
+            }
+            Card.Summary = WidgetTree->ConstructWidget<UTextBlock>();
+            Card.Summary->SetAutoWrapText(true);
+            StyleText(Card.Summary, 13, MutedGold);
+            Requirements->AddChildToVerticalBox(Card.Summary);
+            Card.Faces->AddChild(Card.Scroll);
+            auto* TileSize = WidgetTree->ConstructWidget<USizeBox>();
+            TileSize->SetWidthOverride(RecipeTileWidth);
+            TileSize->SetHeightOverride(133);
+            TileSize->SetContent(Card.Tile);
+            RecipeGrid->AddChildToWrapBox(TileSize);
         }
-        auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
-        Name->SetText(Recipe->Output->DisplayName);
-        Name->SetAutoWrapText(true); Name->SetJustification(ETextJustify::Center); auto Font=Name->GetFont(); Font.Size=10; Name->SetFont(Font);
-        Row->AddChildToVerticalBox(Name); Button->SetContent(Row); Ring->SetContent(Button);
-        auto* TileSize=WidgetTree->ConstructWidget<USizeBox>(); TileSize->SetWidthOverride(RecipeTileWidth); TileSize->SetMinDesiredHeight(84); TileSize->SetContent(Ring);
-        RecipeGrid->AddChildToWrapBox(TileSize);
-        if (bPicked) SelectedTile = TileSize;
     }
-    if (bCraftingOpen && SelectedTile) CraftScroll->ScrollWidgetIntoView(SelectedTile, false);
-    auto* Recipe = DisplayedRecipes[SelectedRecipeIndex].Get();
-    auto* Heading=WidgetTree->ConstructWidget<UTextBlock>();
-    Heading->SetText(Recipe->Output->DisplayName);
-    Heading->SetAutoWrapText(true); auto HeadingFont=Heading->GetFont(); HeadingFont.Size=21; Heading->SetFont(HeadingFont);
-    RecipeDetailsBox->AddChildToVerticalBox(Heading)->SetPadding(FMargin(0,0,0,12));
-    if (auto* Texture = ResolveIcon(Recipe->Output))
-    {
-        auto* Preview = WidgetTree->ConstructWidget<UImage>(); Preview->SetBrushFromTexture(Texture);
-        auto* Size = WidgetTree->ConstructWidget<USizeBox>(); Size->SetWidthOverride(112); Size->SetHeightOverride(112);
-        Size->SetContent(Preview); RecipeDetailsBox->AddChildToVerticalBox(Size)->SetHorizontalAlignment(HAlign_Center);
-    }
-    MaterialImages.Reset();
-    FString Details = TEXT("Inventory crafting · Unlocked");
-    auto* MaterialsHeading=WidgetTree->ConstructWidget<UTextBlock>();
-    MaterialsHeading->SetText(FText::FromString(TEXT("REQUIRED MATERIALS")));
-    RecipeDetailsBox->AddChildToVerticalBox(MaterialsHeading)->SetPadding(FMargin(0,14,0,8));
-    for (const auto& Cost : Recipe->Ingredients) if (Cost.Item)
-    {
-        auto* MaterialLabel = WidgetTree->ConstructWidget<UTextBlock>();
-        MaterialLabel->SetText(FText::FromString(FString::Printf(TEXT("%s: %d / %d"), *Cost.Item->DisplayName.ToString(),
-            BoundInventory->GetItemCount(Cost.Item), Cost.Quantity)));
-        MaterialLabel->SetAutoWrapText(true);
-        auto MaterialFont=MaterialLabel->GetFont(); MaterialFont.Size=16; MaterialLabel->SetFont(MaterialFont);
-        MaterialLabel->SetColorAndOpacity(FSlateColor(BoundInventory->GetItemCount(Cost.Item)>=Cost.Quantity
-            ? FLinearColor(.45f,.85f,.55f) : FLinearColor(1.f,.4f,.35f)));
-        UImage* MaterialImage = nullptr;
-        RecipeDetailsBox->AddChildToVerticalBox(MakeItemRow(Cost.Item, MaterialLabel, MaterialImage));
-        if (MaterialImage) MaterialImages.Add(Cost.Item, MaterialImage);
-    }
-    CraftingDetails = WidgetTree->ConstructWidget<UTextBlock>(); CraftingDetails->SetText(FText::FromString(Details));
-    CraftingDetails->SetAutoWrapText(true); auto InfoFont=CraftingDetails->GetFont(); InfoFont.Size=16; CraftingDetails->SetFont(InfoFont);
-    RecipeDetailsBox->AddChildToVerticalBox(CraftingDetails);
-    CraftButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>();
-    auto* Label = WidgetTree->ConstructWidget<UTextBlock>(); Label->SetText(FText::FromString(TEXT("Craft one (Enter / A)")));
-    CraftButton->SetContent(Label); CraftButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformCraft);
-    const EEWCraftResult Readiness = BoundInventory->GetCraftReadiness(Recipe);
-    CraftButton->SetIsEnabled(Readiness==EEWCraftResult::Success);
-    CraftButton->SetToolTipText(FText::FromString(Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
-        : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory")
-        : Readiness==EEWCraftResult::NeedsFire ? TEXT("Cook it by a lit campfire")
-        : Readiness==EEWCraftResult::Success ? TEXT("Craft one item") : TEXT("Recipe unavailable")));
-    if (Readiness!=EEWCraftResult::Success)
-        CraftingDetails->SetText(FText::FromString(Details + TEXT("\n") + (Readiness==EEWCraftResult::MissingIngredients ? TEXT("Not enough materials")
-            : Readiness==EEWCraftResult::InventoryFull ? TEXT("Make room in your inventory")
-            : Readiness==EEWCraftResult::NeedsFire ? TEXT("Cook it by a lit campfire") : TEXT("Recipe unavailable"))));
-    RecipeDetailsBox->AddChildToVerticalBox(CraftButton);
-    // The work in progress: a bar filling over the recipe's time.
-    CraftBar = WidgetTree->ConstructWidget<UProgressBar>(); CraftBar->SetFillColorAndOpacity(FLinearColor(.9f,.7f,.25f));
-    auto* CraftBarSize = WidgetTree->ConstructWidget<USizeBox>(); CraftBarSize->SetHeightOverride(10); CraftBarSize->SetContent(CraftBar);
-    RecipeDetailsBox->AddChildToVerticalBox(CraftBarSize)->SetPadding(FMargin(0,8,0,2));
-    CraftBarText = WidgetTree->ConstructWidget<UTextBlock>(); { auto F = CraftBarText->GetFont(); F.Size = 14; CraftBarText->SetFont(F); }
-    RecipeDetailsBox->AddChildToVerticalBox(CraftBarText);
-    CraftBar->SetPercent(GetCraftProgress());
-    if (Recipe->CraftSeconds > .02f) CraftBarText->SetText(CraftSecondsLeft > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "CraftTimeLeft", "Crafting... {0} s"), FMath::CeilToInt(CraftSecondsLeft))
-        : FText::Format(NSLOCTEXT("Elitewake", "CraftTime", "Takes {0} s"), FMath::RoundToInt(Recipe->CraftSeconds)));
+    UpdateRecipeCards();
+    UpdateCraftActions();
 }
+
+void UEWInventoryWidget::UpdateRecipeCards()
+{
+    MaterialImages.Reset();
+    if (!BoundInventory) return;
+    for (int32 Index = 0; Index < RecipeCards.Num(); ++Index)
+    {
+        auto& Card = RecipeCards[Index];
+        auto* Recipe = DisplayedRecipes[Index].Get();
+        const bool bSelected = bCraftingOpen && SelectedRecipeIndex == Index;
+        Card.Tile->SetBrush(BrassRect(bSelected || HoveredRecipeIndex == Index ? 2.5f : SlotStroke,
+            bSelected || HoveredRecipeIndex == Index ? CursorGold : MutedGold));
+        Card.Faces->SetActiveWidgetIndex(bSelected && InspectedRecipe == Recipe ? 1 : 0);
+        if (!bSelected) continue;
+        const auto Costs = RecipeCosts(*Recipe);
+        for (const auto& Label : Card.Materials)
+        {
+            const int32 Owned = BoundInventory->GetItemCount(Label.Key);
+            const int64 Required = Costs.FindRef(Label.Key);
+            Label.Value->SetText(FText::Format(NSLOCTEXT("Elitewake", "RecipeCardMaterial", "{0}\nNeed {2}\nHave {1}"),
+                Label.Key->DisplayName, Owned, Required));
+            Label.Value->SetColorAndOpacity(FSlateColor(Owned >= Required ? Ivory : FLinearColor(1.f, .57f, .46f)));
+        }
+        Card.Summary->SetText(FText::Format(NSLOCTEXT("Elitewake", "RecipeCardSummary", "{0}s {1}\n{2}"),
+            FText::AsNumber(Recipe->CraftSeconds),
+            Recipe->bNeedsFire ? NSLOCTEXT("Elitewake", "CraftAtFire", "Lit campfire") : NSLOCTEXT("Elitewake", "CraftByHand", "Hand"),
+            CraftReadinessText(bCraftRequestPending || CraftSecondsLeft > 0.f ? EEWCraftResult::Busy : BoundInventory->GetCraftReadiness(Recipe))));
+        if (bSelected) MaterialImages = Card.Icons;
+    }
+}
+
+void UEWInventoryWidget::UpdateCraftActions()
+{
+    CraftActions->ClearChildren();
+    CraftActions->SetVisibility(ESlateVisibility::Collapsed);
+    CraftButton = nullptr;
+    CraftBar = nullptr;
+    CraftBarText = nullptr;
+    if (!bCraftingOpen) return;
+
+    auto* Recipe = DisplayedRecipes[SelectedRecipeIndex].Get();
+    const auto Readiness = bCraftRequestPending || CraftSecondsLeft > 0.f ? EEWCraftResult::Busy : BoundInventory->GetCraftReadiness(Recipe);
+    ShownCraftReadiness = Readiness;
+    auto* Actions = WidgetTree->ConstructWidget<UHorizontalBox>();
+    CraftStatus = WidgetTree->ConstructWidget<UTextBlock>();
+    CraftStatus->SetAutoWrapText(true);
+    CraftStatus->SetText(FText::Format(NSLOCTEXT("Elitewake", "CraftStatusWithInspect", "{0} · {1}\nR / X inspect"),
+        Recipe->Output->DisplayName, CraftReadinessText(Readiness)));
+    StyleText(CraftStatus, 17, MutedGold);
+    auto* StatusSlot = Actions->AddChildToHorizontalBox(CraftStatus);
+    StatusSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    StatusSlot->SetVerticalAlignment(VAlign_Center);
+    CraftButton = WidgetTree->ConstructWidget<UEWInventoryActionButton>();
+    StyleInventoryButton(CraftButton);
+    auto* Label = WidgetTree->ConstructWidget<UTextBlock>();
+    Label->SetText(NSLOCTEXT("Elitewake", "CraftOne", "Craft one (Enter/A)"));
+    StyleInventoryHeading(Label, 17, Readiness == EEWCraftResult::Success ? Ivory : MutedGold);
+    Label->SetVisibility(ESlateVisibility::HitTestInvisible);
+    CraftButton->SetIsEnabled(Readiness == EEWCraftResult::Success);
+    CraftButton->OnClicked.AddDynamic(this, &UEWInventoryWidget::PerformCraft);
+    auto* CraftFace = WidgetTree->ConstructWidget<UOverlay>();
+    auto* ButtonSlot = CraftFace->AddChildToOverlay(CraftButton);
+    ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
+    ButtonSlot->SetVerticalAlignment(VAlign_Fill);
+    auto* CaptionSlot = CraftFace->AddChildToOverlay(Label);
+    CaptionSlot->SetPadding(FMargin(18, 8));
+    CaptionSlot->SetHorizontalAlignment(HAlign_Center);
+    CaptionSlot->SetVerticalAlignment(VAlign_Center);
+    Actions->AddChildToHorizontalBox(CraftFace)->SetPadding(FMargin(10, 0, 5, 0));
+    CraftActions->AddChildToVerticalBox(Actions);
+    CraftActions->SetVisibility(ESlateVisibility::Visible);
+
+    if (Recipe->CraftSeconds > .02f || CraftSecondsLeft > 0.f)
+    {
+        CraftBar = WidgetTree->ConstructWidget<UProgressBar>();
+        CraftBar->SetFillColorAndOpacity(FLinearColor(.9f, .7f, .25f));
+        CraftBar->SetPercent(GetCraftProgress());
+        auto* CraftBarSize = WidgetTree->ConstructWidget<USizeBox>();
+        CraftBarSize->SetHeightOverride(5);
+        CraftBarSize->SetContent(CraftBar);
+        CraftActions->AddChildToVerticalBox(CraftBarSize)->SetPadding(FMargin(0, 4, 0, 2));
+        CraftBarText = WidgetTree->ConstructWidget<UTextBlock>();
+        StyleText(CraftBarText, 15, MutedGold);
+        CraftBarText->SetText(CraftSecondsLeft > 0.f ? FText::Format(NSLOCTEXT("Elitewake", "CraftTimeLeft", "Crafting... {0} s"), FMath::CeilToInt(CraftSecondsLeft))
+            : FText::Format(NSLOCTEXT("Elitewake", "CraftTime", "Takes {0} s"), FMath::RoundToInt(Recipe->CraftSeconds)));
+        CraftActions->AddChildToVerticalBox(CraftBarText)->SetPadding(FMargin(14, 0, 0, 0));
+    }
+}
+
 UBorder* UEWInventoryWidget::MakeSlotTile(UEWItemDefinition* Item, const FString& Corner, float Freshness, UImage*& Image, UProgressBar*& FreshBar, const FString& Weight, const FString& EmptyLabel)
 {
     Image = nullptr; FreshBar = nullptr;
     auto* Tile = WidgetTree->ConstructWidget<UBorder>();
-    Tile->SetPadding(FMargin(3));
-    Tile->SetBrushColor(Item ? FLinearColor(.045f,.06f,.075f,1) : FLinearColor(.025f,.032f,.042f,.55f));
+    Tile->SetPadding(FMargin(6, 3));
+    Tile->SetBrush(BrassRect(SlotStroke));
     if (!Item)
     {
         if (!EmptyLabel.IsEmpty())
         {
             auto* SlotName = WidgetTree->ConstructWidget<UTextBlock>(); SlotName->SetText(FText::FromString(EmptyLabel)); SlotName->SetJustification(ETextJustify::Center);
-            SlotName->SetColorAndOpacity(FSlateColor(FLinearColor(.42f, .46f, .5f))); auto SlotFont = SlotName->GetFont(); SlotFont.Size = 10; SlotName->SetFont(SlotFont);
-            Tile->SetHorizontalAlignment(HAlign_Center); Tile->SetVerticalAlignment(VAlign_Center); Tile->SetContent(SlotName);
+            StyleText(SlotName, 14);
+            auto* Contents = WidgetTree->ConstructWidget<UVerticalBox>();
+            auto* IconSpace = WidgetTree->ConstructWidget<USizeBox>();
+            IconSpace->SetHeightOverride(42);
+            Contents->AddChildToVerticalBox(IconSpace);
+            Contents->AddChildToVerticalBox(SlotName)->SetPadding(FMargin(0, 2, 0, 1));
+            Tile->SetContent(Contents);
         }
         return Tile;
     }
-    auto* Layers = WidgetTree->ConstructWidget<UOverlay>();
-    Tile->SetContent(Layers);
+    auto* Contents = WidgetTree->ConstructWidget<UVerticalBox>();
+    Tile->SetContent(Contents);
+    auto* ArtRow = WidgetTree->ConstructWidget<UHorizontalBox>();
+    Contents->AddChildToVerticalBox(ArtRow);
     Image = WidgetTree->ConstructWidget<UImage>(); Image->SetBrushFromTexture(ResolveIcon(Item));
-    auto* IconSize = WidgetTree->ConstructWidget<USizeBox>(); IconSize->SetWidthOverride(54); IconSize->SetHeightOverride(54);
+    auto* IconSize = WidgetTree->ConstructWidget<USizeBox>(); IconSize->SetWidthOverride(42); IconSize->SetHeightOverride(42);
     IconSize->SetContent(Image);
-    auto* IconSlot = Layers->AddChildToOverlay(IconSize);
-    IconSlot->SetHorizontalAlignment(HAlign_Center); IconSlot->SetVerticalAlignment(VAlign_Top); IconSlot->SetPadding(FMargin(0,4,0,0));
-    // The quantity, top right.
-    auto* Count = WidgetTree->ConstructWidget<UTextBlock>(); Count->SetText(FText::FromString(Corner));
-    auto CountFont = Count->GetFont(); CountFont.Size = 12; Count->SetFont(CountFont);
-    Count->SetShadowOffset(FVector2D(1,1)); Count->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));
-    auto* CountSlot = Layers->AddChildToOverlay(Count);
-    CountSlot->SetHorizontalAlignment(HAlign_Right); CountSlot->SetVerticalAlignment(VAlign_Top);
-    // Along the bottom: the name, trailing off if it is long, and the weight of the stack.
-    auto* Bottom = WidgetTree->ConstructWidget<UHorizontalBox>();
-    auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
-    Name->SetText(Item->DisplayName.IsEmpty() ? FText::FromName(Item->ItemId) : Item->DisplayName);
-    auto NameFont = Name->GetFont(); NameFont.Size = 9; Name->SetFont(NameFont);
-    Name->SetJustification(ETextJustify::Left); Name->SetClipping(EWidgetClipping::ClipToBounds);
-    Name->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis);
-    Bottom->AddChildToHorizontalBox(Name)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    if (!Weight.IsEmpty())
+    auto* IconSlot = ArtRow->AddChildToHorizontalBox(IconSize);
+    IconSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    IconSlot->SetHorizontalAlignment(HAlign_Center);
+    if (!Corner.IsEmpty())
     {
-        auto* WeightText = WidgetTree->ConstructWidget<UTextBlock>(); WeightText->SetText(FText::FromString(Weight));
-        WeightText->SetColorAndOpacity(FSlateColor(FLinearColor(.62f, .68f, .74f))); auto WeightFont = WeightText->GetFont(); WeightFont.Size = 9; WeightText->SetFont(WeightFont);
-        Bottom->AddChildToHorizontalBox(WeightText)->SetPadding(FMargin(4, 0, 0, 0));
+        auto* Count = WidgetTree->ConstructWidget<UTextBlock>();
+        Count->SetText(FText::FromString(Corner));
+        StyleText(Count, 13);
+        ArtRow->AddChildToHorizontalBox(Count)->SetVerticalAlignment(VAlign_Top);
     }
-    auto* BottomSlot = Layers->AddChildToOverlay(Bottom);
-    BottomSlot->SetHorizontalAlignment(HAlign_Fill); BottomSlot->SetVerticalAlignment(VAlign_Bottom);
-    BottomSlot->SetPadding(FMargin(0,0,0,Freshness >= 0.f ? 6 : 0));
+
+    auto* Name = WidgetTree->ConstructWidget<UTextBlock>();
+    Name->SetText(!EmptyLabel.IsEmpty() ? FText::FromString(EmptyLabel)
+        : Item->DisplayName.IsEmpty() ? FText::FromName(Item->ItemId) : Item->DisplayName);
+    StyleText(Name, 14);
+    Name->SetJustification(ETextJustify::Center);
+    Name->SetClipping(EWidgetClipping::ClipToBounds);
+    Name->SetTextOverflowPolicy(ETextOverflowPolicy::Ellipsis);
+    Contents->AddChildToVerticalBox(Name)->SetPadding(FMargin(0, 2, 0, 1));
+    if (!Weight.IsEmpty()) Tile->SetToolTipText(FText::Format(NSLOCTEXT("Elitewake", "InventoryTileWeight", "{0} · {1}"), Item->DisplayName, FText::FromString(Weight)));
     if (Freshness >= 0.f)
     {
         FreshBar = WidgetTree->ConstructWidget<UProgressBar>();
         FreshBar->SetPercent(Freshness); FreshBar->SetFillColorAndOpacity(FLinearColor(.25f,.8f,.35f));
         auto* BarSize = WidgetTree->ConstructWidget<USizeBox>(); BarSize->SetHeightOverride(4); BarSize->SetContent(FreshBar);
-        auto* BarSlot = Layers->AddChildToOverlay(BarSize);
-        BarSlot->SetHorizontalAlignment(HAlign_Fill); BarSlot->SetVerticalAlignment(VAlign_Bottom);
+        Contents->AddChildToVerticalBox(BarSize);
     }
     return Tile;
 }
@@ -854,10 +1419,14 @@ UBorder* UEWInventoryWidget::MakeSlotTile(UEWItemDefinition* Item, const FString
 UBorder* UEWInventoryWidget::AddToGrid(UWrapBox* Grid, UBorder* Tile)
 {
     // The ring around a tile is the controller cursor: clear until the tile is picked, then gold.
-    auto* Ring = WidgetTree->ConstructWidget<UBorder>(); Ring->SetPadding(FMargin(3)); Ring->SetBrushColor(NoRing);
+    auto* Ring = WidgetTree->ConstructWidget<UBorder>(); Ring->SetPadding(FMargin(1));
+    Ring->SetBrushColor(FLinearColor::Transparent);
     Ring->SetContent(Tile);
     auto* Size = WidgetTree->ConstructWidget<USizeBox>();
-    Size->SetWidthOverride(SlotTileSize); Size->SetHeightOverride(SlotTileSize); Size->SetContent(Ring);
+    const bool bGear = Grid != ItemsBox;
+    Size->SetWidthOverride(bGear ? 120.f : SlotTileWidth);
+    Size->SetHeightOverride(bGear ? 85.f : SlotTileHeight);
+    Size->SetContent(Ring);
     Grid->AddChildToWrapBox(Size);
     return Ring;
 }
@@ -878,55 +1447,199 @@ void UEWInventoryWidget::SetStatFocus(int32 StatIndex)
 {
     StatFocus = StatIndex >= 0 && StatIndex < UEWProgressionComponent::StatCount && SelectedSection == 0 ? StatIndex : INDEX_NONE;
     RefreshProgression();
+    if (SurvivorScroll && AllocArrows.IsValidIndex(StatFocus)) SurvivorScroll->ScrollWidgetIntoView(AllocArrows[StatFocus], false);
 }
+
+void UEWInventoryWidget::NavigateAttributeFocus(int32 Direction)
+{
+    // Follow the visible row order, skipping the two attributes whose effects are not approved.
+    constexpr int32 Order[] = {0, 1, 3, 2};
+    int32 At = 0;
+    for (int32 Index = 0; Index < 4; ++Index) if (Order[Index] == StatFocus) At = Index;
+    SetStatFocus(Order[(At + (Direction > 0 ? 1 : 3)) % 4]);
+}
+int32 UEWInventoryWidget::GetPendingAttributeTotal() const
+{
+    int32 Total = 0;
+    for (int32 Points : PendingAttributes) Total += Points;
+    return Total;
+}
+
 void UEWInventoryWidget::SpendStat(int32 StatIndex)
 {
+    RefreshProgression();
     const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
     const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
-    if (!Progress || Progress->GetUnspentPoints() <= 0 || StatIndex < 0 || StatIndex >= UEWProgressionComponent::StatCount) return;
-    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RequestSpendStatPoint(static_cast<EEWStat>(StatIndex));
+    if (!Progress || bAttributeRequestPending || bResetConfirmation || !PendingAttributes.IsValidIndex(StatIndex)
+        || Progress->GetUnspentPoints() <= GetPendingAttributeTotal()) return;
+    AttributeDraftRevision = Progress->GetAttributeRevision();
+    if (bCraftingOpen) FocusInventory();
+    ++PendingAttributes[StatIndex];
+    StatFocus = StatIndex;
+    bCraftingOpen = false;
+    if (AttributeStatus) AttributeStatus->SetText(NSLOCTEXT("Elitewake", "AttributeDraft", "Pending only. Confirm to save, or cancel to keep your current attributes."));
+    RefreshProgression();
 }
+
+void UEWInventoryWidget::UndoStat(int32 StatIndex)
+{
+    if (bAttributeRequestPending || bResetConfirmation || !PendingAttributes.IsValidIndex(StatIndex) || PendingAttributes[StatIndex] <= 0) return;
+    --PendingAttributes[StatIndex];
+    StatFocus = StatIndex;
+    RefreshProgression();
+}
+
+void UEWInventoryWidget::CancelAttributeChanges()
+{
+    PendingAttributes.Init(0, UEWProgressionComponent::StatCount);
+    bResetConfirmation = false;
+    StatFocus = INDEX_NONE;
+    if (AttributeStatus) AttributeStatus->SetText(FText::GetEmpty());
+    RefreshProgression();
+}
+
+void UEWInventoryWidget::OpenAttributeReset()
+{
+    RefreshProgression();
+    const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
+    const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
+    const auto* Wallet = Character ? Character->GetWalletComponent() : nullptr;
+    if (!Progress || bAttributeRequestPending || GetPendingAttributeTotal() > 0) return;
+    if (!Wallet || !Wallet->CanAfford(UEWProgressionComponent::AttributeResetCopper))
+    {
+        AttributeStatus->SetText(NSLOCTEXT("Elitewake", "ResetInsufficient", "You need 5 gold to reset attribute points."));
+        RefreshProgression();
+        return;
+    }
+    int32 Spent = 0;
+    for (int32 Points : Progress->GetAllStatPoints()) Spent += Points;
+    if (Spent <= 0) return;
+    AttributeDraftRevision = Progress->GetAttributeRevision();
+    bResetConfirmation = true;
+    AttributeStatus->SetText(FText::Format(NSLOCTEXT("Elitewake", "ResetAttributeConfirm", "Reset {0} invested attribute points for 5 GOLD? Constellation skills stay unchanged. Confirm or cancel."), Spent));
+    SetUserFocus(GetOwningPlayer());
+    RefreshProgression();
+}
+
+void UEWInventoryWidget::ConfirmAttributeChanges()
+{
+    if (bAttributeRequestPending || (!bResetConfirmation && GetPendingAttributeTotal() <= 0)) return;
+    auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
+    if (!Controller) return;
+    bAttributeRequestPending = true;
+    AttributeResponseRevision = -1;
+    const bool bReset = bResetConfirmation;
+    bResetConfirmation = false;
+    AttributeStatus->SetText(NSLOCTEXT("Elitewake", "AttributeSaving", "Saving attribute changes..."));
+    RefreshProgression();
+    if (bReset) Controller->RequestResetAttributes(AttributeDraftRevision);
+    else Controller->RequestCommitAttributes(PendingAttributes, AttributeDraftRevision);
+}
+
+void UEWInventoryWidget::ShowAttributeResult(EEWAttributeResult Result, int64 Revision)
+{
+    PendingAttributes.Init(0, UEWProgressionComponent::StatCount);
+    bResetConfirmation = false;
+    StatFocus = INDEX_NONE;
+    AttributeResponseRevision = Revision;
+    bAttributeRequestPending = Result == EEWAttributeResult::Success;
+    const TCHAR* Message = TEXT("Attribute changes saved.");
+    switch (Result)
+    {
+    case EEWAttributeResult::Success: break;
+    case EEWAttributeResult::Stale: Message = TEXT("Your attributes changed. Review the current values and try again."); break;
+    case EEWAttributeResult::NotEnoughGold: Message = TEXT("You need 5 gold. Nothing was charged."); break;
+    case EEWAttributeResult::NothingToReset: Message = TEXT("There are no invested attribute points to reset."); break;
+    case EEWAttributeResult::NotEnoughPoints: Message = TEXT("Not enough unspent attribute points. Nothing was spent."); break;
+    case EEWAttributeResult::SaveFailed: Message = TEXT("Could not save. Return to land and try again. Points and money are unchanged."); break;
+    default: Message = TEXT("Attribute changes were not accepted. Nothing was spent."); break;
+    }
+    if (AttributeStatus) AttributeStatus->SetText(FText::FromString(Message));
+    RefreshProgression();
+}
+
 void UEWInventoryWidget::RefreshProgression()
 {
     const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
     const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
     if (!Progress || !LevelValue || !LevelBar || !PointsValue || AllocArrows.Num() != UEWProgressionComponent::StatCount) return;
+    const int64 Revision = Progress->GetAttributeRevision();
+    if (bAttributeRequestPending && AttributeResponseRevision >= 0 && Revision >= AttributeResponseRevision)
+        bAttributeRequestPending = false;
+    if (!bAttributeRequestPending && AttributeDraftRevision != Revision)
+    {
+        if (GetPendingAttributeTotal() > 0 || bResetConfirmation)
+        {
+            PendingAttributes.Init(0, UEWProgressionComponent::StatCount);
+            bResetConfirmation = false;
+            if (AttributeStatus) AttributeStatus->SetText(NSLOCTEXT("Elitewake", "AttributeDraftStale", "Your attributes changed. Review the current values and choose again."));
+        }
+        AttributeDraftRevision = Revision;
+    }
     LevelValue->SetText(FText::Format(NSLOCTEXT("Elitewake", "LevelFormat", "LEVEL {0}"), Progress->GetLevel()));
     LevelBar->SetPercent(Progress->IsAtMaxLevel() ? 1.f : FMath::Clamp(float(Progress->GetExperience()) / FMath::Max(1, Progress->GetExperienceForNextLevel()), 0.f, 1.f));
-    const int32 Points = Progress->GetUnspentPoints();
-    PointsValue->SetText(Progress->IsAtMaxLevel() ? NSLOCTEXT("Elitewake", "MaxLevel", "Highest level reached")
+    const int32 Pending = GetPendingAttributeTotal();
+    const int32 Points = FMath::Max(0, Progress->GetUnspentPoints() - Pending);
+    PointsValue->SetText(Progress->IsAtMaxLevel()
+        ? FText::Format(NSLOCTEXT("Elitewake", "MaxLevelPoints", "Highest level reached   ·   {0} unspent stat points"), Points)
         : FText::Format(NSLOCTEXT("Elitewake", "PointsFormat", "Experience {0} / {1}     Stat points to spend: {2}"), Progress->GetExperience(), Progress->GetExperienceForNextLevel(), Points));
+    const bool bHasCommitted = Progress->GetAllStatPoints().ContainsByPredicate([](int32 Value) { return Value > 0; });
     if (StatPrompt)
     {
-        StatPrompt->SetText(Points > 0
-            ? FText::Format(NSLOCTEXT("Elitewake", "StatPromptReady", "{0} point(s) to spend. Click an arrow, or press C, left-stick click or RT, pick a stat with Up/Down or the d-pad, then Enter or A."), Points)
-            : NSLOCTEXT("Elitewake", "StatPromptNone", "You earn a point at each level. C, left-stick click or RT picks a stat once you have one."));
-        StatPrompt->SetColorAndOpacity(FSlateColor(Points > 0 ? FLinearColor(.95f, .85f, .45f) : FLinearColor(.55f, .6f, .66f)));
+        StatPrompt->SetText(Progress->GetUnspentPoints() > 0 || Pending > 0 || bHasCommitted
+            ? NSLOCTEXT("Elitewake", "AttributeDraftKeys", "C / RT selects. Left / Right edits; Enter / A confirms; Esc / B cancels. R / X opens reset.") : FText::GetEmpty());
+        StatPrompt->SetVisibility(StatPrompt->GetText().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
     }
+    int64 Committed = 0;
     for (int32 Stat = 0; Stat < UEWProgressionComponent::StatCount; ++Stat)
     {
-        const EEWStat Which = static_cast<EEWStat>(Stat);
-        AllocValues[Stat]->SetText(FText::Format(NSLOCTEXT("Elitewake", "StatRow", "{0}{1}  {2}\n{3}"), FText::FromString(Stat == StatFocus ? TEXT("\u25BA ") : TEXT("")),
-            UEWProgressionComponent::StatName(Which), Progress->GetStatPoints(Which), Progress->StatEffect(Which)));
-        AllocValues[Stat]->SetColorAndOpacity(FSlateColor(Stat == StatFocus ? FLinearColor(1.f, .85f, .35f) : FLinearColor::White));
-        const bool bLive = Points > 0;
+        const auto Which = static_cast<EEWStat>(Stat);
+        const int32 Existing = Progress->GetStatPoints(Which);
+        Committed += Existing;
+        const int32 Draft = GetPendingAttributePoints(Stat);
+        AllocValues[Stat]->SetText(FText::AsNumber(Existing + Draft));
+        AllocValues[Stat]->SetToolTipText(FText::Format(NSLOCTEXT("Elitewake", "AttributeInvestedDraft", "{0} committed, {1} pending"), Existing, Draft));
+        AllocValues[Stat]->SetColorAndOpacity(FSlateColor(Draft > 0 || Stat == StatFocus ? CursorGold : Ivory));
+        AllocArrows[Stat]->SetToolTipText(Progress->StatEffect(Which));
+        const bool bLive = Points > 0 && !bAttributeRequestPending && !bResetConfirmation;
         AllocArrows[Stat]->SetIsEnabled(bLive);
-        AllocArrows[Stat]->SetRenderOpacity(bLive ? 1.f : .25f);
-        AllocArrows[Stat]->SetBackgroundColor(Stat == StatFocus ? FLinearColor(1.f, .85f, .35f) : (bLive ? FLinearColor(.2f, .6f, .35f) : FLinearColor(.1f, .12f, .14f)));
+        AllocMinus[Stat]->SetIsEnabled(Draft > 0 && !bAttributeRequestPending && !bResetConfirmation);
+        AllocMinus[Stat]->SetToolTipText(NSLOCTEXT("Elitewake", "AttributeUndoPending", "Undo one pending point. Committed points require the paid reset."));
+        AllocArrows[Stat]->SetRenderOpacity(bLive ? 1.f : .83f);
+        AllocArrows[Stat]->SetBackgroundColor(Stat == StatFocus ? CursorGold * 1.4f : FLinearColor::White);
     }
+    if (AttributeResetButton)
+    {
+        AttributeResetButton->SetIsEnabled(Committed > 0 && Pending == 0 && !bAttributeRequestPending && !bResetConfirmation);
+        const auto* Wallet = Character->GetWalletComponent();
+        AttributeResetButton->SetToolTipText(FText::FromString(FString::Printf(TEXT("Refund committed attribute points for 5 gold. Purse: %s. Constellation skills are preserved."),
+            *UEWWalletComponent::Format(Wallet ? Wallet->GetCopper() : 0))));
+    }
+    if (AttributeActions) AttributeActions->SetVisibility(Pending > 0 || bResetConfirmation ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    if (AttributeConfirmButton) AttributeConfirmButton->SetIsEnabled(!bAttributeRequestPending);
+    if (AttributeCancelButton) AttributeCancelButton->SetIsEnabled(!bAttributeRequestPending);
+    if (AttributeStatus) AttributeStatus->SetVisibility(AttributeStatus->GetText().IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
 }
 
 void UEWInventoryWidget::PerformCraft()
 {
-    if (!DisplayedRecipes.IsValidIndex(SelectedRecipeIndex) || !IsCraftActionEnabled()) return;
-    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RequestCraft(DisplayedRecipes[SelectedRecipeIndex]);
+    if (!DisplayedRecipes.IsValidIndex(SelectedRecipeIndex)) return;
+    if (!IsCraftActionEnabled()) { UpdateCraftActions(); return; }
+    if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer()))
+    {
+        bCraftRequestPending = true;
+        UpdateRecipeCards();
+        UpdateCraftActions();
+        Controller->RequestCraft(DisplayedRecipes[SelectedRecipeIndex]);
+    }
 }
 bool UEWInventoryWidget::IsCraftActionEnabled() const
 {
-    return bCraftingOpen && CraftButton && CraftButton->GetIsEnabled() && CraftSecondsLeft <= 0.f;
+    return bCraftingOpen && CraftButton && CraftButton->GetIsEnabled() && CraftSecondsLeft <= 0.f && !bCraftRequestPending;
 }
 void UEWInventoryWidget::ShowCraftStarted(UEWCraftingRecipe* Recipe, float Seconds)
 {
+    bCraftRequestPending = false;
     CraftSecondsTotal = CraftSecondsLeft = FMath::Max(0.f, Seconds);
     if (EquipmentResultText && Recipe && Recipe->Output && Seconds > .02f)
         EquipmentResultText->SetText(FText::Format(NSLOCTEXT("Elitewake", "CraftingNow", "Crafting {0}..."), Recipe->Output->DisplayName));
@@ -934,7 +1647,8 @@ void UEWInventoryWidget::ShowCraftStarted(UEWCraftingRecipe* Recipe, float Secon
 }
 void UEWInventoryWidget::HoverRecipe(int32 Index)
 {
-    if ((!bCraftingOpen || Index != SelectedRecipeIndex) && CraftSecondsLeft <= 0.f) SelectRecipe(Index);
+    HoveredRecipeIndex = Index;
+    UpdateRecipeCards();
 }
 
 UHorizontalBox* UEWInventoryWidget::MakeItemRow(UEWItemDefinition* Item, UWidget* Label, UImage*& Image)
@@ -965,6 +1679,7 @@ UTexture2D* UEWInventoryWidget::GetDisplayedMaterialIcon(UEWItemDefinition* Item
 }
 void UEWInventoryWidget::ShowCraftResult(EEWCraftResult Result)
 {
+    bCraftRequestPending = false;
     CraftSecondsLeft = CraftSecondsTotal = 0.f;
     FString Message;
     switch (Result)
@@ -993,33 +1708,35 @@ void UEWInventoryWidget::RefreshSummary()
 		}
 	}
     const float Carried = Inventory->GetTotalWeight() + (BoundEquipment ? BoundEquipment->GetTotalWeight() : 0.f);
-	SummaryText->SetText(FText::FromString(FString::Printf(TEXT("Slots %d / %d     Weight %.1f / %.1f kg"),
-		Inventory->GetUsedSlotCount(), Inventory->GetMaxSlotCount(), Carried, MaxWeight)));
+	SummaryText->SetText(FText::Format(NSLOCTEXT("Elitewake", "InventorySlotCount", "Slots {0} / {1}"),
+		Inventory->GetUsedSlotCount(), Inventory->GetMaxSlotCount()));
     const auto* Character = Cast<AEWCharacter>(GetOwningPlayerPawn());
     const auto* Survival = Character ? Character->GetSurvivalComponent() : nullptr;
     const auto* Progress = Character ? Character->GetProgressionComponent() : nullptr;
-    if (Survival && TileValues.Num() == 8)
+    if (Survival && TileValues.Num() == 6)
     {
-        const float Max[] = {Survival->GetMaxHealth(), Survival->GetMaxStamina(), 100.f, 100.f};
-        const float Now[] = {Survival->GetHealth(), Survival->GetStamina(), Survival->GetHunger(), Survival->GetHydration()};
-        for (int32 i = 0; i < 4; ++i)
+        const float Max[] = {Survival->GetMaxHealth(), Survival->GetMaxStamina(), UEWSurvivalComponent::MaxBreathSeconds};
+        const float Now[] = {Survival->GetHealth(), Survival->GetStamina(), Survival->GetBreathSeconds()};
+        for (int32 i = 0; i < 3; ++i)
         {
-            TileValues[i]->SetText(FText::FromString(i < 2 ? FString::Printf(TEXT("%.0f / %.0f"), Now[i], Max[i]) : FString::Printf(TEXT("%.0f%%"), Now[i])));
-            if (TileBars[i]) TileBars[i]->SetPercent(Max[i] > 0.f ? FMath::Clamp(Now[i] / Max[i], 0.f, 1.f) : 0.f);
+            TileValues[i]->SetText(FText::FromString(i < 2 ? FString::Printf(TEXT("%.0f / %.0f"), Now[i], Max[i])
+                : FString::Printf(TEXT("%.0f / %.0f s"), Now[i], Max[i])));
+            TileBars[i]->SetPercent(Max[i] > 0.f ? FMath::Clamp(Now[i] / Max[i], 0.f, 1.f) : 0.f);
         }
-        // Oxygen and intelligence are not mechanics yet; their tiles hold the place the layout gives them.
-        TileValues[4]->SetText(FText::FromString(TEXT("\u2014")));
-        TileValues[5]->SetText(Progress ? FText::Format(NSLOCTEXT("Elitewake", "FortitudeTile", "{0} pts"), Progress->GetStatPoints(EEWStat::Fortitude)) : FText::FromString(TEXT("\u2014")));
-        TileValues[6]->SetText(FText::FromString(FString::Printf(TEXT("%.1f / %.0f kg"), Carried, MaxWeight)));
-        TileValues[7]->SetText(FText::FromString(TEXT("\u2014")));
+        const float ClimateResist = Progress ? FMath::Min(.6f, Progress->GetStatPoints(EEWStat::Fortitude) * Progress->ResistPerFortitude) : 0.f;
+        TileValues[3]->SetText(FText::FromString(FString::Printf(TEXT("%.0f%% climate protection"), ClimateResist * 100.f)));
+        TileBars[3]->SetPercent(ClimateResist / .6f);
+        TileValues[4]->SetText(FText::FromString(FString::Printf(TEXT("%.1f / %.0f kg"), Carried, MaxWeight)));
+        TileBars[4]->SetPercent(MaxWeight > 0.f ? FMath::Clamp(Carried / MaxWeight, 0.f, 1.f) : 0.f);
+        TileValues[5]->SetText(FText::FromString(TEXT("\u2014")));
         if (ClimateValue && HumidityBar)
         {
             const FEWClimate C = Survival->GetClimate();
             FString State = Survival->IsFreezing() ? TEXT("  Freezing") : Survival->IsOverheating() ? TEXT("  Overheating")
                 : Survival->GetTargetBodyTemperature() < Survival->GetBodyTemperature() - .2f ? TEXT("  Cooling")
                 : Survival->GetTargetBodyTemperature() > Survival->GetBodyTemperature() + .2f ? TEXT("  Warming") : TEXT("");
-            ClimateValue->SetText(FText::FromString(FString::Printf(TEXT("%s  %.0f\u00B0C   Humidity %.0f%%\nBody %.1f\u00B0C%s\nCharacter age  not tracked yet"),
-                *AEWClimateRegion::RegionName(C.Region).ToString(), Survival->GetFeltTemperature(), C.Humidity, Survival->GetBodyTemperature(), *State)));
+            ClimateValue->SetText(FText::FromString(FString::Printf(TEXT("%s   ·   Air %.0f\u00B0C   ·   Humidity %.0f%%   ·   Body %.1f\u00B0C%s"),
+                *AEWClimateRegion::RegionName(C.Region).ToString(), C.AirTemperature, C.Humidity, Survival->GetBodyTemperature(), *State)));
             HumidityBar->SetPercent(FMath::Clamp(C.Humidity / 100.f, 0.f, 1.f));
             if (SubtitleText) SubtitleText->SetText(FText::Format(NSLOCTEXT("Elitewake", "SurvivorSubtitle", "Survivor  \u00B7  {0}"), AEWClimateRegion::RegionName(C.Region)));
         }
@@ -1050,7 +1767,7 @@ void UEWInventoryWidget::Select(int32 Index)
     Index = FMath::Clamp(Index, 0, SelectionCount()-1);
     // Picking an item takes the cursor back from the crafting list.
     const bool bLeftCrafting = bCraftingOpen;
-    if (bLeftCrafting) { bCraftingOpen = false; bShowingDetails = false; SelectedIndex = Index; RefreshCrafting(); return; }
+    if (bLeftCrafting) { bCraftingOpen = false; InspectedRecipe = nullptr; RecipeScrollAxis = 0.f; bShowingDetails = false; SelectedIndex = Index; RefreshCrafting(); return; }
     if (Index != SelectedIndex) { SelectedIndex = Index; bShowingDetails = false; UpdateSelection(); }
 }
 
@@ -1059,8 +1776,7 @@ void UEWInventoryWidget::UpdateSelection()
     for (int32 i=0; i<Rows.Num(); ++i)
     {
         const bool bPicked = i == SelectedIndex;
-        Rows[i]->SetBrushColor(bPicked ? FLinearColor(.2f,.23f,.27f,1) : FLinearColor(.045f,.06f,.075f,1));
-        if (RowRings.IsValidIndex(i)) RowRings[i]->SetBrushColor(bPicked && !bCraftingOpen ? CursorGold : NoRing);     // the controller cursor
+        Rows[i]->SetBrush(bPicked && !bCraftingOpen ? BrassRect(2.5f, CursorGold) : BrassRect(SlotStroke));
     }
     ItemPreview->GetParent()->SetVisibility(ESlateVisibility::Collapsed);
     if (!DetailsText) return;
@@ -1069,10 +1785,18 @@ void UEWInventoryWidget::UpdateSelection()
     FoodActionButton->SetVisibility(bShowingDetails && Item && Item->bFoodConsumptionEnabled ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionButton->SetVisibility(bShowingDetails && bEquippable ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
-    DetailsText->SetText(FText::FromString(SelectedIndex == INDEX_NONE ? TEXT("Your inventory is empty.\nGather supplies to begin.") : TEXT("Select an item to view its details.")));
+    if (!Item && SelectedEquipmentSlot() != EEWEquipmentSlot::None)
+        DetailsText->SetText(FText::Format(NSLOCTEXT("Elitewake", "EmptyEquipmentSlot", "{0} is empty. Select a suitable item in Inventory, then choose Equip (R / X)."),
+            FText::FromString(EquipmentNames[EquipmentOrder(SelectedEquipmentSlot())])));
+    else
+        DetailsText->SetText(FText::FromString(SelectedIndex == INDEX_NONE ? TEXT("Your inventory is empty.\nGather supplies to begin.") : TEXT("Select an item to view its details.")));
     if (bShowingDetails) ConfirmSelection();
     RefreshHotbarAssignments();
-    if (Rows.IsValidIndex(SelectedIndex)) ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], true);
+    if (Rows.IsValidIndex(SelectedIndex))
+    {
+        UScrollBox* Scroll = DisplayedEntries.IsValidIndex(SelectedIndex) ? ItemsScroll.Get() : SurvivorScroll.Get();
+        Scroll->ScrollWidgetIntoView(Rows[SelectedIndex], true);
+    }
     RevealSelectionAfterFrames = 2;
 }
 
@@ -1084,15 +1808,19 @@ void UEWInventoryWidget::ConfirmSelection()
     bShowingDetails = true;
     ItemPreview->SetBrushFromTexture(ResolveIcon(Item)); ItemPreview->GetParent()->SetVisibility(ESlateVisibility::HitTestInvisible);
     FoodActionButton->SetVisibility(Item->bFoodConsumptionEnabled ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+    if (auto* ActionLabel = Cast<UTextBlock>(FoodActionButton->GetContent()))
+        ActionLabel->SetText(FText::FromString(Item->SurvivalTreatment == EEWSurvivalTreatment::None ? TEXT("Eat (R / X)") : TEXT("Use treatment (R / X)")));
     RefreshHotbarAssignments();
     FString ArmorLines;
     if (Item->ArmorKind != EEWArmorKind::None)
     {
         // Armor (owner, November 8): its category, what it covers and what it does.
-        const TCHAR* Kind = Item->ArmorKind == EEWArmorKind::Cloth ? TEXT("Cloth") : Item->ArmorKind == EEWArmorKind::Fur ? TEXT("Fur") : TEXT("Metal");
+        const TCHAR* Kind = Item->EquipmentSlot == EEWEquipmentSlot::Feet ? TEXT("Footwear")
+            : Item->ArmorKind == EEWArmorKind::Cloth ? TEXT("Cloth") : Item->ArmorKind == EEWArmorKind::Fur ? TEXT("Fur") : TEXT("Metal");
         const TCHAR* Covers = Item->EquipmentSlot == EEWEquipmentSlot::Head ? TEXT("Helmet: head, face and neck")
             : Item->EquipmentSlot == EEWEquipmentSlot::Chest ? TEXT("Chest: torso, arms and hands (gloves included)")
-            : TEXT("Pants: legs and feet (footwear included)");
+            : Item->EquipmentSlot == EEWEquipmentSlot::Feet ? TEXT("Boots: feet and lower legs")
+            : Item->EquipmentSlot == EEWEquipmentSlot::Legs ? TEXT("Pants: legs; included footwear is covered when boots are equipped") : TEXT("Wearable accessory");
         ArmorLines = FString::Printf(TEXT("\n%s armor   %s\nDamage stopped %.1f%%    Cold protection %s    Overheating +%.1f%%"),
             Kind, Covers, Item->ArmorReduction * 100.f,
             Item->Insulation > 0.f ? *FString::Printf(TEXT("%d%%"), FMath::RoundToInt(Item->Insulation * 100.f)) : TEXT("none"),
@@ -1104,7 +1832,11 @@ void UEWInventoryWidget::ConfirmSelection()
     EquipmentActionButton->SetVisibility(Item->EquipmentSlot != EEWEquipmentSlot::None ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
     EquipmentActionText->SetText(FText::FromString(SelectedEquipmentSlot() == EEWEquipmentSlot::None ? TEXT("Equip") : TEXT("Unequip")));
     // Details change the list's available height; reveal the selected row after that layout change.
-    if (Rows.IsValidIndex(SelectedIndex)) ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], true, EDescendantScrollDestination::Center);
+    if (Rows.IsValidIndex(SelectedIndex))
+    {
+        UScrollBox* Scroll = DisplayedEntries.IsValidIndex(SelectedIndex) ? ItemsScroll.Get() : SurvivorScroll.Get();
+        Scroll->ScrollWidgetIntoView(Rows[SelectedIndex], true, EDescendantScrollDestination::Center);
+    }
     RevealSelectionAfterFrames = 2;
 }
 
@@ -1130,12 +1862,26 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     if (Key==EKeys::C || Key==EKeys::Gamepad_RightTrigger)
     { if (!Event.IsRepeat() && SelectedSection==0) SetStatFocus(StatFocus==INDEX_NONE ? 0 : INDEX_NONE); return FReply::Handled(); }
     const bool bSectionKey = Key==EKeys::Tab || Key==EKeys::PageUp || Key==EKeys::PageDown || Key==EKeys::Gamepad_RightShoulder || Key==EKeys::Gamepad_LeftTrigger;
+    if (bResetConfirmation)
+    {
+        if ((Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) && !Event.IsRepeat()) ConfirmAttributeChanges();
+        else if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right) CancelAttributeChanges();
+        return FReply::Handled();
+    }
+    if (GetPendingAttributeTotal() > 0 && StatFocus == INDEX_NONE && !bSectionKey)
+    {
+        if ((Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) && !Event.IsRepeat()) { ConfirmAttributeChanges(); return FReply::Handled(); }
+        if (Key == EKeys::Escape || Key == EKeys::Gamepad_FaceButton_Right) { CancelAttributeChanges(); return FReply::Handled(); }
+    }
     if (StatFocus != INDEX_NONE && !bSectionKey)
     {
-        if (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) SetStatFocus((StatFocus + UEWProgressionComponent::StatCount - 1) % UEWProgressionComponent::StatCount);
-        else if (Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down) SetStatFocus((StatFocus + 1) % UEWProgressionComponent::StatCount);
-        else if (Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) SpendStat(StatFocus); }
-        else if (Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right) SetStatFocus(INDEX_NONE);
+        if (Key==EKeys::Up || Key==EKeys::Gamepad_DPad_Up) NavigateAttributeFocus(-1);
+        else if (Key==EKeys::Down || Key==EKeys::Gamepad_DPad_Down) NavigateAttributeFocus(1);
+        else if (Key==EKeys::Right || Key==EKeys::Gamepad_DPad_Right) { if (!Event.IsRepeat()) SpendStat(StatFocus); }
+        else if (Key==EKeys::Left || Key==EKeys::Gamepad_DPad_Left) { if (!Event.IsRepeat()) UndoStat(StatFocus); }
+        else if (Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) ConfirmAttributeChanges(); }
+        else if ((Key==EKeys::R || Key==EKeys::Gamepad_FaceButton_Left) && !Event.IsRepeat()) OpenAttributeReset();
+        else if (Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right) CancelAttributeChanges();
         return FReply::Handled();      // while choosing a stat, the other keys do nothing
     }
     // Sections: Tab, PageDown or RB go on; Shift+Tab, PageUp or LT go back (LB goes back when it is tapped).
@@ -1149,6 +1895,11 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     {
         const bool bAccept = Key==EKeys::Enter || Key==EKeys::Gamepad_FaceButton_Bottom, bBack = Key==EKeys::Escape || Key==EKeys::Gamepad_FaceButton_Right;
         if (!Event.IsRepeat() || bLeftKey || bRightKey) TabFocusInput(bLeftKey ? -1 : bRightKey ? 1 : 0, bDownKey ? 1 : 0, bAccept && !Event.IsRepeat(), bBack && !Event.IsRepeat());
+        return FReply::Handled();
+    }
+    if (IsRecipeInspected() && Event.IsShiftDown() && (bUpKey || bDownKey))
+    {
+        ScrollRecipeCard(bUpKey ? -36.f : 36.f);
         return FReply::Handled();
     }
     if (bUpKey && AtTopOfSection()) { SetTabFocus(true); return FReply::Handled(); }
@@ -1207,10 +1958,14 @@ FReply UEWInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKey
     if (bRightKey) { MoveCursor(1, 0); return FReply::Handled(); }
     if (bUpKey) { MoveCursor(0, -1); return FReply::Handled(); }
     if (bDownKey) { MoveCursor(0, 1); return FReply::Handled(); }
-    if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { ConfirmSelection(); return FReply::Handled(); }
+    if (Key == EKeys::Enter || Key == EKeys::Gamepad_FaceButton_Bottom) { if (!Event.IsRepeat()) ConfirmSelection(); return FReply::Handled(); }
     if (Key == EKeys::R || Key == EKeys::Gamepad_FaceButton_Left)
     {
-        if (bCraftingOpen) return FReply::Handled();
+        if (bCraftingOpen)
+        {
+            if (!Event.IsRepeat()) InspectRecipe(SelectedRecipeIndex);
+            return FReply::Handled();
+        }
         if (!Event.IsRepeat())
         {
             if (SelectedItem() && SelectedItem()->bFoodConsumptionEnabled) PerformFoodAction();
@@ -1306,7 +2061,9 @@ void UEWInventoryWidget::NavigateStep(int32 Dx, int32 Dy)
     if (Dy < 0 && AtTopOfSection()) { SetTabFocus(true); return; }
     if (StatFocus != INDEX_NONE)
     {
-        if (Dy) SetStatFocus((StatFocus + (Dy > 0 ? 1 : UEWProgressionComponent::StatCount - 1)) % UEWProgressionComponent::StatCount);
+        if (Dy) NavigateAttributeFocus(Dy);
+        else if (Dx > 0) SpendStat(StatFocus);
+        else if (Dx < 0) UndoStat(StatFocus);
         return;
     }
     switch (SelectedSection)
@@ -1336,7 +2093,11 @@ FReply UEWInventoryWidget::NativeOnAnalogValueChanged(const FGeometry& Geometry,
     if (FMath::Abs(Event.GetAnalogValue()) > .2f)
         if (auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer())) Controller->RecordInputDevice(Event.GetKey());
     // The left stick steps the highlight on every tab, the way the d-pad does: both axes, repeating while held.
-    if (Event.GetKey() == EKeys::Gamepad_LeftY)
+    if (Event.GetKey() == EKeys::Gamepad_RightY)
+    {
+        RecipeScrollAxis = IsRecipeInspected() && FMath::Abs(Event.GetAnalogValue()) >= .2f ? -Event.GetAnalogValue() : 0.f;
+    }
+    else if (Event.GetKey() == EKeys::Gamepad_LeftY)
     {
         const int32 Direction = FMath::Abs(Event.GetAnalogValue()) >= .5f ? (Event.GetAnalogValue() > 0 ? -1 : 1) : 0;
         if (Direction != AnalogDirection) { AnalogDirection = Direction; AnalogRepeatRemaining = .35f; if (Direction) NavigateStep(0, Direction); }
@@ -1429,13 +2190,27 @@ void UEWInventoryWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
         RefreshInventory();
     }
     RefreshSummary();
+    if (bCraftingOpen && BoundInventory && DisplayedRecipes.IsValidIndex(SelectedRecipeIndex))
+    {
+        RecipeRefreshRemaining -= DeltaTime;
+        if (RecipeRefreshRemaining <= 0.f)
+        {
+            RecipeRefreshRemaining = .25f;
+            UpdateRecipeCards();
+            const auto Readiness = bCraftRequestPending || CraftSecondsLeft > 0.f
+                ? EEWCraftResult::Busy : BoundInventory->GetCraftReadiness(GetShownRecipe());
+            if (Readiness != ShownCraftReadiness) UpdateCraftActions();
+        }
+    }
+    if (HasUserFocus(GetOwningPlayer()) && !IsTypingText() && RecipeScrollAxis != 0.f)
+        ScrollRecipeCard(RecipeScrollAxis * DeltaTime * 180.f);
     // Use settled geometry: confirmation may shrink the scroll viewport after the input event.
     if (RevealSelectionAfterFrames > 0 && --RevealSelectionAfterFrames == 0 && Rows.IsValidIndex(SelectedIndex))
     {
-        if (SelectedIndex == Rows.Num()-1) ItemsScroll->ScrollToEnd();
-        else ItemsScroll->ScrollWidgetIntoView(Rows[SelectedIndex], false);
+        UScrollBox* Scroll = DisplayedEntries.IsValidIndex(SelectedIndex) ? ItemsScroll.Get() : SurvivorScroll.Get();
+        Scroll->ScrollWidgetIntoView(Rows[SelectedIndex], false);
     }
-    if (!HasUserFocus(GetOwningPlayer()) || IsTypingText()) { AnalogDirection = 0; AnalogHorizontal = 0; }
+    if (!HasUserFocus(GetOwningPlayer()) || IsTypingText()) { AnalogDirection = 0; AnalogHorizontal = 0; RecipeScrollAxis = 0.f; }
     if (AnalogDirection || AnalogHorizontal)
     {
         AnalogRepeatRemaining -= DeltaTime;
@@ -1467,6 +2242,13 @@ EEWEquipmentSlot UEWInventoryWidget::SelectedEquipmentSlot() const
     return DisplayedEquipment.IsValidIndex(Index) ? DisplayedEquipment[Index].Slot : EEWEquipmentSlot::None;
 }
 
+UWidget* UEWInventoryWidget::GetEquipmentSlotWidget(EEWEquipmentSlot EquipmentSlot) const
+{
+    const int32 Index = DisplayedEquipment.IndexOfByPredicate([EquipmentSlot](const FEWEquipmentEntry& Entry) { return Entry.Slot == EquipmentSlot; });
+    const int32 Row = DisplayedEntries.Num() + Index;
+    return Index != INDEX_NONE && Rows.IsValidIndex(Row) ? Rows[Row].Get() : nullptr;
+}
+
 void UEWInventoryWidget::PerformEquipmentAction()
 {
     UEWItemDefinition* Item = SelectedItem();
@@ -1494,7 +2276,7 @@ void UEWInventoryWidget::PerformFoodAction()
     auto* Controller = Cast<AEWPlayerController>(GetOwningPlayer());
     UEWItemDefinition* Item = SelectedItem();
     if (!bShowingDetails || !Item || !Item->bFoodConsumptionEnabled || !Controller) return;
-    EquipmentResultText->SetText(FText::FromString(TEXT("Eating…")));
+    EquipmentResultText->SetText(FText::FromString(Item->SurvivalTreatment == EEWSurvivalTreatment::None ? TEXT("Eating…") : TEXT("Preparing treatment…")));
     Controller->RequestConsumeFood(Item);
 }
 void UEWInventoryWidget::ShowFoodResult(EEWFoodUseResult Result)
@@ -1503,6 +2285,9 @@ void UEWInventoryWidget::ShowFoodResult(EEWFoodUseResult Result)
     switch (Result)
     {
         case EEWFoodUseResult::Success: Message = TEXT("Berry eaten"); break;
+        case EEWFoodUseResult::TreatmentStarted: Message = TEXT("Applying bandage"); break;
+        case EEWFoodUseResult::TreatmentApplied: Message = TEXT("Treatment applied"); break;
+        case EEWFoodUseResult::TreatmentUnneeded: Message = TEXT("You do not need this treatment"); break;
         case EEWFoodUseResult::NoBenefit: Message = TEXT("Hunger and health are already full"); break;
         case EEWFoodUseResult::NotOwned: Message = TEXT("That food is no longer in your inventory"); break;
         case EEWFoodUseResult::InvalidFood: Message = TEXT("That item cannot be eaten"); break;
@@ -1571,6 +2356,9 @@ UTexture2D* UEWInventoryWidget::ResolveIcon(UEWItemDefinition* Item)
 {
     if (!Item) return nullptr;
     if (auto* Texture=Item->Icon.LoadSynchronous()) return Texture;
+    if (Item->FoodKind == EEWFoodKind::BerryDish)
+        if (auto* Texture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Elitewake/UI/Inventory/T_InventoryBerryDish.T_InventoryBerryDish")))
+            return Texture;
     int32 Kind=8;
     if (Item->GatheringTool==EEWGatheringTool::Hatchet) Kind=5;
     else if (Item->GatheringTool==EEWGatheringTool::Pickaxe) Kind=6;
@@ -1578,11 +2366,4 @@ UTexture2D* UEWInventoryWidget::ResolveIcon(UEWItemDefinition* Item)
     else if (Item->Category==EEWItemCategory::Clothing) Kind=9;
     if (!FallbackIcons.Contains(Kind)) FallbackIcons.Add(Kind,EWHudIcon::Make(Kind,false));
     return FallbackIcons[Kind];
-}
-
-FLinearColor UEWInventoryWidget::ProbePortraitPixel(FVector2D Uv) const
-{
-    if (!PortraitTarget) return FLinearColor::Black;
-    const int32 X = FMath::Clamp(int32(Uv.X * PortraitTarget->SizeX), 0, PortraitTarget->SizeX - 1), Y = FMath::Clamp(int32(Uv.Y * PortraitTarget->SizeY), 0, PortraitTarget->SizeY - 1);
-    return UKismetRenderingLibrary::ReadRenderTargetPixel(const_cast<UEWInventoryWidget*>(this), PortraitTarget, X, Y);
 }

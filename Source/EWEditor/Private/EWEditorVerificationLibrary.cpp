@@ -26,8 +26,10 @@ bool UEWEditorVerificationLibrary::SendVerificationCompanyPolicy(AEWPlayerContro
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/Engine.h"
+#include "Engine/GameViewportClient.h"
 #include "GameFramework/PlayerController.h"
 #include "Components/BoxComponent.h"
+#include "Blueprint/UserWidget.h"
 #include "Engine/World.h"
 #include "Engine/NetDriver.h"
 #include "EWPickup.h"
@@ -35,6 +37,11 @@ bool UEWEditorVerificationLibrary::SendVerificationCompanyPolicy(AEWPlayerContro
 #include "EWPlayerController.h"
 #include "EWInventoryComponent.h"
 #include "Framework/Application/SlateApplication.h"
+#include "Slate/SceneViewport.h"
+#include "Widgets/SWindow.h"
+#include "Widgets/SViewport.h"
+#include "ImageUtils.h"
+#include "Misc/FileHelper.h"
 #include "InputCoreTypes.h"
 #include "EWStation.h"
 #include "EWResourceNode.h"
@@ -436,6 +443,109 @@ bool UEWEditorVerificationLibrary::StartVerificationPlaySession(int32 NumPlayers
     Params.SessionDestination = EPlaySessionDestinationType::InProcess;
     Params.EditorPlaySettings = Settings;
     GEditor->RequestPlaySession(Params);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::ClickVerificationWidget(UUserWidget* Owner, FName WidgetName, bool bDoubleClick)
+{
+    UWidget* Target = Owner ? Owner->GetWidgetFromName(WidgetName) : nullptr;
+    if (!Target || !Target->GetWorld() || Target->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    const auto Widget = Target->GetCachedWidget();
+    if (!Widget) return false;
+    auto& Slate = FSlateApplication::Get();
+    const auto Window = Slate.FindWidgetWindow(Widget.ToSharedRef());
+    const FGeometry& Geometry = Target->GetCachedGeometry();
+    if (!Window || Geometry.GetLocalSize().IsNearlyZero()) return false;
+    const FVector2D At = Geometry.LocalToAbsolute(Geometry.GetLocalSize() * .5f);
+    const TSet<FKey> DownButtons{ EKeys::LeftMouseButton };
+    const TSet<FKey> NoButtons;
+    const auto Modifiers = Slate.GetModifierKeys();
+    const FPointerEvent Move(0, At, Slate.GetCursorPos(), NoButtons, EKeys::Invalid, 0, Modifiers);
+    const FPointerEvent Down(0, At, At, DownButtons, EKeys::LeftMouseButton, 0, Modifiers);
+    const FPointerEvent Up(0, At, At, NoButtons, EKeys::LeftMouseButton, 0, Modifiers);
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Slate.ProcessMouseMoveEvent(Move);
+    const bool bHandledDown = Slate.ProcessMouseButtonDownEvent(Window->GetNativeWindow(), Down);
+    Slate.ProcessMouseButtonUpEvent(Up);
+    if (bDoubleClick)
+    {
+        Slate.ProcessMouseButtonDoubleClickEvent(Window->GetNativeWindow(), Down);
+        Slate.ProcessMouseButtonUpEvent(Up);
+    }
+    // Borders inspect on press and need not consume the release; buttons consume both.
+    return bHandledDown;
+}
+
+bool UEWEditorVerificationLibrary::ScrollVerificationWidget(UUserWidget* Owner, FName WidgetName, float WheelDelta)
+{
+    UWidget* Target = Owner ? Owner->GetWidgetFromName(WidgetName) : nullptr;
+    if (!Target || !Target->GetWorld() || Target->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    auto& Slate = FSlateApplication::Get();
+    const auto Geometry = Target->GetCachedGeometry();
+    const FVector2D At = Geometry.LocalToAbsolute(Geometry.GetLocalSize() * .5f);
+    const TSet<FKey> Buttons;
+    const FPointerEvent Move(0, At, Slate.GetCursorPos(), Buttons, EKeys::Invalid, 0, Slate.GetModifierKeys());
+    const FPointerEvent Wheel(0, At, At, Buttons, EKeys::Invalid, WheelDelta, Slate.GetModifierKeys());
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    Slate.ProcessMouseMoveEvent(Move);
+    return Slate.ProcessMouseWheelOrGestureEvent(Wheel, nullptr);
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationUIRecipeScroll(APlayerController* Controller, float Value)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    const int32 User = FSlateApplication::Get().GetUserIndexForController(Controller->GetLocalPlayer()->GetControllerId());
+    const FAnalogInputEvent Event(EKeys::Gamepad_RightY, FModifierKeysState(), User, false, 0, 0, Value);
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    FSlateApplication::Get().ProcessAnalogInputEvent(Event);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::ResizeVerificationPlayViewport(UWorld* World, int32 Width, int32 Height)
+{
+    if (!World || World->WorldType != EWorldType::PIE || Width <= 0 || Height <= 0) return false;
+    auto* Client = World->GetGameViewport();
+    auto* Viewport = Client ? Client->GetGameViewport() : nullptr;
+    if (!Viewport) return false;
+    if (const auto Window = Viewport->FindWindow()) Window->Resize(FVector2D(Width, Height));
+    Viewport->SetFixedViewportSize(Width, Height);
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::CaptureVerificationPlayViewport(UWorld* World, const FString& Filename)
+{
+    if (!World || World->WorldType != EWorldType::PIE || !FSlateApplication::IsInitialized()) return false;
+    const auto* Client = World->GetGameViewport();
+    const auto Viewport = Client ? Client->GetGameViewportWidget() : nullptr;
+    if (!Viewport) return false;
+    TArray<FColor> Pixels;
+    FIntVector Size;
+    if (!FSlateApplication::Get().TakeScreenshot(Viewport.ToSharedRef(), Pixels, Size)) return false;
+    TArray64<uint8> PNG;
+    FImageUtils::PNGCompressImageArray(Size.X, Size.Y, Pixels, PNG);
+    return FFileHelper::SaveArrayToFile(PNG, *Filename);
+}
+
+bool UEWEditorVerificationLibrary::ConfigureAttributeVerificationSave(AEWPlayerController* Controller, const FString& SaveSlot)
+{
+    if (!Controller || !Controller->HasAuthority() || Controller->GetWorld()->WorldType != EWorldType::PIE
+        || !SaveSlot.StartsWith(TEXT("EW_AttributeVerification_")) || SaveSlot.Contains(TEXT("/")) || SaveSlot.Contains(TEXT("\\"))) return false;
+    Controller->AttributeVerificationSaveSlot = SaveSlot;
+    return true;
+}
+
+bool UEWEditorVerificationLibrary::IsVerificationWidgetEnabled(UUserWidget* Owner, FName WidgetName)
+{
+    auto* Widget = Owner ? Owner->GetWidgetFromName(WidgetName) : nullptr;
+    return Widget && Widget->GetIsEnabled();
+}
+
+bool UEWEditorVerificationLibrary::SendVerificationAttributeRequest(AEWPlayerController* Controller, const TArray<int32>& Additions, int64 Revision, bool bReset)
+{
+    if (!Controller || !Controller->IsLocalPlayerController() || Controller->GetWorld()->WorldType != EWorldType::PIE) return false;
+    TGuardValue<bool> ScriptGuard(GAllowActorScriptExecutionInEditor, false);
+    if (bReset) Controller->RequestResetAttributes(Revision);
+    else Controller->RequestCommitAttributes(Additions, Revision);
     return true;
 }
 

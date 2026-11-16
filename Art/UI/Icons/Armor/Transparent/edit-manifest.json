@@ -1,0 +1,47 @@
+{
+  "date": "2026-11-12",
+  "mode": "built-in image generation: background-extraction edits",
+  "paths": [
+    {
+      "name": "ClothHeadWrap",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-a90993cd-d080-48d9-9079-37e4865a9be8.png"
+    },
+    {
+      "name": "ClothChest",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-7e979a2d-76de-4cf9-8636-c75b2be7e888.png"
+    },
+    {
+      "name": "ClothPants",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-a45f3b78-e005-40e1-b9f7-ba61e949d3a7.png"
+    },
+    {
+      "name": "FurHood",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-b3253613-0df3-4f70-9b1d-557c2000741e.png"
+    },
+    {
+      "name": "FurJacket",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-71b70e87-985e-4022-b5cf-db6af84533f4.png"
+    },
+    {
+      "name": "FurPants",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-bc1ba7d2-496e-4f4e-97db-14d27af691a4.png"
+    },
+    {
+      "name": "MetalTricornHelmet",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-fe9f0b9d-66f5-41c0-8171-c1b7bb98fd6f.png"
+    },
+    {
+      "name": "MetalCuirass",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-347a8358-8a43-41e9-97ec-bbfd8d0cefbf.png"
+    },
+    {
+      "name": "MetalPants",
+      "path": "C:\\Users\\elite\\.codex\\generated_images\\01a1bd9c-5763-7ce0-b02a-b49f59a68bc6\\exec-ef926c85-3fa1-4b38-8d90-b797f6762de3.png"
+    }
+  ],
+  "prompts": {
+    "cloth": "Use case: background-extraction. EDIT TARGET: the supplied existing Elitewake clothing inventory icon. Remove ONLY the dark rectangular background and any empty floor/plinth/underside line outside the garment, producing genuine transparent alpha around the existing garment silhouette. Preserve the garment's exact design, shape, pose, original cropping, placement, proportions, beige colors, fabric texture, stitching, folds, frayed edges, shading and illustration style. Do not redraw, beautify, sharpen, recolor, reconstruct cropped edges, add parts, or change the clothing. Keep genuine fabric shadows and dark interior garment surfaces opaque; make only exterior empty background transparent. No new scene, labels, frame, shadows or lighting. Return one square transparent cutout of this same icon, at the same relative scale and alignment.",
+    "fur": "Use case: background-extraction. EDIT TARGET: this supplied existing Elitewake fur clothing inventory icon. Remove ONLY the dark rectangular background, exterior empty gray backdrop, and empty display floor/plinth/line. Return genuine transparent alpha outside the original garment silhouette. Preserve the EXACT depicted fur garment, head/fur design, pose, brown colors, straps, texture, lighting, illustration style, placement, scale, and the original cropped extent. CRITICAL: some source edges and body parts are intentionally cropped by the existing icon; retain those same cuts. Do not invent, complete or extend missing fur, an ear, a leg, a sleeve, or any cropped garment part. Do not redesign or redraw the item. Keep fur shadows and interior surfaces opaque; only exterior empty background is transparent. One same square icon cutout, no new labels, scene, frame, lighting or cast shadows.",
+    "metal": "Use case: background-extraction. EDIT TARGET: this supplied existing Elitewake metal clothing inventory icon. Remove ONLY the exterior dark rectangular backdrop and any empty floor/plinth/underside line, returning a genuinely transparent-alpha cutout. Preserve exactly the existing garment/helmet silhouette, proportions, original cropping, pose, navy cloth, steel armor, antique brass detailing, straps, buckles, stitching, textures, highlights, shadows and illustration style. Do not redesign, redraw, embellish, sharpen, recolor, change perspective, or invent missing cropped parts. Keep actual garment interior shadows and metal surfaces opaque. Only empty exterior background and open empty gaps should be transparent. One same square inventory icon at its existing relative scale/alignment; no new objects, labels, scene, frame, lighting or cast shadows."
+  }
+}

@@ -56,6 +56,13 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     Original->GetInventoryComponent()->AddItem(Axe, 1);
     TestTrue(TEXT("Original equips its owned axe"),
         Original->GetEquipmentComponent()->EquipItem(Axe, EEWEquipmentSlot::MainHand) == EEWEquipmentResult::Success);
+    UEWItemDefinition* Boots = LoadObject<UEWItemDefinition>(nullptr, TEXT("/Game/Elitewake/Items/Armor/DA_LeatherSeaBoots.DA_LeatherSeaBoots"));
+    UEWItemDefinition* Cuff = LoadObject<UEWItemDefinition>(nullptr, TEXT("/Game/Elitewake/Items/Armor/DA_LeatherWristCuff.DA_LeatherWristCuff"));
+    if (!TestNotNull(TEXT("Playable boots"), Boots) || !TestNotNull(TEXT("Playable cuff"), Cuff)) return false;
+    Original->GetInventoryComponent()->AddItem(Boots, 1);
+    Original->GetInventoryComponent()->AddItem(Cuff, 1);
+    TestTrue(TEXT("Original wears boots"), Original->GetEquipmentComponent()->EquipItem(Boots, EEWEquipmentSlot::Feet) == EEWEquipmentResult::Success);
+    TestTrue(TEXT("Original wears accessory"), Original->GetEquipmentComponent()->EquipItem(Cuff, EEWEquipmentSlot::Accessory) == EEWEquipmentResult::Success);
     TestTrue(TEXT("Axe shortcut binds"), Original->GetHotbarComponent()->BindItem(2, Axe) == EEWHotbarResult::Success);
     TestTrue(TEXT("Berry shortcut binds"), Original->GetHotbarComponent()->BindItem(5, Berry) == EEWHotbarResult::Success);
 
@@ -104,6 +111,10 @@ bool FEWSurvivorSaveRoundTripTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Food age survives the save"), SavedBerry && FMath::IsNearlyEqual(SavedBerry->FoodAgeSeconds, 321.f, 1.f));
     TestEqual(TEXT("Equipped tool restored"), Resumed->GetEquipmentComponent()->GetEquippedItem(EEWEquipmentSlot::MainHand), Axe);
     TestEqual(TEXT("Tool is not duplicated in inventory"), Resumed->GetInventoryComponent()->GetItemCount(Axe), 0);
+    TestEqual(TEXT("Boots restored to original slot"), Resumed->GetEquipmentComponent()->GetEquippedItem(EEWEquipmentSlot::Feet), Boots);
+    TestEqual(TEXT("Accessory restored to appended slot"), Resumed->GetEquipmentComponent()->GetEquippedItem(EEWEquipmentSlot::Accessory), Cuff);
+    TestEqual(TEXT("Restored boots not duplicated"), Resumed->GetInventoryComponent()->GetItemCount(Boots), 0);
+    TestEqual(TEXT("Restored accessory not duplicated"), Resumed->GetInventoryComponent()->GetItemCount(Cuff), 0);
     TestEqual(TEXT("Starter and saved tool resolve to one owned unit"), Resumed->GetHotbarComponent()->GetOwnedQuantity(Axe), 1);
     TestEqual(TEXT("First hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(2), Axe);
     TestEqual(TEXT("Second hotbar binding restored"), Resumed->GetHotbarComponent()->GetBoundItem(5), Berry);

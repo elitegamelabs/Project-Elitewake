@@ -16,6 +16,9 @@ enum class EEWStat : uint8 { Vitality, Endurance, Strength, Fortitude };
 UENUM(BlueprintType)
 enum class EEWExperienceSource : uint8 { Gather, Craft, Hunt, Fish };
 
+UENUM(BlueprintType)
+enum class EEWAttributeResult : uint8 { Success, NotAuthority, Busy, Stale, InvalidAllocation, NotEnoughPoints, NothingToReset, NotEnoughGold, SaveFailed };
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnProgressionChanged);
 
 /**
@@ -63,6 +66,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="Progression") int32 Award(EEWExperienceSource Source, int32 Times = 1);
     /** Authority only. Spends one stat point; false when none is left. */
     UFUNCTION(BlueprintCallable, Category="Progression") bool SpendPoint(EEWStat Stat);
+    UFUNCTION(BlueprintPure, Category="Progression") int64 GetAttributeRevision() const { return AttributeRevision; }
+    static constexpr int64 AttributeResetCopper = 75000; // 5 gold: 500 copper/silver, 30 silver/gold.
+    /** Server-only atomic transactions. Failed persistence restores points, currency and current vitals. */
+    EEWAttributeResult CommitAttributePoints(const TArray<int32>& Additions, int64 ExpectedRevision, TFunctionRef<bool()> Persist);
+    EEWAttributeResult ResetAttributePoints(int64 ExpectedRevision, TFunctionRef<bool()> Persist);
     /** Authority only: sets level and spent points straight (a saved survivor coming back, and tests). */
     void Restore(int32 NewLevel, int32 NewExperience, int32 NewUnspent, const TArray<int32>& NewStatPoints, int32 NewSkillPoints = 0, const TArray<FName>& NewSkills = TArray<FName>());
     /** The lit stars, for saving. */
@@ -88,6 +96,9 @@ public:
     UPROPERTY(EditDefaultsOnly, Category="Progression|Stats") float ResistPerFortitude = .04f;
 
 private:
+    EEWAttributeResult AttributeTransaction(const TArray<int32>& Additions, bool bReset, int64 ExpectedRevision, TFunctionRef<bool()> Persist);
+    bool bAttributeTransaction = false;
+    UPROPERTY(ReplicatedUsing=OnRep_Progression) int64 AttributeRevision = 0;
     UFUNCTION() void OnRep_Progression();
     void ApplyStats();
     void Changed();

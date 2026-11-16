@@ -1,0 +1,396 @@
+{
+  "date": "2026-11-12",
+  "task": "Existing clothing icon transparency",
+  "import": {
+    "success": true,
+    "icons": [
+      {
+        "name": "ClothHeadWrap",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_ClothHeadWrap.T_Icon_ClothHeadWrap",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "ClothChest",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_ClothChest.T_Icon_ClothChest",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "ClothPants",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_ClothPants.T_Icon_ClothPants",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "FurHood",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_FurHood.T_Icon_FurHood",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "FurJacket",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_FurJacket.T_Icon_FurJacket",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "FurPants",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_FurPants.T_Icon_FurPants",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "MetalTricornHelmet",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_MetalTricornHelmet.T_Icon_MetalTricornHelmet",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "MetalCuirass",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_MetalCuirass.T_Icon_MetalCuirass",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      },
+      {
+        "name": "MetalPants",
+        "texture": "/Game/Elitewake/UI/Icons/Armor/T_Icon_MetalPants.T_Icon_MetalPants",
+        "item_reference_unchanged": true,
+        "compression_no_alpha": false,
+        "maximum_size": 256
+      }
+    ],
+    "error": null
+  },
+  "alpha_audit": {
+    "success": true,
+    "icons": [
+      {
+        "name": "T_Icon_ClothChest",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.4004067367200079,
+        "opaque_fraction": 4.8966115448109906e-05,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_ClothHeadWrap",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.4983058995902108,
+        "opaque_fraction": 4.451465040737264e-06,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_ClothPants",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.7014580455779146,
+        "opaque_fraction": 1.1446624390467251e-05,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_FurHood",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.4422155323061896,
+        "opaque_fraction": 0.00044832612195996733,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_FurJacket",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.4361895204881858,
+        "opaque_fraction": 1.2718471544963613e-06,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_FurPants",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.6899503725240316,
+        "opaque_fraction": 0.00012336917398614704,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_MetalCuirass",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.37035235253568166,
+        "opaque_fraction": 3.4975796748649935e-05,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_MetalPants",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.7006777673486311,
+        "opaque_fraction": 8.775745366024893e-05,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "name": "T_Icon_MetalTricornHelmet",
+        "mode": "RGBA",
+        "size": [
+          1254,
+          1254
+        ],
+        "alpha_extrema": [
+          0,
+          255
+        ],
+        "transparent_fraction": 0.5375519231600823,
+        "opaque_fraction": 0.00013036433333587702,
+        "corner_alpha": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "play": {
+    "success": true,
+    "checks": [
+      {
+        "check": "All nine real clothing items shown",
+        "passed": true
+      },
+      {
+        "check": "All nine real recipe outputs shown",
+        "passed": true
+      },
+      {
+        "check": "ClothHeadWrap keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "ClothHeadWrap stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "ClothChest keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "ClothChest stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "ClothPants keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "ClothPants stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "FurHood keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "FurHood stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "FurJacket keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "FurJacket stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "FurPants keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "FurPants stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "MetalTricornHelmet keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "MetalTricornHelmet stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "MetalCuirass keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "MetalCuirass stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "MetalPants keeps original texture reference",
+        "passed": true
+      },
+      {
+        "check": "MetalPants stays within 256-pixel UI texture limit",
+        "passed": true
+      },
+      {
+        "check": "World continues running behind Inventory",
+        "passed": true
+      },
+      {
+        "check": "Dim view uses real ship deck and scene lights",
+        "passed": true
+      },
+      {
+        "check": "720p Inventory keeps all nine icon references",
+        "passed": true
+      }
+    ],
+    "runtime_textures": {
+      "ClothHeadWrap": [
+        156,
+        156
+      ],
+      "ClothChest": [
+        156,
+        156
+      ],
+      "ClothPants": [
+        156,
+        156
+      ],
+      "FurHood": [
+        156,
+        156
+      ],
+      "FurJacket": [
+        156,
+        156
+      ],
+      "FurPants": [
+        156,
+        156
+      ],
+      "MetalTricornHelmet": [
+        156,
+        156
+      ],
+      "MetalCuirass": [
+        156,
+        156
+      ],
+      "MetalPants": [
+        156,
+        156
+      ]
+    },
+    "error": null
+  },
+  "equipment_status": "unresolved; deferred",
+  "packaged_exe_updated": false
+}

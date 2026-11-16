@@ -1,18 +1,19 @@
-"""Inventory icons for the nine armor pieces (owner, November 8), cut from the owner's three concept sheets in
-Art/Reference/Armor: each sheet's front view of its helmet, chest piece and pants, set on the dark panel on a square.
-Plain Python with Pillow; run from the repository root:
+"""Publish the approved transparent cutouts for the nine existing clothing icons.
+Copies existing raster artwork without regenerating, resizing or changing pixels:
     python Scripts/Art/make_armor_icons.py
-Writes Art/UI/Icons/Armor/T_Icon_<Piece>.png (256 x 256). The sheets are references, not finished art; these icons stand
-until production icons are made from the production garments.
+The original RGB crop generator painted an opaque square behind every garment. Curated RGBA cutouts now live in
+Art/UI/Icons/Armor/Transparent. Missing/opaque cutouts fail clearly instead of silently rebuilding those backgrounds.
+The old crop coordinates below remain as provenance; the concept sheets and recovery copies are preserved.
 """
 from pathlib import Path
 from PIL import Image
+import shutil
 
 ROOT = Path(__file__).resolve().parents[2]
 SHEETS = ROOT / 'Art' / 'Reference' / 'Armor'
 OUT = ROOT / 'Art' / 'UI' / 'Icons' / 'Armor'
 SIZE = 256
-PANEL = (22, 21, 23)   # the sheets' dark panel
+CURATED = OUT / 'Transparent'
 
 # (sheet, piece, crop box in the 1536 x 1024 sheet: left, top, right, bottom)
 CROPS = [
@@ -31,14 +32,14 @@ CROPS = [
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     for sheet, piece, box in CROPS:
-        image = Image.open(SHEETS / sheet).convert('RGB').crop(box)
-        # Fitted inside a square of the sheet's own dark panel colour, keeping its proportions.
-        scale = (SIZE - 16) / max(image.size)
-        image = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))), Image.LANCZOS)
-        square = Image.new('RGB', (SIZE, SIZE), PANEL)
-        square.paste(image, ((SIZE - image.width) // 2, (SIZE - image.height) // 2))
-        square.save(OUT / f'T_Icon_{piece}.png')
-        print('wrote', piece)
+        source = CURATED / f'T_Icon_{piece}.png'
+        with Image.open(source) as image:
+            assert image.mode == 'RGBA', f'{piece}: expected RGBA'
+            assert image.getchannel('A').getextrema() == (0, 255), f'{piece}: missing cutout alpha'
+            assert all(image.getpixel(at)[3] == 0 for at in ((0, 0), (image.width-1, 0),
+                       (0, image.height-1), (image.width-1, image.height-1))), f'{piece}: opaque corner'
+        shutil.copy2(source, OUT / source.name)
+        print('published transparent icon', piece)
 
 
 if __name__ == '__main__':

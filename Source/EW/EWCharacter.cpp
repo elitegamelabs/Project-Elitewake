@@ -580,6 +580,8 @@ void AEWCharacter::Tick(float DeltaSeconds)
 	if (HasAuthority() && SurvivalComponent)
 	{
 		SurvivalComponent->UpdateStamina(bIsSprinting, DeltaSeconds);
+		const auto* Movement = GetCharacterMovement();
+		SurvivalComponent->UpdateHazards(Movement && Movement->IsSwimming() && Movement->ImmersionDepth() >= .99f, DeltaSeconds);
 		SurvivalComponent->UpdateNeeds(bIsSprinting, DeltaSeconds);
 		SurvivalComponent->UpdateRecovery(AEWCampfire::IsLitFireNear(this), DeltaSeconds);
 		// The climate where the survivor stands, twice a second.
@@ -1443,9 +1445,17 @@ float AEWCharacter::GetOverheatMultiplier() const
 
 void AEWCharacter::TakePhysicalDamage(float Amount)
 {
+    TakeInjuringHit(Amount, false, false);
+}
+
+void AEWCharacter::TakeInjuringHit(float Amount, bool bBleeds, bool bPoisons)
+{
     // Server side: armor takes its share of a blow or a bite before it reaches health (owner, November 8).
-    if (!HasAuthority() || !SurvivalComponent || Amount <= 0.f) return;
+    if (!HasAuthority() || !SurvivalComponent || SurvivalComponent->IsDead() || !FMath::IsFinite(Amount) || Amount <= 0.f) return;
+    if (InventoryComponent) InventoryComponent->InterruptBandage();
     SurvivalComponent->ApplyDamage(Amount * (1.f - GetArmorReduction()));
+    if (bBleeds) SurvivalComponent->InflictBleeding();
+    if (bPoisons) SurvivalComponent->InflictPoison();
 }
 
 int32 AEWCharacter::SwingKindAt(const AActor* Target) const
@@ -1573,7 +1583,8 @@ AEWCharacter* AEWCharacter::MeleeStrike()
     if (!Victim || !Victim->SurvivalComponent || Victim->SurvivalComponent->GetHealth() <= 0.f) return nullptr;
     // A free port: nobody hurts anybody inside its bounds (either of them inside is enough).
     if (AEWSafeZone::IsPvPBlocked(this, GetActorLocation()) || AEWSafeZone::IsPvPBlocked(this, Victim->GetActorLocation())) return nullptr;
-    Victim->TakePhysicalDamage(FistDamage);
+    const UEWItemDefinition* Weapon = EquipmentComponent ? EquipmentComponent->GetEquippedItem(EEWEquipmentSlot::MainHand) : nullptr;
+    Victim->TakeInjuringHit(FistDamage, Weapon && Weapon->Category == EEWItemCategory::Weapon && Weapon->bBleedsOnMeleeHit, false);
     Victim->MulticastHitReact();
     return Victim;
 }

@@ -17,7 +17,7 @@ void UEWEquipmentComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>
 
 bool UEWEquipmentComponent::IsValidSlot(EEWEquipmentSlot Slot)
 {
-    return Slot > EEWEquipmentSlot::None && Slot <= EEWEquipmentSlot::OffHand;
+    return Slot > EEWEquipmentSlot::None && Slot <= EEWEquipmentSlot::Accessory;
 }
 
 bool UEWEquipmentComponent::ChangeEquippedState(EEWEquipmentSlot Slot, UEWItemDefinition* NewState)

@@ -18,6 +18,7 @@ class UEWItemDefinition;
 class APlayerController;
 class UEnhancedInputLocalPlayerSubsystem;
 class UWorld;
+class UUserWidget;
 class AActor;
 class AEWStation;
 class AEWWaterSource;
@@ -111,6 +112,28 @@ UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     /** Route normal Slate input to the focused local PIE UI, including gamepad keys/axes. */
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIKey(APlayerController* Controller, FName KeyName);
+    /** Send a Slate mouse click through a PIE widget's actual screen geometry. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool ClickVerificationWidget(UUserWidget* Owner, FName WidgetName, bool bDoubleClick = false);
+
+    UFUNCTION(BlueprintCallable, Category="Verification")
+    static bool ScrollVerificationWidget(UUserWidget* Owner, FName WidgetName, float WheelDelta);
+
+    UFUNCTION(BlueprintCallable, Category="Verification")
+    static bool SendVerificationUIRecipeScroll(APlayerController* Controller, float Value);
+
+    /** Capture this PIE viewport, including Slate UI, without relying on global screenshot focus. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool CaptureVerificationPlayViewport(UWorld* World, const FString& Filename);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool ConfigureAttributeVerificationSave(AEWPlayerController* Controller, const FString& SaveSlot);
+    UFUNCTION(BlueprintPure, Category="Elitewake|Editor|Verification")
+    static bool IsVerificationWidgetEnabled(UUserWidget* Owner, FName WidgetName);
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool SendVerificationAttributeRequest(AEWPlayerController* Controller, const TArray<int32>& Additions, int64 Revision, bool bReset = false);
+    /** Resize just the PIE preview without persisting a user's video settings. */
+    UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
+    static bool ResizeVerificationPlayViewport(UWorld* World, int32 Width, int32 Height);
     UFUNCTION(BlueprintCallable, Category="Elitewake|Editor|Verification")
     static bool SendVerificationUIAnalog(APlayerController* Controller, float Value);
     /** The left stick's horizontal axis (Value > 0 is right). */

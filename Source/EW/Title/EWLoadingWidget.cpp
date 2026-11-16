@@ -3,13 +3,53 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Engine/Texture2D.h"
+#include "Fonts/CompositeFont.h"
 #include "HAL/PlatformTime.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Misc/Paths.h"
 
+namespace
+{
+constexpr int32 WaveFrameCount = 64;
+constexpr double WaveCycleSeconds = 3.2;
+constexpr double NoteSeconds = 9.0;
+
+struct FLoadingNote
+{
+    bool bHistory;
+    const TCHAR* Lines[2];
+};
+
+constexpr FLoadingNote Notes[] = {
+    {false, {TEXT("Aim at a freshwater source to drink."), TEXT("Hold an empty waterskin to fill it.")}},
+    // Royal Museums Greenwich collections, object ZAA0037 (H4).
+    {true, {TEXT("Harrison finished his H4 sea watch"), TEXT("in 1759 to help find longitude at sea.")}},
+    {false, {TEXT("Use the capstan to raise the anchor"), TEXT("before you set sail.")}},
+    // Royal Museums Greenwich collections, rmgc-object-43324 (sextant).
+    {true, {TEXT("Navigators used a sextant to measure"), TEXT("the angle of the Sun above the horizon.")}},
+};
+}
+
+void UEWLoadingWidget::ConfigureArt(UTexture2D* Art, UMaterialInterface* WaveMaterial)
+{
+    VoyageArt = Art;
+    if (!Art || !WaveMaterial) return;
+
+    // MoviePlayer paints on its loading thread while the game thread is busy. Prepare immutable
+    // phase samples here so NativePaint only selects a brush and never mutates a material.
+    WaveFrames.Reserve(WaveFrameCount);
+    for (int32 Index = 0; Index < WaveFrameCount; ++Index)
+    {
+        UMaterialInstanceDynamic* Frame = UMaterialInstanceDynamic::Create(WaveMaterial, this);
+        Frame->SetScalarParameterValue(TEXT("WavePhase"), float(2.0 * UE_PI * Index / WaveFrameCount));
+        WaveFrames.Add(Frame);
+    }
+}
 
 TSharedRef<SWidget> UEWLoadingWidget::RebuildWidget()
 {
-    using namespace EWFrontEnd;
     SetVisibility(ESlateVisibility::HitTestInvisible);
+    ForceVolatile(true);
     if (WidgetTree && !WidgetTree->RootWidget)
     {
         UBorder* Root = WidgetTree->ConstructWidget<UBorder>();
@@ -28,89 +68,59 @@ int32 UEWLoadingWidget::NativePaint(const FPaintArgs& Args, const FGeometry& All
     const FPainter P{AllottedGeometry, OutDrawElements, Layer};
     const FVector2D Size = AllottedGeometry.GetLocalSize();
     const double Now = FPlatformTime::Seconds();
-    const float A = FMath::Clamp(Fade, 0.f, 1.f);
-    auto With = [A](const FLinearColor& C) { return C.CopyWithNewOpacity(C.A * A); };
-    auto SRGB = [](uint8 R, uint8 G, uint8 B, float Alpha = 1.f) { return FLinearColor::FromSRGBColor(FColor(R, G, B)).CopyWithNewOpacity(Alpha); };
+    const float Alpha = FMath::Clamp(Fade, 0.f, 1.f);
+    auto Tint = [Alpha](const FLinearColor& C) { return C.CopyWithNewOpacity(C.A * Alpha); };
+    P.Box(1, FSlateRect(FVector2D::ZeroVector, Size), Tint(Ground));
 
-    P.Box(1, FSlateRect(FVector2D::ZeroVector, Size), With(Ground));
+    const FVector2D Source = VoyageArt ? FVector2D(VoyageArt->GetSizeX(), VoyageArt->GetSizeY()) : FVector2D(16, 9);
+    const FVector2D ArtSize = Source * FMath::Min(Size.X / Source.X, Size.Y / Source.Y);
+    const FVector2D TopLeft = (Size - ArtSize) * .5;
+    const FSlateRect ArtRect(TopLeft, TopLeft + ArtSize);
     if (VoyageArt)
     {
-        // The scene covers the screen, drifting slowly larger and back (22 s), framed a little right of centre.
-        const float Drift = 1.034f + .03f * (.5f - .5f * FMath::Cos(float(FMath::Fmod(Now, 44.0)) * PI / 22.f));
-        const FVector2D Big = Size * Drift;
-        FSlateRect R = Cover(Big, FVector2D(VoyageArt->GetSizeX(), VoyageArt->GetSizeY()));
-        R = R.OffsetBy(-(Big - Size) * FVector2D(.57f, .52f));
-        P.Image(2, VoyageArt, R, FLinearColor(1, 1, 1, A));
+        const int32 Frame = FMath::FloorToInt(FMath::Fmod(Now, WaveCycleSeconds) * WaveFrames.Num() / WaveCycleSeconds);
+        UObject* Resource = WaveFrames.IsValidIndex(Frame) ? static_cast<UObject*>(WaveFrames[Frame].Get()) : VoyageArt.Get();
+        P.Image(2, Resource, ArtRect, Tint(FLinearColor::White));
     }
-    // The wash: dark from the left, and from the bottom.
-    P.Gradient(3, FSlateRect(0, 0, Size.X * .34f, Size.Y), {With(SRGB(5, 15, 22, .82f)), With(SRGB(5, 15, 22, .56f))}, true);
-    P.Gradient(3, FSlateRect(Size.X * .34f, 0, Size.X * .75f, Size.Y), {With(SRGB(5, 15, 22, .56f)), With(SRGB(5, 15, 22, .04f))}, true);
-    P.Gradient(4, FSlateRect(0, 0, Size.X, Size.Y * .64f), {With(SRGB(3, 11, 17, .18f)), With(SRGB(3, 11, 17, .08f))}, false);
-    P.Gradient(4, FSlateRect(0, Size.Y * .64f, Size.X, Size.Y), {With(SRGB(3, 11, 17, .08f)), With(SRGB(3, 11, 17, .88f))}, false);
 
-    // The frame, 28 px in, with corner brackets top-left and bottom-right.
-    const FSlateRect Frame(28, 28, Size.X - 28, Size.Y - 28);
-    P.Outline(5, Frame, 1.f, With(SRGB(245, 223, 186, .24f)));
-    const FLinearColor Bracket = With(SRGB(245, 223, 186, .56f));
-    P.Box(6, FSlateRect(Frame.Left - 1, Frame.Top - 1, Frame.Left + 28, Frame.Top + 1), Bracket);
-    P.Box(6, FSlateRect(Frame.Left - 1, Frame.Top - 1, Frame.Left + 1, Frame.Top + 28), Bracket);
-    P.Box(6, FSlateRect(Frame.Right - 28, Frame.Bottom - 1, Frame.Right + 1, Frame.Bottom + 1), Bracket);
-    P.Box(6, FSlateRect(Frame.Right - 1, Frame.Bottom - 28, Frame.Right + 1, Frame.Bottom + 1), Bracket);
+    // Keep the text and bar anchored to the approved image at any viewport aspect ratio.
+    const float TipLeft = ArtRect.Left + ArtSize.X * .078f;
+    const float TipTop = ArtRect.Top + ArtSize.Y * .302f;
+    const double NoteCycle = FMath::Fmod(Now, NoteSeconds * UE_ARRAY_COUNT(Notes));
+    const FLoadingNote& Note = Notes[FMath::FloorToInt(NoteCycle / NoteSeconds)];
+    const double NoteAge = FMath::Fmod(NoteCycle, NoteSeconds);
+    const float NoteAlpha = float(FMath::Clamp(FMath::Min(NoteAge, NoteSeconds - NoteAge) / .30, 0.0, 1.0));
+    static const TSharedRef<const FCompositeFont> NoteFont = MakeShared<FCompositeFont>(
+        FName(TEXT("Regular")), FPaths::ProjectContentDir() / TEXT("Slate/Fonts/IMFeENrm28P.ttf"),
+        EFontHinting::Default, EFontLoadingPolicy::LazyLoad);
+    const int32 BodySize = FMath::Clamp(FMath::RoundToInt(ArtSize.X * .022f), 14, 54);
+    FSlateFontInfo Heading(NoteFont, FMath::Max(11, BodySize * 3 / 5));
+    Heading.LetterSpacing = 280;
+    const FSlateFontInfo Body(NoteFont, BodySize);
+    const FString Category = Note.bHistory ? TEXT("AGE OF SAIL") : TEXT("VOYAGE TIP");
+    P.Text(3, Category, Heading, FVector2D(TipLeft, TipTop), GoldLight.CopyWithNewOpacity(Alpha * NoteAlpha));
+    const float TextTop = TipTop + ArtSize.Y * .065f;
+    for (int32 Row = 0; Row < UE_ARRAY_COUNT(Note.Lines); ++Row)
+        P.Text(3, Note.Lines[Row], Body, FVector2D(TipLeft, TextTop + Row * BodySize * 1.23f),
+            Cream.CopyWithNewOpacity(Alpha * NoteAlpha));
 
-    // The brand: a gold diamond with a cross through it, and the name.
-    const float Left = FMath::Clamp(Size.X * .071f, 48.f, 144.f);
-    float Top = FMath::Clamp(Size.Y * .13f, 72.f, 150.f);
-    const FVector2D Mark(Left + 16, Top + 16);
-    for (int32 Row = -16; Row <= 16; ++Row)
-    {
-        const float Half = 16.f - FMath::Abs(Row);
-        P.Box(7, FSlateRect(Mark.X - Half, Mark.Y + Row, Mark.X - Half + 1.2f, Mark.Y + Row + 1), With(Gold));
-        P.Box(7, FSlateRect(Mark.X + Half - 1.2f, Mark.Y + Row, Mark.X + Half, Mark.Y + Row + 1), With(Gold));
-    }
-    P.Box(7, FSlateRect(Mark.X - .5f, Mark.Y - 25, Mark.X + .5f, Mark.Y + 25), With(Gold));
-    P.Box(7, FSlateRect(Mark.X - 25, Mark.Y - .5f, Mark.X + 25, Mark.Y + .5f), With(Gold));
-    P.Text(7, TEXT("ELITEWAKE"), Font(FMath::Clamp(int32(Size.X * .017f), 17, 26), false, 300), FVector2D(Left + 52, Mark.Y), With(Cream), FVector2D(0, .5f));
-    Top += 32 + FMath::Clamp(Size.Y * .09f, 48.f, 98.f);
-
-    P.Box(7, FSlateRect(Left, Top + 8, Left + 36, Top + 9), With(Gold));
-    P.Text(7, TEXT("YOUR VOYAGE BEGINS"), Font(9, true, 520), FVector2D(Left + 52, Top + 8), With(GoldLight), FVector2D(0, .5f));
-    Top += 32;
-    const FSlateFontInfo Headline = FCoreStyle::GetDefaultFontStyle("Light", FMath::Clamp(int32(Size.X * .043f), 37, 78));
-    const FVector2D Line1 = P.Text(7, TEXT("Beyond the"), Headline, FVector2D(Left - 3, Top), With(Cream));
-    P.Text(7, TEXT("horizon."), Headline, FVector2D(Left - 3, Top + Line1.Y * .95f), With(GoldLight));
-    Top += Line1.Y * 1.95f + 20;
-    P.Text(7, TEXT("The open seas await. Find your course, make your name,"), Font(14), FVector2D(Left, Top), With(SRGB(232, 232, 226)));
-    P.Text(7, TEXT("and face the peril between you and glory."), Font(14), FVector2D(Left, Top + 29), With(SRGB(232, 232, 226)));
-
-    // The lower band: the bar on the left, the chapter on the right.
-    const float Bottom = Size.Y - FMath::Clamp(Size.Y * .08f, 55.f, 105.f);
-    const float BarW = FMath::Min(520.f, Size.X * .58f);
-    const float BarTop = Bottom - 46;
-    P.Text(7, bReady ? TEXT("YOUR WORLD IS READY") : TEXT("PREPARING YOUR WORLD"), Font(9, true, 440), FVector2D(Left, BarTop - 14), With(GoldLight), FVector2D(0, 1));
-    P.Text(7, bReady ? TEXT("100%") : TEXT("PLEASE WAIT"), Font(9, false, 60), FVector2D(Left + BarW, BarTop - 14), With(Muted), FVector2D(1, 1));
-    const FSlateRect Track(Left, BarTop, Left + BarW, BarTop + 3);
-    P.Box(7, Track, With(SRGB(246, 235, 214, .24f)));
-    if (bReady) P.Gradient(8, Track, {With(Gold.CopyWithNewOpacity(.4f)), With(GoldLight), With(SRGB(255, 243, 215))}, true);
+    const float Left = ArtRect.Left + ArtSize.X * .066f;
+    const float Top = ArtRect.Top + ArtSize.Y * .863f;
+    const float Width = ArtSize.X * .315f;
+    const float Height = FMath::Max(3.f, float(ArtSize.Y * .011));
+    const FSlateRect Track(Left, Top, Left + Width, Top + Height);
+    P.Box(4, Track, Tint(Ground.CopyWithNewOpacity(.85f)));
+    P.Outline(5, Track, 1.f, Tint(Gold.CopyWithNewOpacity(.7f)));
+    if (bReady)
+        P.Gradient(6, Track, {Tint(Gold), Tint(GoldLight)}, true);
     else
     {
-        // A third of the track passes along it every 2.5 s, eased in and out.
-        const float T = float(FMath::Fmod(Now, 2.5) / 2.5);
-        const float Ease = T < .5f ? 2 * T * T : 1 - FMath::Square(-2 * T + 2) / 2;
-        const float W = BarW * .34f;
-        const float X = Left + FMath::Lerp(-1.1f * W, 3.f * W, Ease);
-        const FSlateRect Fill(FMath::Max(X, Track.Left), Track.Top, FMath::Min(X + W, Track.Right), Track.Bottom);
+        const float Travel = float(FMath::Fmod(Now, 2.5) / 2.5);
+        const float FillWidth = Width * .26f;
+        const float Head = FMath::Lerp(Left, Track.Right + FillWidth, Travel);
+        const FSlateRect Fill(FMath::Max(Left, Head - FillWidth), Top + 1, FMath::Min(Track.Right, Head), Track.Bottom - 1);
         if (Fill.Right > Fill.Left + 1)
-        {
-            P.Box(8, FSlateRect(Fill.Left, Fill.Top - 3, Fill.Right, Fill.Bottom + 3), With(Gold.CopyWithNewOpacity(.18f)));
-            P.Gradient(9, Fill, {With(GoldLight.CopyWithNewOpacity(0.f)), With(GoldLight), With(SRGB(255, 243, 215))}, true);
-        }
+            P.Gradient(6, Fill, {Tint(Gold.CopyWithNewOpacity(0.f)), Tint(Gold), Tint(GoldLight)}, true);
     }
-    P.Text(7, TEXT("Your journey will begin as soon as the world is ready."), Font(10), FVector2D(Left, BarTop + 16), With(SRGB(210, 208, 201)));
-    if (Size.X > 760)
-    {
-        const float Right = Size.X - Left;
-        P.Text(7, TEXT("PERIL & GLORY AWAIT"), Font(9, true, 440), FVector2D(Right, BarTop + 6), With(GoldLight), FVector2D(1, 1));
-        P.Text(7, TEXT("ON THE OPEN SEAS"), Font(9, false, 260), FVector2D(Right, BarTop + 10), With(SRGB(230, 221, 205)), FVector2D(1, 0));
-    }
-    return Layer + 12;
+    return Layer + 7;
 }

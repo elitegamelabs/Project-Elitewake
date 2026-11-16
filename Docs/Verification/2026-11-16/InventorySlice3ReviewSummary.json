@@ -1,0 +1,904 @@
+{
+  "slice": 3,
+  "date": "2026-11-12",
+  "build_success": true,
+  "results": {
+    "InventoryEquipmentSlotsPlayResult.json": {
+      "success": true,
+      "network": false,
+      "checks": [
+        {
+          "check": "Five real equipment slots exist",
+          "passed": true
+        },
+        {
+          "check": "Both recipes are included in arrival baseline",
+          "passed": true
+        },
+        {
+          "check": "Empty boots slot accepts mouse selection",
+          "passed": true
+        },
+        {
+          "check": "Controller reaches empty accessory slot",
+          "passed": true
+        },
+        {
+          "check": "Empty slot action does not invent an item",
+          "passed": true
+        },
+        {
+          "check": "Boots card uses actual recipe ingredients",
+          "passed": true
+        },
+        {
+          "check": "Boots crafted once with actual cost and time",
+          "passed": true
+        },
+        {
+          "check": "Keyboard equips boots on server and owner",
+          "passed": true
+        },
+        {
+          "check": "Boots produce real world mesh parts",
+          "passed": true
+        },
+        {
+          "check": "Boots apply existing protection and insulation",
+          "passed": true
+        },
+        {
+          "check": "Accessory crafted through existing controller crafting",
+          "passed": true
+        },
+        {
+          "check": "Controller equips appended accessory slot",
+          "passed": true
+        },
+        {
+          "check": "Accessory mesh is attached on both peers",
+          "passed": true
+        },
+        {
+          "check": "Cosmetic accessory does not invent attribute buffs",
+          "passed": true
+        },
+        {
+          "check": "Worn item weight is counted on server and owner",
+          "passed": true
+        },
+        {
+          "check": "Five worn positions coexist",
+          "passed": true
+        },
+        {
+          "check": "Separate boots suppress pants included shoes",
+          "passed": true
+        },
+        {
+          "check": "Full-body live preview remains present",
+          "passed": true
+        },
+        {
+          "check": "Mouse unequips accessory through actual action button",
+          "passed": true
+        },
+        {
+          "check": "Controller unequips boots without losing item",
+          "passed": true
+        },
+        {
+          "check": "Original pants footwear returns when boots removed",
+          "passed": true
+        },
+        {
+          "check": "Removing boots restores existing armor values",
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    "InventoryEquipmentSlotsNetworkResult.json": {
+      "success": true,
+      "network": true,
+      "checks": [
+        {
+          "check": "Five real equipment slots exist",
+          "passed": true
+        },
+        {
+          "check": "Both recipes are included in arrival baseline",
+          "passed": true
+        },
+        {
+          "check": "Empty boots slot accepts mouse selection",
+          "passed": true
+        },
+        {
+          "check": "Controller reaches empty accessory slot",
+          "passed": true
+        },
+        {
+          "check": "Empty slot action does not invent an item",
+          "passed": true
+        },
+        {
+          "check": "Boots card uses actual recipe ingredients",
+          "passed": true
+        },
+        {
+          "check": "Boots crafted once with actual cost and time",
+          "passed": true
+        },
+        {
+          "check": "Keyboard equips boots on server and owner",
+          "passed": true
+        },
+        {
+          "check": "Boots produce real world mesh parts",
+          "passed": true
+        },
+        {
+          "check": "Boots apply existing protection and insulation",
+          "passed": true
+        },
+        {
+          "check": "Accessory crafted through existing controller crafting",
+          "passed": true
+        },
+        {
+          "check": "Controller equips appended accessory slot",
+          "passed": true
+        },
+        {
+          "check": "Accessory mesh is attached on both peers",
+          "passed": true
+        },
+        {
+          "check": "Cosmetic accessory does not invent attribute buffs",
+          "passed": true
+        },
+        {
+          "check": "Worn item weight is counted on server and owner",
+          "passed": true
+        },
+        {
+          "check": "Five worn positions coexist",
+          "passed": true
+        },
+        {
+          "check": "Separate boots suppress pants included shoes",
+          "passed": true
+        },
+        {
+          "check": "Full-body live preview remains present",
+          "passed": true
+        },
+        {
+          "check": "Mouse unequips accessory through actual action button",
+          "passed": true
+        },
+        {
+          "check": "Controller unequips boots without losing item",
+          "passed": true
+        },
+        {
+          "check": "Original pants footwear returns when boots removed",
+          "passed": true
+        },
+        {
+          "check": "Removing boots restores existing armor values",
+          "passed": true
+        }
+      ],
+      "error": null
+    },
+    "M5FEquipmentNetworkResult.json": {
+      "success": true,
+      "network": true,
+      "checkpoints": [
+        {
+          "label": "unowned/foreign item rejected",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": null,
+          "details": null
+        },
+        {
+          "label": "wrong slot rejected",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": null,
+          "details": null
+        },
+        {
+          "label": "R equips one owned unit",
+          "states": [
+            {
+              "hat": 0,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 0.10000000149011612,
+              "equipment_weight": 2.0
+            },
+            {
+              "hat": 0,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 0.10000000149011612,
+              "equipment_weight": 2.0
+            }
+          ],
+          "selected": 0,
+          "details": false
+        },
+        {
+          "label": "replayed equip does not duplicate",
+          "states": [
+            {
+              "hat": 0,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 0.10000000149011612,
+              "equipment_weight": 2.0
+            },
+            {
+              "hat": 0,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 0.10000000149011612,
+              "equipment_weight": 2.0
+            }
+          ],
+          "selected": 0,
+          "details": false
+        },
+        {
+          "label": "X unequips into inventory",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": null,
+              "carried_weight": 2.0999999046325684,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": 2,
+          "details": false
+        },
+        {
+          "label": "equip head fixture",
+          "states": [
+            {
+              "hat": 0,
+              "alternate": 1,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 5.099999904632568,
+              "inventory_weight": 3.0999999046325684,
+              "equipment_weight": 2.0
+            },
+            {
+              "hat": 0,
+              "alternate": 1,
+              "wood": 1,
+              "equipped": "DA_TestHat",
+              "carried_weight": 5.099999904632568,
+              "inventory_weight": 3.0999999046325684,
+              "equipment_weight": 2.0
+            }
+          ],
+          "selected": 1,
+          "details": false
+        },
+        {
+          "label": "occupied head swaps atomically",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHatAlternate",
+              "carried_weight": 5.099999904632568,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 3.0
+            },
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 1,
+              "equipped": "DA_TestHatAlternate",
+              "carried_weight": 5.099999904632568,
+              "inventory_weight": 2.0999999046325684,
+              "equipment_weight": 3.0
+            }
+          ],
+          "selected": 1,
+          "details": false
+        },
+        {
+          "label": "full inventory leaves gear equipped",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 5750,
+              "equipped": "DA_TestHatAlternate",
+              "carried_weight": 580.0,
+              "inventory_weight": 577.0,
+              "equipment_weight": 3.0
+            },
+            {
+              "hat": 1,
+              "alternate": 0,
+              "wood": 5750,
+              "equipped": "DA_TestHatAlternate",
+              "carried_weight": 580.0,
+              "inventory_weight": 577.0,
+              "equipment_weight": 3.0
+            }
+          ],
+          "selected": 24,
+          "details": true
+        },
+        {
+          "label": "full inventory swap uses freed source slot",
+          "states": [
+            {
+              "hat": 0,
+              "alternate": 1,
+              "wood": 5750,
+              "equipped": "DA_TestHat",
+              "carried_weight": 580.0,
+              "inventory_weight": 578.0,
+              "equipment_weight": 2.0
+            },
+            {
+              "hat": 0,
+              "alternate": 1,
+              "wood": 5750,
+              "equipped": "DA_TestHat",
+              "carried_weight": 580.0,
+              "inventory_weight": 578.0,
+              "equipment_weight": 2.0
+            }
+          ],
+          "selected": 1,
+          "details": false
+        },
+        {
+          "label": "space allows unequip",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": 24,
+          "details": false
+        },
+        {
+          "label": "empty slot replay leaves inventory intact",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": 24,
+          "details": false
+        },
+        {
+          "label": "resource cannot be equipped",
+          "states": [
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            },
+            {
+              "hat": 1,
+              "alternate": 1,
+              "wood": 5500,
+              "equipped": null,
+              "carried_weight": 555.0,
+              "inventory_weight": 555.0,
+              "equipment_weight": 0.0
+            }
+          ],
+          "selected": 24,
+          "details": false
+        }
+      ],
+      "errors": []
+    },
+    "M5ESelectionNetworkResult.json": {
+      "success": true,
+      "network": true,
+      "checkpoints": [
+        {
+          "label": "empty open",
+          "open": true,
+          "selected": -1,
+          "details": false,
+          "count": 0,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "empty equipment slots are navigable and cannot confirm an item",
+          "open": true,
+          "selected": 1,
+          "details": false,
+          "count": 0,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "I closes",
+          "open": false,
+          "selected": 1,
+          "details": false,
+          "count": 0,
+          "move_ignored": false,
+          "look_ignored": false,
+          "focus": false
+        },
+        {
+          "label": "Y opens first valid row",
+          "open": true,
+          "selected": 0,
+          "details": false,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "keyboard next",
+          "open": true,
+          "selected": 1,
+          "details": false,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "keyboard confirms",
+          "open": true,
+          "selected": 1,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "D-pad next",
+          "open": true,
+          "selected": 2,
+          "details": false,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "A confirms",
+          "open": true,
+          "selected": 2,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "stick dead zone",
+          "open": true,
+          "selected": 2,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "stick down on the last row stays (the crafting list below is empty)",
+          "open": true,
+          "selected": 2,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "stick up on the top row goes up to the tab bar; the selection stays",
+          "open": true,
+          "selected": 2,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "Down returns from the tab bar",
+          "open": true,
+          "selected": 2,
+          "details": true,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "D-pad left",
+          "open": true,
+          "selected": 1,
+          "details": false,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "left stops at the first slot",
+          "open": true,
+          "selected": 0,
+          "details": false,
+          "count": 751,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "B closes",
+          "open": false,
+          "selected": 0,
+          "details": false,
+          "count": 751,
+          "move_ignored": false,
+          "look_ignored": false,
+          "focus": false
+        },
+        {
+          "label": "removed selected row clamps",
+          "open": true,
+          "selected": 1,
+          "details": false,
+          "count": 500,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "live refresh retains selected stack and details",
+          "open": true,
+          "selected": 1,
+          "details": true,
+          "count": 501,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "live empty clears selection",
+          "open": true,
+          "selected": -1,
+          "details": false,
+          "count": 0,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "empty to populated selects first",
+          "open": true,
+          "selected": 0,
+          "details": false,
+          "count": 251,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "Escape closes",
+          "open": false,
+          "selected": 0,
+          "details": false,
+          "count": 251,
+          "move_ignored": false,
+          "look_ignored": false,
+          "focus": false
+        },
+        {
+          "label": "Y reopens",
+          "open": true,
+          "selected": 0,
+          "details": false,
+          "count": 251,
+          "move_ignored": true,
+          "look_ignored": true,
+          "focus": true
+        },
+        {
+          "label": "B closes (Y quick-assigns to the hotbar inside the menu)",
+          "open": false,
+          "selected": 0,
+          "details": false,
+          "count": 251,
+          "move_ignored": false,
+          "look_ignored": false,
+          "focus": false
+        }
+      ],
+      "errors": []
+    },
+    "InventoryRecipeCardsPlayResult.json": {
+      "success": true,
+      "network": false,
+      "checks": [
+        {
+          "check": "Three actual unlocked recipes",
+          "passed": true
+        },
+        {
+          "check": "Single mouse click inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "Card has actual material and owned quantities",
+          "passed": true
+        },
+        {
+          "check": "Flip preserves tile and neighboring tile identity",
+          "passed": true
+        },
+        {
+          "check": "Click selected tile restores item face",
+          "passed": true
+        },
+        {
+          "check": "Another recipe restores previous and opens selected",
+          "passed": true
+        },
+        {
+          "check": "Mouse wheel scrolls inside inspected tile",
+          "passed": true
+        },
+        {
+          "check": "Controller right stick scrolls without navigating or crafting",
+          "passed": true
+        },
+        {
+          "check": "Keyboard inspect toggles off",
+          "passed": true
+        },
+        {
+          "check": "Controller X inspects without crafting",
+          "passed": true
+        },
+        {
+          "check": "True Slate double-click starts one timed craft",
+          "passed": true
+        },
+        {
+          "check": "Craft start retains tile identity",
+          "passed": true
+        },
+        {
+          "check": "Double-click yields exactly one output and one ingredient charge",
+          "passed": true
+        },
+        {
+          "check": "Card quantities refresh after authoritative inventory change",
+          "passed": true
+        },
+        {
+          "check": "Keyboard Enter crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Controller A crafts through existing system",
+          "passed": true
+        },
+        {
+          "check": "Missing resources disable crafting and explain why",
+          "passed": true
+        },
+        {
+          "check": "Ineligible double-click grants nothing",
+          "passed": true
+        },
+        {
+          "check": "Station readiness updates without inventory event",
+          "passed": true
+        },
+        {
+          "check": "Search still filters actual recipes",
+          "passed": true
+        },
+        {
+          "check": "720p recipe card remains interactive",
+          "passed": true
+        },
+        {
+          "check": "Final revalidation fixture starts a valid timed craft",
+          "passed": true
+        },
+        {
+          "check": "Materials lost during craft prevent output at completion",
+          "passed": true
+        }
+      ],
+      "error": null
+    }
+  },
+  "screenshots": [
+    "Saved/Screenshots/InventorySlice3/Inventory-Five-Slots-1920x1080.png",
+    "Saved/Screenshots/InventorySlice3/Inventory-Five-Slots-1280x720.png"
+  ],
+  "next_slice_started": false,
+  "automation": {
+    "equipment": {
+      "report": "Saved\\Automation\\InventorySlice3-equipment\\index.json",
+      "succeeded": 8,
+      "failed": 0,
+      "tests": [
+        {
+          "testDisplayName": "ContainerTransfer",
+          "fullTestPath": "Elitewake.Inventory.ContainerTransfer",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "EquipmentTransfer",
+          "fullTestPath": "Elitewake.Inventory.EquipmentTransfer",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "FiveEquipmentSlots",
+          "fullTestPath": "Elitewake.Inventory.FiveEquipmentSlots",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "FoodConsumptionAndFreshness",
+          "fullTestPath": "Elitewake.Inventory.FoodConsumptionAndFreshness",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "HotbarOwnershipAndActivation",
+          "fullTestPath": "Elitewake.Inventory.HotbarOwnershipAndActivation",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "PersistedEquipmentFixtures",
+          "fullTestPath": "Elitewake.Inventory.PersistedEquipmentFixtures",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "PersistedTestItem",
+          "fullTestPath": "Elitewake.Inventory.PersistedTestItem",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "PickupValidation",
+          "fullTestPath": "Elitewake.Inventory.PickupValidation",
+          "state": "Success"
+        },
+        {
+          "testDisplayName": "StackingAndWeight",
+          "fullTestPath": "Elitewake.Inventory.StackingAndWeight",
+          "state": "Success"
+        }
+      ],
+      "succeeded_with_warnings": 1
+    },
+    "save": {
+      "report": "Saved\\Automation\\InventorySlice3-save\\index.json",
+      "succeeded": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "testDisplayName": "SurvivorRoundTrip",
+          "fullTestPath": "Elitewake.Save.SurvivorRoundTrip",
+          "state": "Success"
+        }
+      ]
+    }
+  },
+  "owner_acceptance": "unresolved",
+  "equipment_follow_up_deferred": true
+}

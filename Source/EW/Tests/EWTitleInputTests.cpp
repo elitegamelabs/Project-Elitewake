@@ -86,6 +86,12 @@ public:
         Test->TestEqual(TEXT("Routed right click inside Single Player starts gameplay"), Starts, 1);
         Pointer(EKeys::LeftMouseButton, 0, FVector2D(.25, .5));
         Test->TestEqual(TEXT("Routed left click inside Single Player starts gameplay"), Starts, 2);
+        Key(EKeys::Gamepad_LeftStick_Right);
+        Key(EKeys::Gamepad_FaceButton_Bottom);
+        Test->TestEqual(TEXT("Confirming the focused Multiplayer preview leaves the menu open"), Starts, 2);
+        Key(EKeys::Gamepad_LeftStick_Left);
+        Key(EKeys::Gamepad_FaceButton_Bottom);
+        Test->TestEqual(TEXT("Confirming focused Single Player starts gameplay"), Starts, 3);
 
         Window->SetContent(SNullWidget::NullWidget);
         Widget->RemoveFromRoot();

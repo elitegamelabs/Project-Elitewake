@@ -152,6 +152,16 @@ public:
     /** Spends one of the survivor's unspent stat points on a stat (one point per level; owner, October 22). */
     void RequestSpendStatPoint(EEWStat Stat) { if (IsLocalPlayerController()) ServerSpendStatPoint(Stat); }
     UFUNCTION(Server, Reliable) void ServerSpendStatPoint(EEWStat Stat);
+    void RequestCommitAttributes(const TArray<int32>& Additions, int64 ExpectedRevision) { if (IsLocalPlayerController()) ServerCommitAttributes(Additions, ExpectedRevision); }
+    void RequestResetAttributes(int64 ExpectedRevision) { if (IsLocalPlayerController()) ServerResetAttributes(ExpectedRevision); }
+    UFUNCTION(Server, Reliable) void ServerCommitAttributes(const TArray<int32>& Additions, int64 ExpectedRevision);
+    UFUNCTION(Server, Reliable) void ServerResetAttributes(int64 ExpectedRevision);
+    UFUNCTION(Client, Reliable) void ClientAttributeResult(EEWAttributeResult Result, int64 Revision);
+    bool PersistAttributeChanges();
+#if WITH_EDITOR
+    /** Editor verification uses an isolated save, never a player's real Survivor slot. */
+    FString AttributeVerificationSaveSlot;
+#endif
     /** Lights a star of the constellation tree with skill points (owner, October 22). */
     void RequestUnlockSkill(FName Id) { if (IsLocalPlayerController()) ServerUnlockSkill(Id); }
     UFUNCTION(Server, Reliable) void ServerUnlockSkill(FName Id);

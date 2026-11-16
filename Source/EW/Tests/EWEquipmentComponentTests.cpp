@@ -73,4 +73,33 @@ bool FEWPersistedEquipmentTest::RunTest(const FString& Parameters)
     }
     return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWFiveEquipmentSlotsTest, "Elitewake.Inventory.FiveEquipmentSlots",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWFiveEquipmentSlotsTest::RunTest(const FString& Parameters)
+{
+    TestEqual(TEXT("Legacy main hand byte unchanged"), uint8(EEWEquipmentSlot::MainHand), uint8(6));
+    TestEqual(TEXT("Legacy off hand byte unchanged"), uint8(EEWEquipmentSlot::OffHand), uint8(7));
+    TestEqual(TEXT("Accessory appended after old serialized values"), uint8(EEWEquipmentSlot::Accessory), uint8(8));
+    auto* Owner = NewObject<AActor>();
+    auto* Pack = NewObject<UEWInventoryComponent>(Owner); Owner->AddInstanceComponent(Pack);
+    auto* Gear = NewObject<UEWEquipmentComponent>(Owner); Owner->AddInstanceComponent(Gear);
+    for (const auto Slot : {EEWEquipmentSlot::Head, EEWEquipmentSlot::Chest, EEWEquipmentSlot::Legs,
+         EEWEquipmentSlot::Feet, EEWEquipmentSlot::Accessory, EEWEquipmentSlot::MainHand, EEWEquipmentSlot::OffHand})
+    {
+        auto* Item = NewObject<UEWItemDefinition>(); Item->EquipmentSlot = Slot;
+        TestEqual(TEXT("Owned wearable enters pack"), Pack->AddItem(Item, 1), 1);
+        TestTrue(TEXT("All five wearables and both hands equip"), Gear->EquipItem(Item, Slot) == EEWEquipmentResult::Success);
+        TestEqual(TEXT("Equipped item removed exactly once"), Pack->GetItemCount(Item), 0);
+        TestEqual(TEXT("Expected slot owns the actual item"), Gear->GetEquippedItem(Slot), Item);
+    }
+    TestEqual(TEXT("Seven independent slots coexist"), Gear->GetEquipmentEntries().Num(), 7);
+    auto* Cuff = Gear->GetEquippedItem(EEWEquipmentSlot::Accessory);
+    TestTrue(TEXT("Accessory cannot move into boots"), Gear->EquipItem(Cuff, EEWEquipmentSlot::Feet) == EEWEquipmentResult::InvalidSlot);
+    TestTrue(TEXT("Removing cuff returns one unit"), Gear->UnequipItem(EEWEquipmentSlot::Accessory) == EEWEquipmentResult::Success);
+    TestEqual(TEXT("Cuff returned exactly once"), Pack->GetItemCount(Cuff), 1);
+    TestTrue(TEXT("Repeated cuff removal is safe"), Gear->UnequipItem(EEWEquipmentSlot::Accessory) == EEWEquipmentResult::EmptySlot);
+    Owner->SetRole(ROLE_SimulatedProxy);
+    TestTrue(TEXT("Client cannot equip new slot directly"), Gear->EquipItem(Cuff, EEWEquipmentSlot::Accessory) == EEWEquipmentResult::NotAuthority);
+    return true;
+}
 #endif

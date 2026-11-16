@@ -9,7 +9,7 @@ UENUM(BlueprintType)
 enum class EEWHotbarResult : uint8
 {
     Success, NotAuthority, InvalidSlot, InvalidItem, NotOwned, EmptySlot, UnsupportedAction, InventoryFull, Busy,
-    NoBenefit, UnavailableSurvivor, InvalidFood
+    NoBenefit, UnavailableSurvivor, InvalidFood, TreatmentStarted, TreatmentApplied, TreatmentUnneeded
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FEWOnHotbarChanged);

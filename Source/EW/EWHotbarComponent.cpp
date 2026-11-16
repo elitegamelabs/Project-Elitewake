@@ -71,6 +71,9 @@ EEWHotbarResult UEWHotbarComponent::ActivateSlot(int32 Slot)
             switch (Inventory->ConsumeFood(Item))
             {
                 case EEWFoodUseResult::Success: return EEWHotbarResult::Success;
+                case EEWFoodUseResult::TreatmentStarted: return EEWHotbarResult::TreatmentStarted;
+                case EEWFoodUseResult::TreatmentApplied: return EEWHotbarResult::TreatmentApplied;
+                case EEWFoodUseResult::TreatmentUnneeded: return EEWHotbarResult::TreatmentUnneeded;
                 case EEWFoodUseResult::NotOwned: return EEWHotbarResult::NotOwned;
                 case EEWFoodUseResult::Busy: return EEWHotbarResult::Busy;
                 case EEWFoodUseResult::NoBenefit: return EEWHotbarResult::NoBenefit;

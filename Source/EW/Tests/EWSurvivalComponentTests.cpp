@@ -1,4 +1,8 @@
 #include "EWSurvivalComponent.h"
+#include "EWInventoryComponent.h"
+#include "EWItemDefinition.h"
+#include "Engine/Engine.h"
+#include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "Misc/AutomationTest.h"
 #include <limits>
@@ -137,6 +141,77 @@ bool FEWSurvivalMendingTest::RunTest(const FString& Parameters)
     Owner->SetRole(ROLE_SimulatedProxy);
     Survival->ApplyDamage(10.f);
     TestEqual(TEXT("Clients cannot change health"),Survival->GetHealth(),Survival->GetMaxHealth());
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FEWSurvivalHazardsTest, "Elitewake.Survival.HazardsAndTreatments",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FEWSurvivalHazardsTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    GEngine->CreateNewWorldContext(EWorldType::Game).SetCurrentWorld(World);
+    AActor* Owner = World->SpawnActor<AActor>();
+    auto* Survival = NewObject<UEWSurvivalComponent>(Owner);
+    auto* Inventory = NewObject<UEWInventoryComponent>(Owner);
+    Owner->AddInstanceComponent(Survival);
+    Owner->AddInstanceComponent(Inventory);
+    World->InitializeActorsForPlay(FURL());
+    World->BeginPlay();
+    TGuardValue<uint64> FrameGuard(GFrameCounter, GFrameCounter);
+    auto Wait = [World](int32 Ticks)
+    {
+        for (int32 I = 0; I < Ticks; ++I) { ++GFrameCounter; World->Tick(LEVELTICK_All, .05f); }
+    };
+    auto Treatment = [](EEWSurvivalTreatment Kind, FName Id)
+    {
+        auto* Item = NewObject<UEWItemDefinition>();
+        Item->ItemId = Id;
+        Item->Category = EEWItemCategory::Consumable;
+        Item->FoodKind = EEWFoodKind::Remedy;
+        Item->bFoodConsumptionEnabled = true;
+        Item->SurvivalTreatment = Kind;
+        return Item;
+    };
+    auto* Bandage = Treatment(EEWSurvivalTreatment::Bandage, TEXT("Test.Bandage"));
+    auto* Antidote = Treatment(EEWSurvivalTreatment::Antidote, TEXT("Test.Antidote"));
+    Inventory->AddItem(Bandage, 1);
+    Inventory->AddItem(Antidote, 1);
+    Survival->InflictBleeding();
+    Survival->UpdateHazards(false, 10.f);
+    TestEqual(TEXT("Bleeding takes four health in ten seconds"), Survival->GetHealth(), 96.f);
+    Survival->InflictBleeding();
+    TestEqual(TEXT("A new wound refreshes a single timer"), Survival->GetBleedingLeft(), 30.f);
+    TestEqual(TEXT("A bandage starts before spending the item"), Inventory->ConsumeFood(Bandage), EEWFoodUseResult::TreatmentStarted);
+    Wait(10);
+    Inventory->InterruptBandage();
+    Wait(42);
+    TestTrue(TEXT("An interrupted application leaves the wound and bandage"), Survival->IsBleeding() && Inventory->HasItem(Bandage));
+    TestEqual(TEXT("A bandage can be retried"), Inventory->ConsumeFood(Bandage), EEWFoodUseResult::TreatmentStarted);
+    Wait(44);
+    TestFalse(TEXT("A completed application stops the bleeding"), Survival->IsBleeding());
+    TestFalse(TEXT("A completed application spends one bandage"), Inventory->HasItem(Bandage));
+    TestEqual(TEXT("Bandaging doesn't restore lost health"), Survival->GetHealth(), 96.f);
+
+    Survival->InflictPoison();
+    Survival->UpdateStamina(true, 2.f);
+    Survival->UpdateStamina(false, 2.f);
+    TestEqual(TEXT("Venom halves stamina recovery"), Survival->GetStamina(), 80.f);
+    Survival->UpdateHazards(false, 45.f);
+    TestEqual(TEXT("Venom takes eight health and expires"), Survival->GetHealth(), 88.f);
+    TestEqual(TEXT("An antidote is preserved when not needed"), Inventory->ConsumeFood(Antidote), EEWFoodUseResult::TreatmentUnneeded);
+    Survival->InflictPoison();
+    TestEqual(TEXT("An antidote cures active poison"), Inventory->ConsumeFood(Antidote), EEWFoodUseResult::TreatmentApplied);
+    TestFalse(TEXT("Poison and spent antidote are gone"), Survival->IsPoisoned() || Inventory->HasItem(Antidote));
+
+    Survival->UpdateHazards(true, 22.f);
+    TestEqual(TEXT("Low air begins with eight seconds left"), Survival->GetBreathSeconds(), 8.f);
+    Survival->UpdateHazards(true, 9.f);
+    TestEqual(TEXT("Only the second after air runs out drowns"), Survival->GetHealth(), 84.f);
+    Survival->UpdateHazards(false, 3.f);
+    TestFalse(TEXT("Surfacing clears the underwater state"), Survival->IsUnderwater());
+    TestEqual(TEXT("Three seconds at the surface refills breath"), Survival->GetBreathSeconds(), 30.f);
+    TestEqual(TEXT("Surfacing immediately stops drowning damage"), Survival->GetHealth(), 84.f);
+    GEngine->DestroyWorldContext(World);
+    World->DestroyWorld(false);
     return true;
 }
 #endif

@@ -1,0 +1,22 @@
+[
+  {
+    "path": "Content/Elitewake/Characters/MetaHumans/MH_PirateFemale.uasset",
+    "parts": [
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateFemale.uasset.part01",
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateFemale.uasset.part02",
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateFemale.uasset.part03"
+    ],
+    "bytes": 100384912,
+    "sha256": "ad188c9b779e5b439ac72fe81c8c619e47cc2dc1547aea806103d74a3e4e6c7f"
+  },
+  {
+    "path": "Content/Elitewake/Characters/MetaHumans/MH_PirateMale.uasset",
+    "parts": [
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateMale.uasset.part01",
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateMale.uasset.part02",
+      "Art/SourceAssets/MetaHumanArchives/MH_PirateMale.uasset.part03"
+    ],
+    "bytes": 100388514,
+    "sha256": "57432084827b8d259b2e277c403d9eb8ffefec5a225267fc28f62bbacea7c47a"
+  }
+]

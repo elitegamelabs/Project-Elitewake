@@ -55,7 +55,7 @@ def run_inventory_selection_verification():
         if details is not None:assert row['details']==details,label+': wrong details state'
         if count is not None:assert row['count']==count,label+': wrong replicated item count'
     steps=[(lambda:key('I'),.4),(lambda:check('empty open',-1,False,count=0),.1),
-           (lambda:key('Right'),.1),(lambda:key('Down'),.1),(lambda:key('Enter'),.1),(lambda:check('empty navigation safe',-1,False),.1),
+           (lambda:key('Right'),.1),(lambda:key('Down'),.1),(lambda:key('Enter'),.1),(lambda:check('empty equipment slots are navigable and cannot confirm an item',1,False),.1),
            (lambda:key('I'),.4),(lambda:check('I closes',opened=False),.1),
            (lambda:inventory.add_item(item,751),1.5),(lambda:key('Gamepad_FaceButton_Top'),.4),
            (lambda:check('Y opens first valid row',0,False,count=751),.1),
@@ -69,7 +69,7 @@ def run_inventory_selection_verification():
            (lambda:key('Gamepad_DPad_Down'),.2),(lambda:check('Down returns from the tab bar',2,True),.1),
            (lambda:key('Gamepad_DPad_Left'),.2),(lambda:check('D-pad left',1,False),.1),(lambda:key('Left'),.2),(lambda:key('Left'),.2),(lambda:check('left stops at the first slot',0,False),.1),
            (lambda:key('Gamepad_FaceButton_Right'),.4),(lambda:check('B closes',opened=False),.1),
-           (lambda:key('I'),.4),(lambda:key('Right'),.1),(lambda:key('Right'),.1),(lambda:key('Right'),.1),
+           (lambda:key('I'),.4),(lambda:key('Right'),.1),(lambda:key('Right'),.1),
            (lambda:inventory.remove_item(item,251),1.5),(lambda:check('removed selected row clamps',1,False,count=500),.1),
            (lambda:key('Enter'),.1),(lambda:inventory.add_item(item,1),1.5),
            (lambda:check('live refresh retains selected stack and details',1,True,count=501),.1),

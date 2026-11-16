@@ -2,6 +2,7 @@
 
 
 #include "EWPlayerController.h"
+#include "EWGameMode.h"
 #include "EWItemSpawnerWidget.h"
 #include "EWItemDefinition.h"
 #include "EWEquipmentComponent.h"
@@ -675,6 +676,44 @@ void AEWPlayerController::ServerSpendStatPoint_Implementation(EEWStat Stat)
 {
     auto* Survivor = Cast<AEWCharacter>(GetPawn());
     if (Survivor && Survivor->GetProgressionComponent() && !Survivor->IsDead()) Survivor->GetProgressionComponent()->SpendPoint(Stat);
+}
+
+bool AEWPlayerController::PersistAttributeChanges()
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    if (!HasAuthority() || !Survivor || Survivor->GetController() != this) return false;
+#if WITH_EDITOR
+    if (GetWorld()->WorldType == EWorldType::PIE && !AttributeVerificationSaveSlot.IsEmpty())
+        return UEWSurvivorSave::SaveSurvivor(Survivor, AttributeVerificationSaveSlot, false);
+#endif
+    if (GetWorld()->GetNetMode() == NM_Standalone) return UEWSurvivorSave::SaveSurvivor(Survivor);
+    auto* Mode = GetWorld()->GetAuthGameMode<AEWGameMode>();
+    return Mode && Mode->SavePlayerSurvivor(this);
+}
+
+void AEWPlayerController::ServerCommitAttributes_Implementation(const TArray<int32>& Additions, int64 ExpectedRevision)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    auto* Progress = Survivor ? Survivor->GetProgressionComponent() : nullptr;
+    const auto Result = Survivor && Survivor->GetController() == this && !Survivor->IsDead() && Progress
+        ? Progress->CommitAttributePoints(Additions, ExpectedRevision, [this] { return PersistAttributeChanges(); })
+        : EEWAttributeResult::NotAuthority;
+    ClientAttributeResult(Result, Progress ? Progress->GetAttributeRevision() : -1);
+}
+
+void AEWPlayerController::ServerResetAttributes_Implementation(int64 ExpectedRevision)
+{
+    auto* Survivor = Cast<AEWCharacter>(GetPawn());
+    auto* Progress = Survivor ? Survivor->GetProgressionComponent() : nullptr;
+    const auto Result = Survivor && Survivor->GetController() == this && !Survivor->IsDead() && Progress
+        ? Progress->ResetAttributePoints(ExpectedRevision, [this] { return PersistAttributeChanges(); })
+        : EEWAttributeResult::NotAuthority;
+    ClientAttributeResult(Result, Progress ? Progress->GetAttributeRevision() : -1);
+}
+
+void AEWPlayerController::ClientAttributeResult_Implementation(EEWAttributeResult Result, int64 Revision)
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InventoryWidget->ShowAttributeResult(Result, Revision);
 }
 
 void AEWPlayerController::ServerRequestRespawn_Implementation()

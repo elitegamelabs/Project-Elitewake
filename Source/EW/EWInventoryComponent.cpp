@@ -6,6 +6,8 @@
 #include "EWCraftingRecipe.h"
 #include "EWEquipmentComponent.h"
 #include "EWSurvivalComponent.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 #include "GameFramework/Actor.h"
 #include "Net/UnrealNetwork.h"
 
@@ -217,6 +219,7 @@ EEWFoodUseResult UEWInventoryComponent::ConsumeFood(UEWItemDefinition* Item)
     if (!HasItem(Item)) return EEWFoodUseResult::NotOwned;
     UEWSurvivalComponent* Survival = Owner->FindComponentByClass<UEWSurvivalComponent>();
     if (!Survival || Survival->GetHealth() <= 0.f) return EEWFoodUseResult::UnavailableSurvivor;
+    if (Item->SurvivalTreatment != EEWSurvivalTreatment::None) return UseTreatment(Item, Survival);
     const float Hunger = FMath::Clamp(Survival->Hunger + 100.f * Item->HungerRestoreFraction, 0.f, 100.f);
     const float Health = FMath::Clamp(Survival->Health + Survival->MaxHealth * Item->HealthRestoreFraction, 0.f, Survival->MaxHealth);
     const bool bCures = Item->bCuresFoodSickness && Survival->IsFoodSick();
@@ -239,6 +242,50 @@ EEWFoodUseResult UEWInventoryComponent::ConsumeFood(UEWItemDefinition* Item)
     HandleInventoryChanged();
     Owner->ForceNetUpdate();
     return EEWFoodUseResult::Success;
+}
+
+EEWFoodUseResult UEWInventoryComponent::UseTreatment(UEWItemDefinition* Item, UEWSurvivalComponent* Survival)
+{
+    if (Item->SurvivalTreatment == EEWSurvivalTreatment::Antidote)
+    {
+        if (!Survival->IsPoisoned()) return EEWFoodUseResult::TreatmentUnneeded;
+        TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
+        if (RemoveFromEntries(Entries, Item, 1) != 1) return EEWFoodUseResult::NotOwned;
+        Survival->CurePoison();
+        HandleInventoryChanged();
+        GetOwner()->ForceNetUpdate();
+        return EEWFoodUseResult::TreatmentApplied;
+    }
+    if (!Survival->IsBleeding()) return EEWFoodUseResult::TreatmentUnneeded;
+    if (!GetWorld() || PendingBandage.IsValid()) return EEWFoodUseResult::Busy;
+    PendingBandage = Item;
+    GetWorld()->GetTimerManager().SetTimer(BandageTimer, this, &UEWInventoryComponent::FinishBandage, UEWSurvivalComponent::BandageSeconds);
+    Survival->SetDebuffNotice(TEXT("Bandaging"), NSLOCTEXT("Elitewake", "ApplyingBandage", "Applying bandage"), UEWSurvivalComponent::BandageSeconds);
+    return EEWFoodUseResult::TreatmentStarted;
+}
+
+void UEWInventoryComponent::InterruptBandage()
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !PendingBandage.IsValid()) return;
+    PendingBandage.Reset();
+    if (GetWorld()) GetWorld()->GetTimerManager().ClearTimer(BandageTimer);
+    if (auto* Survival = GetOwner()->FindComponentByClass<UEWSurvivalComponent>())
+        Survival->ClearDebuffNotice(TEXT("Bandaging"));
+}
+
+void UEWInventoryComponent::FinishBandage()
+{
+    UEWItemDefinition* Item = PendingBandage.Get();
+    PendingBandage.Reset();
+    if (!GetOwner() || !GetOwner()->HasAuthority()) return;
+    auto* Survival = GetOwner()->FindComponentByClass<UEWSurvivalComponent>();
+    if (!Survival) return;
+    TGuardValue<bool> Guard(bEquipmentTransferInProgress, true);
+    Survival->ClearDebuffNotice(TEXT("Bandaging"));
+    if (!Item || Survival->IsDead() || !Survival->IsBleeding() || RemoveFromEntries(Entries, Item, 1) != 1) return;
+    Survival->StopBleeding();
+    HandleInventoryChanged();
+    GetOwner()->ForceNetUpdate();
 }
 
 int32 UEWInventoryComponent::RemoveFromEntries(TArray<FEWInventoryEntry>& Entries, UEWItemDefinition* ItemDefinition, int32 Quantity)
@@ -342,6 +389,14 @@ EEWCraftResult UEWInventoryComponent::StageCraft(UEWCraftingRecipe* Recipe, TArr
     for (const auto& Cost : Costs)
         if (RemoveFromEntries(Proposed, Cost.Key, Cost.Value) != Cost.Value)
             return EEWCraftResult::MissingIngredients;
+    for (const auto& Ingredient : Recipe->Ingredients)
+    {
+        if (!Ingredient.bReturnEmptyContainer) continue;
+        UEWItemDefinition* Empty = Ingredient.Item->EmptiedVersion.LoadSynchronous();
+        if (!ValidItem(Empty) || Empty == Ingredient.Item) return EEWCraftResult::InvalidRecipe;
+        if (AddToEntries(Proposed, MaxSlots, Empty, Ingredient.Quantity) != Ingredient.Quantity)
+            return EEWCraftResult::InventoryFull;
+    }
     if (AddToEntries(Proposed, MaxSlots, Recipe->Output, 1) != 1) return EEWCraftResult::InventoryFull;
     if (Recipe->bNeedsFire && !AEWCampfire::IsLitFireNear(GetOwner())) return EEWCraftResult::NeedsFire;
     return EEWCraftResult::Success;

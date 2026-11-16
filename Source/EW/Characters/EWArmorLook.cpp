@@ -36,7 +36,7 @@ const FLinearColor Steel(.22f, .23f, .25f), Navy(.05f, .07f, .16f), Brass(.55f, 
 
 /** The shapes for one worn piece. Bone names are the Unreal mannequin's, which both survivor bodies use; SIDE stands for
  *  l and r (Rebuild places a paired shape on both sides). */
-void ShapesFor(EEWArmorKind Kind, EEWEquipmentSlot Slot, TArray<FShape>& Out)
+void ShapesFor(EEWArmorKind Kind, EEWEquipmentSlot Slot, TArray<FShape>& Out, bool bSeparateBoots = false)
 {
     const float Bulk = Kind == EEWArmorKind::Fur ? 1.22f : Kind == EEWArmorKind::Metal ? 1.12f : 1.06f;
     const FLinearColor Main = Kind == EEWArmorKind::Fur ? FurBrown : Kind == EEWArmorKind::Metal ? Steel : Beige;
@@ -60,9 +60,16 @@ void ShapesFor(EEWArmorKind Kind, EEWEquipmentSlot Slot, TArray<FShape>& Out)
             const FLinearColor Shoe = Kind == EEWArmorKind::Metal ? Boot : Kind == EEWArmorKind::Fur ? FurBrown : BeigeDark;
             Out.Add({TEXT("thigh_SIDE"), TEXT("calf_SIDE"), EShape::Cylinder, 19.f * Bulk, 19.f * Bulk, 4.f, Trouser});
             Out.Add({TEXT("calf_SIDE"), TEXT("foot_SIDE"), EShape::Cylinder, 14.f * Bulk, 14.f * Bulk, 2.f, Shin});
-            Out.Add({TEXT("foot_SIDE"), TEXT("ball_SIDE"), EShape::Cube, 11.f * Bulk, 9.f * Bulk, 12.f, Shoe, .15f});
+            if (!bSeparateBoots)
+                Out.Add({TEXT("foot_SIDE"), TEXT("ball_SIDE"), EShape::Cube, 11.f * Bulk, 9.f * Bulk, 12.f, Shoe, .15f});
             if (Kind == EEWArmorKind::Metal)   // a steel knee cop
                 Out.Add({TEXT("calf_SIDE"), TEXT("foot_SIDE"), EShape::Sphere, 11.f, 11.f, -30.f, Steel, -.5f});
+        }
+        else if (Slot == EEWEquipmentSlot::Feet)
+        {
+            // Separate boots cover the lower shin and foot. Pants retain their existing gameplay values.
+            Out.Add({TEXT("calf_SIDE"), TEXT("foot_SIDE"), EShape::Cylinder, 16.f, 16.f, -12.f, Leather, .18f});
+            Out.Add({TEXT("foot_SIDE"), TEXT("ball_SIDE"), EShape::Cube, 13.f, 11.f, 14.f, Boot, .15f});
         }
     }
     if (Slot == EEWEquipmentSlot::Chest)
@@ -122,6 +129,7 @@ bool RefPose(const USkeletalMeshComponent* Body, const FName Bone, FTransform& O
 
 int32 ShapeCount(const UEWItemDefinition* Item)
 {
+    if (Item && !Item->WornMeshes.IsEmpty()) return Item->WornMeshes.Num();
     if (!Item || Item->ArmorKind == EEWArmorKind::None) return 0;
     TArray<FShape> Shapes;
     ShapesFor(Item->ArmorKind, Item->EquipmentSlot, Shapes);
@@ -134,12 +142,33 @@ void Rebuild(USkeletalMeshComponent* Body, const TArray<FEWEquipmentEntry>& Worn
     InOutPieces.Reset();
     if (!Body || !Body->GetOwner() || Body->GetNetMode() == NM_DedicatedServer) return;
     UMaterialInterface* Base = LoadObject<UMaterialInterface>(nullptr, TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+    const bool bSeparateBoots = Worn.ContainsByPredicate([](const FEWEquipmentEntry& Entry) { return Entry.Slot == EEWEquipmentSlot::Feet && Entry.ItemDefinition; });
     for (const FEWEquipmentEntry& Entry : Worn)
     {
         const UEWItemDefinition* Item = Entry.ItemDefinition;
-        if (!Item || Item->ArmorKind == EEWArmorKind::None) continue;
+        if (!Item) continue;
+        if (!Item->WornMeshes.IsEmpty())
+        {
+            for (const auto& Part : Item->WornMeshes)
+            {
+                UStaticMesh* Mesh = Part.Mesh.LoadSynchronous();
+                if (!Mesh || Body->GetBoneIndex(Part.Bone) == INDEX_NONE) continue;
+                auto* Piece = NewObject<UStaticMeshComponent>(Body->GetOwner(), NAME_None, RF_Transient);
+                Piece->SetStaticMesh(Mesh);
+                Piece->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+                Piece->SetupAttachment(Body, Part.Bone);
+                Piece->SetRelativeTransform(Part.RelativeTransform);
+                if (auto* Material = Part.Material.LoadSynchronous()) Piece->SetMaterial(0, Material);
+                Piece->ComponentTags.Add(TEXT("ArmorPiece"));
+                Piece->ComponentTags.Add(Item->ItemId);
+                Piece->RegisterComponent();
+                InOutPieces.Add(Piece);
+            }
+            continue;
+        }
+        if (Item->ArmorKind == EEWArmorKind::None) continue;
         TArray<FShape> Shapes;
-        ShapesFor(Item->ArmorKind, Item->EquipmentSlot, Shapes);
+        ShapesFor(Item->ArmorKind, Item->EquipmentSlot, Shapes, bSeparateBoots);
         for (int32 SideIndex = 0; SideIndex < 2; ++SideIndex)
             for (const FShape& Shape : Shapes)
             {
